@@ -532,3 +532,62 @@ describe('features (exercise 7 on an imported SWE-agent set)', () => {
     expect(within(note).getByRole('button', { name: 'Download a SWE-agent sample' }).getAttribute('data-spec')).toBe('sources')
   })
 })
+
+describe('experiment hold', () => {
+  function withColumns() {
+    const f = data()
+    const path = `/results/${MINI}/experiment`
+    f[path] = {
+      ...f[path],
+      columns: [
+        { key: 'model', n_levels: 2, levels: [{ value: M1, n: 8 }, { value: M2, n: 7 }] },
+        { key: 'harness_id', n_levels: 2, levels: [{ value: 'baseline', n: 8 }, { value: 'terse', n: 7 }] },
+        { key: 'task_id', n_levels: 2, levels: [{ value: 't1', n: 8 }, { value: 't2', n: 7 }] },
+      ],
+    }
+    return f
+  }
+  it('the default fit asks for no hold, and Inspect model asks for the swapped axes', () => {
+    const { container, requests } = renderRig('#/rig/an:mini:fit', { data: withColumns() })
+    expect(requests.filter((r) => r.url.includes('/experiment'))).toEqual([])
+    fireEvent.click(within(el(container, 'hold-factors')).getByRole('button', { name: 'model' }))
+    const swapped = requests.filter((r) => r.url.includes('a=harness_id') && r.url.includes('b=model'))
+    expect(swapped.length).toBeGreaterThan(0)
+    expect(swapped.every((r) => !r.url.includes('hold='))).toBe(true)
+    resetRig()
+    const held = renderRig('#/rig/an:mini:fit', { data: withColumns() })
+    fireEvent.change(within(el(held.container, 'hold-factors')).getByRole('combobox', { name: 'Hold model' }), { target: { value: M1 } })
+    expect(held.requests.some((r) => r.url.includes('hold=' + encodeURIComponent(`model=${M1}`)))).toBe(true)
+  })
+  it('a failed hold can be reset back to the bare fit', async () => {
+    const { container, requests } = renderRig('#/rig/an:mini:fit', { data: withColumns() })
+    fireEvent.change(within(el(container, 'hold-factors')).getByRole('combobox', { name: 'Hold model' }), { target: { value: M1 } })
+    const reset = await screen.findByRole('button', { name: 'Reset' })
+    fireEvent.click(reset)
+    expect(el(container, 'two-factor-fit').textContent).toContain('model (A)')
+    expect(requests.some((r) => r.url.includes('hold=' + encodeURIComponent(`model=${M1}`)))).toBe(true)
+  })
+  it('captured is not a missing dataset, and the experiment read carries the private header', () => {
+    const { container } = renderRig('#/rig/an:captured:fit', { data: data() })
+    expect(container.textContent).not.toContain('There is no dataset')
+    const call = global.fetch.mock.calls.find((c) => String(c[0]).includes('/results/captured/experiment'))
+    expect(call, 'captured experiment was fetched').toBeTruthy()
+    expect(call[1].headers['x-harnesslab-private']).toBe('1')
+  })
+  it('an ungraded capture does not draw pass@1 = 0', () => {
+    const f = data()
+    f['private:/results/captured/experiment'] = {
+      outcome: 'hidden_pass', a_key: 'model', b_key: 'harness_id',
+      a_levels: ['claude'], b_levels: ['claude-code'],
+      cells: [{ a: 'claude', b: 'claude-code', n: 1, pass1: 0, ci95: [0, 0] }],
+      contrasts: [], anova: null, columns: [],
+      error: 'no graded runs under this oracle',
+      fit: { status: 'insufficient_data', reason: 'no_graded_runs' },
+    }
+    const { container } = renderRig('#/rig/an:captured:fit', { data: f })
+    expect(container.textContent).toContain('This outcome was not graded.')
+    expect(el(container, 'cell-grid-ci')).toBeNull()
+    expect(container.textContent).not.toContain('0.0%')
+    everyEmptyHasAWay(container)
+  })
+})

@@ -574,6 +574,7 @@ function WatcherControls({ st, compact }) {
   return (
     <div className="rg-col rg-ws-ctl" data-el="capture-controls">
       {!watching && <CopyCmd label="Start a watcher from a terminal on this machine" cmd={WATCH_CMD} el="capture-start" />}
+      {!watching && <p className="rg-small">That terminal asks before it reads your sessions. Type yes, or it reads nothing.</p>}
       <div className="rg-row rg-wrap rg-ws-acts">
         {watching && paused !== true && <ConfirmAction label="Pause capture" confirmLabel="Pause the watcher" detail={detail} onConfirm={ask('pause')} el="capture-pause" />}
         {paused !== false && (watching || paused === true) && <ConfirmAction label="Resume capture" confirmLabel="Resume the watcher" detail={detail} onConfirm={ask('resume')} el="capture-resume" />}

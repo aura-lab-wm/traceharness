@@ -33,6 +33,7 @@
 // reachable by following import statements, and a glob is invisible to it. A new view file is added here.
 import * as m_pending from './views/_pending.jsx'
 import * as m_analysis from './views/analysis.jsx'
+import * as m_blocks from './views/blocks.jsx'
 import * as m_buddy from './views/buddy.jsx'
 import * as m_casefile from './views/casefile.jsx'
 import * as m_console from './views/console.jsx'
@@ -44,6 +45,7 @@ import * as m_workspace from './views/workspace.jsx'
 export const modules = {
   './views/_pending.jsx': m_pending,
   './views/analysis.jsx': m_analysis,
+  './views/blocks.jsx': m_blocks,
   './views/buddy.jsx': m_buddy,
   './views/casefile.jsx': m_casefile,
   './views/console.jsx': m_console,

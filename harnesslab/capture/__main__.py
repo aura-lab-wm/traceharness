@@ -91,6 +91,9 @@ def build_parser() -> argparse.ArgumentParser:
                    help="the menubar app bundle, for --print-menubar-agent")
     p.add_argument("--print-launchd", action="store_true",
                    help="print a LaunchAgent plist that runs --watch under launchd; installs nothing")
+    p.add_argument("--yes", action="store_true",
+                   help="start --watch or --backfill without the terminal prompt "
+                        "(a person already typed yes)")
     return p
 
 
@@ -284,6 +287,11 @@ def main(argv: list[str] | None = None) -> int:
             return 2
         print(json.dumps(report, indent=2, sort_keys=True))
         return 1 if report["errors"] else 0
+
+    from .consent import confirm_live_capture
+    if not confirm_live_capture(assume_yes=args.yes, isatty=sys.stdin.isatty(), ask=input):
+        print("Live capture did not start. Nothing was read.", file=sys.stderr)
+        return 2
 
     if args.watch:
         from . import sniffer

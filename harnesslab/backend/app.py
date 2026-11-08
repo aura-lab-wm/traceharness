@@ -11,7 +11,7 @@ from concurrent.futures import ThreadPoolExecutor
 from dataclasses import asdict
 from typing import Optional
 
-from fastapi import FastAPI, HTTPException, Request
+from fastapi import FastAPI, HTTPException, Query, Request
 from fastapi.responses import StreamingResponse, FileResponse, JSONResponse, PlainTextResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
@@ -342,26 +342,47 @@ def run_query(name: str, pattern: str = "", harness: Optional[str] = None, model
 
 @app.get("/api/results/{name}/experiment")
 def experiment(name: str, a: str = "model", b: str = "harness_id", outcome: str = "hidden_pass",
-               a_cell: Optional[str] = None, b_cell: Optional[str] = None, also: Optional[str] = None):
+               a_cell: Optional[str] = None, b_cell: Optional[str] = None, also: Optional[str] = None,
+               hold: Optional[list[str]] = Query(default=None)):
     """Exercise 8 for whatever is in the filter, now also carrying `fit` -- `factor_summary(anova)`,
     the pure summary of the SAME ANOVA table this response already returned, so the Experiment view
     stops deriving it client-side (docs/superpowers/specs/2026-09-21-study-aggregates-design.md).
     Everything this response returned before is unchanged. `also` adds comma-separated results dirs
     as extra levels of the model factor, which is how a live model is compared against the
     prerecorded cells; every named dir's fingerprint feeds the cache key so a change to any of them
-    invalidates it."""
+    invalidates it.
+
+    `hold` is repeated `column=value`. Matching rows are kept and the same decomposition is refit.
+    A hold is not a path and is not a second test. A bad column is 400 and is not cached."""
     _dir(name)
     extras = sorted(x.strip() for x in (also or "").split(",") if x.strip())
     for extra in extras:
         _dir(extra)
+    try:
+        holds = [M.parse_hold(spec) for spec in (hold or [])]
+    except ValueError as exc:
+        raise HTTPException(400, str(exc)) from exc
     rows, fp = _study_rows_stable(name)
     fps = [fp]
     for extra in extras:
         extra_rows, extra_fp = _study_rows_stable(extra)
         rows = rows + extra_rows
         fps.append(extra_fp)
-    key = ("experiment", name, a, b, outcome, a_cell, b_cell, tuple(extras))
-    return _STUDY_CACHE.get_or_compute(key, tuple(fps), lambda: M.experiment(rows, a, b, outcome, a_cell, b_cell))
+    try:
+        M.validate_holds(rows, holds, a, b, outcome)
+    except ValueError as exc:
+        raise HTTPException(400, str(exc)) from exc
+    key = ("experiment", name, a, b, outcome, a_cell, b_cell, tuple(extras), tuple(holds))
+    return _STUDY_CACHE.get_or_compute(
+        key, tuple(fps), lambda: M.experiment(rows, a, b, outcome, a_cell, b_cell, holds))
+
+
+@app.get("/api/sources")
+def sources():
+    """Included grids, import adapters, and the benchmarks this lab does not load.
+
+    Read-only. `captured` is not listed and is not read."""
+    return M.source_catalog()
 
 
 @app.get("/api/results/{name}/integrity")
@@ -480,6 +501,8 @@ class JobIn(BaseModel):
     sentinel_only: bool = False               # run each harness ONLY as "<id>+sentinel" (pair with plain cells already in `out`)
     price: Optional[list[float]] = None
     max_cost_usd: Optional[float] = None      # stop submitting work once the job's ledger cost reaches this
+    api_key: Optional[str] = None             # caller's own key for this job; never returned
+    harness_inline: Optional[dict] = None     # built_<hash> -> HarnessConfig, for the block builder
 
 
 JOBS: dict[str, dict] = {}
@@ -487,8 +510,16 @@ _INDEX_LOCK = threading.Lock()
 _EXEC = ThreadPoolExecutor(max_workers=8)
 
 
+def _redact_job_secret(job: dict, text: str) -> str:
+    secret = job.get("_api_key") or ""
+    if secret:
+        text = text.replace(secret, "[redacted]")
+    return text
+
+
 def job_public(j: dict) -> dict:
-    d = {k: v for k, v in j.items() if k not in ("_future",)}
+    hidden = ("_future", "_api_key", "api_key", "harness_inline")
+    d = {k: v for k, v in j.items() if k not in hidden and not str(k).startswith("_")}
     d["spent"] = round(sum((r.get("cost") or 0.0) for r in j.get("results", [])), 6)
     return d
 
@@ -510,9 +541,17 @@ def _seed_for(job_seed: int, task_id: str, harness_id: str, model: str, repeat: 
 
 def _expand_harnesses(job: dict) -> list[HarnessConfig]:
     """The harness list a job actually runs: plain, plain + "+sentinel" twin (A/B), or the twin only."""
+    from harnesslab.core.blocks import inline_config
     out = []
+    inline = job.get("harness_inline") or {}
     for hid in job["harnesses"]:
-        h = _harness_by_id(hid)
+        if hid in inline:
+            try:
+                h = inline_config(hid, inline[hid])
+            except ValueError as e:
+                raise HTTPException(400, str(e)) from e
+        else:
+            h = _harness_by_id(hid)
         if job.get("temperature") is not None:
             h.temperature = job["temperature"]
         if job.get("sentinel") is not None:
@@ -540,7 +579,7 @@ def _run_one(job: dict, cell: dict, task: dict, harness: HarnessConfig, repeat: 
         provider = make_provider("mock", cell["model"], temperature=harness.temperature, seed=seed)
     else:
         provider = make_provider("openai", cell["model"], temperature=harness.temperature, price=job.get("price"),
-                                 api_key=SETTINGS["openrouter_key"], base_url=SETTINGS["base_url"])
+                                 api_key=job.get("_api_key") or SETTINGS["openrouter_key"], base_url=SETTINGS["base_url"])
     BUS.publish("run_start", job=job["id"], run_id=run_id, task=task["id"], harness=harness.id, model=cell["model"], repeat=repeat)
     job["running"].append(run_id)
 
@@ -568,8 +607,9 @@ def _run_one(job: dict, cell: dict, task: dict, harness: HarnessConfig, repeat: 
         job["done"] += 1
         if run_id in job["running"]:
             job["running"].remove(run_id)
-        job["errors"].append(f"{task['id']}/{harness.id}/{cell['model']}: {e}")
-        BUS.publish("run_error", job=job["id"], run_id=run_id, error=str(e), trace=traceback.format_exc()[-800:])
+        err = _redact_job_secret(job, f"{task['id']}/{harness.id}/{cell['model']}: {e}")
+        job["errors"].append(err)
+        BUS.publish("run_error", job=job["id"], run_id=run_id, error=err, trace=_redact_job_secret(job, traceback.format_exc()[-800:]))
 
 
 def _run_job(job: dict):
@@ -602,13 +642,25 @@ def _run_job(job: dict):
 
 @app.post("/api/jobs")
 def create_job(j: JobIn):
-    if any(not m.startswith("mock") for m in j.models) and not SETTINGS["openrouter_key"]:
-        raise HTTPException(400, "OpenRouter key not set (export OPENROUTER_API_KEY or paste it in Settings)")
+    raw = j.model_dump()
+    secret = (raw.pop("api_key", None) or "").strip()
+    inline = raw.get("harness_inline") or {}
+    if inline:
+        from harnesslab.core.blocks import inline_config
+        for hid in j.harnesses:
+            if hid not in inline:
+                continue
+            try:
+                inline_config(hid, inline[hid])
+            except ValueError as e:
+                raise HTTPException(400, str(e)) from e
+    if any(not m.startswith("mock") for m in j.models) and not secret and not SETTINGS["openrouter_key"]:
+        raise HTTPException(400, "This run calls a live model. Paste your own LLM key. The lab does not keep one for you.")
     if not j.out or "/" in j.out or j.out.startswith("."):
         raise HTTPException(400, "bad results dir name")
     jid = uuid.uuid4().hex[:8]
     job = {"id": jid, "status": "queued", "created_at": time.time(), "done": 0, "total": 0, "running": [], "results": [], "errors": [],
-           **j.model_dump()}
+           "_api_key": secret or None, **raw}
     JOBS[jid] = job
     threading.Thread(target=_run_job, args=(job,), daemon=True).start()
     return job_public(job)
@@ -789,6 +841,9 @@ _fork_hoist(app)   # keep /api/live and /api/runs/*/stream ahead of the SPA catc
 # --- harness routes ---
 from harnesslab.backend.harness_tools import router as harness_router
 app.include_router(harness_router)
+
+from harnesslab.backend.blocks_api import router as blocks_router
+app.include_router(blocks_router)
 # The SPA catch-all above ("/{path:path}", registered only when frontend/dist exists) would
 # otherwise shadow every GET route added after it. Routes are matched in order and list.sort is
 # stable, so this only moves the catch-all to the end and is safe to repeat.

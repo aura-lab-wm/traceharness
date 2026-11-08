@@ -41,6 +41,7 @@ function Home({ spec }) {
         <div className="t"><div className="rg-eyebrow">Library · data/runs · {fmt.int(total)} runs</div><h1>Datasets</h1>
           <p>{fmt.plural(all.length, 'trajectory set')}. Open one to see its questions already answered, then follow any number down to the recorded action behind it.</p></div>
         <Go spec="sources" className="rg-btn pri lg" el="load-trajectories-cta">Load trajectories</Go>
+        <Go spec="blocks" className="rg-btn lg" el="build-harness-cta">Build a harness</Go>
       </div>
       <div className="rg-row rg-wrap rg-home-bar">
         <SearchBox value={q} onChange={setQ} placeholder="Find a dataset, model or harness" el="dataset-search" />

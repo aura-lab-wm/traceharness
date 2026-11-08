@@ -34,7 +34,7 @@ import { useMemo, useState } from 'react'
 import { makeSpec } from '../route'
 import { api, IS_STATIC } from '../../api'
 import {
-  useDataset, useDatasets, useOverview, useRuns, useMetrics, useComparisons, useExperiment, useOracle, useIntegrity, useReport,
+  useDataset, useDatasets, useOverview, useRuns, useMetrics, useComparisons, useExperiment, isCapturedDir, useOracle, useIntegrity, useReport,
   useTasks, useModels, useJobs, useApi, useRealAnalysis, usePatterns, useQuery, short, fmt, tally, tokStats, conditionRuns, resolveCondition, metricsCell,
   verdict, invalidate, paths,
 } from '../data'
@@ -109,7 +109,14 @@ function shapeOf(row) {
   }
 }
 const shapeLine = (row) => { const s = shapeOf(row); return `${row.name} has ${s.ms} under ${s.hs}` }
-const REASON = { fewer_than_2_balanced_levels_a: 'fewer than two balanced models', fewer_than_2_balanced_levels_b: 'fewer than two balanced harnesses' }
+const REASON = {
+  fewer_than_2_balanced_levels_a: 'fewer than two balanced models',
+  fewer_than_2_balanced_levels_b: 'fewer than two balanced harnesses',
+  hold_excluded_every_row: 'the hold matched no rows',
+  bad_hold: 'the hold is not a column of this grid',
+  no_graded_runs: 'this outcome was not graded',
+  task_id_is_the_block: 'task is the block, so it is not a factor',
+}
 /** Another dataset that CAN answer: `need` = 'harnesses' (≥2), 'models' (≥2) or 'fit' (≥2 of each).
  *  Recorded data first, then the most runs. null when none on this machine qualifies. */
 function useAlt(dir, need) {
@@ -152,12 +159,15 @@ function AnalysisDoc({ spec, args }) {
   const ds = useDataset(dir)
   const { conditionFor } = useRig()
   if (ds.error) return <ErrorState error={ds.error} onRetry={ds.reload} what="The dataset index" />
-  if (ds.missing) return <NotFound spec={spec} detail={`There is no dataset “${dir}” in data/runs on this machine.`} />
-  if (!ds.data) return <Loading label="Reading /api/overview…" />
+  // `captured` is private and is absent from the overview on purpose. Missing it is not "no such dataset":
+  // the fit still mounts and asks for the directory with the private header.
+  const captured = isCapturedDir(dir)
+  if (ds.missing && !captured) return <NotFound spec={spec} detail={`There is no dataset “${dir}” in data/runs on this machine.`} />
+  if (!ds.data && !(ds.missing && captured)) return <Loading label="Reading /api/overview…" />
   const view = v0 || 'family'
   const Body = BODY[view]
   if (!Body) return <NotFound spec={spec} detail={`“${view}” is not an analysis view. The views are ${Object.keys(BODY).join(', ')}.`} />
-  const row = ds.data
+  const row = ds.data || { name: dir, models: [], harnesses: [], tasks: [], runs: 0, kind: 'recorded' }
   const mem = conditionFor(dir)
   const c = resolveCondition(row, m || mem.model, h || mem.harness)
   return (
@@ -741,12 +751,33 @@ function Judge({ dir, c }) {
 }
 
 /* ------------------------------------------------------------------ 6 · experiment */
+function holdLevels(columns, key) {
+  const col = (columns || []).find((c) => c.key === key)
+  return col ? col.levels.map((l) => String(l.value)) : []
+}
 function Fit({ spec, dir, row, c }) {
-  const E = useExperiment(dir)
-  const alt = useAlt(dir, 'fit')
+  const [inspect, setInspect] = useTabState(spec, 'inspect', 'harness')
+  const [holdModel, setHoldModel] = useTabState(spec, 'holdModel', '')
+  const [holdHarness, setHoldHarness] = useTabState(spec, 'holdHarness', '')
+  const [holdTask, setHoldTask] = useTabState(spec, 'holdTask', '')
   const [only, setOnly] = useTabState(spec, 'only', 'all')
   const [cm, setCm] = useTabState(spec, 'cm', 'all')
-  if (E.error) return <ErrorState error={E.error} onRetry={E.reload} what={`/api/results/${dir}/experiment`} />
+  const query = useMemo(() => {
+    const holds = []
+    if (inspect === 'model') {
+      if (holdHarness) holds.push(`harness_id=${holdHarness}`)
+    } else if (holdModel) holds.push(`model=${holdModel}`)
+    if (holdTask) holds.push(`task_id=${holdTask}`)
+    return inspect === 'model' ? { a: 'harness_id', b: 'model', holds } : { holds }
+  }, [inspect, holdModel, holdHarness, holdTask])
+  const E = useExperiment(dir, query)
+  const alt = useAlt(dir, 'fit')
+  const nonDefault = inspect !== 'harness' || !!holdModel || !!holdHarness || !!holdTask
+  const resetInspect = () => { setInspect('harness'); setHoldModel(''); setHoldHarness(''); setHoldTask('') }
+  if (E.error) return (<>
+    <ErrorState error={E.error} onRetry={E.reload} what={`/api/results/${dir}/experiment`} />
+    {nonDefault && <Btn onClick={resetInspect}>Reset</Btn>}
+  </>)
   if (!E.data) return <Loading label={`Reading /api/results/${dir}/experiment…`} />
   const X = E.data
   const A = X.a_levels || [], B = X.b_levels || []
@@ -760,23 +791,55 @@ function Fit({ spec, dir, row, c }) {
   const cellsOf = (m, h) => (X.cells || []).find((k) => k.a === m && k.b === h)
   const S = shapeOf(row)
   const reason = F.reason ? REASON[F.reason] || String(F.reason).replace(/_/g, ' ') : null
+  const ungraded = F.reason === 'no_graded_runs' || X.error === 'no graded runs under this oracle'
+  const aWord = !X.a_key || X.a_key === 'model' ? 'model' : (X.a_key === 'harness_id' ? 'harness' : X.a_key)
+  const bWord = !X.b_key || X.b_key === 'harness_id' ? 'harness' : (X.b_key === 'model' ? 'model' : X.b_key)
+  const axisCount = (n, word) => (word === 'harness' ? plural(n, 'harness', 'harnesses') : plural(n, word))
+  const held = X.held || []
+  const columns = X.columns || []
+  const showHolds = !IS_STATIC && columns.length > 0
   const lead = ok
     ? <>The <b>{F.leading_factor}</b> is what moves this study: model levels span {(F.model.range * 100).toFixed(1)} points against the harness's {(F.harness.range * 100).toFixed(1)}, and the interaction carries {pct(F.interaction_share)}{F.interaction_share < Math.max(F.model.share, F.harness.share) / 2 ? ' — the effect is largely additive' : ''}.</>
     : null
+  const ways = [
+    S.nm > 1 && { label: `Compare its ${S.nm} models in the family matrix`, spec: makeSpec('an', dir, 'family', short(c.model), c.harness), primary: true },
+    S.nh > 1 && { label: `Compare its ${S.nh} harnesses in Comparison`, spec: makeSpec('an', dir, 'delta', short(c.model), c.harness), primary: S.nm < 2 },
+    alt && { label: `Open the fit for ${alt.name} (${altShape(alt)})`, spec: makeSpec('an', alt.name, 'fit') },
+  ]
   return (<>
     <Head eyebrow="More analysis · experiment" title="Two-factor fit" el="fit-answer" lead={lead}
-      sub={<>Outcome <span className="rg-mono">{X.outcome || '—'}</span> · {plural(A.length, 'model')} × {plural(B.length, 'harness', 'harnesses')} · tasks as blocks{X.anova ? <> · n={int(X.anova.n)}{(X.anova.dropped || []).length ? ` · ${X.anova.dropped.length} dropped for balance` : ' · balanced, nothing dropped'}</> : null}</>}
+      sub={<>Outcome <span className="rg-mono">{X.outcome || '—'}</span> · {axisCount(A.length, aWord)} × {axisCount(B.length, bWord)} · tasks as blocks{X.anova ? <> · n={int(X.anova.n)}{(X.anova.dropped || []).length ? ` · ${X.anova.dropped.length} dropped for balance` : ' · balanced, nothing dropped'}</> : null}{held.length ? <> · held {held.map((h) => `${h.key}=${h.value}`).join(', ')} · {int(X.n_after)} of {int(X.n_before)}</> : null}</>}
       about={<>
         <p>A two-way ANOVA of the outcome on model and harness, with tasks as blocks. Each factor's <b>share</b> is its sum of squares over the total; its <b>spread</b> is the range of its level means. The interaction share says how far the two factors fail to add up.</p>
         <p>Pairwise contrasts compare harnesses within one model, each with a 95% interval; with many contrasts, some exclude zero by chance alone (the expected count is shown). Descriptive, over these tasks only.</p>
+        <p>A hold refits the same decomposition on the rows that match. This page does not start session capture. SWE-bench Verified and Terminal-Bench are not loaded.</p>
       </>} />
+    {showHolds && (
+      <div className="rg-row rg-wrap rg-an-bar" data-el="hold-factors">
+        <Seg label="Inspect" options={[['harness', 'harness'], ['model', 'model']]} value={inspect} onChange={(v) => { setInspect(v); if (v === 'model') setHoldModel(''); else setHoldHarness('') }} />
+        {inspect !== 'model' && (
+          <select className="rg-selc" aria-label="Hold model" value={holdModel} onChange={(e) => setHoldModel(e.target.value)}>
+            <option value="">all models</option>
+            {holdLevels(columns, 'model').map((v) => <option key={v} value={v}>{short(v)}</option>)}
+          </select>
+        )}
+        {inspect === 'model' && (
+          <select className="rg-selc" aria-label="Hold harness" value={holdHarness} onChange={(e) => setHoldHarness(e.target.value)}>
+            <option value="">all harnesses</option>
+            {holdLevels(columns, 'harness_id').map((v) => <option key={v} value={v}>{v}</option>)}
+          </select>
+        )}
+        <select className="rg-selc" aria-label="Hold task" value={holdTask} onChange={(e) => setHoldTask(e.target.value)}>
+          <option value="">all tasks</option>
+          {holdLevels(columns, 'task_id').map((v) => <option key={v} value={v}>{v}</option>)}
+        </select>
+      </div>
+    )}
     <div data-el="two-factor-fit">
-      {!ok ? (
-        <Empty title="No two-factor fit for this dataset." actions={[
-          S.nm > 1 && { label: `Compare its ${S.nm} models in the family matrix`, spec: makeSpec('an', dir, 'family', short(c.model), c.harness), primary: true },
-          S.nh > 1 && { label: `Compare its ${S.nh} harnesses in Comparison`, spec: makeSpec('an', dir, 'delta', short(c.model), c.harness), primary: S.nm < 2 },
-          alt && { label: `Open the fit for ${alt.name} (${altShape(alt)})`, spec: makeSpec('an', alt.name, 'fit') },
-        ]}>{shapeLine(row)}, so a model × harness fit has nothing to split{reason ? <> (the fit reports {reason})</> : null}. A fit needs at least two balanced models and two balanced harnesses; the cell grid below still shows every observed cell with its interval.</Empty>
+      {ungraded ? (
+        <Empty title="This outcome was not graded." actions={ways.some(Boolean) ? ways : [{ copy: `python -m harnesslab fit ${dir}`, label: 'Fit this grid in the terminal' }]}>{shapeLine(row)}. This outcome was not graded, so the cell grid is not drawn.</Empty>
+      ) : !ok ? (
+        <Empty title="No two-factor fit for this dataset." actions={ways}>{shapeLine(row)}, so a model × harness fit has nothing to split{reason ? <> (the fit reports {reason})</> : null}. A fit needs at least two balanced models and two balanced harnesses; the cell grid below still shows every observed cell with its interval.</Empty>
       ) : (<>
         <div className="rg-stats rg-an-f3">
           <div className="rg-stat"><span className="rg-lbl">model spread</span><span className="rg-fig md">{(F.model.range * 100).toFixed(1)}<span className="u">pp</span></span><span className="rg-small rg-dim">share {pct(F.model.share)}</span></div>
@@ -790,8 +853,8 @@ function Fit({ spec, dir, row, c }) {
         </Sec>
       </>)}
     </div>
-    <Sec title="Cell grid · pass@1 with 95% CI" meta={`${(X.cells || []).length} cells · hidden suite`} el="cell-grid-ci">
-      <div className="rg-pnl rg-an-mxp"><div className="rg-tblwrap"><table className="rg-an-mx"><thead><tr><th>model</th>{B.map((h) => <th key={h}>{h}</th>)}</tr></thead>
+    {!ungraded && <Sec title="Cell grid · pass@1 with 95% CI" meta={`${(X.cells || []).length} cells · hidden suite`} el="cell-grid-ci">
+      <div className="rg-pnl rg-an-mxp"><div className="rg-tblwrap"><table className="rg-an-mx"><thead><tr><th>{X.a_key || 'model'}</th>{B.map((h) => <th key={h}>{h}</th>)}</tr></thead>
         <tbody>{A.map((m) => <tr key={m}><td className="rh"><span className="rg-mono">{short(m)}</span></td>{B.map((h) => {
           const x = cellsOf(m, h)
           if (!x || !x.n) return <td key={h}><div className="rg-an-mc empty"><span className="v2">not run</span></div></td>
@@ -799,16 +862,16 @@ function Fit({ spec, dir, row, c }) {
             <span className="v1">{pct(x.pass1)}</span><CiBar lo={x.ci95 && x.ci95[0]} hi={x.ci95 && x.ci95[1]} pt={x.pass1} />
             <span className="v2">[{x.ci95 ? (x.ci95[0] * 100).toFixed(0) : '—'}, {x.ci95 ? (x.ci95[1] * 100).toFixed(0) : '—'}] · n={x.n}</span></Go></td>
         })}</tr>)}</tbody></table></div></div>
-    </Sec>
+    </Sec>}
     {contrasts.length > 0 && (
-      <Sec title="Pairwise contrasts · within model" meta={`${plural(contrasts.length, 'contrast')} · ${nsep} exclude 0`} el="pairwise-contrasts">
+      <Sec title={`Pairwise contrasts · within ${aWord}`} meta={`${plural(contrasts.length, 'contrast')} · ${nsep} exclude 0`} el="pairwise-contrasts">
         <div className="rg-row rg-wrap rg-an-bar">
           <Seg label="Contrast filter" options={[['all', `all ${contrasts.length}`], ['sep', `separating ${nsep}`]]} value={only} onChange={setOnly} />
-          {A.length > 1 && <select className="rg-selc" value={cm} onChange={(e) => setCm(e.target.value)} aria-label="Model"><option value="all">all models</option>{A.map((m) => <option key={m} value={m}>{short(m)}</option>)}</select>}
+          {A.length > 1 && <select className="rg-selc" value={cm} onChange={(e) => setCm(e.target.value)} aria-label={aWord === 'model' ? 'Model' : aWord === 'harness' ? 'Harness' : aWord}><option value="all">{aWord === 'model' ? 'all models' : aWord === 'harness' ? 'all harnesses' : `all ${aWord}`}</option>{A.map((m) => <option key={m} value={m}>{short(m)}</option>)}</select>}
           <span className="rg-grow" />
           {X.multiplicity && <span className="rg-small rg-mute">{plural(X.multiplicity.n, 'test')} at 95%: ~{fx(X.multiplicity.expected_false, 2)} expected to exclude zero by chance alone.</span>}
         </div>
-        <div className="rg-pnl"><div className="rg-tblwrap rg-an-cscroll"><table className="rg-tbl rg-an-tbl"><thead><tr><th>model</th><th>from → to</th><th className="rg-num">Δ</th><th className="rg-an-ciw">95% CI</th><th><span className="sr-only">separates</span></th></tr></thead>
+        <div className="rg-pnl"><div className="rg-tblwrap rg-an-cscroll"><table className="rg-tbl rg-an-tbl"><thead><tr><th>{aWord}</th><th>from → to</th><th className="rg-num">Δ</th><th className="rg-an-ciw">95% CI</th><th><span className="sr-only">separates</span></th></tr></thead>
           <tbody>{cons.map((x, i) => (
             <tr key={i}><td className="rg-mono rg-small">{short(x.a)}</td><td className="rg-mono rg-small">{x.from} → {x.to}</td><td className={cx('rg-num', !x.covers_zero && 'rg-acc')}>{pp(x.delta)}</td>
               <td><CiBar lo={x.ci95 && x.ci95[0]} hi={x.ci95 && x.ci95[1]} pt={x.delta} min={-mx} max={mx} zero={0} /><div className="rg-tiny rg-mute rg-mono">[{pp(x.ci95 && x.ci95[0])}, {pp(x.ci95 && x.ci95[1])}]</div></td>

@@ -302,7 +302,27 @@ export function useRuns(dir) {
 export function useRunDetail(dir, id) { return useApi(dir && id ? paths.runDetail(dir, id) : null) }
 export function useMetrics(dir, baseline) { return useApi(dir ? paths.metrics(dir, baseline) : null) }
 export function useComparisons(dir, baseline = 'baseline') { return useApi(dir ? paths.comparisons(dir, baseline) : null) }
-export function useExperiment(dir) { return useApi(dir ? paths.experiment(dir) : null) }
+/** Exact directory name `captured`, after trimming slashes. `captured_claude_code` is a public stand-in. */
+export function isCapturedDir(dir) {
+  return String(dir || '').replace(/\/+$/, '').trim().toLowerCase() === 'captured'
+}
+/** Experiment URL. Defaults (model × harness_id, hidden_pass, no hold) stay the bare path so
+ *  Report, Comparison, and the question stack keep the response they already prime.
+ *  A static export ignores the query: the snapshot was taken without holds. */
+export function experimentPath(dir, query) {
+  const base = paths.experiment(dir)
+  if (!query || IS_STATIC) return base
+  const parts = []
+  if (query.a && query.a !== 'model') parts.push(`a=${E(query.a)}`)
+  if (query.b && query.b !== 'harness_id') parts.push(`b=${E(query.b)}`)
+  if (query.outcome && query.outcome !== 'hidden_pass') parts.push(`outcome=${E(query.outcome)}`)
+  for (const spec of query.holds || []) if (spec) parts.push(`hold=${E(spec)}`)
+  return parts.length ? `${base}?${parts.join('&')}` : base
+}
+export function useExperiment(dir, query) {
+  const path = dir ? experimentPath(dir, query) : null
+  return useApi(path, isCapturedDir(dir) ? { private: true } : undefined)
+}
 export function useOracle(dir) { return useApi(dir ? paths.oracle(dir) : null) }
 export function useIntegrity(dir, harness) { return useApi(dir ? paths.integrity(dir, harness) : null) }
 export function useReport(dir, harness) { return useApi(dir ? paths.report(dir, harness) : null) }

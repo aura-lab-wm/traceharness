@@ -15,7 +15,7 @@ from harnesslab.core import patterns as P
 from harnesslab.core.reportcard import build_card, card_markdown, added_lines, similarity
 
 from .paths import LAB_ROOT, RUNS_ROOT   # checkout or installed wheel
-from .results_scope import list_results_dirs
+from .results_scope import count_runs, list_results_dirs
 
 
 def _clean(x):
@@ -292,14 +292,164 @@ def report_card(name: str, rows: list[dict], harness: str) -> dict:
 # --------------------------------------------------------------------------- experiment (exercise 8)
 FACTORS = {"model": "model", "harness_id": "harness", "task_id": "task", "results": "results dir"}
 
+# The fit menu is these three columns. Verdicts are outcomes, not factors, and task_id stays
+# on the menu even when it has more than _MAX_LEVELS distinct values (real_swe_agent_500 has 30).
+_FIT_MENU = ("model", "harness_id", "task_id")
+_VERDICTS = frozenset({"hidden_pass", "strong_pass", "visible_pass"})
+_HOLD_KEY = re.compile(r"^[A-Za-z_][A-Za-z0-9_]{0,63}$")
+_MAX_HOLDS = 8
+_MAX_HOLD_VALUE = 200
+_MAX_LEVELS = 24  # does not drop task_id; the fit menu is only _FIT_MENU
+
+# Benchmarks this lab does not turn into a grid. Named so a catalog cannot imply they are loaded.
+NOT_LOADED = (
+    {"id": "swebench_verified", "note": "SWE-bench Verified is not loaded. There is no grid for it."},
+    {"id": "terminal_bench", "note": "Terminal-Bench is not loaded. There is no grid for it."},
+)
+
+
+def _cell(value) -> str:
+    if isinstance(value, bool):
+        return "true" if value else "false"
+    return str(value)
+
+
+def parse_hold(spec: str) -> tuple[str, str]:
+    """One `column=value` hold. The value is data, never a path."""
+    if not isinstance(spec, str) or "=" not in spec:
+        raise ValueError("A hold is column=value.")
+    key, value = spec.split("=", 1)
+    key = key.strip()
+    if not _HOLD_KEY.match(key):
+        raise ValueError("A hold column must be a results-column name.")
+    if len(value) > _MAX_HOLD_VALUE or any(ord(c) < 32 for c in value):
+        raise ValueError("A hold value is not a column value.")
+    return key, value
+
+
+def column_levels(rows: list[dict]) -> list[dict]:
+    """The fit menu: model, harness_id, and task_id.
+
+    Nothing else is offered. A verdict is not a factor. task_id is included however many
+    tasks the grid has; the 24-level cap does not drop it."""
+    counts: dict[str, Counter] = {key: Counter() for key in _FIT_MENU}
+    seen: set[str] = set()
+    for row in rows:
+        for key in _FIT_MENU:
+            if key not in row or row[key] is None or isinstance(row[key], (dict, list)):
+                continue
+            seen.add(key)
+            counts[key][_cell(row[key])] += 1
+    out = []
+    for key in _FIT_MENU:
+        if key not in seen or not counts[key]:
+            continue
+        levels = counts[key]
+        out.append({
+            "key": key,
+            "n_levels": len(levels),
+            "levels": [{"value": val, "n": n} for val, n in sorted(levels.items())],
+        })
+    return out
+
+
+def validate_holds(rows: list[dict], holds: list[tuple[str, str]], a_key: str, b_key: str, outcome: str) -> None:
+    """A hold pins a column to one observed value before the same decomposition.
+
+    model and harness_id may be pinned even when one of them is the column being compared:
+    the inspected column is then the other axis, and a single remaining level is
+    fewer_than_2_balanced_levels_*, not a bad hold. A verdict cannot be held.
+    `a_key` and `b_key` stay in the signature so the route and the CLI call this the same way.
+    Pinning either of them is allowed: one remaining level is fewer_than_2_balanced_levels_*,
+    not a bad hold. `outcome` is refused when it is a verdict column."""
+    if len(holds) > _MAX_HOLDS:
+        raise ValueError("at most 8 holds")
+    known = {k for row in rows for k, v in row.items() if not isinstance(v, (dict, list))}
+    seen = set()
+    for key, value in holds:
+        if not _HOLD_KEY.match(key):
+            raise ValueError("A hold column must be a results-column name.")
+        if key in _VERDICTS or (key == outcome and outcome in _VERDICTS):
+            raise ValueError(f"cannot hold {key}: that column is a verdict")
+        if key not in known:
+            raise ValueError(f"unknown column {key}")
+        if key in seen:
+            raise ValueError(f"column {key} is held twice")
+        if len(value) > _MAX_HOLD_VALUE or any(ord(c) < 32 for c in value):
+            raise ValueError("A hold value is not a column value.")
+        seen.add(key)
+
+
+def _matches_hold(cell, value: str) -> bool:
+    """A bool cell accepts true/false in either case. Every other cell is an exact string.
+    The value is never opened as a path."""
+    if isinstance(cell, bool):
+        token = value.strip().lower()
+        return token in ("true", "false") and _cell(cell) == token
+    return _cell(cell) == value
+
+
+def apply_holds(rows: list[dict], holds: list[tuple[str, str]]) -> list[dict]:
+    kept = rows
+    for key, value in holds:
+        kept = [row for row in kept if key in row and row[key] is not None and _matches_hold(row[key], value)]
+    return kept
+
+
+def source_catalog(runs_root: str | None = None) -> dict:
+    """Included result dirs, import adapters, and the benchmarks this lab does not load.
+
+    `captured` stays out: list_results_dirs excludes it, and this catalog does not read it.
+    """
+    root = runs_root or RUNS_ROOT
+    included = [{"name": name, "runs": count_runs(root, name), "kind": "included"}
+                for name in list_results_dirs(root)]
+    from .importers import list_sources
+    adapters = [{"name": s["name"], "description": s["description"]} for s in list_sources()]
+    return {
+        "included": included,
+        "import_adapters": adapters,
+        "not_loaded": [dict(item) for item in NOT_LOADED],
+        "capture": {
+            "directory": "captured",
+            "listed_by_default": False,
+            "starts_from_the_website": False,
+            "command": "python -m harnesslab.capture --watch",
+        },
+    }
+
 
 def experiment(rows: list[dict], a_key: str = "model", b_key: str = "harness_id",
-               outcome: str = "hidden_pass", a_cell: str | None = None, b_cell: str | None = None) -> dict:
+               outcome: str = "hidden_pass", a_cell: str | None = None, b_cell: str | None = None,
+               holds: list[tuple[str, str]] | None = None) -> dict:
     """The exercise-8 factorial for whatever is in the filter, plus the two things a leaderboard hides:
-    how many runs it would take to see the difference, and how often the ranking inverts at this n."""
+    how many runs it would take to see the difference, and how often the ranking inverts at this n.
+
+    `holds` keeps named columns at one value before that same decomposition. It does not add a test.
+    """
+    holds = list(holds or [])
+    columns = column_levels(rows)
+    n_before = len(rows)
+    base = {
+        "factors": FACTORS, "a_key": a_key, "b_key": b_key, "outcome": outcome,
+        "columns": columns, "held": [{"key": k, "value": v} for k, v in holds],
+        "n_before": n_before, "n_after": n_before,
+    }
+    try:
+        validate_holds(rows, holds, a_key, b_key, outcome)
+        rows = apply_holds(rows, holds)
+    except ValueError as exc:
+        return _clean({**base, "n_after": 0, "error": str(exc),
+                       "fit": {"status": "insufficient_data", "reason": "bad_hold"},
+                       "a_levels": [], "b_levels": [], "cells": [], "anova": None, "contrasts": []})
+    base["n_after"] = len(rows)
     R = [r for r in rows if r.get(outcome) is not None]
     if not R:
-        return {"error": "no graded runs under this oracle"}
+        reason = "hold_excluded_every_row" if holds and not rows else "no_graded_runs"
+        message = "no rows match the hold" if reason == "hold_excluded_every_row" else "no graded runs under this oracle"
+        return _clean({**base, "error": message,
+                       "fit": {"status": "insufficient_data", "reason": reason},
+                       "a_levels": [], "b_levels": [], "cells": [], "anova": None, "contrasts": []})
     A = sorted({r[a_key] for r in R})
     B = sorted({r[b_key] for r in R})
 
@@ -317,11 +467,14 @@ def experiment(rows: list[dict], a_key: str = "model", b_key: str = "harness_id"
     cells_out = [{"a": a, "b": b, "key": f"{a}|{b}", **cell_stat(groups[(a, b)])}
                  for a in A for b in B if groups.get((a, b))]
 
-    # the decomposition needs a balanced subset; say so rather than silently dropping cells
+    # the decomposition needs a balanced subset; say so rather than silently dropping cells.
+    # task_id is the block. Fitting it as A or B makes cell × task absorb the factor and the
+    # share can go negative, so that request gets no table.
     bal_B = [b for b in B if all(groups.get((a, b)) for a in A)]
     bal_A = [a for a in A if all(groups.get((a, b)) for b in bal_B)]
+    blocked = a_key == "task_id" or b_key == "task_id"
     table = None
-    if len(bal_A) >= 2 and len(bal_B) >= 2 and a_key != b_key:
+    if not blocked and len(bal_A) >= 2 and len(bal_B) >= 2 and a_key != b_key:
         sub = [r for r in R if r[a_key] in bal_A and r[b_key] in bal_B]
         table = factorial(sub, a_key, b_key, "task_id", outcome)
         table["balanced_a"], table["balanced_b"] = bal_A, bal_B
@@ -332,7 +485,9 @@ def experiment(rows: list[dict], a_key: str = "model", b_key: str = "harness_id"
     # once `factor_summary` became the one canonical implementation (docs/superpowers/specs/
     # 2026-09-21-study-aggregates-design.md). No anova table means no fit: explicit insufficient_data
     # with WHY, never an invented zero effect, same discipline as `comparisons_for` above.
-    if table is not None:
+    if blocked:
+        fit = {"status": "insufficient_data", "reason": "task_id_is_the_block"}
+    elif table is not None:
         fit = factor_summary(table)
     elif a_key == b_key:
         fit = {"status": "insufficient_data", "reason": "same_factor"}
@@ -341,7 +496,9 @@ def experiment(rows: list[dict], a_key: str = "model", b_key: str = "harness_id"
     else:
         fit = {"status": "insufficient_data", "reason": "fewer_than_2_balanced_levels_b"}
 
-    # every pairwise contrast of B, paired over tasks, inside each level of A
+    # every pairwise contrast of B, paired over tasks, inside each level of A.
+    # One shared task makes the interval collapse onto the point, so covers_zero would be true
+    # only when the point is zero. Skip those; do not report a separation from a single task.
     contrasts = []
     for a in A:
         for i in range(len(B)):
@@ -350,15 +507,14 @@ def experiment(rows: list[dict], a_key: str = "model", b_key: str = "harness_id"
                 if not ra or not rb:
                     continue
                 pb_ = paired_bootstrap(ra, rb, outcome)
-                if not pb_.get("n_tasks"):
+                if (pb_.get("n_tasks") or 0) < 2:
                     continue
                 lo, hi = pb_["ci95"]
                 contrasts.append({"a": a, "from": B[i], "to": B[j], "delta": pb_["mean_diff"],
                                   "ci95": [lo, hi], "tasks": pb_["n_tasks"],
                                   "covers_zero": lo <= 0 <= hi})
     n_c = len(contrasts)
-    out = {"factors": FACTORS, "a_key": a_key, "b_key": b_key, "outcome": outcome,
-           "a_levels": A, "b_levels": B, "cells": cells_out, "anova": table, "fit": fit,
+    out = {**base, "a_levels": A, "b_levels": B, "cells": cells_out, "anova": table, "fit": fit,
            "contrasts": contrasts,
            "multiplicity": {"n": n_c, "expected_false": n_c * 0.05,
                             "bonferroni_pct": (100 - 5 / n_c) if n_c else 95.0}}

@@ -336,13 +336,37 @@ def ochiai_attribution(feature_rows: list[dict], outcome_key: str = "resolved") 
 
 
 # ---------------------------------------------------------------- factorial designs
+def _factor_label(key: str) -> str:
+    """Short name for a results column. `harness_id` is the harness factor; every other column keeps its name."""
+    if key == "harness_id":
+        return "harness"
+    return key
+
+
+def _anova_terms(a_key: str, b_key: str) -> tuple[str, str, str, str, str]:
+    """Term strings and summary keys for the columns that were actually passed.
+
+    The default model × harness_id fit keeps the historical strings `model (A)`, `harness (B)`,
+    and `model x harness (AB)`, and the summary keys `model` and `harness`. Any other pair is
+    named from those columns, so a swapped call cannot store the harness sum of squares under `model`.
+    """
+    if a_key == "model" and b_key == "harness_id":
+        return ("model (A)", "harness (B)", "model x harness (AB)", "model", "harness")
+    a_name, b_name = _factor_label(a_key), _factor_label(b_key)
+    return (f"{a_name} (A)", f"{b_name} (B)", f"{a_name} x {b_name} (AB)", a_name, b_name)
+
+
 def factorial(rows: list[dict], a_key: str = "model", b_key: str = "harness_id", block_key: str = "task_id",
               outcome: str = "hidden_pass") -> dict:
     """Two-factor (A x B) design with tasks as blocks, balanced, sums-of-squares decomposition.
 
     Y_ijk = mu + alpha_i + beta_j + (alpha beta)_ij + u_k + eps_ijk  (fixed A, B; task as a block)
     Returns the ANOVA-style table (SS, df, MS, F) and the share of total variance each term explains.
-    This is the textbook decomposition, not REML; it is meant to make the components visible."""
+    This is the textbook decomposition, not REML; it is meant to make the components visible.
+    `task_id` is the block. Passing it as A or B raises; the caller reports insufficient_data
+    instead of a table whose cell × task share can go negative."""
+    if a_key == block_key or b_key == block_key:
+        raise ValueError("task is the block, so it is not a factor")
     from collections import defaultdict
     ys = [1.0 if r.get(outcome) else 0.0 for r in rows]
     A = [r[a_key] for r in rows]; B = [r[b_key] for r in rows]; K = [r[block_key] for r in rows]
@@ -368,25 +392,32 @@ def factorial(rows: list[dict], a_key: str = "model", b_key: str = "harness_id",
     df_within = n - len(mabk)
     df_cxt = (len(mabk) - 1) - df_a - df_b - df_ab - df_k
     ms_within = ss_within / df_within if df_within else float("nan")
+    a_term, b_term, ab_term, _, _ = _anova_terms(a_key, b_key)
     table = []
-    for name, ss, df in [("model (A)", ss_a, df_a), ("harness (B)", ss_b, df_b), ("model x harness (AB)", ss_ab, df_ab),
+    for name, ss, df in [(a_term, ss_a, df_a), (b_term, ss_b, df_b), (ab_term, ss_ab, df_ab),
                          ("task (block)", ss_k, df_k), ("cell x task", ss_cells_x_task, max(df_cxt, 1)), ("residual (repeats)", ss_within, df_within)]:
         ms = ss / df if df else float("nan")
         table.append({"term": name, "SS": ss, "df": df, "MS": ms, "F": (ms / ms_within if name != "residual (repeats)" and ms_within else float("nan")),
                       "share": ss / ss_total if ss_total else float("nan")})
     return {"n": n, "grand_mean": mu, "cell_means": {f"{a} | {b}": v for (a, b), v in mab.items()},
-            "a_means": ma, "b_means": mb, "table": table, "ss_total": ss_total}
+            "a_means": ma, "b_means": mb, "table": table, "ss_total": ss_total,
+            "a_key": a_key, "b_key": b_key}
 
 
 def factor_summary(anova: dict) -> dict:
     """Pure summary of an existing `factorial()` result for the Experiment view: which named
-    factor (model or harness) leads by sum of squares, each one's SS share and level RANGE (its
-    highest level mean minus its lowest), and the interaction's share. Reads `anova["table"]`
-    and `anova["a_means"]`/`anova["b_means"]` only -- it does NOT refit anything and adds NO
-    significance test; whatever F-ratios `factorial()` already computed remain the only
-    inferential numbers in play."""
+    factor leads by sum of squares, each one's SS share and level RANGE (its highest level mean
+    minus its lowest), and the interaction's share. Reads `anova["table"]` and the level means
+    only -- it does NOT refit anything and adds NO significance test; whatever F-ratios
+    `factorial()` already computed remain the only inferential numbers in play.
+
+    A table with no `a_key`/`b_key` is the historical model × harness fit (the hand-built
+    fixture and every default `factorial()` call). The summary keys are the columns that were
+    fitted, never the position: factor A's sum of squares is stored under A's name."""
+    a_key = anova.get("a_key", "model")
+    b_key = anova.get("b_key", "harness_id")
+    a_term, b_term, ab_term, a_name, b_name = _anova_terms(a_key, b_key)
     by_term = {t["term"]: t for t in anova["table"]}
-    a_term, b_term, ab_term = "model (A)", "harness (B)", "model x harness (AB)"
     missing = [t for t in (a_term, b_term, ab_term) if t not in by_term]
     if missing:
         raise KeyError(f"factor_summary expects factorial()'s standard table terms; missing {missing}")
@@ -394,11 +425,11 @@ def factor_summary(anova: dict) -> dict:
     def level_range(means: dict) -> float:
         return (max(means.values()) - min(means.values())) if means else float("nan")
 
-    leading = "model" if by_term[a_term]["SS"] >= by_term[b_term]["SS"] else "harness"
+    leading = a_name if by_term[a_term]["SS"] >= by_term[b_term]["SS"] else b_name
     return {
         "leading_factor": leading,
-        "model": {"share": by_term[a_term]["share"], "range": level_range(anova.get("a_means", {}))},
-        "harness": {"share": by_term[b_term]["share"], "range": level_range(anova.get("b_means", {}))},
+        a_name: {"share": by_term[a_term]["share"], "range": level_range(anova.get("a_means", {}))},
+        b_name: {"share": by_term[b_term]["share"], "range": level_range(anova.get("b_means", {}))},
         "interaction_share": by_term[ab_term]["share"],
     }
 

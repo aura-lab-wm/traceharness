@@ -22,9 +22,11 @@ def build_parser() -> argparse.ArgumentParser:
                "`harnesslab watch [<dir>[/<run_id>]]` follows a run's ledger in the terminal as it "
                "is written; `harnesslab import <path>` reads another harness's trace into the "
                "ledger (`--detect` first, to see what it is); `harnesslab oracle <dir>`, `harnesslab patterns <dir> [--query REGEX]`, "
-               "`harnesslab comparisons <dir> [--baseline B]` and `harnesslab fit <dir>` print the "
+               "`harnesslab comparisons <dir> [--baseline B]` and `harnesslab fit <dir> [--hold COLUMN=VALUE]` print the "
                "same canonical study-aggregate statistics as GET /api/results/<dir>/{oracle,"
-               "comparisons,experiment} as JSON; `harnesslab serve` is this, the default.",
+               "comparisons,experiment} as JSON; `harnesslab sources` lists the grids on disk, the import "
+               "adapters, and the benchmarks that are not loaded; `harnesslab serve` is this, the default. "
+               "`harnesslab link --url wss://...` dials out to a signed-in console; it does not open a port.",
     )
     p.add_argument("--host", default=os.environ.get("HARNESSLAB_HOST", "127.0.0.1"),
                    help="interface to bind (default 127.0.0.1; use 0.0.0.0 in a container)")
@@ -479,13 +481,34 @@ def build_fit_parser() -> argparse.ArgumentParser:
     p.add_argument("--a", dest="a_key", default="model", metavar="KEY", help="factor A column (default: model)")
     p.add_argument("--b", dest="b_key", default="harness_id", metavar="KEY", help="factor B column (default: harness_id)")
     p.add_argument("--outcome", default="hidden_pass", metavar="KEY", help="outcome column (default: hidden_pass)")
+    p.add_argument("--hold", action="append", default=[], metavar="COLUMN=VALUE",
+                   help="keep rows where COLUMN equals VALUE, then refit. Repeat to hold more than one column")
     return p
 
 
+def _fit_inspection(result: dict) -> dict:
+    """Cells and the fit, for a hold or for a grid whose two-factor table cannot be built."""
+    return {
+        "cells": result.get("cells") or [],
+        "contrasts": result.get("contrasts") or [],
+        "a_key": result.get("a_key"),
+        "b_key": result.get("b_key"),
+        "outcome": result.get("outcome"),
+        "held": result.get("held"),
+        "n_before": result.get("n_before"),
+        "n_after": result.get("n_after"),
+        "fit": result.get("fit"),
+    }
+
+
 def fit_cli(argv: list[str]) -> int:
-    """`harnesslab fit <dir>` -- see build_fit_parser. Exit 1 when there is no fit (no graded runs,
-    or fewer than 2 balanced levels of either factor) -- the same insufficient_data the HTTP route's
-    `fit` key carries goes to stderr instead of stdout, rather than printed as if it were a result."""
+    """`harnesslab fit <dir>` -- see build_fit_parser.
+
+    A finished model × harness fit with no --hold prints only the `fit` object and exits 0.
+    `--hold`, or an insufficient fit that still has cells, prints cells, contrasts, the factor
+    names, the hold, and the fit, and exits 0. Exit 1 when no graded row remains or the hold
+    matches nothing (stderr). Exit 2 when the hold itself is malformed or names a verdict.
+    """
     args = _add_dir_and_lab_args(build_fit_parser()).parse_args(argv)
     if args.lab:
         os.environ["HARNESSLAB_LAB"] = os.path.abspath(os.path.expanduser(args.lab))
@@ -496,14 +519,46 @@ def fit_cli(argv: list[str]) -> int:
     if rows is None:
         print(err, file=sys.stderr)
         return 1
-    result = M.experiment(rows, args.a_key, args.b_key, args.outcome)
-    fit = result.get("fit")
-    if fit is None:
-        # no `fit` key at all means experiment() found nothing to summarize in the first place
-        # (e.g. no graded runs under this outcome) -- not a result, so it goes to stderr, not stdout.
+    try:
+        holds = [M.parse_hold(spec) for spec in (args.hold or [])]
+        M.validate_holds(rows, holds, args.a_key, args.b_key, args.outcome)
+    except ValueError as exc:
+        print(str(exc), file=sys.stderr)
+        return 2
+    result = M.experiment(rows, args.a_key, args.b_key, args.outcome, holds=holds)
+    fit = result.get("fit") if isinstance(result.get("fit"), dict) else {}
+    cells = result.get("cells") or []
+    reason = fit.get("reason")
+    # No graded rows, a hold that matched nothing, or a bad hold that reached the fitter.
+    if reason in ("hold_excluded_every_row", "no_graded_runs", "bad_hold") or (
+            not cells and "leading_factor" not in fit):
         print(json.dumps(result, indent=2), file=sys.stderr)
         return 1
-    print(json.dumps(fit, indent=2))
+    # A successful no-hold fit keeps the previous stdout: the fit object alone.
+    if not args.hold and "leading_factor" in fit:
+        print(json.dumps(fit, indent=2))
+        return 0
+    print(json.dumps(_fit_inspection(result), indent=2))
+    return 0
+
+
+def sources_cli(argv: list[str]) -> int:
+    """`harnesslab sources` -- included grids, import adapters, and benchmarks that are not loaded.
+
+    Read-only. Does not read data/runs/captured and does not start a server."""
+    p = argparse.ArgumentParser(
+        prog="harnesslab sources",
+        description="List the result grids on disk, the import adapters, and the benchmarks this "
+                    "lab does not load. captured is not listed and is not read.",
+    )
+    p.add_argument("--lab", default=None, metavar="DIR", help="lab root (default: the one `harnesslab serve` uses)")
+    args = p.parse_args(argv)
+    if args.lab:
+        os.environ["HARNESSLAB_LAB"] = os.path.abspath(os.path.expanduser(args.lab))
+    from harnesslab.backend import paths                      # noqa: E402  (after HARNESSLAB_LAB)
+    from harnesslab.backend import metrics as M                # noqa: E402
+    import json                                                # noqa: E402
+    print(json.dumps(M.source_catalog(paths.RUNS_ROOT), indent=2))
     return 0
 
 
@@ -580,6 +635,11 @@ def main(argv: list[str] | None = None) -> int:
         return integrity_cli(argv[1:])
     if argv and argv[0] == "patterns":
         return patterns_cli(argv[1:])
+    if argv and argv[0] == "sources":
+        return sources_cli(argv[1:])
+    if argv and argv[0] == "link":
+        from harnesslab.backend.remote_link import link_main  # noqa: E402
+        return link_main(argv[1:])
     if argv and argv[0] == "serve":
         argv = argv[1:]
 
