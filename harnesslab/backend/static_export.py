@@ -73,7 +73,10 @@ _GLOBAL_URLS = ["/api/overview", "/api/tasks", "/api/harnesses", "/api/models",
                 "/api/sentinel", "/api/sentinel/plugins", "/api/judge",
                 "/api/harness/list", "/api/harness/knobs",
                 "/api/import/sources", "/api/import/status", "/api/real/status",
-                "/api/export/formats", "/api/settings"]
+                "/api/export/formats", "/api/settings",
+                # The block builder fetches these with no static-export guard, so a
+                # frozen page still needs the preset catalog and the blank palette.
+                "/api/blocks/catalog", "/api/blocks/palette"]
 
 
 def _dir_urls(client, d: str, n_runs: int) -> list[str]:

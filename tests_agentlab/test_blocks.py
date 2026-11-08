@@ -59,6 +59,16 @@ class TestCompile(unittest.TestCase):
         self.assertFalse(compiled["ok"])
         self.assertTrue(any("key" in e for e in compiled["errors"]))
 
+    def test_catalog_and_palette_are_public_reads_the_export_bakes(self):
+        from harnesslab.backend import static_export as SE
+
+        client = TestClient(app)
+        for path in ("/api/blocks/catalog", "/api/blocks/palette"):
+            response = client.get(path)
+            self.assertEqual(response.status_code, 200, response.text[:240])
+            self.assertNotIn("api_key", response.text)
+            self.assertIn(path, SE._GLOBAL_URLS)
+
 
 class TestRun(unittest.TestCase):
     def setUp(self):
