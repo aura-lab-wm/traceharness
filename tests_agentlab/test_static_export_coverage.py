@@ -91,6 +91,10 @@ EXCLUDED_FROM_EXPORT = {
     "/api/runs/{dir}/{run_id}/stream":
         "a Server-Sent-Events tail of a ledger being written; nothing to bake -- the run page "
         "falls back to the per-run detail route, which _urls() already snapshots",
+    "/api/sources":
+        "the CLI prints source_catalog() itself; the Sources screen reads "
+        "/api/import/sources (already in _GLOBAL_URLS) and hides that screen when the "
+        "export is static. No exported page fetches this route",
 }
 
 
