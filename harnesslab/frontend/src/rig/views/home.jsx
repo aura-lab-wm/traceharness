@@ -29,7 +29,7 @@ function Home({ spec }) {
     return (
       <div className="rg-dpad">
         <div className="rg-dh"><div className="t"><div className="rg-eyebrow">Library · data/runs</div><h1>Datasets</h1></div></div>
-        <Empty title="No datasets yet." actions={[{ label: 'Load trajectories', spec: 'sources', primary: true }, { label: 'Capture sessions on this machine', spec: 'capture' }]}>
+        <Empty title="No datasets yet." actions={[{ label: 'Load trajectories', spec: 'sources', primary: true }, { label: 'Capture sessions on this machine', spec: 'capture' }, { label: 'Fixed harnesses', spec: 'shallowCards' }, { label: 'Minimal harness', spec: 'shallowWizard' }]}>
           data/runs on this machine holds no trajectory sets. Import another harness's traces, or capture the coding-agent sessions already on this machine.
         </Empty>
       </div>
@@ -42,6 +42,8 @@ function Home({ spec }) {
           <p>{fmt.plural(all.length, 'trajectory set')}. Open one to see its questions already answered, then follow any number down to the recorded action behind it.</p></div>
         <Go spec="sources" className="rg-btn pri lg" el="load-trajectories-cta">Load trajectories</Go>
         <Go spec="blocks" className="rg-btn lg" el="build-harness-cta">Build a harness</Go>
+        <Go spec="shallowCards" className="rg-btn lg" el="fixed-harnesses-cta">Fixed harnesses</Go>
+        <Go spec="shallowWizard" className="rg-btn lg" el="minimal-harness-cta">Minimal harness</Go>
       </div>
       <div className="rg-row rg-wrap rg-home-bar">
         <SearchBox value={q} onChange={setQ} placeholder="Find a dataset, model or harness" el="dataset-search" />
