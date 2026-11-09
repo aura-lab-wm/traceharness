@@ -128,6 +128,12 @@ def blocks_from_answers(answers: dict) -> list[dict]:
     ]
 
 
+_READ_ONLY_VERIFY = (
+    "This prompt asks to edit files and run tests, and neither edit_file nor run_tests is mounted."
+)
+_READ_ONLY_PERMISSIVE = "Read only is paired with a permissive policy."
+
+
 def compile_minimal(answers: dict | None = None) -> dict:
     chosen = recommended_answers() if answers is None else dict(answers)
     if chosen.get("mcp") != "none":
@@ -144,10 +150,15 @@ def compile_minimal(answers: dict | None = None) -> dict:
     harness["mcp"] = "none"
     harness["lane"] = "minimal"
     harness["cap_bytes"] = 20_000
+    warnings = list(compiled["warnings"])
+    if chosen.get("touch") == "read_only" and chosen.get("verify") == "yes":
+        warnings.append(_READ_ONLY_VERIFY)
+    if chosen.get("touch") == "read_only" and chosen.get("dangerous") == "permissive":
+        warnings.append(_READ_ONLY_PERMISSIVE)
     return {
         "ok": True,
         "errors": [],
-        "warnings": compiled["warnings"],
+        "warnings": warnings,
         "harness": harness,
         "hash": digest,
         "mcp": "none",

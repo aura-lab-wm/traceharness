@@ -113,14 +113,14 @@ export function rigFixture() {
 }
 
 /** Render the Rig at `hash` with primed data. Unprimed GETs 404 and are recorded. */
-export function renderRig(hash = '#/rig/', { data = rigFixture(), storage, Root = RigApp } = {}) {
+export function renderRig(hash = '#/rig/', { data = rigFixture(), storage, Root = RigApp, fetchImpl } = {}) {
   resetCache(); resetTabState()
   if (storage) for (const [k, v] of Object.entries(storage)) localStorage.setItem(k, v)
   reloadCase()
   prime(data)
   const requests = []
   vi.stubGlobal('EventSource', vi.fn(function () { this.close = vi.fn() }))
-  vi.stubGlobal('fetch', vi.fn(async (url, opts) => {
+  vi.stubGlobal('fetch', fetchImpl || vi.fn(async (url, opts) => {
     requests.push({ url: String(url), method: (opts && opts.method) || 'GET' })
     return { ok: false, status: 404, statusText: 'Not Found', headers: { get: () => 'application/json' }, json: async () => ({ detail: `not primed in the test: ${url}` }) }
   }))
@@ -131,6 +131,7 @@ export function renderRig(hash = '#/rig/', { data = rigFixture(), storage, Root 
 export function resetRig() {
   cleanup(); resetCache(); resetTabState()
   try { localStorage.clear() } catch { /* ignore */ }
+  try { sessionStorage.clear() } catch { /* ignore */ }
   reloadCase()
   vi.unstubAllGlobals()
 }

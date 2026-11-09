@@ -3,7 +3,7 @@
    state and is sent only on Run. It is not written into the tab store. */
 import { useEffect, useState } from 'react'
 import { api } from '../../api'
-import { Btn, Empty, ErrorState, Loading, Note, Tag } from '../ui'
+import { Btn, Empty, ErrorState, Go, Loading, Note, Tag } from '../ui'
 
 const TYPE_LABEL = {
   prompt: 'Prompt',
@@ -15,6 +15,9 @@ const TYPE_LABEL = {
   listing: 'File list',
 }
 
+const CUSTOMIZE_KEY = 'traceharness.shallow.customize'
+const CUSTOMIZE_TYPES = ['prompt', 'tools', 'policy', 'context', 'stop', 'sampling', 'listing']
+
 function fresh(type, tools) {
   if (type === 'prompt') return { type, text: 'You are an autonomous software engineer. Inspect, edit, verify, then call submit.' }
   if (type === 'tools') return { type, names: ['list_files', 'read_file', 'edit_file', 'run_tests', 'submit'] }
@@ -23,6 +26,24 @@ function fresh(type, tools) {
   if (type === 'stop') return { type, max_steps: 12, max_total_tokens: 400000 }
   if (type === 'sampling') return { type, temperature: 0, max_tokens_per_call: 2048 }
   return { type, include: true, _tools: tools }
+}
+
+function readCustomizeBlocks(tools) {
+  let stored = null
+  try {
+    const raw = sessionStorage.getItem(CUSTOMIZE_KEY)
+    stored = raw ? JSON.parse(raw) : null
+  } catch {
+    stored = null
+  }
+  const usable = Array.isArray(stored) && stored.length > 0 && stored.every((block) => (
+    block && typeof block === 'object' && !Array.isArray(block) && typeof block.type === 'string'
+  ))
+  if (!usable) return CUSTOMIZE_TYPES.map((type) => fresh(type, tools))
+  return stored.map((block) => ({
+    ...block,
+    names: Array.isArray(block.names) ? block.names.filter((name) => typeof name === 'string') : block.names,
+  }))
 }
 
 function BlockCard({ block, index, count, tools, onChange, onMove, onRemove }) {
@@ -137,13 +158,7 @@ function Blocks({ args } = {}) {
         setBlocks(pal.blank)
         return
       }
-      let stored = null
-      try {
-        const raw = sessionStorage.getItem('traceharness.shallow.customize')
-        stored = raw ? JSON.parse(raw) : null
-      } catch { stored = null }
-      if (Array.isArray(stored) && stored.length) setBlocks(stored)
-      else setBlocks(['prompt', 'tools', 'policy', 'context', 'stop', 'sampling', 'listing'].map((type) => fresh(type, pal.tools)))
+      setBlocks(readCustomizeBlocks(pal.tools))
     }).catch((e) => { if (live) setLoadError(e) })
     return () => { live = false }
   }, [customize])
@@ -173,6 +188,13 @@ function Blocks({ args } = {}) {
       return next
     })
   }
+  function resetToWizard() {
+    setBlocks(readCustomizeBlocks(tools))
+    setPreset('')
+    setJob(null)
+    setError('')
+  }
+
   function onRemove(index) {
     setBlocks((cur) => cur.filter((_, i) => i !== index))
     setPreset('')
@@ -224,6 +246,12 @@ function Blocks({ args } = {}) {
           <div className="rg-eyebrow">Runner · blocks</div>
           <h1>Build a harness</h1>
           <p>Start from a common harness, or stack the blocks yourself. This lab runs the stack. A live model uses a key you paste here. The key is not saved.</p>
+          {customize && (
+            <div className="rg-row rg-wrap" data-el="minimal-customize-nav">
+              <Go spec="shallowWizard" className="rg-btn" el="back-to-wizard">Back to Minimal Wizard</Go>
+              <button type="button" className="rg-btn" data-el="reset-wizard-answers" onClick={resetToWizard}>Reset to Wizard Answers</button>
+            </div>
+          )}
         </div>
       </div>
       {!customize && <div className="rg-row rg-wrap" data-el="harness-catalog">
