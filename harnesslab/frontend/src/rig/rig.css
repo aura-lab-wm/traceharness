@@ -911,6 +911,10 @@ body.rg-resizing{cursor:col-resize;user-select:none}
 .rg-tbtn.on{border-color:var(--rig-line2)}
 .rg-seg{border-radius:8px}
 .rg-inp,.rg-selc{border-radius:8px}
+/* Form text must not inherit the small uppercase field-label typography. */
+.rig input.rg-inp,.rig textarea.rg-inp,.rig select.rg-selc{font-family:var(--rig-sans);font-size:14px;font-weight:400;letter-spacing:normal;text-transform:none}
+.rig textarea.rg-inp{line-height:1.5}
+@media (max-width:760px){.rig input.rg-inp,.rig textarea.rg-inp,.rig select.rg-selc{font-size:16px}}
 .rg-cmd{border-radius:8px}
 .rg-cmd .rg-cmd-ph{font-family:var(--rig-sans)}
 .rg-sw .rg-sw-tr{border-radius:9px}
@@ -952,3 +956,8 @@ body.rg-resizing{cursor:col-resize;user-select:none}
   .rg-tbtn.ico{width:34px;min-width:34px;height:34px;border-color:var(--rig-line2);color:var(--rig-dim);border-radius:8px}
   .rg-tbtn.ico:hover{color:var(--rig-text);border-color:var(--rig-line3);background:none}
 }
+
+/* Keep named radio-group legends full width without the browser fieldset inset. */
+.rig fieldset.rg-pnl{min-inline-size:0;padding:0}
+.rig fieldset.rg-pnl>legend.rg-pnl-h{float:left;width:100%;box-sizing:border-box}
+.rig fieldset.rg-pnl>legend.rg-pnl-h+*{clear:both}

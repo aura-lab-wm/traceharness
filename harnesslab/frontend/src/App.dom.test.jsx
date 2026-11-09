@@ -33,6 +33,9 @@ describe('legacyToRig', () => {
     ['#/fork/mini/r1', '#/rig/fork:r1'],
     ['#/load', '#/rig/sources'],
     ['#/start', '#/rig/guide'],
+    ['#fixed', '#/rig/shallowCards'],
+    ['#minimal', '#/rig/shallowWizard'],
+    ['#customize', '#/rig/blocks:customize'],
     ['#/sources', '#/rig/sources'],
     ['#/capture', '#/rig/capture'],
     ['#/sentinel', '#/rig/sentinel'],
@@ -62,6 +65,18 @@ describe('App', () => {
     const { container } = renderRig('#/s/mini/judge', { Root: App })
     expect(location.hash).toBe('#/rig/an:mini:judge')
     expect(container.querySelector('.rg-doc').dataset.spec).toBe('an:mini:judge')
+  })
+
+  it('an existing member bookmark opens its harness editor', () => {
+    const { container } = renderRig('#fixed', { Root: App })
+    expect(location.hash).toBe('#/rig/shallowCards')
+    expect(container.querySelector('[data-el="shallow-cards"]')).toBeTruthy()
+    act(() => {
+      history.replaceState(null, '', '#minimal')
+      window.dispatchEvent(new HashChangeEvent('hashchange'))
+    })
+    expect(location.hash).toBe('#/rig/shallowWizard')
+    expect(container.querySelector('[data-el="shallow-wizard"]')).toBeTruthy()
   })
 
   it('a legacy link followed while the Rig is open is rewritten and opened', () => {

@@ -47,6 +47,9 @@ export function legacyToRig(hash) {
     case 'fork': return c ? rig(makeSpec('fork', c)) : rig('home')
     case 'load': return rig('sources')
     case 'start': return rig('guide')
+    case 'fixed': return rig('shallowCards')
+    case 'minimal': return rig('shallowWizard')
+    case 'customize': return rig(makeSpec('blocks', 'customize'))
     case 'canvas': case 'sentinel': case 'sources': case 'capture': case 'settings': case 'package':
       return rig(a)
     default: return rig('home')

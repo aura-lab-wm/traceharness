@@ -12,17 +12,21 @@
    Data: useRuns (index joined with /api/outcomes), useRunDetail (summary, spans, patch,
    messages, issue), useFindRun (id or 6-hex suffix). Failure findings are DERIVED from the
    ledger spans (finish_reasons, usage, the harness's max_tokens_per_call in the invoke_agent
-   start span) — nothing is hard-coded per run. Notes share the classic app's browser-local
-   review key (workspaceFacts.reviewKey) and Export review keeps its Markdown format, with the
+   start span) — nothing is hard-coded per run. Local notes share the classic app's browser-local
+   review key; hosted notes isolate that key per member and Export review keeps its Markdown format, with the
    failure mode added.
    ==================================================================================== */
 import { Fragment, useEffect, useMemo, useRef, useState } from 'react'
 import { makeSpec } from '../route'
+import { withEvidenceOrigin } from '../shallowEvidence'
 import { useDataset, useOverview, useRuns, useOutcomes, useRunDetail, useFindRun, short, sfx, verdict, tally, tokStats, fmt, resolveCondition, paths } from '../data'
 import { useRig, useTabState } from '../context'
 import { Panel, Loading, ErrorState, Empty, NextSteps, Btn, About, FailureChip, PinButton, AskingSentence, Verdict, VerdictText, OutcomeBar, Tag, Note, Seg, SearchBox, Switch, Go, Icon, Kbd, MOD, failureModeOf, FailureSummary } from '../ui'
 import { downloadText, useCaseFile } from '../caseFile'
 import { reviewKey, reviewReport } from '../../workspace/workspaceFacts'
+import { memberStorageKey } from '../memberStorage'
+import { RecordingProvenance } from '../RecordingProvenance'
+import { isSweRun, suiteLabel, tokenCoverage } from '../provenance'
 import { findings as checkpoints } from '../../directions/investigationFacts'
 import { RunConsole } from './console'
 import './trajectory.css'
@@ -370,19 +374,19 @@ function WhyFailed({ run, detail, oracle, meta, el = 'failure-finding', chip = t
 /* ================================================================== task investigator */
 const FACETS = [['findings', 'Findings'], ['timeline', 'Timeline'], ['patch', 'Patch'], ['task', 'Task'], ['notes', 'Notes'], ['messages', 'Messages'], ['raw', 'Raw record'], ['compare', 'Compare']]
 
-function readNote(dir, id) {
+export function readReviewNote(dir, id) {
   try {
-    const p = JSON.parse(localStorage.getItem(reviewKey(dir, id)) || 'null')
+    const p = JSON.parse(localStorage.getItem(memberStorageKey(reviewKey(dir, id))) || 'null')
     return { text: p && typeof p.text === 'string' ? p.text : '', status: p && p.status === 'reviewed' ? 'reviewed' : 'unreviewed', saved: (p && p.saved) || null }
   } catch { return { text: '', status: 'unreviewed', saved: null } }
 }
 function Notes({ dir, run, onExport }) {
-  const [note, setNote] = useState(() => readNote(dir, run.id))
+  const [note, setNote] = useState(() => readReviewNote(dir, run.id))
   const [msg, setMsg] = useState('')
   const { toast } = useRig()
   const save = (next = note) => {
     const v = { ...next, saved: new Date().toISOString().slice(0, 16).replace('T', ' ') }
-    try { localStorage.setItem(reviewKey(dir, run.id), JSON.stringify(v)); setNote(v); setMsg('Saved in this browser.'); toast('Note saved in this browser') } catch { setMsg('Could not save — browser storage is blocked. Copy or export your note before leaving.') }
+    try { localStorage.setItem(memberStorageKey(reviewKey(dir, run.id)), JSON.stringify(v)); setNote(v); setMsg('Saved in this browser.'); toast('Note saved in this browser') } catch { setMsg('Could not save — browser storage is blocked. Copy or export your note before leaving.') }
   }
   const hint = 'rg-traj-note-hint-' + run.id
   return (
@@ -698,7 +702,7 @@ function TaskDoc({ spec, args }) {
   const nq2 = nq.trim().toLowerCase()
   const navTasks = tasks.filter((t) => !nq2 || t.toLowerCase().includes(nq2) || String((((ov.data && ov.data.tasks) || []).find((x) => x.id === t) || {}).title || '').toLowerCase().includes(nq2))
   const spans = (det.data && det.data.spans) || []
-  const doExport = (note = readNote(dir, run.id)) => {
+  const doExport = (note = readReviewNote(dir, run.id)) => {
     if (!det.data) return
     let md = reviewReport({ dataset: dir, run: run.raw, record: det.data, note, url: location.href })
     const story = failureStory(run, det.data, oracle, meta)
@@ -778,6 +782,7 @@ function TaskDoc({ spec, args }) {
             </p>
           </header>
         </div>
+        <RecordingProvenance runs={att} />
         {lab && <Lesson run={run} detail={det.data} att={att} oracle={oracle} />}
         <section className="rg-traj-attsec" aria-label="Attempts">
           <h2 className="rg-traj-sh" title="Run numbers follow the repeat index and are scoped to this model and harness.">Attempts</h2>
@@ -792,6 +797,7 @@ function TaskDoc({ spec, args }) {
             <span className="rg-traj-acts" data-el="run-actions">
               {partner && <Go spec={makeSpec('cmp', run.id, partner.id)} className="rg-btn pri"><Icon name="cmp" size={13} />{partnerLabel}</Go>}
               <Go spec={makeSpec('run', run.id)} className="rg-btn">Open run ledger</Go>
+              <Go spec={withEvidenceOrigin('shallowWizard', tspec(idx))} className="rg-btn" el="design-harness-from-evidence">Design a harness</Go>
               <PinButton item={runPin(run, oracle, meta)} />
             </span>
           </div>
@@ -804,7 +810,7 @@ function TaskDoc({ spec, args }) {
             <dl className="rg-traj-qf">
               <div><dt>hidden</dt><dd><VerdictText v={run.hid} words={['passed', 'failed', 'unknown']} /></dd></div>
               <div><dt>visible</dt><dd><VerdictText v={run.vis} words={['passed', 'failed', 'unknown']} /></dd></div>
-              <div><dt>tokens</dt><dd className="rg-mono">{int(tokOf(run))}</dd></div>
+              <div><dt>{isSweRun(run) ? "estimated tokens" : "tokens"}</dt><dd className="rg-mono">{int(tokOf(run))}</dd></div>
               <div><dt>model calls</dt><dd className="rg-mono">{run.steps ?? '—'}</dd></div>
               <div><dt>exit</dt><dd className="rg-mono">{run.exit || '—'}</dd></div>
               <div className="rg-traj-qf-id"><dt>run id</dt><dd className="rg-mono rg-traj-id">{run.id}</dd></div>
@@ -899,9 +905,9 @@ function RunDoc({ spec, args }) {
   const cfg = harnessOf(spans)
   const groups = [
     ['Grades', [['hidden', <VerdictText key="h" v={run.hid} />], ['visible', <VerdictText key="v" v={run.vis} />], ['strengthened', <VerdictText key="s" v={run.str} />]]],
-    ['Usage', [['tokens in / out', run.in != null ? `${int(run.in)} / ${int(run.out)}` : '—'], ['cost', run.cost != null ? usd(run.cost, 5) : '—'], ['wall', run.wall != null ? (run.wall / 1000).toFixed(1) + ' s' : '—']]],
+    ['Usage', [[isSweRun(run) ? 'estimated tokens in / out' : 'tokens in / out', run.in != null ? `${int(run.in)} / ${int(run.out)}` : '—'], ['cost', run.cost != null ? usd(run.cost, 5) : '—'], ['wall', run.wall != null ? (run.wall / 1000).toFixed(1) + ' s' : '—']]],
     ['Behaviour', [['calls · tools · edits', `${run.steps ?? '—'} · ${run.tools ?? '—'} · ${run.edits ?? '—'}`], ['boundary', `${run.bnd ?? 0}${run.bkinds && run.bkinds.length ? ' · ' + run.bkinds.join(', ') : ''}`], ['exit reason', run.exit || '—']]],
-    ['Recorded setup', [['seed', det.data ? (seedOf(spans) ?? '—') : '…'], ['max tokens / call', cfg && cfg.max_tokens_per_call != null ? int(cfg.max_tokens_per_call) : '—'], ['max steps', cfg && cfg.max_steps != null ? int(cfg.max_steps) : '—']]],
+    [isSweRun(run) ? 'Importer-reconstructed setup' : 'Recorded setup', [['seed', det.data ? (seedOf(spans) ?? '—') : '…'], ['max tokens / call', cfg && cfg.max_tokens_per_call != null ? int(cfg.max_tokens_per_call) : '—'], ['max steps', cfg && cfg.max_steps != null ? int(cfg.max_steps) : '—']]],
   ]
   const onSel = (s) => { setSel(s); requestAnimationFrame(() => { const e = listRef.current && listRef.current.querySelector('[data-el="run-console"]'); if (e && e.scrollIntoView) e.scrollIntoView({ block: 'nearest' }) }) }
   return (
@@ -913,9 +919,11 @@ function RunDoc({ spec, args }) {
           {spans.length > 0 && <button type="button" className={cx('rg-btn', replay ? 'pri' : '')} aria-pressed={replay} onClick={() => setReplay(!replay)}>▶ Replay as live</button>}
           {other && <Go spec={makeSpec('cmp', run.id, other.id)} className="rg-btn">Compare with {sfx(other.id)}</Go>}
           <Go spec={taskSpecOf(run, ai >= 0 ? ai : null)} className="rg-btn">Task investigator</Go>
+          <Go spec={withEvidenceOrigin('shallowWizard', spec)} className="rg-btn" el="design-harness-from-evidence">Design a harness</Go>
           <PinButton item={runPin(run, oracle, meta)} />
         </div>
       </header>
+      <RecordingProvenance runs={[run]} />
       {replay && spans.length ? <ReplayLanes run={run} spans={spans} onExit={() => setReplay(false)} /> : (<>
         {v === false && det.data && <WhyFailed run={run} detail={det.data} oracle={oracle} meta={meta} onPick={onSel} />}
         <DetailGate det={det} run={run} what="event list" runs={runs}>
@@ -965,12 +973,12 @@ function SpanDoc({ spec, args }) {
   const cfg = harnessOf(spans) || {}
   const nChat = cnt('chat')
   const fields = []
-  if (s.span === 'chat') fields.push(['reply', `#${nos.get(s.seq)} of ${nChat}`], ['tokens in / out', `${int(s['gen_ai.usage.input_tokens'])} / ${int(s['gen_ai.usage.output_tokens'])}`], ['tool calls', callsOf(s).map(callName).join(', ') || 'none'], ['max tokens / call', cfg.max_tokens_per_call != null ? int(cfg.max_tokens_per_call) : '—'], ['cost', usd(s.cost_usd, 6)], ['duration', s.duration_ms != null ? int(s.duration_ms) + ' ms' : '—'], ['model step', s.step ?? '—'])
-  if (s.span === 'execute_tool') fields.push(['tool', s['gen_ai.tool.name'] || '—'], ['status', s.status || '—'], ['tests passed', testsPassed(s) == null ? '—' : testsPassed(s) ? '✓ yes' : `× no${exitCode(s) != null ? ' (exit=' + exitCode(s) + ')' : ''}`], ['duration', s.duration_ms != null ? int(s.duration_ms) + ' ms' : '—'])
+  if (s.span === 'chat') fields.push(['reply', `#${nos.get(s.seq)} of ${nChat}`], [isSweRun(run) ? 'estimated tokens in / out' : 'tokens in / out', `${int(s['gen_ai.usage.input_tokens'])} / ${int(s['gen_ai.usage.output_tokens'])}`], ['tool calls', callsOf(s).map(callName).join(', ') || 'none'], ['max tokens / call', cfg.max_tokens_per_call != null ? int(cfg.max_tokens_per_call) : '—'], ['cost', isSweRun(run) ? '— not supplied' : usd(s.cost_usd, 6)], ['duration', !isSweRun(run) && s.duration_ms != null ? int(s.duration_ms) + ' ms' : '—'], ['model step', s.step ?? '—'])
+  if (s.span === 'execute_tool') fields.push(['tool', s['gen_ai.tool.name'] || '—'], ['status', s.status || '—'], ['tests passed', testsPassed(s) == null ? '—' : testsPassed(s) ? '✓ yes' : `× no${exitCode(s) != null ? ' (exit=' + exitCode(s) + ')' : ''}`], ['duration', !isSweRun(run) && s.duration_ms != null ? int(s.duration_ms) + ' ms' : '—'])
   if (s.span === 'edit') fields.push(['path', s.path || '—'], ['lines', `+${s.lines_added ?? 0} −${s.lines_removed ?? 0}`], ['via', s.tool || '—'])
   if (s.span === 'grade') fields.push(['visible', s.visible === true ? '✓ pass' : s.visible === false ? '× fail' : '? unknown'], ['hidden', s.hidden === true ? '✓ pass' : s.hidden === false ? '× fail' : '? unknown'], ['strengthened', s.strong === true ? '✓ pass' : s.strong === false ? '× fail' : '? unknown'], ['tests modified', String(s.tests_modified ?? '—')])
   if (s.span === 'boundary_event') fields.push(['boundary kind', s.kind || '—'], ['tool', s.tool || '—'], ['status', s.status || '—'])
-  if (s.span === 'invoke_agent') fields.push(['status', s.status || '—'], ...(s.status === 'start' ? [['seed', s.seed ?? '—'], ['harness hash', s.harness_hash || '—'], ['repeat', s.repeat_index ?? '—']] : [['exit', s.exit_reason || '—'], ['total tokens', int(s.total_tokens)], ['cost', usd(s.cost_usd, 6)]]))
+  if (s.span === 'invoke_agent') fields.push(['status', s.status || '—'], ...(s.status === 'start' ? [['seed', s.seed ?? '—'], ['harness hash', s.harness_hash || '—'], ['repeat', s.repeat_index ?? '—']] : [['exit', s.exit_reason || '—'], ['total tokens', int(s.total_tokens)], ['cost', isSweRun(run) ? '— not supplied' : usd(s.cost_usd, 6)]]))
   if (s.span === 'sentinel') fields.push(['step', s.step ?? '—'], ['risk', s.risk != null ? (+s.risk).toFixed(3) : '—'], ['action', s.action || 'none'], ['patterns', (s.patterns || []).join(', ') || '—'], ['layer', s.layer || '—'])
   const fr = finishOf(s)
   const cut = isCutoff(s)
@@ -987,9 +995,11 @@ function SpanDoc({ spec, args }) {
           {i > 0 && <button type="button" className="rg-btn" onClick={() => step(-1)}>↑ prev</button>}
           {i < spans.length - 1 && <button type="button" className="rg-btn" onClick={() => step(1)}>↓ next</button>}
           <Go spec={makeSpec('run', run.id)} className="rg-btn">Open run</Go>
+          <Go spec={withEvidenceOrigin('shallowWizard', spec)} className="rg-btn" el="design-harness-from-evidence">Design a harness</Go>
           <PinButton item={eventPin(run, s, nos.get(s.seq))} />
         </div>
       </header>
+      <RecordingProvenance runs={[run]} />
       <div className="rg-traj-spangrid">
         <section className="rg-pnl" data-el="span-detail" aria-label={`Span ${s.seq}`}>
           <div className="rg-pnl-h"><span className="rg-lbl">Span #{s.seq}</span><span className="meta"><Ki s={s} />{s.span}</span></div>
@@ -1012,7 +1022,7 @@ function SpanDoc({ spec, args }) {
             {callsOf(s).length > 0 && <div><div className="rg-lbl rg-traj-lblgap">requested tools</div><pre className="rg-pre">{text(callsOf(s))}</pre></div>}
             {s.args && Object.keys(s.args).length > 0 && <div><div className="rg-lbl rg-traj-lblgap">arguments</div><pre className="rg-pre">{text(s.args)}</pre></div>}
             {s.result_preview != null && <div><div className="rg-lbl rg-traj-lblgap">result (preview — the recorder may truncate)</div><pre className="rg-pre">{text(s.result_preview)}</pre></div>}
-            {s.harness && typeof s.harness === 'object' && <div><div className="rg-lbl rg-traj-lblgap">recorded harness configuration</div><pre className="rg-pre">{text(s.harness)}</pre></div>}
+            {s.harness && typeof s.harness === 'object' && <div><div className="rg-lbl rg-traj-lblgap">{isSweRun(run) ? 'importer-reconstructed harness configuration' : 'recorded harness configuration'}</div><pre className="rg-pre">{text(s.harness)}</pre></div>}
             <details><summary className="rg-lbl rg-traj-sum-t">payload · raw span</summary><pre className="rg-pre rg-traj-mt">{text(payload)}</pre></details>
             <div className="rg-row rg-wrap">
               {forkable && <Go spec={makeSpec('fork', run.id, s.seq)} className="rg-btn"><Icon name="fork" size={13} />Fork at this step</Go>}
@@ -1329,8 +1339,8 @@ function FieldDoc({ spec, args }) {
   const R = useRuns(dir)
   const meta = useModeMeta(dir)
   const [q, setQ] = useTabState(spec, 'q', '')
-  const [mf, setMf] = useTabState(spec, 'm', 'all')
-  const [hf, setHf] = useTabState(spec, 'h', 'all')
+  const [mf, setMf] = useTabState(spec, 'm', args[1] || 'all')
+  const [hf, setHf] = useTabState(spec, 'h', args[2] || 'all')
   const [vf, setVf] = useTabState(spec, 'v', 'all')
   const [fm, setFm] = useTabState(spec, 'fm', 'all')
   const [pg0, setPg] = useTabState(spec, 'pg', 0)
@@ -1363,6 +1373,7 @@ function FieldDoc({ spec, args }) {
   const label = (m) => (meta[m] && meta[m].label) || (m === 'strengthened_only' ? 'strengthened only' : m.replace(/_/g, ' '))
   return (
     <div className="rg-dpad rg-traj-doc rg-traj-stack">
+      <RecordingProvenance runs={scope} />
       <header className="rg-dh rg-traj-dh"><div className="t"><div className="rg-eyebrow">{dir} · recorded trajectories</div><h1>Every run, every span</h1>
         <p>Open any run to follow its outcome into the recorded actions.{nNoLedger ? <> {int(nNoLedger)} of {int(scope.length)} runs in scope have no ledger and are marked <span className="rg-traj-led">no ledger</span>.</> : ''}</p></div></header>
       <div data-el="field-run-list" className="rg-traj-stack-s">
@@ -1374,7 +1385,7 @@ function FieldDoc({ spec, args }) {
         </div>
         <div className="rg-row rg-wrap rg-mono rg-small rg-traj-totals" data-el="field-totals">
           <span>{int(scope.length)} in scope</span><span className="rg-sky">✓ {int(o.p)} passed</span><span className="rg-red">× {int(o.f)} failed</span><span className="rg-mute">? {int(o.u)} unknown</span>
-          <span className="rg-mute">· {oracle} suite · mean {tk.mean == null ? '—' : int(tk.mean)} tok ({tk.rec}/{tk.n} recorded)</span>
+          <span className="rg-mute">· {suiteLabel(scope, oracle)} · mean {tk.mean == null ? '—' : int(tk.mean)} tok ({tokenCoverage(tk)})</span>
         </div>
         {modes.length > 0 && (
           <div className="rg-row rg-wrap rg-traj-mchips" role="group" aria-label="Failure mode filter" data-el="failure-mode-filter">
@@ -1540,7 +1551,8 @@ export const views = {
   field: {
     tag: 'runs',
     title: (a) => `runs · ${a[0] || ''}`,
-    ctx: (a) => ({ dir: a[0] }),
+    ctx: (a) => ({ dir: a[0], model: a[1] || null, harness: a[2] || null }),
+    retarget: (a, c) => makeSpec('field', c.dir, c.model, c.harness),
     crumbs: (a) => [[a[0], makeSpec('ds', a[0])], ['recorded trajectories']],
     palette: (env) => env.datasets.map((d) => ({ group: 'dataset', title: `trajectories ${d.name}`, detail: 'field run list · search every run', spec: makeSpec('field', d.name) })),
     render: FieldDoc,

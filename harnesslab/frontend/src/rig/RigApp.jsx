@@ -15,7 +15,7 @@
    the shell only through useRig() (context.js). Nothing here writes to the backend.
    ==================================================================================== */
 import { Component, useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { IS_STATIC } from '../api'
+import { IS_STATIC, IS_MEMBER, STATIC_DATA } from '../api'
 import { parseHash, toHash, parseSpec, makeSpec, withChain, specKind, isRigHash, SUITES } from './route'
 import { RigContext, useRig } from './context'
 import { getView, listViews, listDocks } from './registry'
@@ -23,6 +23,7 @@ import { useOverview, useJobs, useAllRuns, useCacheVersion, useConnection, normO
 import { QUESTIONS } from './answers'
 import { useCaseFile } from './caseFile'
 import { useBuildWatch } from './buildWatch'
+import { evidenceOrigin } from './shallowEvidence'
 import { AN_VIEWS } from './views/analysis.jsx'
 import { TaskSideNav } from './views/trajectory.jsx'
 import { Icon, Kbd, MOD, NotFound, EvidenceChain, Toaster, toast as showToast, Seg, NextSteps } from './ui'
@@ -310,9 +311,11 @@ export default function RigApp() {
   }, [rowOf, route.cond])
   const ctxOf = useCallback((spec) => {
     const { kind, args } = parseSpec(spec)
-    const def = getView(kind)
+    const source = ['shallowCards', 'shallowWizard', 'shallowApply', 'blocks'].includes(kind) ? evidenceOrigin(args) : null
+    const contextSpec = source ? parseSpec(source) : { kind, args }
+    const def = getView(contextSpec.kind)
     let raw = {}
-    try { raw = (def && def.ctx && def.ctx(args, env())) || {} } catch { raw = {} }
+    try { raw = (def && def.ctx && def.ctx(contextSpec.args, env())) || {} } catch { raw = {} }
     if (!raw.dir) return raw
     const row = rowOf(raw.dir)
     if (!row) return raw
@@ -368,15 +371,17 @@ export default function RigApp() {
       const mod = e.metaKey || e.ctrlKey
       const s = routeRef.current
       const k = (e.key || '').toLowerCase()
+      const typing = [e.target, document.activeElement].some((el) => el && typeof el.closest === 'function' && el.closest('input, textarea, select, [contenteditable]:not([contenteditable="false"]), [role="textbox"]'))
+      if (e.isComposing) return
       if (mod && k === 'k') { e.preventDefault(); setPalette(!s.pal); return }
       if (s.pal) return   // the palette handles its own keys
       if (keysOpen) { if (e.key === 'Escape' || e.key === '?') { e.preventDefault(); setKeysOpen(false) } return }
       if (mod && k === 'j') { e.preventDefault(); toggleDock('buddy'); return }
       if (mod && e.key === '\\') { e.preventDefault(); toggleSplit(); return }
       if (mod && e.shiftKey && e.key === 'Enter') { e.preventDefault(); toggleMax(); return }
-      if (mod && !e.shiftKey && k === 'b' && !/INPUT|TEXTAREA|SELECT/.test((document.activeElement && document.activeElement.tagName) || '')) { e.preventDefault(); setNavOpenState((o) => { writeNav(!o); return !o }); return }
-      if (e.altKey && k === 'w') { e.preventDefault(); const p = s.panes[s.focus]; closeTab(s.focus, p.active); return }
-      if (e.altKey && (e.key === ']' || e.key === '[')) {
+      if (mod && !e.shiftKey && k === 'b' && !typing) { e.preventDefault(); setNavOpenState((o) => { writeNav(!o); return !o }); return }
+      if (!typing && e.altKey && k === 'w') { e.preventDefault(); const p = s.panes[s.focus]; closeTab(s.focus, p.active); return }
+      if (!typing && e.altKey && (e.key === ']' || e.key === '[')) {
         e.preventDefault(); const p = s.panes[s.focus]
         focusTab(s.focus, (p.active + (e.key === ']' ? 1 : -1) + p.tabs.length) % p.tabs.length); return
       }
@@ -387,7 +392,6 @@ export default function RigApp() {
         if (s.max) setMax(false)
         return
       }
-      const typing = /INPUT|TEXTAREA|SELECT/.test((document.activeElement && document.activeElement.tagName) || '')
       if (!typing && e.key === '?') { e.preventDefault(); setKeysOpen(true); return }
       if (!typing && e.key === '/') {
         const i = document.querySelector('#rig-doc-main input[type=search]')
@@ -407,7 +411,7 @@ export default function RigApp() {
   const curInfo = tabInfo(curSpec)
   const railDir = fallbackDir
 
-  const rail = railItems(specKind(curSpec), railDir, lab)
+  const rail = railItems(specKind(curSpec), railDir, lab, condition)
   // In Analysis the sidebar carries the eight study steps, so the page needs no second nav column.
   const anSteps = specKind(curSpec) === 'an' && railDir ? analysisSteps(curSpec, railDir, condition) : null
   // On a task page the sidebar carries the task list under "Trajectories", for the same reason.
@@ -424,6 +428,7 @@ export default function RigApp() {
           <button type="button" className="rg-mtab" aria-label={`Switch document (${nTabs} open)`} onClick={() => setSheet(route.sheet ? null : 'tabs')}><Icon name="tabs" size={16} /><span className="tt">{curInfo.title}</span><span className="n">{nTabs}</span></button>
           <button type="button" className="rg-cmd" aria-label="Open command palette" onClick={() => setPalette(true)}><Icon name="search" size={15} /><span className="rg-cmd-ph">Search datasets, runs, tasks and views…</span><span className="rg-cmd-k"><Kbd>{MOD}</Kbd><Kbd>K</Kbd></span></button>
           <div className="rg-tb-r">
+            {IS_MEMBER && <a className="rg-tbtn" href="/login" data-el="member-account">Account</a>}
             <button type="button" className={`rg-tbtn${route.dock === 'buddy' ? ' on' : ''}`} data-el="buddy-launcher" aria-label="Ask Buddy" aria-pressed={route.dock === 'buddy'} onClick={() => toggleDock('buddy')}><Icon name="buddy" size={16} /><span className="lbl-d">Ask Buddy</span></button>
             <span className="rg-tb-sep rg-hide-sm" aria-hidden="true" />
             <button type="button" className={`rg-tbtn ico rg-hide-sm${panes.length > 1 ? ' on' : ''}`} aria-label="Toggle split view" aria-pressed={panes.length > 1} title={`Split view (${MOD}+\\)`} onClick={toggleSplit}><Icon name="split" size={16} /></button>
@@ -473,7 +478,8 @@ export default function RigApp() {
             launchers on the right (a closed dock takes no row of its own). */}
         <footer className="rg-sb" aria-label="Status">
           <span className="it" data-el="runtime-status">
-            {IS_STATIC ? <><span className="rg-dot off" /><span data-el="read-only-export-state">read-only snapshot</span></>
+            {IS_MEMBER ? <><span className="rg-dot" /><span data-el="member-workspace-state" title={STATIC_DATA?.__meta__?.generated_at ? `Snapshot created ${STATIC_DATA.__meta__.generated_at}; saved harnesses are read from your account.` : 'Recorded data snapshot; saved harnesses are read from your account.'}>recorded snapshot · member harness saves</span></>
+              : IS_STATIC ? <><span className="rg-dot off" /><span data-el="read-only-export-state">read-only snapshot</span></>
               : ov.error || !online ? <><span className="rg-dot warn" /><span data-el="backend-down">backend unreachable · retrying</span></>
                 : ov.data ? <><span className="rg-dot" />local workspace · connected</> : <><span className="rg-dot off" />connecting…</>}
           </span>
@@ -485,6 +491,7 @@ export default function RigApp() {
           {lab ? <button type="button" className="it lab-on" data-el="guided-indicator" onClick={() => openTab('guide')}>Guided analysis on</button>
             : <button type="button" className="it" data-el="student-lab-toggle" title="Turn on the Student Lab reading guide" onClick={() => setLab(true)}>Student Lab off</button>}
           <span className="sp" />
+          {IS_MEMBER && <a className="it" href="/app/shallow" data-el="member-simple-editor">Simple harness editor</a>}
           <DockLaunchers dock={route.dock} toggleDock={toggleDock} caseCount={caseItems.length} />
         </footer>
 
@@ -499,7 +506,7 @@ export default function RigApp() {
 }
 
 /* ---------------------------------------------------------------- rail */
-const RAIL_GROUPS = ['Workspace', 'Tools']
+const RAIL_GROUPS = ['Workspace', 'Harnesses', 'Tools']
 /** The analysis steps for the focused an: tab, carrying its condition, as the in-page nav does. */
 function analysisSteps(spec, dir, condition) {
   const { args } = parseSpec(spec)
@@ -510,12 +517,16 @@ function analysisSteps(spec, dir, condition) {
     spec: k === 'traj' ? makeSpec('tasks', dir, ...cs) : makeSpec('an', dir, k, ...cs),
   }))
 }
-function railItems(kind, dir, lab) {
+function railItems(kind, dir, lab, condition) {
   const on = (ks) => ks.includes(kind)
+  const cs = condition && condition.dir === dir ? [short(condition.model), condition.harness] : []
   const items = [
     { group: 'Workspace', spec: 'home', icon: 'db', label: 'Datasets', on: on(['home', 'ds', 'q']), el: 'nav-datasets' },
-    { group: 'Workspace', spec: dir ? makeSpec('an', dir, 'family') : 'home', icon: 'an', label: 'Analysis', on: on(['an']) },
-    { group: 'Workspace', spec: dir ? makeSpec('field', dir) : 'home', icon: 'traj', label: 'Trajectories', on: on(['field', 'tasks', 'task', 'run', 'span', 'cmp', 'fork']) },
+    { group: 'Workspace', spec: dir ? makeSpec('an', dir, 'family', ...cs) : 'home', icon: 'an', label: 'Analysis', on: on(['an']) },
+    { group: 'Workspace', spec: dir ? makeSpec('field', dir, ...(condition && condition.dir === dir ? [condition.model, condition.harness] : [])) : 'home', icon: 'traj', label: 'Trajectories', on: on(['field', 'tasks', 'task', 'run', 'span', 'cmp', 'fork']) },
+    { group: 'Harnesses', spec: 'shallowCards', icon: 'tabs', label: 'Fixed harnesses', on: on(['shallowCards', 'shallowApply']), el: 'nav-fixed-harnesses' },
+    { group: 'Harnesses', spec: 'shallowWizard', icon: 'q', label: 'Minimal harness', on: on(['shallowWizard']), el: 'nav-minimal-harness' },
+    { group: 'Harnesses', spec: 'blocks', icon: 'data', label: 'Build a harness', on: on(['blocks']), el: 'nav-build-harness' },
     { group: 'Tools', spec: 'sources', icon: 'src', label: 'Sources & capture', on: on(['sources', 'capture']), el: 'nav-sources' },
     { group: 'Tools', spec: 'sentinel', icon: 'sent', label: 'Sentinel', on: on(['sentinel']) },
     { group: 'Tools', spec: 'canvas', icon: 'canvas', label: 'Canvas', on: on(['canvas']) },
@@ -742,12 +753,28 @@ function StatusPop({ pop, close, condition, rowOf }) {
 /* ---------------------------------------------------------------- mobile tab sheet */
 function TabSheet({ panes, focus, close, rail }) {
   const rig = useRig()
+  const ref = useRef(null)
+  useEffect(() => {
+    const previous = document.activeElement
+    const selected = ref.current && (ref.current.querySelector('[aria-current="page"]') || ref.current.querySelector('button'))
+    if (selected) selected.focus()
+    return () => { if (previous && previous.isConnected && typeof previous.focus === 'function') previous.focus() }
+  }, [])
+  const onKeyDown = (event) => {
+    if (event.key === 'Escape') { event.preventDefault(); event.stopPropagation(); close(); return }
+    if (event.key !== 'Tab') return
+    const buttons = [...ref.current.querySelectorAll('button:not([disabled]), a[href], [tabindex="0"]')]
+    const first = buttons[0], last = buttons[buttons.length - 1]
+    if (!first) { event.preventDefault(); return }
+    if (event.shiftKey && (document.activeElement === first || document.activeElement === ref.current)) { event.preventDefault(); last.focus() }
+    else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus() }
+  }
   const all = []
   panes.forEach((p, pi) => p.tabs.forEach((t, i) => all.push([pi, i, t, pi === focus && i === p.active])))
   return (
     <>
       <div className="rg-scrim" style={{ alignItems: 'flex-end', padding: 0 }} onClick={close} aria-hidden="true" />
-      <div className="rg-sheet" role="dialog" aria-label="Open documents">
+      <div className="rg-sheet" role="dialog" aria-modal="true" aria-label="Open documents" ref={ref} tabIndex={-1} onKeyDown={onKeyDown}>
         <div className="grab" />
         <div className="rg-row" style={{ padding: '0 16px 8px' }}><span className="rg-lbl">Open documents · {all.length}</span><span className="rg-grow" /><button type="button" className="rg-btn ghost" aria-label="Close" onClick={close}><Icon name="x" size={16} /></button></div>
         <div className="rg-sheet-b">
@@ -755,7 +782,7 @@ function TabSheet({ panes, focus, close, rail }) {
             const ti = tabInfo(t)
             return (
               <div key={pi + ':' + t} className="rg-row" style={{ borderBottom: '1px solid var(--rig-line)' }}>
-                <button type="button" className={`it${on ? ' on' : ''}`} style={{ border: 0 }} onClick={() => rig.focusTab(pi, i)}><span className="rg-tag">{ti.tag}</span><span className="rg-grow rg-ell rg-mono">{ti.title}</span></button>
+                <button type="button" className={`it${on ? ' on' : ''}`} aria-current={on ? 'page' : undefined} style={{ border: 0 }} onClick={() => rig.focusTab(pi, i)}><span className="rg-tag">{ti.tag}</span><span className="rg-grow rg-ell rg-mono">{ti.title}</span></button>
                 <button type="button" className="rg-btn ghost" aria-label={`Close ${ti.title}`} onClick={() => rig.closeTab(pi, i)}>×</button>
               </div>
             )

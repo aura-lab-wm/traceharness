@@ -1,5 +1,10 @@
-/* Door 1. Six fixed cards. No request, no key, no storage. */
-import { useState } from 'react'
+/* Door 1. The six actual shells; hosted members can save prompt-only changes. */
+import { useEffect, useState } from 'react'
+import { api, IS_MEMBER } from '../../api'
+import { requireStored } from '../../member-api'
+import { readDraft, writeDraft } from './shallow-drafts'
+import { ErrorState, Go, Loading } from '../ui'
+import { EvidenceOrigin, evidenceOrigin, withEvidenceOrigin } from '../shallowEvidence'
 import { CARDS, PERMISSION } from './shallow-data.js'
 
 function utf8Size(text) {
@@ -20,19 +25,106 @@ function clipUtf8(text, capBytes) {
   return ""
 }
 
-function ShallowCards() {
+function ShallowCards({ args } = {}) {
+  const [cards, setCards] = useState(IS_MEMBER ? null : CARDS)
   const [prompts, setPrompts] = useState(() => Object.fromEntries(CARDS.map((row) => [row.id, row.prompt])))
+  const [drafts, setDrafts] = useState({})
+  const [loadError, setLoadError] = useState(null)
+  const [messages, setMessages] = useState({})
+  const [busy, setBusy] = useState({})
+  const [storageError, setStorageError] = useState('')
+  const [revision, setRevision] = useState(0)
+  const [accountLoaded, setAccountLoaded] = useState(!IS_MEMBER)
+  useEffect(() => {
+    if (!IS_MEMBER) return
+    let active = true
+    setLoadError(null)
+    setAccountLoaded(false)
+    Promise.all([api('/shallow/catalog'), api('/shallow/harnesses')]).then(([catalog, library]) => {
+      if (!active) return
+      if (!Array.isArray(catalog.harnesses) || !Array.isArray(library.harnesses)) throw new Error('The member harness catalog could not be read.')
+      const saved = new Map(library.harnesses.filter((row) => row.lane === 'fixed').map((row) => [row.id, row]))
+      const rows = catalog.harnesses.map((row) => ({ ...row,
+        ...(saved.has(row.id) ? { prompt: saved.get(row.id).prompt, hash: saved.get(row.id).hash } : {}),
+        memberSaved: saved.has(row.id) && !(library.unconfirmed || []).includes(row.id),
+      }))
+      const restored = readDraft('fixed') || {}
+      const valid = Object.fromEntries(rows.filter((row) => typeof restored[row.id]?.prompt === 'string' && /^[a-f0-9]{12}$/.test(restored[row.id]?.baseHash)).map((row) => [row.id, { ...restored[row.id], restored: true }]))
+      setCards(rows)
+      setAccountLoaded(library.loaded === true)
+      setDrafts(valid)
+      setPrompts(Object.fromEntries(rows.map((row) => [row.id, valid[row.id]?.prompt ?? row.prompt])))
+      setMessages(Object.fromEntries((library.unconfirmed || []).map((id) => [id, 'Account storage has not confirmed this prompt. Your draft is still pending.'])))
+    }).catch((error) => { if (active) setLoadError(error) })
+    return () => { active = false }
+  }, [revision])
+
+  function edit(row, value) {
+    setPrompts((cur) => ({ ...cur, [row.id]: value }))
+    setMessages((cur) => ({ ...cur, [row.id]: '' }))
+    if (!IS_MEMBER) return
+    setDrafts((cur) => {
+      const next = { ...cur, [row.id]: { prompt: value, baseHash: cur[row.id]?.baseHash || row.hash,
+        basePresent: cur[row.id]?.basePresent ?? row.memberSaved } }
+      setStorageError(writeDraft('fixed', next))
+      return next
+    })
+  }
+
+  async function save(row) {
+    if (!accountLoaded) return
+    const submitted = prompts[row.id]
+    setBusy((cur) => ({ ...cur, [row.id]: true }))
+    setMessages((cur) => ({ ...cur, [row.id]: '' }))
+    try {
+      const result = requireStored(await api('/shallow/harnesses', { method: 'POST', body: {
+        id: row.id, prompt: submitted,
+        ...((drafts[row.id]?.basePresent ?? row.memberSaved)
+          ? { if_hash: drafts[row.id]?.baseHash || row.hash } : { if_absent: true }),
+      } }))
+      setCards((cur) => cur.map((card) => card.id === row.id ? { ...card, prompt: result.harness.prompt, hash: result.harness.hash, memberSaved: true } : card))
+      setDrafts((cur) => {
+        const next = { ...cur }
+        delete next[row.id]
+        setStorageError(writeDraft('fixed', next))
+        return next
+      })
+      setPrompts((cur) => ({ ...cur, [row.id]: result.harness.prompt }))
+      setMessages((cur) => ({ ...cur, [row.id]: 'Saved to your account.' }))
+    } catch (error) { setMessages((cur) => ({ ...cur, [row.id]: error.message })) }
+    finally { setBusy((cur) => ({ ...cur, [row.id]: false })) }
+  }
+
+  function discardAndReload(id) {
+    const next = { ...drafts }
+    delete next[id]
+    const failure = writeDraft('fixed', next)
+    setStorageError(failure)
+    if (failure) return
+    setDrafts(next)
+    setRevision((n) => n + 1)
+  }
+
+  if (loadError) return <><ErrorState error={loadError} what="Your fixed harnesses" onRetry={() => setRevision((n) => n + 1)} /><p><a href="/login">Account</a> · Sign back into the original account to keep working on its draft.</p></>
+  if (!cards) return <Loading label="Reading your fixed harnesses…" />
   return (
     <div className="rg-dpad" data-el="shallow-cards">
       <div className="rg-dh">
         <div className="t">
           <div className="rg-eyebrow">Shallow · fixed</div>
           <h1>Fixed harnesses</h1>
-          <p>Six stand-ins. A change on one card edits that prompt. The tool shell, the permission rule, the step cap, and the byte cap stay on the harness. Nothing on this screen is saved, and nothing here calls a model.</p>
+          <p>Six stand-ins. Their tools, permission rules, step caps, and byte caps are TraceHarness lab choices, not verified vendor limits. A change on one card edits that prompt; the other harness settings stay fixed. {IS_MEMBER ? 'Save each prompt to your account. Edits remain drafts until the save is confirmed. Nothing here calls a model.' : 'Nothing on this screen is saved, and nothing here calls a model.'}</p>
         </div>
       </div>
+      <EvidenceOrigin args={args} />
+      <div className="rg-row rg-wrap">
+        <Go spec={withEvidenceOrigin('shallowApply', evidenceOrigin(args))} className="rg-btn" el="preview-six-shells">Preview one prompt across six shells</Go>
+      </div>
+      {IS_MEMBER && !accountLoaded && <p role="alert">Your saved account data has not loaded. Saving is unavailable. <button type="button" className="rg-btn" onClick={() => setRevision((n) => n + 1)}>Retry account data</button> <a href="/login">Account</a></p>}
+      {IS_MEMBER && <p className="rg-small">Drafts stay in this workbench tab. The plain editor shares confirmed account saves only.</p>}
       <div className="rg-col">
-        {CARDS.map((row) => {
+        {storageError && <p role="alert">{storageError}</p>}
+        {cards.map((row) => {
           const value = prompts[row.id]
           const used = utf8Size(value)
           const clipped = clipUtf8(value, row.cap_bytes)
@@ -44,10 +136,15 @@ function ShallowCards() {
                 <p className="rg-small">{row.tools.join(" · ")}</p>
                 <p className="rg-small">{PERMISSION}</p>
                 {used > row.cap_bytes || dropsVerify ? <p className="rg-small">This prompt is over the byte cap, or the clipped text drops verify and modify the tests.</p> : null}
-                <label className="rg-fld">Standing prompt
-                  <textarea className="rg-inp" value={value} onChange={(e) => setPrompts((cur) => ({ ...cur, [row.id]: e.target.value }))} spellCheck={false} />
+                <label className="rg-fld">Standing prompt for {row.name}
+                  <textarea className="rg-inp" value={value} disabled={!!busy[row.id]} onChange={(e) => edit(row, e.target.value)} spellCheck={false} />
                 </label>
-                {value !== row.prompt ? <button type="button" className="rg-btn" onClick={() => setPrompts((cur) => ({ ...cur, [row.id]: row.prompt }))}>Reset prompt</button> : null}
+                {value !== row.prompt ? <button type="button" className="rg-btn" disabled={!!busy[row.id]} onClick={() => edit(row, row.prompt)}>Reset prompt</button> : null}
+                {IS_MEMBER && <div className="rg-row rg-wrap">
+                  <button type="button" className="rg-btn pri" disabled={!accountLoaded || !!busy[row.id] || !value.trim()} onClick={() => save(row)}>{busy[row.id] ? 'Saving…' : 'Save prompt'}</button>
+                  {drafts[row.id] && <><span className="rg-small">{drafts[row.id].restored ? 'Restored unsaved draft from this tab' : 'Unsaved draft'}</span><button type="button" className="rg-btn" disabled={Object.values(busy).some(Boolean)} onClick={() => discardAndReload(row.id)}>Discard draft and reload saved prompt</button></>}
+                </div>}
+                {messages[row.id] && <p role={messages[row.id] === 'Saved to your account.' ? 'status' : 'alert'} className="rg-small">{messages[row.id]}{messages[row.id].includes('account changed') && <> <a href="/login">Account</a></>}</p>}
               </div>
             </article>
           )
@@ -61,6 +158,7 @@ export const views = {
   shallowCards: {
     tag: "six",
     title: () => "Fixed harnesses",
+    crumbs: (args) => [['Harnesses', withEvidenceOrigin('shallowCards', evidenceOrigin(args))], ['Fixed']],
     render: ShallowCards,
     palette: () => [{ title: "Fixed harnesses", detail: "six shallow stand-ins", spec: "shallowCards", keywords: "claude codex qwen kimi grok agy antigravity" }],
   },

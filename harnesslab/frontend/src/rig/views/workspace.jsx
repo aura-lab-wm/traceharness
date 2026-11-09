@@ -28,7 +28,7 @@
    owns the theme today. Sec / About / CopyCmd are local; they would serve every view from ui.jsx.
    ==================================================================================== */
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { api, IS_STATIC, captureControl } from '../../api'
+import { api, IS_STATIC, IS_MEMBER, captureControl } from '../../api'
 import schoolPackage from '../../../../school-package.json'
 import { arrival, suggestResultsDir, cleanResultsDir, detectState, progressPct, progressKnown, progressPhrase, verdictTile } from '../../method/importing'
 import { browserStores, readMate, writeKey, forgetKey, writeModel, isKeyRemembered, setCaptured, DEFAULT_MODEL } from '../../matekey'
@@ -63,7 +63,7 @@ function Head({ eyebrow, title, children, actions, el }) {
     </div>
   )
 }
-const StaticNote = ({ what }) => <Note el="read-only-export-state"><div><b>Read-only export.</b> {what} needs the live app (<span className="rg-mono">python -m harnesslab</span>).</div></Note>
+const StaticNote = ({ what }) => <Note el="read-only-export-state"><div><b>{IS_MEMBER ? 'Local workbench required.' : 'Read-only export.'}</b> {what} needs the local app (<span className="rg-mono">python -m harnesslab{IS_MEMBER ? ' --port 8742' : ''}</span>){IS_MEMBER ? ' at 127.0.0.1:8742' : ''}.</div></Note>
 
 /** <Sec title meta? lead? el?>…</Sec> — a section of a document: a heading and whitespace, no box.
  *  Boxes stay for units of data (a table, a list); sections are separated by the page rhythm. */
@@ -1213,11 +1213,10 @@ function Settings() {
       </div>
       {/* The two key panels share their rows: key field beside key field, buttons beside buttons. */}
       <div className="rg-ws-setrow rg-ws-pairrow">
-        <BuddyPanel />
-        <LabKeyPanel st={st} />
+        {IS_MEMBER ? <Sec title="Models run locally" el="member-local-keys"><p>The hosted workbench reads the recorded snapshot and saves your harnesses. Configure model keys, Buddy, and the judge in your local workbench at <code>127.0.0.1:8742</code>.</p><CopyCmd cmd="python -m harnesslab --host 127.0.0.1 --port 8742" /></Sec> : <><BuddyPanel /><LabKeyPanel st={st} /></>}
       </div>
       <div className="rg-ws-setrow">
-      <NarratorPanel />
+      {!IS_MEMBER && <NarratorPanel />}
       <Sec title="Paths in use" meta={IS_STATIC ? 'export' : 'GET /api/settings'} el="paths-in-use">
         {IS_STATIC ? <StaticNote what="The server's paths" /> : st.error ? <Failed what="Could not read the server's settings." error={st.error} onRetry={st.reload} /> : !s ? <div className="rg-skel rg-ws-sk" /> : (
           <dl className="rg-kv rg-ws-kv">
@@ -1459,7 +1458,7 @@ function Package() {
       <Sec title="Reproduce from this directory">
         <h3 className="rg-ws-h3">1 · Install and run</h3>
         <pre className="rg-pre">{'python3 -m pip install -e .\npython3 -m harnesslab --no-browser'}</pre>
-        <p className="rg-small rg-mute">Open <span className="rg-mono">http://127.0.0.1:8765</span>. No API key is needed to inspect the included results.</p>
+        <p className="rg-small rg-mute">Open <span className="rg-mono">{IS_MEMBER ? "http://127.0.0.1:8742" : "http://127.0.0.1:8765"}</span>. No API key is needed to inspect the included results.</p>
         <h3 className="rg-ws-h3">2 · Reproduce the exercises</h3>
         <pre className="rg-pre">{'python3 exercises/ex1_variance.py\npython3 exercises/ex2_harness.py\npython3 exercises/ex7_real_trajectories.py --offline\npython3 exercises/ex8_experiment.py'}</pre>
         <p className="rg-small rg-mute">Read <span className="rg-mono">HANDOUT.md</span> for exercises 3–6, or open the <Go spec="guide" className="rg-tlink">reading guide</Go>.</p>

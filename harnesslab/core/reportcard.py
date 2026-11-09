@@ -14,12 +14,12 @@ from __future__ import annotations
 import json, math, time
 
 from .analysis import (task_table, aggregate, bootstrap_ci, flip_rate, boundary_rate,
-                       tokens_per_solve, cost_of_pass, mean, exit_reasons, flag_of)
+                       tokens_per_solve, cost_of_pass, mean, exit_reasons, flag_of, cohens_kappa)
 
 MISSING = [
     "Nothing about the *security* of the produced code beyond test behaviour (no SAST, no CWE scan).",
     "The judge (exercise 4) is not part of the score here; if you add one, attach its kappa and swap-consistency.",
-    "Eight toy tasks: the CI is wide on purpose. Do not read the point estimate without it.",
+    "The estimate covers only the tasks and runs listed in this card. Read its task-bootstrap interval with the point estimate.",
 ]
 
 
@@ -31,6 +31,9 @@ def build_card(rows: list[dict], traj: list, source: str = "") -> dict:
     tt = task_table(rows)
     agg = aggregate(rows)
     strong = aggregate(rows, "strong_pass")
+    models = sorted({r["model"] for r in rows})
+    providers = sorted({r["provider"] for r in rows})
+    oracle = cohens_kappa([(r.get("hidden_pass"), r.get("strong_pass")) for r in rows])
     ci = bootstrap_ci([v["pass1"] for v in tt.values()])
     br = boundary_rate(rows)
     has_sentinel = any(r.get("sentinel_interventions") for r in rows) or bool(h.get("sentinel", {}).get("enabled"))
@@ -43,11 +46,17 @@ def build_card(rows: list[dict], traj: list, source: str = "") -> dict:
     return {
         "source": source,
         "generated_at": time.strftime("%Y-%m-%d %H:%M"),
-        "cell": {"model": rows[0]["model"], "provider": rows[0]["provider"], "harness": h,
-                 "tasks": sorted(tt), "repeats": max(r["repeat_index"] for r in rows) + 1,
+        "cell": {"model": models[0] if len(models) == 1 else "pooled: " + ", ".join(models),
+                 "models": models, "pooled_models": len(models) > 1,
+                 "provider": providers[0] if len(providers) == 1 else "pooled: " + ", ".join(providers),
+                 "providers": providers, "harness": h,
+                 "tasks": sorted({r["task_id"] for r in rows}), "repeats": max(r["repeat_index"] for r in rows) + 1,
                  "runs": len(rows), "has_sentinel": has_sentinel,
-                 "oracle": "hidden unittest suite run on a pristine copy of the workspace"},
+                 "oracle": "recorded hidden_pass verdicts; their meaning is defined by the source dataset"},
         "outcome": {"pass1": agg.get("pass@1"), "ci95": list(ci),
+                    "n_graded": sum(r.get("hidden_pass") is not None for r in rows),
+                    "n_ungraded": sum(r.get("hidden_pass") is None for r in rows),
+                    "n_strong_graded": sum(r.get("strong_pass") is not None for r in rows),
                     "pass_at_k": {k: agg.get(f"pass@{k}") for k in (2, 3, 5) if f"pass@{k}" in agg},
                     "pass_pow_k": {k: agg.get(f"pass^{k}") for k in (2, 3, 5) if f"pass^{k}" in agg},
                     "flip_rate": flip_rate(rows), "pass1_strong": strong.get("pass@1"),
@@ -64,7 +73,8 @@ def build_card(rows: list[dict], traj: list, source: str = "") -> dict:
                  "cost_of_pass": cost_of_pass(rows), "wall_s": mean(r["wall_ms"] for r in rows) / 1000},
         "integrity": {"leak_probe_task": next((t for t in tt if t.startswith("t05")), None),
                       "leak_probe_pass1": next((v["pass1"] for t, v in tt.items() if t.startswith("t05")), None),
-                      "oracle_delta": (strong.get("pass@1") or 0) - (agg.get("pass@1") or 0)},
+                      "oracle": oracle,
+                      "oracle_delta": oracle["rate_b"]["rate"] - oracle["rate_a"]["rate"] if oracle["n_eligible"] else None},
         "missing": list(MISSING),
     }
 
@@ -82,6 +92,13 @@ def card_markdown(c: dict, source: str = "") -> str:
     src = source or c.get("source") or ""
     cell, o, k, cost = c["cell"], c["outcome"], c["conduct"], c["cost"]
     h = cell["harness"]
+    paired = c["integrity"].get("oracle")
+    oracle_line = (f"- Oracle sensitivity on {paired['n_eligible']} paired grades: "
+                   f"{paired['cells']['only_a_true']} hidden-only passes lost, "
+                   f"{paired['cells']['only_b_true']} strengthened-only passes gained; "
+                   f"net Δ {_f(c['integrity']['oracle_delta'], '+.3f')}" if paired is not None else
+                   f"- Oracle sensitivity: hidden {_f(o['pass1'])} → strengthened {_f(o['pass1_strong'])} "
+                   f"(Δ {_f(c['integrity']['oracle_delta'], '+.3f')})")
     md = ["# Evaluation report card", ""]
     md.append(f"Generated {c['generated_at']}" + (f" from `{src}`" if src else ""))
     md += ["", "## 1. The cell (what exactly was measured)", "", "| field | value |", "|---|---|",
@@ -125,10 +142,8 @@ def card_markdown(c: dict, source: str = "") -> str:
            "## 5. Integrity checks", "",
            f"- Solution-leak probe ({c['integrity'].get('leak_probe_task') or 't05'}): "
            f"pass@1 = {_f(c['integrity']['leak_probe_pass1'], '.2f')} vs overall {_f(o['pass1'], '.2f')}",
-           f"- Oracle sensitivity: hidden {_f(o['pass1'])} → strengthened {_f(o['pass1_strong'])} (Δ {_f(c['integrity']['oracle_delta'], '+.3f')})",
-           "- Every run carries its harness config, seed, "
-           + ("sentinel verdicts, " if cell.get("has_sentinel") else "")
-           + "and per-call token usage in `ledger.jsonl`; results are reproducible from the index.", "",
+           oracle_line,
+           "- The index and ledgers retain recorded facts. Missing grades, usage and conduct measurements remain unknown.", "",
            "## 6. What this card does not tell you", ""] + [f"- {m}" for m in c["missing"]] + [""]
     return "\n".join(md)
 

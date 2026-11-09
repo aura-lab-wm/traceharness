@@ -49,6 +49,9 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--export-runs", type=int, default=None, metavar="N",
                    help="how many per-run detail payloads to embed for the Trajectories page "
                         "(default 40; 0 embeds none and keeps the file small)")
+    p.add_argument("--export-compress-data", action="store_true",
+                   help="gzip the embedded snapshot to keep large exports smaller; requires "
+                        "a browser with native DecompressionStream support")
     p.add_argument("--yes", action="store_true",
                    help="confirm exporting private results (captured sessions) without a prompt")
     p.add_argument("--paths", action="store_true", help="print the resolved paths as JSON and exit")
@@ -676,14 +679,17 @@ def main(argv: list[str] | None = None) -> int:
                 print("export cancelled: captured runs need an explicit yes (pass --yes in a script)", file=sys.stderr)
                 return 1
         from harnesslab.backend.static_export import DEFAULT_RUNS
-        info = build(args.export, picked, DEFAULT_RUNS if args.export_runs is None else args.export_runs)
+        info = build(args.export, picked, DEFAULT_RUNS if args.export_runs is None else args.export_runs,
+                     compress_data=args.export_compress_data)
         print(f"wrote {info['path']}  ({info['bytes']/1_000_000:.1f} MB, "
-              f"{info['endpoints']} endpoints, {info['runs_embedded']} run details, "
+              f"{info['endpoints']} endpoints, {info['embedded_run_details']} run details, "
+              f"limit {info['runs_embedded']} per dataset, "
               f"results: {', '.join(info['results'])})")
         if info["failed"]:
             print(f"  {len(info['failed'])} endpoint(s) not captured:", file=sys.stderr)
             for u, why in info["failed"][:8]:
                 print(f"    {u} -> {why}", file=sys.stderr)
+            return 1
         print("  open it directly in a browser; no server needed.")
         return 0
 

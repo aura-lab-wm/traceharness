@@ -16,12 +16,13 @@
    API   useCaseFile() -> Item[]      (React, re-renders on change, any tab)
          getItems() · pin(item) · unpin(id) · togglePin(item) · isPinned(id) · setNote(id, text)
          clearCase() · pinId(kind, ...parts) · caseMarkdown(items, meta) · downloadText(name, text, type)
-   Persisted to localStorage 'rig.case' inside try/catch: blocked storage keeps the case file
+   Persisted to localStorage 'rig.case' (member-scoped when hosted) inside try/catch: blocked storage keeps the case file
    for this visit only (storageOk() tells the UI so) and never throws.
    ==================================================================================== */
 import { useSyncExternalStore } from 'react'
+import { memberStorageKey } from './memberStorage'
 
-const KEY = 'rig.case'
+const KEY = memberStorageKey('rig.case')
 const listeners = new Set()
 let items = read()
 let ok = true

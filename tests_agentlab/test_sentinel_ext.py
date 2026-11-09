@@ -372,6 +372,17 @@ class TestLeaderboard(unittest.TestCase):
             X.leaderboard("no_such_dir", (2,), bootstrap=0)
         self.assertEqual(cm.exception.status_code, 404)
 
+    def test_existing_selection_without_labelled_replayable_runs_is_unsupported(self):
+        # The selected harness does not occur in the real index. The dataset exists, so
+        # this is an empty evaluation cohort, not a nonexistent-dataset 404 or a ranking.
+        lb = X.leaderboard("prerecorded_mock", (2,), harness="absent_harness", bootstrap=0, use_cache=False)
+        self.assertFalse(lb["supported"])
+        self.assertEqual(lb["rows"], [])
+        self.assertEqual(lb["n_runs"], 0)
+        self.assertEqual(lb["n_prefixes"], 0)
+        self.assertIn("labelled", lb["run_count_scope"])
+        self.assertIn("cannot be ranked", lb["reason"])
+
     def test_k_parsing(self):
         from fastapi import HTTPException
         self.assertEqual(X._parse_ks("10,15,20"), (10, 15, 20))

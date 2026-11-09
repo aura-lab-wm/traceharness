@@ -35,6 +35,11 @@ function data() {
   integ.self_report = [{ harness: 'baseline', overclaim: 0.1 }, { harness: 'terse', overclaim: 0 }]
   f['/judge'] = { status: 'idle', stage: null, error: null, report: null, history: [] }
   f[`/results/${MINI}/report?harness=baseline`] = { ...f[`/results/${MINI}/report?harness=baseline`], markdown: '# Evaluation report card\n' }
+  f[`/results/${MINI}/report?harness=baseline&model=${encodeURIComponent(M1)}`] = { markdown: '# Selected model report\n', card: {
+    cell: { model: M1, models: [M1], pooled_models: false, harness: { id: 'baseline' }, runs: 4, tasks: ['t1', 't2'] },
+    outcome: { pass1: 0.75, ci95: [0.25, 1], pass_at_k: {}, pass_pow_k: {}, pass1_strong: 0.5 },
+    integrity: { oracle: { n_eligible: 4, cells: { both_true: 2, both_false: 1, only_a_true: 1, only_b_true: 0 }, rate_a: { rate: 0.75 }, rate_b: { rate: 0.5 }, kappa: 0.5 } }, missing: [],
+  } }
   f['/models'] = { models: [{ id: M1, price_in: 0.1, price_out: 0.4 }, { id: 'mock', price_in: null, price_out: null }], observed: { [M1]: { cost_per_run: 0.01, runs: 8 } } }
   return f
 }
@@ -75,7 +80,7 @@ describe('an: family matrix', () => {
     expect(rows[0].textContent).not.toContain('unknown')                 // a zero-unknown cell says nothing about it
     expect(rows[1].textContent).toContain('1 / 3 known · 1 unknown')     // beta-2 · baseline: ✓? ××
     expect(rows[1].textContent).toContain('33.3%')
-    expect(el(container, 'grade-basis').textContent).toContain('hidden-suite grades')
+    expect(el(container, 'grade-basis').textContent).toContain('hidden suite')
     expect(el(container, 'repeat-counts-differ')).toBeNull()            // every family has 4 runs
     act(() => { fireEvent.click(within(rows[1]).getAllByTitle(/Open the trajectories of beta-2 under terse/)[0]) })
     expect(location.hash).toBe('#/rig/an:mini:family+!tasks:mini:beta-2:terse')
@@ -164,11 +169,13 @@ describe('an: experiment', () => {
 })
 
 describe('an: report card', () => {
-  it('labels a pooled card honestly and states the pooled n', () => {
+  it('requests the selected model and states its exact cohort and paired oracle loss', () => {
     const { container } = renderRig('#/rig/an:mini:report', { data: data() })
-    expect(el(container, 'report-cell-label').textContent).toBe('all 2 models · baseline (pooled) · 8 runs')
-    expect(el(container, 'report-pooled-note').textContent).toContain('alpha-1 alone has 4')
-    expect(el(container, 'report-card').textContent).toContain('71.4%')
+    expect(el(container, 'report-cell-label').textContent).toBe('alpha-1 · baseline · 4 runs')
+    expect(el(container, 'report-pooled-note')).toBeNull()
+    expect(el(container, 'report-claims').textContent).toContain('1 hidden passes are lost (25.0 percentage points)')
+    expect(el(container, 'report-claims').textContent).toContain('4 paired runs')
+    expect(el(container, 'report-card').textContent).toContain('75.0%')
     expect(screen.getByRole('button', { name: 'Export .md' })).toBeTruthy()
   })
 })
@@ -263,8 +270,8 @@ function shapes({ key = false, judge = { status: 'idle', stage: null, error: nul
     '/results/solo/oracle': { n_eligible: 0, n_excluded: 6, cells: { both_true: 0, both_false: 0, only_a_true: 0, only_b_true: 0 }, rate_a: { rate: null, n: 0 }, rate_b: { rate: null, n: 0 }, kappa: null, kappa_undefined_reason: 'no_eligible_pairs' },
     '/results/solo/integrity?harness=swe': { harness: 'swe', leakage: [{ task: 's1', probe: null, pass1: 2 / 3, pass1_strong: 0, patch_issue_similarity: null }, { task: 's2', probe: null, pass1: 0, pass1_strong: 0, patch_issue_similarity: null }],
       weak_tests: { per_task: [{ task: 's1', n_passed: 2, lost: 1 }] }, self_report: [{ harness: 'swe', overclaim: 0 }] },
-    '/results/solo/report?harness=swe': { card: { cell: { model: BIG, harness: { id: 'swe' }, runs: 6, tasks: ['s1', 's2'], oracle: 'hidden unittest suite' },
-      outcome: { pass1: 1 / 3, ci95: [0, 0.67], pass_at_k: {}, pass_pow_k: {}, pass1_strong: 0, flip_rate: 0.5 }, missing: ['Two toy tasks.'] } },
+    [`/results/solo/report?harness=swe&model=${encodeURIComponent(BIG)}`]: { card: { cell: { model: BIG, pooled_models: false, harness: { id: 'swe' }, runs: 4, tasks: ['s1', 's2'], oracle: 'hidden unittest suite' },
+      outcome: { pass1: 0.25, ci95: [0, 0.67], pass_at_k: {}, pass_pow_k: {}, pass1_strong: 0, flip_rate: 0.5 }, missing: ['Two toy tasks.'] } },
     '/results/duo/comparisons?baseline=baseline': { baseline: 'permissive', comparisons: { mock: { 'permissive+sentinel': { n_tasks: 1, mean_diff: 1, ci95: [0, 1], per_task: { d1: 1 } } } } },
     '/results/duo/experiment': { outcome: 'hidden_pass', a_levels: ['mock'], b_levels: ['permissive', 'permissive+sentinel'], anova: null, multiplicity: { n: 1, expected_false: 0.05 },
       cells: [{ a: 'mock', b: 'permissive', n: 1, pass1: 0, ci95: [0, 0] }, { a: 'mock', b: 'permissive+sentinel', n: 1, pass1: 1, ci95: [1, 1] }],
@@ -315,7 +322,7 @@ describe('round 3 · dead ends: one harness, no strengthened grades (solo)', () 
     expect(el(container, 'pairwise-contrasts')).toBeNull()
     everyEmptyHasAWay(container)
   })
-  it('report: no two-factor claims offers ways forward; Export .md says why it is disabled; pooled label kept', () => {
+  it('report: no two-factor claims offers ways forward; Export .md says why it is disabled; selected model scope kept', () => {
     const { container } = renderRig('#/rig/an:solo:report', { data: shapes() })
     const claims = el(container, 'report-claims')
     expect(claims.textContent).toContain('No two-factor claims.')
@@ -323,7 +330,7 @@ describe('round 3 · dead ends: one harness, no strengthened grades (solo)', () 
     const md = screen.getByRole('button', { name: 'Export .md' })
     expect(md.disabled).toBe(true)
     everyDisabledSaysWhy(container)
-    expect(el(container, 'report-cell-label').textContent).toBe('all 2 models · swe (pooled) · 6 runs')
+    expect(el(container, 'report-cell-label').textContent).toBe('big · swe · 4 runs')
     expect(el(container, 'report-card').textContent).toContain('not graded')         // strengthened 0.0 from the backend is not a grade
     expect(el(container, 'report-card').textContent).toContain('no strengthened grades')
   })
@@ -380,7 +387,7 @@ describe('round 3 · dead ends: paging never shows a disabled arrow', () => {
   it('a family matrix that fits says so and shows no arrows', () => {
     const { container } = renderRig('#/rig/an:mini:family', { data: shapes() })
     expect(el(container, 'family-pages').textContent).toBe('all 2 harnesses shown')
-    expect(screen.queryByRole('button', { name: /harnesses/ })).toBeNull()
+    expect(within(el(container, 'family-pages')).queryByRole('button')).toBeNull()
   })
   it('a paged family matrix hides the arrow at each end', () => {
     const { container } = renderRig('#/rig/an:wide:family', { data: shapes() })
@@ -475,7 +482,12 @@ describe('round 3 · breathing: every view leads with its answer and keeps metho
   })
   it('the family answer names the highest and lowest family with denominators', () => {
     const { container } = renderRig('#/rig/an:mini:family', { data: data() })
-    expect(el(container, 'family-answer').textContent).toBe('Highest: alpha-1 under terse at 100.0% (4/4); lowest: beta-2 under baseline at 33.3% (1/3) — hidden-suite grades among known ones, over 4 families.')
+    expect(el(container, 'family-answer').textContent).toBe('Highest: alpha-1 under terse at 100.0% (4/4); lowest: beta-2 under baseline at 33.3% (1/3) — hidden suite among known grades, over 4 families.')
+  })
+  it('reports the interaction share without classifying the effect as additive', () => {
+    const { container } = renderRig('#/rig/an:mini:fit', { data: data() })
+    expect(el(container, 'fit-answer').textContent).toContain('of total variance')
+    expect(el(container, 'fit-answer').textContent).not.toContain('additive')
   })
 })
 

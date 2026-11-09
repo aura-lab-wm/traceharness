@@ -9,6 +9,14 @@ import { renderRig, resetRig, rigFixture } from '../../../test/rig-testing'
 afterEach(resetRig)
 
 describe('home · dataset library', () => {
+  it('labels an ungraded recording without showing a zero-percent failure rate', () => {
+    const data = rigFixture()
+    data['/overview'].results[0].pass_rate = null
+    const { container } = renderRig('#/rig/home', { data })
+    const row = [...container.querySelectorAll('[data-el="dataset-list"] tbody tr')].find((node) => node.querySelector('b').textContent === data['/overview'].results[0].name)
+    expect(row.textContent).toContain('Not graded')
+    expect(row.textContent).not.toContain('0.0%')
+  })
   it('lists every dataset from /api/overview with its kind and stats', () => {
     const { container, requests } = renderRig('#/rig/home')
     const list = container.querySelector('[data-el="dataset-list"]')

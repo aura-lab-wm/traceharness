@@ -13,6 +13,8 @@ import { useDataset, useRuns, useOutcomes, short, fmt, tally, tokStats, conditio
 import { useRig } from '../context'
 import { AskingSentence, Go, Kbd, Panel, OutcomeBar, Verdict, FailureChip, PinButton, Tag, Loading, ErrorState, NotFound, Empty, failureSummary } from '../ui'
 import { QuestionStack } from './questions'
+import { RecordingProvenance } from '../RecordingProvenance'
+import { suiteLabel, tokenCoverage } from '../provenance'
 import './dataset.css'
 
 const { pct, int, plural } = fmt
@@ -60,7 +62,7 @@ function Overview({ dir, c, row }) {
     <div className="rg-dh">
       <div className="t" data-el="condition-summary"><div className="rg-eyebrow">Condition overview · one model × harness in focus</div>
         <h2><span className="rg-mono">{short(c.model)}</span> <span className="rg-dim" style={{ fontWeight: 400 }}>under</span> <span className="rg-mono">{c.harness}</span></h2>
-        <p className="rg-mono rg-small">{dir} · {plural(d.tasks.length, 'task')} · {int(d.list.length)} attempts · {oracle}-suite grades</p></div>
+        <p className="rg-mono rg-small">{dir} · {plural(d.tasks.length, 'task')} · {int(d.list.length)} attempts · {suiteLabel(d.list, oracle)}</p></div>
       <PinButton item={{ id: `cell:${dir}:${c.model}:${c.harness}`, kind: 'cell', label: `${short(c.model)} · ${c.harness} · ${dir}`, value: `${pct(d.o.rate)} · ${d.o.p}/${d.o.known} known (${oracle})`, spec: makeSpec('ds', ...cs), dir, model: c.model, harness: c.harness }} />
       <Go spec={makeSpec('tasks', ...cs)} className="rg-btn pri lg" el="explore-trajectories-cta">Explore all trajectories <Kbd>↵</Kbd></Go>
     </div>
@@ -72,7 +74,7 @@ function Overview({ dir, c, row }) {
         <span className="rg-small rg-mute">{d.o.u ? `${d.o.u} unknown grade${d.o.u > 1 ? 's' : ''} excluded from the rate.` : 'No unknown grades here.'}</span></div>
       <Go spec={makeSpec('tasks', ...cs)} className="rg-stat" el="mixed-outcomes-count"><span className="rg-lbl">Mixed outcomes</span><span className="rg-fig md">{d.mixed.length}<span className="u">/ {d.tasks.length} tasks</span></span><span className="rg-small rg-dim">Same condition — some attempts pass, others fail.</span>{d.mixed.length > 0 && <span className="rg-small rg-amb rg-mono">{d.mixed.slice(0, 3).map((x) => x.t).join(' · ')}</span>}</Go>
       <div className="rg-stat" data-el="visible-hidden-disagreements"><span className="rg-lbl">Visible ≠ hidden</span><span className="rg-fig md">{d.dis.length}<span className="u">/ {d.both.length}</span></span><span className="rg-small rg-dim">{d.visOnly} passed the visible tests and not the hidden suite.</span><span className="rg-small rg-mute">{d.list.length - d.both.length} attempts lack one of the two grades.</span></div>
-      <div className="rg-stat" data-el="mean-tokens"><span className="rg-lbl">Mean tokens / run</span><span className="rg-fig md">{d.tk.mean == null ? '—' : int(d.tk.mean)}</span><span className="rg-small rg-dim rg-mono">usage recorded {d.tk.rec}/{d.tk.n}</span><span className="rg-small rg-mute">Not a savings estimate.</span></div>
+      <div className="rg-stat" data-el="mean-tokens"><span className="rg-lbl">Mean tokens / run{d.tk.estimated ? ' · includes estimates' : ''}</span><span className="rg-fig md">{d.tk.mean == null ? '—' : int(d.tk.mean)}</span><span className="rg-small rg-dim rg-mono">{tokenCoverage(d.tk)}</span><span className="rg-small rg-mute">Not a savings estimate.</span></div>
     </div>
     <Panel label="Model performance · one harness, different models" meta={<Tag>{c.harness}</Tag>} el="model-performance-table" flush>
         <div className="rg-tblwrap"><table className="rg-tbl"><thead><tr><th>model</th><th className="rg-num">success</th><th className="rg-num rg-hide-sm">known · unknown</th><th className="rg-num">mean tokens</th><th className="rg-num rg-hide-sm">coverage</th><th><span className="sr-only">Open</span></th></tr></thead>
@@ -81,7 +83,7 @@ function Overview({ dir, c, row }) {
               <td className="rg-mono"><Go spec={makeSpec('ds', dir, short(x.m), c.harness)} className="rg-tlink">{short(x.m)}</Go><div className="rg-tiny rg-mute">{x.l.length} attempts</div></td>
               <td className="rg-num rg-mono"><b>{pct(x.o.rate)}</b><div style={{ marginTop: 4 }}><OutcomeBar p={x.o.p} f={x.o.f} u={x.o.u} /></div></td>
               <td className="rg-num rg-mono rg-small rg-hide-sm">{x.o.p}/{x.o.known} · {x.o.u}</td>
-              <td className="rg-num rg-mono">{x.tk.mean == null ? '—' : int(x.tk.mean)}<div className="rg-tiny rg-mute">{x.tk.rec}/{x.tk.n} recorded</div></td>
+              <td className="rg-num rg-mono">{x.tk.mean == null ? '—' : int(x.tk.mean)}<div className="rg-tiny rg-mute">{tokenCoverage(x.tk)}</div></td>
               <td className="rg-num rg-mono rg-small rg-hide-sm">{x.tasks} tasks</td>
               <td className="rg-num"><Go spec={makeSpec('ds', dir, short(x.m), c.harness)} className="rg-btn ghost" title={`Focus ${short(x.m)}`}>→</Go></td>
             </tr>))}</tbody></table></div>
@@ -115,6 +117,7 @@ function Overview({ dir, c, row }) {
 function Dataset({ spec, args }) {
   const [dir, m, h] = args
   const ds = useDataset(dir)
+  const R = useRuns(dir)
   const { conditionFor } = useRig()
   if (ds.error) return <ErrorState error={ds.error} onRetry={ds.reload} what="The dataset index (/api/overview)" />
   if (ds.missing) return <NotFound spec={spec} detail={`There is no dataset “${dir}” in data/runs on this machine.`} />
@@ -130,6 +133,7 @@ function Dataset({ spec, args }) {
           <div className="rg-row rg-wrap" style={{ marginTop: 8 }} data-el="dataset-stats"><Tag tone={row.kind === 'mock' ? 'dash' : undefined} el="dataset-kind">{row.kind === 'mock' ? 'Mock control' : 'Recorded'}</Tag><Tag nc>{int(row.runs)} runs</Tag><Tag nc>{row.models.length} models</Tag><Tag nc>{row.harnesses.length} harnesses</Tag><Tag nc>{row.tasks.length} tasks</Tag></div>
           {row.kind === 'mock' && <p>Mock control: scripted agents with designed failure rates. All-pass or all-fail here would mean the grader broke, not the model.</p>}</div>
       </div>
+      <RecordingProvenance runs={R.data} />
       <AskingSentence dir={dir} model={c.model} harness={c.harness} />
       <section aria-label="Questions" className="rg-ds-questions">
         <div className="rg-row rg-ds-sh"><h2>Questions, already answered</h2><span className="rg-grow" /><Go spec={makeSpec('q', dir)} className="rg-tlink">Open as a document →</Go></div>
@@ -148,8 +152,8 @@ function Actions({ args }) {
   return (
     <div className="rg-seg" data-el="view-switch" role="group" aria-label="View">
       <button type="button" className="on" aria-pressed="true">Overview</button>
-      <Go spec={makeSpec('tasks', ...cs)} className="rg-ds-seg">Trajectories</Go>
-      <Go spec={makeSpec('an', dir, 'family')} className="rg-ds-seg rg-hide-sm">Analysis</Go>
+      <Go spec={makeSpec('tasks', ...cs)} replace className="rg-ds-seg">Trajectories</Go>
+      <Go spec={makeSpec('an', dir, 'family', ...cs.slice(1))} replace className="rg-ds-seg rg-hide-sm">Analysis</Go>
     </div>
   )
 }

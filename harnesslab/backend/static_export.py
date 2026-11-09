@@ -8,6 +8,7 @@ single file that opens from disk with no server, no network and no dependencies.
     python -m harnesslab --export me.html
     python -m harnesslab --export me.html --export-results live
     python -m harnesslab --export me.html --export-results live --export-runs 0   # skip run details
+    python -m harnesslab --export me.html --export-runs 2000 --export-compress-data
 
 The snapshot is taken by calling the running app through Starlette's TestClient rather than by
 calling the metrics functions directly, so what lands in the file is byte-for-byte what the
@@ -18,9 +19,12 @@ Live actions (launching runs, training, importing) are absent by construction: t
 to POST to. The frontend detects the embedded payload, serves reads from it, refuses writes, and
 matches on the *normalised query string* so a request carrying parameters the snapshot lacks
 fails loudly instead of quietly resolving to the wrong numbers.
+
+A standalone export stays read-only. A host may explicitly insert an authenticated member
+marker to enable its narrowly scoped harness compile/save bridge; this never enables execution.
 """
 from __future__ import annotations
-import json, os, re, time
+import base64, gzip, json, os, re, time
 from urllib.parse import quote
 
 from .paths import DIST, RUNS_ROOT
@@ -30,6 +34,11 @@ from .results_scope import is_private, list_results_dirs
 # How many per-run detail payloads to embed. Trajectories needs one per run it can open; all 576
 # of a live directory would make the file unwieldy, so this is a bounded, stated sample.
 DEFAULT_RUNS = 40
+
+# These are limits on the snapshot, independent of any web host's HTML limit. Check both
+# while exporting and while reading: a small gzip must not allocate unbounded decoded data.
+MAX_DATA_BYTES = 256 * 1024 * 1024
+MAX_COMPRESSED_DATA_BYTES = 64 * 1024 * 1024
 
 
 #: Keys stripped from a payload before it is embedded. An export is handed to a participant or a
@@ -108,12 +117,15 @@ def _dir_urls(client, d: str, n_runs: int) -> list[str]:
            # aggregates-design.md): no parameters to vary, one bake per dir.
            f"/api/results/{d}/oracle",
            # The attribution matrix: every model's per-harness comparison in one response, at
-           # its bare (server-picked) baseline HARNESS. That bare form is what the matrix
-           # requests today; one bake per real harness is added below so a baseline picker
-           # would find its data offline. The baseline is a HARNESS id -- the first version of
+           # its bare (server-picked) baseline HARNESS. Explicit default and real-harness
+           # variants below also cover the matrix and its baseline picker offline.
+           # The baseline is a HARNESS id -- the first version of
            # this baked one variant per MODEL, which matched an endpoint that wrongly compared
            # models against each other.
-           f"/api/results/{d}/comparisons"]
+           f"/api/results/{d}/comparisons",
+           # The frontend's historical default is explicit even when this dataset's
+           # actual harness is named swe-agent or claude-code. The live API resolves it.
+           f"/api/results/{d}/comparisons?baseline=baseline"]
     for h in harnesses:
         out.append(f"/api/results/{d}/comparisons?baseline={q(h)}")
     for h in harnesses:
@@ -126,11 +138,14 @@ def _dir_urls(client, d: str, n_runs: int) -> list[str]:
                 # the Sentinel page's leaderboard, at the defaults its controls start on
                 f"/api/sentinel/leaderboard?dir={d}&k=10%2C15%2C20&threshold=0.6&harness={q(h)}",
                 f"/api/repeats/{d}?harness={q(h)}"]
+        for model in sorted({r["model"] for r in rows if r["harness_id"] == h}):
+            out.append(f"/api/results/{d}/report?harness={q(h)}&model={q(model)}")
     for oracle in ("hidden_pass", "strong_pass", "visible_pass"):
         out.append(f"/api/harness/ranking?dir={d}&outcome={oracle}")
         # the three decks read the assistant's deterministic digest per (dir, harness, oracle)
         for h in harnesses:
             out.append(f"/api/assist/context?results={d}&harness={q(h)}&oracle={oracle}")
+            out.append(f"/api/results/{d}/patterns?harness={q(h)}&outcome={oracle}")
         for a, b in (("model", "harness_id"), ("harness_id", "model"),
                      ("model", "task_id"), ("harness_id", "task_id")):
             out.append(f"/api/results/{d}/experiment?a={a}&b={b}&outcome={oracle}")
@@ -143,7 +158,7 @@ def _dir_urls(client, d: str, n_runs: int) -> list[str]:
         # `detail` stays null and the tooltip just omits the command line).
         out += [f"/api/results/{d}/runs/{r['run_id']}", f"/api/fork/{d}/state/{r['run_id']}",
                 f"/api/repeats/{d}/run/{r['run_id']}"]
-    return out
+    return list(dict.fromkeys(out))
 
 
 def _urls(client, dirs: list[str], n_runs: int) -> list[str]:
@@ -201,7 +216,127 @@ def _fetch(client, url: str, sink: dict, fail_sink: list) -> None:
         fail_sink.append((url, f"{type(e).__name__}: {e}"))
 
 
-def build(out_path: str, results: list[str] | None = None, n_runs: int = DEFAULT_RUNS) -> dict:
+def ledger_coverage(data: dict, dirs: list[str]) -> dict:
+    """Actual run-detail coverage, counted from committed responses, never the requested limit.
+
+    Missing index responses have unknown coverage, including a generation that could not be
+    pinned. Only details matching a baked index row count; an unrelated key cannot fill a gap.
+    """
+    coverage = {}
+    for d in dirs:
+        rows = data.get(f"/results/{d}/runs")
+        if not isinstance(rows, list):
+            coverage[d] = {"index_rows": None, "indexed_runs": None, "embedded_runs": 0,
+                           "missing_runs": None, "complete": False}
+            continue
+        ids = {r["run_id"] for r in rows if isinstance(r, dict) and isinstance(r.get("run_id"), str)}
+        embedded = sum(f"/results/{d}/runs/{run_id}" in data for run_id in ids)
+        coverage[d] = {"index_rows": len(rows), "indexed_runs": len(ids), "embedded_runs": embedded,
+                       "missing_runs": len(ids) - embedded,
+                       "complete": embedded == len(ids) == len(rows)}
+    return coverage
+
+
+def _data_banner(data: dict, compress_data: bool = False) -> str:
+    blob = json.dumps(data, separators=(",", ":"), allow_nan=False)
+    if not compress_data:
+        # Escape every '<', including HTML's script double-escaped-state opener, rather
+        # than only closing tags. JSON.parse and the historical assignment agree on it.
+        return '<script>window.__HARNESSLAB_DATA__=' + blob.replace("<", "\\u003c") + ';</script>'
+
+    raw = blob.encode("utf-8")
+    if len(raw) > MAX_DATA_BYTES:
+        raise ValueError(f"snapshot exceeds the compressed export's {MAX_DATA_BYTES // (1024 * 1024)} MiB decoded limit")
+    compressed = gzip.compress(raw, mtime=0)
+    if len(compressed) > MAX_COMPRESSED_DATA_BYTES:
+        raise ValueError("compressed snapshot exceeds the export's compressed-data limit")
+    encoded = base64.b64encode(compressed).decode("ascii")
+    # Base64 is inert HTML text, never a JavaScript literal; the engine parses only this
+    # small bootstrap. Native gzip also checks its checksum/trailer before data is exposed.
+    banner = (f'<script id="harnesslab-data" type="application/octet-stream" '
+              f'data-encoding="gzip-base64" data-bytes="{len(raw)}">{encoded}</script>')
+    bootstrap = r'''<script>
+window.__HARNESSLAB_DATA_READY__ = (async function () {
+  const source = document.getElementById('harnesslab-data');
+  if (!source || source.dataset.encoding !== 'gzip-base64') throw new Error('The embedded data format is unsupported.');
+  if (typeof DecompressionStream !== 'function') throw new Error('This browser cannot decompress the export. Open it in a current browser, or create an export without --export-compress-data.');
+  const expected = Number(source.dataset.bytes);
+  if (!Number.isSafeInteger(expected) || expected <= 0 || expected > MAX_DECODED_BYTES) throw new Error('The embedded data size is invalid or exceeds the export limit.');
+  let encoded = source.textContent;
+  if (!encoded.length || encoded.length > MAX_BASE64_BYTES || encoded.length % 4) throw new Error('The embedded compressed data is incomplete or too large.');
+  const chunks = [];
+  let compressedBytes = 0;
+  for (let offset = 0; offset < encoded.length; offset += 65536) {
+    const part = atob(encoded.slice(offset, offset + 65536));
+    compressedBytes += part.length;
+    if (compressedBytes > MAX_COMPRESSED_BYTES) throw new Error('The embedded compressed data is too large.');
+    const bytes = new Uint8Array(part.length);
+    for (let i = 0; i < part.length; i++) bytes[i] = part.charCodeAt(i);
+    chunks.push(bytes);
+  }
+  encoded = null;
+  source.textContent = '';
+  const reader = new Blob(chunks).stream().pipeThrough(new DecompressionStream('gzip')).getReader();
+  chunks.length = 0;
+  const decoder = new TextDecoder('utf-8', { fatal: true });
+  const parts = [];
+  let total = 0;
+  try {
+    while (true) {
+      const { value, done } = await reader.read();
+      if (done) break;
+      total += value.byteLength;
+      if (total > expected || total > MAX_DECODED_BYTES) throw new Error('The embedded data exceeds its declared size.');
+      parts.push(decoder.decode(value, { stream: true }));
+    }
+    if (total !== expected) throw new Error('The embedded data is incomplete.');
+    parts.push(decoder.decode());
+  } catch (error) {
+    await reader.cancel().catch(function () {});
+    throw error;
+  } finally {
+    reader.releaseLock();
+  }
+  const data = JSON.parse(parts.join(''));
+  parts.length = 0;
+  if (!data || typeof data !== 'object' || Array.isArray(data) || data.__meta__?.static !== true || !Array.isArray(data.__meta__.results)) throw new Error('The embedded snapshot is invalid.');
+  window.__HARNESSLAB_DATA__ = data;
+  return data;
+})();
+window.__HARNESSLAB_DATA_READY__.catch(function (error) {
+  function showFailure() {
+    const root = document.getElementById('root') || document.body;
+    const panel = document.createElement('div');
+    panel.id = 'harnesslab-export-error';
+    panel.setAttribute('role', 'alert');
+    panel.style.cssText = 'max-width:620px;margin:12vh auto;padding:24px;font:16px/1.6 system-ui,sans-serif';
+    const title = document.createElement('h1');
+    title.textContent = 'The recorded data could not be loaded.';
+    const detail = document.createElement('p');
+    detail.textContent = error instanceof Error ? error.message : 'The export is incomplete or unsupported.';
+    const help = document.createElement('p');
+    help.textContent = 'Reload the page or open a fresh export. No recorded data or saved harnesses were changed.';
+    panel.append(title, detail, help);
+    const member = window.__TRACEHARNESS_MEMBER__;
+    if (member?.version === 1 && /^[a-f0-9]{24}$/.test(member.scope) && /^https?:$/.test(location.protocol)) {
+      const link = document.createElement('a');
+      link.href = '/app/shallow';
+      link.textContent = 'Open the simple harness editor';
+      panel.append(link);
+    }
+    root.replaceChildren(panel);
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', showFailure, { once: true });
+  else showFailure();
+});
+</script>'''
+    return banner + "\n" + bootstrap.replace("MAX_DECODED_BYTES", str(MAX_DATA_BYTES)).replace(
+        "MAX_COMPRESSED_BYTES", str(MAX_COMPRESSED_DATA_BYTES)).replace(
+        "MAX_BASE64_BYTES", str(4 * ((MAX_COMPRESSED_DATA_BYTES + 2) // 3)))
+
+
+def build(out_path: str, results: list[str] | None = None, n_runs: int = DEFAULT_RUNS,
+          *, compress_data: bool = False) -> dict:
     index = os.path.join(DIST, "index.html")
     if not os.path.exists(index):
         raise SystemExit("the UI is not built. Run: cd harnesslab/frontend && npm install && npm run build")
@@ -265,35 +400,65 @@ def build(out_path: str, results: list[str] | None = None, n_runs: int = DEFAULT
                                f"attempts; {d}'s study-aggregate endpoints were skipped rather "
                                f"than baked from a mixed generation"))
 
+    coverage = ledger_coverage(data, dirs)
     data["__meta__"] = {"generated_at": time.strftime("%Y-%m-%d %H:%M"), "results": dirs,
-                        "static": True, "runs_embedded": n_runs}
+                        "static": True, "runs_embedded": n_runs,
+                        "runs_limit_per_dataset": n_runs, "ledger_coverage": coverage}
 
-    html = open(index, encoding="utf-8").read()
+    with open(index, encoding="utf-8") as f:
+        html = f.read()
 
     def inline(m):
         tag, url = m.group(0), m.group(2)
         p = os.path.join(DIST, url.lstrip("/"))
         if not os.path.exists(p):
             return tag
-        body = open(p, encoding="utf-8").read()
+        with open(p, encoding="utf-8") as f:
+            body = f.read()
+        if url.endswith(".svg"):
+            encoded = base64.b64encode(body.encode("utf-8")).decode("ascii")
+            return tag.replace(f'href="{url}"', f'href="data:image/svg+xml;base64,{encoded}"', 1)
         if url.endswith(".css"):
             return f"<style>\n{body}\n</style>"
         if url.endswith(".js"):
-            return f'<script type="module">\n{body}\n</script>'
+            # A compressed snapshot is async. Hold the entire compiled app before its
+            # module-level IS_STATIC/cache initialization reads __HARNESSLAB_DATA__.
+            ready = '''if (!window.__HARNESSLAB_DATA_READY__) {
+  const panel = document.createElement('div');
+  panel.id = 'harnesslab-export-error';
+  panel.setAttribute('role', 'alert');
+  panel.style.cssText = 'max-width:620px;margin:12vh auto;padding:24px;font:16px/1.6 system-ui,sans-serif';
+  panel.textContent = 'The recorded data could not be loaded. This exported file is incomplete. Reload the page or open a fresh export.';
+  const member = window.__TRACEHARNESS_MEMBER__;
+  if (member?.version === 1 && /^[a-f0-9]{24}$/.test(member.scope) && /^https?:$/.test(location.protocol)) {
+    const link = document.createElement('a');
+    link.href = '/app/shallow';
+    link.textContent = 'Open the simple harness editor';
+    panel.append(document.createElement('br'), link);
+  }
+  (document.getElementById('root') || document.body || document.documentElement).replaceChildren(panel);
+  throw new Error('The embedded data bootstrap is missing.');
+}
+await window.__HARNESSLAB_DATA_READY__;
+''' if compress_data else ""
+            body = re.sub(r"</script", lambda m: m[0].replace("/", "\\/"), body, flags=re.I)
+            return f'<script type="module">\n{ready}{body}\n</script>'
         return tag
 
     # drop remote font links: a file meant to open offline must not hang on a network fetch.
     # The CSS carries a system-font fallback stack, so this costs the webfont and nothing else.
     html = re.sub(r'<link[^>]+fonts\.(googleapis|gstatic)\.com[^>]*>', "", html)
+    html = re.sub(r'<link[^>]*rel="icon"[^>]*(href)="([^"]+)"[^>]*>', inline, html)
     html = re.sub(r'<link[^>]*rel="stylesheet"[^>]*(href)="([^"]+)"[^>]*>', inline, html)
     html = re.sub(r'<script[^>]*(src)="([^"]+)"[^>]*></script>', inline, html)
 
-    blob = json.dumps(data, separators=(",", ":")).replace("</", "<\\/")
-    banner = f"<script>window.__HARNESSLAB_DATA__={blob};</script>"
+    banner = _data_banner(data, compress_data)
     html = html.replace("</head>", banner + "\n</head>", 1) if "</head>" in html else banner + html
 
     with open(out_path, "w", encoding="utf-8") as f:
         f.write(html)
     return {"path": os.path.abspath(out_path), "bytes": len(html.encode()),
             "results": dirs, "endpoints": len(data) - 1, "failed": failed,
-            "runs_embedded": n_runs}
+            "runs_embedded": n_runs, "ledger_coverage": coverage,
+            "embedded_run_details": sum(c["embedded_runs"] for c in coverage.values()),
+            "data_encoding": "gzip-base64" if compress_data else "json"}

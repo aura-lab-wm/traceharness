@@ -353,7 +353,7 @@ def overview(runs_root: Optional[str] = None, db_path: Optional[str] = None) -> 
         if is_private(root, name):
             continue
         agg = cx.execute(
-            "SELECT COUNT(*) n, AVG(CASE WHEN hidden_pass THEN 1.0 ELSE 0.0 END) p FROM runs WHERE dir = ?",
+            "SELECT COUNT(*) n, AVG(hidden_pass) p FROM runs WHERE dir = ?",
             (name,)).fetchone()
         def distinct(col):
             return [r[0] for r in cx.execute(

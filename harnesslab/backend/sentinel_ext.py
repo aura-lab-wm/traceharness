@@ -25,9 +25,8 @@ from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 
 from . import sentinel as S
+from .paths import RUNS_ROOT
 
-LAB = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-RUNS_ROOT = os.path.join(LAB, "data", "runs")
 CACHE_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "data", "cache", "leaderboard")
 HARNESSLAB_VERSION = "0.1"
 BUNDLE_FORMAT = "harnesslab.sentinel.model/1"
@@ -378,7 +377,7 @@ def leaderboard(dir_name: str, ks=DEFAULT_KS, threshold: float = 0.6, harness: O
     ents = _entrants()
     key = _sha({"dir": dir_name, "sig": _dir_sig(d), "ks": list(ks), "thr": threshold, "harness": harness,
                 "B": bootstrap, "max_runs": max_runs, "seed": seed,
-                "entrants": [[e["name"], e["sha"]] for e in ents], "v": 3})
+                "entrants": [[e["name"], e["sha"]] for e in ents], "v": 4})
     cache_path = os.path.join(CACHE_DIR, key + ".json")
     if use_cache and os.path.exists(cache_path):
         try:
@@ -390,10 +389,11 @@ def leaderboard(dir_name: str, ks=DEFAULT_KS, threshold: float = 0.6, harness: O
             pass
     t0 = time.time()
     runs = _prefix_table(d, harness=harness, max_runs=max_runs)
-    if not runs:
-        raise HTTPException(404, f"no labelled runs in {dir_name}" + (f" for harness {harness}" if harness else ""))
     rows = []
-    for e in ents:
+    # An existing captured dataset can have real ledgers but no oracle labels. There
+    # is no ranking to estimate in that case; it is distinct from _dir()'s missing-dir
+    # 404 and must not turn the untrained prior into fabricated benchmark evidence.
+    for e in ents if runs else []:
         risks = _risks_for(e, runs)
         st = _entrant_stats(risks, runs, ks, threshold, bootstrap, seed)
         rows.append({"model": e["name"], "kind": e["kind"], "active": e["active"], "trained": e["trained"],
@@ -410,6 +410,8 @@ def leaderboard(dir_name: str, ks=DEFAULT_KS, threshold: float = 0.6, harness: O
     out = {"dir": dir_name, "harness": harness, "k": list(ks), "threshold": threshold, "bootstrap": bootstrap,
            "n_runs": len(runs), "n_fail": sum(r["label"] for r in runs),
            "n_prefixes": sum(len(r["steps"]) for r in runs),
+           "supported": bool(runs), "run_count_scope": "labelled runs with replayable steps",
+           "reason": None if runs else "No labelled runs with replayable steps are available for this selection. Recorded runs without oracle labels cannot be ranked.",
            "metric": "EW-AUC@k = AUC among runs still alive at step k (see harnesslab/docs/early_warning_metric.md)",
            "rows": rows, "computed_at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
            "seconds": round(time.time() - t0, 2), "cached": False, "cache_key": key[:12]}

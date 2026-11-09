@@ -66,9 +66,15 @@ def pass_pow_k(c: int, n: int, k: int) -> float:
 
 
 def task_table(rows: list[dict], outcome: str = "hidden_pass", k_values=(1, 2, 3, 5)) -> dict:
+    """Per-task estimates over recorded verdicts; an absent grade is not a failed run.
+
+    Keep accepting the boolean-valued 0/1 indicators used by conduct comparisons. Counts
+    here describe eligible grades; callers retain the total recorded run count separately.
+    """
     by_task = defaultdict(list)
     for r in rows:
-        by_task[r["task_id"]].append(bool(r.get(outcome)))
+        if r.get(outcome) is not None:
+            by_task[r["task_id"]].append(bool(r[outcome]))
     out = {}
     for tid, outcomes in sorted(by_task.items()):
         n, c = len(outcomes), sum(outcomes)
@@ -197,7 +203,8 @@ def mean(xs: Iterable[float]) -> float:
 
 # ---------------------------------------------------------------- stability and conduct
 def flip_rate(rows: list[dict], outcome: str = "hidden_pass") -> float:
-    """Fraction of tasks (with >= 2 runs) whose outcome differs across runs."""
+    """Fraction of tasks with >= 2 known grades whose outcome differs across runs."""
+    rows = [r for r in rows if r.get(outcome) is not None]
     by_task = defaultdict(set)
     counts = Counter(r["task_id"] for r in rows)
     for r in rows:

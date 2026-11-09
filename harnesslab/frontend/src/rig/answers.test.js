@@ -20,6 +20,7 @@ describe('the nine questions answer from payloads, never invent', () => {
   it('variable → experiment fit', () => {
     const r = ask('variable'); expect(r.state).toBe('answered')
     expect(r.answer.num).toBe('20.0%'); expect(text(r.answer)).toContain('model')
+    expect(text(r.answer)).not.toContain('additive')
     expect(r.answer.runs.test(runs[8])).toBe(true)
     expect(ask('variable', { experiment: { fit: { status: 'insufficient_data', reason: 'fewer_than_2_balanced_levels_b' } } }).state).toBe('unanswered')
   })
@@ -47,13 +48,14 @@ describe('the nine questions answer from payloads, never invent', () => {
   })
   it('sentinel → only a model trained on this dataset answers', () => {
     expect(ask('sentinel').answer.num).toBe('50%')
+    expect(ask('sentinel').answer.note).toBe('Replay measures detection on these recorded trajectories. A live intervention can change later actions; its effect on outcomes requires separate measurement.')
     expect(sentinelFor(F['/sentinel'], 'other')).toBeNull()
     expect(ask('sentinel', { dir: 'other' }).state).toBe('unanswered')
   })
   it('report → the pooled card is labelled pooled with its n', () => {
     const r = ask('report')
     expect(r.answer.numLabel).toBe('all 2 models · baseline (pooled) · n = 8')
-    expect(r.answer.note).toContain('pools every model')
+    expect(r.answer.note).toContain('pools 8 runs across 2 models')
     expect(ask('report', { report: { error: 'no runs' } })).toMatchObject({ state: 'unanswered' })
   })
   it('next → repeats plan', () => {
@@ -64,4 +66,17 @@ describe('the nine questions answer from payloads, never invent', () => {
     expect(answerQuestion(QMAP.grader, input({ oracleData: null }), { oracle: true })).toEqual({ state: 'loading' })
     expect(answerQuestion(QMAP.grader, input({ oracleData: null }), { oracle: 'error' }).state).toBe('unanswered')
   })
+})
+
+// The transition counts, not the net change, determine how many passes were lost.
+it('distinguishes gross lost/gained passes from net oracle change, even when net is zero', () => {
+  const oracleData = { n_eligible: 500, n_excluded: 0, cells: { only_a_true: 30, only_b_true: 10, both_true: 300, both_false: 160 }, rate_a: { rate: 0.66 }, rate_b: { rate: 0.62 }, kappa: 0.8 }
+  const answer = ask('grader', { oracleData }).answer
+  expect(text(answer)).toContain('6.0 percentage points lost')
+  expect(text(answer)).toContain('2.0 gained')
+  expect(answer.num).toBe('−4.0pp')
+  oracleData.cells.only_b_true = 30; oracleData.rate_b.rate = 0.66
+  const equal = ask('grader', { oracleData }).answer
+  expect(text(equal)).toContain('6.0 percentage points lost')
+  expect(text(equal)).not.toContain('no pass is lost')
 })

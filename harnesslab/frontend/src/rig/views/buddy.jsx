@@ -8,6 +8,7 @@
    not-connected state and never an answer — no canned text, ever.
    ==================================================================================== */
 import { useEffect, useMemo, useRef, useState } from 'react'
+import { IS_MEMBER } from '../../api'
 import { askBuddy, buddyEvidence, buddySettings, redactBuddy } from '../../workspace/buddyClient'
 import BuddyModelPicker from '../../workspace/BuddyModelPicker'
 import BuddyMessage from '../../workspace/BuddyMessage'
@@ -58,7 +59,32 @@ function useEvidence(items, ctx) {
   }, [items, dir, first, second, R.data, R.error, A.data, A.loading, A.error, B.data, B.loading, B.error])
 }
 
-function BuddyDock({ ctx = {} }) {
+function BuddyDock(props) {
+  return IS_MEMBER ? <MemberBuddyDock {...props} /> : <LiveBuddyDock {...props} />
+}
+
+function MemberBuddyDock({ ctx = {} }) {
+  const items = useCaseFile()
+  const { setDock, openTab } = useRig()
+  return (
+    <div className="rg-bud" data-el="buddy-panel">
+      <div className="rg-note" data-el="buddy-local-only"><div>
+        <b>Buddy runs in the local workbench.</b>
+        <p>Keep inspecting and pinning evidence here. To ask a model about it, start <code>python -m harnesslab --host 127.0.0.1 --port 8742</code> and open <code>127.0.0.1:8742</code>.</p>
+      </div></div>
+      {ctx.dir && <p className="rg-small">Selected dataset: <b>{ctx.dir}</b>{ctx.run && <> · run <span className="rg-mono">{ctx.run}</span></>}</p>}
+      <div data-el="buddy-evidence">
+        <b>{items.length} pinned item{items.length === 1 ? '' : 's'}</b>
+        <ul className="rg-bud-ev">{items.map((item) => <li key={item.id}><Tag>{item.kind}</Tag> <span className="rg-mono rg-tiny">{item.label}</span></li>)}</ul>
+        <p className="rg-small rg-mute">The case file is stored in this browser. Open it to export the evidence you have collected.</p>
+        <button type="button" className="rg-btn" onClick={() => setDock('case')}>Open case file</button>
+        {!items.length && <button type="button" className="rg-btn ghost" onClick={() => openTab('home')}>Browse datasets</button>}
+      </div>
+    </div>
+  )
+}
+
+function LiveBuddyDock({ ctx = {} }) {
   const items = useCaseFile()
   const { openTab, oracle, setDock } = useRig()
   const [settings, setSettings] = useState(() => buddySettings())

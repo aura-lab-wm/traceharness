@@ -10,7 +10,7 @@ describe('questions', () => {
     const { container } = renderRig('#/rig/q:mini:grader')
     expect(container.querySelector('h1').textContent).toBe('Can I trust the grader?')
     const ans = container.querySelector('[data-el="answer"]')
-    expect(ans.textContent).toContain('6.7 points')
+    expect(ans.textContent).toContain('6.7 percentage points lost')
     expect(ans.textContent).toContain('−6.7pp')
     expect(container.querySelector('[data-el="question-figure"]').textContent).toContain('κ 0.87')
     // the breadcrumb IS the evidence chain, Answer current

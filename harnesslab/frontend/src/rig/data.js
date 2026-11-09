@@ -155,10 +155,11 @@ export function tally(list, oracle = 'hidden') {
   for (const r of list || []) { const v = verdict(r, oracle); if (v === true) p++; else if (v === false) f++; else u++ }
   return { p, f, u, n: p + f + u, known: p + f, rate: p + f ? p / (p + f) : null }
 }
-/** Mean total tokens over runs that RECORDED usage; rec/n is the coverage to show beside it. */
+/** Mean available tokens; rec counts supplied values, estimated separates importer estimates from measured usage. */
 export function tokStats(list) {
   const rec = (list || []).filter((r) => r.in != null && r.out != null)
-  return { n: (list || []).length, rec: rec.length, mean: rec.length ? rec.reduce((a, r) => a + r.in + r.out, 0) / rec.length : null }
+  const estimated = rec.filter((r) => r.usageEstimated).length
+  return { n: (list || []).length, rec: rec.length, estimated, measured: rec.length - estimated, mean: rec.length ? rec.reduce((a, r) => a + r.in + r.out, 0) / rec.length : null }
 }
 export const isMockRow = (row) => !!row && (row.models || []).length > 0 && row.models.every((m) => String(m).startsWith('mock'))
 export const datasetKind = (row) => (isMockRow(row) ? 'mock' : 'recorded')
@@ -226,6 +227,7 @@ export function normRun(r, ds) {
     id: r.run_id, ds, task: r.task_id, harness: r.harness_id, model: r.model, rep: r.repeat_index, exit: r.exit_reason,
     vis: nb(r.visible_pass), hid: nb(r.hidden_pass), str: nb(r.strong_pass),
     in: r.input_tokens ?? null, out: r.output_tokens ?? null,
+    usageEstimated: r.provider === 'nebius/SWE-agent-trajectories',
     cost: imported ? null : (r.cost_usd ?? null), wall: imported ? null : (r.wall_ms ?? null),
     steps: r.steps, tools: r.tool_calls, edits: r.edits, bnd: r.boundary_events, bkinds: r.boundary_kinds || [],
     tests: r.tests_run_by_agent, rtbs: nb(r.ran_tests_before_submit), started: r.started_at || '', error: r.error || '',
@@ -255,7 +257,7 @@ export const paths = {
   experiment: (dir) => `/results/${E(dir)}/experiment`,
   oracle: (dir) => `/results/${E(dir)}/oracle`,
   integrity: (dir, harness) => `/results/${E(dir)}/integrity${harness ? '?harness=' + E(harness) : ''}`,
-  report: (dir, harness) => `/results/${E(dir)}/report${harness ? '?harness=' + E(harness) : ''}`,
+  report: (dir, harness, model) => `/results/${E(dir)}/report${harness || model ? '?' + [harness && 'harness=' + E(harness), model && 'model=' + E(model)].filter(Boolean).join('&') : ''}`,
   patterns: (dir, harness, outcome) => `/results/${E(dir)}/patterns${qs({ harness, outcome })}`,
   query: (dir, pattern, harness, outcome) => `/results/${E(dir)}/query${qs({ pattern, harness, outcome })}`,
   repeats: (dir, harness) => `/repeats/${E(dir)}${harness ? '?harness=' + E(harness) : ''}`,
@@ -325,7 +327,7 @@ export function useExperiment(dir, query) {
 }
 export function useOracle(dir) { return useApi(dir ? paths.oracle(dir) : null) }
 export function useIntegrity(dir, harness) { return useApi(dir ? paths.integrity(dir, harness) : null) }
-export function useReport(dir, harness) { return useApi(dir ? paths.report(dir, harness) : null) }
+export function useReport(dir, harness, model) { return useApi(dir ? paths.report(dir, harness, model) : null) }
 /** Exercise 7 on an imported SWE-agent set (real_features.jsonl); `{error}` for any other dataset. */
 export function useRealAnalysis(dir) { return useApi(dir ? paths.realAnalysis(dir) : null) }
 export function usePatterns(dir, harness, outcome) { return useApi(dir ? paths.patterns(dir, harness, outcome) : null) }

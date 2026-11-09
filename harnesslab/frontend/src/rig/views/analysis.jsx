@@ -11,8 +11,8 @@
      judge     /oracle (hidden vs strengthened, κ, 2×2), /integrity (flags, per-task oracle,
                leakage), /judge (LLM judge; run = POST /judge/run behind a confirm step)
      fit       /experiment two-factor fit, cell grid, pairwise contrasts
-     report    /results/<dir>/report?harness=<h>. The card's cell names ONE model but its
-               outcome pools every model under the harness; shown as "all N models · h (pooled)"
+     report    /results/<dir>/report?harness=<h>&model=<m>. A selected model/harness
+               cohort, with explicitly labelled dataset-wide contextual statistics.
      setup     compose a cell; Launch = POST /jobs (same body as method/StepRun.jsx) behind
                ConfirmAction, never automatic; disabled in a static export
      features  every dataset: action sequences, where a task's runs diverge, and a regex query over
@@ -32,13 +32,15 @@
    ==================================================================================== */
 import { useMemo, useState } from 'react'
 import { makeSpec } from '../route'
-import { api, IS_STATIC } from '../../api'
+import { api, IS_STATIC, IS_MEMBER } from '../../api'
 import {
   useDataset, useDatasets, useOverview, useRuns, useMetrics, useComparisons, useExperiment, isCapturedDir, useOracle, useIntegrity, useReport,
   useTasks, useModels, useJobs, useApi, useRealAnalysis, usePatterns, useQuery, short, fmt, tally, tokStats, conditionRuns, resolveCondition, metricsCell,
   verdict, invalidate, paths,
 } from '../data'
 import { useRig, useTabState } from '../context'
+import { RecordingProvenance } from '../RecordingProvenance'
+import { oracleChanges, suiteLabel, tokenCoverage } from '../provenance'
 import {
   AskingSentence, Go, Panel, OutcomeBar, CiBar, Verdict, FailureChip, PinButton, Tag, Note, Seg, SearchBox,
   Loading, ErrorState, NotFound, Empty, NextSteps, Btn, ConfirmAction, About, CopyCmd, Kbd, MOD, failureModeOf, failureSummary,
@@ -58,7 +60,7 @@ export const AN_VIEWS = [
 ]
 const AN_LABEL = Object.fromEntries(AN_VIEWS.map(([v, l]) => [v, l]))
 const PAL_KEYWORDS = { delta: 'compare comparison delta matrix baseline', judge: 'oracle integrity leakage kappa judge', fit: 'experiment anova two-factor contrasts', outcomes: 'pass@1 pass^k flip ci', family: 'family matrix models harnesses', report: 'report card export', setup: 'launch run setup compose', features: 'features patterns sequences query regex action string ochiai attribution sbfl failure swe-agent' }
-const LIVE_CMD = 'python -m harnesslab'
+const LIVE_CMD = IS_MEMBER ? 'python -m harnesslab --host 127.0.0.1 --port 8742' : 'python -m harnesslab'
 
 const probeLabel = (p) => String(p || '').replace(/_/g, ' ')
 function ProbeTag({ probe }) {
@@ -157,6 +159,7 @@ function AnNav({ dir, cur, c }) {
 function AnalysisDoc({ spec, args }) {
   const [dir, v0, m, h] = args
   const ds = useDataset(dir)
+  const R = useRuns(dir)
   const { conditionFor } = useRig()
   if (ds.error) return <ErrorState error={ds.error} onRetry={ds.reload} what="The dataset index" />
   // `captured` is private and is absent from the overview on purpose. Missing it is not "no such dataset":
@@ -174,6 +177,7 @@ function AnalysisDoc({ spec, args }) {
     <div className="rg-an-split">
       <AnNav dir={dir} cur={view} c={c} />
       <div className="rg-dpad rg-an-main" data-view={view}>
+        <RecordingProvenance runs={R.data} />
         <AskingSentence dir={dir} model={c.model} harness={c.harness} />
         <Body spec={spec} dir={dir} row={row} c={c} />
       </div>
@@ -251,8 +255,8 @@ function Family({ spec, dir, row, c }) {
   const lo = [...fams].sort((a, b) => a.o.rate - b.o.rate || b.o.known - a.o.known)[0]
   const famTxt = (x) => <><b className="rg-mono">{short(x.m)}</b> under <b className="rg-mono">{x.h}</b> at {pct(x.o.rate)} ({x.o.p}/{x.o.known})</>
   const lead = !fams.length ? `No family in ${dir} has a ${oracle}-suite grade yet.`
-    : fams.length === 1 ? <>One family was measured: {famTxt(hi)}, {oracle}-suite grades.</>
-      : <>Highest: {famTxt(hi)}; lowest: {famTxt(lo)} — {oracle}-suite grades among known ones, over {plural(fams.length, 'family', 'families')}.</>
+    : fams.length === 1 ? <>One family was measured: {famTxt(hi)}, {suiteLabel(R.data, oracle)}.</>
+      : <>Highest: {famTxt(hi)}; lowest: {famTxt(lo)} — {suiteLabel(R.data, oracle)} among known grades, over {plural(fams.length, 'family', 'families')}.</>
   const td = (m, h) => {
     const l = d.cell(m, h)
     if (!l.length) return <td key={h}><div className="rg-an-mc empty"><span className="v2">not run</span></div></td>
@@ -282,6 +286,7 @@ function Family({ spec, dir, row, c }) {
         <p>A family is one model under one harness. Each cell counts its runs under the suite chosen in the sentence above: the rate is among <b>known</b> grades, and unknown grades are shown beside it, never folded into fail.</p>
         <p>Select a cell to open its trajectories; the pin keeps it in the case file. Column headers open the focused model under that harness.</p>
       </>} />
+    <p className="rg-small rg-mute">Observed rates describe each family’s own tasks and repeats. Task sets and sample sizes can differ; this matrix is not a controlled causal ranking.</p>
     <div data-el="family-matrix">
       <div className="rg-row rg-wrap rg-an-bar">
         <label className="rg-fld">Model filter
@@ -313,7 +318,7 @@ function Family({ spec, dir, row, c }) {
         </table>
       </div></div>
       <div className="rg-row rg-wrap rg-small rg-mute rg-an-foot">
-        <span data-el="grade-basis">{models.length * H.length} families in the current filter · grade basis: <b className="rg-dim">{oracle}-suite grades, among known grades</b>; unknown is shown, never folded into fail.</span>
+        <span data-el="grade-basis">{models.length * H.length} families in the current filter · grade basis: <b className="rg-dim">{suiteLabel(R.data, oracle)}, among known grades</b>; unknown is shown, never folded into fail.</span>
         <Go spec={makeSpec('field', dir)} className="rg-tlink">Every run, every span →</Go>
       </div>
     </div>
@@ -538,7 +543,7 @@ function Delta({ spec, dir, row, c }) {
   return (<>
     <Head eyebrow="Step 3 · attribute the difference" title="Comparison" el="delta-answer" lead={lead}
       about={<>
-        <p>Each cell is the paired Δ pass@1 of one model under one harness against <span className="rg-mono">{base}</span>, paired by task. A contrast <b>separates</b> when its 95% interval excludes zero; one that covers zero is not evidence of no effect, only of no detectable one at this n.</p>
+        <p>Each cell is the paired Δ pass@1 of one model under one harness against <span className="rg-mono">{base}</span>, paired by task. These are unadjusted 95% intervals across multiple comparisons. A contrast <b>separates</b> when its interval excludes zero; one that covers zero is not evidence of no effect, only of no detectable one at this n.</p>
         <p>Selecting a cell shows its per-task Δ and opens its trajectories in the split pane (<Kbd>{MOD} click</Kbd> on any link also opens to the side). Descriptive, over these tasks only.</p>
       </>} />
     <div data-el="delta-matrix">
@@ -643,7 +648,7 @@ function LlmJudge({ canCompare }) {
         <div className="rg-stats rg-an-jfigs">{figs.map(([k, v]) => <div key={k} className="rg-stat"><span className="rg-lbl">{k.replace(/_/g, ' ')}</span><span className="rg-fig sm">{fx(v, 2)}</span></div>)}</div>
       ) : IS_STATIC ? (
         <Empty title="No judge report in this export." actions={[seeChecks]} el="empty-state read-only-export-state">
-          This is a static export, so the judge cannot run here. Start the live app to run it: <CopyCmd cmd={LIVE_CMD} />
+          {IS_MEMBER ? 'The judge runs in the local workbench at 127.0.0.1:8742.' : 'This is a static export, so the judge cannot run here.'} Start the local app to run it: <CopyCmd cmd={LIVE_CMD} />
         </Empty>
       ) : !key ? (
         <Empty title="No judge report yet." actions={[{ label: "Set the lab's server key in Settings", spec: 'settings', primary: true }, seeChecks]}>
@@ -679,6 +684,7 @@ function Judge({ dir, c }) {
   const both = !!o.n_eligible
   const ra = o.rate_a && o.rate_a.rate, rb = o.rate_b && o.rate_b.rate
   const dd = ra == null || rb == null ? null : rb - ra
+  const changes = oracleChanges(o)
   const flags = integrityFlags(I.data, both)
   const leak = (I.data && I.data.leakage) || []
   const altOk = alt && AO.data && AO.data.n_eligible > 0
@@ -686,12 +692,12 @@ function Judge({ dir, c }) {
   const flagTxt = nFlags == null ? '' : nFlags ? `; ${plural(nFlags, 'integrity flag')} ${nFlags === 1 ? 'is' : 'are'} open` : '; no integrity flag is open'
   const lead = both
     ? <>{dd != null && dd < 0 ? <>The strengthened suite lowers the pass rate by <b>{(Math.abs(dd) * 100).toFixed(1)} points</b></> : <>The strengthened suite does not lower the pass rate</>} ({pct(ra)} → {pct(rb)}, κ {fx(o.kappa)}, {int(o.n_eligible)} runs){flagTxt}.</>
-    : <>Only the hidden suite graded {dir}: no run carries a strengthened grade, so its oracle cannot be checked against a stronger one{flagTxt}.</>
+    : <>No run in {dir} carries both a hidden and a strengthened grade, so the two suites cannot be compared{flagTxt}.</>
   const harness = I.data && I.data.harness ? I.data.harness : c.harness
   return (<>
     <Head eyebrow="More analysis · the oracle is an instrument too" title="Judge & integrity" el="judge-answer" lead={lead}
       about={<>
-        <p>The hidden suite is what every pass rate here is graded by. The strengthened suite adds cases; runs graded by both show how much of the score survives a stronger oracle, and κ is the agreement between the two beyond chance.</p>
+        <p>This comparison uses runs with both hidden and strengthened grades. The 2×2 table shows passes lost and gained; the rate difference is their net change, and κ measures agreement beyond chance. Other views follow their stated grade basis.</p>
         <p>Integrity flags come from <span className="rg-mono">/integrity</span> for the <span className="rg-mono">{harness}</span> harness: a contamination probe (the issue text carries the fix), weak hidden tests (passes that the strengthened suite rejects), and harnesses whose agent claims a pass the hidden suite does not confirm.</p>
       </>} />
     <Sec title="Oracle comparison · hidden vs strengthened" meta={`${int(o.n_eligible)} runs · ${int(o.n_excluded)} excluded`} el="oracle-comparison"
@@ -714,9 +720,7 @@ function Judge({ dir, c }) {
             <table className="rg-tbl rg-an-tbl rg-an-2x2"><thead><tr><th><span className="sr-only">hidden</span></th><th className="rg-num">strong ✓</th><th className="rg-num">strong ×</th></tr></thead>
               <tbody><tr><td className="rg-mono rg-small">hidden ✓</td><td className="rg-num">{int(cells.both_true)}</td><td className="rg-num rg-red">{int(cells.only_a_true)}</td></tr>
                 <tr><td className="rg-mono rg-small">hidden ×</td><td className="rg-num">{int(cells.only_b_true)}</td><td className="rg-num">{int(cells.both_false)}</td></tr></tbody></table>
-            <p className="rg-an-p">{dd != null && dd < 0
-              ? <>Where the two suites disagree, the score was measuring the suite rather than the fix: {(Math.abs(dd) * 100).toFixed(1)} points of the reported pass rate do not survive a stronger oracle — {int(cells.only_a_true)} runs the hidden suite passed and the strengthened one did not.</>
-              : <>The strengthened suite does not lower the pass rate here ({int(cells.only_a_true)} hidden-only passes, {int(cells.only_b_true)} strengthened-only).</>}</p>
+            <p className="rg-an-p">{changes ? <>{int(changes.lost)} hidden passes are lost ({(changes.loss * 100).toFixed(1)} percentage points), while {int(changes.gained)} passes are gained ({(changes.gain * 100).toFixed(1)} points) under the strengthened suite. The net pass-rate change is {pp(changes.net)} over {int(changes.n)} paired runs. Disagreement identifies different grading outcomes; it does not establish their cause.</> : <>Net pass-rate change {pp(dd)}; {int(cells.only_a_true)} hidden-only passes and {int(cells.only_b_true)} strengthened-only passes.</>}</p>
           </div>
         </div></div>
       )}
@@ -799,7 +803,7 @@ function Fit({ spec, dir, row, c }) {
   const columns = X.columns || []
   const showHolds = !IS_STATIC && columns.length > 0
   const lead = ok
-    ? <>The <b>{F.leading_factor}</b> is what moves this study: model levels span {(F.model.range * 100).toFixed(1)} points against the harness's {(F.harness.range * 100).toFixed(1)}, and the interaction carries {pct(F.interaction_share)}{F.interaction_share < Math.max(F.model.share, F.harness.share) / 2 ? ' — the effect is largely additive' : ''}.</>
+    ? <>The <b>{F.leading_factor}</b> is what moves this study: model levels span {(F.model.range * 100).toFixed(1)} points against the harness's {(F.harness.range * 100).toFixed(1)}, and the interaction carries {pct(F.interaction_share)} of total variance.</>
     : null
   const ways = [
     S.nm > 1 && { label: `Compare its ${S.nm} models in the family matrix`, spec: makeSpec('an', dir, 'family', short(c.model), c.harness), primary: true },
@@ -842,7 +846,7 @@ function Fit({ spec, dir, row, c }) {
         <Empty title="No two-factor fit for this dataset." actions={ways}>{shapeLine(row)}, so a model × harness fit has nothing to split{reason ? <> (the fit reports {reason})</> : null}. A fit needs at least two balanced models and two balanced harnesses; the cell grid below still shows every observed cell with its interval.</Empty>
       ) : (<>
         <div className="rg-stats rg-an-f3">
-          <div className="rg-stat"><span className="rg-lbl">model spread</span><span className="rg-fig md">{(F.model.range * 100).toFixed(1)}<span className="u">pp</span></span><span className="rg-small rg-dim">share {pct(F.model.share)}</span></div>
+          <div className="rg-stat"><span className="rg-lbl">dataset model spread</span><span className="rg-fig md">{(F.model.range * 100).toFixed(1)}<span className="u">pp</span></span><span className="rg-small rg-dim">share {pct(F.model.share)}</span></div>
           <div className="rg-stat"><span className="rg-lbl">harness spread</span><span className="rg-fig md">{(F.harness.range * 100).toFixed(1)}<span className="u">pp</span></span><span className="rg-small rg-dim">share {pct(F.harness.share)}</span></div>
           <div className="rg-stat"><span className="rg-lbl">interaction</span><span className="rg-fig md">{pct(F.interaction_share)}</span><span className="rg-small rg-dim">of total variance</span></div>
         </div>
@@ -885,7 +889,7 @@ function Fit({ spec, dir, row, c }) {
 /* ------------------------------------------------------------------ 7 · report card */
 function Report({ dir, row, c }) {
   const { toast } = useRig()
-  const Rp = useReport(dir, c.harness)
+  const Rp = useReport(dir, c.harness, c.model)
   const X = useExperiment(dir)
   const O = useOracle(dir)
   const R = useRuns(dir)
@@ -913,22 +917,25 @@ function Report({ dir, row, c }) {
   const hr = R.data.filter((r) => r.harness === h)
   const own = hr.filter((r) => r.model === card.cell.model).length
   const nModels = new Set(hr.map((r) => r.model)).size
-  const pooled = n != null && n > own && n === hr.length
+  const pooled = card.cell.pooled_models ?? (n != null && n > own && n === hr.length)
   const scope = pooled ? `all ${nModels} models · ${h} (pooled)` : `${short(card.cell.model)} · ${h}`
-  const hasStrong = hr.some((r) => r.str != null)
+  const cohort = pooled ? hr : hr.filter((r) => r.model === card.cell.model)
+  const hasStrong = cohort.some((r) => r.str != null)
+  const co = card.integrity?.oracle
+  const changes = oracleChanges(co)
   const bnd = R.data.reduce((a, r) => a + (r.bnd || 0), 0)
   const best = [...(E.cells || [])].filter((x) => x.n).sort((a, b) => b.pass1 - a.pass1 || b.n - a.n)[0]
   const leak = ((I.data && I.data.leakage) || []).find((x) => x.probe === 'solution_leak')
-  const nRuns = (E.anova && E.anova.n) || R.data.length
+  const nRuns = R.data.length
   const ladder = [['pass@1', oc.pass1, 'point estimate'], ...Object.entries(oc.pass_at_k || {}).map(([k, v]) => ['pass@' + k, v, 'with retries']), ...Object.entries(oc.pass_pow_k || {}).map(([k, v]) => ['pass^' + k, v, 'every attempt'])]
-  const note = pooled ? `The card's header names ${card.cell.model}, but its outcome pools every model's ${h} runs (n = ${int(n)}; ${short(card.cell.model)} alone has ${int(own)}). Labelled here as "${scope}".` : null
+  const note = pooled ? `This card pools ${int(n)} recorded runs across ${nModels} models under ${h}; it is not a single-model estimate.` : null
   const exportMd = () => {
     const md = (note ? `> **Note (TraceHarness):** ${note}\n\n` : '') + (Rp.data.markdown || '')
-    if (!download(`report-card-${dir}-${h}.md`, md, 'text/markdown')) toast('Download is not available in this browser.')
+    if (!download(`report-card-${dir}-${h}-${short(c.model).replace(/[^a-zA-Z0-9_.-]/g, "_")}.md`, md, 'text/markdown')) toast('Download is not available in this browser.')
   }
   const exportJson = () => {
     const body = note ? { rig_note: note, rig_scope: scope, ...card } : card
-    if (!download(`report-card-${dir}-${h}.json`, JSON.stringify(body, null, 2), 'application/json')) toast('Download is not available in this browser.')
+    if (!download(`report-card-${dir}-${h}-${short(c.model).replace(/[^a-zA-Z0-9_.-]/g, "_")}.json`, JSON.stringify(body, null, 2), 'application/json')) toast('Download is not available in this browser.')
   }
   const headline = F
     ? `Across ${plural((E.a_levels || []).length, 'model')} and ${plural((E.b_levels || []).length, 'harness', 'harnesses')}, the ${E.fit.leading_factor} is what moves this study: model levels span ${(F.model.range * 100).toFixed(1)} points against the harness's ${(F.harness.range * 100).toFixed(1)}.`
@@ -936,21 +943,21 @@ function Report({ dir, row, c }) {
   return (
     <article data-el="report-card" className="rg-an-report">
       <div className="rg-row rg-wrap rg-an-bar"><span className="rg-lbl">Report card · generated from disk · {card.generated_at || '—'}</span><span className="rg-grow" />
-        <PinButton item={{ id: `figure:${dir}:report:${h}`, kind: 'figure', label: `Report card · ${dir} · ${scope}`, value: `pass@1 ${pct(oc.pass1)} ${ciText(oc.ci95)} · n=${int(n)} · ${scope}`, spec: makeSpec('an', dir, 'report', short(c.model), c.harness), dir, harness: h }} />
+        <PinButton item={{ id: `figure:${dir}:report:${h}:${c.model}`, kind: 'figure', label: `Report card · ${dir} · ${scope}`, value: `pass@1 ${pct(oc.pass1)} ${ciText(oc.ci95)} · n=${int(n)} · ${scope}`, spec: makeSpec('an', dir, 'report', short(c.model), c.harness), dir, harness: h }} />
         <Btn onClick={exportMd} disabled={!Rp.data.markdown} why="The report endpoint returned no Markdown for this card; export .json instead.">Export .md</Btn>
         <button type="button" className="rg-btn" onClick={exportJson}>Export .json</button></div>
       <h1 className="rg-an-rh1">{headline}</h1>
       <div className="rg-stats rg-an-r5">
-        <div className="rg-stat"><span className="rg-lbl">runs</span><span className="rg-fig sm">{int(nRuns)}</span></div>
-        <div className="rg-stat"><span className="rg-lbl">best cell</span><span className="rg-fig sm">{best ? pct(best.pass1) : '—'}</span>{best && <span className="rg-tiny rg-mute rg-mono">{short(best.a)} × {best.b} · n={best.n}</span>}</div>
-        <div className="rg-stat"><span className="rg-lbl">model spread</span><span className="rg-fig sm">{F ? (F.model.range * 100).toFixed(1) + 'pp' : '—'}</span>{!F && <span className="rg-tiny rg-mute">no two-factor fit</span>}</div>
-        <div className="rg-stat"><span className="rg-lbl">oracle Δ</span><span className={cx('rg-fig sm', od < 0 && 'rg-red')}>{pp(od)}</span>{od == null && !hasStrongDs && <span className="rg-tiny rg-mute">no strengthened grades</span>}</div>
-        <div className="rg-stat"><span className="rg-lbl">boundary events</span><span className="rg-fig sm">{int(bnd)}</span></div>
+        <div className="rg-stat"><span className="rg-lbl">dataset runs</span><span className="rg-fig sm">{int(nRuns)}</span></div>
+        <div className="rg-stat"><span className="rg-lbl">dataset best cell</span><span className="rg-fig sm">{best ? pct(best.pass1) : '—'}</span>{best && <span className="rg-tiny rg-mute rg-mono">{short(best.a)} × {best.b} · n={best.n}</span>}</div>
+        <div className="rg-stat"><span className="rg-lbl">dataset model spread</span><span className="rg-fig sm">{F ? (F.model.range * 100).toFixed(1) + 'pp' : '—'}</span>{!F && <span className="rg-tiny rg-mute">no two-factor fit</span>}</div>
+        <div className="rg-stat"><span className="rg-lbl">dataset oracle net Δ</span><span className={cx('rg-fig sm', od < 0 && 'rg-red')}>{pp(od)}</span>{od == null && !hasStrongDs && <span className="rg-tiny rg-mute">no strengthened grades</span>}</div>
+        <div className="rg-stat"><span className="rg-lbl">dataset boundary events</span><span className="rg-fig sm">{int(bnd)}</span></div>
       </div>
       <Sec title="Claims and caveats" el="report-claims">
         <div className="rg-col rg-an-claims">
           {F && <Note><div><div className="rg-lbl rg-an-fk">Claim · I</div>The {E.fit.leading_factor} is the larger variable here: the model carries {pct(F.model.share)} of the variance against the harness's {pct(F.harness.share)}, and its levels span {(F.model.range * 100).toFixed(1)}pp against {(F.harness.range * 100).toFixed(1)}pp.<div className="rg-tiny rg-mute rg-mono rg-an-mt">two-factor fit · {(E.cells || []).length} cells · tasks as blocks</div></div></Note>}
-          {F && <Note><div><div className="rg-lbl rg-an-fk">Claim · II</div>{E.fit.interaction_share < F.model.share / 2 ? 'The effect is largely additive' : 'Model and harness interact'}: the interaction term carries {pct(E.fit.interaction_share)} of the variance, against the model's {pct(F.model.share)}.<div className="rg-tiny rg-mute rg-mono rg-an-mt">two-factor fit · interaction term</div></div></Note>}
+          {F && <Note><div><div className="rg-lbl rg-an-fk">Claim · II</div>The model × harness interaction term carries {pct(E.fit.interaction_share)} of the variance, against the model's {pct(F.model.share)}.<div className="rg-tiny rg-mute rg-mono rg-an-mt">two-factor fit · interaction term</div></div></Note>}
           {!F && (
             <Empty title="No two-factor claims." actions={[
               S.nm > 1 && { label: `Compare its ${S.nm} models in the family matrix`, spec: makeSpec('an', dir, 'family', short(c.model), c.harness), primary: true },
@@ -958,7 +965,7 @@ function Report({ dir, row, c }) {
               alt && { label: `Open the report for ${alt.name} (${altShape(alt)})`, spec: makeSpec('an', alt.name, 'report') },
             ]}>{shapeLine(row)}, so there is no model-against-harness fit and nothing is claimed in its place. The card's one estimate is the pass@1 above, labelled with its scope.</Empty>
           )}
-          {od != null && od < 0 && <Note tone="red"><div><div className="rg-lbl rg-an-fk">Caveat · III</div>{(Math.abs(od) * 100).toFixed(1)} points of the reported pass rate do not survive the strengthened oracle, so part of what was scored was the suite rather than the fix.<div className="rg-tiny rg-mute rg-mono rg-an-mt">hidden vs strengthened · κ {fx(o.kappa)} · {int(o.n_eligible)} runs</div></div></Note>}
+          {changes && (changes.lost > 0 || changes.gained > 0) && <Note tone="red"><div><div className="rg-lbl rg-an-fk">Caveat · III</div>In this card’s paired cohort, {int(changes.lost)} hidden passes are lost ({(changes.loss * 100).toFixed(1)} percentage points) and {int(changes.gained)} passes are gained ({(changes.gain * 100).toFixed(1)} points) under the strengthened suite; net change {pp(changes.net)}.<div className="rg-tiny rg-mute rg-mono rg-an-mt">{scope} · hidden vs strengthened · κ {fx(co.kappa)} · {int(changes.n)} paired runs</div></div></Note>}
           {(leak || bnd > 0) && <Note tone="red"><div><div className="rg-lbl rg-an-fk">Caveat · IV</div>{leak ? <><span className="rg-mono">{leak.task}</span> is the contamination probe and scores {pct(leak.pass1)}; </> : null}{int(bnd)} boundary events were recorded inside the scratch copy.<div className="rg-tiny rg-mute rg-mono rg-an-mt">boundary_event · {int(bnd)} spans across {int(R.data.length)} runs</div></div></Note>}
         </div>
       </Sec>
@@ -967,18 +974,18 @@ function Report({ dir, row, c }) {
           {ladder.map(([k, v, s]) => <div key={k}><div className="rg-lbl">{k}</div><div className="rg-fig sm">{pct(v)}</div><div className="rg-tiny rg-mute">{s}</div></div>)}
           <div><div className="rg-lbl">flip rate</div><div className="rg-fig sm">{pct(oc.flip_rate, 0)}</div><div className="rg-tiny rg-mute">tasks mixed</div></div>
           <div><div className="rg-lbl">strengthened</div><div className="rg-fig sm">{hasStrong ? pct(oc.pass1_strong) : '—'}</div>
-            {hasStrong ? <div className="rg-tiny rg-red-t">Δ {pp(oc.pass1_strong == null ? null : oc.pass1_strong - oc.pass1)}</div> : <div className="rg-tiny rg-mute">not graded</div>}</div>
+            {hasStrong ? <div className="rg-tiny rg-red-t">paired net Δ {pp(changes?.net ?? null)}</div> : <div className="rg-tiny rg-mute">not graded</div>}</div>
         </div>
-        <p className="rg-small rg-mute rg-an-mt">Scope: {scope}. Oracle: {card.cell.oracle || 'hidden suite'}.</p>
+        <p className="rg-small rg-mute rg-an-mt">Scope: {scope}. Oracle: {card.cell.oracle || 'hidden suite'}.{oc.n_graded != null ? ` ${int(oc.n_graded)} graded; ${int(oc.n_ungraded)} unknown.` : ''}</p>
       </Sec>
       <Sec title="What this card does not cover">
         <ul className="rg-an-ul">{(card.missing || []).map((x, i) => <li key={i}>{x}</li>)}</ul>
       </Sec>
       <Sec title="Provenance" el="report-provenance">
-        <dl className="rg-kv rg-an-kv"><dt>source</dt><dd>{card.source || `data/runs/${dir}`}</dd><dt>runs · cells</dt><dd>{int(nRuns)} runs · {(E.cells || []).length} cells</dd>
-          <dt>oracle</dt><dd>{card.cell.oracle || 'hidden'}{hasStrongDs ? ' + strengthened' : ' · no strengthened grades'}</dd><dt>boundary</dt><dd>boundary_event · {int(bnd)} spans</dd><dt>generated</dt><dd>{card.generated_at || '—'}</dd>
+        <dl className="rg-kv rg-an-kv"><dt>source</dt><dd>{card.source || `data/runs/${dir}`}</dd><dt>dataset runs · cells</dt><dd>{int(nRuns)} runs · {(E.cells || []).length} cells</dd>
+          <dt>oracle</dt><dd>{card.cell.oracle || 'hidden'}{hasStrong ? ' + strengthened' : ' · no strengthened grades in this card'}</dd><dt>boundary</dt><dd>boundary_event · {int(bnd)} spans</dd><dt>generated</dt><dd>{card.generated_at || '—'}</dd>
           <dt>card cell</dt><dd data-el="report-cell-label">{scope} · {int(n)} runs</dd></dl>
-        {pooled && <p className="rg-small rg-an-mt" data-el="report-pooled-note"><Tag tone="amb">note</Tag> <span className="rg-dim">The card's header names <span className="rg-mono">{card.cell.model}</span>, but its {int(n)} runs are every model under <span className="rg-mono">{h}</span> ({short(card.cell.model)} alone has {int(own)}). Shown as pooled; the exports carry this note.</span></p>}
+        {pooled && <p className="rg-small rg-an-mt" data-el="report-pooled-note"><Tag tone="amb">note</Tag> <span className="rg-dim">{note}</span></p>}
       </Sec>
     </article>
   )
@@ -1068,7 +1075,7 @@ function Setup({ spec, dir, row, c }) {
             <dt>wall time</dt><dd>{n && wall ? `≈ ${Math.max(1, Math.round(wall / par / 60000))} min${wallKnown ? '' : ' + unmeasured'}` : '—'} <span className="rg-mute">@ {par} parallel</span></dd>
             <dt>detectable</dt><dd>{mde == null ? '—' : `${(mde * 100).toFixed(1)}pp`} <span className="rg-mute">per arm n={perArm}</span></dd></dl>
           {IS_STATIC ? (
-            <Note el="read-only-export-state"><div>This is a static export, so runs cannot launch here. Start the live app to launch this cell: <CopyCmd cmd={LIVE_CMD} /></div></Note>
+            <Note el="read-only-export-state"><div>{IS_MEMBER ? 'Experiments run in the local workbench at 127.0.0.1:8742.' : 'This is a static export, so runs cannot launch here.'} Start the local app to launch this cell: <CopyCmd cmd={LIVE_CMD} /></div></Note>
           ) : (
             <div className="rg-an-launch">
               <ConfirmAction el="launch-runs" label={`Launch ${int(n)} runs`} confirmLabel={`Start ${int(n)} runs`} disabled={!can} why={why}
@@ -1360,6 +1367,7 @@ function TaskExplorer({ spec, args }) {
   const lead = !d.list.length ? null : <>{nClean} of {nT} tasks passed every attempt{nMixed ? `, ${nMixed} flip between pass and fail` : ''}{nNever ? `, ${nNever} never passed` : ''}{nUnk ? `, ${nUnk} have ungraded attempts` : ''} — {oracle}-suite grades{fsum ? `; ${fsum}` : ''}.</>
   return (
     <div className="rg-dpad rg-an-xp">
+      <RecordingProvenance runs={d.list} />
       <AskingSentence dir={dir} model={c.model} harness={c.harness} />
       <Head eyebrow="Trajectory explorer · task × attempts" title={`${plural(nT, 'task')}, ${int(d.list.length)} attempts`} el="tasks-answer" lead={lead}
         actions={<div className="rg-row rg-wrap"><PinButton item={{ id: `cell:${dir}:${c.model}:${c.harness}`, kind: 'cell', label: `${short(c.model)} · ${c.harness} · ${dir}`, value: `${pct(tally(d.list, oracle).rate)} · ${tally(d.list, oracle).p}/${tally(d.list, oracle).known} known (${oracle})`, spec: makeSpec('ds', ...cs), dir, model: c.model, harness: c.harness }} />
@@ -1403,7 +1411,7 @@ function TaskExplorer({ spec, args }) {
                     {x.l.length <= 12 ? <div className="rg-an-rib ribn" aria-hidden="true">{x.l.map((_, i) => <span key={i}>{String(i + 1).padStart(2, '0')}</span>)}</div> : <div className="rg-tiny rg-mute rg-mono">{x.l.length} attempts</div>}</div>
                   <div className="t-cnt rg-num"><span className="rg-sky">{x.o.p}</span> / <span className="rg-red-t">{x.o.f}</span>{x.o.u ? <> / <span className="rg-mute">{x.o.u}?</span></> : null}</div>
                   <div className="t-bar"><OutcomeBar p={x.o.p} f={x.o.f} u={x.o.u} /></div>
-                  <div className="t-tok rg-num">{x.tk.mean == null ? '—' : int(x.tk.mean)}{x.tk.rec < x.tk.n && <div className="rg-tiny rg-mute">{x.tk.rec}/{x.tk.n} recorded</div>}</div>
+                  <div className="t-tok rg-num">{x.tk.mean == null ? '—' : int(x.tk.mean)}{(x.tk.rec < x.tk.n || x.tk.estimated > 0) && <div className="rg-tiny rg-mute">{tokenCoverage(x.tk)}</div>}</div>
                   <div className="t-probe">{meta[x.t] ? <ProbeTag probe={pr} /> : <span className="rg-small rg-mute" title="No task card: imported trajectories carry no probe">—</span>}</div>
                 </div>
               )

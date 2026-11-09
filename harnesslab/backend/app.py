@@ -401,15 +401,15 @@ def integrity(name: str, harness: str = "baseline"):
 
 
 @app.get("/api/results/{name}/report")
-def report(name: str, harness: str = "baseline"):
+def report(name: str, harness: str = "baseline", model: Optional[str] = None):
     _dir(name)
-    return M.report_card(name, M.rows_for(name), harness)
+    return M.report_card(name, M.rows_for(name), harness, model)
 
 
 @app.get("/api/results/{name}/report.md", response_class=PlainTextResponse)
-def report_md(name: str, harness: str = "baseline"):
+def report_md(name: str, harness: str = "baseline", model: Optional[str] = None):
     _dir(name)
-    return M.report_card(name, M.rows_for(name), harness).get("markdown", "")
+    return M.report_card(name, M.rows_for(name), harness, model).get("markdown", "")
 
 
 # --------------------------------------------------------------------------- models (OpenRouter)

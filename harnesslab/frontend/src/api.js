@@ -1,4 +1,6 @@
 import { useEffect, useRef, useState, useCallback } from 'react'
+import { IS_MEMBER, memberRequest, memberRoute } from './member-api'
+export { IS_MEMBER } from './member-api'
 
 /** A file written by `python -m harnesslab --export` carries every read-only response inline.
  *  There is no server to reach, so reads are served from the blob and writes are refused. */
@@ -6,11 +8,14 @@ export const STATIC_DATA = typeof window !== 'undefined' ? window.__HARNESSLAB_D
 export const IS_STATIC = !!STATIC_DATA
 
 export async function api(path, opts = {}) {
-  if (IS_STATIC) {
-    if (opts.method && opts.method !== 'GET') {
+  const method = (opts.method || 'GET').toUpperCase()
+  if (IS_MEMBER && memberRoute(path, method)) return memberRequest(path, opts)
+  if (IS_STATIC || IS_MEMBER) {
+    if (method !== 'GET') {
+      if (IS_MEMBER) throw new Error('Execution and local changes need the local app. Start it with python -m harnesslab --host 127.0.0.1 --port 8742. Member harness saves are available in Fixed harnesses and Minimal harness.')
       throw new Error('This is a static export — launching runs and training need the live app.')
     }
-    if (path in STATIC_DATA) return STATIC_DATA[path]
+    if (STATIC_DATA && Object.hasOwn(STATIC_DATA, path)) return STATIC_DATA[path]
     // Match on the normalised query, never on the bare path: a request carrying parameters the
     // snapshot does not have (a second results dir, a picked cell) must NOT quietly resolve to the
     // snapshot taken without them. Returning plausible-but-wrong numbers is the one failure this
@@ -22,7 +27,7 @@ export async function api(path, opts = {}) {
       return b + (kept.length ? '?' + kept.map(([k, v]) => `${k}=${v}`).join('&') : '')
     }
     const want = norm(path)
-    const hit = Object.keys(STATIC_DATA).find(k => norm(k) === want)
+    const hit = Object.keys(STATIC_DATA || {}).find(k => norm(k) === want)
     if (hit) return STATIC_DATA[hit]
     throw new Error('Not in this static export — that view needs the live app (python -m harnesslab).')
   }
@@ -89,7 +94,7 @@ export function useEvents(enabled = true) {
   const [tick, setTick] = useState(0)
   const ref = useRef(null)
   useEffect(() => {
-    if (IS_STATIC || !enabled) return // Package preview and static exports have no live stream.
+    if (IS_STATIC || IS_MEMBER || !enabled) return // Hosted snapshots have no local live stream.
     const es = new EventSource('/api/events')
     ref.current = es
     es.onopen = () => setConnected(true)
@@ -148,7 +153,7 @@ export function useLiveRun(dir, runId, enabled = true) {
   const [state, set] = useState(fresh)
   useEffect(() => {
     set(fresh())
-    if (!enabled || IS_STATIC || !dir || !runId) return
+    if (!enabled || IS_STATIC || IS_MEMBER || !dir || !runId) return
     const es = new EventSource(runStreamUrl(dir, runId))
     const seenBad = new Set()
     es.onopen = () => set(s => ({ ...s, reconnecting: false, phase: s.phase === 'connecting' ? 'live' : s.phase }))

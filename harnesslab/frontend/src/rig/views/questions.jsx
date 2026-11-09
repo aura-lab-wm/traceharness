@@ -154,7 +154,7 @@ function Figure({ fig, dir, answer }) {
           <dt>{oracle} tests</dt><dd className="rg-row"><Verdict v={verdict(r, oracle)} /><FailureChip run={r} /></dd>
           <dt>visible · hidden · strengthened</dt><dd className="rg-row"><Verdict v={r.vis} /><Verdict v={r.hid} /><Verdict v={r.str} /></dd>
           <dt>model calls · tool calls · edits</dt><dd>{r.steps} · {r.tools} · {r.edits}</dd>
-          <dt>tokens</dt><dd>{r.in == null || r.out == null ? '— not recorded' : `${int(r.in + r.out)} (${int(r.in)} in / ${int(r.out)} out)`}</dd>
+          <dt>tokens</dt><dd>{r.in == null || r.out == null ? '— not recorded' : `${int(r.in + r.out)} (${int(r.in)} in / ${int(r.out)} out)${r.usageEstimated ? " · estimated" : ""}`}</dd>
           <dt>exit</dt><dd>{r.exit}{r.lastFinish ? ` · last finish “${r.lastFinish}”` : ''}</dd>
         </dl>
       )
@@ -304,7 +304,7 @@ function QuestionsDoc({ spec, args }) {
     <div className="rg-dpad">
       <AskingSentence dir={dir} />
       <div className="rg-q-ask"><span className="rg-q-mark" aria-hidden="true">?</span><h1>{q.q(cond)}</h1></div>
-      {res.state === 'loading' && <Loading label="Answering from the live endpoints…" />}
+      {res.state === 'loading' && <Loading label="Answering from the recorded data…" />}
       {res.state === 'unanswered' && <Unanswered dir={dir} qid={qid} reason={res.reason} A={A} />}
       {res.state === 'answered' && (<>
         <div className="rg-q-answer" data-el="answer">
@@ -323,7 +323,7 @@ function QuestionsDoc({ spec, args }) {
           </Panel>
         </div>
         {res.answer.runs && <ShowRuns dir={dir} qid={qid} res={res} runs={A.input.runs} />}
-        <p className="rg-small rg-mute rg-q-disc" data-el="descriptive-disclaimer">Descriptive, not causal. Every number is read from the live API for {dir}; unknown grades are never counted as failures.</p>
+        <p className="rg-small rg-mute rg-q-disc" data-el="descriptive-disclaimer">Descriptive, not causal. Every number is computed from recorded data for {dir}; unknown grades are never counted as failures.</p>
       </>)}
     </div>
   )

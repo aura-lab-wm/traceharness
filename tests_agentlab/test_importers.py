@@ -651,13 +651,11 @@ class TestDownstreamToleratesUnknownOutcomes(Tmp):
         self.assertIn("any", boundary_rate(self.rows))
         tokens_per_solve(self.rows)
 
-    def test_none_is_folded_into_not_passed_by_analysis(self):
-        """Documented caveat rather than a bug: harnesslab.core.analysis uses bool(r.get(outcome)),
-        so an unknown outcome reads as a failure in pass@1. The UI says so; we do not edit
-        analysis.py or metrics.py from this stream."""
+    def test_unknown_grades_are_excluded_instead_of_counted_as_failures(self):
+        """Imported sessions without oracle grades have no measurable pass rate."""
         from harnesslab.core.analysis import aggregate
         unknown = [r for r in self.rows if r["hidden_pass"] is None]
-        self.assertEqual(aggregate(unknown)["pass@1"], 0.0)
+        self.assertIsNone(aggregate(unknown).get("pass@1"))
 
     def test_metrics_endpoints_logic_does_not_crash(self):
         from harnesslab.backend import metrics as M

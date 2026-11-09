@@ -34,12 +34,13 @@ def results_dirs() -> list[dict]:
     for name in list_results_dirs(RUNS_ROOT):
         idx = os.path.join(RUNS_ROOT, name, "index.jsonl")
         rows = load_index(os.path.join(RUNS_ROOT, name))
+        known = [r["hidden_pass"] for r in rows if isinstance(r.get("hidden_pass"), bool)]
         out.append({"name": name, "runs": len(rows),
                     "harnesses": sorted({r["harness_id"] for r in rows}),
                     "models": sorted({r["model"] for r in rows}),
                     "model_runs": dict(sorted(Counter(r["model"] for r in rows).items())),
                     "tasks": sorted({r["task_id"] for r in rows}),
-                    "pass_rate": mean(1.0 if r.get("hidden_pass") else 0.0 for r in rows) if rows else None,
+                    "pass_rate": mean(float(verdict) for verdict in known) if known else None,
                     "updated": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime(os.path.getmtime(idx)))})
     return _clean(out)
 
@@ -64,9 +65,14 @@ def cells(rows: list[dict]) -> list[dict]:
         ci = bootstrap_ci([v["pass1"] for v in tt.values()])
         strong = aggregate(R, "strong_pass")
         s.update({"model": model, "harness": h, "repeats": n_rep,
+                  "n_graded": sum(r.get("hidden_pass") is not None for r in R),
+                  "n_ungraded": sum(r.get("hidden_pass") is None for r in R),
                   "ci95": list(ci), "pass1_strong": strong.get("pass@1"),
                   "passk_curve": [{"k": k, "pass_at_k": agg.get(f"pass@{k}"), "pass_pow_k": agg.get(f"pass^{k}")} for k in ks],
-                  "tasks": {t: {"n": v["n"], "c": v["c"], "pass1": v["pass1"], "outcomes": [bool(r.get("hidden_pass")) for r in sorted(R, key=lambda r: r["repeat_index"]) if r["task_id"] == t]} for t, v in tt.items()},
+                  "tasks": {t: {"n": v["n"], "c": v["c"], "pass1": v["pass1"],
+                                "n_ungraded": sum(r["task_id"] == t and r.get("hidden_pass") is None for r in R),
+                                "outcomes": [r["hidden_pass"] for r in sorted(R, key=lambda r: r["repeat_index"])
+                                             if r["task_id"] == t and r.get("hidden_pass") is not None]} for t, v in tt.items()},
                   "boundary": boundary_rate(R),
                   "sentinel_interventions": mean(r.get("sentinel_interventions", 0) for r in R),
                   "mean_wall_s": mean(r["wall_ms"] for r in R) / 1000})
@@ -202,22 +208,33 @@ def integrity(name: str, rows: list[dict], harness: str) -> dict:
 
 
 def weak_tests(rows: list[dict]) -> dict:
+    """Strong-suite survival/loss among hidden passes with a known strong verdict.
+
+    n_passed retains all recorded hidden passes; n_eligible is the denominator of
+    survive/lost and n_excluded reports the hidden passes that were never regraded.
+    """
     harnesses = sorted({r["harness_id"] for r in rows})
     hid = {h: aggregate(filter_rows(rows, harness_id=h), "hidden_pass").get("pass@1") for h in harnesses}
     strg = {h: aggregate(filter_rows(rows, harness_id=h), "strong_pass").get("pass@1") for h in harnesses}
-    rank_h = {h: i + 1 for i, h in enumerate(sorted(harnesses, key=lambda h: -(hid[h] or 0)))}
-    rank_s = {h: i + 1 for i, h in enumerate(sorted(harnesses, key=lambda h: -(strg[h] or 0)))}
+    rank_h = {h: i + 1 for i, h in enumerate(sorted((h for h in harnesses if hid[h] is not None), key=lambda h: -hid[h]))}
+    rank_s = {h: i + 1 for i, h in enumerate(sorted((h for h in harnesses if strg[h] is not None), key=lambda h: -strg[h]))}
     per_h = []
     for h in harnesses:
         R = filter_rows(rows, harness_id=h)
-        passed = [r for r in R if r["hidden_pass"]]
+        passed = [r for r in R if r.get("hidden_pass") is True]
+        eligible = [r for r in passed if isinstance(r.get("strong_pass"), bool)]
         per_h.append({"harness": h, "hidden": hid[h], "strong": strg[h],
-                      "survive": (sum(1 for r in passed if r["strong_pass"]) / len(passed)) if passed else None,
-                      "rank_hidden": rank_h[h], "rank_strong": rank_s[h]})
+                      "survive": mean(r["strong_pass"] for r in eligible) if eligible else None,
+                      "n_passed": len(passed), "n_eligible": len(eligible), "n_excluded": len(passed) - len(eligible),
+                      "n_hidden_graded": sum(isinstance(r.get("hidden_pass"), bool) for r in R),
+                      "n_strong_graded": sum(isinstance(r.get("strong_pass"), bool) for r in R),
+                      "rank_hidden": rank_h.get(h), "rank_strong": rank_s.get(h)})
     per_t = []
     for tid in sorted({r["task_id"] for r in rows}):
-        R = [r for r in rows if r["task_id"] == tid and r["hidden_pass"]]
-        per_t.append({"task": tid, "n_passed": len(R), "lost": (sum(1 for r in R if not r["strong_pass"]) / len(R)) if R else None})
+        R = [r for r in rows if r["task_id"] == tid and r.get("hidden_pass") is True]
+        eligible = [r for r in R if isinstance(r.get("strong_pass"), bool)]
+        per_t.append({"task": tid, "n_passed": len(R), "n_eligible": len(eligible), "n_excluded": len(R) - len(eligible),
+                      "lost": mean(not r["strong_pass"] for r in eligible) if eligible else None})
     return _clean({"per_harness": per_h, "per_task": per_t})
 
 
@@ -280,13 +297,15 @@ def conduct(name: str, rows: list[dict], harness: str) -> dict:
     })
 
 
-def report_card(name: str, rows: list[dict], harness: str) -> dict:
+def report_card(name: str, rows: list[dict], harness: str, model: str | None = None) -> dict:
     """The exercise-6 card. Same builder and same markdown as `exercises/ex6_report_card.py`."""
     d = os.path.join(RUNS_ROOT, name)
-    R = filter_rows(rows, harness_id=harness)
+    R = filter_rows(rows, harness_id=harness, model=model)
     if not R:
         return {"error": "no runs"}
-    traj = load_runs(d, harness_id=harness)
+    selected = {r["run_id"] for r in R}
+    traj = [t for t in load_runs(d, harness_id=harness, **({"model": model} if model is not None else {}))
+            if t.run_id in selected]
     card = build_card(R, traj, source=f"data/runs/{name}")
     return _clean({"card": card, "markdown": card_markdown(card)})
 # --------------------------------------------------------------------------- experiment (exercise 8)

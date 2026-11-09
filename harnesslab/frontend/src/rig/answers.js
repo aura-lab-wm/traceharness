@@ -14,6 +14,7 @@
               fig: {...}                                     // payload for the figure renderer
               note? }                                        // honesty caveat shown under the answer
    ==================================================================================== */
+import { oracleChanges } from './provenance'
 import { short, sfx, tally, verdict, metricsCell, isFailureMode, fmt, conditionRuns } from './data'
 
 const { pct, pp, int, plural } = fmt
@@ -95,13 +96,14 @@ export const QUESTIONS = [
           ? `No run carries both a hidden and a strengthened grade (${int(o.n_excluded)} excluded), so the two suites cannot be compared.`
           : `Agreement between the suites is undefined here (${humanReason(o.kappa_undefined_reason)}).` }
       }
-      const d = o.rate_a.rate - o.rate_b.rate
+      const change = oracleChanges(o)
+      const net = o.rate_b.rate - o.rate_a.rate
       return {
-        sentence: d > 0.0005
-          ? [{ mark: `${(d * 100).toFixed(1)} points` }, ` of the hidden-suite pass rate do not survive the strengthened suite (κ ${fmt.fx(o.kappa)}).`]
-          : ['The strengthened suite agrees with the hidden suite: ', { mark: 'no pass is lost' }, ` (κ ${fmt.fx(o.kappa)}).`],
-        num: pp(-d), numLabel: `hidden ${pct(o.rate_a.rate)} → strengthened ${pct(o.rate_b.rate)} · n = ${int(o.n_eligible)}`,
-        short: `${(d * 100).toFixed(1)} points don't survive the strengthened suite (κ ${fmt.fx(o.kappa)})`,
+        sentence: change
+          ? [{ mark: `${(change.loss * 100).toFixed(1)} percentage points lost` }, ` and ${(change.gain * 100).toFixed(1)} gained under the strengthened suite; net ${pp(change.net)} (κ ${fmt.fx(o.kappa)}).`]
+          : ['The strengthened suite changes the pass rate by ', { mark: pp(net) }, ` (κ ${fmt.fx(o.kappa)}); paired transition counts are unavailable.`],
+        num: pp(net), numLabel: `net change · hidden ${pct(o.rate_a.rate)} → strengthened ${pct(o.rate_b.rate)} · n = ${int(o.n_eligible)}`,
+        short: change ? `${(change.loss * 100).toFixed(1)} points lost, ${(change.gain * 100).toFixed(1)} gained; net ${pp(net)}` : `Net change ${pp(net)}`,
         fig: { kind: 'oracle', o },
         runs: { title: 'Runs the hidden suite passed and the strengthened suite failed', test: (r) => r.hid === true && r.str === false },
       }
@@ -214,7 +216,7 @@ export const QUESTIONS = [
         sentence: [`At threshold ${fmt.fx(op.threshold)} the ${m.name} warning catches `, { mark: `${pct(op.recall, 0)} of bad submits` }, `, blocks ${pct(op.false_alarm, 0)} of good ones, ${fmt.fx(op.mean_lead_steps, 1)} steps ahead.`],
         num: pct(op.recall, 0), numLabel: `bad submits caught · trained on ${int(m.meta.n_runs)} runs (${m.name})`,
         short: `${pct(op.recall, 0)} caught, ${pct(op.false_alarm, 0)} of good blocked`,
-        note: 'Replayed on recorded trajectories; an intervention changes what the agent does next, so this is an upper bound on what a live run would show.',
+        note: 'Replay measures detection on these recorded trajectories. A live intervention can change later actions; its effect on outcomes requires separate measurement.',
         fig: { kind: 'sentinel', model: m, threshold: thr },
         runs: h ? { title: `${h} runs that failed the hidden suite`, test: (r) => r.harness === h && r.hid === false } : null,
       }
@@ -232,14 +234,14 @@ export const QUESTIONS = [
       const own = runs && h ? runs.filter((r) => r.harness === h && r.model === card.cell.model).length : null
       const all = runs && h ? runs.filter((r) => r.harness === h).length : null
       const models = runs && h ? new Set(runs.filter((r) => r.harness === h).map((r) => r.model)).size : null
-      const pooled = own != null && n != null && n > own && n === all
+      const pooled = card.cell.pooled_models ?? (own != null && n != null && n > own && n === all)
       const o = card.outcome
       const scope = pooled ? `all ${models} models · ${h} (pooled)` : `${short(card.cell.model)} · ${h}`
       return {
         sentence: ['pass@1 ', { mark: pct(o.pass1) }, ` [${pct(o.ci95 && o.ci95[0])}, ${pct(o.ci95 && o.ci95[1])}] over ${int(n)} ${h} runs${pooled ? `, all ${models} models pooled` : ''}; pass^3 ${pct(o.pass_pow_k && o.pass_pow_k['3'])}, strengthened ${pct(o.pass1_strong)}.`],
         num: pct(o.pass1), numLabel: `${scope} · n = ${int(n)}`,
         short: `pass@1 ${pct(o.pass1)} over ${int(n)} ${h} runs${pooled ? ' (all models pooled)' : ''}`,
-        note: pooled ? `The card's header names ${card.cell.model}, but its outcome pools every model's ${h} runs (n = ${int(n)}; ${short(card.cell.model)} alone has ${int(own)}). Shown here as pooled.` : null,
+        note: pooled ? `This card pools ${int(n)} runs across ${models} models under ${h}; it is not a single-model estimate.` : null,
         fig: { kind: 'report', card, pooled, scope },
         runs: h ? { title: `Every ${h} run behind the report card`, test: (r) => r.harness === h } : null,
       }

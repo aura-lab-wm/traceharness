@@ -6,6 +6,7 @@
    lives behind "About". Empty states always offer the way forward.
    ==================================================================================== */
 import { useMemo } from 'react'
+import { IS_STATIC, IS_MEMBER } from '../../api'
 import { makeSpec } from '../route'
 import { useDatasets, short, fmt } from '../data'
 import { useRig, useTabState } from '../context'
@@ -29,8 +30,8 @@ function Home({ spec }) {
     return (
       <div className="rg-dpad">
         <div className="rg-dh"><div className="t"><div className="rg-eyebrow">Library · data/runs</div><h1>Datasets</h1></div></div>
-        <Empty title="No datasets yet." actions={[{ label: 'Load trajectories', spec: 'sources', primary: true }, { label: 'Capture sessions on this machine', spec: 'capture' }, { label: 'Fixed harnesses', spec: 'shallowCards' }, { label: 'Minimal harness', spec: 'shallowWizard' }]}>
-          data/runs on this machine holds no trajectory sets. Import another harness's traces, or capture the coding-agent sessions already on this machine.
+        <Empty title="No datasets yet." actions={[!IS_STATIC && { label: 'Load trajectories', spec: 'sources', primary: true }, !IS_STATIC && { label: 'Capture sessions on this machine', spec: 'capture' }, { label: 'Fixed harnesses', spec: 'shallowCards' }, { label: 'Minimal harness', spec: 'shallowWizard' }].filter(Boolean)}>
+          {IS_STATIC ? 'This snapshot contains no trajectory sets. You can still design a harness; import and capture run in the local workbench.' : 'data/runs on this machine holds no trajectory sets. Import another harness\'s traces, or capture the coding-agent sessions already on this machine.'}
         </Empty>
       </div>
     )
@@ -38,12 +39,17 @@ function Home({ spec }) {
   return (
     <div className="rg-dpad">
       <div className="rg-dh">
-        <div className="t"><div className="rg-eyebrow">Library · data/runs · {fmt.int(total)} runs</div><h1>Datasets</h1>
-          <p>{fmt.plural(all.length, 'trajectory set')}. Open one to see its questions already answered, then follow any number down to the recorded action behind it.</p></div>
-        <Go spec="sources" className="rg-btn pri lg" el="load-trajectories-cta">Load trajectories</Go>
-        <Go spec="blocks" className="rg-btn lg" el="build-harness-cta">Build a harness</Go>
-        <Go spec="shallowCards" className="rg-btn lg" el="fixed-harnesses-cta">Fixed harnesses</Go>
-        <Go spec="shallowWizard" className="rg-btn lg" el="minimal-harness-cta">Minimal harness</Go>
+        <div className="t"><div className="rg-eyebrow">Library · {IS_STATIC ? 'saved snapshot' : 'data/runs'} · {fmt.int(total)} runs</div><h1>Datasets</h1>
+          <p>{fmt.plural(all.length, 'trajectory set')}. Recorded agents appear first; scripted mock controls stay labeled. Open a dataset to examine its analysis, then follow a result into its run evidence.</p></div>
+        {!IS_STATIC && <Go spec="sources" className="rg-btn pri lg" el="load-trajectories-cta">Load trajectories</Go>}
+      </div>
+      <div className="rg-pnl rg-home-list" data-el="harness-workflow">
+        <div className="rg-pnl-b rg-row rg-wrap">
+          <div className="rg-grow"><b>Design from the evidence</b><p className="rg-small">Open a run and choose Design a harness to keep a link back to it. {IS_MEMBER ? 'Save harnesses to your member account; execute experiments locally at 127.0.0.1:8742.' : 'Or begin with a fixed shell, six questions, or a block stack.'}</p></div>
+          <Go spec="shallowWizard" className="rg-btn pri" el="minimal-harness-cta">Minimal harness</Go>
+          <Go spec="shallowCards" className="rg-btn" el="fixed-harnesses-cta">Fixed harnesses</Go>
+          <Go spec="blocks" className="rg-btn" el="build-harness-cta">Build a harness</Go>
+        </div>
       </div>
       <div className="rg-row rg-wrap rg-home-bar">
         <SearchBox value={q} onChange={setQ} placeholder="Find a dataset, model or harness" el="dataset-search" />
@@ -54,7 +60,7 @@ function Home({ spec }) {
         {list.length ? (
           <div className="rg-tblwrap"><table className="rg-tbl rg-home-tbl">
             <thead><tr><th>dataset</th><th className="rg-num">runs</th><th className="rg-num rg-hide-sm">tasks</th><th className="rg-num rg-hide-sm">harnesses</th><th className="rg-num rg-hide-sm">models</th>
-              <th className="rg-num rg-hide-sm" title="pass_rate as indexed by /api/overview: hidden suite, every condition pooled">pass (index)</th><th className="rg-hide-md">updated</th><th><span className="sr-only">Open</span></th></tr></thead>
+              <th className="rg-num rg-hide-sm" title="Known hidden-suite grades, every condition pooled; ungraded runs are excluded">pass (index)</th><th className="rg-hide-md">updated</th><th><span className="sr-only">Open</span></th></tr></thead>
             <tbody>{list.map((r) => (
               <tr key={r.name} tabIndex={0} className="hov"
                 onKeyDown={(e) => { if (e.key === 'Enter' && e.target === e.currentTarget) openTab(makeSpec('ds', r.name), { side: e.metaKey || e.ctrlKey }) }}
@@ -66,7 +72,7 @@ function Home({ spec }) {
                 </td>
                 <td className="rg-num" data-el="dataset-stats">{fmt.int(r.runs)}</td>
                 <td className="rg-num rg-hide-sm">{r.tasks.length}</td><td className="rg-num rg-hide-sm">{r.harnesses.length}</td><td className="rg-num rg-hide-sm">{r.models.length}</td>
-                <td className="rg-num rg-hide-sm"><span className="rg-home-pr"><span className="rg-home-prt" aria-hidden="true">{r.pass_rate != null && <i style={{ width: `${Math.max(0, Math.min(1, r.pass_rate)) * 100}%` }} />}</span>{fmt.pct(r.pass_rate)}</span></td>
+                <td className="rg-num rg-hide-sm"><span className="rg-home-pr"><span className="rg-home-prt" aria-hidden="true">{r.pass_rate != null && <i style={{ width: `${Math.max(0, Math.min(1, r.pass_rate)) * 100}%` }} />}</span>{r.pass_rate == null ? 'Not graded' : fmt.pct(r.pass_rate)}</span></td>
                 <td className="rg-mono rg-small rg-dim rg-hide-md rg-home-date">{String(r.updated || '').slice(0, 10) || 'not recorded'}</td>
                 <td className="rg-num rg-home-go"><Go spec={makeSpec('ds', r.name)} className="rg-rowgo" el="dataset-open" label={`Open ${r.name}`}><Icon name="right" size={15} /></Go></td>
               </tr>))}</tbody>
@@ -80,9 +86,9 @@ function Home({ spec }) {
         )}
       </div>
       <About summary="About recorded datasets and mock controls" el="dataset-kind-about">
-        <p><b>Recorded</b> datasets hold real agent trajectories: each run is a ledger of every model call and tool action, graded by visible, hidden and (where the task has one) strengthened test suites.</p>
+        <p><b>Recorded</b> datasets hold real agent trajectories: each run is a ledger of model calls and tool actions. Test-suite grades are shown where recorded; captured sessions and imported runs can have unknown outcomes.</p>
         <p><b>Mock controls</b> are scripted agents with designed failure rates. They check the measurement, not a model: all-pass or all-fail on a mock control means the grader broke.</p>
-        <p>“pass (index)” is the hidden-suite pass rate the library index reports, pooled over every model and harness in the dataset; open a dataset for rates per condition, with their denominators.</p>
+        <p>“pass (index)” is the hidden-suite pass rate among known grades, pooled over every model and harness in the dataset. Ungraded runs are excluded; open a dataset for rates per condition, with their denominators.</p>
       </About>
     </div>
   )
