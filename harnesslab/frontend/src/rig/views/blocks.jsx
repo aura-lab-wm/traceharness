@@ -107,7 +107,8 @@ function BlockCard({ block, index, count, tools, onChange, onMove, onRemove }) {
   )
 }
 
-function Blocks() {
+function Blocks({ args } = {}) {
+  const customize = Array.isArray(args) && args[0] === 'customize'
   const [catalog, setCatalog] = useState(null)
   const [tools, setTools] = useState([])
   const [types, setTypes] = useState([])
@@ -125,15 +126,27 @@ function Blocks() {
 
   useEffect(() => {
     let live = true
-    Promise.all([api('/blocks/catalog'), api('/blocks/palette')]).then(([cat, pal]) => {
+    const loads = customize ? [api('/blocks/palette')] : [api('/blocks/catalog'), api('/blocks/palette')]
+    Promise.all(loads).then((rows) => {
       if (!live) return
-      setCatalog(cat.harnesses)
+      const pal = customize ? rows[0] : rows[1]
+      if (!customize) setCatalog(rows[0].harnesses)
       setTools(pal.tools)
       setTypes(pal.types)
-      setBlocks(pal.blank)
+      if (!customize) {
+        setBlocks(pal.blank)
+        return
+      }
+      let stored = null
+      try {
+        const raw = sessionStorage.getItem('traceharness.shallow.customize')
+        stored = raw ? JSON.parse(raw) : null
+      } catch { stored = null }
+      if (Array.isArray(stored) && stored.length) setBlocks(stored)
+      else setBlocks(['prompt', 'tools', 'policy', 'context', 'stop', 'sampling', 'listing'].map((type) => fresh(type, pal.tools)))
     }).catch((e) => { if (live) setLoadError(e) })
     return () => { live = false }
-  }, [])
+  }, [customize])
 
   function loadPreset(id) {
     const row = (catalog || []).find((r) => r.id === id)
@@ -172,12 +185,12 @@ function Blocks() {
     }
     let cancel = false
     const body = { blocks }
-    if (preset) body.preset_id = preset
+    if (preset && !customize) body.preset_id = preset
     api('/blocks/compile', { method: 'POST', body })
       .then((res) => { if (!cancel) setCompiled(res) })
       .catch((e) => { if (!cancel) setCompiled({ ok: false, errors: [String(e.message || e)], warnings: [] }) })
     return () => { cancel = true }
-  }, [blocks, preset])
+  }, [blocks, preset, customize])
 
   const liveModel = model !== 'mock' && !model.startsWith('mock')
   const missingKey = liveModel && !key.trim()
@@ -189,7 +202,7 @@ function Blocks() {
     setJob(null)
     try {
       const body = { blocks, model, task, repeats: 1 }
-      if (preset) body.preset_id = preset
+      if (preset && !customize) body.preset_id = preset
       if (key.trim()) body.api_key = key.trim()
       const res = await api('/blocks/run', { method: 'POST', body })
       setJob(res)
@@ -213,14 +226,14 @@ function Blocks() {
           <p>Start from a common harness, or stack the blocks yourself. This lab runs the stack. A live model uses a key you paste here. The key is not saved.</p>
         </div>
       </div>
-      <div className="rg-row rg-wrap" data-el="harness-catalog">
+      {!customize && <div className="rg-row rg-wrap" data-el="harness-catalog">
         {(catalog || []).map((row) => (
           <button type="button" key={row.id} className={preset === row.id ? 'rg-btn pri' : 'rg-btn'} onClick={() => loadPreset(row.id)}>
             {row.name}
           </button>
         ))}
         <button type="button" className="rg-btn" onClick={() => { setPreset(''); setBasis(''); setModel('mock'); setJob(null) }}>Blank stack</button>
-      </div>
+      </div>}
       {preset && basis && <Note>{basis}{catalog.find((r) => r.id === preset)?.same_loop_as?.length ? ` Same loop as ${catalog.find((r) => r.id === preset).same_loop_as.join(', ')}.` : ''}</Note>}
       <div className="rg-col">
         {blocks.map((block, i) => (
@@ -250,7 +263,7 @@ function Blocks() {
           {busy ? 'Running…' : 'Run'}
         </Btn>
         {model === 'mock' && <Tag tone="dash">mock · no key</Tag>}
-        {compiled && compiled.ok && <span className="rg-small rg-dim">Cell {compiled.harness.id}</span>}
+        {compiled && compiled.ok && <span className="rg-small rg-dim">Cell {customize ? `min_${compiled.hash}` : compiled.harness.id}</span>}
       </div>
       {compiled && compiled.ok === false && <Note tone="bad">{(compiled.errors || []).join(' ')}</Note>}
       {compiled && (compiled.warnings || []).length > 0 && compiled.ok && (compiled.warnings || []).map((w) => <p key={w} className="rg-small">{w}</p>)}
