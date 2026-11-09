@@ -24,13 +24,25 @@ export const QUESTIONS = [
 
 const VERIFY_YES = "You are a minimal TraceHarness agent. Read the repository, edit only the files the task names, and run the tests that already exist. Before you call submit, verify the edit against those tests. Do not modify the tests. Network, privilege, secret access, and path escape stay blocked."
 
-export function blocksFromAnswers(answers) {
+export const VERIFY_NO = "You are a minimal TraceHarness agent. Read the repository and edit only the files the task names. Call submit when the edit is in place. Leave every test file untouched. Network, privilege, secret access, and path escape stay blocked."
+
+export const RECOMMENDED_ID = "min_099dc52e693e"
+
+export const RECOMMENDED_ANSWERS = Object.fromEntries(QUESTIONS.map((row) => [row.id, row.recommended]))
+
+export function blocksFromAnswers(input) {
+  const answers = { ...RECOMMENDED_ANSWERS }
+  if (input && typeof input === "object") {
+    for (const key of Object.keys(RECOMMENDED_ANSWERS)) {
+      if (input[key] != null) answers[key] = input[key]
+    }
+  }
   const tools = {
     read_edit_test: ["list_files", "read_file", "edit_file", "run_tests", "submit"],
     read_only: ["list_files", "read_file", "submit"],
     with_shell: ["list_files", "read_file", "edit_file", "run_tests", "bash", "submit"],
   }[answers.touch]
-  const prompt = answers.verify === "yes" ? VERIFY_YES : "You are a minimal TraceHarness agent. Read the repository and edit only the files the task names. Call submit when the edit is in place. Leave every test file untouched. Network, privilege, secret access, and path escape stay blocked."
+  const prompt = answers.verify === "yes" ? VERIFY_YES : VERIFY_NO
   const window = answers.history === "last2" ? 2 : 0
   const steps = { steps_12: 12, steps_6: 6, steps_20: 20 }[answers.stop] || 12
   return [

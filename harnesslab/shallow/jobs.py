@@ -21,6 +21,9 @@ KEY_SENTENCE = (
 _SECRET_KEY = re.compile(
     r'"(?:api_key|key|password|token|authorization|secret|_api_key)"\s*:'
 )
+_ALLOWED_TOOLS = frozenset({
+    "list_files", "read_file", "write_file", "edit_file", "run_tests", "bash", "submit",
+})
 
 
 class ShallowJobError(Exception):
@@ -78,6 +81,8 @@ def run_shallow_job(store, user_id: str, body: dict, caller=None) -> dict:
     steps = outcome.get("steps")
     if not isinstance(passed, bool) or isinstance(steps, bool) or not isinstance(steps, int):
         raise ShallowJobError("The caller result is not usable.", 502)
+    if steps < 0:
+        raise ShallowJobError("The caller result is not usable.", 502)
 
     fingerprint = json.dumps(
         {
@@ -132,9 +137,11 @@ def _shell(store, user_id: str, body: dict, harness_id: str):
             prompt = row["prompt"]
         if not isinstance(prompt, str) or not prompt.strip():
             raise ShallowJobError("Prompt is empty.")
+        tools = list(row["tools"])
+        _check_tools(tools)
         return (
             "fixed",
-            list(row["tools"]),
+            tools,
             row["policy"],
             row["max_steps"],
             row["cap_bytes"],
@@ -166,7 +173,16 @@ def _shell(store, user_id: str, body: dict, harness_id: str):
         raise ShallowJobError("Prompt is empty.")
     if mcp != "none":
         raise ShallowJobError("MCP is off on this harness.")
+    _check_tools(tools)
     return "minimal", list(tools), policy, max_steps, cap_bytes, prompt, mcp
+
+
+def _check_tools(tools) -> None:
+    if any("mcp" in str(name).lower() for name in tools):
+        raise ShallowJobError("MCP tools are not mounted")
+    for name in tools:
+        if not isinstance(name, str) or name not in _ALLOWED_TOOLS:
+            raise ShallowJobError("Unknown tool.", 400)
 
 
 def _mock(clipped: str) -> dict:

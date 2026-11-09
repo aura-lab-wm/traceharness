@@ -7,7 +7,7 @@ change edits the prompt only. Tools, policy, stop, and cap stay on the harness.
 from __future__ import annotations
 
 from .catalog import AGENTS, card, catalog
-from .identity import shallow_hash
+from .identity import clip_prompt, shallow_hash
 
 _FIXED = frozenset(AGENTS)
 
@@ -30,7 +30,7 @@ def apply_prompt_to_all(prompt: str) -> list[dict]:
     out = []
     for row in catalog():
         edited = dict(row)
-        edited["prompt"] = prompt
+        edited["prompt"] = clip_prompt(prompt, row["cap_bytes"])
         edited["hash"] = shallow_hash(row["id"], prompt, row["cap_bytes"])
         edited["tools"] = list(row["tools"])
         edited["include_in_vendor_ladder"] = False
@@ -51,4 +51,6 @@ def paired_study(harness_id: str, prompt: str, seed: int) -> dict:
         "steps_unchanged": stock["max_steps"] == edited["max_steps"],
         "cap_unchanged": stock["cap_bytes"] == edited["cap_bytes"],
         "include_in_vendor_ladder": False,
+        "prompt_bytes": len(edited["prompt"].encode("utf-8")),
+        "was_clipped": edited["prompt"] != prompt,
     }

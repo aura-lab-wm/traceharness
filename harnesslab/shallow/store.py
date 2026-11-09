@@ -60,6 +60,22 @@ class MemoryStore:
         row = self._jobs.get((user_id, job_id))
         return None if row is None else json.loads(json.dumps(row))
 
+    def list_harnesses(self, user_id: str) -> list[dict]:
+        return self._list(self._harness, user_id)
+
+    def list_jobs(self, user_id: str) -> list[dict]:
+        return self._list(self._jobs, user_id)
+
+    def _list(self, table: dict, user_id: str) -> list[dict]:
+        user_id = _safe(user_id, "user")
+        rows = [
+            json.loads(json.dumps(row))
+            for (owner, _), row in table.items()
+            if owner == user_id
+        ]
+        rows.sort(key=lambda item: item["id"])
+        return rows
+
 
 class FileStore:
     def __init__(self, root):
@@ -83,6 +99,32 @@ class FileStore:
 
     def get_job(self, user_id: str, job_id: str):
         return self._read("jobs", user_id, job_id)
+
+    def list_harnesses(self, user_id: str) -> list[dict]:
+        return self._list("harnesses", user_id)
+
+    def list_jobs(self, user_id: str) -> list[dict]:
+        return self._list("jobs", user_id)
+
+    def _list(self, kind: str, user_id: str) -> list[dict]:
+        user_id = _safe(user_id, "user")
+        folder = self.root / kind
+        if not folder.is_dir():
+            return []
+        prefix = f"{user_id}__"
+        rows = []
+        for path in folder.iterdir():
+            name = path.name
+            if not path.is_file() or not name.startswith(prefix) or not name.endswith(".json"):
+                continue
+            record_id = name[len(prefix):-len(".json")]
+            if not SAFE_ID.fullmatch(record_id):
+                continue
+            row = self._read(kind, user_id, record_id)
+            if row is not None:
+                rows.append(row)
+        rows.sort(key=lambda item: item["id"])
+        return rows
 
     def _file(self, kind: str, user_id: str, record_id: str) -> Path:
         user_id = _safe(user_id, "user")
@@ -113,9 +155,14 @@ class FileStore:
         path = self._file(kind, user_id, record_id)
         if not path.is_file():
             return None
-        with path.open("r", encoding="utf-8") as handle:
-            data = json.load(handle)
-        return public_record(data) if isinstance(data, dict) else None
+        try:
+            with path.open("r", encoding="utf-8") as handle:
+                data = json.load(handle)
+        except ValueError:
+            return None
+        if not isinstance(data, dict) or data.get("id") != record_id:
+            return None
+        return public_record(data)
 
 
 def _prepare(record: dict, job: bool = False) -> dict:

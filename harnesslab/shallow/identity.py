@@ -52,13 +52,34 @@ def shallow_hash(harness_id: str, prompt: str, cap_bytes: int) -> str:
     return hashlib.sha256(blob.encode("utf-8")).hexdigest()[:12]
 
 
+_NOT_SECRET = frozenset({
+    "max_tokens_per_call",
+    "max_total_tokens",
+    "id",
+    "harness_id",
+    "user_id",
+    "job_id",
+})
+_SECRET_SUFFIXES = ("_api_key", "_key", "_token", "_secret", "_password")
+
+
+def _is_secret_key(key: object) -> bool:
+    """True for secret field names, including uppercase and compound names."""
+    low = str(key).lower()
+    if low in _NOT_SECRET:
+        return False
+    if low in SECRET_FIELDS:
+        return True
+    return low.endswith(_SECRET_SUFFIXES)
+
+
 def strip_secrets(value):
     """Drop secret field names at every level. Values are otherwise kept."""
     if isinstance(value, dict):
         return {
             key: strip_secrets(item)
             for key, item in value.items()
-            if key not in SECRET_FIELDS
+            if not _is_secret_key(key)
         }
     if isinstance(value, list):
         return [strip_secrets(item) for item in value]
