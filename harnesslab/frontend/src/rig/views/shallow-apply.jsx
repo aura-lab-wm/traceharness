@@ -5,6 +5,7 @@ import { ErrorState, Go, Loading } from '../ui'
 import { EvidenceOrigin, evidenceOrigin, withEvidenceOrigin } from '../shallowEvidence'
 import { readDraft, writeDraft } from './shallow-drafts'
 import { CARDS } from './shallow-data.js'
+import { ByteMeter, HarnessNav, ToolChips } from '../harnessWorkspace'
 
 function clipUtf8(text, capBytes) {
   const raw = new TextEncoder().encode(text)
@@ -39,10 +40,11 @@ function ShallowApply({ args } = {}) {
   if (error) return <><ErrorState error={error} what="The six shell preview" onRetry={() => setRevision((n) => n + 1)} /><p><a href="/login">Account</a> · Sign back into the original account to keep working on its draft.</p></>
   if (!cards) return <Loading label="Reading the six shells…" />
   return (
-    <div className="rg-dpad" data-el="shallow-apply">
+    <div className="rg-dpad rg-harness" data-el="shallow-apply">
+      <HarnessNav active="fixed" args={args} />
       <div className="rg-dh">
         <div className="t">
-          <div className="rg-eyebrow">Shallow · same change</div>
+          <div className="rg-eyebrow">Harness workspace / Compare prompt fit</div>
           <h1>One prompt, six shells</h1>
           <p>The prompt is the only thing this change edits. Each harness keeps its own tools, permission rule, stop, and byte cap. These cells stay off the vendor ladder.</p>
           <p>This is a preview. Applying it here does not save any account prompt or run a model.</p>
@@ -53,19 +55,20 @@ function ShallowApply({ args } = {}) {
       <label className="rg-fld">Prompt applied to all six
         <textarea className="rg-inp" value={prompt} onChange={(e) => setPrompt(e.target.value)} spellCheck={false} />
       </label>
-      <button type="button" className="rg-btn pri" onClick={() => setApplied(prompt)}>Apply to all six</button>
-      {prompt !== applied ? <p className="rg-small">Unapplied edits</p> : null}
-      <div className="rg-col">
+      <div className="rg-harness-toolbar"><button type="button" className="rg-btn pri" onClick={() => setApplied(prompt)}>Apply to all six</button>
+      <span className="rg-small">{prompt !== applied ? 'Unapplied edits' : 'Preview only · account prompts unchanged'}</span></div>
+      <div className="rg-harness-grid">
         {cards.map((row) => {
           const shown = clipUtf8(applied, row.cap_bytes)
           const used = new TextEncoder().encode(shown).length
           const clipped = shown !== applied
           return (
-            <article key={row.id} className="rg-pnl" data-el="apply-shell" data-agent={row.id}>
-              <div className="rg-pnl-h"><b>{row.name}</b><span className="meta">{used} / {row.cap_bytes} bytes · {row.max_steps} steps · {row.policy}{clipped ? " · clipped" : ""}</span></div>
-              <div className="rg-pnl-b rg-col">
-                <p className="rg-small">{row.tools.join(" · ")}</p>
-                <p className="rg-small">{shown}</p>
+            <article key={row.id} className="rg-harness-card" data-el="apply-shell" data-agent={row.id}>
+              <div className="rg-harness-card-head"><div><div className="rg-harness-label">{row.max_steps} steps · {row.policy}</div><h2>{row.name}</h2></div><span className={`rg-harness-tag${clipped ? ' draft' : ''}`}>{clipped ? 'Clipped' : 'Fits cap'}</span></div>
+              <div className="rg-harness-card-body">
+                <ToolChips tools={row.tools} />
+                <p className="rg-harness-preview-prompt">{shown}</p>
+                <ByteMeter used={used} cap={row.cap_bytes} name={row.name} />
               </div>
             </article>
           )

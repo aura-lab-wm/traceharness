@@ -1,0 +1,90 @@
+/* Harness authoring: the existing Rig palette, with a dedicated editing hierarchy.
+   Shared by fixed, guided, flexible and shell-preview views; no global overrides. */
+.rig .rg-harness{max-width:1560px;margin-inline:auto;padding:32px;container-type:inline-size}
+.rg-harness-nav{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-bottom:32px}
+.rg-harness-lane{min-width:0;border:1px solid var(--rig-line2);border-radius:10px;background:var(--rig-panel)}
+.rg-harness-lane.active{border-color:var(--rig-sel);background:var(--rig-sel-bg)}
+.rg-harness-lane-link{display:flex;width:100%;align-items:center;gap:12px;padding:14px 16px;text-align:left;color:var(--rig-dim);border:0;background:none;border-radius:9px}
+.rg-harness-lane-link:hover{background:var(--rig-panel2);color:var(--rig-text)}
+.rg-harness-lane-link>span{flex:1;min-width:0}
+.rg-harness-lane-link strong{display:block;font-size:15px;font-weight:600;color:var(--rig-text)}
+.rg-harness-lane-link small{display:block;font-size:12px;margin-top:3px}
+.rg-harness-lane.active .rg-ico{color:var(--rig-sel-t)}
+.rg-harness .rg-dh{margin-bottom:24px}
+.rg-harness .rg-dh::before{display:none}
+.rig .rg-harness .rg-dh h1{font-size:32px;line-height:1.15;letter-spacing:-.035em;margin:8px 0 12px}
+.rig .rg-harness .rg-dh p{font-size:14px;line-height:1.65;max-width:76ch}
+.rg-harness .rg-eyebrow,.rg-harness-label{font:500 11px/1.5 var(--rig-mono);text-transform:uppercase;letter-spacing:.09em;color:var(--rig-dim)}
+.rg-harness .rg-fld{font:500 13px/1.5 var(--rig-sans);letter-spacing:0;text-transform:none;color:var(--rig-text);gap:8px}
+.rg-harness .rg-inp,.rg-harness .rg-selc{width:100%;min-width:0;height:auto;min-height:42px;background:var(--rig-bg);border-color:var(--rig-line2);padding:11px 12px}
+.rig .rg-harness textarea.rg-inp{font:13px/1.75 var(--rig-mono);resize:vertical;min-height:180px}
+.rg-harness .rg-inp:focus,.rg-harness .rg-selc:focus{border-color:var(--rig-sel)}
+.rg-harness .rg-btn{min-height:38px;height:auto;white-space:normal;text-align:center;padding:8px 14px;line-height:1.4}
+.rg-harness .rg-small{font-size:12px;line-height:1.65;color:var(--rig-dim)}
+.rg-harness-toolbar{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;padding:16px 0 24px}
+.rg-harness-rules{margin-bottom:16px;color:var(--rig-dim);font-size:12px}
+.rg-harness-rules summary{cursor:pointer;padding:10px 0;min-height:40px}
+.rg-harness-note{border-left:2px solid var(--rig-line3);padding:4px 0 4px 14px;color:var(--rig-dim);font-size:12px;line-height:1.65}
+.rg-harness-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:20px;align-items:start}
+.rg-harness-card{min-width:0;background:var(--rig-panel);border:1px solid var(--rig-line2);border-radius:12px;overflow:hidden}
+.rg-harness-card-head{padding:22px 22px 16px;display:flex;align-items:flex-start;justify-content:space-between;gap:12px}
+.rig .rg-harness-card h2{font-size:21px;letter-spacing:-.025em;font-weight:600;margin:3px 0 0}
+.rg-harness-card-body{display:flex;flex-direction:column;gap:18px;padding:0 22px 22px}
+.rg-harness-tag{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--rig-line2);border-radius:5px;padding:4px 7px;font:11px/1.4 var(--rig-mono);color:var(--rig-dim);white-space:nowrap}
+.rg-harness-tag.draft{color:var(--rig-amb-t);border-color:var(--rig-amb);background:var(--rig-amb-bg)}
+.rg-harness-tools{display:flex;flex-wrap:wrap;gap:5px;padding:0;margin:0;list-style:none}
+.rg-harness-tools li{font:11px/1.5 var(--rig-mono);padding:3px 7px;border-radius:4px;background:var(--rig-panel2);color:var(--rig-dim);overflow-wrap:anywhere}
+.rg-harness-meter{display:grid;gap:7px;color:var(--rig-dim);font-size:11px}
+.rg-harness-meter>div{display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap}
+.rg-harness-meter meter{display:block;width:100%;height:5px;appearance:none;border:0;border-radius:4px;background:var(--rig-panel3);overflow:hidden}
+.rg-harness-meter meter::-webkit-meter-bar{height:5px;background:var(--rig-panel3);border:0}
+.rg-harness-meter meter::-webkit-meter-optimum-value{background:var(--rig-sel-t)}
+.rg-harness-meter meter::-moz-meter-bar{background:var(--rig-sel-t)}
+.rg-harness-meter.over meter::-webkit-meter-optimum-value{background:var(--rig-amb-t)}
+.rg-harness-meter.over meter::-moz-meter-bar{background:var(--rig-amb-t)}
+.rg-harness-warning{padding:10px 12px;border-left:2px solid var(--rig-amb);background:var(--rig-amb-bg);color:var(--rig-amb-t);font-size:12px;line-height:1.65;overflow-wrap:anywhere}
+.rg-harness-actions{display:flex;flex-wrap:wrap;gap:8px;align-items:center;padding-top:2px}
+.rg-harness-actions .rg-small{flex-basis:100%}
+.rg-harness-status{padding:10px 12px;border-radius:6px;background:var(--rig-panel2);font-size:12px;line-height:1.6;overflow-wrap:anywhere}
+.rg-harness-layout{display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:24px;align-items:start}
+.rg-harness-layout>*,.rg-harness-summary>*{min-width:0}
+.rg-harness-summary{position:sticky;top:20px;border:1px solid var(--rig-line2);border-top:2px solid var(--rig-sel);border-radius:10px;background:var(--rig-panel);overflow:hidden}
+.rg-harness-summary-head{display:flex;align-items:center;gap:10px;padding:20px;border-bottom:1px solid var(--rig-line)}
+.rg-harness-summary-head .rg-ico{color:var(--rig-sel-t)}
+.rg-harness-summary h2{font-size:15px;font-weight:600;margin:0}
+.rg-harness-summary-body{display:flex;flex-direction:column;gap:16px;padding:20px}
+.rg-harness-spec{margin:0;display:grid;gap:12px}
+.rg-harness-spec>div{display:flex;justify-content:space-between;gap:12px;align-items:baseline;border-bottom:1px solid var(--rig-line);padding-bottom:10px;font-size:12px}
+.rg-harness-spec dt{color:var(--rig-dim)}
+.rg-harness-spec dd{margin:0;text-align:right;font:12px/1.5 var(--rig-mono);overflow-wrap:anywhere}
+.rg-harness-questions{display:flex;flex-direction:column;gap:28px}
+.rig .rg-harness-question{border:0;padding:0;min-inline-size:0;margin:0}
+.rg-harness-question legend{display:flex;align-items:center;gap:12px;font-size:17px;font-weight:500;margin-bottom:12px}
+.rg-harness-question legend>span{font:12px/1 var(--rig-mono);color:var(--rig-sel-t);background:var(--rig-sel-bg);border:1px solid var(--rig-line2);border-radius:6px;padding:7px}
+.rg-harness-options{display:flex;flex-direction:column;gap:8px}
+.rg-harness-option{display:flex;align-items:center;gap:12px;padding:14px 16px;min-height:52px;border:1px solid var(--rig-line2);background:var(--rig-panel);border-radius:8px;cursor:pointer;color:var(--rig-dim);font-size:13px;line-height:1.5}
+.rg-harness-option:has(:checked){border-color:var(--rig-sel);background:var(--rig-sel-bg);color:var(--rig-text)}
+.rg-harness-option:has(:focus-visible){outline:2px solid var(--rig-sel-t);outline-offset:3px}
+.rg-harness-option input{accent-color:var(--rig-sel);flex-shrink:0;width:16px;height:16px}
+.rg-harness-option>span{flex:1}
+.rg-harness-option small{color:var(--rig-sel-t);font-size:11px;white-space:nowrap}
+.rg-harness .rg-harness-library{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.5fr) auto;align-items:end;gap:14px;padding:20px;border:1px solid var(--rig-line2);background:var(--rig-panel);border-radius:10px;margin:24px 0}
+.rg-harness-library>h2{grid-column:1/-1;font-size:15px;font-weight:600;margin:0}
+.rg-harness-library>p{grid-column:1/-1}
+.rg-harness-library .rg-fld{min-width:0}
+.rg-harness-blocks{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
+.rg-harness-blocks>.rg-pnl{margin:0;min-width:0;border-color:var(--rig-line2);border-radius:10px}
+.rg-harness-blocks>[data-block-type="prompt"],.rg-harness-blocks>[data-block-type="tools"]{grid-column:1/-1}
+.rg-harness-blocks .rg-pnl-h{padding:12px 16px;background:var(--rig-panel2);gap:10px;flex-wrap:wrap}
+.rg-harness-blocks .rg-pnl-h>.rg-lbl{color:var(--rig-text);font-size:13px}
+.rg-harness-blocks .rg-pnl-b{padding:16px}
+.rg-harness-blocks .rg-pnl-b>div.rg-row{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.rg-harness-blocks .rg-pnl-b>.rg-row>label{min-width:0}
+.rg-harness-blocks [role="group"]>label{padding:9px;min-height:44px;border:1px solid var(--rig-line2);border-radius:6px;font:11px/1.5 var(--rig-mono);overflow-wrap:anywhere}
+.rg-harness-blocks [role="group"]>label:has(:checked){background:var(--rig-sel-bg);border-color:var(--rig-sel)}
+.rg-harness-blocks input[type="checkbox"]{accent-color:var(--rig-sel);width:16px;height:16px;flex-shrink:0}
+.rg-harness-blocks .rg-pnl-h .rg-btn{font-size:11px;min-height:28px;padding:3px 8px}
+.rg-harness-preview-prompt{white-space:pre-wrap;overflow-wrap:anywhere;font:12px/1.8 var(--rig-mono);max-height:240px;overflow-y:auto;background:var(--rig-bg);padding:16px;border:1px solid var(--rig-line);border-radius:6px}
+@container (max-width:950px){.rg-harness-layout{grid-template-columns:minmax(0,1fr) 270px;gap:18px}.rg-harness-blocks{grid-template-columns:minmax(0,1fr)}}
+@container (max-width:760px){.rg-harness-layout{grid-template-columns:minmax(0,1fr)}.rg-harness-summary{position:static}.rg-harness-grid{grid-template-columns:minmax(0,1fr)}.rg-harness-library{grid-template-columns:minmax(0,1fr)!important}.rg-harness-lane-link{padding:12px 10px;gap:8px}.rg-harness-lane-link small,.rg-harness-lane-link>.rg-ico:last-child{display:none}.rg-harness-nav{gap:6px;margin-bottom:24px}}
+@media(max-width:760px){.rig .rg-harness{padding:20px 16px}.rig .rg-harness .rg-dh h1{font-size:28px}.rg-harness-card-head{padding:18px 16px 14px}.rg-harness-card-body{padding:0 16px 18px}.rg-harness-option{padding:12px;flex-wrap:wrap}.rg-harness-option small{margin-left:28px}.rg-harness .rg-btn{min-height:44px}.rg-harness-blocks .rg-pnl-h .rg-btn{min-height:36px}.rg-harness-nav .rg-ico{display:none}.rig .rg-harness textarea.rg-inp{font-size:16px}.rg-harness-summary-body{padding:16px}.rg-harness-blocks .rg-pnl-b>.rg-row{grid-template-columns:minmax(0,1fr)}}

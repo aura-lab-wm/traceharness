@@ -1,11 +1,40 @@
 // @vitest-environment jsdom
-import { fireEvent, screen } from '@testing-library/react'
+import { fireEvent, screen, within } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { renderRig, resetRig, rigFixture } from '../../../test/rig-testing'
 
 afterEach(resetRig)
 
 describe('shallow doors', () => {
+  it('measures UTF-8 prompt bytes, exposes over-cap text, and resets the editor and meter together', () => {
+    const { container } = renderRig('#/rig/shallowCards', { data: { '/overview': { results: [] } } })
+    const card = within(container.querySelector('[data-agent="grok"]'))
+    const editor = card.getByRole('textbox', { name: 'Standing prompt for Grok' })
+    const original = editor.value
+    fireEvent.change(editor, { target: { value: '🙂'.repeat(2501) } })
+    const meter = card.getByRole('meter', { name: 'Grok prompt bytes' })
+    expect(meter.getAttribute('aria-valuetext')).toBe('10004 of 10000 bytes, over cap')
+    expect(meter.value).toBe(10000)
+    expect(card.getByText('4 bytes over the shell cap')).toBeTruthy()
+    fireEvent.click(card.getByRole('button', { name: 'Reset prompt' }))
+    expect(editor.value).toBe(original)
+    expect(meter.value).toBe(new TextEncoder().encode(original).length)
+    expect(card.queryByText('4 bytes over the shell cap')).toBeNull()
+  })
+
+  it('keeps the visible configuration summary in sync with wizard choices', () => {
+    renderRig('#/rig/shallowWizard', { data: { '/overview': { results: [] } } })
+    const summary = within(screen.getByRole('complementary', { name: 'Your configuration' }))
+    expect(summary.getByText('run_tests')).toBeTruthy()
+    fireEvent.click(screen.getByRole('radio', { name: 'Read only.' }))
+    expect(summary.queryByText('run_tests')).toBeNull()
+    fireEvent.click(screen.getByRole('radio', { name: 'Only the last two observations.' }))
+    expect(summary.getByText('2 observations')).toBeTruthy()
+    fireEvent.click(screen.getByRole('button', { name: 'Reset to recommended' }))
+    expect(summary.getByText('run_tests')).toBeTruthy()
+    expect(summary.getByText('Full history')).toBeTruthy()
+  })
+
   it('the empty library and the filled library both offer the two doors', () => {
     const empty = renderRig('#/rig/home', { data: { '/overview': { results: [] } } })
     expect(empty.container.textContent).toContain('Fixed harnesses')

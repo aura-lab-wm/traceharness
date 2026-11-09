@@ -7,6 +7,7 @@ import { requireStored } from '../../member-api'
 import { Btn, Empty, ErrorState, Go, Loading, Note, Tag } from '../ui'
 import { EvidenceOrigin, evidenceOrigin, withEvidenceOrigin } from '../shallowEvidence'
 import { blocksFromHarness, readDraft, wizardBlocks, writeDraft } from './shallow-drafts'
+import { HarnessNav, HarnessSummary } from '../harnessWorkspace'
 
 const TYPE_LABEL = {
   prompt: 'Prompt',
@@ -55,7 +56,7 @@ function BlockCard({ block, index, count, tools, onChange, onMove, onRemove }) {
     focusAfterMove.current = null
   }, [index])
   return (
-    <article className="rg-pnl" data-el="harness-block">
+    <article className="rg-pnl" data-el="harness-block" data-block-type={block.type}>
       <div className="rg-pnl-h">
         <span className="rg-lbl">{index + 1} · {TYPE_LABEL[block.type] || block.type}</span>
         <span className="rg-row">
@@ -136,6 +137,7 @@ function BlockCard({ block, index, count, tools, onChange, onMove, onRemove }) {
 
 function Blocks({ args } = {}) {
   const customize = IS_MEMBER || (Array.isArray(args) && args[0] === 'customize')
+  const libraryRef = useRef(null)
   const [catalog, setCatalog] = useState(null)
   const [tools, setTools] = useState([])
   const [types, setTypes] = useState([])
@@ -318,14 +320,16 @@ function Blocks({ args } = {}) {
   const filteredLibrary = library.filter((row) => [row.id, row.prompt, row.policy, ...(row.tools || [])].join(' ').toLowerCase().includes(query))
 
   return (
-    <div className="rg-dpad">
+    <div className="rg-dpad rg-harness" data-el="harness-builder">
+      <HarnessNav active="custom" args={args} />
       <div className="rg-dh">
         <div className="t">
-          <div className="rg-eyebrow">{IS_MEMBER ? 'Shallow · customize' : 'Runner · blocks'}</div>
+          <div className="rg-eyebrow">{IS_MEMBER ? 'Harness workspace / Flexible' : 'Runner / Flexible'}</div>
           <h1>{customize ? 'Customize minimal harness' : 'Build a harness'}</h1>
-          <p>{IS_MEMBER ? 'Edit the seven wizard blocks and save the harness to your account. MCP stays off. Previewing and saving do not run a model.' : 'Start from a common harness, or stack the blocks yourself. This lab runs the stack. A live model uses a key you paste here. The key is not saved.'}</p>
+          <p>{IS_MEMBER ? 'Shape the whole configuration. Edit the seven blocks, review how they fit together, and save your harness. MCP stays off. Previewing and saving do not run a model.' : 'Start from a common harness, or stack the blocks yourself. This lab runs the stack. A live model uses a key you paste here. The key is not saved.'}</p>
           {customize && (
             <div className="rg-row rg-wrap" data-el="minimal-customize-nav">
+              {IS_MEMBER && <button type="button" className="rg-btn" onClick={() => libraryRef.current?.querySelector('input')?.focus()}>Open a saved harness</button>}
               <Go spec={withEvidenceOrigin('shallowWizard', evidenceOrigin(args))} className="rg-btn" el="back-to-wizard">Back to Minimal Wizard</Go>
               <button type="button" className="rg-btn" disabled={busy} data-el="reset-wizard-answers" onClick={resetToWizard}>Reset to Wizard Answers</button>
             </div>
@@ -334,21 +338,6 @@ function Blocks({ args } = {}) {
       </div>
       <EvidenceOrigin args={args} />
       {storageError && <p role="alert">{storageError}</p>}
-      {IS_MEMBER && <div className="rg-pnl rg-pnl-b rg-col" data-el="member-harness-library">
-        <label className="rg-fld">Find a saved harness
-          <input type="search" className="rg-inp" value={libraryQuery} disabled={busy} onChange={(event) => { setLibraryQuery(event.target.value); setSelected('') }} placeholder="Prompt, content ID, tool, or policy" />
-        </label>
-        <p className="rg-small">Showing {filteredLibrary.length} of {library.length} saved minimal harnesses.</p>
-        <label className="rg-fld">Saved minimal harnesses
-          <select className="rg-selc" value={selected} onChange={(event) => setSelected(event.target.value)} disabled={busy}>
-            <option value="">{filteredLibrary.length ? 'Choose a saved harness' : library.length ? 'No saved harness matches this search' : 'No minimal harnesses saved yet'}</option>
-            {filteredLibrary.map((row) => <option key={row.id} value={row.id}>{(row.prompt || '').replace(/\s+/g, ' ').slice(0, 80)} · {row.policy} · {row.max_steps} steps · {row.id}{unconfirmed.includes(row.id) ? ' · storage unconfirmed' : ''}</option>)}
-          </select>
-        </label>
-        <button type="button" className="rg-btn" disabled={!selected || busy} onClick={reopen}>Open selected harness</button>
-        <p className="rg-small">Opening a saved harness replaces the draft shown below. Drafts stay in this workbench tab; the plain editor shares confirmed account saves only.</p>
-        {unconfirmed.length > 0 && <p role="alert">Account storage has not confirmed every listed harness. Save again before relying on another browser or session.</p>}
-      </div>}
       {IS_MEMBER && !accountLoaded && <p role="alert">Your saved account data has not loaded. Saving is unavailable. <button type="button" className="rg-btn" onClick={() => setRevision((n) => n + 1)}>Retry account data</button> <a href="/login">Account</a></p>}
       {IS_MEMBER && restored && <p role="status" className="rg-small">Restored the editor draft from this tab. Use Save to confirm it in your account, or Reset to Wizard Answers to discard these edits.</p>}
       {!customize && <div className="rg-row rg-wrap" data-el="harness-catalog">
@@ -360,7 +349,9 @@ function Blocks({ args } = {}) {
         <button type="button" className="rg-btn" onClick={() => { setPreset(''); setBasis(''); setModel('mock'); setJob(null) }}>Blank stack</button>
       </div>}
       {preset && basis && <Note>{basis}{catalog.find((r) => r.id === preset)?.same_loop_as?.length ? ` Same loop as ${catalog.find((r) => r.id === preset).same_loop_as.join(', ')}.` : ''}</Note>}
-      <fieldset className="rg-col" disabled={busy} style={{ border: 0, padding: 0, margin: 0, minWidth: 0 }}>
+      <div className="rg-harness-layout">
+      <div>
+      <fieldset className="rg-harness-blocks" aria-label="Harness blocks" disabled={busy} style={{ border: 0, padding: 0, margin: 0, minWidth: 0 }}>
         {blocks.map((block, i) => (
           <BlockCard key={blockKey(block)} block={block} index={i} count={blocks.length} tools={tools} onChange={onChange} onMove={onMove} onRemove={onRemove} />
         ))}
@@ -383,6 +374,8 @@ function Blocks({ args } = {}) {
           <input className="rg-inp" type="password" autoComplete="off" value={key} onChange={(e) => setKey(e.target.value)} placeholder={liveModel ? 'required for this model' : 'not used for mock'} />
         </label></>}
       </div>
+      </div>
+      <HarnessSummary blocks={blocks} title="Configuration preview">
       {IS_MEMBER ? <div className="rg-col">
         <button type="button" className="rg-btn pri" disabled={!accountLoaded || busy || !compiled?.ok} onClick={save}>{busy ? 'Saving…' : 'Save minimal harness'}</button>
         {compiled?.ok && <p className="rg-small">Cell {compiled.harness.id}</p>}
@@ -396,7 +389,7 @@ function Blocks({ args } = {}) {
         {compiled && compiled.ok && <span className="rg-small rg-dim">Cell {customize ? `min_${compiled.hash}` : compiled.harness.id}</span>}
       </div>}
       {compiled && compiled.ok === false && <Note tone="bad"><span role="alert">{(compiled.errors || []).join(' ')}{IS_MEMBER && (compiled.errors || []).some((message) => message.includes('account changed')) && <> <a href="/login">Account</a></>}</span>{IS_MEMBER && <button type="button" className="rg-btn" onClick={() => setPreviewRevision((n) => n + 1)}>Retry preview</button>}</Note>}
-      {compiled && (compiled.warnings || []).length > 0 && compiled.ok && (compiled.warnings || []).map((w) => <p key={w} className="rg-small">{w}</p>)}
+      {compiled && (compiled.warnings || []).length > 0 && compiled.ok && (compiled.warnings || []).map((w) => <p key={w} className="rg-harness-warning">{w}</p>)}
       {error && <Note tone="bad" el="harness-error"><span role="alert">{error}{IS_MEMBER && error.includes('account changed') && <> <a href="/login">Account</a></>}</span></Note>}
       {job && (
         <div className="rg-pnl" data-el="harness-job">
@@ -408,6 +401,25 @@ function Blocks({ args } = {}) {
           </div>
         </div>
       )}
+      </HarnessSummary>
+      </div>
+      {IS_MEMBER && <div className="rg-harness-library" ref={libraryRef} data-el="member-harness-library">
+        <h2>Your saved harnesses</h2>
+        <label className="rg-fld">Find a saved harness
+          <input type="search" className="rg-inp" value={libraryQuery} disabled={busy} onChange={(event) => { setLibraryQuery(event.target.value); setSelected('') }} placeholder="Prompt, content ID, tool, or policy" />
+        </label>
+        <label className="rg-fld">Saved minimal harnesses
+          <select className="rg-selc" value={selected} onChange={(event) => setSelected(event.target.value)} disabled={busy}>
+            <option value="">{filteredLibrary.length ? 'Choose a saved harness' : library.length ? 'No saved harness matches this search' : 'No minimal harnesses saved yet'}</option>
+            {filteredLibrary.map((row) => <option key={row.id} value={row.id}>{(row.prompt || '').replace(/\s+/g, ' ').slice(0, 80)} · {row.policy} · {row.max_steps} steps · {row.id}{unconfirmed.includes(row.id) ? ' · storage unconfirmed' : ''}</option>)}
+          </select>
+        </label>
+        <button type="button" className="rg-btn" disabled={!selected || busy} onClick={reopen}>Open selected harness</button>
+        <p className="rg-small">Showing {filteredLibrary.length} of {library.length} saved minimal harnesses.</p>
+        <p className="rg-small">Opening a saved harness replaces the current editor draft. Drafts stay in this workbench tab; the plain editor shares confirmed account saves only.</p>
+        {unconfirmed.length > 0 && <p role="alert">Account storage has not confirmed every listed harness. Save again before relying on another browser or session.</p>}
+      </div>}
+
     </div>
   )
 }

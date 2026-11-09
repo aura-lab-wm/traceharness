@@ -6,6 +6,7 @@ import { Go } from '../ui'
 import { EvidenceOrigin, evidenceOrigin, withEvidenceOrigin } from '../shallowEvidence'
 import { QUESTIONS, blocksFromAnswers } from './shallow-data.js'
 import { wizardAnswers, writeDraft } from './shallow-drafts'
+import { HarnessNav, HarnessSummary } from '../harnessWorkspace'
 
 const INITIAL = Object.fromEntries(QUESTIONS.map((row) => [row.id, row.recommended]))
 
@@ -21,10 +22,6 @@ function ShallowWizard({ args } = {}) {
   const [accountError, setAccountError] = useState('')
   const [accountRevision, setAccountRevision] = useState(0)
   const blocks = blocksFromAnswers(answers)
-  const tools = blocks.find((block) => block.type === "tools")
-  const policy = blocks.find((block) => block.type === "policy")
-  const context = blocks.find((block) => block.type === "context")
-  const stop = blocks.find((block) => block.type === "stop")
   const matches = QUESTIONS.every((row) => answers[row.id] === INITIAL[row.id])
   useEffect(() => {
     if (!IS_MEMBER) return
@@ -65,23 +62,25 @@ function ShallowWizard({ args } = {}) {
     finally { setBusy(false) }
   }
   return (
-    <div className="rg-dpad" data-el="shallow-wizard">
+    <div className="rg-dpad rg-harness" data-el="shallow-wizard">
+      <HarnessNav active="minimal" args={args} />
       <div className="rg-dh">
         <div className="t">
-          <div className="rg-eyebrow">Shallow · minimal</div>
+          <div className="rg-eyebrow">Harness workspace / Guided setup</div>
           <h1>Minimal harness</h1>
-          <p>Six questions. The recommended answer is already selected. This lane stays off the six-card comparison and off the vendor ladder. MCP is off.</p>
+          <p>Six choices to define how your agent works. Start with the recommended answers, then adjust its tools, permissions, and limits. This lane stays off the six-card comparison and off the vendor ladder.</p>
         </div>
       </div>
       <EvidenceOrigin args={args} />
       {storageError && <p role="alert">{storageError}</p>}
-      <div className="rg-col">
-        {QUESTIONS.map((row) => (
-          <fieldset key={row.id} className="rg-pnl" data-question={row.id} role="radiogroup" aria-label={row.prompt}>
-            <legend className="rg-pnl-h"><b>{row.prompt}</b></legend>
-            <div className="rg-pnl-b rg-col">
+      <div className="rg-harness-layout">
+      <div className="rg-harness-questions">
+        {QUESTIONS.map((row, index) => (
+          <fieldset key={row.id} className="rg-harness-question" data-question={row.id} role="radiogroup" aria-label={row.prompt}>
+            <legend><span aria-hidden="true">{String(index + 1).padStart(2, '0')}</span>{row.prompt}</legend>
+            <div className="rg-harness-options">
               {row.options.map(([value, label]) => (
-                <label key={value} className="rg-row" data-mcp={row.id === "mcp" ? "none" : undefined}>
+                <label key={value} className="rg-harness-option" data-mcp={row.id === "mcp" ? "none" : undefined}>
                   <input
                     type="radio"
                     name={row.id}
@@ -93,25 +92,29 @@ function ShallowWizard({ args } = {}) {
                       setAnswers((cur) => ({ ...cur, [row.id]: value }))
                     }}
                   />
-                  <span>{label}{value === row.recommended ? " Recommended." : ""}</span>
+                  <span>{label}</span>{value === row.recommended && <small>Recommended</small>}
                 </label>
               ))}
             </div>
           </fieldset>
         ))}
       </div>
-      <p className="rg-small" data-el="wizard-summary">Tools {tools.names.join(", ")}. Policy {policy.mode}. History window {context.window}. Stop {stop.max_steps} steps. {matches ? "Matches min_099dc52e693e." : "The selection diverges from the recommended cell."}</p>
-      {matches ? null : <button type="button" className="rg-btn" disabled={busy} onClick={() => setAnswers(INITIAL)}>Reset to recommended</button>}
-      <p className="rg-small">Network, privilege, secret access, and path escape are not a choice. They stay blocked.</p>
+      <HarnessSummary blocks={blocks}>
       {preview && <p className="rg-small">Cell {preview.harness.id}</p>}
-      {(preview?.warnings || []).map((warning) => <p key={warning} role="status" className="rg-small">{warning}</p>)}
+      {(preview?.warnings || []).map((warning) => <p key={warning} role="status" className="rg-harness-warning">{warning}</p>)}
       {error && <p role="alert">{error}{IS_MEMBER && error.includes('account changed') && <> <a href="/login">Account</a></>}</p>}
       {IS_MEMBER && error && !preview && <button type="button" className="rg-btn" onClick={() => setPreviewRevision((n) => n + 1)}>Retry preview</button>}
       {saved && <p role="status">{saved}</p>}
       {accountError && <p role="alert">{accountError} <button type="button" className="rg-btn" onClick={() => setAccountRevision((n) => n + 1)}>Retry account data</button> <a href="/login">Account</a></p>}
-      {IS_MEMBER && <><p className="rg-small">Answers are a draft in this workbench tab. Save to keep the harness in your account. Saving does not run a model. The plain editor shares confirmed account saves only.</p><button type="button" className="rg-btn pri" disabled={!accountLoaded || busy || !preview?.ok} onClick={save}>{busy ? 'Saving…' : 'Save minimal harness'}</button></>}
-      <Go spec={withEvidenceOrigin('blocks', evidenceOrigin(args), 'customize')} className="rg-btn pri" el="customize-spec">Customize</Go>
+      {IS_MEMBER && <button type="button" className="rg-btn pri" disabled={!accountLoaded || busy || !preview?.ok} onClick={save}>{busy ? 'Saving…' : 'Save minimal harness'}</button>}
+      <Go spec={withEvidenceOrigin('blocks', evidenceOrigin(args), 'customize')} className="rg-btn" el="customize-spec">Customize</Go>
+      <p className="rg-small" data-el="wizard-summary">{matches ? "Matches min_099dc52e693e." : "The selection diverges from the recommended cell."} MCP is off.</p>
+      {matches ? null : <button type="button" className="rg-btn" disabled={busy} onClick={() => setAnswers(INITIAL)}>Reset to recommended</button>}
+      <p className="rg-small">Network, privilege, secret access, and path escape are not a choice. They stay blocked.</p>
+      {IS_MEMBER && <p className="rg-small">Answers stay in this tab until you save. Saving keeps the harness in your account and does not run a model.</p>}
       {IS_MEMBER && <p className="rg-small">Open Customize to reopen your saved minimal harnesses.</p>}
+      </HarnessSummary>
+      </div>
     </div>
   )
 }

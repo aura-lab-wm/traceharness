@@ -6,6 +6,7 @@ import { readDraft, writeDraft } from './shallow-drafts'
 import { ErrorState, Go, Loading } from '../ui'
 import { EvidenceOrigin, evidenceOrigin, withEvidenceOrigin } from '../shallowEvidence'
 import { CARDS, PERMISSION } from './shallow-data.js'
+import { ByteMeter, HarnessNav, ToolChips } from '../harnessWorkspace'
 
 function utf8Size(text) {
   return new TextEncoder().encode(text).length
@@ -108,21 +109,23 @@ function ShallowCards({ args } = {}) {
   if (loadError) return <><ErrorState error={loadError} what="Your fixed harnesses" onRetry={() => setRevision((n) => n + 1)} /><p><a href="/login">Account</a> · Sign back into the original account to keep working on its draft.</p></>
   if (!cards) return <Loading label="Reading your fixed harnesses…" />
   return (
-    <div className="rg-dpad" data-el="shallow-cards">
+    <div className="rg-dpad rg-harness" data-el="shallow-cards">
+      <HarnessNav active="fixed" args={args} />
       <div className="rg-dh">
         <div className="t">
-          <div className="rg-eyebrow">Shallow · fixed</div>
+          <div className="rg-eyebrow">Harness workspace / Fixed</div>
           <h1>Fixed harnesses</h1>
-          <p>Six stand-ins. Their tools, permission rules, step caps, and byte caps are TraceHarness lab choices, not verified vendor limits. A change on one card edits that prompt; the other harness settings stay fixed. {IS_MEMBER ? 'Save each prompt to your account. Edits remain drafts until the save is confirmed. Nothing here calls a model.' : 'Nothing on this screen is saved, and nothing here calls a model.'}</p>
+          <p>Edit the standing prompt. Keep the shell. These six stand-ins use TraceHarness lab choices, not verified vendor limits. Tools, permissions, and limits stay fixed while you refine the instructions.</p>
         </div>
       </div>
       <EvidenceOrigin args={args} />
-      <div className="rg-row rg-wrap">
+      <div className="rg-harness-toolbar">
+        <span className="rg-harness-label">6 shells · prompt editing</span>
         <Go spec={withEvidenceOrigin('shallowApply', evidenceOrigin(args))} className="rg-btn" el="preview-six-shells">Preview one prompt across six shells</Go>
       </div>
       {IS_MEMBER && !accountLoaded && <p role="alert">Your saved account data has not loaded. Saving is unavailable. <button type="button" className="rg-btn" onClick={() => setRevision((n) => n + 1)}>Retry account data</button> <a href="/login">Account</a></p>}
-      {IS_MEMBER && <p className="rg-small">Drafts stay in this workbench tab. The plain editor shares confirmed account saves only.</p>}
-      <div className="rg-col">
+      <details className="rg-harness-rules"><summary>Permissions and saving</summary><p className="rg-harness-note">{PERMISSION} {IS_MEMBER ? 'Drafts stay in this workbench tab; the plain editor shares confirmed account saves only. Saving does not run a model.' : 'Nothing on this screen is saved, and nothing here calls a model.'}</p></details>
+      <div className="rg-harness-grid">
         {storageError && <p role="alert">{storageError}</p>}
         {cards.map((row) => {
           const value = prompts[row.id]
@@ -130,21 +133,21 @@ function ShallowCards({ args } = {}) {
           const clipped = clipUtf8(value, row.cap_bytes)
           const dropsVerify = !clipped.includes("verify") || !clipped.includes("modify the tests")
           return (
-            <article key={row.id} className="rg-pnl" data-agent={row.id}>
-              <div className="rg-pnl-h"><b>{row.name}</b><span className="meta">{used} / {row.cap_bytes} bytes · {row.max_steps} steps</span></div>
-              <div className="rg-pnl-b rg-col">
-                <p className="rg-small">{row.tools.join(" · ")}</p>
-                <p className="rg-small">{PERMISSION}</p>
-                {used > row.cap_bytes || dropsVerify ? <p className="rg-small">This prompt is over the byte cap, or the clipped text drops verify and modify the tests.</p> : null}
+            <article key={row.id} className="rg-harness-card" data-agent={row.id}>
+              <div className="rg-harness-card-head"><div><div className="rg-harness-label">{row.max_steps} steps · strict policy</div><h2>{row.name}</h2></div><span className={`rg-harness-tag${drafts[row.id] || value !== row.prompt ? ' draft' : ''}`}>{drafts[row.id] || value !== row.prompt ? 'Draft' : row.memberSaved && accountLoaded ? 'Account save' : 'Fixed shell'}</span></div>
+              <div className="rg-harness-card-body">
+                <ToolChips tools={row.tools} />
                 <label className="rg-fld">Standing prompt for {row.name}
-                  <textarea className="rg-inp" value={value} disabled={!!busy[row.id]} onChange={(e) => edit(row, e.target.value)} spellCheck={false} />
+                  <textarea className="rg-inp" rows={8} value={value} disabled={!!busy[row.id]} onChange={(e) => edit(row, e.target.value)} spellCheck={false} />
                 </label>
-                {value !== row.prompt ? <button type="button" className="rg-btn" disabled={!!busy[row.id]} onClick={() => edit(row, row.prompt)}>Reset prompt</button> : null}
-                {IS_MEMBER && <div className="rg-row rg-wrap">
-                  <button type="button" className="rg-btn pri" disabled={!accountLoaded || !!busy[row.id] || !value.trim()} onClick={() => save(row)}>{busy[row.id] ? 'Saving…' : 'Save prompt'}</button>
+                <ByteMeter used={used} cap={row.cap_bytes} name={row.name} />
+                {used > row.cap_bytes || dropsVerify ? <p className="rg-harness-warning">This prompt is over the byte cap, or the clipped text drops verify and modify the tests.</p> : null}
+                <div className="rg-harness-actions">
+                  {IS_MEMBER && <button type="button" className="rg-btn pri" disabled={!accountLoaded || !!busy[row.id] || !value.trim()} onClick={() => save(row)}>{busy[row.id] ? 'Saving…' : 'Save prompt'}</button>}
+                  {value !== row.prompt ? <button type="button" className="rg-btn" disabled={!!busy[row.id]} onClick={() => edit(row, row.prompt)}>Reset prompt</button> : null}
                   {drafts[row.id] && <><span className="rg-small">{drafts[row.id].restored ? 'Restored unsaved draft from this tab' : 'Unsaved draft'}</span><button type="button" className="rg-btn" disabled={Object.values(busy).some(Boolean)} onClick={() => discardAndReload(row.id)}>Discard draft and reload saved prompt</button></>}
-                </div>}
-                {messages[row.id] && <p role={messages[row.id] === 'Saved to your account.' ? 'status' : 'alert'} className="rg-small">{messages[row.id]}{messages[row.id].includes('account changed') && <> <a href="/login">Account</a></>}</p>}
+                </div>
+                {messages[row.id] && <p role={messages[row.id] === 'Saved to your account.' ? 'status' : 'alert'} className="rg-harness-status">{messages[row.id]}{messages[row.id].includes('account changed') && <> <a href="/login">Account</a></>}</p>}
               </div>
             </article>
           )
