@@ -64,25 +64,45 @@ class TaskPackagingTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, 'digest'):
                 package.read_source({'archive_sha256': '0' * 64}, path)
 
+    def test_only_exact_reviewed_symlink_can_be_omitted(self):
+        raw = archive('source/tests/fixture-link', kind=tarfile.SYMTYPE)
+        # Absolute link destinations are not accepted even as an exclusion.
+        with tempfile.TemporaryDirectory() as temporary, self.assertRaisesRegex(ValueError, 'exclusions'):
+            package.extract_source(raw, 'source', Path(temporary), {'tests/fixture-link': '/etc/passwd'})
+        stream = io.BytesIO()
+        with tarfile.open(fileobj=stream, mode='w:gz') as output:
+            link = tarfile.TarInfo('source/tests/certs/valid/ca')
+            link.type = tarfile.SYMTYPE
+            link.linkname = '../expired/ca'
+            output.addfile(link)
+        for policy in ({'tests/certs/valid/ca': '../expired/other'}, {'tests/certs/absent': '../expired/ca'}):
+            with self.subTest(policy=policy), tempfile.TemporaryDirectory() as temporary, self.assertRaises(ValueError):
+                package.extract_source(stream.getvalue(), 'source', Path(temporary), policy)
+        with tempfile.TemporaryDirectory() as temporary:
+            target = Path(temporary)
+            package.extract_source(stream.getvalue(), 'source', target, {'tests/certs/valid/ca': '../expired/ca'})
+            self.assertEqual(list(target.iterdir()), [])
+        with tempfile.TemporaryDirectory() as temporary, self.assertRaisesRegex(ValueError, 'absent'):
+            package.extract_source(archive(), 'source', Path(temporary), {'tests/certs/valid/ca': '../expired/ca'})
+
     def make_task(self, root):
-        task, workspace = root / 'task', root / 'workspace'
+        task, workspace, contract = CuratedEditContractTests().task(root)
         for location in [task / 'repo', workspace]:
-            (location / 'src/requests').mkdir(parents=True)
-            (location / 'src/requests/exceptions.py').write_text('original = True\n')
             (location / 'public_tests').mkdir()
             (location / 'public_tests/test_issue.py').write_text('assert True\n')
-        return task, workspace
+        return task, workspace, contract
 
     def test_grader_copies_pristine_tests_and_only_source_overlay(self):
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
-            task, workspace = self.make_task(root)
-            (workspace / 'src/requests/exceptions.py').write_text('fixed = True\n')
+            task, workspace, contract = self.make_task(root)
+            fixed = CuratedEditContractTests.baseline + CuratedEditContractTests.safe_method.encode()
+            (workspace / 'src/requests/exceptions.py').write_bytes(fixed)
             (workspace / 'sitecustomize.py').write_text('raise RuntimeError("agent startup hook")')
             (workspace / 'conftest.py').write_text('raise RuntimeError("agent pytest hook")')
             target = root / 'scratch'
-            grade.reconstruct(task, workspace, target, 'src/requests/')
-            self.assertEqual((target / 'src/requests/exceptions.py').read_text(), 'fixed = True\n')
+            grade.reconstruct(task, workspace, target, 'src/requests/', contract)
+            self.assertEqual((target / 'src/requests/exceptions.py').read_bytes(), fixed)
             self.assertEqual((target / 'public_tests/test_issue.py').read_text(), 'assert True\n')
             self.assertFalse((target / 'sitecustomize.py').exists())
             self.assertFalse((target / 'conftest.py').exists())
@@ -90,18 +110,18 @@ class TaskPackagingTests(unittest.TestCase):
     def test_grader_refuses_modified_tests(self):
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
-            task, workspace = self.make_task(root)
+            task, workspace, contract = self.make_task(root)
             (workspace / 'public_tests/test_issue.py').write_text('tampered = True\n')
             with self.assertRaisesRegex(ValueError, 'Protected'):
-                grade.reconstruct(task, workspace, root / 'scratch', 'src/requests/')
+                grade.reconstruct(task, workspace, root / 'scratch', 'src/requests/', contract)
 
     def test_grader_refuses_symlinked_candidate(self):
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
-            task, workspace = self.make_task(root)
+            task, workspace, contract = self.make_task(root)
             (workspace / 'sitecustomize.py').symlink_to('/etc/passwd')
             with self.assertRaisesRegex(ValueError, 'ordinary'):
-                grade.reconstruct(task, workspace, root / 'scratch', 'src/requests/')
+                grade.reconstruct(task, workspace, root / 'scratch', 'src/requests/', contract)
 
     def test_root_writer_signals_as_candidate_and_restores_uid_on_failure(self):
         # Guard the actual privilege boundary: CAP_KILL is deliberately absent.

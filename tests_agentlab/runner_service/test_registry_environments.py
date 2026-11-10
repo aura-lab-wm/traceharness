@@ -21,7 +21,10 @@ class EnvironmentRegistryTests(unittest.TestCase):
         for rid in ["native-codex", "native-claude-code"]:
             receipt = {"status": "passed", "runtime_id": rid, "runtime_version": "fixture-1",
                        "image_digest": self.images[rid], "model_id": "fixture/model",
-                       "verified_at": "unit-fixture-only", "run_id": "not-a-real-run"}
+                       "verified_at": "unit-fixture-only", "run_id": "not-a-real-run",
+                       "task_id": "fixture-task", "task_revision": self.data["tasks"][0]["revision"],
+                       "task_content_sha256": self.data["tasks"][0]["content_sha256"],
+                       "grader_image_digest": self.data["tasks"][0]["grader_image_digest"]}
             raw = canonical(receipt)
             name = rid + ".json"
             (self.root / name).write_bytes(raw)
@@ -83,6 +86,7 @@ class EnvironmentRegistryTests(unittest.TestCase):
         task = value["tasks"][0]
         task.pop("environment_digests")
         task.update(environment_digest=IMAGE, runtime_ids=["traceharness"])
+        value["runtimes"] = [row for row in value["runtimes"] if row["id"] == "traceharness"]
         registry = Registry(self.root, value)
         self.assertEqual(registry.tasks["fixture-task"]["environment_digests"], {"traceharness": IMAGE})
         self.assertTrue(registry.task_health()["fixture-task"])
@@ -95,6 +99,8 @@ class EnvironmentRegistryTests(unittest.TestCase):
                 path.write_text(json.dumps(metadata))
                 value = copy.deepcopy(self.data)
                 value["tasks"][0]["content_sha256"] = tree_hash(path.parent)
+                for runtime in value["runtimes"]:
+                    runtime["compatibility_receipts"] = []
                 self.assertFalse(Registry(self.root, value).task_health()["fixture-task"])
         path.unlink()
         self.assertFalse(Registry(self.root, self.data).task_health()["fixture-task"])

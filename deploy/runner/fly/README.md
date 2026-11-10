@@ -62,12 +62,16 @@ Before enabling member execution:
    the immutable upstream reference. Include any previously observed incorrect
    solution as a regression case. For the curated Requests package, also verify
    the original stdout/exit forgery is refused before candidate import. Its
-   public edit contract permits only the documented safe serialization method;
+   public edit contracts permit only the documented task-specific repair;
    see `../tasks/README.md` for the exact scope.
-2. Run `python /opt/verify_runtime.py --runtime RUNTIME --model MODEL` on the
+2. Run `python /opt/verify_runtime.py --runtime RUNTIME --model MODEL --task TASK --registry INVENTORY` on the
    dedicated VM, supplying the operator's OpenRouter key through protected stdin.
    It installs a receipt only after real model responses, a passed independent
-   grade and verified manifest/trace/patch artifacts.
+   grade and verified manifest/trace/patch artifacts, for each exact combination.
+   Defaults are 32 requests/$2 for Claude and 20 requests/$1 for the other
+   runtimes, all with a 240-second limit. Explicit `--max-steps`,
+   `--max-cost-usd` and `--wall-time-seconds` overrides are bounded to
+   64 requests/$5/600 seconds and recorded in the receipt. There are no retries.
 3. Enable `RUNNER_EXECUTION_ENABLED=1` and restart to load the reviewed receipts.
 4. Verify real signed-in selection, preflight, launch, artifacts and reload on
    `/app`; verify anonymous and hostile-origin refusals separately.
@@ -81,6 +85,13 @@ immutable package and reports, migrate the registry's exact task/grader hashes,
 retire prior task-bound release evidence and repeat grading and compatibility
 runs. Deployment iteration numbers are not task versions: confirm the hashes
 inside each report before treating it as evidence for the new release.
+
+For an isolated inventory upgrade, stage and hash-check a new directory such as
+`/data/inventory-x4`, then set `RUNNER_REGISTRY` to its registry in both the
+disabled verification release and enabled release. Pass that same registry to
+the operator verifier. The boot script preserves `/data/inventory`; it does not
+populate arbitrary override paths. Retaining the old directory makes rollback
+explicit without rewriting historical receipts.
 
 The checked-in capacity is one active job per member and one execution worker.
 Jobs and artifacts expire after 24 hours; provider keys live only in memory and

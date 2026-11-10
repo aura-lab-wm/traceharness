@@ -1,0 +1,2631 @@
+{
+  "schema_version": 1,
+  "deployed": true,
+  "complete": false,
+  "completion_reason": "Three real-member Claude UI combinations remain unverified after provider HTTP402; all12 operator combinations passed.",
+  "verified_at": "2026-11-10T23:43:20.956972+00:00",
+  "scope": "Four real curated Requests repository tasks; three exact task/runtime/model combinations each. Narrow disclosed edit contracts; no arbitrary repository or benchmark claim.",
+  "surface": "https://traceharness.dev/app#/rig/harnesses",
+  "worker_version": "a84991b5-a7f0-4ea1-90c5-ee48dbaaff5b",
+  "fly_release": 7,
+  "identities": {
+    "worker_version": "a84991b5-a7f0-4ea1-90c5-ee48dbaaff5b",
+    "control_index": "sha256:fae23e856a742c08208107dff37bf82a61913edf2bdd65fd1c2dde2419d87088",
+    "control_linux_amd64": "sha256:8b302d0282a9ad36c7af7db5d2c34e8cdd321531fe4b37cfee75eec290b10ce0",
+    "kv_rewritten": false,
+    "app_html_sha256": "8e95b06950126a48fc4be315c0f4c61fcaaa2d1e208ff2057aee420e20d6fb1a",
+    "registry": {
+      "version": 1,
+      "models": [
+        {
+          "id": "openai/gpt-4.1-mini",
+          "name": "OpenAI GPT-4.1 Mini"
+        },
+        {
+          "id": "openai/gpt-5.1-codex-mini",
+          "name": "OpenAI GPT-5.1 Codex Mini"
+        },
+        {
+          "id": "anthropic/claude-haiku-4.5",
+          "name": "Anthropic Claude Haiku 4.5"
+        }
+      ],
+      "runtimes": [
+        {
+          "id": "traceharness",
+          "version": "0.3.0",
+          "image_digest": "sha256:73cc2e983cf0f818c058227f70d3a12ec553d0112cd786a8707c2f892ef600ed",
+          "compatibility_receipts": []
+        },
+        {
+          "id": "native-claude-code",
+          "version": "2.1.322",
+          "image_digest": "sha256:78ecae96cd0fc1702f513787e0dee8ab8b8125e163e343d6826a625558e96988",
+          "compatibility_receipts": []
+        },
+        {
+          "id": "native-codex",
+          "version": "0.167.1",
+          "image_digest": "sha256:e1e4ef84997e7c17acdb210ef55679b3d637fb590cdf469614fc6ab60459f2b0",
+          "compatibility_receipts": []
+        }
+      ],
+      "tasks": [
+        {
+          "id": "requests-jsondecode-pickle",
+          "title": "Requests #6628: Preserve JSON errors across process boundaries",
+          "repository": "https://github.com/psf/requests",
+          "revision": "96b22fa18c00831656ee4b286bf1c9062459b00a",
+          "path": "tasks/requests-jsondecode-pickle-v3",
+          "content_sha256": "4a0f1b04dfe848ca5e7c7514c562a7fec3e4ed51959ab6cbd4bacdf68b5132cc",
+          "grader_image_digest": "sha256:b6bc5bf5a8a16225ffe35975f1ee30c6a5b86ceee5fae5a001e9221face4dded",
+          "runtime_ids": [
+            "traceharness",
+            "native-claude-code",
+            "native-codex"
+          ],
+          "environment_digests": {
+            "traceharness": "sha256:73cc2e983cf0f818c058227f70d3a12ec553d0112cd786a8707c2f892ef600ed",
+            "native-claude-code": "sha256:78ecae96cd0fc1702f513787e0dee8ab8b8125e163e343d6826a625558e96988",
+            "native-codex": "sha256:e1e4ef84997e7c17acdb210ef55679b3d637fb590cdf469614fc6ab60459f2b0"
+          }
+        },
+        {
+          "id": "requests-unicode-length",
+          "title": "Requests: count UTF-8 bytes in upload Content-Length",
+          "repository": "https://github.com/psf/requests",
+          "revision": "f6707042d8b18d2a3737380bf58ff020872fb07b",
+          "content_sha256": "4a98a5b8095eab35a956c9972675ff53242d844854aac0a1af3ef6738f59dbef",
+          "path": "tasks/requests-unicode-length",
+          "grader_image_digest": "sha256:b6bc5bf5a8a16225ffe35975f1ee30c6a5b86ceee5fae5a001e9221face4dded",
+          "runtime_ids": [
+            "traceharness",
+            "native-claude-code",
+            "native-codex"
+          ],
+          "environment_digests": {
+            "traceharness": "sha256:73cc2e983cf0f818c058227f70d3a12ec553d0112cd786a8707c2f892ef600ed",
+            "native-claude-code": "sha256:78ecae96cd0fc1702f513787e0dee8ab8b8125e163e343d6826a625558e96988",
+            "native-codex": "sha256:e1e4ef84997e7c17acdb210ef55679b3d637fb590cdf469614fc6ab60459f2b0"
+          }
+        },
+        {
+          "id": "requests-leading-slashes",
+          "title": "Requests: normalize excess leading request-target slashes",
+          "repository": "https://github.com/psf/requests",
+          "revision": "7a13c041dbef42f9f3feb14110f02626f6892e9a",
+          "content_sha256": "aae3b7b73c84044395ab0fa1edfe357abde29998adc5025e436c607a72115c22",
+          "path": "tasks/requests-leading-slashes",
+          "grader_image_digest": "sha256:b6bc5bf5a8a16225ffe35975f1ee30c6a5b86ceee5fae5a001e9221face4dded",
+          "runtime_ids": [
+            "traceharness",
+            "native-claude-code",
+            "native-codex"
+          ],
+          "environment_digests": {
+            "traceharness": "sha256:73cc2e983cf0f818c058227f70d3a12ec553d0112cd786a8707c2f892ef600ed",
+            "native-claude-code": "sha256:78ecae96cd0fc1702f513787e0dee8ab8b8125e163e343d6826a625558e96988",
+            "native-codex": "sha256:e1e4ef84997e7c17acdb210ef55679b3d637fb590cdf469614fc6ab60459f2b0"
+          }
+        },
+        {
+          "id": "requests-empty-netrc",
+          "title": "Requests: ignore empty netrc authentication entries",
+          "repository": "https://github.com/psf/requests",
+          "revision": "1b40fdd004bfc8ba5301bcf8a6908264e9b6b877",
+          "content_sha256": "c636eaca91cec9cf3a41c1e0664e1b1a74c14b216b0fee9b414d66daaf23c49f",
+          "path": "tasks/requests-empty-netrc",
+          "grader_image_digest": "sha256:b6bc5bf5a8a16225ffe35975f1ee30c6a5b86ceee5fae5a001e9221face4dded",
+          "runtime_ids": [
+            "traceharness",
+            "native-claude-code",
+            "native-codex"
+          ],
+          "environment_digests": {
+            "traceharness": "sha256:73cc2e983cf0f818c058227f70d3a12ec553d0112cd786a8707c2f892ef600ed",
+            "native-claude-code": "sha256:78ecae96cd0fc1702f513787e0dee8ab8b8125e163e343d6826a625558e96988",
+            "native-codex": "sha256:e1e4ef84997e7c17acdb210ef55679b3d637fb590cdf469614fc6ab60459f2b0"
+          }
+        }
+      ]
+    }
+  },
+  "operator": {
+    "complete": true,
+    "evidence_kind": "actual-operator-bootstrap-not-member-auth",
+    "runs": [
+      {
+        "job_id": "16e62444995b6e5906514f45de3faf28ce1a9f1de43c4a70",
+        "status": "succeeded",
+        "grade": "passed",
+        "usage": {
+          "cost_usd": 0.002712,
+          "input_tokens": 10760,
+          "output_tokens": 445,
+          "requests": 4
+        },
+        "compatibility_passed": true,
+        "task_id": "requests-jsondecode-pickle",
+        "runtime_id": "traceharness",
+        "exit_code": 0
+      },
+      {
+        "job_id": "2968d2d799326822028f7dd7402775ac3ba906f9dbcea20b",
+        "status": "succeeded",
+        "grade": "passed",
+        "usage": {
+          "cost_usd": 0.633592,
+          "input_tokens": 619522,
+          "output_tokens": 2814,
+          "requests": 17
+        },
+        "compatibility_passed": true,
+        "task_id": "requests-jsondecode-pickle",
+        "runtime_id": "native-claude-code",
+        "exit_code": 0
+      },
+      {
+        "job_id": "793e0c1a3d9625e285997cb363340a839a0de0defa0994b8",
+        "status": "succeeded",
+        "grade": "passed",
+        "usage": {
+          "cost_usd": 0.0075862,
+          "input_tokens": 78836,
+          "output_tokens": 1401,
+          "requests": 9
+        },
+        "compatibility_passed": true,
+        "task_id": "requests-jsondecode-pickle",
+        "runtime_id": "native-codex",
+        "exit_code": 0
+      },
+      {
+        "job_id": "19c5795714b76d75d32e9d92700e5d1268ff3c97d5e5e2f1",
+        "status": "succeeded",
+        "grade": "passed",
+        "usage": {
+          "cost_usd": 0.0050868,
+          "input_tokens": 23861,
+          "output_tokens": 214,
+          "requests": 4
+        },
+        "compatibility_passed": true,
+        "task_id": "requests-unicode-length",
+        "runtime_id": "traceharness",
+        "exit_code": 0
+      },
+      {
+        "job_id": "946ae5a89c59b4b7ca1ea46d66f9e5bc403c018c1b5a58d8",
+        "status": "succeeded",
+        "grade": "passed",
+        "usage": {
+          "cost_usd": 0.623249,
+          "input_tokens": 611744,
+          "output_tokens": 2301,
+          "requests": 14
+        },
+        "compatibility_passed": true,
+        "task_id": "requests-unicode-length",
+        "runtime_id": "native-claude-code",
+        "exit_code": 0
+      },
+      {
+        "job_id": "44db3bb83d4066cfaa78f8ed6010c4a798860f087f61ddc2",
+        "status": "succeeded",
+        "grade": "passed",
+        "usage": {
+          "cost_usd": 0.00971857,
+          "input_tokens": 107513,
+          "output_tokens": 1600,
+          "requests": 11
+        },
+        "compatibility_passed": true,
+        "task_id": "requests-unicode-length",
+        "runtime_id": "native-codex",
+        "exit_code": 0
+      },
+      {
+        "job_id": "7f57eb8317a53cfe2d87d4a08a165d18b9dcf31dcf4e3f3c",
+        "status": "succeeded",
+        "grade": "passed",
+        "usage": {
+          "cost_usd": 0.0046856,
+          "input_tokens": 21454,
+          "output_tokens": 253,
+          "requests": 4
+        },
+        "compatibility_passed": true,
+        "task_id": "requests-leading-slashes",
+        "runtime_id": "traceharness",
+        "exit_code": 0
+      },
+      {
+        "job_id": "2fb1a45184a0a5972bfedcbfa385e50e51934da0a85fcc01",
+        "status": "succeeded",
+        "grade": "passed",
+        "usage": {
+          "cost_usd": 0.265639,
+          "input_tokens": 259364,
+          "output_tokens": 1255,
+          "requests": 7
+        },
+        "compatibility_passed": true,
+        "task_id": "requests-leading-slashes",
+        "runtime_id": "native-claude-code",
+        "exit_code": 0
+      },
+      {
+        "job_id": "220d99c95699a5e5b9e18285c0b79bff574acffa32693cb4",
+        "status": "succeeded",
+        "grade": "passed",
+        "usage": {
+          "cost_usd": 0.01490167,
+          "input_tokens": 149415,
+          "output_tokens": 2333,
+          "requests": 15
+        },
+        "compatibility_passed": true,
+        "task_id": "requests-leading-slashes",
+        "runtime_id": "native-codex",
+        "exit_code": 0
+      },
+      {
+        "job_id": "f32504f71e5cc19541a19d36b5eadbe629c70f9675e9f913",
+        "status": "succeeded",
+        "grade": "passed",
+        "usage": {
+          "cost_usd": 0.0059752,
+          "input_tokens": 25486,
+          "output_tokens": 267,
+          "requests": 4
+        },
+        "compatibility_passed": true,
+        "task_id": "requests-empty-netrc",
+        "runtime_id": "traceharness",
+        "exit_code": 0
+      },
+      {
+        "job_id": "e98710a93001d3ca3bafb2298e7167d38a0f932d81ea896a",
+        "status": "succeeded",
+        "grade": "passed",
+        "usage": {
+          "cost_usd": 0.291603,
+          "input_tokens": 284543,
+          "output_tokens": 1412,
+          "requests": 7
+        },
+        "compatibility_passed": true,
+        "task_id": "requests-empty-netrc",
+        "runtime_id": "native-claude-code",
+        "exit_code": 0
+      },
+      {
+        "job_id": "3c1c7651d68876cc0b1da40b30e183b3cdc0c197e2880c01",
+        "status": "succeeded",
+        "grade": "passed",
+        "usage": {
+          "cost_usd": 0.00793416,
+          "input_tokens": 107888,
+          "output_tokens": 1379,
+          "requests": 11
+        },
+        "compatibility_passed": true,
+        "task_id": "requests-empty-netrc",
+        "runtime_id": "native-codex",
+        "exit_code": 0
+      }
+    ],
+    "finished_at": "2026-11-10T23:23:50.643367+00:00"
+  },
+  "operator_receipts": {
+    "registry": {
+      "models": [
+        {
+          "id": "openai/gpt-4.1-mini",
+          "name": "OpenAI GPT-4.1 Mini"
+        },
+        {
+          "id": "openai/gpt-5.1-codex-mini",
+          "name": "OpenAI GPT-5.1 Codex Mini"
+        },
+        {
+          "id": "anthropic/claude-haiku-4.5",
+          "name": "Anthropic Claude Haiku 4.5"
+        }
+      ],
+      "runtimes": [
+        {
+          "compatibility_receipts": [
+            {
+              "path": "compatibility/traceharness-16e62444995b6e5906514f45de3faf28ce1a9f1de43c4a70.json",
+              "sha256": "e43f8baef7bab31c15dee03e9193d001c75499dec30e54e3e3d70c2d0139545c"
+            },
+            {
+              "path": "compatibility/traceharness-19c5795714b76d75d32e9d92700e5d1268ff3c97d5e5e2f1.json",
+              "sha256": "65452818be25b400df2537594fe04f466391e2d6abd5d362c0470d913059c62c"
+            },
+            {
+              "path": "compatibility/traceharness-7f57eb8317a53cfe2d87d4a08a165d18b9dcf31dcf4e3f3c.json",
+              "sha256": "827cc3680e6a65ac379211ed0f83a3dca6a07aa9cf334a8cb1adabef3dfbaee2"
+            },
+            {
+              "path": "compatibility/traceharness-f32504f71e5cc19541a19d36b5eadbe629c70f9675e9f913.json",
+              "sha256": "2ebf41fa9b2b143b4572fbaaeb2eca99befb7e2e67722279c44e52cc59036b21"
+            }
+          ],
+          "id": "traceharness",
+          "image_digest": "sha256:73cc2e983cf0f818c058227f70d3a12ec553d0112cd786a8707c2f892ef600ed",
+          "version": "0.3.0"
+        },
+        {
+          "compatibility_receipts": [
+            {
+              "path": "compatibility/native-claude-code-2968d2d799326822028f7dd7402775ac3ba906f9dbcea20b.json",
+              "sha256": "0fa54504afad4424c11cb053e5e882873cab613a08598bf09cf02dfd8ddfa393"
+            },
+            {
+              "path": "compatibility/native-claude-code-946ae5a89c59b4b7ca1ea46d66f9e5bc403c018c1b5a58d8.json",
+              "sha256": "96af282c238f60cd7d8fae1c2616ff188947dab4b05b841ff4aa8e80436464a9"
+            },
+            {
+              "path": "compatibility/native-claude-code-2fb1a45184a0a5972bfedcbfa385e50e51934da0a85fcc01.json",
+              "sha256": "8845a0f25bd09839f4f2e707f83950d8fcc9993b03a3a774f313f337b22a7805"
+            },
+            {
+              "path": "compatibility/native-claude-code-e98710a93001d3ca3bafb2298e7167d38a0f932d81ea896a.json",
+              "sha256": "1b2135bbcc47b8e5573f470caec37e051eb21d79d9bd0f99dcbb95fa3754542e"
+            }
+          ],
+          "id": "native-claude-code",
+          "image_digest": "sha256:78ecae96cd0fc1702f513787e0dee8ab8b8125e163e343d6826a625558e96988",
+          "version": "2.1.322"
+        },
+        {
+          "compatibility_receipts": [
+            {
+              "path": "compatibility/native-codex-793e0c1a3d9625e285997cb363340a839a0de0defa0994b8.json",
+              "sha256": "a807c7fc143ab6c3c2c0ff2fb3a9c25ee032c817253339ab4bce9fdacc0781a3"
+            },
+            {
+              "path": "compatibility/native-codex-44db3bb83d4066cfaa78f8ed6010c4a798860f087f61ddc2.json",
+              "sha256": "bbe2101be9f880416b76af71b72ebd3870ed84935d553d43e2f12be5e5226571"
+            },
+            {
+              "path": "compatibility/native-codex-220d99c95699a5e5b9e18285c0b79bff574acffa32693cb4.json",
+              "sha256": "90d8c28fc28a2d3afee06d37e0334eab9a46e0a34aafa30bf0563f787b7c26c1"
+            },
+            {
+              "path": "compatibility/native-codex-3c1c7651d68876cc0b1da40b30e183b3cdc0c197e2880c01.json",
+              "sha256": "9b282244f16eec6e8c8033dca65aff2009107921151f80126ce65ac2b3c7f5e4"
+            }
+          ],
+          "id": "native-codex",
+          "image_digest": "sha256:e1e4ef84997e7c17acdb210ef55679b3d637fb590cdf469614fc6ab60459f2b0",
+          "version": "0.167.1"
+        }
+      ],
+      "tasks": [
+        {
+          "content_sha256": "4a0f1b04dfe848ca5e7c7514c562a7fec3e4ed51959ab6cbd4bacdf68b5132cc",
+          "environment_digests": {
+            "native-claude-code": "sha256:78ecae96cd0fc1702f513787e0dee8ab8b8125e163e343d6826a625558e96988",
+            "native-codex": "sha256:e1e4ef84997e7c17acdb210ef55679b3d637fb590cdf469614fc6ab60459f2b0",
+            "traceharness": "sha256:73cc2e983cf0f818c058227f70d3a12ec553d0112cd786a8707c2f892ef600ed"
+          },
+          "grader_image_digest": "sha256:b6bc5bf5a8a16225ffe35975f1ee30c6a5b86ceee5fae5a001e9221face4dded",
+          "id": "requests-jsondecode-pickle",
+          "path": "tasks/requests-jsondecode-pickle-v3",
+          "repository": "https://github.com/psf/requests",
+          "revision": "96b22fa18c00831656ee4b286bf1c9062459b00a",
+          "runtime_ids": [
+            "traceharness",
+            "native-claude-code",
+            "native-codex"
+          ],
+          "title": "Requests #6628: Preserve JSON errors across process boundaries"
+        },
+        {
+          "content_sha256": "4a98a5b8095eab35a956c9972675ff53242d844854aac0a1af3ef6738f59dbef",
+          "environment_digests": {
+            "native-claude-code": "sha256:78ecae96cd0fc1702f513787e0dee8ab8b8125e163e343d6826a625558e96988",
+            "native-codex": "sha256:e1e4ef84997e7c17acdb210ef55679b3d637fb590cdf469614fc6ab60459f2b0",
+            "traceharness": "sha256:73cc2e983cf0f818c058227f70d3a12ec553d0112cd786a8707c2f892ef600ed"
+          },
+          "grader_image_digest": "sha256:b6bc5bf5a8a16225ffe35975f1ee30c6a5b86ceee5fae5a001e9221face4dded",
+          "id": "requests-unicode-length",
+          "path": "tasks/requests-unicode-length",
+          "repository": "https://github.com/psf/requests",
+          "revision": "f6707042d8b18d2a3737380bf58ff020872fb07b",
+          "runtime_ids": [
+            "traceharness",
+            "native-claude-code",
+            "native-codex"
+          ],
+          "title": "Requests: count UTF-8 bytes in upload Content-Length"
+        },
+        {
+          "content_sha256": "aae3b7b73c84044395ab0fa1edfe357abde29998adc5025e436c607a72115c22",
+          "environment_digests": {
+            "native-claude-code": "sha256:78ecae96cd0fc1702f513787e0dee8ab8b8125e163e343d6826a625558e96988",
+            "native-codex": "sha256:e1e4ef84997e7c17acdb210ef55679b3d637fb590cdf469614fc6ab60459f2b0",
+            "traceharness": "sha256:73cc2e983cf0f818c058227f70d3a12ec553d0112cd786a8707c2f892ef600ed"
+          },
+          "grader_image_digest": "sha256:b6bc5bf5a8a16225ffe35975f1ee30c6a5b86ceee5fae5a001e9221face4dded",
+          "id": "requests-leading-slashes",
+          "path": "tasks/requests-leading-slashes",
+          "repository": "https://github.com/psf/requests",
+          "revision": "7a13c041dbef42f9f3feb14110f02626f6892e9a",
+          "runtime_ids": [
+            "traceharness",
+            "native-claude-code",
+            "native-codex"
+          ],
+          "title": "Requests: normalize excess leading request-target slashes"
+        },
+        {
+          "content_sha256": "c636eaca91cec9cf3a41c1e0664e1b1a74c14b216b0fee9b414d66daaf23c49f",
+          "environment_digests": {
+            "native-claude-code": "sha256:78ecae96cd0fc1702f513787e0dee8ab8b8125e163e343d6826a625558e96988",
+            "native-codex": "sha256:e1e4ef84997e7c17acdb210ef55679b3d637fb590cdf469614fc6ab60459f2b0",
+            "traceharness": "sha256:73cc2e983cf0f818c058227f70d3a12ec553d0112cd786a8707c2f892ef600ed"
+          },
+          "grader_image_digest": "sha256:b6bc5bf5a8a16225ffe35975f1ee30c6a5b86ceee5fae5a001e9221face4dded",
+          "id": "requests-empty-netrc",
+          "path": "tasks/requests-empty-netrc",
+          "repository": "https://github.com/psf/requests",
+          "revision": "1b40fdd004bfc8ba5301bcf8a6908264e9b6b877",
+          "runtime_ids": [
+            "traceharness",
+            "native-claude-code",
+            "native-codex"
+          ],
+          "title": "Requests: ignore empty netrc authentication entries"
+        }
+      ],
+      "version": 1
+    },
+    "receipts": [
+      {
+        "artifacts": [
+          {
+            "bytes": 2741,
+            "name": "manifest.json",
+            "sha256": "eb23255a7c9d7d60e90adfb2c73e5808e2ca3ae59997ee299e6c6067da21d52b"
+          },
+          {
+            "bytes": 21,
+            "name": "grade.json",
+            "sha256": "878982568e5e39420f9fc8fca5caaade78f526a402b42f08357919732d5a1cd5"
+          },
+          {
+            "bytes": 8314,
+            "name": "trace.jsonl",
+            "sha256": "0e30047527600c78a660d16aaa61281547fd287337ed8531da4dbd7709fad12b"
+          },
+          {
+            "bytes": 13878,
+            "name": "messages.json",
+            "sha256": "63e4726feaaed4964998cd1c73501b96078e1dfd188b071fa7cf983c9dda3962"
+          },
+          {
+            "bytes": 414,
+            "name": "patch.diff",
+            "sha256": "8e359f08bb8f740c8a88e88beed674104a4c1e7955ca4e9534f68264f40f8a39"
+          },
+          {
+            "bytes": 904,
+            "name": "summary.json",
+            "sha256": "108972671adbde0e406808d7dbfd141bca94fc6ef385b2c38da4880369711245"
+          }
+        ],
+        "grade": "passed",
+        "grader_image_digest": "sha256:b6bc5bf5a8a16225ffe35975f1ee30c6a5b86ceee5fae5a001e9221face4dded",
+        "image_digest": "sha256:73cc2e983cf0f818c058227f70d3a12ec553d0112cd786a8707c2f892ef600ed",
+        "limits": {
+          "max_cost_usd": 1,
+          "max_steps": 20,
+          "wall_time_seconds": 240
+        },
+        "manifest_sha256": "80a9d575ba878c0a8c1e40c773832da61c08f47df56639e84fe8c04f1f625a8b",
+        "model_id": "openai/gpt-4.1-mini",
+        "model_requests": 4,
+        "run_id": "16e62444995b6e5906514f45de3faf28ce1a9f1de43c4a70",
+        "runtime_id": "traceharness",
+        "runtime_version": "0.3.0",
+        "status": "passed",
+        "successful_model_responses": 4,
+        "task_content_sha256": "4a0f1b04dfe848ca5e7c7514c562a7fec3e4ed51959ab6cbd4bacdf68b5132cc",
+        "task_id": "requests-jsondecode-pickle",
+        "task_revision": "96b22fa18c00831656ee4b286bf1c9062459b00a",
+        "verification_kind": "operator-bootstrap-no-browser-auth",
+        "verified_at": "2026-11-10T23:16:31.624232+00:00"
+      },
+      {
+        "artifacts": [
+          {
+            "bytes": 2738,
+            "name": "manifest.json",
+            "sha256": "764868ba70abc5318d50159fce5eb4c75da3f2297787f5bd58b780cc481f2493"
+          },
+          {
+            "bytes": 21,
+            "name": "grade.json",
+            "sha256": "878982568e5e39420f9fc8fca5caaade78f526a402b42f08357919732d5a1cd5"
+          },
+          {
+            "bytes": 8064,
+            "name": "trace.jsonl",
+            "sha256": "3a004ff0935b08dc157aeb7cb185e306e6794b93eb4fe4bf6efb188b61c008dc"
+          },
+          {
+            "bytes": 29045,
+            "name": "messages.json",
+            "sha256": "e1c781037192020b2779feac3878c115b3ce4cad3af70b3858d0160bc1a1821a"
+          },
+          {
+            "bytes": 269,
+            "name": "patch.diff",
+            "sha256": "2df959ac16757bc308830b4dcac8c72ddc364f2408ea7af282e804c4c486e6cb"
+          },
+          {
+            "bytes": 896,
+            "name": "summary.json",
+            "sha256": "94cf1d5b5d786e22cb28905105a97dae8491f28899feddd8ada02a692acc2d3b"
+          }
+        ],
+        "grade": "passed",
+        "grader_image_digest": "sha256:b6bc5bf5a8a16225ffe35975f1ee30c6a5b86ceee5fae5a001e9221face4dded",
+        "image_digest": "sha256:73cc2e983cf0f818c058227f70d3a12ec553d0112cd786a8707c2f892ef600ed",
+        "limits": {
+          "max_cost_usd": 1,
+          "max_steps": 20,
+          "wall_time_seconds": 240
+        },
+        "manifest_sha256": "6c5004b4fde1448965d073703686ccdf45572ce82e4a2913ce53985c2b407513",
+        "model_id": "openai/gpt-4.1-mini",
+        "model_requests": 4,
+        "run_id": "19c5795714b76d75d32e9d92700e5d1268ff3c97d5e5e2f1",
+        "runtime_id": "traceharness",
+        "runtime_version": "0.3.0",
+        "status": "passed",
+        "successful_model_responses": 4,
+        "task_content_sha256": "4a98a5b8095eab35a956c9972675ff53242d844854aac0a1af3ef6738f59dbef",
+        "task_id": "requests-unicode-length",
+        "task_revision": "f6707042d8b18d2a3737380bf58ff020872fb07b",
+        "verification_kind": "operator-bootstrap-no-browser-auth",
+        "verified_at": "2026-11-10T23:18:39.533874+00:00"
+      },
+      {
+        "artifacts": [
+          {
+            "bytes": 2739,
+            "name": "manifest.json",
+            "sha256": "4776add1ac0f6217e9f03dc6613ebdb4369e3c2b43d00445d7e170705effcc30"
+          },
+          {
+            "bytes": 21,
+            "name": "grade.json",
+            "sha256": "878982568e5e39420f9fc8fca5caaade78f526a402b42f08357919732d5a1cd5"
+          },
+          {
+            "bytes": 7901,
+            "name": "trace.jsonl",
+            "sha256": "8a5fe0e304eb7364ec2045e3db97829af35bf9bdb608d8575e5b12eee7273b47"
+          },
+          {
+            "bytes": 27859,
+            "name": "messages.json",
+            "sha256": "3239479ca9edd2195d2ea436aefe884b53a7e84185a09a93c0ccc5ecbc4b567f"
+          },
+          {
+            "bytes": 368,
+            "name": "patch.diff",
+            "sha256": "18423e902fef379320eaa57e4a815d19401d534b52b77868624e445a595b0f63"
+          },
+          {
+            "bytes": 900,
+            "name": "summary.json",
+            "sha256": "ada5c54d0f0374f76feb4c1067675f14e2021ff376d6d0c7a578ec873edce256"
+          }
+        ],
+        "grade": "passed",
+        "grader_image_digest": "sha256:b6bc5bf5a8a16225ffe35975f1ee30c6a5b86ceee5fae5a001e9221face4dded",
+        "image_digest": "sha256:73cc2e983cf0f818c058227f70d3a12ec553d0112cd786a8707c2f892ef600ed",
+        "limits": {
+          "max_cost_usd": 1,
+          "max_steps": 20,
+          "wall_time_seconds": 240
+        },
+        "manifest_sha256": "4cb5e8ee9e3caae3c277995bd6fa28dfbd93aba5f0cd06082e3240d79bfbe54e",
+        "model_id": "openai/gpt-4.1-mini",
+        "model_requests": 4,
+        "run_id": "7f57eb8317a53cfe2d87d4a08a165d18b9dcf31dcf4e3f3c",
+        "runtime_id": "traceharness",
+        "runtime_version": "0.3.0",
+        "status": "passed",
+        "successful_model_responses": 4,
+        "task_content_sha256": "aae3b7b73c84044395ab0fa1edfe357abde29998adc5025e436c607a72115c22",
+        "task_id": "requests-leading-slashes",
+        "task_revision": "7a13c041dbef42f9f3feb14110f02626f6892e9a",
+        "verification_kind": "operator-bootstrap-no-browser-auth",
+        "verified_at": "2026-11-10T23:20:39.016214+00:00"
+      },
+      {
+        "artifacts": [
+          {
+            "bytes": 2735,
+            "name": "manifest.json",
+            "sha256": "e631cc580a9c74f0ec98678a68df2e1320dd4f2fbf5b1226bf24a7a9df801e0c"
+          },
+          {
+            "bytes": 21,
+            "name": "grade.json",
+            "sha256": "878982568e5e39420f9fc8fca5caaade78f526a402b42f08357919732d5a1cd5"
+          },
+          {
+            "bytes": 8530,
+            "name": "trace.jsonl",
+            "sha256": "4cf891867a02ca63ee4079456a363bb21c89a4fc3a35d4013447966612a3f633"
+          },
+          {
+            "bytes": 30679,
+            "name": "messages.json",
+            "sha256": "28572a078d1387b452ddab67869f0441f3ad9d154223662854659b5ab510894d"
+          },
+          {
+            "bytes": 367,
+            "name": "patch.diff",
+            "sha256": "4f0bc0736407265532450cae13de6db728247621c718e501ee124eb1ef7dbd92"
+          },
+          {
+            "bytes": 893,
+            "name": "summary.json",
+            "sha256": "f16dfd1df5f7babb2efeb612e0b2afac4a967974b0e6df13efc83b32ec9b9859"
+          }
+        ],
+        "grade": "passed",
+        "grader_image_digest": "sha256:b6bc5bf5a8a16225ffe35975f1ee30c6a5b86ceee5fae5a001e9221face4dded",
+        "image_digest": "sha256:73cc2e983cf0f818c058227f70d3a12ec553d0112cd786a8707c2f892ef600ed",
+        "limits": {
+          "max_cost_usd": 1,
+          "max_steps": 20,
+          "wall_time_seconds": 240
+        },
+        "manifest_sha256": "d2eb0b4f7a37db2da303022d328826997976a86fccf3e6c7f6e5221a6d97b0ec",
+        "model_id": "openai/gpt-4.1-mini",
+        "model_requests": 4,
+        "run_id": "f32504f71e5cc19541a19d36b5eadbe629c70f9675e9f913",
+        "runtime_id": "traceharness",
+        "runtime_version": "0.3.0",
+        "status": "passed",
+        "successful_model_responses": 4,
+        "task_content_sha256": "c636eaca91cec9cf3a41c1e0664e1b1a74c14b216b0fee9b414d66daaf23c49f",
+        "task_id": "requests-empty-netrc",
+        "task_revision": "1b40fdd004bfc8ba5301bcf8a6908264e9b6b877",
+        "verification_kind": "operator-bootstrap-no-browser-auth",
+        "verified_at": "2026-11-10T23:22:30.745594+00:00"
+      },
+      {
+        "artifacts": [
+          {
+            "bytes": 1167,
+            "name": "manifest.json",
+            "sha256": "4a02bf2a07b3f34b51ca2c297138e6926bd878ef4da99676ac2b42cbe6bba770"
+          },
+          {
+            "bytes": 21,
+            "name": "grade.json",
+            "sha256": "878982568e5e39420f9fc8fca5caaade78f526a402b42f08357919732d5a1cd5"
+          },
+          {
+            "bytes": 90034,
+            "name": "trace.jsonl",
+            "sha256": "aab40f794686bd50a32c2c6b943703d02a792cd4d869f009ed502b85db6c582b"
+          },
+          {
+            "bytes": 642,
+            "name": "patch.diff",
+            "sha256": "5a9ae5edf61b8dfbf91645a7c6b716ace85227c9c2766071243ca034ad5d74cd"
+          }
+        ],
+        "grade": "passed",
+        "grader_image_digest": "sha256:b6bc5bf5a8a16225ffe35975f1ee30c6a5b86ceee5fae5a001e9221face4dded",
+        "image_digest": "sha256:78ecae96cd0fc1702f513787e0dee8ab8b8125e163e343d6826a625558e96988",
+        "limits": {
+          "max_cost_usd": 2,
+          "max_steps": 32,
+          "wall_time_seconds": 240
+        },
+        "manifest_sha256": "880e008f44744faef285a52bc95863f5fbc88588493e743444bfa71482ca45ea",
+        "model_id": "anthropic/claude-haiku-4.5",
+        "model_requests": 17,
+        "run_id": "2968d2d799326822028f7dd7402775ac3ba906f9dbcea20b",
+        "runtime_id": "native-claude-code",
+        "runtime_version": "2.1.322",
+        "status": "passed",
+        "successful_model_responses": 17,
+        "task_content_sha256": "4a0f1b04dfe848ca5e7c7514c562a7fec3e4ed51959ab6cbd4bacdf68b5132cc",
+        "task_id": "requests-jsondecode-pickle",
+        "task_revision": "96b22fa18c00831656ee4b286bf1c9062459b00a",
+        "verification_kind": "operator-bootstrap-no-browser-auth",
+        "verified_at": "2026-11-10T23:17:30.607918+00:00"
+      },
+      {
+        "artifacts": [
+          {
+            "bytes": 1164,
+            "name": "manifest.json",
+            "sha256": "dd4dbef9ab0769b2b757156ea54e3cebe3cf660ca937eb2871abbc8345d42873"
+          },
+          {
+            "bytes": 21,
+            "name": "grade.json",
+            "sha256": "878982568e5e39420f9fc8fca5caaade78f526a402b42f08357919732d5a1cd5"
+          },
+          {
+            "bytes": 183184,
+            "name": "trace.jsonl",
+            "sha256": "22003bdb01f663569492ba6906557c2fc39a09ad83c318f6e58d947daf1c4446"
+          },
+          {
+            "bytes": 421,
+            "name": "patch.diff",
+            "sha256": "02235a9b56e226e68f5abe120415d6759a8a67e380bac681bf876ccc8036981f"
+          }
+        ],
+        "grade": "passed",
+        "grader_image_digest": "sha256:b6bc5bf5a8a16225ffe35975f1ee30c6a5b86ceee5fae5a001e9221face4dded",
+        "image_digest": "sha256:78ecae96cd0fc1702f513787e0dee8ab8b8125e163e343d6826a625558e96988",
+        "limits": {
+          "max_cost_usd": 2,
+          "max_steps": 32,
+          "wall_time_seconds": 240
+        },
+        "manifest_sha256": "91b6f8955332d8797c1fa44e2fefad079858eb7f968de9f93db7b25514a80ef0",
+        "model_id": "anthropic/claude-haiku-4.5",
+        "model_requests": 14,
+        "run_id": "946ae5a89c59b4b7ca1ea46d66f9e5bc403c018c1b5a58d8",
+        "runtime_id": "native-claude-code",
+        "runtime_version": "2.1.322",
+        "status": "passed",
+        "successful_model_responses": 14,
+        "task_content_sha256": "4a98a5b8095eab35a956c9972675ff53242d844854aac0a1af3ef6738f59dbef",
+        "task_id": "requests-unicode-length",
+        "task_revision": "f6707042d8b18d2a3737380bf58ff020872fb07b",
+        "verification_kind": "operator-bootstrap-no-browser-auth",
+        "verified_at": "2026-11-10T23:19:31.658315+00:00"
+      },
+      {
+        "artifacts": [
+          {
+            "bytes": 1165,
+            "name": "manifest.json",
+            "sha256": "30777ef3621485c3f97b7f2a786057c0116b8eef7093d6c08ec32b09fd3fe5a1"
+          },
+          {
+            "bytes": 21,
+            "name": "grade.json",
+            "sha256": "878982568e5e39420f9fc8fca5caaade78f526a402b42f08357919732d5a1cd5"
+          },
+          {
+            "bytes": 109654,
+            "name": "trace.jsonl",
+            "sha256": "ceb8aa163ee4efd49f0700db4ef0d96906409ff20e224e08b2f60d0cf6e6f65f"
+          },
+          {
+            "bytes": 533,
+            "name": "patch.diff",
+            "sha256": "fd9c2b07da5540bafd8952e260a86e3152d6ab1f1adba6e210d8e20b594fa69e"
+          }
+        ],
+        "grade": "passed",
+        "grader_image_digest": "sha256:b6bc5bf5a8a16225ffe35975f1ee30c6a5b86ceee5fae5a001e9221face4dded",
+        "image_digest": "sha256:78ecae96cd0fc1702f513787e0dee8ab8b8125e163e343d6826a625558e96988",
+        "limits": {
+          "max_cost_usd": 2,
+          "max_steps": 32,
+          "wall_time_seconds": 240
+        },
+        "manifest_sha256": "7fe7fd8bbe8b4043e98f21780ad063af362fc29af247e086cbdb618e021ee5da",
+        "model_id": "anthropic/claude-haiku-4.5",
+        "model_requests": 7,
+        "run_id": "2fb1a45184a0a5972bfedcbfa385e50e51934da0a85fcc01",
+        "runtime_id": "native-claude-code",
+        "runtime_version": "2.1.322",
+        "status": "passed",
+        "successful_model_responses": 7,
+        "task_content_sha256": "aae3b7b73c84044395ab0fa1edfe357abde29998adc5025e436c607a72115c22",
+        "task_id": "requests-leading-slashes",
+        "task_revision": "7a13c041dbef42f9f3feb14110f02626f6892e9a",
+        "verification_kind": "operator-bootstrap-no-browser-auth",
+        "verified_at": "2026-11-10T23:21:08.514340+00:00"
+      },
+      {
+        "artifacts": [
+          {
+            "bytes": 1161,
+            "name": "manifest.json",
+            "sha256": "dab659afee85f78706d61ed96ddfa71501bb239039751f6f56e2bb7dcfc5e3ac"
+          },
+          {
+            "bytes": 21,
+            "name": "grade.json",
+            "sha256": "878982568e5e39420f9fc8fca5caaade78f526a402b42f08357919732d5a1cd5"
+          },
+          {
+            "bytes": 161076,
+            "name": "trace.jsonl",
+            "sha256": "c141e2bc72d32136539f73c8f91f037951105ef554f72137578394a8204bf7f7"
+          },
+          {
+            "bytes": 539,
+            "name": "patch.diff",
+            "sha256": "805ce585ff43105bb0522aba1b78bc89f308da79c03d337489ea2bb70911c9a5"
+          }
+        ],
+        "grade": "passed",
+        "grader_image_digest": "sha256:b6bc5bf5a8a16225ffe35975f1ee30c6a5b86ceee5fae5a001e9221face4dded",
+        "image_digest": "sha256:78ecae96cd0fc1702f513787e0dee8ab8b8125e163e343d6826a625558e96988",
+        "limits": {
+          "max_cost_usd": 2,
+          "max_steps": 32,
+          "wall_time_seconds": 240
+        },
+        "manifest_sha256": "c54a0e9f78e0999bd417296934a1e46aed641371d272f49d1f33aac6c9366d91",
+        "model_id": "anthropic/claude-haiku-4.5",
+        "model_requests": 7,
+        "run_id": "e98710a93001d3ca3bafb2298e7167d38a0f932d81ea896a",
+        "runtime_id": "native-claude-code",
+        "runtime_version": "2.1.322",
+        "status": "passed",
+        "successful_model_responses": 7,
+        "task_content_sha256": "c636eaca91cec9cf3a41c1e0664e1b1a74c14b216b0fee9b414d66daaf23c49f",
+        "task_id": "requests-empty-netrc",
+        "task_revision": "1b40fdd004bfc8ba5301bcf8a6908264e9b6b877",
+        "verification_kind": "operator-bootstrap-no-browser-auth",
+        "verified_at": "2026-11-10T23:23:02.408573+00:00"
+      },
+      {
+        "artifacts": [
+          {
+            "bytes": 1160,
+            "name": "manifest.json",
+            "sha256": "4bdec2703bd5fa2350ba1b262c8ca423995b16e6f9f518a662cb6a73482d6942"
+          },
+          {
+            "bytes": 21,
+            "name": "grade.json",
+            "sha256": "878982568e5e39420f9fc8fca5caaade78f526a402b42f08357919732d5a1cd5"
+          },
+          {
+            "bytes": 12508,
+            "name": "trace.jsonl",
+            "sha256": "2c5e157c0df877b27bf6cf2df98176054d9d290c7846211f3e7260c12079a9ce"
+          },
+          {
+            "bytes": 624,
+            "name": "patch.diff",
+            "sha256": "7716c9374356f387ea93835fa401802d4f844261dded8633f342f673df482344"
+          }
+        ],
+        "grade": "passed",
+        "grader_image_digest": "sha256:b6bc5bf5a8a16225ffe35975f1ee30c6a5b86ceee5fae5a001e9221face4dded",
+        "image_digest": "sha256:e1e4ef84997e7c17acdb210ef55679b3d637fb590cdf469614fc6ab60459f2b0",
+        "limits": {
+          "max_cost_usd": 1,
+          "max_steps": 20,
+          "wall_time_seconds": 240
+        },
+        "manifest_sha256": "4ae2dd684cd8c0de9ea1b0e54230284d76ef45ed5d6f30b5b3a2a73767e70f88",
+        "model_id": "openai/gpt-5.1-codex-mini",
+        "model_requests": 9,
+        "run_id": "793e0c1a3d9625e285997cb363340a839a0de0defa0994b8",
+        "runtime_id": "native-codex",
+        "runtime_version": "0.167.1",
+        "status": "passed",
+        "successful_model_responses": 9,
+        "task_content_sha256": "4a0f1b04dfe848ca5e7c7514c562a7fec3e4ed51959ab6cbd4bacdf68b5132cc",
+        "task_id": "requests-jsondecode-pickle",
+        "task_revision": "96b22fa18c00831656ee4b286bf1c9062459b00a",
+        "verification_kind": "operator-bootstrap-no-browser-auth",
+        "verified_at": "2026-11-10T23:18:23.998695+00:00"
+      },
+      {
+        "artifacts": [
+          {
+            "bytes": 1157,
+            "name": "manifest.json",
+            "sha256": "94355ac8d5d21b18c4bb52b17a6487d21b649555a8fd6d59935b820b795fd245"
+          },
+          {
+            "bytes": 21,
+            "name": "grade.json",
+            "sha256": "878982568e5e39420f9fc8fca5caaade78f526a402b42f08357919732d5a1cd5"
+          },
+          {
+            "bytes": 27843,
+            "name": "trace.jsonl",
+            "sha256": "540e495b1784937f4809facc36106c60d30fb4b6925f0391fbabd9b514990b34"
+          },
+          {
+            "bytes": 421,
+            "name": "patch.diff",
+            "sha256": "02235a9b56e226e68f5abe120415d6759a8a67e380bac681bf876ccc8036981f"
+          }
+        ],
+        "grade": "passed",
+        "grader_image_digest": "sha256:b6bc5bf5a8a16225ffe35975f1ee30c6a5b86ceee5fae5a001e9221face4dded",
+        "image_digest": "sha256:e1e4ef84997e7c17acdb210ef55679b3d637fb590cdf469614fc6ab60459f2b0",
+        "limits": {
+          "max_cost_usd": 1,
+          "max_steps": 20,
+          "wall_time_seconds": 240
+        },
+        "manifest_sha256": "008d658a4d0fd34e283913fa41c8c124181e16c00e0fa180b15568ef3d63e107",
+        "model_id": "openai/gpt-5.1-codex-mini",
+        "model_requests": 11,
+        "run_id": "44db3bb83d4066cfaa78f8ed6010c4a798860f087f61ddc2",
+        "runtime_id": "native-codex",
+        "runtime_version": "0.167.1",
+        "status": "passed",
+        "successful_model_responses": 11,
+        "task_content_sha256": "4a98a5b8095eab35a956c9972675ff53242d844854aac0a1af3ef6738f59dbef",
+        "task_id": "requests-unicode-length",
+        "task_revision": "f6707042d8b18d2a3737380bf58ff020872fb07b",
+        "verification_kind": "operator-bootstrap-no-browser-auth",
+        "verified_at": "2026-11-10T23:20:23.000291+00:00"
+      },
+      {
+        "artifacts": [
+          {
+            "bytes": 1158,
+            "name": "manifest.json",
+            "sha256": "36c506a7a2e95b1ca9182547c3e1b8c7913de2e44280796a81c7f248d6e85945"
+          },
+          {
+            "bytes": 21,
+            "name": "grade.json",
+            "sha256": "878982568e5e39420f9fc8fca5caaade78f526a402b42f08357919732d5a1cd5"
+          },
+          {
+            "bytes": 24468,
+            "name": "trace.jsonl",
+            "sha256": "3b5b00f1cac7f24f7b434a930b0bb3ad7df2b4129210a8ad27db4382b4ba2f16"
+          },
+          {
+            "bytes": 533,
+            "name": "patch.diff",
+            "sha256": "fd9c2b07da5540bafd8952e260a86e3152d6ab1f1adba6e210d8e20b594fa69e"
+          }
+        ],
+        "grade": "passed",
+        "grader_image_digest": "sha256:b6bc5bf5a8a16225ffe35975f1ee30c6a5b86ceee5fae5a001e9221face4dded",
+        "image_digest": "sha256:e1e4ef84997e7c17acdb210ef55679b3d637fb590cdf469614fc6ab60459f2b0",
+        "limits": {
+          "max_cost_usd": 1,
+          "max_steps": 20,
+          "wall_time_seconds": 240
+        },
+        "manifest_sha256": "fe995aef7e4818a98a0cec541d354b9645de11077c0e49d836611964323543cb",
+        "model_id": "openai/gpt-5.1-codex-mini",
+        "model_requests": 15,
+        "run_id": "220d99c95699a5e5b9e18285c0b79bff574acffa32693cb4",
+        "runtime_id": "native-codex",
+        "runtime_version": "0.167.1",
+        "status": "passed",
+        "successful_model_responses": 15,
+        "task_content_sha256": "aae3b7b73c84044395ab0fa1edfe357abde29998adc5025e436c607a72115c22",
+        "task_id": "requests-leading-slashes",
+        "task_revision": "7a13c041dbef42f9f3feb14110f02626f6892e9a",
+        "verification_kind": "operator-bootstrap-no-browser-auth",
+        "verified_at": "2026-11-10T23:22:14.541670+00:00"
+      },
+      {
+        "artifacts": [
+          {
+            "bytes": 1154,
+            "name": "manifest.json",
+            "sha256": "2d3cf9ce48c81bf4008c44381b25e0a8d8ae894822e3d59c76fd8bd0d4766c89"
+          },
+          {
+            "bytes": 21,
+            "name": "grade.json",
+            "sha256": "878982568e5e39420f9fc8fca5caaade78f526a402b42f08357919732d5a1cd5"
+          },
+          {
+            "bytes": 20824,
+            "name": "trace.jsonl",
+            "sha256": "d14ad9794a0532344c82fec7100d428a22ae2769f8395ea4ee959a503f15bb76"
+          },
+          {
+            "bytes": 539,
+            "name": "patch.diff",
+            "sha256": "805ce585ff43105bb0522aba1b78bc89f308da79c03d337489ea2bb70911c9a5"
+          }
+        ],
+        "grade": "passed",
+        "grader_image_digest": "sha256:b6bc5bf5a8a16225ffe35975f1ee30c6a5b86ceee5fae5a001e9221face4dded",
+        "image_digest": "sha256:e1e4ef84997e7c17acdb210ef55679b3d637fb590cdf469614fc6ab60459f2b0",
+        "limits": {
+          "max_cost_usd": 1,
+          "max_steps": 20,
+          "wall_time_seconds": 240
+        },
+        "manifest_sha256": "4ac8ce283b39c344221d7d106a87384ae439844aa6e552d87ef09e5e99c9f995",
+        "model_id": "openai/gpt-5.1-codex-mini",
+        "model_requests": 11,
+        "run_id": "3c1c7651d68876cc0b1da40b30e183b3cdc0c197e2880c01",
+        "runtime_id": "native-codex",
+        "runtime_version": "0.167.1",
+        "status": "passed",
+        "successful_model_responses": 11,
+        "task_content_sha256": "c636eaca91cec9cf3a41c1e0664e1b1a74c14b216b0fee9b414d66daaf23c49f",
+        "task_id": "requests-empty-netrc",
+        "task_revision": "1b40fdd004bfc8ba5301bcf8a6908264e9b6b877",
+        "verification_kind": "operator-bootstrap-no-browser-auth",
+        "verified_at": "2026-11-10T23:23:50.528088+00:00"
+      }
+    ],
+    "all_task_hashes_verified": true
+  },
+  "member_audit": {
+    "schema_version": 1,
+    "evidence_kind": "offline-audit-of-real-member-execution-evidence",
+    "generated_at": "2026-11-10T23:42:20.385887+00:00",
+    "complete": false,
+    "expected_combinations": 12,
+    "accepted_runs": [
+      {
+        "task_id": "requests-empty-netrc",
+        "runtime_id": "native-codex",
+        "model_id": "openai/gpt-5.1-codex-mini",
+        "job_id": "85a884ce74c9110b4a1c691af1efde12ea4a6cc493ed5435",
+        "status": "succeeded",
+        "grade": "passed",
+        "usage": {
+          "requests": 11,
+          "input_tokens": 102845,
+          "output_tokens": 1281,
+          "cost_usd": 0.00782909,
+          "cost_status": "reported"
+        },
+        "source_report": {
+          "path": "member-requests-empty-netrc-native-codex/member-execution-proof.json",
+          "sha256": "604c7d89bdfde5a4fef5418e329c0232273ef2c993af2cde034b8a3498a38d54"
+        },
+        "manifest_sha256": "0c6ee275491ac831ef3af86935e95e675b982df3ba209ba928832f986b502445",
+        "reviewed_manifest_file_sha256": "a4902b412861f6d8da7fb50c32eaa2558aae290a133843b45723cdc50f7581a6",
+        "artifacts": [
+          {
+            "name": "manifest.json",
+            "bytes": 1202,
+            "sha256": "0605179ca81bf1a8aa40c1afe6a5bb2877c4a523d806d7e1628d2aecddfddfd3",
+            "api_and_ui_verified": true
+          },
+          {
+            "name": "grade.json",
+            "bytes": 21,
+            "sha256": "878982568e5e39420f9fc8fca5caaade78f526a402b42f08357919732d5a1cd5",
+            "api_and_ui_verified": true
+          },
+          {
+            "name": "trace.jsonl",
+            "bytes": 17390,
+            "sha256": "31a78ddd4da5760b910fe50baa462a5b151953db6f05c412c5ed4801fe6b599d",
+            "api_and_ui_verified": true
+          },
+          {
+            "name": "patch.diff",
+            "bytes": 539,
+            "sha256": "805ce585ff43105bb0522aba1b78bc89f308da79c03d337489ea2bb70911c9a5",
+            "api_and_ui_verified": true
+          }
+        ],
+        "idempotency_same_job": true,
+        "reopened_after_reload": true,
+        "hostile_origin_metadata_and_artifact_refused": true,
+        "unsupported_model_preflight_refused": true,
+        "connection_revocation": "verified by reached post-revocation reload checkpoint",
+        "historical_browser_health": "verified",
+        "source_report_complete": true
+      },
+      {
+        "task_id": "requests-empty-netrc",
+        "runtime_id": "traceharness",
+        "model_id": "openai/gpt-4.1-mini",
+        "job_id": "0b20afc8b128b8ef8560536da85e3850250815f5be4a7e41",
+        "status": "succeeded",
+        "grade": "passed",
+        "usage": {
+          "requests": 4,
+          "input_tokens": 25518,
+          "output_tokens": 262,
+          "cost_usd": 0.0054424,
+          "cost_status": "reported"
+        },
+        "source_report": {
+          "path": "member-requests-empty-netrc-traceharness-observation-verified/member-execution-proof.json",
+          "sha256": "334e4ebe4819b76f5b97ada4003874af8a242c7d3027bf2d7a7360107f4a1973"
+        },
+        "manifest_sha256": "e0d22cd0d0acc94c8ec6c944ec569fd9bb2f7ec0fc1cb576671a9fb7d9d7a4cc",
+        "reviewed_manifest_file_sha256": "f2fa5c5dcb983b7c8ed624b6341a7ff3efa1bc95788115dcc964165c66ed97b3",
+        "artifacts": [
+          {
+            "name": "manifest.json",
+            "bytes": 2879,
+            "sha256": "3843674da6fa33ba5ca3c0b91edce2fccd296ccb8611108a5509a6dc0cf7d0e5",
+            "api_and_ui_verified": true
+          },
+          {
+            "name": "grade.json",
+            "bytes": 21,
+            "sha256": "878982568e5e39420f9fc8fca5caaade78f526a402b42f08357919732d5a1cd5",
+            "api_and_ui_verified": true
+          },
+          {
+            "name": "trace.jsonl",
+            "bytes": 8576,
+            "sha256": "eee7cd31b7f88b67a3fea3a8407692b6c36e26c4665e8f7b72953577914bf345",
+            "api_and_ui_verified": true
+          },
+          {
+            "name": "messages.json",
+            "bytes": 30713,
+            "sha256": "4b0c3c1b2cb87f85e7b1bf705f63fda3e9369fbf358dd5e0aae60c95c62814e2",
+            "api_and_ui_verified": true
+          },
+          {
+            "name": "patch.diff",
+            "bytes": 367,
+            "sha256": "4f0bc0736407265532450cae13de6db728247621c718e501ee124eb1ef7dbd92",
+            "api_and_ui_verified": true
+          },
+          {
+            "name": "summary.json",
+            "bytes": 893,
+            "sha256": "cbeb61aa0caa96907cf6cbfc0aa0fa62d42634b0ca8094ee920876116e0f1a7c",
+            "api_and_ui_verified": true
+          }
+        ],
+        "idempotency_same_job": true,
+        "reopened_after_reload": true,
+        "hostile_origin_metadata_and_artifact_refused": true,
+        "unsupported_model_preflight_refused": true,
+        "connection_revocation": "verified by reached post-revocation reload checkpoint",
+        "historical_browser_health": "verified",
+        "source_report_complete": true
+      },
+      {
+        "task_id": "requests-jsondecode-pickle",
+        "runtime_id": "native-claude-code",
+        "model_id": "anthropic/claude-haiku-4.5",
+        "job_id": "7349add019c4d720bca125a3acd5e7e09365cd4e5f248b9b",
+        "status": "succeeded",
+        "grade": "passed",
+        "usage": {
+          "requests": 15,
+          "input_tokens": 551711,
+          "output_tokens": 3089,
+          "cost_usd": 0.567156,
+          "cost_status": "reported"
+        },
+        "source_report": {
+          "path": "member-requests-jsondecode-pickle/member-execution-proof.json",
+          "sha256": "462597014093037a9a71786c6769227c24cbe1901c8ab0847fd2aef9343c49e2"
+        },
+        "manifest_sha256": "3df76b77d24953f6f4d6c98269a7a163128f2ad9afa19e8b34cccf6f877d72b4",
+        "reviewed_manifest_file_sha256": "9a8566197bd035a816d4502a70cf91e7d62d3c8409caacfb47a496480a569053",
+        "artifacts": [
+          {
+            "name": "manifest.json",
+            "bytes": 1215,
+            "sha256": "b741f8f1406caa7c495bd004948ac6a2a01cae7283003b70c00b8eacedcdc839",
+            "api_and_ui_verified": true
+          },
+          {
+            "name": "grade.json",
+            "bytes": 21,
+            "sha256": "878982568e5e39420f9fc8fca5caaade78f526a402b42f08357919732d5a1cd5",
+            "api_and_ui_verified": true
+          },
+          {
+            "name": "trace.jsonl",
+            "bytes": 97335,
+            "sha256": "f91dd05d9d6b9efa8db12625b00b9c9048e18af09214f7f5bfecab331c05b504",
+            "api_and_ui_verified": true
+          },
+          {
+            "name": "patch.diff",
+            "bytes": 570,
+            "sha256": "de4eeb0d13ef7e1000413aed956c5f928242c8337ab2bf03c352e12ba47c3fcc",
+            "api_and_ui_verified": true
+          }
+        ],
+        "idempotency_same_job": true,
+        "reopened_after_reload": true,
+        "hostile_origin_metadata_and_artifact_refused": true,
+        "unsupported_model_preflight_refused": true,
+        "connection_revocation": "verified by reached post-revocation reload checkpoint",
+        "historical_browser_health": "verified",
+        "source_report_complete": true
+      },
+      {
+        "task_id": "requests-jsondecode-pickle",
+        "runtime_id": "native-codex",
+        "model_id": "openai/gpt-5.1-codex-mini",
+        "job_id": "74bbf6b8c6cabbcb5f3124e4459ed63521d04557bba12b7a",
+        "status": "succeeded",
+        "grade": "passed",
+        "usage": {
+          "requests": 10,
+          "input_tokens": 89494,
+          "output_tokens": 1961,
+          "cost_usd": 0.00914606,
+          "cost_status": "reported"
+        },
+        "source_report": {
+          "path": "member-requests-jsondecode-pickle/member-execution-proof.json",
+          "sha256": "462597014093037a9a71786c6769227c24cbe1901c8ab0847fd2aef9343c49e2"
+        },
+        "manifest_sha256": "3d42890be55eb91552a2fbdf8194c3304de025509abc174c2d9bc0984f626aec",
+        "reviewed_manifest_file_sha256": "eb24096994537615350e5dd481d1270b21302f305c50b40cefcdd71530f6cc8d",
+        "artifacts": [
+          {
+            "name": "manifest.json",
+            "bytes": 1208,
+            "sha256": "c1de3eb94b07e9d28cafaa0121a3fa7aeb5dbb3d71821fbd9ba186c89fcb6da8",
+            "api_and_ui_verified": true
+          },
+          {
+            "name": "grade.json",
+            "bytes": 21,
+            "sha256": "878982568e5e39420f9fc8fca5caaade78f526a402b42f08357919732d5a1cd5",
+            "api_and_ui_verified": true
+          },
+          {
+            "name": "trace.jsonl",
+            "bytes": 15822,
+            "sha256": "fc882c692a6742b09e2b4cd9172b892fac488a59edb474e265caba06146ffe0e",
+            "api_and_ui_verified": true
+          },
+          {
+            "name": "patch.diff",
+            "bytes": 631,
+            "sha256": "0adc08efb973cfd6f335cd26fb34cb2f7f619b8fd9a3e1e6e340574284b2e146",
+            "api_and_ui_verified": true
+          }
+        ],
+        "idempotency_same_job": true,
+        "reopened_after_reload": true,
+        "hostile_origin_metadata_and_artifact_refused": true,
+        "unsupported_model_preflight_refused": true,
+        "connection_revocation": "verified by reached post-revocation reload checkpoint",
+        "historical_browser_health": "verified",
+        "source_report_complete": true
+      },
+      {
+        "task_id": "requests-jsondecode-pickle",
+        "runtime_id": "traceharness",
+        "model_id": "openai/gpt-4.1-mini",
+        "job_id": "a06c7fb96967f92b1c6a6fe3d5c7328ce1daca67e0ce4224",
+        "status": "succeeded",
+        "grade": "passed",
+        "usage": {
+          "requests": 4,
+          "input_tokens": 12559,
+          "output_tokens": 485,
+          "cost_usd": 0.0032652,
+          "cost_status": "reported"
+        },
+        "source_report": {
+          "path": "member-requests-jsondecode-pickle/member-execution-proof.json",
+          "sha256": "462597014093037a9a71786c6769227c24cbe1901c8ab0847fd2aef9343c49e2"
+        },
+        "manifest_sha256": "372f4c58713668a20f6cd0c693ff3c67257e67a6b8ab80898aaa5c0bc9da9f2d",
+        "reviewed_manifest_file_sha256": "065484421c2b54d113935d646ef498949f3e656f96af61e9515914ad82391a36",
+        "artifacts": [
+          {
+            "name": "manifest.json",
+            "bytes": 2885,
+            "sha256": "f2a5448c5de0c07307b402422ba65dd1d2cb2abf3054d49414d2bae95ddf62f1",
+            "api_and_ui_verified": true
+          },
+          {
+            "name": "grade.json",
+            "bytes": 21,
+            "sha256": "878982568e5e39420f9fc8fca5caaade78f526a402b42f08357919732d5a1cd5",
+            "api_and_ui_verified": true
+          },
+          {
+            "name": "trace.jsonl",
+            "bytes": 9277,
+            "sha256": "c0b609d9bc5b674dd2fada493187bfb47acacc0de52b6cf8c2cedbcde215e45b",
+            "api_and_ui_verified": true
+          },
+          {
+            "name": "messages.json",
+            "bytes": 16333,
+            "sha256": "639a93c36be1c2551f4bfef0ac89a09c3eedc8557d29ae68e172e716a603e7f3",
+            "api_and_ui_verified": true
+          },
+          {
+            "name": "patch.diff",
+            "bytes": 420,
+            "sha256": "94fa248f60a93640be88db02edf28c633fbfaac5f1de4b1aefbd2e83d2ac1ba7",
+            "api_and_ui_verified": true
+          },
+          {
+            "name": "summary.json",
+            "bytes": 917,
+            "sha256": "a035bb81f9e0149938e02220322ee3e4a6973f29d4826d1d812e2bfb08ffe1f8",
+            "api_and_ui_verified": true
+          }
+        ],
+        "idempotency_same_job": true,
+        "reopened_after_reload": true,
+        "hostile_origin_metadata_and_artifact_refused": true,
+        "unsupported_model_preflight_refused": true,
+        "connection_revocation": "verified by reached post-revocation reload checkpoint",
+        "historical_browser_health": "verified",
+        "source_report_complete": true
+      },
+      {
+        "task_id": "requests-leading-slashes",
+        "runtime_id": "native-codex",
+        "model_id": "openai/gpt-5.1-codex-mini",
+        "job_id": "0f9c17163dca9f1d8cde170b42671f29f5ed7d47cf1a42ec",
+        "status": "succeeded",
+        "grade": "passed",
+        "usage": {
+          "requests": 10,
+          "input_tokens": 95377,
+          "output_tokens": 1655,
+          "cost_usd": 0.00848417,
+          "cost_status": "reported"
+        },
+        "source_report": {
+          "path": "member-requests-leading-slashes-native-codex/member-execution-proof.json",
+          "sha256": "1c88df24e04fdef53a81caa8a91669c90b02d5b63ca3eff8b11dbfa15157a66d"
+        },
+        "manifest_sha256": "ccc1f326c50c76ce01c2bc170da30824af3ffc77cb54ae89f56c21fc1adf1322",
+        "reviewed_manifest_file_sha256": "d260248596173b4bb2a34de699f1e7ca6ef18ec6acdd5c67ae0e81ceb0ddc3fa",
+        "artifacts": [
+          {
+            "name": "manifest.json",
+            "bytes": 1206,
+            "sha256": "483c3c4307e347c7d2da0871ebd2851c7817247fa781c1378efa3f84ae47df4e",
+            "api_and_ui_verified": true
+          },
+          {
+            "name": "grade.json",
+            "bytes": 21,
+            "sha256": "878982568e5e39420f9fc8fca5caaade78f526a402b42f08357919732d5a1cd5",
+            "api_and_ui_verified": true
+          },
+          {
+            "name": "trace.jsonl",
+            "bytes": 20824,
+            "sha256": "01dd2ff33523a04749a8a55117f9eac2b10114a87b73170f9054e1bfc15f7346",
+            "api_and_ui_verified": true
+          },
+          {
+            "name": "patch.diff",
+            "bytes": 533,
+            "sha256": "fd9c2b07da5540bafd8952e260a86e3152d6ab1f1adba6e210d8e20b594fa69e",
+            "api_and_ui_verified": true
+          }
+        ],
+        "idempotency_same_job": true,
+        "reopened_after_reload": true,
+        "hostile_origin_metadata_and_artifact_refused": true,
+        "unsupported_model_preflight_refused": true,
+        "connection_revocation": "verified by reached post-revocation reload checkpoint",
+        "historical_browser_health": "verified",
+        "source_report_complete": true
+      },
+      {
+        "task_id": "requests-leading-slashes",
+        "runtime_id": "traceharness",
+        "model_id": "openai/gpt-4.1-mini",
+        "job_id": "4b4c7c0f2a953f47a0f269bb4f6326c48c70e4e310aa8546",
+        "status": "succeeded",
+        "grade": "passed",
+        "usage": {
+          "requests": 4,
+          "input_tokens": 11605,
+          "output_tokens": 197,
+          "cost_usd": 0.0026148,
+          "cost_status": "reported"
+        },
+        "source_report": {
+          "path": "member-requests-leading-slashes-traceharness/member-execution-proof.json",
+          "sha256": "c0af73552dc18c3e309780ea6778da070c2c4d4b16a7924a5356bbbb3fd908e5"
+        },
+        "manifest_sha256": "ab9c84a38f0ac7250503ebc1b7a8333efa05ff2308ae2765d71723f20e265fa2",
+        "reviewed_manifest_file_sha256": "5e40b2f4738ba6e1debc455a5b86936a02718721ebd61c320cc92a735293f2f8",
+        "artifacts": [
+          {
+            "name": "manifest.json",
+            "bytes": 2883,
+            "sha256": "022d8d79cbf87b1075eac4ab56499b78c6614790074c5587eae2bf6010378f51",
+            "api_and_ui_verified": true
+          },
+          {
+            "name": "grade.json",
+            "bytes": 21,
+            "sha256": "878982568e5e39420f9fc8fca5caaade78f526a402b42f08357919732d5a1cd5",
+            "api_and_ui_verified": true
+          },
+          {
+            "name": "trace.jsonl",
+            "bytes": 8183,
+            "sha256": "1d73a808209320a1e81494fb5b5f327a066fd9c6109e10792c75f10c016657ff",
+            "api_and_ui_verified": true
+          },
+          {
+            "name": "messages.json",
+            "bytes": 14281,
+            "sha256": "d6c7b248fe0d84922aca4fa6d201acac9d218c2bfa3cc69b78c1007a222ba9cb",
+            "api_and_ui_verified": true
+          },
+          {
+            "name": "patch.diff",
+            "bytes": 368,
+            "sha256": "18423e902fef379320eaa57e4a815d19401d534b52b77868624e445a595b0f63",
+            "api_and_ui_verified": true
+          },
+          {
+            "name": "summary.json",
+            "bytes": 912,
+            "sha256": "c83f1618eaa2488fdaf264e043392112d2cd48ff367e74cc51c17c7bc31a69e9",
+            "api_and_ui_verified": true
+          }
+        ],
+        "idempotency_same_job": true,
+        "reopened_after_reload": true,
+        "hostile_origin_metadata_and_artifact_refused": true,
+        "unsupported_model_preflight_refused": true,
+        "connection_revocation": "verified by reached post-revocation reload checkpoint",
+        "historical_browser_health": "verified",
+        "source_report_complete": true
+      },
+      {
+        "task_id": "requests-unicode-length",
+        "runtime_id": "native-codex",
+        "model_id": "openai/gpt-5.1-codex-mini",
+        "job_id": "ecc5d37c2d443d24cf743c2586d3f080ea6fcd0c0a81951b",
+        "status": "succeeded",
+        "grade": "passed",
+        "usage": {
+          "requests": 8,
+          "input_tokens": 72537,
+          "output_tokens": 1537,
+          "cost_usd": 0.00617081,
+          "cost_status": "reported"
+        },
+        "source_report": {
+          "path": "member-requests-unicode-length-native-codex/member-execution-proof.json",
+          "sha256": "afd173348603925801f64806fbdc664b13d27e704a7efc694a82354bcf4b9f62"
+        },
+        "manifest_sha256": "fc94e791629942e0cd289e84be1011055b4c8e200a71be242ab94cafa9f60849",
+        "reviewed_manifest_file_sha256": "5c6752ef645499b8c8f93b4b9df0dbe9ee4cfbd7214ea5893cc1a88016310dd4",
+        "artifacts": [
+          {
+            "name": "manifest.json",
+            "bytes": 1205,
+            "sha256": "5767bb1798e6d72282c11b70046927752ac127d9f8de89cea37e056386d0faca",
+            "api_and_ui_verified": true
+          },
+          {
+            "name": "grade.json",
+            "bytes": 21,
+            "sha256": "878982568e5e39420f9fc8fca5caaade78f526a402b42f08357919732d5a1cd5",
+            "api_and_ui_verified": true
+          },
+          {
+            "name": "trace.jsonl",
+            "bytes": 15039,
+            "sha256": "0dfcecf0ab7a4f735f993a3969690bfd6799ef19bb9a96d031b6cf429cae0cea",
+            "api_and_ui_verified": true
+          },
+          {
+            "name": "patch.diff",
+            "bytes": 421,
+            "sha256": "02235a9b56e226e68f5abe120415d6759a8a67e380bac681bf876ccc8036981f",
+            "api_and_ui_verified": true
+          }
+        ],
+        "idempotency_same_job": true,
+        "reopened_after_reload": true,
+        "hostile_origin_metadata_and_artifact_refused": true,
+        "unsupported_model_preflight_refused": true,
+        "connection_revocation": "verified by reached post-revocation reload checkpoint",
+        "historical_browser_health": "verified",
+        "source_report_complete": true
+      },
+      {
+        "task_id": "requests-unicode-length",
+        "runtime_id": "traceharness",
+        "model_id": "openai/gpt-4.1-mini",
+        "job_id": "e36d1f1620369fe936e59c01cefdc0251a50fe4a5727a35c",
+        "status": "succeeded",
+        "grade": "passed",
+        "usage": {
+          "requests": 4,
+          "input_tokens": 12157,
+          "output_tokens": 190,
+          "cost_usd": 0.0027092,
+          "cost_status": "reported"
+        },
+        "source_report": {
+          "path": "member-requests-unicode-length/member-execution-proof.json",
+          "sha256": "76fe5daf33d6401584554a34675893153869ae8c90b6e27169f0942b31de2ef2"
+        },
+        "manifest_sha256": "17e7a561ccb6fa3a3514e5952eefe95e2658a6379641c2dc611286592653f0a7",
+        "reviewed_manifest_file_sha256": "69bfb3267b5751ace637e9c38f312d6440393aeb8554aa5a9bdd17d1b63af07c",
+        "artifacts": [
+          {
+            "name": "manifest.json",
+            "bytes": 2882,
+            "sha256": "68f9cded7baba2aff7ad9dbf43efb149113a2ee5fc5baba5ebc34780514b40f7",
+            "api_and_ui_verified": true
+          },
+          {
+            "name": "grade.json",
+            "bytes": 21,
+            "sha256": "878982568e5e39420f9fc8fca5caaade78f526a402b42f08357919732d5a1cd5",
+            "api_and_ui_verified": true
+          },
+          {
+            "name": "trace.jsonl",
+            "bytes": 8063,
+            "sha256": "c6529633574022b2267de3e774fe919f042480aa7dcabbee3fa1052cc767f96c",
+            "api_and_ui_verified": true
+          },
+          {
+            "name": "messages.json",
+            "bytes": 14363,
+            "sha256": "cc9b186648fa73d013bfa96fb0dceb55e2ea6c17a3f0fd4eb2836c76a835cbb8",
+            "api_and_ui_verified": true
+          },
+          {
+            "name": "patch.diff",
+            "bytes": 269,
+            "sha256": "2df959ac16757bc308830b4dcac8c72ddc364f2408ea7af282e804c4c486e6cb",
+            "api_and_ui_verified": true
+          },
+          {
+            "name": "summary.json",
+            "bytes": 908,
+            "sha256": "5248af2eba1e779185acc5490a3af0ade6a1a9d08a592b8e608f62be31351f1f",
+            "api_and_ui_verified": true
+          }
+        ],
+        "idempotency_same_job": true,
+        "reopened_after_reload": true,
+        "hostile_origin_metadata_and_artifact_refused": true,
+        "unsupported_model_preflight_refused": true,
+        "connection_revocation": "verified by reached post-revocation reload checkpoint",
+        "historical_browser_health": "UNVERIFIED: report-wide check was not reached",
+        "source_report_complete": false,
+        "read_only_recovery": {
+          "path": "post-restart-member-recovery.json",
+          "sha256": "93d3ff4ca806d2978bd2895d25cb4f5fac6be785a60ddcf7f0af913d6cf12f6a",
+          "job_id": "e36d1f1620369fe936e59c01cefdc0251a50fe4a5727a35c",
+          "browser_health": {
+            "page_errors": 0,
+            "console_errors": 0,
+            "blocked_edge_analytics_console": 2,
+            "application_csp_violations": 0,
+            "blocked_edge_analytics_csp": 1
+          },
+          "no_new_jobs": true
+        }
+      }
+    ],
+    "failed_attempts": [
+      {
+        "task_id": "requests-empty-netrc",
+        "runtime_id": "traceharness",
+        "model_id": "openai/gpt-4.1-mini",
+        "job_id": "b8ea407ef3a66338dcbe0a1559f07372270d7c111bb822ff",
+        "status": "succeeded",
+        "grade": "failed",
+        "usage": {
+          "requests": 20,
+          "input_tokens": 313827,
+          "output_tokens": 2312,
+          "cost_usd": 0.044366,
+          "cost_status": "reported"
+        },
+        "source_report": {
+          "path": "member-requests-empty-netrc-traceharness/member-execution-proof.json",
+          "sha256": "18fc0bae4df1f396d1f719400a3e90435f8313d367ea97e016b935cb4f0f7544"
+        },
+        "artifact_audit": {
+          "manifest_sha256": "542eafe20b95ed0b23b6de1483d81056bb9e47913be5cf8d39c19853a9d53d9f",
+          "artifacts": [
+            {
+              "name": "manifest.json",
+              "bytes": 2879,
+              "sha256": "9a07bb7648093653b8da238b4b4ce244fe1244fe288a86e89fa86200d6dbbf64",
+              "api_and_ui_verified": true
+            },
+            {
+              "name": "grade.json",
+              "bytes": 21,
+              "sha256": "eb90d9b066e2fee61604dfa5095851f68860d1ab1f85f191e3b1ffe6b7be8816",
+              "api_and_ui_verified": true
+            },
+            {
+              "name": "trace.jsonl",
+              "bytes": 34757,
+              "sha256": "090736bacf9585894b6ef5f0b35b5058fbaacfdda734d7dad06db8c23afa8f8d",
+              "api_and_ui_verified": true
+            },
+            {
+              "name": "messages.json",
+              "bytes": 109113,
+              "sha256": "17042e435d999e77ae42757ca4b077162a698385b56e642c04423e468c4d86db",
+              "api_and_ui_verified": true
+            },
+            {
+              "name": "patch.diff",
+              "bytes": 0,
+              "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+              "api_and_ui_verified": true
+            },
+            {
+              "name": "summary.json",
+              "bytes": 876,
+              "sha256": "c9fef1da70beda85ef2abb379dabd7b997c7a97fd416b1cd6b0a6237835053b9",
+              "api_and_ui_verified": true
+            }
+          ],
+          "grade_matches_failed_outcome": true
+        }
+      },
+      {
+        "task_id": "requests-unicode-length",
+        "runtime_id": "native-claude-code",
+        "model_id": "anthropic/claude-haiku-4.5",
+        "job_id": "989516569ec866dfbae5d791ddf7ae16d6f4da0edc3e01ce",
+        "status": "failed",
+        "grade": "ungraded",
+        "usage": {
+          "requests": 12,
+          "cost_usd": null,
+          "cost_status": "UNVERIFIED: provider cost is absent or invalid"
+        },
+        "source_report": {
+          "path": "member-requests-unicode-length/member-execution-proof.json",
+          "sha256": "76fe5daf33d6401584554a34675893153869ae8c90b6e27169f0942b31de2ef2"
+        },
+        "failure_diagnostic": {
+          "path": "member-unicode-claude-failure.json",
+          "sha256": "134c00e3f5c62e8807b6f28d2fd894226ad9eeb46bc0898174ea21de7b384789"
+        },
+        "reported_provider_http_statuses": [
+          402
+        ]
+      }
+    ],
+    "unverified_attempts": [],
+    "pending_combinations": [
+      {
+        "task_id": "requests-unicode-length",
+        "runtime_id": "native-claude-code",
+        "model_id": "anthropic/claude-haiku-4.5"
+      },
+      {
+        "task_id": "requests-leading-slashes",
+        "runtime_id": "native-claude-code",
+        "model_id": "anthropic/claude-haiku-4.5"
+      },
+      {
+        "task_id": "requests-empty-netrc",
+        "runtime_id": "native-claude-code",
+        "model_id": "anthropic/claude-haiku-4.5"
+      }
+    ],
+    "report_failures": [
+      {
+        "path": "member-requests-empty-netrc-traceharness/member-execution-proof.json",
+        "sha256": "18fc0bae4df1f396d1f719400a3e90435f8313d367ea97e016b935cb4f0f7544",
+        "task_id": "requests-empty-netrc",
+        "failure": {
+          "phase": "final safety and browser health",
+          "type": "CheckFailed",
+          "check": "all_requested_task_grades_passed"
+        },
+        "historical_complete": false
+      },
+      {
+        "path": "member-requests-empty-netrc-traceharness-observation-retry/member-execution-proof.json",
+        "sha256": "043927d485dd13972a268d06f2e728f89f904307f7bde096cc156f60b3eb8f3c",
+        "task_id": "requests-empty-netrc",
+        "failure": {
+          "phase": "traceharness: exact manifest review",
+          "type": "CheckFailed",
+          "check": "review_manifest_hash"
+        },
+        "historical_complete": false
+      },
+      {
+        "path": "member-requests-unicode-length/member-execution-proof.json",
+        "sha256": "76fe5daf33d6401584554a34675893153869ae8c90b6e27169f0942b31de2ef2",
+        "task_id": "requests-unicode-length",
+        "failure": {
+          "phase": "native-claude-code: bounded execution polling",
+          "type": "CheckFailed",
+          "check": "reported_actual_cost_within_limits"
+        },
+        "historical_complete": false
+      }
+    ],
+    "integrity_errors": [],
+    "sources": [
+      {
+        "path": "member-requests-empty-netrc-native-codex/member-execution-proof.json",
+        "sha256": "604c7d89bdfde5a4fef5418e329c0232273ef2c993af2cde034b8a3498a38d54",
+        "complete": true,
+        "task_id": "requests-empty-netrc",
+        "browser_health_verified": true
+      },
+      {
+        "path": "member-requests-empty-netrc-traceharness/member-execution-proof.json",
+        "sha256": "18fc0bae4df1f396d1f719400a3e90435f8313d367ea97e016b935cb4f0f7544",
+        "complete": false,
+        "task_id": "requests-empty-netrc",
+        "browser_health_verified": true
+      },
+      {
+        "path": "member-requests-empty-netrc-traceharness-observation-retry/member-execution-proof.json",
+        "sha256": "043927d485dd13972a268d06f2e728f89f904307f7bde096cc156f60b3eb8f3c",
+        "complete": false,
+        "task_id": "requests-empty-netrc",
+        "browser_health_verified": false
+      },
+      {
+        "path": "member-requests-empty-netrc-traceharness-observation-verified/member-execution-proof.json",
+        "sha256": "334e4ebe4819b76f5b97ada4003874af8a242c7d3027bf2d7a7360107f4a1973",
+        "complete": true,
+        "task_id": "requests-empty-netrc",
+        "browser_health_verified": true
+      },
+      {
+        "path": "member-requests-jsondecode-pickle/member-execution-proof.json",
+        "sha256": "462597014093037a9a71786c6769227c24cbe1901c8ab0847fd2aef9343c49e2",
+        "complete": true,
+        "task_id": "requests-jsondecode-pickle",
+        "browser_health_verified": true
+      },
+      {
+        "path": "member-requests-leading-slashes-native-codex/member-execution-proof.json",
+        "sha256": "1c88df24e04fdef53a81caa8a91669c90b02d5b63ca3eff8b11dbfa15157a66d",
+        "complete": true,
+        "task_id": "requests-leading-slashes",
+        "browser_health_verified": true
+      },
+      {
+        "path": "member-requests-leading-slashes-traceharness/member-execution-proof.json",
+        "sha256": "c0af73552dc18c3e309780ea6778da070c2c4d4b16a7924a5356bbbb3fd908e5",
+        "complete": true,
+        "task_id": "requests-leading-slashes",
+        "browser_health_verified": true
+      },
+      {
+        "path": "member-requests-unicode-length/member-execution-proof.json",
+        "sha256": "76fe5daf33d6401584554a34675893153869ae8c90b6e27169f0942b31de2ef2",
+        "complete": false,
+        "task_id": "requests-unicode-length",
+        "browser_health_verified": false
+      },
+      {
+        "path": "member-requests-unicode-length-native-codex/member-execution-proof.json",
+        "sha256": "afd173348603925801f64806fbdc664b13d27e704a7efc694a82354bcf4b9f62",
+        "complete": true,
+        "task_id": "requests-unicode-length",
+        "browser_health_verified": true
+      }
+    ],
+    "recovery_evidence": [
+      {
+        "path": "post-restart-member-recovery.json",
+        "sha256": "93d3ff4ca806d2978bd2895d25cb4f5fac6be785a60ddcf7f0af913d6cf12f6a",
+        "job_id": "e36d1f1620369fe936e59c01cefdc0251a50fe4a5727a35c",
+        "browser_health": {
+          "page_errors": 0,
+          "console_errors": 0,
+          "blocked_edge_analytics_console": 2,
+          "application_csp_violations": 0,
+          "blocked_edge_analytics_csp": 1
+        },
+        "no_new_jobs": true
+      }
+    ],
+    "release_summary": {
+      "expected_member_combinations": 12,
+      "accepted_member_combinations": 9,
+      "pending_member_combinations": 3,
+      "accepted_member_attempts": 9,
+      "observed_member_attempts": 11,
+      "failed_member_attempts": 2,
+      "unverified_member_attempts": 0,
+      "historical_failed_reports": 3,
+      "accepted_member_requests": 70,
+      "accepted_member_reported_cost_usd": 0.61281773,
+      "all_attempts_confirmed_cost_subtotal_usd": 0.65718373,
+      "all_attempts_total_cost_usd": null,
+      "unknown_cost_attempts": [
+        "989516569ec866dfbae5d791ddf7ae16d6f4da0edc3e01ce"
+      ],
+      "historical_browser_health_unverified_jobs": [
+        "e36d1f1620369fe936e59c01cefdc0251a50fe4a5727a35c"
+      ],
+      "browser_health_pending_jobs": [],
+      "all_member_combinations_passed": false,
+      "all_recorded_member_attempts_passed": false
+    },
+    "inventory": {
+      "path": "registry-final-build.json",
+      "sha256": "5f6fef49e5cb452b1486105d3f3735dac83ee935113baab6949c8872622d195a"
+    },
+    "verifier_source": {
+      "path": "verify-member-matrix.py",
+      "sha256": "a2cec094d9e78a062971f696788bd56964309adcd1259229f9c7c9b1ee42b4b1",
+      "historical_source_hash_embedded_in_reports": false,
+      "revocation_basis": "Recorded reload completion checkpoint follows checked explicit revocation in this verifier."
+    },
+    "operator_receipts": {
+      "path": "registry-final-receipts.json",
+      "sha256": "e4998995b00493255a552e2a92d2f168e859948f6db356682e9d9f5b7678d03a",
+      "verified_combinations": 12
+    },
+    "all_recorded_member_attempts_passed": false,
+    "release_ready": false
+  },
+  "local_tests": {
+    "runner_passed": 142,
+    "runner_linux_only_skipped": 1,
+    "worker_passed": 162,
+    "offline_evidence_audit_tests_passed": 14
+  },
+  "deployed_grader": {
+    "cases": 12,
+    "outcomes": [
+      {
+        "task_id": "requests-jsondecode-pickle",
+        "candidate": "baseline",
+        "expected": "failed",
+        "outcome": "failed"
+      },
+      {
+        "task_id": "requests-jsondecode-pickle",
+        "candidate": "reference",
+        "expected": "passed",
+        "outcome": "passed"
+      },
+      {
+        "task_id": "requests-jsondecode-pickle",
+        "candidate": "stdout-forgery",
+        "expected": "failed",
+        "outcome": "failed"
+      },
+      {
+        "task_id": "requests-unicode-length",
+        "candidate": "baseline",
+        "expected": "failed",
+        "outcome": "failed"
+      },
+      {
+        "task_id": "requests-unicode-length",
+        "candidate": "reference",
+        "expected": "passed",
+        "outcome": "passed"
+      },
+      {
+        "task_id": "requests-unicode-length",
+        "candidate": "stdout-forgery",
+        "expected": "failed",
+        "outcome": "failed"
+      },
+      {
+        "task_id": "requests-leading-slashes",
+        "candidate": "baseline",
+        "expected": "failed",
+        "outcome": "failed"
+      },
+      {
+        "task_id": "requests-leading-slashes",
+        "candidate": "reference",
+        "expected": "passed",
+        "outcome": "passed"
+      },
+      {
+        "task_id": "requests-leading-slashes",
+        "candidate": "stdout-forgery",
+        "expected": "failed",
+        "outcome": "failed"
+      },
+      {
+        "task_id": "requests-empty-netrc",
+        "candidate": "baseline",
+        "expected": "failed",
+        "outcome": "failed"
+      },
+      {
+        "task_id": "requests-empty-netrc",
+        "candidate": "reference",
+        "expected": "passed",
+        "outcome": "passed"
+      },
+      {
+        "task_id": "requests-empty-netrc",
+        "candidate": "stdout-forgery",
+        "expected": "failed",
+        "outcome": "failed"
+      }
+    ],
+    "uid_boundary": {
+      "candidate_uid": 10002,
+      "candidate_caps": 0,
+      "no_new_privileges": 1,
+      "writer_output_denied": true,
+      "candidate_termination_verified": true,
+      "writer_uid_restored": true,
+      "cap_kill": false,
+      "grader_source_sha256": "74f27cc21ae0a058ddaf09ee7f57453a16b2be6cb76ab5d6195ad151ce4e9165"
+    },
+    "cleanup_verified": true,
+    "sha256": "41fdfc2d6ce88438298c35e4f54ee81007ce9ee85cac1dd01bcc25c3517540b3"
+  },
+  "restart": {
+    "corrected_exit": 0,
+    "runtime_audit": {
+      "execution_enabled": "1",
+      "registry": "/data/inventory-x4/registry.json",
+      "task_count": 4,
+      "all_task_hashes_verified": true,
+      "persisted_member_jobs": 16,
+      "active_jobs": [],
+      "containers": [],
+      "residual_mounts": [],
+      "needs_attention": 0
+    },
+    "recovery": {
+      "evidence_kind": "production-real-member-readonly-recovery",
+      "complete": true,
+      "no_new_jobs": true,
+      "runs": [
+        {
+          "job_id": "e36d1f1620369fe936e59c01cefdc0251a50fe4a5727a35c",
+          "status": "succeeded",
+          "grade": "passed",
+          "usage_unchanged": true,
+          "manifest_unchanged": true,
+          "artifacts": [
+            {
+              "name": "manifest.json",
+              "bytes": 2882,
+              "sha256": "68f9cded7baba2aff7ad9dbf43efb149113a2ee5fc5baba5ebc34780514b40f7",
+              "api_hash_verified": true
+            },
+            {
+              "name": "grade.json",
+              "bytes": 21,
+              "sha256": "878982568e5e39420f9fc8fca5caaade78f526a402b42f08357919732d5a1cd5",
+              "api_hash_verified": true
+            },
+            {
+              "name": "trace.jsonl",
+              "bytes": 8063,
+              "sha256": "c6529633574022b2267de3e774fe919f042480aa7dcabbee3fa1052cc767f96c",
+              "api_hash_verified": true
+            },
+            {
+              "name": "messages.json",
+              "bytes": 14363,
+              "sha256": "cc9b186648fa73d013bfa96fb0dceb55e2ea6c17a3f0fd4eb2836c76a835cbb8",
+              "api_hash_verified": true
+            },
+            {
+              "name": "patch.diff",
+              "bytes": 269,
+              "sha256": "2df959ac16757bc308830b4dcac8c72ddc364f2408ea7af282e804c4c486e6cb",
+              "api_hash_verified": true
+            },
+            {
+              "name": "summary.json",
+              "bytes": 908,
+              "sha256": "5248af2eba1e779185acc5490a3af0ade6a1a9d08a592b8e608f62be31351f1f",
+              "api_hash_verified": true
+            }
+          ],
+          "reopened_after_reload": true,
+          "browser_health": {
+            "page_errors": 0,
+            "console_errors": 0,
+            "blocked_edge_analytics_console": 2,
+            "application_csp_violations": 0,
+            "blocked_edge_analytics_csp": 1
+          }
+        }
+      ],
+      "persisted_runs": [
+        {
+          "job_id": "85a884ce74c9110b4a1c691af1efde12ea4a6cc493ed5435",
+          "status": "succeeded",
+          "grade": "passed",
+          "usage_unchanged": true,
+          "manifest_unchanged": true,
+          "artifacts": [
+            {
+              "name": "manifest.json",
+              "bytes": 1202,
+              "sha256": "0605179ca81bf1a8aa40c1afe6a5bb2877c4a523d806d7e1628d2aecddfddfd3",
+              "api_hash_verified": true
+            },
+            {
+              "name": "grade.json",
+              "bytes": 21,
+              "sha256": "878982568e5e39420f9fc8fca5caaade78f526a402b42f08357919732d5a1cd5",
+              "api_hash_verified": true
+            },
+            {
+              "name": "trace.jsonl",
+              "bytes": 17390,
+              "sha256": "31a78ddd4da5760b910fe50baa462a5b151953db6f05c412c5ed4801fe6b599d",
+              "api_hash_verified": true
+            },
+            {
+              "name": "patch.diff",
+              "bytes": 539,
+              "sha256": "805ce585ff43105bb0522aba1b78bc89f308da79c03d337489ea2bb70911c9a5",
+              "api_hash_verified": true
+            }
+          ]
+        },
+        {
+          "job_id": "0f9c17163dca9f1d8cde170b42671f29f5ed7d47cf1a42ec",
+          "status": "succeeded",
+          "grade": "passed",
+          "usage_unchanged": true,
+          "manifest_unchanged": true,
+          "artifacts": [
+            {
+              "name": "manifest.json",
+              "bytes": 1206,
+              "sha256": "483c3c4307e347c7d2da0871ebd2851c7817247fa781c1378efa3f84ae47df4e",
+              "api_hash_verified": true
+            },
+            {
+              "name": "grade.json",
+              "bytes": 21,
+              "sha256": "878982568e5e39420f9fc8fca5caaade78f526a402b42f08357919732d5a1cd5",
+              "api_hash_verified": true
+            },
+            {
+              "name": "trace.jsonl",
+              "bytes": 20824,
+              "sha256": "01dd2ff33523a04749a8a55117f9eac2b10114a87b73170f9054e1bfc15f7346",
+              "api_hash_verified": true
+            },
+            {
+              "name": "patch.diff",
+              "bytes": 533,
+              "sha256": "fd9c2b07da5540bafd8952e260a86e3152d6ab1f1adba6e210d8e20b594fa69e",
+              "api_hash_verified": true
+            }
+          ]
+        },
+        {
+          "job_id": "a06c7fb96967f92b1c6a6fe3d5c7328ce1daca67e0ce4224",
+          "status": "succeeded",
+          "grade": "passed",
+          "usage_unchanged": true,
+          "manifest_unchanged": true,
+          "artifacts": [
+            {
+              "name": "manifest.json",
+              "bytes": 2885,
+              "sha256": "f2a5448c5de0c07307b402422ba65dd1d2cb2abf3054d49414d2bae95ddf62f1",
+              "api_hash_verified": true
+            },
+            {
+              "name": "grade.json",
+              "bytes": 21,
+              "sha256": "878982568e5e39420f9fc8fca5caaade78f526a402b42f08357919732d5a1cd5",
+              "api_hash_verified": true
+            },
+            {
+              "name": "trace.jsonl",
+              "bytes": 9277,
+              "sha256": "c0b609d9bc5b674dd2fada493187bfb47acacc0de52b6cf8c2cedbcde215e45b",
+              "api_hash_verified": true
+            },
+            {
+              "name": "messages.json",
+              "bytes": 16333,
+              "sha256": "639a93c36be1c2551f4bfef0ac89a09c3eedc8557d29ae68e172e716a603e7f3",
+              "api_hash_verified": true
+            },
+            {
+              "name": "patch.diff",
+              "bytes": 420,
+              "sha256": "94fa248f60a93640be88db02edf28c633fbfaac5f1de4b1aefbd2e83d2ac1ba7",
+              "api_hash_verified": true
+            },
+            {
+              "name": "summary.json",
+              "bytes": 917,
+              "sha256": "a035bb81f9e0149938e02220322ee3e4a6973f29d4826d1d812e2bfb08ffe1f8",
+              "api_hash_verified": true
+            }
+          ]
+        },
+        {
+          "job_id": "7349add019c4d720bca125a3acd5e7e09365cd4e5f248b9b",
+          "status": "succeeded",
+          "grade": "passed",
+          "usage_unchanged": true,
+          "manifest_unchanged": true,
+          "artifacts": [
+            {
+              "name": "manifest.json",
+              "bytes": 1215,
+              "sha256": "b741f8f1406caa7c495bd004948ac6a2a01cae7283003b70c00b8eacedcdc839",
+              "api_hash_verified": true
+            },
+            {
+              "name": "grade.json",
+              "bytes": 21,
+              "sha256": "878982568e5e39420f9fc8fca5caaade78f526a402b42f08357919732d5a1cd5",
+              "api_hash_verified": true
+            },
+            {
+              "name": "trace.jsonl",
+              "bytes": 97335,
+              "sha256": "f91dd05d9d6b9efa8db12625b00b9c9048e18af09214f7f5bfecab331c05b504",
+              "api_hash_verified": true
+            },
+            {
+              "name": "patch.diff",
+              "bytes": 570,
+              "sha256": "de4eeb0d13ef7e1000413aed956c5f928242c8337ab2bf03c352e12ba47c3fcc",
+              "api_hash_verified": true
+            }
+          ]
+        },
+        {
+          "job_id": "74bbf6b8c6cabbcb5f3124e4459ed63521d04557bba12b7a",
+          "status": "succeeded",
+          "grade": "passed",
+          "usage_unchanged": true,
+          "manifest_unchanged": true,
+          "artifacts": [
+            {
+              "name": "manifest.json",
+              "bytes": 1208,
+              "sha256": "c1de3eb94b07e9d28cafaa0121a3fa7aeb5dbb3d71821fbd9ba186c89fcb6da8",
+              "api_hash_verified": true
+            },
+            {
+              "name": "grade.json",
+              "bytes": 21,
+              "sha256": "878982568e5e39420f9fc8fca5caaade78f526a402b42f08357919732d5a1cd5",
+              "api_hash_verified": true
+            },
+            {
+              "name": "trace.jsonl",
+              "bytes": 15822,
+              "sha256": "fc882c692a6742b09e2b4cd9172b892fac488a59edb474e265caba06146ffe0e",
+              "api_hash_verified": true
+            },
+            {
+              "name": "patch.diff",
+              "bytes": 631,
+              "sha256": "0adc08efb973cfd6f335cd26fb34cb2f7f619b8fd9a3e1e6e340574284b2e146",
+              "api_hash_verified": true
+            }
+          ]
+        },
+        {
+          "job_id": "4b4c7c0f2a953f47a0f269bb4f6326c48c70e4e310aa8546",
+          "status": "succeeded",
+          "grade": "passed",
+          "usage_unchanged": true,
+          "manifest_unchanged": true,
+          "artifacts": [
+            {
+              "name": "manifest.json",
+              "bytes": 2883,
+              "sha256": "022d8d79cbf87b1075eac4ab56499b78c6614790074c5587eae2bf6010378f51",
+              "api_hash_verified": true
+            },
+            {
+              "name": "grade.json",
+              "bytes": 21,
+              "sha256": "878982568e5e39420f9fc8fca5caaade78f526a402b42f08357919732d5a1cd5",
+              "api_hash_verified": true
+            },
+            {
+              "name": "trace.jsonl",
+              "bytes": 8183,
+              "sha256": "1d73a808209320a1e81494fb5b5f327a066fd9c6109e10792c75f10c016657ff",
+              "api_hash_verified": true
+            },
+            {
+              "name": "messages.json",
+              "bytes": 14281,
+              "sha256": "d6c7b248fe0d84922aca4fa6d201acac9d218c2bfa3cc69b78c1007a222ba9cb",
+              "api_hash_verified": true
+            },
+            {
+              "name": "patch.diff",
+              "bytes": 368,
+              "sha256": "18423e902fef379320eaa57e4a815d19401d534b52b77868624e445a595b0f63",
+              "api_hash_verified": true
+            },
+            {
+              "name": "summary.json",
+              "bytes": 912,
+              "sha256": "c83f1618eaa2488fdaf264e043392112d2cd48ff367e74cc51c17c7bc31a69e9",
+              "api_hash_verified": true
+            }
+          ]
+        },
+        {
+          "job_id": "ecc5d37c2d443d24cf743c2586d3f080ea6fcd0c0a81951b",
+          "status": "succeeded",
+          "grade": "passed",
+          "usage_unchanged": true,
+          "manifest_unchanged": true,
+          "artifacts": [
+            {
+              "name": "manifest.json",
+              "bytes": 1205,
+              "sha256": "5767bb1798e6d72282c11b70046927752ac127d9f8de89cea37e056386d0faca",
+              "api_hash_verified": true
+            },
+            {
+              "name": "grade.json",
+              "bytes": 21,
+              "sha256": "878982568e5e39420f9fc8fca5caaade78f526a402b42f08357919732d5a1cd5",
+              "api_hash_verified": true
+            },
+            {
+              "name": "trace.jsonl",
+              "bytes": 15039,
+              "sha256": "0dfcecf0ab7a4f735f993a3969690bfd6799ef19bb9a96d031b6cf429cae0cea",
+              "api_hash_verified": true
+            },
+            {
+              "name": "patch.diff",
+              "bytes": 421,
+              "sha256": "02235a9b56e226e68f5abe120415d6759a8a67e380bac681bf876ccc8036981f",
+              "api_hash_verified": true
+            }
+          ]
+        },
+        {
+          "job_id": "e36d1f1620369fe936e59c01cefdc0251a50fe4a5727a35c",
+          "status": "succeeded",
+          "grade": "passed",
+          "usage_unchanged": true,
+          "manifest_unchanged": true,
+          "artifacts": [
+            {
+              "name": "manifest.json",
+              "bytes": 2882,
+              "sha256": "68f9cded7baba2aff7ad9dbf43efb149113a2ee5fc5baba5ebc34780514b40f7",
+              "api_hash_verified": true
+            },
+            {
+              "name": "grade.json",
+              "bytes": 21,
+              "sha256": "878982568e5e39420f9fc8fca5caaade78f526a402b42f08357919732d5a1cd5",
+              "api_hash_verified": true
+            },
+            {
+              "name": "trace.jsonl",
+              "bytes": 8063,
+              "sha256": "c6529633574022b2267de3e774fe919f042480aa7dcabbee3fa1052cc767f96c",
+              "api_hash_verified": true
+            },
+            {
+              "name": "messages.json",
+              "bytes": 14363,
+              "sha256": "cc9b186648fa73d013bfa96fb0dceb55e2ea6c17a3f0fd4eb2836c76a835cbb8",
+              "api_hash_verified": true
+            },
+            {
+              "name": "patch.diff",
+              "bytes": 269,
+              "sha256": "2df959ac16757bc308830b4dcac8c72ddc364f2408ea7af282e804c4c486e6cb",
+              "api_hash_verified": true
+            },
+            {
+              "name": "summary.json",
+              "bytes": 908,
+              "sha256": "5248af2eba1e779185acc5490a3af0ade6a1a9d08a592b8e608f62be31351f1f",
+              "api_hash_verified": true
+            }
+          ]
+        },
+        {
+          "job_id": "0b20afc8b128b8ef8560536da85e3850250815f5be4a7e41",
+          "status": "succeeded",
+          "grade": "passed",
+          "usage_unchanged": true,
+          "manifest_unchanged": true,
+          "artifacts": [
+            {
+              "name": "manifest.json",
+              "bytes": 2879,
+              "sha256": "3843674da6fa33ba5ca3c0b91edce2fccd296ccb8611108a5509a6dc0cf7d0e5",
+              "api_hash_verified": true
+            },
+            {
+              "name": "grade.json",
+              "bytes": 21,
+              "sha256": "878982568e5e39420f9fc8fca5caaade78f526a402b42f08357919732d5a1cd5",
+              "api_hash_verified": true
+            },
+            {
+              "name": "trace.jsonl",
+              "bytes": 8576,
+              "sha256": "eee7cd31b7f88b67a3fea3a8407692b6c36e26c4665e8f7b72953577914bf345",
+              "api_hash_verified": true
+            },
+            {
+              "name": "messages.json",
+              "bytes": 30713,
+              "sha256": "4b0c3c1b2cb87f85e7b1bf705f63fda3e9369fbf358dd5e0aae60c95c62814e2",
+              "api_hash_verified": true
+            },
+            {
+              "name": "patch.diff",
+              "bytes": 367,
+              "sha256": "4f0bc0736407265532450cae13de6db728247621c718e501ee124eb1ef7dbd92",
+              "api_hash_verified": true
+            },
+            {
+              "name": "summary.json",
+              "bytes": 893,
+              "sha256": "cbeb61aa0caa96907cf6cbfc0aa0fa62d42634b0ca8094ee920876116e0f1a7c",
+              "api_hash_verified": true
+            }
+          ]
+        }
+      ],
+      "blocked": [],
+      "failed_attempt_preserved": {
+        "job_id": "989516569ec866dfbae5d791ddf7ae16d6f4da0edc3e01ce",
+        "status": "failed",
+        "grade": "ungraded",
+        "cost_usd": null
+      },
+      "artifact_sha256": "8e95b06950126a48fc4be315c0f4c61fcaaa2d1e208ff2057aee420e20d6fb1a",
+      "browser_health": {
+        "page_errors": 0,
+        "console_errors": 0,
+        "blocked_edge_analytics_console": 2,
+        "application_csp_violations": 0,
+        "blocked_edge_analytics_csp": 1
+      }
+    },
+    "machine": {
+      "id": "8e64d7b7d01e68",
+      "state": "started",
+      "instance_id": "01M73WDTZMHFRR2G6M4NHQH3XF",
+      "image_ref": {
+        "registry": "registry.fly.io",
+        "repository": "traceharness-runner",
+        "digest": "sha256:8b302d0282a9ad36c7af7db5d2c34e8cdd321531fe4b37cfee75eec290b10ce0"
+      },
+      "checks": [
+        {
+          "name": "servicecheck-00-tcp-8743",
+          "status": "passing",
+          "output": "Success",
+          "updated_at": "2026-11-10T23:40:57.037Z"
+        }
+      ],
+      "updated_at": "2026-11-10T23:40:52Z",
+      "created_at": "2026-11-10T22:13:43Z"
+    }
+  },
+  "anonymous": {
+    "complete": true,
+    "worker_version": "a84991b5-a7f0-4ea1-90c5-ee48dbaaff5b",
+    "tested_at": "2026-11-10T23:28:05.129361+00:00",
+    "user_agent": "traceharness-proof",
+    "max_redirs": 0,
+    "checks": [
+      {
+        "path": "/app",
+        "hostile_origin": false,
+        "status": 302,
+        "location": "/login",
+        "acao": false,
+        "pass": true
+      },
+      {
+        "path": "/app",
+        "hostile_origin": true,
+        "status": 302,
+        "location": "/login",
+        "acao": false,
+        "pass": true
+      },
+      {
+        "path": "/app/shallow",
+        "hostile_origin": false,
+        "status": 302,
+        "location": "/login",
+        "acao": false,
+        "pass": true
+      },
+      {
+        "path": "/app/shallow",
+        "hostile_origin": true,
+        "status": 302,
+        "location": "/login",
+        "acao": false,
+        "pass": true
+      },
+      {
+        "path": "/link",
+        "hostile_origin": false,
+        "status": 302,
+        "location": "/login",
+        "acao": false,
+        "pass": true
+      },
+      {
+        "path": "/link",
+        "hostile_origin": true,
+        "status": 403,
+        "location": null,
+        "acao": false,
+        "pass": true
+      },
+      {
+        "path": "/api/shallow/harnesses",
+        "hostile_origin": false,
+        "status": 401,
+        "location": null,
+        "acao": false,
+        "pass": true
+      },
+      {
+        "path": "/api/shallow/harnesses",
+        "hostile_origin": true,
+        "status": 401,
+        "location": null,
+        "acao": false,
+        "pass": true
+      },
+      {
+        "path": "/api/shallow/jobs",
+        "hostile_origin": false,
+        "status": 401,
+        "location": null,
+        "acao": false,
+        "pass": true
+      },
+      {
+        "path": "/api/shallow/jobs",
+        "hostile_origin": true,
+        "status": 401,
+        "location": null,
+        "acao": false,
+        "pass": true
+      },
+      {
+        "path": "/api/runner/catalog",
+        "hostile_origin": false,
+        "status": 401,
+        "location": null,
+        "acao": false,
+        "pass": true
+      },
+      {
+        "path": "/api/runner/catalog",
+        "hostile_origin": true,
+        "status": 401,
+        "location": null,
+        "acao": false,
+        "pass": true
+      },
+      {
+        "path": "/api/runner/jobs",
+        "hostile_origin": false,
+        "status": 401,
+        "location": null,
+        "acao": false,
+        "pass": true
+      },
+      {
+        "path": "/api/runner/jobs",
+        "hostile_origin": true,
+        "status": 401,
+        "location": null,
+        "acao": false,
+        "pass": true
+      },
+      {
+        "path": "/api/runner/jobs/a06c7fb96967f92b1c6a6fe3d5c7328ce1daca67e0ce4224/artifacts/manifest.json",
+        "hostile_origin": false,
+        "status": 401,
+        "location": null,
+        "acao": false,
+        "pass": true
+      },
+      {
+        "path": "/api/runner/jobs/a06c7fb96967f92b1c6a6fe3d5c7328ce1daca67e0ce4224/artifacts/manifest.json",
+        "hostile_origin": true,
+        "status": 401,
+        "location": null,
+        "acao": false,
+        "pass": true
+      }
+    ]
+  },
+  "numeric_preflight_diagnostic": {
+    "evidence_kind": "real-member-read-only-preflight-numeric-diagnostic",
+    "no_new_jobs": true,
+    "raw_temperature_type": "int",
+    "returned_hash": "e0d22cd0d0acc94c8ec6c944ec569fd9bb2f7ec0fc1cb576671a9fb7d9d7a4cc",
+    "wire_value_reencoded_hash": "11b76c18dab76da739a0b0fdf22bbedefcf450fc15ce64fd7545d0e8868d312f",
+    "schema_temperature_restored_hash": "e0d22cd0d0acc94c8ec6c944ec569fd9bb2f7ec0fc1cb576671a9fb7d9d7a4cc",
+    "semantic_equality": true
+  },
+  "source": {
+    "source_base": "817cf918c779a53bfa04cd84566d5e498d33a3e5",
+    "files": {
+      "deploy/runner/README.md": "508da377976a4a9cb02fff377a1bddca0c065e72396a90618d8e9e4938bf981e",
+      "deploy/runner/fly/README.md": "fdfad145d821335d43759a502ac421166c6727a8b209a2d966a63ab153caffc6",
+      "deploy/runner/tasks/README.md": "865b1621cdb42e8e2796333807cca157076ad4649122ba19fbaa61ecf21f78d0",
+      "deploy/runner/tasks/grade.py": "74f27cc21ae0a058ddaf09ee7f57453a16b2be6cb76ab5d6195ad151ce4e9165",
+      "deploy/runner/tasks/requests-empty-netrc/checks.py": "969873f76c9c719e013898a5eb177cb9a1309ef5cfb38ffa22997af2f4d6b408",
+      "deploy/runner/tasks/requests-empty-netrc/issue.md": "ef41c51e439fec3d6b92528e186a86e0716c89bfb89e217835e466dc14bc7c12",
+      "deploy/runner/tasks/requests-empty-netrc/public_policy.json": "c1edce9fc0ba1df4cb051510b4d63216193f6dd1f39bc372a0afc6d45a72aeae",
+      "deploy/runner/tasks/requests-empty-netrc/public_test.py": "dffa9eab5501a3774a5924646f10df8c496c753aaf54414fa91e88133562866e",
+      "deploy/runner/tasks/requests-empty-netrc/recipe.json": "3905e664bd8b564d8084654ba2b6c8181632ce60ba17557a599337eec9e19003",
+      "deploy/runner/tasks/requests-empty-netrc/requirements.lock": "62d5530b417b96728d8634160a7e5555a660bed02d16ff1460337f32333a0413",
+      "deploy/runner/tasks/requests-leading-slashes/checks.py": "ddfd03db81ea3fc5c385fe6c933591c3fcd918b751b7a627d3f74850d5336f03",
+      "deploy/runner/tasks/requests-leading-slashes/issue.md": "e49b8c3678ee2586f0e01a106cb62de7a5f158041305809edaf60df0395a10f3",
+      "deploy/runner/tasks/requests-leading-slashes/public_policy.json": "0b8aed4ede867572ce6cdda586dbb489eb8b7077dafa6df86a0dcd3d8166d0be",
+      "deploy/runner/tasks/requests-leading-slashes/public_test.py": "286444ee91db88825109e873364f89a6ab5d0dffde49b0f08ea6c80e0faa485e",
+      "deploy/runner/tasks/requests-leading-slashes/recipe.json": "f1d1b5c1bea8c6ad18741bd8f6414cf83cfbe0d7a61ff1bc34cad87bed0d57de",
+      "deploy/runner/tasks/requests-leading-slashes/requirements.lock": "62d5530b417b96728d8634160a7e5555a660bed02d16ff1460337f32333a0413",
+      "deploy/runner/tasks/requests-unicode-length/checks.py": "08480a5ded705bb82f7c5f06f3656d4a5e251c96792bd8e3dc3ec53caed0818f",
+      "deploy/runner/tasks/requests-unicode-length/issue.md": "dd2ee630e5109d5b4e408c3d20f02dbc0333d1dfbe17903f284ca5edaea22627",
+      "deploy/runner/tasks/requests-unicode-length/public_policy.json": "ce124e8e93e5be2e4882f8cbe4ab2aff2d297032545583377592bf5f05638c0b",
+      "deploy/runner/tasks/requests-unicode-length/public_test.py": "d072f29addfc616152cea5c5b8d9cfe443ec67e89f93d1927c90602a695e2156",
+      "deploy/runner/tasks/requests-unicode-length/recipe.json": "7e1b348c3b1425113d04b94e638cb2fa0fb411f284609a2decd26ad7d6bfa7ed",
+      "deploy/runner/tasks/requests-unicode-length/requirements.lock": "62d5530b417b96728d8634160a7e5555a660bed02d16ff1460337f32333a0413",
+      "deploy/runner/verify_runtime.py": "68848366310cd965ed9453a19c68e077dc20539697037be56f7d80fcfff6560e",
+      "harnesslab/runner_service/configuration.py": "a1aa66e1799b97e02905c7d7e7e819821b7eae848780e78ae98133e03a3dd346",
+      "harnesslab/runner_service/registry.py": "f22b8843b3727230e4889404f6e3c4417e32e1306b2d5ec499d4eab6cdceee9f",
+      "harnesslab/runner_service/service.py": "d5d77a6f7b872e9fe78bdb67323bc301da73d741f3a1275bc981cea0a36d87a5",
+      "scripts/package_runner_task.py": "f8ad32b84724917f1ba17806fbf9c771d3c90046929c71dd2caf8704852a6888",
+      "tests_agentlab/runner_service/test_curated_grader_contracts.py": "3f58d505387d81244c994e4b5f559df3e5a0373b13df34e7f29e6f09b31485ea",
+      "tests_agentlab/runner_service/test_operator_verification.py": "164760703a2af8b85b109819f7baa9f70b093903e831cd77e94556dcd1a317c0",
+      "tests_agentlab/runner_service/test_registry_environments.py": "72a8a71f9616c6fada2d8182715e36fa84ec601d3418b284a24208bde16dd518",
+      "tests_agentlab/runner_service/test_runner.py": "c3bd9db7ae7d53a24990f65d0f06eae23ea25a34d0562d39f97ee7ecf5fd89c1",
+      "tests_agentlab/runner_service/test_task_compatibility.py": "60645177d81da2d0734e74bcee07a210be317e8dcd4ed114ef866cfd69c44912",
+      "tests_agentlab/runner_service/test_task_packaging.py": "f0e1756edb86b11765c5ad7714b531dd7c9bd3fe09b3b951bdc82df7560fb740"
+    }
+  },
+  "unverified": [
+    "Three pending Claude member UI task combinations enumerated in member_audit.pending_combinations",
+    "Second real member account isolation",
+    "Forced cold production Postgres saved-prompt paint",
+    "Actual email/OAuth callback exchange",
+    "UI Cancel click in this pass; previous release API cancellation evidence retained",
+    "Exact all-attempt model cost: failed Claude attempt has no provider-reported cost"
+  ]
+}

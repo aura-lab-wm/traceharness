@@ -1,0 +1,32 @@
+{
+  "version": 1,
+  "id": "requests-unicode-length",
+  "title": "Requests: count UTF-8 bytes in upload Content-Length",
+  "repository": "https://github.com/psf/requests",
+  "issue_url": "https://github.com/psf/requests/issues/6586",
+  "revision": "f6707042d8b18d2a3737380bf58ff020872fb07b",
+  "archive_url": "https://codeload.github.com/psf/requests/tar.gz/f6707042d8b18d2a3737380bf58ff020872fb07b",
+  "archive_sha256": "1627c307e11e004c63df1af73c3c187e2a1e2baf207b87f3f805c92fbb3c16f8",
+  "archive_prefix": "requests-f6707042d8b18d2a3737380bf58ff020872fb07b",
+  "reference_revision": "3fd309a5c14e4cfbd96bea6c8e71b4958fe090bb",
+  "reference_source_url": "https://raw.githubusercontent.com/psf/requests/3fd309a5c14e4cfbd96bea6c8e71b4958fe090bb/src/requests/utils.py",
+  "reference_source_sha256": "6aabf9db102f37b95afd6c845de3babbec531d9dc3f01c693d837c69745b0e10",
+  "license": "Apache-2.0; original LICENSE and NOTICE retained",
+  "visible_test_command": "PYTHONPATH=src python -m unittest discover -s public_tests -v",
+  "public_test_filename": "test_unicode_length.py",
+  "allowed_source_prefix": "src/requests/",
+  "hidden_checks": "checks.py",
+  "grading_timeout_seconds": 45,
+  "expected_checks": 4,
+  "edit_contract": {
+    "kind": "requests-unicode-length-v1",
+    "path": "src/requests/utils.py",
+    "baseline_sha256": "a54cdbf46459bee3671f0788885ae7d26055ee684a80dee5bfca62ec28edcbcf"
+  },
+  "provenance_details": {
+    "reference_revision": "3fd309a5c14e4cfbd96bea6c8e71b4958fe090bb",
+    "reference_source_url": "https://raw.githubusercontent.com/psf/requests/3fd309a5c14e4cfbd96bea6c8e71b4958fe090bb/src/requests/utils.py",
+    "reference_source_sha256": "6aabf9db102f37b95afd6c845de3babbec531d9dc3f01c693d837c69745b0e10",
+    "pull_request_url": "https://github.com/psf/requests/pull/6589"
+  }
+}

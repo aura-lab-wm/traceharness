@@ -2,8 +2,8 @@
 """Operator-only isolated compatibility run. Never imported by the member service.
 
 Read the OpenRouter key from stdin. No key argument, key file, transcript output,
-HTTP endpoint or browser path exists. The sole receipt bootstrap exception is an
-in-memory model assignment to the selected runtime before its real Docker/image,
+HTTP endpoint or browser path exists. The sole receipt bootstrap exception is a
+CLI-local review of the exact selected runtime/model/task after real Docker/image,
 label, isolation and task-content checks. The inventory remains unchanged until
 an actual model response, completed runtime and passed trusted grader are proved.
 """
@@ -14,6 +14,7 @@ from datetime import datetime, timezone
 import fcntl
 import hashlib
 import json
+import math
 import os
 from pathlib import Path
 import re
@@ -27,7 +28,7 @@ from harnesslab.runner_service.credentials import CredentialVault
 from harnesslab.runner_service.execution import DockerExecutor
 from harnesslab.runner_service.jobs import Jobs, TERMINAL
 from harnesslab.runner_service.provider import OpenRouter
-from harnesslab.runner_service.registry import Registry
+from harnesslab.runner_service.registry import Registry, COMPATIBILITY_FIELDS
 from harnesslab.runner_service.settings import Settings
 
 ARTIFACT_NAMES = {"manifest.json", "grade.json", "trace.jsonl", "messages.json", "summary.json", "patch.diff"}
@@ -66,7 +67,16 @@ def read_key(stream):
     return key
 
 
-def configuration(runtime_id, model_id, task_id):
+def configuration(runtime_id, model_id, task_id, *, max_steps=None, max_cost_usd=None, wall_time_seconds=None):
+    limits = {"max_steps": (32 if runtime_id == "native-claude-code" else 20) if max_steps is None else max_steps,
+              "wall_time_seconds": 240 if wall_time_seconds is None else wall_time_seconds,
+              "max_cost_usd": (2 if runtime_id == "native-claude-code" else 1) if max_cost_usd is None else max_cost_usd}
+    for name, low, high, integer in [("max_steps", 1, 64, True), ("wall_time_seconds", 30, 600, True),
+                                     ("max_cost_usd", 0.01, 5, False)]:
+        value = limits[name]
+        if (isinstance(value, bool) or not isinstance(value, (int, float)) or not math.isfinite(value)
+                or not low <= value <= high or integer and int(value) != value):
+            raise VerificationRefused("Operator limits must be 1–64 requests, 30–600 seconds and $0.01–$5.")
     prompt = ("Solve the repository issue described in the task. Inspect the real source and visible tests, "
               "make the smallest correct source change, and run the provided visible test command. "
               "Do not modify tests or grading inputs. Report what changed and what you verified. "
@@ -76,30 +86,45 @@ def configuration(runtime_id, model_id, task_id):
         {"type": "tools", "names": ["list_files", "read_file", "write_file", "edit_file", "run_tests", "bash", "submit"]},
         {"type": "policy", "mode": "strict"},
         {"type": "context", "window": 0, "observation_chars": 20000},
-        {"type": "stop", "max_steps": 20, "max_total_tokens": 200000},
+        {"type": "stop", "max_steps": limits["max_steps"], "max_total_tokens": 200000},
         {"type": "sampling", "temperature": 0, "max_tokens_per_call": 4096},
         {"type": "listing", "include": True},
     ]
     return {"version": 1, "runtime_id": runtime_id, "model_id": model_id, "task_id": task_id,
             "prompt": prompt, "prompt_mode": "replace" if runtime_id == "traceharness" else "append",
             "harness": {"lane": "minimal", "blocks": blocks} if runtime_id == "traceharness" else {},
-            "limits": {"max_steps": 20, "wall_time_seconds": 240, "max_cost_usd": 1}}
+            "limits": limits}
 
 
-def review_operator_run(registry, executor, runtime_id, model_id, task_id):
+def review_operator_run(registry, executor, runtime_id, model_id, task_id, **limits):
     """Bootstrap only the receipt gate; actual executor readiness is still required."""
     if runtime_id not in registry.runtimes or model_id not in registry.models or task_id not in registry.tasks:
         raise VerificationRefused("Select an installed runtime, registered model and installed task.")
     runtime = registry.runtimes[runtime_id]
     if runtime_id not in registry.tasks[task_id]["runtime_ids"]:
         raise VerificationRefused("The installed task does not support this runtime.")
-    # This Registry instance belongs only to this CLI process. Never write the
-    # temporary model_ids assignment to inventory or expose it over an endpoint.
-    runtime["model_ids"] = list(dict.fromkeys([*runtime.get("model_ids", []), model_id]))
-    health = executor.health()  # Actual Docker/image labels, host capabilities and package hashes.
+    selected = configuration(runtime_id, model_id, task_id, **limits)
+    # Docker health normally requires some proved model. Temporarily permit only
+    # the selected model while inspecting actual images/labels, host isolation
+    # and package hashes. Restore even on failure; no receipt is fabricated.
+    original_models = runtime.get("model_ids", [])
+    try:
+        runtime["model_ids"] = list(dict.fromkeys([*original_models, model_id]))
+        health = executor.health()
+    finally:
+        runtime["model_ids"] = original_models
     if not health.get("available") or not health.get("runtimes", {}).get(runtime_id) or not health.get("tasks", {}).get(task_id):
         raise VerificationRefused("Actual host, pinned images, isolation or task readiness checks failed.")
-    result = preflight(configuration(runtime_id, model_id, task_id), registry, health)
+    class OperatorReview:
+        runtimes, tasks, models = registry.runtimes, registry.tasks, registry.models
+
+        @staticmethod
+        def compatible(selected_runtime, selected_model, selected_task):
+            return (selected_runtime, selected_model, selected_task) == (runtime_id, model_id, task_id)
+
+    # This wrapper exists only inside the operator CLI and grants only its exact
+    # selected triple. Member service preflight always uses the strict Registry.
+    result = preflight(selected, OperatorReview(), health)
     if result.get("ok") is not True:
         raise VerificationRefused("The operator configuration did not pass preflight.")
     return result
@@ -170,6 +195,7 @@ def register_receipt(registry_path, original_raw, receipt):
     if registry_path.is_symlink() or registry_path.read_bytes() != original_raw:
         raise VerificationRefused("Inventory changed during verification; no inventory update was made.")
     data = json.loads(original_raw)
+    inventory = Registry(registry_path.parent, data)
     runtime = next(row for row in data["runtimes"] if row["id"] == receipt["runtime_id"])
     folder = registry_path.parent / "compatibility"
     if folder.is_symlink():
@@ -181,8 +207,8 @@ def register_receipt(registry_path, original_raw, receipt):
     write_private(target, raw)
     existing = []
     for item in runtime.get("compatibility_receipts", []):
-        prior = json.loads((registry_path.parent / item["path"]).read_bytes())
-        if prior.get("model_id") != receipt["model_id"]:
+        prior = json.loads(inventory.private_path(item["path"]).read_bytes())
+        if tuple(prior.get(key) for key in COMPATIBILITY_FIELDS) != tuple(receipt.get(key) for key in COMPATIBILITY_FIELDS):
             existing.append(item)
     runtime["compatibility_receipts"] = existing + [{"path": "compatibility/" + filename, "sha256": hashlib.sha256(raw).hexdigest()}]
     # Revalidate every path, receipt, runtime/environment binding and task before
@@ -218,6 +244,9 @@ def main(argv=None):
     parser.add_argument('--runtime', choices=list(RUNTIME_NAMES), required=True)
     parser.add_argument('--model', required=True)
     parser.add_argument('--task')
+    parser.add_argument('--max-steps', type=int, help='Maximum model requests, 1–64; default Claude 32, otherwise 20.')
+    parser.add_argument('--max-cost-usd', type=float, help='Maximum model spend, $0.01–$5; default Claude $2, otherwise $1.')
+    parser.add_argument('--wall-time-seconds', type=int, help='Maximum runtime, 30–600 seconds; default 240.')
     parser.add_argument('--registry', type=Path, default=Path('/data/inventory/registry.json'))
     parser.add_argument('--state-dir', type=Path, default=Path('/data/verification/jobs'))
     args = parser.parse_args(argv)
@@ -244,7 +273,9 @@ def main(argv=None):
                             docker_binary=os.environ.get('RUNNER_DOCKER', '/usr/bin/docker'),
                             isolation_runtime=os.environ.get('RUNNER_ISOLATION_RUNTIME', 'runsc'), max_workers=1)
         executor = DockerExecutor(settings, registry)
-        review = review_operator_run(registry, executor, args.runtime, args.model, task_id)
+        review = review_operator_run(registry, executor, args.runtime, args.model, task_id,
+                                     max_steps=args.max_steps, max_cost_usd=args.max_cost_usd,
+                                     wall_time_seconds=args.wall_time_seconds)
         provider = ObservedProvider()
         models = provider.models({args.model})
         model = next((row for row in models if row['id'] == args.model), None)

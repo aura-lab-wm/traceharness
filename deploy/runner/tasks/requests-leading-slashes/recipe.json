@@ -1,0 +1,32 @@
+{
+  "version": 1,
+  "id": "requests-leading-slashes",
+  "title": "Requests: normalize excess leading request-target slashes",
+  "repository": "https://github.com/psf/requests",
+  "issue_url": "https://github.com/psf/requests/issues/6643",
+  "revision": "7a13c041dbef42f9f3feb14110f02626f6892e9a",
+  "archive_url": "https://codeload.github.com/psf/requests/tar.gz/7a13c041dbef42f9f3feb14110f02626f6892e9a",
+  "archive_sha256": "b29e3d5f75cd610341369dccba5aeba92c87f9299f8f0dc06952f774a26913f4",
+  "archive_prefix": "requests-7a13c041dbef42f9f3feb14110f02626f6892e9a",
+  "reference_revision": "60389df6d69ce833164696dcf36cbb43336d3426",
+  "reference_source_url": "https://raw.githubusercontent.com/psf/requests/60389df6d69ce833164696dcf36cbb43336d3426/src/requests/adapters.py",
+  "reference_source_sha256": "6ba7a40d04b3158f65ae84db305e130b90713c1f16ed8b49e3ee72ccb127f4d3",
+  "license": "Apache-2.0; original LICENSE and NOTICE retained",
+  "visible_test_command": "PYTHONPATH=src python -m unittest discover -s public_tests -v",
+  "public_test_filename": "test_leading_slashes.py",
+  "allowed_source_prefix": "src/requests/",
+  "hidden_checks": "checks.py",
+  "grading_timeout_seconds": 45,
+  "expected_checks": 4,
+  "edit_contract": {
+    "kind": "requests-leading-slashes-v1",
+    "path": "src/requests/adapters.py",
+    "baseline_sha256": "0484cd36f9963d14f2c3688c09567a56b4c647aa4da2ab76514e6c1fb3241937"
+  },
+  "provenance_details": {
+    "reference_revision": "60389df6d69ce833164696dcf36cbb43336d3426",
+    "reference_source_url": "https://raw.githubusercontent.com/psf/requests/60389df6d69ce833164696dcf36cbb43336d3426/src/requests/adapters.py",
+    "reference_source_sha256": "6ba7a40d04b3158f65ae84db305e130b90713c1f16ed8b49e3ee72ccb127f4d3",
+    "pull_request_url": "https://github.com/psf/requests/pull/6644"
+  }
+}

@@ -47,10 +47,9 @@ def create_app(settings: Settings | None = None, *, registry=None, provider=None
             health = executor.health()
             models = provider.models(set(registry.models)) if health.get("available") else []
             active = {row["id"] for row in models if isinstance(row, dict) and isinstance(row.get("id"), str)}
-            runtimes = {rid: bool(available and active.intersection(registry.runtimes.get(rid, {}).get("model_ids", [])))
-                        for rid, available in health.get("runtimes", {}).items()}
-            tasks = {tid: bool(ready and any(runtimes.get(r) for r in registry.tasks.get(tid, {}).get("runtime_ids", [])))
-                     for tid, ready in health.get("tasks", {}).items()}
+            combinations = registry.ready_combinations(health, active)
+            runtimes = {rid: any(task.get(rid) for task in combinations.values()) for rid in registry.runtimes}
+            tasks = {tid: any(engines.values()) for tid, engines in combinations.items()}
             health = {"available": bool(any(runtimes.values()) and any(tasks.values())), "runtimes": runtimes, "tasks": tasks}
             readiness.update(at=clock(), health=health, models=models)
             return health, models

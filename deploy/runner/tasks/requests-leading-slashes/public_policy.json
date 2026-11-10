@@ -1,0 +1,20 @@
+{
+  "policy_version": 1,
+  "scope": "This curated real upstream task only; other tasks have independent reviewed policies.",
+  "editable_file": "src/requests/adapters.py",
+  "permitted_change": "In src/requests/adapters.py, add one guarded normalization immediately after url = request.path_url in HTTPAdapter.request_url. Preserve every existing module AST node and all other original files.",
+  "source_encoding": "UTF-8, optional UTF-8 BOM; accepted source normalized to UTF-8.",
+  "extra_files": "New workspace files are excluded from pristine grading reconstruction.",
+  "protected_files": "Every other existing file must remain byte-identical. No new imports, functions, decorators, defaults or unrelated executable changes.",
+  "permitted_guard_expressions": [
+    "url.startswith(\"//\")",
+    "url.startswith((\"//\",))",
+    "url[:2] == \"//\""
+  ],
+  "assignment_target": "url",
+  "permitted_assignment_values": [
+    "\"/\" + url.lstrip(\"/\")",
+    "f\"/{url.lstrip('/')}\"",
+    "\"/{}\".format(url.lstrip(\"/\"))"
+  ]
+}

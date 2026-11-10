@@ -1,0 +1,36 @@
+{
+  "version": 1,
+  "id": "requests-empty-netrc",
+  "title": "Requests: ignore empty netrc authentication entries",
+  "repository": "https://github.com/psf/requests",
+  "issue_url": "https://github.com/psf/requests/issues/6928",
+  "revision": "1b40fdd004bfc8ba5301bcf8a6908264e9b6b877",
+  "archive_url": "https://codeload.github.com/psf/requests/tar.gz/1b40fdd004bfc8ba5301bcf8a6908264e9b6b877",
+  "archive_sha256": "789af7f0f4f2a29c74be13d02f7f8f1f65fb023065b4bf397dc180f6cfe8add4",
+  "archive_prefix": "requests-1b40fdd004bfc8ba5301bcf8a6908264e9b6b877",
+  "reference_revision": "47914226c2968802f2cdee3f6f0f6e06e4472f64",
+  "reference_source_url": "https://raw.githubusercontent.com/psf/requests/47914226c2968802f2cdee3f6f0f6e06e4472f64/src/requests/utils.py",
+  "reference_source_sha256": "91302671e03442e8247a091049fc0d725dc4970f5306bbbb167f128f75d67309",
+  "license": "Apache-2.0; original LICENSE and NOTICE retained",
+  "visible_test_command": "PYTHONPATH=src python -m unittest discover -s public_tests -v",
+  "public_test_filename": "test_empty_netrc.py",
+  "allowed_source_prefix": "src/requests/",
+  "hidden_checks": "checks.py",
+  "grading_timeout_seconds": 45,
+  "expected_checks": 4,
+  "edit_contract": {
+    "kind": "requests-empty-netrc-v1",
+    "path": "src/requests/utils.py",
+    "baseline_sha256": "ba580f898f3a98dfaae9161b4f30da3e929d8a9340837a6df74a9ef08632e59c"
+  },
+  "provenance_details": {
+    "reference_revision": "47914226c2968802f2cdee3f6f0f6e06e4472f64",
+    "reference_source_url": "https://raw.githubusercontent.com/psf/requests/47914226c2968802f2cdee3f6f0f6e06e4472f64/src/requests/utils.py",
+    "reference_source_sha256": "91302671e03442e8247a091049fc0d725dc4970f5306bbbb167f128f75d67309",
+    "pull_request_url": "https://github.com/psf/requests/pull/7205"
+  },
+  "excluded_source_symlinks": {
+    "tests/certs/mtls/client/ca": "../../expired/ca/",
+    "tests/certs/valid/ca": "../expired/ca"
+  }
+}

@@ -10,6 +10,14 @@ from .configuration import RUNTIME_NAMES, has_secret
 
 IMAGE = re.compile(r"^(?:[a-zA-Z0-9][a-zA-Z0-9./:_-]*@)?sha256:[a-f0-9]{64}$")
 ID = re.compile(r"^[a-zA-Z0-9][a-zA-Z0-9_.-]{0,119}$")
+COMPATIBILITY_FIELDS = ("runtime_id", "runtime_version", "image_digest", "model_id", "task_id",
+                        "task_revision", "task_content_sha256", "grader_image_digest")
+
+
+def compatibility_identity(runtime: dict, task: dict, model_id: str) -> tuple:
+    """Every input whose replacement invalidates an execution receipt."""
+    return (runtime["id"], runtime["version"], runtime["image_digest"], model_id, task["id"],
+            task["revision"], task["content_sha256"], task["grader_image_digest"])
 
 
 def tree_hash(directory: Path) -> str:
@@ -46,6 +54,7 @@ class Registry:
         if data.get("version") != 1 or has_secret(data):
             raise ValueError("Invalid runner inventory")
         self.runtimes, self.tasks, self.models = {}, {}, {}
+        self._compatibility = set()
         for model in data.get("models", []):
             mid = model.get("id")
             if not isinstance(mid, str) or not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9/_.:@+-]{1,150}", mid) or mid.startswith("mock") or mid in self.models:
@@ -61,20 +70,6 @@ class Registry:
             row.update(name=RUNTIME_NAMES[rid], kind="traceharness" if rid == "traceharness" else "native",
                        prompt_mode="replace" if rid == "traceharness" else "append", supports_advanced=rid == "traceharness")
             row["model_ids"] = []
-            # A model ID in a config file is not proof of adapter compatibility.
-            for receipt in row.get("compatibility_receipts", []):
-                path = self.private_path(receipt.get("path", ""))
-                raw = path.read_bytes()
-                if hashlib.sha256(raw).hexdigest() != receipt.get("sha256"):
-                    raise ValueError("Compatibility receipt changed")
-                result = json.loads(raw)
-                mid = result.get("model_id")
-                if (result.get("status") != "passed" or result.get("runtime_id") != rid
-                        or result.get("runtime_version") != row["version"]
-                        or result.get("image_digest") != row["image_digest"] or mid not in self.models
-                        or not result.get("verified_at") or not result.get("run_id")):
-                    raise ValueError("Compatibility receipt does not bind this runtime/model/image")
-                row["model_ids"].append(mid)
             self.runtimes[rid] = row
         for source in data.get("tasks", []):
             row = dict(source)
@@ -113,6 +108,32 @@ class Registry:
             row["path"] = str(path)
             row["runtime_ids"] = list(runtime_ids)
             self.tasks[tid] = row
+        # Validate only after both sides of each receipt are installed. A runtime
+        # and model success on one task never attests another task or grader.
+        for rid, row in self.runtimes.items():
+            receipts = row.get("compatibility_receipts", [])
+            if not isinstance(receipts, list):
+                raise ValueError("Compatibility receipts must be a list")
+            for receipt in receipts:
+                if not isinstance(receipt, dict):
+                    raise ValueError("Invalid compatibility receipt reference")
+                path = self.private_path(receipt.get("path", ""))
+                raw = path.read_bytes()
+                if hashlib.sha256(raw).hexdigest() != receipt.get("sha256"):
+                    raise ValueError("Compatibility receipt changed")
+                result = json.loads(raw)
+                if not isinstance(result, dict):
+                    raise ValueError("Invalid compatibility receipt")
+                mid, tid = result.get("model_id"), result.get("task_id")
+                task = self.tasks.get(tid) if isinstance(tid, str) else None
+                if (result.get("status") != "passed" or not isinstance(mid, str) or mid not in self.models
+                        or not task or rid not in task["runtime_ids"]
+                        or tuple(result.get(key) for key in COMPATIBILITY_FIELDS) != compatibility_identity(row, task, mid)
+                        or not result.get("verified_at") or not result.get("run_id")):
+                    raise ValueError("Compatibility receipt does not bind this runtime/model/image/task/grader")
+                self._compatibility.add(compatibility_identity(row, task, mid))
+                if mid not in row["model_ids"]:
+                    row["model_ids"].append(mid)
 
     @classmethod
     def load(cls, path: Path):
@@ -144,22 +165,38 @@ class Registry:
                 result[tid] = False
         return result
 
+    def compatible(self, runtime_id: str, model_id: str, task_id: str) -> bool:
+        runtime, task = self.runtimes.get(runtime_id), self.tasks.get(task_id)
+        return bool(runtime and task and runtime_id in task["runtime_ids"]
+                    and compatibility_identity(runtime, task, model_id) in self._compatibility)
+
+    def ready_combinations(self, health: dict, model_ids=None) -> dict[str, dict[str, list[str]]]:
+        """Exact receipts intersected with current task, image and provider health."""
+        active = set(self.models if model_ids is None else model_ids)
+        return {tid: {rid: sorted(mid for mid in self.runtimes[rid]["model_ids"]
+                                 if mid in active and self.compatible(rid, mid, tid))
+                      if health.get("available") and health.get("tasks", {}).get(tid)
+                      and health.get("runtimes", {}).get(rid) else []
+                      for rid in task["runtime_ids"]} for tid, task in self.tasks.items()}
+
     def catalog(self, health: dict, models: list[dict] | None = None) -> dict:
+        combinations = self.ready_combinations(health, None if models is None else [row["id"] for row in models])
         runtimes = []
         for rid, name in RUNTIME_NAMES.items():
             row = self.runtimes.get(rid, {})
-            available = health.get("runtimes", {}).get(rid, False)
+            ready_models = sorted({mid for task in combinations.values() for mid in task.get(rid, [])})
+            available = bool(ready_models)
             runtimes.append({"id": rid, "name": name, "kind": "traceharness" if rid == "traceharness" else "native",
                              "available": available, "reason": "" if available else "No verified, isolated runtime is available.",
                              "version": row.get("version"), "image_digest": row.get("image_digest"),
                              "prompt_mode": "replace" if rid == "traceharness" else "append", "supports_advanced": rid == "traceharness",
-                             "model_ids": row.get("model_ids", [])})
+                             "model_ids": ready_models})
         tasks = [{**{k: task[k] for k in ("id", "title", "repository", "revision", "environment_digest")},
                   "runtime_ids": list(task["runtime_ids"]), "environment_digests": dict(task["environment_digests"]),
-                  "ready": bool(health.get("tasks", {}).get(tid)),
-                  "reason": "" if health.get("tasks", {}).get(tid) else "Task package or environment is unavailable."}
+                  "model_ids_by_runtime": combinations[tid], "ready": any(combinations[tid].values()),
+                  "reason": "" if any(combinations[tid].values()) else "No verified task/runtime/model combination is currently available."}
                  for tid, task in self.tasks.items()]
-        available = bool(health.get("available"))
+        available = any(task["ready"] for task in tasks)
         return {"version": 1, "runner": {"available": available, "message": "Private runner ready." if available else "No verified runtime and task environment are connected."},
                 "runtimes": runtimes, "models": models or [], "tasks": tasks,
                 "credentials_available": available, "execution_available": available}

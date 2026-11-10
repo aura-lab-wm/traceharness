@@ -180,11 +180,30 @@ fetches a repository or installs a package.
 
 Each compatibility receipt entry has a relative `path` and SHA-256 of its bytes.
 Its JSON must bind `status:"passed"`, `runtime_id`, `runtime_version`,
-`image_digest`, `model_id`, `verified_at`, and a real `run_id`. Models must also be
+`image_digest`, `model_id`, `task_id`, `task_revision`, `task_content_sha256`,
+`grader_image_digest`, `verified_at`, and a real `run_id`. Replacing any of those
+runtime, model, task or grader identities invalidates the receipt. Models must also be
 explicitly registered (`id`, `name`) and present in the current OpenRouter
 catalog. Do not create receipts from unit fixtures, the existence of a binary,
 or a model's marketing name. Receipts are operator attestations, not automatic
 proof of all future provider behavior.
+
+`manifest_sha256` hashes the server's compact, sorted-key UTF-8 JSON, whereas an
+artifact's `sha256` hashes its exact downloadable bytes, including whitespace.
+Verify both independently. Parsing the downloaded `manifest.json` preserves the
+compiler's numeric types for canonical rehashing. The JavaScript gateway may
+serialize a compiled temperature of `0.0` as `0`; a client that rehashes the
+preflight object must restore only `harness.configuration.temperature` to its
+declared float type. Do not coerce the request's sampling block or other fields.
+The artifact's canonical hash must match the reviewed manifest hash, and its
+parsed value must equal the reviewed manifest semantically.
+
+The catalog exposes `task.model_ids_by_runtime`: each declared runtime maps to
+the currently ready models for that exact task. Empty arrays mean unverified or
+unavailable. Runtime `model_ids` is the union across ready tasks; it never grants
+permission by itself. Member preflight checks the exact task/runtime/model
+receipt and current task/image/provider health. A receipt for one task cannot
+enable another task.
 
 The Dockerfile is a runtime wrapper only. Supply an audited digest-pinned base
 that already contains Python and, for native modes, the exact native binary.
@@ -206,7 +225,7 @@ documents the `anthropic` allowlist slug. Native Codex uses a fresh CODEX_HOME,
 an explicit local Responses provider, ephemeral execution, disabled rules, and
 developer instructions in a generated UTF-8 TOML file. Both use noninteractive
 permission bypass **only inside the externally isolated container**. No host
-agent session or account state is read. Each installed runtime/model pair needs
+agent session or account state is read. Each installed task/runtime/model combination needs
 its own real compatibility receipt. The release report lists the exact verified
 versions, models, images, task and signed-in execution results.
 

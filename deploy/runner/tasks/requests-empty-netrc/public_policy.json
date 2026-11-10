@@ -1,0 +1,16 @@
+{
+  "policy_version": 1,
+  "scope": "This curated real upstream task only; other tasks have independent reviewed policies.",
+  "editable_file": "src/requests/utils.py",
+  "permitted_change": "In src/requests/utils.py, replace only the if _netrc condition in get_netrc_auth with a predicate that requires at least one nonempty field. Preserve the rest of the complete module AST and every other original file.",
+  "source_encoding": "UTF-8, optional UTF-8 BOM; accepted source normalized to UTF-8.",
+  "extra_files": "New workspace files are excluded from pristine grading reconstruction.",
+  "protected_files": "Every other existing file must remain byte-identical. No new imports, functions, decorators, defaults or unrelated executable changes.",
+  "permitted_predicates": [
+    "_netrc and any(_netrc)",
+    "_netrc is not None and any(_netrc)",
+    "any(_netrc or ())",
+    "bool(_netrc) and any(_netrc)",
+    "_netrc and (_netrc[0] or _netrc[1] or _netrc[2])"
+  ]
+}

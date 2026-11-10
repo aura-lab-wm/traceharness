@@ -39,15 +39,21 @@ def read_source(recipe, archive=None):
     return raw
 
 
-def extract_source(raw, prefix, dest):
-    seen, total = set(), 0
+def extract_source(raw, prefix, dest, excluded_symlinks=None):
+    if excluded_symlinks is None:
+        excluded_symlinks = {}
+    if (not isinstance(excluded_symlinks, dict) or any(
+            not isinstance(name, str) or not name or name.startswith('/')
+            or '..' in PurePosixPath(name).parts or not isinstance(target, str)
+            or not target or target.startswith('/')
+            for name, target in excluded_symlinks.items())):
+        raise ValueError('Invalid explicit source exclusions')
+    seen, excluded, total = set(), set(), 0
     with tarfile.open(fileobj=io.BytesIO(raw), mode='r:gz') as archive:
         for member in archive:
             parts = PurePosixPath(member.name).parts
             if not parts or parts[0] != prefix or '..' in parts or member.name.startswith('/'):
                 raise ValueError('Unsafe source archive path')
-            if not (member.isfile() or member.isdir()):
-                raise ValueError('Source archives cannot contain symlinks or special files')
             if len(parts) == 1:
                 if not member.isdir():
                     raise ValueError('Archive root must be a directory')
@@ -56,6 +62,13 @@ def extract_source(raw, prefix, dest):
             if name in seen or len(seen) >= 10000:
                 raise ValueError('Duplicate or excessive source entries')
             seen.add(name)
+            if name in excluded_symlinks:
+                if not member.issym() or member.linkname != excluded_symlinks[name]:
+                    raise ValueError('Reviewed source exclusion changed')
+                excluded.add(name)
+                continue  # Never resolve, follow, or create the omitted link.
+            if not (member.isfile() or member.isdir()):
+                raise ValueError('Source archives cannot contain symlinks or special files')
             target = dest.joinpath(*parts[1:])
             if member.isdir():
                 target.mkdir(parents=True, exist_ok=True)
@@ -67,6 +80,8 @@ def extract_source(raw, prefix, dest):
             with archive.extractfile(member) as src, target.open('xb') as out:
                 shutil.copyfileobj(src, out)
             target.chmod(0o755 if member.mode & 0o111 else 0o644)
+    if excluded != set(excluded_symlinks):
+        raise ValueError('Reviewed source exclusion is absent')
 
 
 def package(recipe_path, output, archive=None):
@@ -82,9 +97,12 @@ def package(recipe_path, output, archive=None):
     with tempfile.TemporaryDirectory(prefix='.task-package-', dir=output.parent) as temporary:
         stage = Path(temporary) / 'task'
         (stage / 'repo').mkdir(parents=True)
-        extract_source(raw, recipe['archive_prefix'], stage / 'repo')
+        extract_source(raw, recipe['archive_prefix'], stage / 'repo', recipe.get('excluded_source_symlinks'))
         (stage / 'repo' / 'public_tests').mkdir(exist_ok=False)
-        shutil.copyfile(root / 'public_test.py', stage / 'repo' / 'public_tests' / 'test_json_pickle.py')
+        public_name = recipe.get('public_test_filename', 'test_json_pickle.py')
+        if not isinstance(public_name, str) or not re.fullmatch(r'test_[A-Za-z0-9_]+\.py', public_name):
+            raise ValueError('Invalid public test filename')
+        shutil.copyfile(root / 'public_test.py', stage / 'repo' / 'public_tests' / public_name)
         if 'edit_contract' in recipe:
             shutil.copyfile(root / 'public_policy.json', stage / 'repo' / 'TRACEHARNESS_TASK_POLICY.json')
         shutil.copyfile(root / 'issue.md', stage / 'issue.md')
@@ -95,9 +113,15 @@ def package(recipe_path, output, archive=None):
         grading = {k: recipe[k] for k in ('allowed_source_prefix', 'hidden_checks', 'grading_timeout_seconds')}
         if 'edit_contract' in recipe:
             grading['edit_contract'] = recipe['edit_contract']
+        if 'expected_checks' in recipe:
+            grading['expected_checks'] = recipe['expected_checks']
         (stage / 'grading.json').write_text(json.dumps(grading, indent=2) + '\n')
         provenance = {k: recipe[k] for k in ('id', 'title', 'repository', 'issue_url', 'revision', 'archive_url', 'archive_sha256', 'license')}
         provenance.update(kind='real-upstream-issue', benchmark_claim=False, source='pinned upstream archive plus independent offline regression checks')
+        if recipe.get('excluded_source_symlinks'):
+            provenance['excluded_source_symlinks'] = recipe['excluded_source_symlinks']
+        if 'provenance_details' in recipe:
+            provenance['upstream_fix'] = recipe['provenance_details']
         (stage / 'provenance.json').write_text(json.dumps(provenance, indent=2) + '\n')
         digest = tree_hash(stage)
         os.rename(stage, output)

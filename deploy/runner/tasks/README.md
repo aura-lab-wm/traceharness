@@ -1,5 +1,22 @@
 # Real repository task packages
 
+Four curated Requests recipes cover distinct upstream failures. They are real
+repository issues with pinned broken revisions and upstream fixes, not invented
+examples or claims of unrestricted repository execution. Each task discloses a
+narrow static edit policy and supplies independent offline behavioral checks.
+
+| Recipe | Real behavior under test | Upstream issue / fix |
+| --- | --- | --- |
+| `requests-jsondecode-pickle` | JSON exceptions survive pickle and process pools without losing formatted error state | [#6628](https://github.com/psf/requests/issues/6628), [fix](https://github.com/psf/requests/commit/3ff3ff21dd45957c9e143cd500291959bb15f690) |
+| `requests-unicode-length` | Upload Content-Length counts UTF-8 bytes while binary/file behavior stays intact | [#6586](https://github.com/psf/requests/issues/6586), [fix](https://github.com/psf/requests/commit/3fd309a5c14e4cfbd96bea6c8e71b4958fe090bb) |
+| `requests-leading-slashes` | Origin-form targets normalize leading slashes without changing HTTP proxy absolute-form targets | [#6643](https://github.com/psf/requests/issues/6643), [fix](https://github.com/psf/requests/commit/60389df6d69ce833164696dcf36cbb43336d3426) |
+| `requests-empty-netrc` | Empty netrc profiles do not inject Authorization while populated/explicit auth still works | [#6928](https://github.com/psf/requests/issues/6928), [fix](https://github.com/psf/requests/commit/47914226c2968802f2cdee3f6f0f6e06e4472f64) |
+
+The added recipes use the same pinned dependencies and Python 3.12 environment
+as the initial task. They do not require sockets, services or extra packages.
+Netrc tests create their own temporary input and never read a host credential
+file. The original JSON package remains immutable; new recipes do not alter it.
+
 The first package repairs an actual Requests failure: [upstream issue #6628](https://github.com/psf/requests/issues/6628), where a JSON decoding exception cannot be deserialized and can terminate a process pool. The source is the immutable parent of [the upstream fix](https://github.com/psf/requests/commit/3ff3ff21dd45957c9e143cd500291959bb15f690). This is a TraceHarness task with upstream provenance, not a claimed SWE-bench result.
 
 The source archive is pinned to revision `96b22fa18c00831656ee4b286bf1c9062459b00a` and SHA-256 `b9a1f599c259a4e29edeefb0a0690a31c89a4d038212bd44ea9b9d8321908ca5`. Original Requests LICENSE and NOTICE files are retained. The task provides the complete repository, a public offline reproduction and an independent hidden grader. It does not include the reference solution in the agent-visible repository.
@@ -14,7 +31,7 @@ python scripts/package_runner_task.py \
   --output /srv/traceharness-inventory/tasks/requests-jsondecode-pickle-6628
 ```
 
-An optional `--archive` path reuses a downloaded archive. The exact digest is still checked. Archive extraction rejects traversal, symlinks, hardlinks, special files, duplicates and excessive contents. The output manifest includes the final `content_sha256` using the runner registry's tree hash. Package creation never creates a compatibility receipt or claims successful execution.
+An optional `--archive` path reuses a downloaded archive. The exact digest is still checked. Archive extraction rejects traversal, hardlinks, special files, duplicates and excessive contents. Symlinks are rejected unless an operator-reviewed recipe explicitly names an exact path/target pair to omit. Such an omission never follows or creates the link; missing or changed entries fail, and provenance records the omission. The empty-netrc recipe omits two unrelated upstream TLS-certificate-fixture links using this rule. The output manifest includes the final `content_sha256` using the runner registry's tree hash. Package creation never creates a compatibility receipt or claims successful execution.
 
 The package contains:
 
@@ -24,6 +41,17 @@ The package contains:
 - `grader/checks.py` and `grading.json`: trusted independent offline checks, unavailable in the task container.
 - `requirements.lock`: task dependencies pinned to exact versions and pure-wheel hashes.
 - `provenance.json`: immutable source identity, original issue and license attribution.
+
+New recipes declare `public_test_filename` and `expected_checks`; the original
+JSON recipe keeps its existing filename and four-check default so its package
+hash is unchanged. Every grader requires a known edit contract. There is no
+fallback that imports unrestricted candidate source when a contract is missing
+or unknown. Unicode and URL tasks permit one documented guarded assignment at
+an exact function location; netrc permits one documented predicate replacement.
+The remainder of each module AST and all other original files stay protected.
+Each new package has four hidden methods, including preservation cases beyond
+the reported failure. Baseline/reference checks do not establish live-model
+compatibility; each task/runtime/model combination needs its own actual run.
 
 The visible command is `PYTHONPATH=src python -m unittest discover -s public_tests -v`. It does not use the upstream network-dependent pytest suite. The independent grader covers all pickle protocols, invalid Response.json payloads with and without explicit encoding, exception identity/attributes, a real ProcessPool failure followed by a successful task, and unchanged valid-JSON/ordinary-error behavior. Both original and restored JSON errors must retain the formatted message and args of an independent standard-library JSON decoder; comparing a regressed exception only with itself is insufficient. Constructor request/response keyword behavior is checked without requiring pickle to preserve metadata that the upstream fix itself does not retain. The current recipe deliberately tests the standard-library JSON backend; optional simplejson is not installed or claimed verified.
 

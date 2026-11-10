@@ -14,6 +14,7 @@ import io
 import json
 import os
 from pathlib import Path, PurePosixPath
+import re
 import resource
 import shutil
 import signal
@@ -83,6 +84,140 @@ def validate_json_reduce(baseline_raw, candidate_raw):
     return normalized
 
 
+def ast_identity(node):
+    return ast.dump(node, include_attributes=False)
+
+
+def named_function(tree, name, owner=None):
+    """Find one direct definition; nested/duplicate declarations are not repairs."""
+    body = tree.body
+    if owner is not None:
+        classes = [node for node in body if isinstance(node, ast.ClassDef) and node.name == owner]
+        if len(classes) != 1:
+            raise EditContractError('Task requires its original enclosing class.')
+        body = classes[0].body
+    functions = [node for node in body if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)) and node.name == name]
+    if len(functions) != 1 or not isinstance(functions[0], ast.FunctionDef):
+        raise EditContractError('Task requires its original synchronous function.')
+    return functions[0]
+
+
+def validate_guard_insertion(baseline_raw, candidate_raw, *, function, anchor, guards, values, target, owner=None):
+    """Permit one explicit side-effect-free guard at its reviewed statement site."""
+    baseline, _ = source_tree(baseline_raw)
+    candidate, normalized = source_tree(candidate_raw)
+    if ast_identity(candidate) == ast_identity(baseline):
+        return normalized
+    original = named_function(baseline, function, owner)
+    changed = named_function(candidate, function, owner)
+    anchor_id = ast_identity(ast.parse(anchor).body[0])
+    locations = [index for index, node in enumerate(original.body) if ast_identity(node) == anchor_id]
+    if len(locations) != 1 or len(changed.body) != len(original.body) + 1:
+        raise EditContractError('Task permits one guarded repair at its documented location.')
+    index = locations[0] + 1
+    permitted = {ast_identity(ast.parse('if ' + guard + ':\n    ' + target + ' = ' + value).body[0])
+                 for guard in guards for value in values}
+    if ast_identity(changed.body[index]) not in permitted:
+        raise EditContractError('Task permits only its documented guarded repair expressions.')
+    changed.body.pop(index)
+    if ast_identity(candidate) != ast_identity(baseline):
+        raise EditContractError('Only the documented guarded repair may change the module.')
+    return normalized
+
+
+def validate_unicode_length(baseline_raw, candidate_raw):
+    return validate_guard_insertion(
+        baseline_raw, candidate_raw, function='super_len', anchor='current_position = 0', target='o',
+        guards=['isinstance(o, str)', 'isinstance(o, (str,))'],
+        values=['o.encode()', 'o.encode("utf-8")', 'o.encode("utf8")', 'o.encode("UTF-8")',
+                'o.encode(encoding="utf-8")', 'o.encode("utf-8", "strict")',
+                'str.encode(o, "utf-8")', 'bytes(o, "utf-8")'])
+
+
+def validate_leading_slashes(baseline_raw, candidate_raw):
+    return validate_guard_insertion(
+        baseline_raw, candidate_raw, owner='HTTPAdapter', function='request_url', anchor='url = request.path_url', target='url',
+        guards=['url.startswith("//")', 'url.startswith(("//",))', 'url[:2] == "//"'],
+        values=['"/" + url.lstrip("/")', 'f"/{url.lstrip(\'/\')}"',
+                '"/{}".format(url.lstrip("/"))'])
+
+
+def node_paths(node, path=()):
+    yield path, node
+    for field, value in ast.iter_fields(node):
+        if isinstance(value, ast.AST):
+            yield from node_paths(value, path + (field,))
+        elif isinstance(value, list):
+            for index, child in enumerate(value):
+                if isinstance(child, ast.AST):
+                    yield from node_paths(child, path + (field, index))
+
+
+def at_path(node, path):
+    try:
+        for part in path:
+            node = node[part] if isinstance(part, int) else getattr(node, part)
+        return node
+    except (AttributeError, IndexError, TypeError):
+        raise EditContractError('Task changed the original function structure.') from None
+
+
+def validate_empty_netrc(baseline_raw, candidate_raw):
+    baseline, _ = source_tree(baseline_raw)
+    candidate, normalized = source_tree(candidate_raw)
+    if ast_identity(candidate) == ast_identity(baseline):
+        return normalized
+    original = named_function(baseline, 'get_netrc_auth')
+    changed = named_function(candidate, 'get_netrc_auth')
+    locations = [(path, node) for path, node in node_paths(original)
+                 if isinstance(node, ast.If) and isinstance(node.test, ast.Name) and node.test.id == '_netrc']
+    if len(locations) != 1:
+        raise EditContractError('Task requires the original netrc condition.')
+    path, original_if = locations[0]
+    changed_if = at_path(changed, path)
+    permitted = {ast_identity(ast.parse(value, mode='eval').body) for value in [
+        '_netrc and any(_netrc)', '_netrc is not None and any(_netrc)',
+        'any(_netrc or ())', 'bool(_netrc) and any(_netrc)',
+        '_netrc and (_netrc[0] or _netrc[1] or _netrc[2])',
+    ]}
+    if not isinstance(changed_if, ast.If) or ast_identity(changed_if.test) not in permitted:
+        raise EditContractError('Task permits only its documented empty-netrc predicates.')
+    changed_if.test = original_if.test
+    if ast_identity(candidate) != ast_identity(baseline):
+        raise EditContractError('Only the documented netrc condition may change the module.')
+    return normalized
+
+
+CONTRACTS = {
+    'requests-jsondecode-reduce-v1': ('src/requests/exceptions.py', validate_json_reduce),
+    'requests-unicode-length-v1': ('src/requests/utils.py', validate_unicode_length),
+    'requests-leading-slashes-v1': ('src/requests/adapters.py', validate_leading_slashes),
+    'requests-empty-netrc-v1': ('src/requests/utils.py', validate_empty_netrc),
+}
+
+
+def contract_validator(contract):
+    """No missing/unknown contract can fall back to arbitrary source execution."""
+    if (not isinstance(contract, dict) or set(contract) != {'kind', 'path', 'baseline_sha256'}
+            or not isinstance(contract.get('kind'), str) or contract['kind'] not in CONTRACTS):
+        raise ValueError('A known curated edit contract is required.')
+    path, validator = CONTRACTS[contract['kind']]
+    if (contract['path'] != path or not isinstance(contract['baseline_sha256'], str)
+            or not re.fullmatch(r'[a-f0-9]{64}', contract['baseline_sha256'])):
+        raise ValueError('Curated edit contract identity is invalid.')
+    return validator
+
+
+def expected_check_count(recipe):
+    contract = recipe.get('edit_contract')
+    contract_validator(contract)
+    # Preserve the original, immutable JSON task package's four-check protocol.
+    count = recipe.get('expected_checks', 4 if contract['kind'] == 'requests-jsondecode-reduce-v1' else None)
+    if type(count) is not int or not 1 <= count <= 1000:
+        raise ValueError('Task must declare a bounded expected check count.')
+    return count
+
+
 def files(root):
     result, total = {}, 0
     for directory, dirs, names in os.walk(root, followlinks=False):
@@ -103,31 +238,25 @@ def files(root):
 
 def reconstruct(task, workspace, target, prefix, contract=None):
     """Ignore agent configuration/tests; overlay permitted source into pristine repo."""
-    if not prefix.endswith('/') or '..' in PurePosixPath(prefix).parts or prefix.startswith('/'):
+    validator = contract_validator(contract)
+    if not isinstance(prefix, str) or not prefix.endswith('/') or '..' in PurePosixPath(prefix).parts or prefix.startswith('/'):
         raise ValueError('Invalid source policy')
     baseline = files(task / 'repo')
     candidate = files(workspace)
-    allowed = lambda name: name.startswith(prefix) and name.endswith('.py')
-    normalized = None
-    if contract is not None:
-        if (set(contract) != {'kind', 'path', 'baseline_sha256'}
-                or contract['kind'] != 'requests-jsondecode-reduce-v1'
-                or contract['path'] != 'src/requests/exceptions.py'
-                or not allowed(contract['path']) or contract['path'] not in baseline):
-            raise ValueError('Unsupported curated edit contract')
-        name = contract['path']
-        original = baseline[name].read_bytes()
-        if hashlib.sha256(original).hexdigest() != contract['baseline_sha256']:
-            raise ValueError('Curated edit contract baseline mismatch')
-        if name not in candidate:
-            raise EditContractError('Required task source is missing.')
-        normalized = validate_json_reduce(original, candidate[name].read_bytes())
-        allowed = lambda name: name == contract['path']
+    name = contract['path']
+    if not name.startswith(prefix) or name not in baseline:
+        raise ValueError('Curated edit contract source is unavailable.')
+    original = baseline[name].read_bytes()
+    if hashlib.sha256(original).hexdigest() != contract['baseline_sha256']:
+        raise ValueError('Curated edit contract baseline mismatch')
+    if name not in candidate:
+        raise EditContractError('Required task source is missing.')
+    normalized = validator(original, candidate[name].read_bytes())
+    allowed = lambda name: name == contract['path']
     for name, source in baseline.items():
         if not allowed(name):
             if name not in candidate or hashlib.sha256(source.read_bytes()).digest() != hashlib.sha256(candidate[name].read_bytes()).digest():
-                error = EditContractError if contract is not None else ValueError
-                raise error('Protected task file changed')
+                raise EditContractError('Protected task file changed')
     shutil.copytree(task / 'repo', target)
     for name in list(baseline):
         if allowed(name) and name not in candidate:
@@ -136,10 +265,7 @@ def reconstruct(task, workspace, target, prefix, contract=None):
         if allowed(name):
             dest = target / name
             dest.parent.mkdir(parents=True, exist_ok=True)
-            if normalized is not None:
-                dest.write_bytes(normalized)
-            else:
-                shutil.copyfile(source, dest)
+            dest.write_bytes(normalized)
     for directory, dirs, names in os.walk(target):
         Path(directory).chmod(0o755)
         for name in names:
@@ -184,6 +310,7 @@ def run_grade(task, workspace, *, local_validation=False, python=sys.executable)
     if not local_validation and (sys.platform != 'linux' or os.geteuid() != 0):
         raise ValueError('Production grader requires isolated Linux root writer')
     recipe = json.loads((task / 'grading.json').read_text())
+    expected_checks = expected_check_count(recipe)
     checks = recipe['hidden_checks']
     if Path(checks).name != checks or not checks.endswith('.py'):
         raise ValueError('Invalid check file')
@@ -224,7 +351,9 @@ def run_grade(task, workspace, *, local_validation=False, python=sys.executable)
             summary = json.loads(raw.rstrip().splitlines()[-1])
         except (ValueError, IndexError):
             summary = {}
-        complete = summary == {'checks_run': 4, 'success': True}
+        complete = (isinstance(summary, dict) and set(summary) == {'checks_run', 'success'}
+                    and type(summary['checks_run']) is int and summary['checks_run'] == expected_checks
+                    and summary['success'] is True)
         return {'outcome': 'passed' if returncode == 0 and complete else 'failed'}
 
 

@@ -55,8 +55,8 @@ def preflight(configuration, registry, health: dict) -> dict:
         issues.append("The selected task package is unavailable or its content changed.")
     if not isinstance(model_id, str) or model_id not in registry.models:
         issues.append("Select a registered model.")
-    elif runtime and model_id not in runtime.get("model_ids", []):
-        issues.append("This runtime/model combination has no matching compatibility receipt.")
+    elif runtime and task and not registry.compatible(runtime["id"], model_id, task["id"]):
+        issues.append("This task/runtime/model combination has no matching compatibility receipt for its pinned images and grader.")
     if runtime and task and runtime["id"] not in task.get("runtime_ids", []):
         issues.append("The task environment is not registered for this runtime.")
     prompt = configuration.get("prompt")

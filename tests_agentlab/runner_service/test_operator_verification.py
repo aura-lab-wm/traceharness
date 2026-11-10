@@ -21,6 +21,27 @@ class OperatorVerificationTests(unittest.TestCase):
         native=verify.configuration('native-codex','provider/model','task')
         self.assertEqual(native['harness'],{})
         self.assertEqual(native['prompt_mode'],'append')
+        self.assertEqual(native['limits'],custom['limits'])
+        claude=verify.configuration('native-claude-code','provider/model','task')
+        self.assertEqual(claude['limits'],{'max_steps':32,'wall_time_seconds':240,'max_cost_usd':2})
+
+    def test_operator_overrides_are_explicit_bounded_and_match_compiler_stop(self):
+        custom=verify.configuration('traceharness','provider/model','task',max_steps=32,max_cost_usd=2,wall_time_seconds=300)
+        self.assertEqual(custom['limits'],{'max_steps':32,'wall_time_seconds':300,'max_cost_usd':2})
+        self.assertEqual(next(block['max_steps'] for block in custom['harness']['blocks'] if block['type']=='stop'),32)
+        for name,values in [('max_steps',[0,65,True,2.5,'32']),('wall_time_seconds',[29,601,False,30.5]),
+                           ('max_cost_usd',[0,5.01,True,float('nan'),float('inf')])]:
+            for value in values:
+                with self.subTest(name=name,value=value):
+                    with self.assertRaises(verify.VerificationRefused):
+                        verify.configuration('traceharness','provider/model','task',**{name:value})
+
+    def test_invalid_operator_limits_refuse_before_executor_readiness(self):
+        registry=SimpleNamespace(runtimes={'traceharness':{'model_ids':[]}},models={'provider/model':{}},tasks={'task':{'runtime_ids':['traceharness']}})
+        executor=SimpleNamespace(health=Mock())
+        with self.assertRaises(verify.VerificationRefused):
+            verify.review_operator_run(registry,executor,'traceharness','provider/model','task',max_cost_usd=float('inf'))
+        executor.health.assert_not_called()
 
     def test_secret_is_only_accepted_from_bounded_noninteractive_stdin(self):
         class Input:
