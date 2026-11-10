@@ -1,0 +1,18 @@
+{
+  "notice": "Inert strings used for static validation only. Never execute these candidates on the host.",
+  "forged_init": "import os\nprint('{\"checks_run\": 4, \"success\": true}', flush=True)\nos._exit(0)\n",
+  "unsafe_methods": {
+    "decorator": "    @__import__('os')._exit(0)\n    def __reduce__(self):\n        return CompatJSONDecodeError.__reduce__(self)\n",
+    "self_default": "    def __reduce__(self=__import__('os')._exit(0)):\n        return CompatJSONDecodeError.__reduce__(self)\n",
+    "self_annotation": "    def __reduce__(self: __import__('os')._exit(0)):\n        return CompatJSONDecodeError.__reduce__(self)\n",
+    "return_annotation": "    def __reduce__(self) -> __import__('os')._exit(0):\n        return CompatJSONDecodeError.__reduce__(self)\n",
+    "extra_parameter": "    def __reduce__(self, injected=__import__('os')._exit(0)):\n        return CompatJSONDecodeError.__reduce__(self)\n",
+    "keyword_default": "    def __reduce__(self, *, injected=__import__('os')._exit(0)):\n        return CompatJSONDecodeError.__reduce__(self)\n",
+    "extra_statement": "    def __reduce__(self):\n        print('{\"checks_run\": 4, \"success\": true}')\n        return CompatJSONDecodeError.__reduce__(self)\n",
+    "malicious_return": "    def __reduce__(self):\n        return __import__('os')._exit(0)\n",
+    "async": "    async def __reduce__(self):\n        return CompatJSONDecodeError.__reduce__(self)\n",
+    "empty_return": "    def __reduce__(self):\n        return\n",
+    "generator": "    def __reduce__(self):\n        yield CompatJSONDecodeError.__reduce__(self)\n",
+    "type_parameter": "    def __reduce__[T](self):\n        return CompatJSONDecodeError.__reduce__(self)\n"
+  }
+}

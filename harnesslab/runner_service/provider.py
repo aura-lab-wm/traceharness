@@ -11,6 +11,8 @@ def _transport_child(connection, operation, args, kwargs):
     """Killable network boundary: no credentials in argv, logs or files."""
     try:
         connection.send((True, getattr(OpenRouter(), operation)(*args, **kwargs)))
+    except ProviderError as error:
+        connection.send((False, provider_status(error)))
     except Exception:
         connection.send((False, None))
     finally:
@@ -32,7 +34,7 @@ def bounded_transport(operation, args, kwargs, timeout_seconds, *, target=_trans
     try:
         ok, value = receive.recv()
         if not ok:
-            raise ProviderError("Provider request could not be completed.")
+            raise ProviderError("Provider request could not be completed.", status_code=value)
         return value
     except (EOFError, OSError, ValueError):
         raise ProviderError("Provider request reached its deadline or was interrupted.") from None
@@ -46,8 +48,20 @@ def bounded_transport(operation, args, kwargs, timeout_seconds, *, target=_trans
         process.close()
 
 
+def _http_status(value):
+    # No coercion: bools, strings, response objects and exception payloads are not statuses.
+    return value if type(value) is int and 100 <= value <= 599 else None
+
+
 class ProviderError(Exception):
-    pass
+    def __init__(self, message, *, status_code=None):
+        self.status_code = _http_status(status_code)
+        super().__init__(message)
+
+
+def provider_status(error):
+    """Only adapter-authored ProviderError metadata may become a public diagnostic."""
+    return _http_status(getattr(error, "status_code", None)) if isinstance(error, ProviderError) else None
 
 
 class OpenRouter:
@@ -65,7 +79,7 @@ class OpenRouter:
             with httpx.Client(timeout=httpx.Timeout(3, connect=3), follow_redirects=False, trust_env=False) as client:
                 with client.stream(method, self.base + path, headers=headers, json=body) as response:
                     if response.status_code < 200 or response.status_code >= 300:
-                        raise ProviderError("Provider refused the request.")
+                        raise ProviderError("Provider refused the request.", status_code=response.status_code)
                     chunks, size = [], 0
                     for chunk in response.iter_bytes():
                         if time.monotonic() >= deadline:
@@ -118,7 +132,7 @@ class OpenRouter:
             with httpx.Client(timeout=httpx.Timeout(min(3, total), connect=min(3, total)), follow_redirects=False, trust_env=False) as client:
                 with client.stream("POST", self.base + path, headers=headers, json=body) as response:
                     if not 200 <= response.status_code < 300:
-                        raise ProviderError("Provider refused the model request.")
+                        raise ProviderError("Provider refused the model request.", status_code=response.status_code)
                     chunks, size = [], 0
                     for chunk in response.iter_bytes():
                         if time.monotonic() >= deadline:

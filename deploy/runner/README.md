@@ -1,9 +1,17 @@
 # Private execution service
 
-This is an implementation and an operator integration contract. It has **not**
-been provisioned, deployed, or verified with a live model. The checked-in registry
-is empty and execution is disabled by default. Tests use explicitly injected
-fixtures; no fixture is a real task, compatibility result, or runnable default.
+This package implements the private execution control plane, isolated task and
+native runtime adapters, independent grading, and owner-authorized artifact
+retrieval. The checked-in default registry is empty and execution is disabled
+until an operator installs a verified inventory. Tests use explicit fixtures;
+fixtures never register a real task or runtime compatibility receipt.
+
+The real Requests task and its reproducible package builder are documented in
+[tasks/README.md](tasks/README.md). The deployed November 10 execution scope and
+separate operator/member evidence are recorded in
+[the release report](releases/2026-11-10.md). A fresh installation still requires
+its own host, grading and runtime/model verification. An implementation or built
+image alone does not establish readiness.
 
 The member continues to use `https://traceharness.dev/app`. Its runner requests
 go through the existing authenticated Worker at `/api/runner/*`. The private
@@ -27,8 +35,9 @@ Credential requests have an overall deadline and cannot create a late handle
 after a timed-out response.
 
 Jobs retain a public manifest and status in a private directory outside the lab's
-tracked `data/runs`. No key, credential handle, provider response, or process
-environment is serialized in a job. Admission is bounded to two active jobs per
+tracked `data/runs`. No key, credential handle, or process environment is serialized
+in job metadata. Model responses can appear in owner-authorized trace artifacts.
+Admission is bounded to two active jobs per
 member, eight queued/running jobs with default settings, 100 retained jobs per
 member, 2,000 records globally, and a 64-MiB serialized-manifest budget. Terminal
 records expire after 24 hours. List responses omit manifests; detail responses
@@ -54,22 +63,32 @@ native CLI must be demonstrated against that exact transport before registration
 The `max_steps` field limits **model requests**, including for native agents. It
 does not count every native tool action. Cost control reserves a conservative
 byte-based input bound, output cap, and current listed request price before a
-call. Uncertain reservations are not refunded. This is not a guarantee about
+call. A complete successful response with a validated final cost replaces that
+request's reservation with its actual reported charge. Partial, errored or
+unpriced responses keep their reservation; earlier uncertain charges are never
+refunded. This is not a guarantee about
 provider billing changes or costs outside this service. Actual token/cost totals
-are not fabricated; the current public usage report contains request count only.
+are not fabricated. Request count is always reported; input/output tokens and
+cost are included only when a valid terminal provider response actually supplies
+them. Streaming usage is read from terminal protocol records, not estimated from
+a displayed model price. Missing billing fields remain absent.
 
 ## Host requirements and failure handling
 
-Use a dedicated Linux execution host with a separately installed `runsc` or Kata
-Docker runtime and enough capacity. The existing Virginia host is shared, and
-its observed standard `runc` runtime does not satisfy this requirement. No host
-configuration was changed by this work.
+Use a dedicated Linux execution VM or host with a separately installed `runsc`
+or Kata Docker runtime and enough capacity. A shared Virginia Docker daemon
+using ordinary `runc` does not satisfy this requirement. The current deployment
+contract targets a dedicated Fly VM with its own Docker daemon and gVisor
+runtime; the isolation checks are unchanged by the choice of VM provider.
 
 The trusted control service needs Docker administration and host mount capability
 (root with `CAP_SYS_ADMIN`). This is **not** a permission granted to task containers.
 Do not install this privileged service on a shared host merely because Docker
 is available. An audited VM or dedicated host is an appropriate boundary; this
-repository does not provision one.
+package's service entrypoint does not provision one. Provisioning, private-network
+binding, persistent storage and image installation belong to the operator's
+reviewed deployment configuration. Never add capabilities to a shared daemon
+merely to pass readiness.
 
 Workspace, runtime output, and grader output use per-job bounded tmpfs mounts
 (2 GiB, 64 MiB, and 16 MiB respectively). Task containers have a read-only root,
@@ -78,6 +97,16 @@ and a bounded `/tmp`. There are no published ports. The inner entrypoint also
 enforces a wall deadline, so loss of the control process does not grant an
 unlimited task lifetime. A trusted offline grader runs separately, without the
 model socket, and reads the resulting workspace plus the original task package.
+The trusted grader result writer runs as root with only SETUID and SETGID added;
+its output tmpfs is root-owned mode0700. Candidate Python is evaluated as
+UID/GID10002 with supplementary groups cleared, no-new-privileges and a minimal
+environment. The grader reconstructs pristine source and immutable tests instead
+of accepting agent-modified pytest configuration or startup hooks. The curated
+Requests task also validates a disclosed static edit contract before any candidate
+import: only a safe serialization method may be added, with the original module
+otherwise unchanged. This closes its stdout-marker forgery path. It does not make
+arbitrary Python edits safe to grade using subprocess output; every further task
+needs a reviewed grading boundary. See the task documentation for its exact policy.
 
 Cancellation is first `cancel_requested`. It becomes `cancelled` only after the
 executor returns or confirms cleanup. An already-issued provider call can still
@@ -100,35 +129,54 @@ prompt or limits before admitting a job.
 
 `succeeded` means execution completed, **not** that the issue was solved. The
 separate `grade` enum is `ungraded`, `passed`, `failed`, or `error`. Only the trusted
-grader supplies it. Current artifacts expose the normalized grade's name, size
-and SHA-256; arbitrary agent files and stdout are not published. Full trace/patch
-export and artifact download are not implemented by this service.
+grader supplies it. Finalized artifacts can include `manifest.json`, `grade.json`,
+`trace.jsonl`, `messages.json`, `patch.diff` and `summary.json`. Each artifact is
+bounded to 1 MiB, opened without following links, restricted to regular UTF-8
+files and scrubbed for credential-shaped text before its published SHA-256 is
+computed. Oversized or invalid artifacts are explicitly omitted with an issue;
+a truncated trace is not presented as complete.
+
+`GET /api/runner/jobs/{job_id}/artifacts/{name}` verifies the requesting owner,
+allowlisted name, recorded byte count and SHA-256 before returning bounded
+base64 content through the authenticated Worker. The member UI can download
+these artifacts. Arbitrary agent files, host paths, Docker output and credentials
+are never exposed by that endpoint. Failed or cancelled executions retain any
+valid artifacts recovered before temporary storage is removed.
 
 ## Inventory and runtime images
 
 Start from `registry.empty.json`. Inventory paths must be relative to its
 directory and may not traverse symlinks. Task packages are operator-installed,
 not uploaded or fetched from browser URLs. A package contains `repo/`, `issue.md`,
-and any grader inputs. The agent sees only `repo/` and `issue.md`; hidden grading
-inputs are mounted only into the offline grader.
+`task.json`, and any grader inputs. `task.json` supplies the explicit public
+`visible_test_command`; the TraceHarness `run_tests` tool executes that command
+inside the sandbox. The agent receives repository/instructions/public metadata;
+hidden grading inputs are mounted only into the offline grader. An absent or
+invalid visible command prevents the task from becoming ready.
 
 Each task entry requires `id`, `title`, HTTPS `repository`, immutable Git
 `revision` (40 or 64 hex characters), relative `path`, `content_sha256` from
-`harnesslab.runner_service.registry.tree_hash`, pinned `environment_digest`,
-pinned `grader_image_digest`, and registered `runtime_ids`. The grader image
+`harnesslab.runner_service.registry.tree_hash`, pinned `grader_image_digest`,
+registered `runtime_ids`, and an `environment_digests` mapping whose keys exactly
+match those runtime IDs. Each value must match that runtime's pinned image.
+Legacy `environment_digest` inventories remain accepted for a shared image.
+The selected runtime's environment digest is bound into the preflight manifest.
+The grader image
 must provide `/opt/traceharness-grade`, read `/workspace` and `/task`, and write
 `/output/grade.json` with `{"outcome":"passed"}`, `failed`, or `error`. Missing,
 oversized, symlinked or malformed grade files fail the execution.
 
 Runtime entries require `id`, exact `version`, digest-pinned `image_digest`, and
 `compatibility_receipts`. IDs are `traceharness`, `native-claude-code`, and
-`native-codex`. Runtime image labels must match the ID/version. The v1 task
-environment must be the same pinned image as its registered runtime. V1 permits
-only one image per runtime ID in an installation. Compatible task dependencies
-must share that image; incompatible dependencies require a separately reviewed
-installation and registry. Multiple dependency images for the same runtime ID
-are not supported yet. There is no untrusted image build or package installation
-at run time.
+`native-codex`. Runtime image labels must match the ID/version. Immutable local
+Docker IDs (`sha256:...`) and registry references (`name@sha256:...`) are accepted
+only when Docker inspection confirms the exact identity; mutable tags are not.
+
+The same task may have a different pinned environment for each engine. One
+image per runtime ID is supported in an installation; that image must include
+the dependencies of every task registered for it. Multiple dependency images
+for the same runtime ID remain unsupported. No member request builds an image,
+fetches a repository or installs a package.
 
 Each compatibility receipt entry has a relative `path` and SHA-256 of its bytes.
 Its JSON must bind `status:"passed"`, `runtime_id`, `runtime_version`,
@@ -144,7 +192,10 @@ Supply a local `wheelhouse/` containing this project's wheel and all dependency
 wheels plus an independently reviewed `SHA256SUMS`. The build has no network
 dependency installation or latest-version fallback. The output image must be
 pushed and registered by digest only after independent build review and actual
-isolated compatibility testing. No image was built by this task.
+isolated compatibility testing. Operator deployment builds may use a separate
+reviewed recipe that pins the Python/native versions, task dependencies and
+resulting immutable image IDs. Record those exact inputs and hashes with the
+release rather than treating an image-build success as model compatibility.
 
 Native Claude Code uses safe mode, a fresh empty HOME, no settings sources,
 strict empty MCP configuration, no skills or Chrome, and an appended prompt
@@ -155,9 +206,9 @@ documents the `anthropic` allowlist slug. Native Codex uses a fresh CODEX_HOME,
 an explicit local Responses provider, ephemeral execution, disabled rules, and
 developer instructions in a generated UTF-8 TOML file. Both use noninteractive
 permission bypass **only inside the externally isolated container**. No host
-agent session or account state is read. These adapter launch paths are implemented;
-native execution and appended-prompt behavior remain **UNVERIFIED** until real
-compatibility receipts exist.
+agent session or account state is read. Each installed runtime/model pair needs
+its own real compatibility receipt. The release report lists the exact verified
+versions, models, images, task and signed-in execution results.
 
 ## Starting a reviewed installation
 
@@ -167,9 +218,17 @@ directory and `RUNNER_REGISTRY` to the reviewed inventory. Only after the host,
 images, task packages and compatibility evidence are ready set
 `RUNNER_EXECUTION_ENABLED=1`, `RUNNER_DOCKER`, and `RUNNER_ISOLATION_RUNTIME`.
 The command `python -m harnesslab.runner_service` binds only `127.0.0.1:8743`.
-Provide a separately reviewed private HTTPS connection from the Worker; do not
-expose this port directly to the public internet. No Cloudflare route, KV value,
-Worker secret, Fly app, or Virginia service is configured by this package.
+A dedicated VM launcher may instead bind the VM's explicit private interface
+address behind its HTTPS proxy; do not bind `0.0.0.0` or publish task-container
+ports. The service accepts no browser session or direct unsigned operation.
+
+Configure the Worker's `RUNNER_URL` as the operator-owned HTTPS origin and set
+`RUNNER_SHARED_SECRET` on both sides using secret storage. Existing same-origin
+`/api/runner/*` routes remain the browser interface. Keep the member JWT in the
+Worker; forward only the signed canonical UUID. The service package itself
+does not modify Cloudflare routes, the apex, KV, Worker secrets, Fly apps or
+Virginia services. Those deployment actions require an explicit operator scope
+and their own release logs. Preserve the existing login and anonymous API gates.
 
 For tests, `create_app(Settings(...), registry=..., provider=..., executor=...,
 clock=...)` supports explicit dependency injection. Production imports create

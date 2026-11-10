@@ -1,0 +1,16 @@
+{
+  "policy_version": 1,
+  "scope": "This curated Requests task only; other tasks may use different reviewed edit policies.",
+  "editable_file": "src/requests/exceptions.py",
+  "permitted_change": "Add one synchronous JSONDecodeError.__reduce__(self) method. All existing module AST nodes and every other original repository file must remain unchanged.",
+  "method_signature": "Exactly self; no decorators, defaults, annotations, type parameters or additional parameters.",
+  "method_body": "An optional literal docstring followed by exactly one return statement.",
+  "permitted_return_expressions": [
+    "CompatJSONDecodeError.__reduce__(self)",
+    "(self.__class__, (self.msg, self.doc, self.pos))",
+    "(type(self), (self.msg, self.doc, self.pos))"
+  ],
+  "source_encoding": "UTF-8, with an optional UTF-8 BOM; accepted source is normalized to UTF-8 before execution.",
+  "extra_files": "New workspace files are excluded from the pristine grading reconstruction.",
+  "existing_behavior": "Preserve the formatted exception message, args, constructor request/response behavior, inheritance and valid-JSON behavior. The public reproduction checks behavior; the independent grader also enforces this edit policy before importing candidate code."
+}

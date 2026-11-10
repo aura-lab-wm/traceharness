@@ -1,0 +1,24 @@
+{
+  "version": 1,
+  "id": "requests-jsondecode-pickle-6628",
+  "title": "Requests: preserve JSON decode errors across process boundaries",
+  "repository": "https://github.com/psf/requests",
+  "issue_url": "https://github.com/psf/requests/issues/6628",
+  "revision": "96b22fa18c00831656ee4b286bf1c9062459b00a",
+  "archive_url": "https://codeload.github.com/psf/requests/tar.gz/96b22fa18c00831656ee4b286bf1c9062459b00a",
+  "archive_sha256": "b9a1f599c259a4e29edeefb0a0690a31c89a4d038212bd44ea9b9d8321908ca5",
+  "archive_prefix": "requests-96b22fa18c00831656ee4b286bf1c9062459b00a",
+  "reference_revision": "3ff3ff21dd45957c9e143cd500291959bb15f690",
+  "reference_source_url": "https://raw.githubusercontent.com/psf/requests/3ff3ff21dd45957c9e143cd500291959bb15f690/src/requests/exceptions.py",
+  "reference_source_sha256": "8c93d2d545804ecf3a4a155468ba2b4e225bd52686ba83445a020225ea7e5646",
+  "license": "Apache-2.0; original LICENSE and NOTICE retained",
+  "visible_test_command": "PYTHONPATH=src python -m unittest discover -s public_tests -v",
+  "allowed_source_prefix": "src/requests/",
+  "hidden_checks": "checks.py",
+  "grading_timeout_seconds": 45,
+  "edit_contract": {
+    "kind": "requests-jsondecode-reduce-v1",
+    "path": "src/requests/exceptions.py",
+    "baseline_sha256": "0e1bde1417255634d1c6145db95a4ef866cc60c203da09a374b7cd12a36923f5"
+  }
+}

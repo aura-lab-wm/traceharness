@@ -12,6 +12,7 @@ from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 
 from .auth import Authenticator, AuthenticationError
+from .artifacts import read_artifact
 from .configuration import preflight
 from .credentials import CredentialVault, CredentialUnavailable
 from .execution import DockerExecutor
@@ -234,6 +235,12 @@ def create_app(settings: Settings | None = None, *, registry=None, provider=None
         if not HEX_ID.fullmatch(job_id):
             raise JobError("Job not found.", 404)
         return {"job": jobs.get(request.state.owner, job_id)}
+
+    @app.get("/api/runner/jobs/{job_id}/artifacts/{name}")
+    def get_artifact(request: Request, job_id: str, name: str):
+        if not HEX_ID.fullmatch(job_id):
+            raise JobError("Job not found.", 404)
+        return read_artifact(jobs, request.state.owner, job_id, name)
 
     @app.post("/api/runner/jobs/{job_id}/cancel")
     async def cancel_job(request: Request, job_id: str):

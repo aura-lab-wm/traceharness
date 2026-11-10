@@ -1,5 +1,6 @@
 // @vitest-environment jsdom
 // These are transport/interaction fixtures, not evidence of a deployed runner or model run.
+import { createHash, webcrypto } from 'node:crypto'
 import { act, cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest'
 import { CARDS, RECOMMENDED_ID, VERIFY_NO, blocksFromAnswers } from './shallow-data'
@@ -52,6 +53,7 @@ beforeEach(() => {
     const custom = handler?.(call)
     if (custom !== undefined) return custom
     if (url === '/api/runner/catalog') return json(catalog)
+    if (url === '/api/runner/jobs' && opts.method === 'GET') return json({ jobs: [] })
     if (url === '/api/shallow/catalog') return json({ harnesses: catalogCards })
     if (url === '/api/shallow/harnesses' && opts.method === 'GET') return json({ harnesses: rows, loaded: true, unconfirmed: [] })
     if (url === '/api/shallow/compile') return json(compiled(body))
@@ -166,7 +168,7 @@ describe('the unified member Harnesses composer', () => {
     await screen.findByText(/Harness saved to your account/)
     expect(calls.find((c) => c.url === '/api/shallow/harnesses' && c.method === 'POST').body).toEqual({ id: 'claude', prompt: 'Edited account prompt.', if_hash: '777777777777' })
     expect(JSON.parse(sessionStorage.getItem(draftKey('fixed'))).claude).toBeUndefined()
-    expect(calls.some((c) => c.url === '/api/runner/jobs')).toBe(false)
+    expect(calls.some((c) => c.url === '/api/runner/jobs' && c.method === 'POST')).toBe(false)
   })
 
   it('keeps the prompt and CAS baseline after an unconfirmed save and conflict', async () => {
@@ -198,7 +200,7 @@ describe('the unified member Harnesses composer', () => {
     expect(screen.getByRole('radio', { name: 'Read only.', exact: true }).checked).toBe(true)
     fireEvent.click(screen.getByRole('button', { name: 'Reset to Wizard Answers' }))
     expect(prompt().value).toBe(blocksFromAnswers().find((b) => b.type === 'prompt').text)
-    expect(calls.some((c) => c.url === '/api/runner/jobs')).toBe(false)
+    expect(calls.some((c) => c.url === '/api/runner/jobs' && c.method === 'POST')).toBe(false)
   })
 
   it('does not allow an old preflight response to authorize changed instructions', async () => {
@@ -210,7 +212,7 @@ describe('the unified member Harnesses composer', () => {
     await act(async () => pending.resolve(json({ ok: true, issues: [], manifest_sha256: 'f'.repeat(64) })))
     expect(screen.queryByText('Configuration verified')).toBeNull()
     expect(screen.getByRole('button', { name: 'Run', exact: true }).disabled).toBe(true)
-    expect(calls.some((c) => c.url === '/api/runner/jobs')).toBe(false)
+    expect(calls.some((c) => c.url === '/api/runner/jobs' && c.method === 'POST')).toBe(false)
   })
 
   it('keeps key and handle out of storage, URL, exports and configuration requests', async () => {
@@ -248,24 +250,24 @@ describe('the unified member Harnesses composer', () => {
 
   it('reuses the same idempotency key after an uncertain launch and never launches automatically', async () => {
     let attempts = 0
-    handler = (call) => call.url === '/api/runner/jobs' && attempts++ === 0 ? Promise.reject(new Error('Connection ended; outcome unconfirmed.')) : undefined
+    handler = (call) => call.url === '/api/runner/jobs' && call.method === 'POST' && attempts++ === 0 ? Promise.reject(new Error('Connection ended; outcome unconfirmed.')) : undefined
     render(<Composer />); await ready(); await connect()
     fireEvent.click(screen.getByRole('button', { name: 'Review run' }))
     await screen.findByText('Configuration verified')
-    expect(calls.some((c) => c.url === '/api/runner/jobs')).toBe(false)
+    expect(calls.some((c) => c.url === '/api/runner/jobs' && c.method === 'POST')).toBe(false)
     fireEvent.click(screen.getByRole('button', { name: 'Run', exact: true }))
     await screen.findByText('Connection ended; outcome unconfirmed.')
     fireEvent.click(screen.getByRole('button', { name: 'Run', exact: true }))
     await screen.findByRole('region', { name: 'Current job' })
-    const submitted = calls.filter((c) => c.url === '/api/runner/jobs')
+    const submitted = calls.filter((c) => c.url === '/api/runner/jobs' && c.method === 'POST')
     expect(submitted).toHaveLength(2)
     expect(submitted[0].body.idempotency_key).toBe(submitted[1].body.idempotency_key)
     expect(submitted[0].body.manifest_sha256).toBe('a'.repeat(64))
-    expect(screen.getByText('needs attention')).toBeTruthy()
+    expect(within(screen.getByRole('region', { name: 'Current job' })).getByText('needs attention')).toBeTruthy()
     expect(screen.queryByRole('button', { name: 'Cancel run' })).toBeNull()
     fireEvent.click(screen.getByRole('button', { name: 'Run again' }))
-    await waitFor(() => expect(calls.filter((c) => c.url === '/api/runner/jobs')).toHaveLength(3))
-    expect(calls.filter((c) => c.url === '/api/runner/jobs')[2].body.idempotency_key).not.toBe(submitted[1].body.idempotency_key)
+    await waitFor(() => expect(calls.filter((c) => c.url === '/api/runner/jobs' && c.method === 'POST')).toHaveLength(3))
+    expect(calls.filter((c) => c.url === '/api/runner/jobs' && c.method === 'POST')[2].body.idempotency_key).not.toBe(submitted[1].body.idempotency_key)
   })
 
   it('does not claim compatibility from a public model catalog alone', async () => {
@@ -280,13 +282,13 @@ describe('the unified member Harnesses composer', () => {
   })
 
   it('shows task grade separately from successful execution status', async () => {
-    handler = (call) => call.url === '/api/runner/jobs' ? json({ job: { id: 'fixture-graded-job', status: 'succeeded', grade: 'failed', issues: [] } }) : undefined
+    handler = (call) => call.url === '/api/runner/jobs' && call.method === 'POST' ? json({ job: { id: 'fixture-graded-job', status: 'succeeded', grade: 'failed', issues: [] } }) : undefined
     const { container } = render(<Composer />); await ready(); await connect()
     fireEvent.click(screen.getByRole('button', { name: 'Review run' }))
     await screen.findByText('Configuration verified')
     fireEvent.click(screen.getByRole('button', { name: 'Run', exact: true }))
     await screen.findByRole('region', { name: 'Current job' })
-    expect(screen.getByText('succeeded')).toBeTruthy()
+    expect(within(screen.getByRole('region', { name: 'Current job' })).getByText('succeeded')).toBeTruthy()
     expect(container.querySelector('[data-el="runner-job-grade"]').textContent).toBe('Task grade: Failed')
     expect(screen.getByText('Execution completed. The task grade is reported separately below.')).toBeTruthy()
   })
@@ -294,7 +296,7 @@ describe('the unified member Harnesses composer', () => {
   it('binds admission to the reviewed manifest and requires a new review after a 409', async () => {
     let changed = false
     handler = (call) => {
-      if (call.url === '/api/runner/jobs' && !changed) { changed = true; return json({ error: 'The runtime or task changed after review.' }, 409) }
+      if (call.url === '/api/runner/jobs' && call.method === 'POST' && !changed) { changed = true; return json({ error: 'The runtime or task changed after review.' }, 409) }
       if (call.url === '/api/runner/preflight' && changed) return json({ ok: true, issues: [], manifest_sha256: 'b'.repeat(64) })
       return undefined
     }
@@ -309,7 +311,7 @@ describe('the unified member Harnesses composer', () => {
     await screen.findByText('Configuration verified')
     fireEvent.click(screen.getByRole('button', { name: 'Run', exact: true }))
     await screen.findByRole('region', { name: 'Current job' })
-    const submitted = calls.filter((call) => call.url === '/api/runner/jobs')
+    const submitted = calls.filter((call) => call.url === '/api/runner/jobs' && call.method === 'POST')
     expect(submitted.map((call) => call.body.manifest_sha256)).toEqual(['a'.repeat(64), 'b'.repeat(64)])
     expect(submitted[0].body.idempotency_key).not.toBe(submitted[1].body.idempotency_key)
   })
@@ -438,7 +440,7 @@ describe('the unified member Harnesses composer', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Run', exact: true }))
     fireEvent.click(screen.getByRole('button', { name: 'Review run' }))
     expect(calls.filter((call) => call.url === '/api/runner/preflight')).toHaveLength(1)
-    expect(calls.some((call) => call.url === '/api/runner/jobs')).toBe(false)
+    expect(calls.some((call) => call.url === '/api/runner/jobs' && call.method === 'POST')).toBe(false)
     await act(async () => pending.resolve(JSON.stringify(imported)))
     await waitFor(() => expect(prompt().value).toBe(imported.prompt))
     expect(screen.queryByText('Configuration verified')).toBeNull()
@@ -448,7 +450,7 @@ describe('the unified member Harnesses composer', () => {
     await screen.findByText('Configuration verified')
     expect(calls.filter((call) => call.url === '/api/runner/preflight')).toHaveLength(2)
     expect(calls.findLast((call) => call.url === '/api/runner/preflight').body.configuration.prompt).toBe(imported.prompt)
-    expect(calls.some((call) => call.url === '/api/runner/jobs')).toBe(false)
+    expect(calls.some((call) => call.url === '/api/runner/jobs' && call.method === 'POST')).toBe(false)
   })
 
   it('keeps incompatible tasks inspectable but blocks review until their registered runtime is selected', async () => {
@@ -463,7 +465,7 @@ describe('the unified member Harnesses composer', () => {
     expect(screen.getByRole('combobox', { name: 'Task', exact: true }).value).toBe('Registered task fixture')
     expect(screen.queryByText('This task is not registered for the selected runtime. Choose a supported task or harness.')).toBeNull()
     expect(screen.getByRole('button', { name: 'Review run' }).disabled).toBe(false)
-    expect(calls.some((call) => call.url === '/api/runner/jobs')).toBe(false)
+    expect(calls.some((call) => call.url === '/api/runner/jobs' && call.method === 'POST')).toBe(false)
   })
 
   it('rejects credential-bearing or malformed imports without changing the current draft', async () => {
@@ -497,7 +499,7 @@ describe('the unified member Harnesses composer', () => {
     expect(prompt().value).toBe('Edited Codex stand-in draft.')
     switchHarness('custom')
     expect(prompt().value).toBe('Original custom working draft.')
-    expect(calls.some((call) => call.url === '/api/runner/jobs')).toBe(false)
+    expect(calls.some((call) => call.url === '/api/runner/jobs' && call.method === 'POST')).toBe(false)
   })
 
   it('preserves unrelated advanced sampling values when a guided tools answer changes', async () => {
@@ -567,7 +569,7 @@ describe('the unified member Harnesses composer', () => {
     expect(prompt().value).not.toBe(before.prompt)
     fireEvent.click(screen.getByRole('button', { name: 'Undo configuration change' }))
     expect(JSON.parse(await download())).toEqual(before)
-    expect(calls.some((call) => call.url === '/api/runner/jobs')).toBe(false)
+    expect(calls.some((call) => call.url === '/api/runner/jobs' && call.method === 'POST')).toBe(false)
   })
 
   it('restores the fixed-prompt snapshot when undoing an import after later edits to that preset', async () => {
@@ -619,7 +621,7 @@ describe('the unified member Harnesses composer', () => {
     expect(screen.getByRole('combobox', { name: 'Harness', exact: true }).value).toBe('Custom TraceHarness harness')
     expect(prompt().value).toBe('Keep my configuration while clearing a selection.')
     expect(screen.getByRole('button', { name: 'Review run' }).disabled).toBe(true)
-    expect(calls.some((call) => call.url === '/api/runner/jobs')).toBe(false)
+    expect(calls.some((call) => call.url === '/api/runner/jobs' && call.method === 'POST')).toBe(false)
   })
 
   it('applies the selected verification template only on request and preserves every unrelated setting with undo', async () => {
@@ -784,5 +786,129 @@ describe('the unified member Harnesses composer', () => {
     const secondGroup = second.container.querySelector('input[type=radio]')
     expect(firstGroup.name).not.toBe(secondGroup.name)
     expect(first.container.querySelector('[role=combobox]').id).not.toBe(second.container.querySelector('[role=combobox]').id)
+  })
+})
+
+
+const historicalId = '1'.repeat(48)
+const activeId = '2'.repeat(48)
+const historicalJob = (changes = {}) => ({ id: historicalId, status: 'succeeded', grade: 'failed', created_at: 1794000000,
+  updated_at: 1794000050, artifacts: [], issues: [], usage: { requests: 2 }, ...changes })
+
+describe('member execution history and evidence', () => {
+  it('recovers an unfinished server run after reload and opens prior results without changing the draft or launching', async () => {
+    const prior = historicalJob()
+    const pending = historicalJob({ id: activeId, status: 'running', grade: 'ungraded', created_at: 1794000100 })
+    handler = (call) => call.url === '/api/runner/jobs' && call.method === 'GET' ? json({ jobs: [prior, pending] })
+      : call.url === '/api/runner/jobs/' + historicalId ? json({ job: { ...prior, manifest: { runtime_id: 'traceharness', model_id: 'fixture/model-a', task_id: 'fixture-task' } } }) : undefined
+    const first = render(<Composer />)
+    await screen.findByRole('region', { name: 'Current job' })
+    expect(within(screen.getByRole('region', { name: 'Current job' })).getByRole('heading').textContent).toContain(activeId)
+    const before = prompt().value
+    fireEvent.click(screen.getByRole('button', { name: 'Open run ' + historicalId }))
+    await waitFor(() => expect(within(screen.getByRole('region', { name: 'Current job' })).getByRole('heading').textContent).toContain(historicalId))
+    expect(prompt().value).toBe(before)
+    expect(within(screen.getByRole('region', { name: 'Current job' })).getByText('fixture/model-a')).toBeTruthy()
+    expect(calls.some((call) => call.url === '/api/runner/jobs' && call.method === 'POST')).toBe(false)
+    expect(calls.some((call) => call.url === '/api/runner/credentials')).toBe(false)
+    first.unmount(); render(<Composer />)
+    await waitFor(() => expect(within(screen.getByRole('region', { name: 'Current job' })).getByRole('heading').textContent).toContain(activeId))
+  })
+
+  it('rejects a detail response for a different job without replacing the selected run', async () => {
+    handler = (call) => call.url === '/api/runner/jobs' && call.method === 'GET' ? json({ jobs: [historicalJob()] })
+      : call.url === '/api/runner/jobs/' + historicalId ? json({ job: historicalJob({ id: activeId }) }) : undefined
+    render(<Composer />)
+    fireEvent.click(await screen.findByRole('button', { name: 'Open run ' + historicalId }))
+    await screen.findByText('The runner returned a different run. Refresh the run list.')
+    expect(screen.queryByRole('region', { name: 'Current job' })).toBeNull()
+  })
+
+  it('keeps an active submitted run lease on unmount and revokes an idle connection', async () => {
+    handler = (call) => call.url === '/api/runner/jobs' && call.method === 'POST'
+      ? json({ job: historicalJob({ id: activeId, status: 'running', grade: 'ungraded' }) }) : undefined
+    const first = render(<Composer />); await ready(); await connect()
+    fireEvent.click(screen.getByRole('button', { name: 'Review run' })); await screen.findByText('Configuration verified')
+    fireEvent.click(screen.getByRole('button', { name: 'Run', exact: true })); await screen.findByRole('region', { name: 'Current job' })
+    first.unmount()
+    expect(calls.some((call) => call.url === '/api/runner/credentials/fixture-credential' && call.method === 'DELETE')).toBe(false)
+    const second = render(<Composer />); await ready(); await connect(); second.unmount()
+    expect(calls.some((call) => call.url === '/api/runner/credentials/fixture-credential' && call.method === 'DELETE')).toBe(true)
+  })
+
+  it('retains an unconfirmed submission lease after editing and leaving the page', async () => {
+    handler = (call) => { if (call.url === '/api/runner/jobs' && call.method === 'POST') throw new Error('Runner connection lost') }
+    const view = render(<Composer />); await ready(); await connect()
+    fireEvent.click(screen.getByRole('button', { name: 'Review run' })); await screen.findByText('Configuration verified')
+    fireEvent.click(screen.getByRole('button', { name: 'Run', exact: true })); await screen.findByText('Runner connection lost')
+    fireEvent.change(prompt(), { target: { value: 'Next draft after an uncertain submission.' } })
+    view.unmount()
+    expect(calls.some((call) => call.url === '/api/runner/credentials/fixture-credential' && call.method === 'DELETE')).toBe(false)
+  })
+
+  it('does not revoke a concurrent run when a later submission completes immediately', async () => {
+    let submissions = 0
+    handler = (call) => call.url === '/api/runner/jobs' && call.method === 'GET' ? json({ jobs: [historicalJob()] })
+      : call.url === '/api/runner/jobs/' + historicalId ? json({ job: historicalJob() })
+        : call.url === '/api/runner/jobs' && call.method === 'POST' ? json({ job: ++submissions === 1
+          ? historicalJob({ id: activeId, status: 'running', grade: 'ungraded' })
+          : historicalJob({ id: '3'.repeat(48) }) }) : undefined
+    const view = render(<Composer />); await ready(); await connect()
+    fireEvent.click(screen.getByRole('button', { name: 'Review run' })); await screen.findByText('Configuration verified')
+    fireEvent.click(screen.getByRole('button', { name: 'Run', exact: true })); await screen.findByRole('region', { name: 'Current job' })
+    fireEvent.click(screen.getByRole('button', { name: 'Open run ' + historicalId }))
+    await waitFor(() => expect(within(screen.getByRole('region', { name: 'Current job' })).getByRole('heading').textContent).toContain(historicalId))
+    fireEvent.click(screen.getByRole('button', { name: 'Run again', exact: true }))
+    await waitFor(() => expect(within(screen.getByRole('region', { name: 'Current job' })).getByRole('heading').textContent).toContain('3'.repeat(48)))
+    view.unmount()
+    expect(calls.some((call) => call.url === '/api/runner/credentials/fixture-credential' && call.method === 'DELETE')).toBe(false)
+  })
+
+  it('explains and performs explicit credential revocation during an active run', async () => {
+    handler = (call) => call.url === '/api/runner/jobs' && call.method === 'POST'
+      ? json({ job: historicalJob({ id: activeId, status: 'running', grade: 'ungraded' }) }) : undefined
+    render(<Composer />); await ready(); await connect()
+    fireEvent.click(screen.getByRole('button', { name: 'Review run' })); await screen.findByText('Configuration verified')
+    fireEvent.click(screen.getByRole('button', { name: 'Run', exact: true })); await screen.findByRole('region', { name: 'Current job' })
+    expect(screen.getByText('Disconnecting blocks future model calls for runs started with this connection. Use Cancel run to stop execution.')).toBeTruthy()
+    fireEvent.click(screen.getByRole('button', { name: 'Disconnect OpenRouter' }))
+    await waitFor(() => expect(calls.some((call) => call.url === '/api/runner/credentials/fixture-credential' && call.method === 'DELETE')).toBe(true))
+    expect(screen.getByRole('button', { name: 'Cancel run' })).toBeTruthy()
+  })
+
+  it.each([false, true])('downloads only an artifact matching its advertised SHA-256 (tampered=%s)', async (tampered) => {
+    vi.stubGlobal('crypto', webcrypto)
+    const bytes = Buffer.from('<script>not rendered</script>\nActual artifact text. 日本語')
+    const artifact = { name: 'trace.jsonl', bytes: bytes.length, sha256: createHash('sha256').update(bytes).digest('hex') }
+    const job = historicalJob({ artifacts: [artifact] })
+    handler = (call) => call.url === '/api/runner/jobs' && call.method === 'GET' ? json({ jobs: [job] })
+      : call.url === '/api/runner/jobs/' + historicalId ? json({ job })
+        : call.url === '/api/runner/jobs/' + historicalId + '/artifacts/trace.jsonl' ? json({ ...artifact, encoding: 'base64', content: (tampered ? Buffer.from('tampered') : bytes).toString('base64') }) : undefined
+    let downloaded
+    const clicked = vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(function () { expect(this.download).toBe('traceharness-' + historicalId + '-trace.jsonl') })
+    vi.stubGlobal('URL', class extends URL { static createObjectURL(value) { downloaded = value; return 'blob:fixture-artifact' } static revokeObjectURL() {} })
+    render(<Composer />)
+    fireEvent.click(await screen.findByRole('button', { name: 'Open run ' + historicalId }))
+    fireEvent.click(await screen.findByRole('button', { name: 'Download trace.jsonl' }))
+    if (tampered) {
+      await screen.findByText('Artifact integrity could not be verified. No file was downloaded.')
+      expect(clicked).not.toHaveBeenCalled(); expect(downloaded).toBeUndefined()
+    } else {
+      await waitFor(() => expect(clicked).toHaveBeenCalledOnce())
+      expect(downloaded.type).toBe('application/octet-stream')
+      const result = await new Promise((resolve) => { const reader = new FileReader(); reader.onload = () => resolve(reader.result); reader.readAsText(downloaded) })
+      expect(result).toBe(bytes.toString())
+      expect(screen.queryByText('not rendered')).toBeNull()
+    }
+  })
+
+  it('shows the environment pinned for the selected engine', async () => {
+    catalog.tasks[0].runtime_ids = ['traceharness', 'native-codex']
+    catalog.tasks[0].environment_digests = { traceharness: 'sha256:' + 'a'.repeat(64), 'native-codex': 'sha256:' + 'b'.repeat(64) }
+    render(<Composer />); await ready()
+    expect(screen.getByText('sha256:' + 'a'.repeat(64))).toBeTruthy()
+    switchHarness('native:native-codex')
+    expect(screen.getByText('sha256:' + 'b'.repeat(64))).toBeTruthy()
+    expect(screen.queryByText('sha256:' + 'a'.repeat(64))).toBeNull()
   })
 })

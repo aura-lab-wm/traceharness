@@ -118,7 +118,7 @@ def preflight(configuration, registry, health: dict) -> dict:
         return {"ok": False, "issues": list(dict.fromkeys(issues))}
     manifest = {"version": 1, "runtime_id": runtime["id"], "runtime_version": runtime["version"],
                 "image_digest": runtime["image_digest"], "model_id": model_id, "task_id": task["id"],
-                "task_revision": task["revision"], "environment_digest": task["environment_digest"],
+                "task_revision": task["revision"], "environment_digest": task.get("environment_digests", {}).get(runtime["id"], task["environment_digest"]),
                 "grader_image_digest": task["grader_image_digest"],
                 "task_content_sha256": task["content_sha256"], "prompt": prompt,
                 "prompt_mode": runtime["prompt_mode"], "prompt_sha256": hashlib.sha256(prompt.encode()).hexdigest(),

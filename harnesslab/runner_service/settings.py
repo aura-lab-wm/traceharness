@@ -37,4 +37,6 @@ class Settings:
                    docker_binary=os.environ.get("RUNNER_DOCKER", "/usr/bin/docker"),
                    isolation_runtime=os.environ.get("RUNNER_ISOLATION_RUNTIME", "runsc"),
                    network=os.environ.get("RUNNER_NETWORK", "traceharness-jobs"),
-                   gateway_origin=os.environ.get("RUNNER_GATEWAY_ORIGIN", ""))
+                   gateway_origin=os.environ.get("RUNNER_GATEWAY_ORIGIN", ""),
+                   max_workers=int(os.environ.get("RUNNER_MAX_WORKERS", "2")),
+                   max_active_per_owner=int(os.environ.get("RUNNER_MAX_ACTIVE_PER_OWNER", "2")))

@@ -1,7 +1,7 @@
 import { useEffect, useId, useMemo, useRef, useState } from 'react'
 import { api, IS_MEMBER } from '../../api'
 import { requireStored, encodeMemberJSON } from '../../member-api'
-import { runnerRequest, runnerCatalog, UNAVAILABLE_RUNNER } from '../../runner-api'
+import { runnerRequest, runnerCatalog, decodeRunnerArtifact, RUNNER_ARTIFACT_NAMES, UNAVAILABLE_RUNNER } from '../../runner-api'
 import { ByteMeter, NumericField, ToolChips } from '../harnessWorkspace'
 import { fieldIssues, numberIssue } from '../harnessFields'
 import { EvidenceOrigin } from '../shallowEvidence'
@@ -20,14 +20,16 @@ const jobStates = new Set(['queued', 'preparing', 'running', 'cancel_requested',
 const gradeLabels = { ungraded: 'Not graded', passed: 'Passed', failed: 'Failed', error: 'Grading error' }
 const jsonKey = (value) => encodeMemberJSON(value)
 const units = (value) => Number.isFinite(Number(value)) && value != null ? '$' + (Number(value) * 1e6).toLocaleString(undefined, { maximumFractionDigits: 3 }) : '—'
+const runTime = (value) => Number.isFinite(expiryTime(value)) ? new Date(expiryTime(value)).toLocaleString() : 'Time not reported'
 const readableTime = (value) => Number.isFinite(expiryTime(value)) ? new Date(expiryTime(value)).toLocaleTimeString() : 'unknown'
-const asJob = (value) => {
+const asJob = (value, expectedId) => {
   if (!value || !/^[A-Za-z0-9_-]{1,100}$/.test(value.id) || !jobStates.has(value.status)
     || value.grade !== undefined && !Object.hasOwn(gradeLabels, value.grade)
     || value.issues !== undefined && (!Array.isArray(value.issues) || value.issues.some((issue) => typeof issue !== 'string'))
     || value.manifest_sha256 !== undefined && !/^[a-f0-9]{64}$/.test(value.manifest_sha256)
-    || value.artifacts !== undefined && (!Array.isArray(value.artifacts) || value.artifacts.some((a) => !a || typeof a.name !== 'string' || !Number.isFinite(a.bytes)))
-    || value.usage !== undefined && (!value.usage || typeof value.usage !== 'object' || Array.isArray(value.usage))) throw new Error('The runner returned an incomplete job. Check the job service before retrying.')
+    || value.artifacts !== undefined && (!Array.isArray(value.artifacts) || value.artifacts.some((a) => !a || !RUNNER_ARTIFACT_NAMES.has(a.name) || !Number.isSafeInteger(a.bytes) || a.bytes < 0 || a.bytes > 1024 * 1024 || !/^[a-f0-9]{64}$/.test(a.sha256)))
+    || value.usage !== undefined && (!value.usage || typeof value.usage !== 'object' || Array.isArray(value.usage) || Object.entries(value.usage).some(([name, count]) => !['requests', 'input_tokens', 'output_tokens', 'cost_usd'].includes(name) || !Number.isFinite(count) || count < 0 || name !== 'cost_usd' && !Number.isSafeInteger(count)))) throw new Error('The runner returned an incomplete job. Check the job service before retrying.')
+  if (expectedId && value.id !== expectedId) throw new Error('The runner returned a different run. Refresh the run list.')
   return value
 }
 const harnessContentKey = (blocks = []) => jsonKey([...blocks].sort((a, b) => a.type.localeCompare(b.type)).map((block) => Object.fromEntries(Object.entries(block).sort(([a], [b]) => a.localeCompare(b)).map(([key, value]) => [key, key === 'names' ? [...value].sort() : value]))))
@@ -82,11 +84,22 @@ export function HarnessComposer({ args = [] }) {
   const [job, setJob] = useState(null)
   const [jobError, setJobError] = useState('')
   const [cancelling, setCancelling] = useState(false)
+  const [recentJobs, setRecentJobs] = useState([])
+  const [jobsLoading, setJobsLoading] = useState(false)
+  const [jobsError, setJobsError] = useState('')
+  const [jobsRevision, setJobsRevision] = useState(0)
+  const [jobsVisible, setJobsVisible] = useState(20)
+  const [openingJob, setOpeningJob] = useState('')
+  const [downloadingArtifact, setDownloadingArtifact] = useState('')
+  const artifactRequest = useRef(null)
+  const jobRef = useRef(null)
+  jobRef.current = job
   const active = useRef(true)
   const credentialGeneration = useRef(0)
   const credentialRef = useRef(null)
   const preflightRequest = useRef(null)
   const retry = useRef(null)
+  const submittedRunLeases = useRef(new Set())
   const jobRequest = useRef(0)
 
   const fixed = state.selection.startsWith('fixed:')
@@ -114,7 +127,7 @@ export function HarnessComposer({ args = [] }) {
   const task = catalog.tasks.find((t) => t.id === state.task_id)
   const models = catalog.models.filter((m) => !runtime?.available || !Array.isArray(runtime?.model_ids) || runtime.model_ids.includes(m.id))
   const selectedModelAllowed = Array.isArray(runtime?.model_ids) && runtime.model_ids.includes(state.model_id)
-  const editLocked = saving || launching || importing
+  const editLocked = saving || launching || importing || !!openingJob
   const jobActive = job && !terminal.has(job.status)
   const blocksIssues = native || fixed ? [] : fieldIssues(state.blocks)
   const readyIssues = [
@@ -145,7 +158,8 @@ export function HarnessComposer({ args = [] }) {
       credentialGeneration.current++
       preflightRequest.current?.abort()
       const current = credentialRef.current
-      if (current) runnerRequest('/credentials/' + current.credential_id, { method: 'DELETE' }).catch(() => {})
+      if (current && !hasPendingRun()) runnerRequest('/credentials/' + current.credential_id, { method: 'DELETE' }).catch(() => {})
+      artifactRequest.current?.abort()
       credentialRef.current = null
     }
   }, [])
@@ -201,20 +215,75 @@ export function HarnessComposer({ args = [] }) {
     credentialGeneration.current++
     const current = credentialRef.current
     credentialRef.current = null; setCredential(null); setKey(''); setConnecting(false)
-    if (current) runnerRequest('/credentials/' + current.credential_id, { method: 'DELETE' }).catch(() => {})
+    if (current && !hasPendingRun()) runnerRequest('/credentials/' + current.credential_id, { method: 'DELETE' }).catch(() => {})
   }, [credentialsAvailable])
   useEffect(() => {
-    if (!job || terminal.has(job.status)) return
+    if (!job || terminal.has(job.status) || openingJob) return
     let live = true
     const controller = new AbortController()
     const timer = setTimeout(() => {
       const request = ++jobRequest.current
       runnerRequest('/jobs/' + job.id, { signal: controller.signal })
-        .then((data) => { if (live && request === jobRequest.current) { setJob(asJob(data.job)); setJobError('') } })
+        .then((data) => { if (live && request === jobRequest.current) { rememberJob(asJob(data.job, job.id)); setJobError('') } })
         .catch(() => { if (live && request === jobRequest.current) setJobError('Live status could not be refreshed. The job outcome is not confirmed. Use Refresh status.') })
     }, 2000)
     return () => { live = false; clearTimeout(timer); controller.abort() }
-  }, [job])
+  }, [job, openingJob])
+  useEffect(() => {
+    if (!catalog.runner.available) return
+    let live = true
+    const controller = new AbortController()
+    setJobsLoading(true); setJobsError('')
+    runnerRequest('/jobs', { signal: controller.signal }).then((data) => {
+      if (!Array.isArray(data.jobs) || data.jobs.length > 2000 || new Set(data.jobs.map((row) => row?.id)).size !== data.jobs.length) throw new Error('The runner returned an incomplete run list.')
+      const rows = data.jobs.map((row) => asJob(row)).sort((a, b) => (b.created_at || 0) - (a.created_at || 0))
+      if (!live) return
+      const current = jobRef.current
+      setRecentJobs(current ? [current, ...rows.filter((row) => row.id !== current.id)] : rows)
+      // A submitted run remains server-owned across page reloads. Reopen its
+      // status without reconstructing a credential connection or resubmitting.
+      if (!current) { const pending = rows.find((row) => !terminal.has(row.status)); if (pending) { jobRef.current = pending; setJob(pending) } }
+    }).catch((failure) => { if (live) setJobsError(failure.message) })
+      .finally(() => { if (live) setJobsLoading(false) })
+    return () => { live = false; controller.abort() }
+  }, [catalog.runner.available, catalogRevision, jobsRevision])
+  useEffect(() => { artifactRequest.current?.abort(); setDownloadingArtifact('') }, [job?.id])
+
+  function hasPendingRun() { return submittedRunLeases.current.size > 0 }
+  function rememberJob(next) {
+    if (terminal.has(next.status)) submittedRunLeases.current.delete(next.id)
+    jobRef.current = next; setJob(next)
+    setRecentJobs((rows) => [next, ...rows.filter((row) => row.id !== next.id)].sort((a, b) => (b.created_at || 0) - (a.created_at || 0)))
+  }
+  async function openJob(id) {
+    if (launching || openingJob) return
+    const request = ++jobRequest.current
+    setOpeningJob(id); setJobError('')
+    try {
+      const data = await runnerRequest('/jobs/' + id)
+      if (active.current && request === jobRequest.current) {
+        const next = asJob(data.job, id)
+        rememberJob(next)
+        setTimeout(() => document.getElementById(instanceId + '-job')?.focus(), 0)
+      }
+    } catch (failure) { if (active.current && request === jobRequest.current) setJobsError(failure.message) }
+    finally { if (active.current) setOpeningJob('') }
+  }
+  async function downloadArtifact(artifact) {
+    if (!job || downloadingArtifact) return
+    const id = job.id
+    const controller = new AbortController(); artifactRequest.current?.abort(); artifactRequest.current = controller
+    setDownloadingArtifact(artifact.name); setJobError('')
+    try {
+      const data = await runnerRequest('/jobs/' + id + '/artifacts/' + artifact.name, { signal: controller.signal })
+      const bytes = await decodeRunnerArtifact(data, artifact)
+      if (!active.current || controller.signal.aborted || jobRef.current?.id !== id) return
+      const url = URL.createObjectURL(new Blob([bytes], { type: 'application/octet-stream' }))
+      const anchor = document.createElement('a'); anchor.href = url; anchor.download = 'traceharness-' + id + '-' + artifact.name; anchor.click()
+      setTimeout(() => URL.revokeObjectURL(url), 1000)
+    } catch (failure) { if (active.current && !controller.signal.aborted && jobRef.current?.id === id) setJobError(failure.message) }
+    finally { if (active.current && artifactRequest.current === controller) setDownloadingArtifact('') }
+  }
 
   function editPrompt(value) {
     setSaved(''); setError('')
@@ -305,13 +374,14 @@ export function HarnessComposer({ args = [] }) {
         runnerRequest('/credentials/' + result.credential_id, { method: 'DELETE' }).catch(() => {}); return
       }
       const value = { credential_id: result.credential_id, expires_at: result.expires_at }
+      submittedRunLeases.current.clear()
       credentialRef.current = value; setCredential(value); setKey('')
     } catch (failure) { if (active.current && generation === credentialGeneration.current) setError(failure.message) }
     finally { if (active.current && generation === credentialGeneration.current) setConnecting(false) }
   }
   async function clearKey() {
     const current = credentialRef.current
-    credentialGeneration.current++; credentialRef.current = null
+    credentialGeneration.current++; credentialRef.current = null; submittedRunLeases.current.clear()
     setCredential(null); setKey(''); setConnecting(false)
     if (current) try { await runnerRequest('/credentials/' + current.credential_id, { method: 'DELETE' }) } catch { if (active.current) setError('The key was cleared from this page. Remote revocation is unconfirmed; the connection expires automatically.') }
   }
@@ -336,12 +406,19 @@ export function HarnessComposer({ args = [] }) {
     if (retry.current?.identity !== identity || retry.current.confirmed) retry.current = { identity, key: crypto.randomUUID() }
     const request = ++jobRequest.current
     const submission = retry.current
-    setLaunching(true); setError('')
+    const lease = 'unconfirmed:' + submission.key
+    setLaunching(true); setError(''); submittedRunLeases.current.add(lease)
     try {
       const data = await runnerRequest('/jobs', { method: 'POST', body: { configuration, manifest_sha256: manifestHash, credential_id: credential.credential_id, idempotency_key: submission.key } })
-      if (active.current && request === jobRequest.current) { setJob(asJob(data.job)); submission.confirmed = true; setJobError('') }
+      if (active.current && request === jobRequest.current) {
+        const next = asJob(data.job)
+        submittedRunLeases.current.delete(lease)
+        if (!terminal.has(next.status)) submittedRunLeases.current.add(next.id)
+        rememberJob(next); submission.confirmed = true; setJobError('')
+      }
     } catch (failure) {
       if (active.current) {
+        if (failure.status >= 400 && failure.status < 500 && failure.status !== 408) submittedRunLeases.current.delete(lease)
         if (failure.status === 409) { setPreflight(null); retry.current = null }
         setError(failure.message + (failure.status === 409 ? ' Review the run again before launching.' : ''))
       }
@@ -354,7 +431,7 @@ export function HarnessComposer({ args = [] }) {
     if (cancel) setCancelling(true)
     try {
       const data = await runnerRequest('/jobs/' + job.id + (cancel ? '/cancel' : ''), { method: cancel ? 'POST' : 'GET', ...(cancel ? { body: {} } : {}) })
-      if (active.current && request === jobRequest.current) { setJob(asJob(data.job)); setJobError('') }
+      if (active.current && request === jobRequest.current) { rememberJob(asJob(data.job, job.id)); setJobError('') }
     } catch { if (active.current && request === jobRequest.current) setJobError(cancel ? 'Cancellation could not be confirmed. Refresh status before retrying.' : 'Live status is unconfirmed. Try refreshing again.') }
     finally { if (active.current) setCancelling(false) }
   }
@@ -507,7 +584,7 @@ export function HarnessComposer({ args = [] }) {
     <div className="rg-composer-switch-policy"><label><input type="checkbox" checked={!!state.preserve_prompt} disabled={editLocked} onChange={(event) => setState((s) => ({ ...s, preserve_prompt: event.target.checked }))} />Keep prompt when switching harnesses</label><span>Each harness keeps its own draft. Tools and permissions stay with the selected engine.</span></div>
     </div>
     {configNotice && <div className="rg-note rg-composer-import-status" role="status"><p>{configNotice}</p>{undoConfiguration && <button className="rg-btn" disabled={editLocked} onClick={undoEditorChange}>Undo configuration change</button>}</div>}
-    {(model || task) && <details className="rg-composer-details"><summary>Selection details</summary><dl>{model && <><div><dt>Model</dt><dd>{model.id}</dd></div>{Number.isFinite(model.context_length) && <div><dt>Context window</dt><dd>{model.context_length.toLocaleString()} tokens</dd></div>}<div><dt>Runtime compatibility</dt><dd>{runtime?.available ? selectedModelAllowed ? 'Verified by the connected runtime' : 'Not verified for this runtime' : 'Not verified · connect a runtime before execution'}</dd></div></>}{task && <><div><dt>Repository</dt><dd>{task.repository || 'Not supplied'}</dd></div><div><dt>Revision</dt><dd>{task.revision || 'Not verified'}</dd></div>{task.environment_digest && <div><dt>Environment</dt><dd>{task.environment_digest}</dd></div>}{Array.isArray(task.runtime_ids) && <div><dt>Task runtimes</dt><dd>{task.runtime_ids.join(', ') || 'None registered'}</dd></div>}{task.reason && <div><dt>Task status</dt><dd>{task.reason}</dd></div>}</>}</dl></details>}
+    {(model || task) && <details className="rg-composer-details"><summary>Selection details</summary><dl>{model && <><div><dt>Model</dt><dd>{model.id}</dd></div>{Number.isFinite(model.context_length) && <div><dt>Context window</dt><dd>{model.context_length.toLocaleString()} tokens</dd></div>}<div><dt>Runtime compatibility</dt><dd>{runtime?.available ? selectedModelAllowed ? 'Verified by the connected runtime' : 'Not verified for this runtime' : 'Not verified · connect a runtime before execution'}</dd></div></>}{task && <><div><dt>Repository</dt><dd>{task.repository || 'Not supplied'}</dd></div><div><dt>Revision</dt><dd>{task.revision || 'Not verified'}</dd></div>{(task.environment_digests?.[configuration.runtime_id] || task.environment_digest) && <div><dt>Environment</dt><dd>{task.environment_digests?.[configuration.runtime_id] || task.environment_digest}</dd></div>}{Array.isArray(task.runtime_ids) && <div><dt>Task runtimes</dt><dd>{task.runtime_ids.join(', ') || 'None registered'}</dd></div>}{task.reason && <div><dt>Task status</dt><dd>{task.reason}</dd></div>}</>}</dl></details>}
     {(storageError || accountError) && <div className="rg-note" role="alert">{storageError || accountError}{accountError && <><button className="rg-btn" onClick={() => setAccountRevision((n) => n + 1)}>Retry account data</button><a href="/login">Account</a></>}</div>}
     <div className="rg-composer-layout">
       <section className="rg-composer-editor" aria-label="Configuration editor">
@@ -528,9 +605,9 @@ export function HarnessComposer({ args = [] }) {
         {previewError && <p role="alert">{previewError}</p>}
         {credentialsAvailable ? <section className="rg-pnl rg-composer-key"><div className="rg-pnl-h"><Icon name="sent" /><h2>OpenRouter connection</h2></div><div className="rg-pnl-b">
           {!credentialsAvailable ? <p className="rg-small">Connect an execution service before adding a key. No key is collected while the runner is unavailable.</p>
-            : credential ? <><p role="status">Connected for this session · expires at {readableTime(credential.expires_at)}</p><button className="rg-btn" onClick={clearKey}>Disconnect OpenRouter</button></>
+            : credential ? <><p role="status">Connected for this session · expires at {readableTime(credential.expires_at)}</p><button className="rg-btn" onClick={clearKey}>Disconnect OpenRouter</button>{hasPendingRun() && <p className="rg-small">Disconnecting blocks future model calls for runs started with this connection. Use Cancel run to stop execution.</p>}</>
               : <><label className="rg-fld">OpenRouter API key<input className="rg-inp" type="password" autoComplete="off" spellCheck={false} value={key} disabled={connecting} onChange={(e) => setKey(e.target.value)} /></label><div className="rg-row rg-wrap"><button className="rg-btn" disabled={!key.trim() || connecting} onClick={connectKey}>{connecting ? 'Verifying key…' : 'Connect OpenRouter'}</button><button className="rg-btn ghost" onClick={clearKey}>Clear key</button></div></>}
-          <p className="rg-small rg-mute">Your key is never included in saved harnesses or exported configurations. A connection is cleared when this workspace closes.</p>
+          <p className="rg-small rg-mute">Your key is never included in saved harnesses or exported configurations. Closing this workspace keeps an active run’s connection until it expires; unused connections are revoked.</p>
         </div></section> : <details className="rg-composer-details"><summary>OpenRouter connection</summary><p>Connect an execution service before adding a key. No key is collected while the runner is unavailable. Keys are excluded from saved and exported configurations.</p></details>}
       </section>
       <aside className="rg-composer-review" aria-label="Run configuration"><div className="rg-composer-section-head"><h2>Run configuration</h2><Icon name="log" /></div><dl>
@@ -553,7 +630,29 @@ export function HarnessComposer({ args = [] }) {
       {comparedCheckpoint && !checkpointComparison && checkpoints.some((row) => row.id === comparedCheckpoint) && <p role="status">Complete valid configuration values to compare with this checkpoint.</p>}
       <ConfigurationLibrary entries={checkpoints} busy={editLocked} comparison={checkpointComparison} onCreate={createCheckpoint} onRename={renameStoredCheckpoint} onDelete={removeCheckpoint} onRestore={restoreStoredCheckpoint} onCompare={compareCheckpoint} onExport={(id) => downloadConfiguration(restoreCheckpoint(checkpoints, id), 'traceharness-checkpoint.json')} />
     </div>}
-    {job && <section className="rg-pnl rg-composer-job" aria-label="Current job"><div className="rg-pnl-h"><h2>Run {job.id}</h2><span className="meta">{job.status.replaceAll('_', ' ')}</span></div><div className="rg-pnl-b"><p>{job.cancellation_requested && !terminal.has(job.status) ? 'Cancellation requested; waiting for confirmed termination.' : job.status === 'succeeded' ? 'Execution completed. The task grade is reported separately below.' : terminal.has(job.status) ? 'The runner reported a final state.' : 'Showing status reported by the execution service.'}</p><p data-el="runner-job-grade"><strong>Task grade:</strong> {gradeLabels[job.grade] || 'Not reported'}</p>{job.manifest_sha256 && <p className="rg-small rg-mono">Configuration {job.manifest_sha256}</p>}{(job.issues || []).map((issue) => <p key={issue} role="alert">{issue}</p>)}{jobError && <p role="alert">{jobError}</p>}<div className="rg-row rg-wrap"><button className="rg-btn" disabled={launching} onClick={() => refreshJob()}>Refresh status</button>{!terminal.has(job.status) && <button className="rg-btn" disabled={cancelling || job.cancellation_requested} onClick={() => refreshJob(true)}>{cancelling ? 'Requesting cancellation…' : 'Cancel run'}</button>}</div>{job.usage && <dl className="rg-composer-usage">{Object.entries(job.usage).filter(([, value]) => value != null).map(([name, value]) => <div key={name}><dt>{name.replaceAll('_', ' ')}</dt><dd>{String(value)}</dd></div>)}</dl>}{job.artifacts?.length > 0 && <ul>{job.artifacts.map((a) => <li key={a.name}>{a.name} · {a.bytes} bytes</li>)}</ul>}</div></section>}
+    {(catalog.runner.available || recentJobs.length > 0 || jobsError) && <section className="rg-pnl rg-composer-history" aria-label="Recent runs">
+      <div className="rg-pnl-h"><h2>Recent runs</h2><button type="button" className="rg-btn" disabled={jobsLoading} onClick={() => setJobsRevision((value) => value + 1)}>{jobsLoading ? 'Refreshing runs…' : 'Refresh runs'}</button></div>
+      <div className="rg-pnl-b"><p className="rg-small rg-mute">Runs retained for this signed-in account. Opening a result leaves your editor configuration unchanged.</p>
+        {jobsError && <p role="alert">{jobsError}</p>}{!jobsLoading && !recentJobs.length && !jobsError && <p>No submitted runs in this account.</p>}
+        {!!recentJobs.length && <ul className="rg-composer-run-list">{recentJobs.slice(0, jobsVisible).map((row) => <li key={row.id} aria-current={job?.id === row.id ? 'true' : undefined}>
+          <div><strong className="rg-mono">{row.id}</strong><span>{row.status.replaceAll('_', ' ')} · {gradeLabels[row.grade] || 'Not graded'}</span><time>{runTime(row.created_at)}</time></div>
+          <button type="button" className="rg-btn" disabled={launching || !!openingJob} aria-label={'Open run ' + row.id} onClick={() => openJob(row.id)}>{openingJob === row.id ? 'Opening…' : 'Open run'}</button>
+        </li>)}</ul>}
+        {recentJobs.length > jobsVisible && <button type="button" className="rg-btn" onClick={() => setJobsVisible((count) => count + 20)}>Show more runs</button>}
+      </div>
+    </section>}
+    {job && <section id={instanceId + '-job'} tabIndex={-1} className="rg-pnl rg-composer-job" aria-label="Current job">
+      <div className="rg-pnl-h"><h2>Run {job.id}</h2><span className="meta">{job.status.replaceAll('_', ' ')}</span></div>
+      <div className="rg-pnl-b"><p>{job.cancellation_requested && !terminal.has(job.status) ? 'Cancellation requested; waiting for confirmed termination.' : job.status === 'succeeded' ? 'Execution completed. The task grade is reported separately below.' : terminal.has(job.status) ? 'The runner reported a final state.' : 'Showing status reported by the execution service.'}</p>
+        {!terminal.has(job.status) && <p className="rg-small">This run continues on the runner while its connection remains valid. You can return through Recent runs after reloading.</p>}
+        <p data-el="runner-job-grade"><strong>Task grade:</strong> {gradeLabels[job.grade] || 'Not reported'}</p>
+        {job.manifest && <dl className="rg-composer-job-identity">{['runtime_id', 'runtime_version', 'model_id', 'task_id', 'task_revision'].filter((name) => typeof job.manifest[name] === 'string').map((name) => <div key={name}><dt>{name.replaceAll('_', ' ')}</dt><dd>{job.manifest[name]}</dd></div>)}</dl>}
+        {job.manifest_sha256 && <p className="rg-small rg-mono">Configuration {job.manifest_sha256}</p>}{(job.issues || []).map((issue) => <p key={issue} role="alert">{issue}</p>)}{jobError && <p role="alert">{jobError}</p>}
+        <div className="rg-row rg-wrap"><button className="rg-btn" disabled={launching || !!openingJob} onClick={() => refreshJob()}>Refresh status</button>{!terminal.has(job.status) && <button className="rg-btn" disabled={cancelling || job.cancellation_requested || !!openingJob} onClick={() => refreshJob(true)}>{cancelling ? 'Requesting cancellation…' : 'Cancel run'}</button>}</div>
+        {job.usage && <><dl className="rg-composer-usage">{Object.entries(job.usage).filter(([, value]) => value != null).map(([name, value]) => <div key={name}><dt>{name.replaceAll('_', ' ')}</dt><dd>{name === 'cost_usd' ? '$' + value.toLocaleString(undefined, { maximumFractionDigits: 8 }) : value.toLocaleString()}</dd></div>)}</dl><p className="rg-small rg-mute">Only usage reported by the runner is shown. Missing token or cost totals are unconfirmed.</p></>}
+        {job.artifacts?.length > 0 && <ul className="rg-composer-artifacts" aria-label="Run artifacts">{job.artifacts.map((artifact) => <li key={artifact.name}><div><strong>{artifact.name}</strong><span>{artifact.bytes.toLocaleString()} bytes · SHA-256 verified before download</span></div><button type="button" className="rg-btn" aria-label={'Download ' + artifact.name} disabled={!!downloadingArtifact} onClick={() => downloadArtifact(artifact)}>{downloadingArtifact === artifact.name ? 'Verifying…' : 'Download'}</button></li>)}</ul>}
+      </div>
+    </section>}
     <footer className="rg-composer-footer"><Go spec="shallowApply" className="rg-tlink">Compare one prompt across the six TraceHarness shells</Go><span>Native runtimes and lab stand-ins are distinct engines.</span></footer>
   </div>
 }

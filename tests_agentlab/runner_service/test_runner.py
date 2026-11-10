@@ -45,6 +45,7 @@ def fixture_registry(root):
     (task / "repo").mkdir(parents=True)
     (task / "repo" / "source.txt").write_text("unit fixture only")
     (task / "issue.md").write_text("This is an explicit unit fixture; never register it in deployment.")
+    (task / "task.json").write_text(json.dumps({"visible_test_command": "python -m unittest"}))
     receipt = {"status": "passed", "runtime_id": "traceharness", "runtime_version": "0.3.0", "image_digest": IMAGE,
                "model_id": "fixture/model", "verified_at": "unit-test", "run_id": "unit-test"}
     raw = canonical(receipt)

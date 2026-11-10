@@ -7,10 +7,19 @@ export const UNAVAILABLE_RUNNER = Object.freeze({
   runtimes: [], models: [], tasks: [], credentials_available: false, execution_available: false,
 })
 
+export const RUNNER_ARTIFACT_NAMES = new Set(['manifest.json', 'grade.json', 'trace.jsonl', 'messages.json', 'patch.diff', 'summary.json'])
+const ARTIFACT_MAX_BYTES = 1024 * 1024
+const IMAGE_ID = /^(?:[a-zA-Z0-9][a-zA-Z0-9./:_-]*@)?sha256:[a-f0-9]{64}$/
 const RUNTIME_IDS = new Set(['traceharness', 'native-claude-code', 'native-codex'])
+
+const artifactRoute = (path) => {
+  const match = /^\/jobs\/([a-f0-9]{48})\/artifacts\/([^/]+)$/.exec(path)
+  return !!match && RUNNER_ARTIFACT_NAMES.has(match[2])
+}
 
 const allowed = (path, method) => method === 'GET' && ['/catalog', '/jobs'].includes(path)
   || method === 'GET' && /^\/jobs\/[A-Za-z0-9_-]{1,100}$/.test(path)
+  || method === 'GET' && artifactRoute(path)
   || method === 'POST' && ['/preflight', '/credentials', '/jobs'].includes(path)
   || method === 'POST' && /^\/jobs\/[A-Za-z0-9_-]{1,100}\/cancel$/.test(path)
   || method === 'DELETE' && /^\/credentials\/[A-Za-z0-9_-]{1,100}$/.test(path)
@@ -32,7 +41,7 @@ export async function runnerRequest(path, { method = 'GET', body, signal } = {})
     const response = await fetch('/api/runner' + path, {
       method, headers, signal: controller.signal, credentials: 'same-origin',
       mode: 'same-origin', redirect: 'error', cache: 'no-store',
-      body: body === undefined ? undefined : encodeMemberJSON(body),
+      ...(method === 'GET' || body === undefined ? {} : { body: encodeMemberJSON(body) }),
     })
     let data
     try { data = await response.json() } catch { throw new Error('The runner returned an unreadable response.') }
@@ -79,10 +88,32 @@ export function runnerCatalog(data) {
         || ['prompt', 'completion'].some((key) => m.pricing[key] !== undefined && (!text(m.pricing[key]) || m.pricing[key].length > 40 || !/^\d+(?:\.\d+)?$/.test(m.pricing[key])))))
     || data.tasks.some((t) => !optionalText(t.title) || !optionalText(t.repository) || !optionalText(t.revision) || !optionalText(t.reason) || typeof t.ready !== 'boolean'
       || t.environment_digest !== undefined && (!text(t.environment_digest) || t.environment_digest.length > 256)
+      || t.environment_digests !== undefined && (!t.environment_digests || typeof t.environment_digests !== 'object' || Array.isArray(t.environment_digests)
+        || !Array.isArray(t.runtime_ids) || !Object.keys(t.environment_digests).length || Object.entries(t.environment_digests).some(([id, image]) => !RUNTIME_IDS.has(id) || typeof image !== 'string' || !IMAGE_ID.test(image) || !t.runtime_ids.includes(id))
+        || t.runtime_ids?.some((id) => !Object.hasOwn(t.environment_digests, id)))
       || t.runtime_ids !== undefined && (!Array.isArray(t.runtime_ids) || !t.runtime_ids.length || t.runtime_ids.length > RUNTIME_IDS.size
         || t.runtime_ids.some((id) => !RUNTIME_IDS.has(id)) || new Set(t.runtime_ids).size !== t.runtime_ids.length))
     || ['runtimes', 'models', 'tasks'].some((key) => new Set(data[key].map((r) => r.id)).size !== data[key].length)) {
     throw new Error('The runner catalog is incomplete. Execution remains unavailable.')
   }
   return data
+}
+
+
+export async function decodeRunnerArtifact(data, expected) {
+  const failure = () => { throw new Error('Artifact integrity could not be verified. No file was downloaded.') }
+  if (!expected || !RUNNER_ARTIFACT_NAMES.has(expected.name) || !data || data.name !== expected.name
+    || data.encoding !== 'base64' || !Number.isSafeInteger(data.bytes) || data.bytes < 0 || data.bytes > ARTIFACT_MAX_BYTES
+    || data.bytes !== expected.bytes || !/^[a-f0-9]{64}$/.test(data.sha256) || data.sha256 !== expected.sha256
+    || typeof data.content !== 'string' || data.content.length > 4 * Math.ceil(ARTIFACT_MAX_BYTES / 3)
+    || !/^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$/.test(data.content)) failure()
+  let bytes
+  try {
+    const binary = atob(data.content)
+    if (binary.length !== data.bytes) failure()
+    bytes = Uint8Array.from(binary, (character) => character.charCodeAt(0))
+    const hash = Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256', bytes)), (byte) => byte.toString(16).padStart(2, '0')).join('')
+    if (hash !== data.sha256) failure()
+  } catch { failure() }
+  return bytes
 }

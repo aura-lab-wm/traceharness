@@ -1,0 +1,373 @@
+{
+  "date": "2026-11-10",
+  "member_url": "https://traceharness.dev/app#/rig/harnesses",
+  "worker_version": "5222a77c-0c06-4392-9826-d0164c48e312",
+  "fly_release": 5,
+  "control_image": "registry.fly.io/traceharness-runner@sha256:935a2562bc4618fa57dbfd9ac1c420b0414e42d8053714554392f9b6407aa3e4",
+  "runtime_images": {
+    "traceharness": "sha256:377af7d2b284b9e29772238eadf119ff3482e9246f164ac90edfe0ad0001e8bc",
+    "native-claude-code": "sha256:243ab616008fd52cc53f9f0bbed1f6602fdf4dd5449d3e5f9f26cb5407e167d1",
+    "native-codex": "sha256:6fdf793d98fee27f9fa2ea20c281a4376523a645b3cb0b19f25e25542ac96a80",
+    "grader": "sha256:8e70e43aef664d735cc339d85dacbc48e54921ece7c0b477b8d9a542c6835e2d"
+  },
+  "task_content_sha256": "4a0f1b04dfe848ca5e7c7514c562a7fec3e4ed51959ab6cbd4bacdf68b5132cc",
+  "grader_source_sha256": "bc8647779c1409699e046c6122e9b553621bebda2b71637b3702ebdaa8b88db0",
+  "wheel_sha256": "0e1e8678d82154046119dd30c4bf58ff4e51b4fea39b9d553865898312c1e496",
+  "kv_readback": {
+    "complete": true,
+    "key": "app.html.gz",
+    "namespace": "8a74dd2fba124b1a8d82e6eeff5ba3ae",
+    "gzip_sha256": "d85bdabf987240b426b888e1436d1d4a914b07857af45b1c5f07fe6bb066a3a5",
+    "html_sha256": "8e95b06950126a48fc4be315c0f4c61fcaaa2d1e208ff2057aee420e20d6fb1a",
+    "upload_exit_code": 0,
+    "evidence": "Exact recorded remote readback matches the approved v6 file byte-for-byte. Signed-in HTTP paint verified separately."
+  },
+  "operator_runs": {
+    "traceharness": {
+      "artifacts": [
+        {
+          "bytes": 2741,
+          "name": "manifest.json",
+          "sha256": "da8a8da67796b40af57c606eb6672596d1d11d460e260c12a0c5e116a6e2955b"
+        },
+        {
+          "bytes": 21,
+          "name": "grade.json",
+          "sha256": "878982568e5e39420f9fc8fca5caaade78f526a402b42f08357919732d5a1cd5"
+        },
+        {
+          "bytes": 8287,
+          "name": "trace.jsonl",
+          "sha256": "dc04a72456cf033ce90d2b2e1817c85cfcdc5c96b4ad2eb91b8036be2b18d4ca"
+        },
+        {
+          "bytes": 13867,
+          "name": "messages.json",
+          "sha256": "3db2ef2827342a80c1463390ebda741eec1d57cd5a46590d9aa50792580c8d01"
+        },
+        {
+          "bytes": 429,
+          "name": "patch.diff",
+          "sha256": "73c217f7b6b15e0ae764d90726060651a21bcd6b25ae4d1fb541c046b1b3034b"
+        },
+        {
+          "bytes": 917,
+          "name": "summary.json",
+          "sha256": "1a0c519b3a47218abfafb74fb6c663ee596e0457f4ff97bdeda042091789b33f"
+        }
+      ],
+      "compatibility_passed": true,
+      "grade": "passed",
+      "issues": [],
+      "job_id": "dfc62311fb86a56c1d12e51714aef50df12f3b6ac05ac8ed",
+      "receipt": {
+        "inventory_updated": true,
+        "sha256": "c02ded51680ddcf7a8321554fea2972e1874dff1bac3076fd76dd87ef2f29c2a"
+      },
+      "status": "succeeded",
+      "successful_model_responses": 4,
+      "usage": {
+        "cost_usd": 0.0028688,
+        "input_tokens": 10768,
+        "output_tokens": 445,
+        "requests": 4
+      },
+      "verification_kind": "operator-bootstrap-no-browser-auth"
+    },
+    "native-claude-code": {
+      "artifacts": [
+        {
+          "bytes": 1167,
+          "name": "manifest.json",
+          "sha256": "2218ba1ae00afbf036f02f48b075fecb0f99e71eb58a406915bed4f4ce353f1e"
+        },
+        {
+          "bytes": 21,
+          "name": "grade.json",
+          "sha256": "878982568e5e39420f9fc8fca5caaade78f526a402b42f08357919732d5a1cd5"
+        },
+        {
+          "bytes": 105272,
+          "name": "trace.jsonl",
+          "sha256": "caf197c4558aece216dbc5c0c0827689318d3260c35795a681b24977c8613d4f"
+        },
+        {
+          "bytes": 570,
+          "name": "patch.diff",
+          "sha256": "de4eeb0d13ef7e1000413aed956c5f928242c8337ab2bf03c352e12ba47c3fcc"
+        }
+      ],
+      "compatibility_passed": true,
+      "grade": "passed",
+      "issues": [],
+      "job_id": "d7ddd75d57336595cf58a1530a4f1585ea61a1b9f2898709",
+      "receipt": {
+        "inventory_updated": true,
+        "sha256": "d1ac1612b4eca55ed96f80577aa5621ef9295abc23a92175e2561f0574a4bd85"
+      },
+      "status": "succeeded",
+      "successful_model_responses": 15,
+      "usage": {
+        "cost_usd": 0.582799,
+        "input_tokens": 563904,
+        "output_tokens": 3779,
+        "requests": 15
+      },
+      "verification_kind": "operator-bootstrap-no-browser-auth"
+    },
+    "native-codex": {
+      "artifacts": [
+        {
+          "bytes": 1160,
+          "name": "manifest.json",
+          "sha256": "ebbdd3ade87fde34cebc78fa5a46dc169227805e5b35a8c15eda8b5d4e94aab3"
+        },
+        {
+          "bytes": 21,
+          "name": "grade.json",
+          "sha256": "878982568e5e39420f9fc8fca5caaade78f526a402b42f08357919732d5a1cd5"
+        },
+        {
+          "bytes": 14886,
+          "name": "trace.jsonl",
+          "sha256": "74e85fd30e758ac05c3fd8e704dac3bde6d8bfa01a692000491b0daf4cfe92dd"
+        },
+        {
+          "bytes": 622,
+          "name": "patch.diff",
+          "sha256": "eef5a2baf1bb41dd3ea3099ca7f0c6f9dc089148406aea2b482271abd1a51911"
+        }
+      ],
+      "compatibility_passed": true,
+      "grade": "passed",
+      "issues": [],
+      "job_id": "32f0b25f07111e138dfdf26f09e07d8d618daff9e06f1246",
+      "receipt": {
+        "inventory_updated": true,
+        "sha256": "c7e54bdc0edf55a41d056f3b5214db1c76b969ef2dd8b94f263167e1b04c88a1"
+      },
+      "status": "succeeded",
+      "successful_model_responses": 8,
+      "usage": {
+        "cost_usd": 0.0095405,
+        "input_tokens": 70378,
+        "output_tokens": 1605,
+        "requests": 8
+      },
+      "verification_kind": "operator-bootstrap-no-browser-auth"
+    }
+  },
+  "member_runs": [
+    {
+      "runtime_id": "traceharness",
+      "model_id": "openai/gpt-4.1-mini",
+      "job_id": "e840b9c1617ae4105e788eeade297e13a3f3b6959783dd80",
+      "status": "succeeded",
+      "grade": "passed",
+      "task_solved": true,
+      "manifest_sha256": "b2a7aa0f876f76ea2e6018e8e2c1520bffb7706ca8951383ae974e95d20cb7bf",
+      "usage": {
+        "requests": 4,
+        "input_tokens": 12621,
+        "output_tokens": 479,
+        "cost_usd": 0.0032804
+      },
+      "idempotency_same_job": true,
+      "artifacts": [
+        {
+          "name": "manifest.json",
+          "bytes": 3215,
+          "sha256": "c2040a4f5a0cdf3d3bf76931b59b231faebec48f57617f54a9b6c22407b06808",
+          "api_and_ui_verified": true
+        },
+        {
+          "name": "grade.json",
+          "bytes": 21,
+          "sha256": "878982568e5e39420f9fc8fca5caaade78f526a402b42f08357919732d5a1cd5",
+          "api_and_ui_verified": true
+        },
+        {
+          "name": "trace.jsonl",
+          "bytes": 9280,
+          "sha256": "baaf9b57d7f05cb728ac55958dacfe7b1db277a0c5af52c552bad4c7d2cc6fe4",
+          "api_and_ui_verified": true
+        },
+        {
+          "name": "messages.json",
+          "bytes": 16389,
+          "sha256": "7a53e96c0d484cbd7210843294d3000e0887057e2523dd410959503f2893fdc7",
+          "api_and_ui_verified": true
+        },
+        {
+          "name": "patch.diff",
+          "bytes": 445,
+          "sha256": "bd6c1e7e153de460325dd0db720623b3cccbb20ded98eeec82f94938e0c79ade",
+          "api_and_ui_verified": true
+        },
+        {
+          "name": "summary.json",
+          "bytes": 905,
+          "sha256": "06fc6e8b5bcf2d9cd1ef0c7266610cc9aeba2d3d2371cb298b71be654af8ce96",
+          "api_and_ui_verified": true
+        }
+      ],
+      "reopened_after_reload": true,
+      "limits": {
+        "max_steps": 20,
+        "wall_time_seconds": 240,
+        "max_cost_usd": 1
+      },
+      "source_report_sha256": "fe7d54a1fc8621833bbf378b98172f98c23bf858734fb8ff446c144a1d3a25b9"
+    },
+    {
+      "runtime_id": "native-claude-code",
+      "model_id": "anthropic/claude-haiku-4.5",
+      "job_id": "39a11090109b083effb00e3e521bec536980e928dce9dab4",
+      "status": "succeeded",
+      "grade": "passed",
+      "task_solved": true,
+      "manifest_sha256": "ba28d0229ef607030b15df5b546f06306b2a24b4f94cc8c8c7cb13f4e408b242",
+      "usage": {
+        "requests": 12,
+        "input_tokens": 439677,
+        "output_tokens": 2426,
+        "cost_usd": 0.451807
+      },
+      "idempotency_same_job": true,
+      "artifacts": [
+        {
+          "name": "manifest.json",
+          "bytes": 1325,
+          "sha256": "efc5e98c9950ca1bff4874aa1658a9f01dadf65b310c74127fd584c7a9024345",
+          "api_and_ui_verified": true
+        },
+        {
+          "name": "grade.json",
+          "bytes": 21,
+          "sha256": "878982568e5e39420f9fc8fca5caaade78f526a402b42f08357919732d5a1cd5",
+          "api_and_ui_verified": true
+        },
+        {
+          "name": "trace.jsonl",
+          "bytes": 89253,
+          "sha256": "f2eb9ee24315bb0deff30a33486fb647149f80b394930615156a5525d4aa80af",
+          "api_and_ui_verified": true
+        },
+        {
+          "name": "patch.diff",
+          "bytes": 570,
+          "sha256": "de4eeb0d13ef7e1000413aed956c5f928242c8337ab2bf03c352e12ba47c3fcc",
+          "api_and_ui_verified": true
+        }
+      ],
+      "reopened_after_reload": true,
+      "limits": {
+        "max_steps": 32,
+        "wall_time_seconds": 240,
+        "max_cost_usd": 2
+      },
+      "source_report_sha256": "76df02aec928eb396bd07ac840e83a401f54117e68c70268474f2bb890418010"
+    },
+    {
+      "runtime_id": "native-codex",
+      "model_id": "openai/gpt-5.1-codex-mini",
+      "job_id": "b00ff03889893987bf246c07ae13beb2d569b37821f8c348",
+      "status": "succeeded",
+      "grade": "passed",
+      "task_solved": true,
+      "manifest_sha256": "2f1dedeae675f6fe3a4d45a732defdcad86e16077cad3a77193d3a7760a02fc8",
+      "usage": {
+        "requests": 9,
+        "input_tokens": 80659,
+        "output_tokens": 2072,
+        "cost_usd": 0.00763803
+      },
+      "idempotency_same_job": true,
+      "artifacts": [
+        {
+          "name": "manifest.json",
+          "bytes": 1318,
+          "sha256": "2213b48f426d14db7e28caf5d542d2ba42294b347951d9268c6b645b6717b29f",
+          "api_and_ui_verified": true
+        },
+        {
+          "name": "grade.json",
+          "bytes": 21,
+          "sha256": "878982568e5e39420f9fc8fca5caaade78f526a402b42f08357919732d5a1cd5",
+          "api_and_ui_verified": true
+        },
+        {
+          "name": "trace.jsonl",
+          "bytes": 16848,
+          "sha256": "853ecec3140943c3a787665f060756c64b7f135ef78b4a2b47528379a4ccd48f",
+          "api_and_ui_verified": true
+        },
+        {
+          "name": "patch.diff",
+          "bytes": 622,
+          "sha256": "5978f2140bfe768b6a96ec4adf64643d0be3bfda9f125739d19810887ab7b79a",
+          "api_and_ui_verified": true
+        }
+      ],
+      "reopened_after_reload": true,
+      "limits": {
+        "max_steps": 20,
+        "wall_time_seconds": 240,
+        "max_cost_usd": 1
+      },
+      "source_report_sha256": "fe7d54a1fc8621833bbf378b98172f98c23bf858734fb8ff446c144a1d3a25b9"
+    }
+  ],
+  "initial_member_limit_failure": {
+    "job_id": "fd8fcc205ee1f35cc6c3b7f27a2c92061dcc9569607b1260",
+    "status": "failed",
+    "grade": "ungraded",
+    "usage": {
+      "requests": 20,
+      "input_tokens": 749524,
+      "output_tokens": 4419,
+      "cost_usd": 0.771619
+    },
+    "reason": "The first Claude member attempt exhausted the declared 20-request cap. It is retained as a failed attempt, not counted as a passing run."
+  },
+  "cancellation": {
+    "job_id": "f35f2b5f05c0685cecfba60f22658b23c8626230f6d8aeb2",
+    "status": "cancelled",
+    "grade": "ungraded",
+    "model_requests": 0,
+    "cost_reported": false,
+    "original_cleanup_request": "UNVERIFIED in initial proof; independent API-only reproduction returned415 because the test omitted JSON Content-Type.",
+    "reconciled_cleanup": "Drained process restart cleared volatile leases; corrected real-member connection/revocation returned200 and repeat revocation401.",
+    "host_containers_remaining": [],
+    "job_tmpfs_mounts_remaining": []
+  },
+  "tests": {
+    "runner_passed": 117,
+    "runner_linux_only_skipped": 1,
+    "worker_passed": 161,
+    "frontend_passed": 860,
+    "live_anonymous_checks_passed": 16
+  },
+  "proof_sha256": {
+    "member-execution-accepted.json": "6bfd4278a0faf3f391f08bba7f3279989597abc9c8232f12237119745912eb74",
+    "member-execution-proof.json": "fe7d54a1fc8621833bbf378b98172f98c23bf858734fb8ff446c144a1d3a25b9",
+    "member-native-claude-retry-vk7r8xr6/member-execution-proof.json": "76df02aec928eb396bd07ac840e83a401f54117e68c70268474f2bb890418010",
+    "deployed-grader-final-task-v3.json": "f5d7bf5e2f35f4a7168a0a4b427fdfbc2ddcd284b05b320fd895b6704c97b6d3",
+    "isolation-final-live.log": "d8d4e5bf30c81f578da3ebb4ff73e2d06620ac92b9c0ddf5cbb50937e31b54b9",
+    "final-registry-receipts.json": "6ec309d0e201a1331bce73509812bf11730f7ec93825ce7b96444208bffa7e38",
+    "kv-readback-proof.json": "02a3d4107563d3fe0e1d9b2fd311046183b4bced19545c91df51abbee41779de",
+    "anonymous-live.json": "b5a2570fbbb70fca4f005559acf99872ebe2c6a963cfa0fd42f4521ed4c4e8e2",
+    "anonymous-artifact-live.json": "3393d7991a6dae8aff133037839febda517b086bf6ab0d7072f791ed71c76694",
+    "member-cancel-proof.json": "c925adb7898c907a1dd56f82290b4527c6925db5356cd59d06cda297b50235de",
+    "final-host-cleanup.json": "a0b4b3beeea354a2784ea91d08dd4918bd280a8cbf51461030fffc9f40b0ded2",
+    "post-restart-member-proof.json": "ac4edfef06c16f48e9e13098e8d61cabd376b5565d6c41478b40d6f202c6c433",
+    "worker-tests-final.log": "11f46ebf1adabd0609efc766f580710507d4c349ec55da52814b16de82b60244",
+    "runner-tests-final.log": "d5724584db6ee55822cf27587748c6447d6d86876298f5ac58c93824830ee5bc",
+    "member-cancellation-reconciled.json": "b07e384261f30ba6cd6404a60d0f6ffeb6e12906e7f426d402840f2b63522df2"
+  },
+  "unverified": [
+    "Live isolation across two separately authenticated member accounts; only one real member session was supplied.",
+    "Forced cold PostgreSQL saved-prompt hydration and actual auth-code exchange were not exercised in this runner acceptance."
+  ],
+  "supported_scope": "Three exact runtime/model pairs and one operator-installed Requests task with a disclosed static edit contract. Arbitrary repository uploads and arbitrary model compatibility are not claimed."
+}

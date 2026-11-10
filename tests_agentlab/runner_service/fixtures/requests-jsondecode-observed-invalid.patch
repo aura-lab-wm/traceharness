@@ -1,0 +1,26 @@
+--- a/src/requests/exceptions.py
++++ b/src/requests/exceptions.py
+@@ -31,15 +31,16 @@
+ class JSONDecodeError(InvalidJSONError, CompatJSONDecodeError):
+     """Couldn't decode the text into json"""
+ 
+-    def __init__(self, *args, **kwargs):
++    def __init__(self, msg, doc, pos, *args, **kwargs):
+         """
+-        Construct the JSONDecodeError instance first with all
+-        args. Then use it's args to construct the IOError so that
+-        the json specific args aren't used as IOError specific args
+-        and the error message from JSONDecodeError is preserved.
++        Construct the JSONDecodeError instance with msg, doc, pos.
++        Then initialize the base classes accordingly.
+         """
+-        CompatJSONDecodeError.__init__(self, *args)
+-        InvalidJSONError.__init__(self, *self.args, **kwargs)
++        CompatJSONDecodeError.__init__(self, msg, doc, pos)
++        InvalidJSONError.__init__(self, msg, **kwargs)
++
++    def __reduce__(self):
++        return (self.__class__, (self.msg, self.doc, self.pos))
+ 
+ 
+ class HTTPError(RequestException):

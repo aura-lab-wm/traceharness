@@ -48,3 +48,16 @@ describe('task compatibility and model metadata validation', () => {
     expect(() => runnerCatalog(catalog)).toThrow('catalog is incomplete')
   })
 })
+
+
+describe('runtime-specific task environments', () => {
+  it('retains one pinned dependency image per supported runtime', () => {
+    const catalog = fixture()
+    catalog.tasks[0].environment_digests = { traceharness: 'sha256:' + 'b'.repeat(64), 'native-codex': 'sha256:' + 'c'.repeat(64) }
+    expect(runnerCatalog(catalog).tasks[0].environment_digests['native-codex']).toBe('sha256:' + 'c'.repeat(64))
+  })
+  it.each([null, [], {}, { unknown: 'sha256:' + 'a'.repeat(64) }, { traceharness: 'latest' }, { traceharness: 'sha256:' + 'a'.repeat(64) }])('rejects incomplete or unpinned environment maps %j', (environment_digests) => {
+    const catalog = fixture(); catalog.tasks[0].environment_digests = environment_digests
+    expect(() => runnerCatalog(catalog)).toThrow('catalog is incomplete')
+  })
+})

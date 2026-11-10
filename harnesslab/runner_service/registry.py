@@ -8,7 +8,7 @@ import re
 
 from .configuration import RUNTIME_NAMES, has_secret
 
-IMAGE = re.compile(r"^[a-zA-Z0-9][a-zA-Z0-9./:_-]*@sha256:[a-f0-9]{64}$")
+IMAGE = re.compile(r"^(?:[a-zA-Z0-9][a-zA-Z0-9./:_-]*@)?sha256:[a-f0-9]{64}$")
 ID = re.compile(r"^[a-zA-Z0-9][a-zA-Z0-9_.-]{0,119}$")
 
 
@@ -83,7 +83,7 @@ class Registry:
                 raise ValueError("Invalid or duplicate task identity")
             if not re.fullmatch(r"[a-f0-9]{40}|[a-f0-9]{64}", row.get("revision", "")):
                 raise ValueError("Task revision must be immutable")
-            if not IMAGE.fullmatch(row.get("environment_digest", "")) or not IMAGE.fullmatch(row.get("grader_image_digest", "")):
+            if not IMAGE.fullmatch(row.get("grader_image_digest", "")):
                 raise ValueError("Task environment and grader must be pinned images")
             if not isinstance(row.get("repository"), str) or not row["repository"].startswith("https://"):
                 raise ValueError("Task repository must be an HTTPS provenance URL")
@@ -99,10 +99,17 @@ class Registry:
                     or any(not isinstance(r, str) or r not in self.runtimes for r in runtime_ids)
                     or len(set(runtime_ids)) != len(runtime_ids)):
                 raise ValueError("Task must name installed runtime environments")
-            # In v1 a runtime image also supplies the task's dependencies; no build or
-            # package install is allowed in response to an untrusted browser request.
-            if any(self.runtimes[r]["image_digest"] != row["environment_digest"] for r in runtime_ids):
+            # Each engine can supply its own pinned dependency environment for the
+            # same upstream task. Legacy single-image inventories remain valid.
+            environments = row.get("environment_digests")
+            if environments is None:
+                environments = {rid: row.get("environment_digest", "") for rid in runtime_ids}
+            if (not isinstance(environments, dict) or set(environments) != set(runtime_ids)
+                    or any(not isinstance(image, str) or not IMAGE.fullmatch(image)
+                           or self.runtimes[rid]["image_digest"] != image for rid, image in environments.items())):
                 raise ValueError("Runtime image must match the tested task environment")
+            row["environment_digests"] = dict(environments)
+            row["environment_digest"] = next(iter(environments.values()))
             row["path"] = str(path)
             row["runtime_ids"] = list(runtime_ids)
             self.tasks[tid] = row
@@ -129,7 +136,10 @@ class Registry:
         result = {}
         for tid, task in self.tasks.items():
             try:
-                result[tid] = tree_hash(Path(task["path"])) == task["content_sha256"]
+                metadata = json.loads((Path(task["path"]) / "task.json").read_text())
+                command = metadata.get("visible_test_command") if isinstance(metadata, dict) else None
+                result[tid] = bool(isinstance(command, str) and command.strip() and len(command) <= 4096
+                                   and "\x00" not in command and tree_hash(Path(task["path"])) == task["content_sha256"])
             except (OSError, ValueError):
                 result[tid] = False
         return result
@@ -145,7 +155,7 @@ class Registry:
                              "prompt_mode": "replace" if rid == "traceharness" else "append", "supports_advanced": rid == "traceharness",
                              "model_ids": row.get("model_ids", [])})
         tasks = [{**{k: task[k] for k in ("id", "title", "repository", "revision", "environment_digest")},
-                  "runtime_ids": list(task["runtime_ids"]),
+                  "runtime_ids": list(task["runtime_ids"]), "environment_digests": dict(task["environment_digests"]),
                   "ready": bool(health.get("tasks", {}).get(tid)),
                   "reason": "" if health.get("tasks", {}).get(tid) else "Task package or environment is unavailable."}
                  for tid, task in self.tasks.items()]

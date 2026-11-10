@@ -144,3 +144,19 @@
 .rg-composer-checkpoints{margin-top:24px;scroll-margin-top:16px}
 .rg-composer-selection-actions{margin:-8px 0 12px;gap:8px}
 @media(max-width:760px){.rg-composer-toolbar>p{display:none}.rg-composer-toolbar>.rg-row{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));width:100%}.rg-composer-toolbar .rg-btn{padding:8px;font-size:12px;min-width:0}.rg-composer .rg-dh{margin-bottom:12px}.rg-composer .rg-dh .rg-eyebrow{display:none}.rg-composer .rg-dh h1{margin:0 0 6px}.rg-composer .rg-dh p{font-size:12px;margin:0}.rg-composer .rg-dh .rg-composer-connection{font-size:11px;padding:4px 8px}.rg-composer-setup-summary{flex-wrap:wrap}.rg-composer-setup-summary dl{min-width:140px}.rg-composer-prompt-actions .rg-btn{font-size:12px;padding:8px}.rg-composer-setup-summary+.rg-composer-setup .rg-composer-selectors{margin-bottom:12px}}
+
+/* Completed evidence stays reachable independently of the current editor draft. */
+.rg-composer-history{margin-top:24px!important}
+.rg-composer-history .rg-pnl-h{justify-content:space-between;flex-wrap:wrap;gap:12px}
+.rg-composer-run-list,.rg-composer-artifacts{list-style:none;padding:0;margin:16px 0 0}
+.rg-composer-run-list>li,.rg-composer-artifacts>li{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:14px 0;border-top:1px solid var(--rig-line);min-width:0}
+.rg-composer-run-list>li>div,.rg-composer-artifacts>li>div{display:grid;gap:5px;min-width:0}
+.rg-composer-run-list strong,.rg-composer-artifacts strong{font-size:12px;line-height:1.6;overflow-wrap:anywhere}
+.rg-composer-run-list span,.rg-composer-run-list time,.rg-composer-artifacts span{font-size:12px;line-height:1.6;color:var(--rig-dim);overflow-wrap:anywhere}
+.rg-composer-run-list>li[aria-current=true] strong{color:var(--rig-sel-t)}
+.rg-composer-run-list .rg-btn,.rg-composer-artifacts .rg-btn{flex-shrink:0}
+.rg-composer-job .rg-pnl-h h2{overflow-wrap:anywhere;min-width:0}
+.rg-composer-job-identity{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:16px 0;font-size:12px;line-height:1.6}
+.rg-composer-job-identity dt{color:var(--rig-dim)}
+.rg-composer-job-identity dd{margin:3px 0 0;font-family:var(--rig-mono);overflow-wrap:anywhere}
+@media(max-width:760px){.rg-composer-run-list>li,.rg-composer-artifacts>li{align-items:flex-start;flex-wrap:wrap;gap:10px}.rg-composer-job-identity{grid-template-columns:minmax(0,1fr)}}
