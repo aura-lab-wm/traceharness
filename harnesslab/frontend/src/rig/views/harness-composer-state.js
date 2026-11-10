@@ -1,5 +1,7 @@
 import { blocksFromHarness, readDraft, wizardAnswers, wizardBlocks } from './shallow-drafts'
 import { CARDS, QUESTIONS, blocksFromAnswers } from './shallow-data'
+import { encodeMemberJSON } from '../../member-api'
+import { fieldIssues, numberIssue } from '../harnessFields'
 
 export const NATIVE_DRAFTS = [
   { id: 'native-claude-code', name: 'Claude Code', kind: 'native', available: false, prompt_mode: 'append', reason: 'A native runtime must be connected and verified.' },
@@ -19,7 +21,7 @@ export function safeBlocks(input) {
     if (key === 'include') return typeof value !== 'boolean'
     return value !== '' && (typeof value !== 'number' || !Number.isFinite(value))
   }))) return null
-  return input.map((b) => Object.fromEntries([['type', b.type], ...fields[b.type].map((key) => [key, b[key]])]))
+  return input.map((b) => Object.fromEntries([['type', b.type], ...fields[b.type].map((key) => [key, Array.isArray(b[key]) ? [...b[key]] : b[key]])]))
 }
 
 export function fixedComposerDrafts() {
@@ -47,7 +49,7 @@ export function initialComposer(args = []) {
     typeof old.limits?.[key] === 'number' && Number.isFinite(old.limits[key]) || old.limits?.[key] === '' ? old.limits[key] : fallback]))
   const answers = Object.fromEntries(QUESTIONS.map((q) => [q.id, q.options.some(([v]) => v === old.answers?.[q.id]) ? old.answers[q.id] : wizardAnswers()[q.id]]))
   return { selection, model_id: typeof old.model_id === 'string' ? old.model_id : '', task_id: typeof old.task_id === 'string' ? old.task_id : '', blocks,
-    native_prompts: nativePrompts, harness_drafts: harnessDrafts, answers, limits,
+    native_prompts: nativePrompts, harness_drafts: harnessDrafts, answers, limits, preserve_prompt: old.preserve_prompt === true,
     edit_mode: args[0] === 'guided' ? 'guided' : ['guided', 'advanced'].includes(old.edit_mode) ? old.edit_mode : 'prompt' }
 }
 
@@ -60,7 +62,7 @@ export function configurationFor(state, { card, runtime, fixedPrompt }) {
     version: 1, runtime_id: native ? state.selection.slice(7) : 'traceharness',
     model_id: state.model_id, task_id: state.task_id, prompt,
     prompt_mode: native ? runtime?.prompt_mode || 'append' : 'replace',
-    harness: native ? {} : { ...(fixed && card ? { id: card.id, lane: 'fixed', hash: card.hash } : { lane: 'minimal' }), blocks },
+    harness: native ? {} : { ...(fixed && card ? { id: card.id, lane: 'fixed', ...(typeof card.hash === 'string' ? { hash: card.hash } : {}) } : { lane: 'minimal' }), blocks },
     limits: { ...state.limits, max_steps: native ? state.limits.max_steps : blocks.find((b) => b.type === 'stop')?.max_steps },
   }
 }
@@ -72,4 +74,125 @@ export function guidedBlocks(answers, prompt) {
 export function expiryTime(value) {
   if (typeof value === 'number') return value < 1e12 ? value * 1000 : value
   return typeof value === 'string' ? Date.parse(value) : NaN
+}
+
+export const CONFIGURATION_MAX_BYTES = 1024 * 1024
+const configurationKeys = ['version', 'runtime_id', 'model_id', 'task_id', 'prompt', 'prompt_mode', 'harness', 'limits']
+const limitFields = [
+  { key: 'max_steps', label: 'Step cap', min: 1, max: 200 },
+  { key: 'wall_time_seconds', label: 'Time limit', min: 30, max: 3600 },
+  { key: 'max_cost_usd', label: 'Model budget', min: 0.01, max: 100, step: 'any' },
+]
+const toolNames = new Set(CARDS.flatMap((card) => card.tools))
+const secretKeys = new Set(['apikey', 'key', 'password', 'token', 'authorization', 'secret', 'credentialid', 'openrouterkey', 'openrouterapikey', 'accesstoken', 'refreshtoken'])
+const plain = (value) => value && typeof value === 'object' && !Array.isArray(value) && Object.getPrototypeOf(value) === Object.prototype
+const keysMatch = (value, required, optional = []) => plain(value) && required.every((key) => Object.hasOwn(value, key))
+  && Object.keys(value).every((key) => required.includes(key) || optional.includes(key))
+const copy = (value) => JSON.parse(encodeMemberJSON(value))
+const fail = (message) => { throw new Error(message) }
+
+// Check before copying or serializing: imports are configuration, never an
+// endpoint, credential, object prototype, or executable instruction to the UI.
+function checkData(value, depth = 0, budget = { nodes: 0 }) {
+  if (++budget.nodes > 1000 || depth > 8) fail('The configuration is too complex. Import a TraceHarness configuration export.')
+  if (typeof value === 'string') {
+    if (/sk-or-v\d+-[A-Za-z0-9_-]{16,}/.test(value)) fail('Remove provider credentials before importing or exporting configuration.')
+    for (let i = 0; i < value.length; i++) {
+      const code = value.charCodeAt(i)
+      if (code >= 0xd800 && code <= 0xdbff) {
+        const next = value.charCodeAt(++i)
+        if (!(next >= 0xdc00 && next <= 0xdfff)) fail('The configuration contains invalid Unicode text.')
+      } else if (code >= 0xdc00 && code <= 0xdfff) fail('The configuration contains invalid Unicode text.')
+    }
+    return
+  }
+  if (value === null || typeof value === 'boolean') return
+  if (typeof value === 'number') { if (!Number.isFinite(value)) fail('Configuration numbers must be finite.'); return }
+  if (!Array.isArray(value) && !plain(value)) fail('Import a JSON configuration object, without executable or custom values.')
+  for (const key of Reflect.ownKeys(value)) {
+    if (Array.isArray(value) && key === 'length') continue
+    if (typeof key !== 'string' || ['__proto__', 'prototype', 'constructor'].includes(key)) fail('The configuration contains an unsafe object field.')
+    if (Array.isArray(value) && !/^(0|[1-9][0-9]*)$/.test(key)) fail('Configuration arrays cannot contain extra fields.')
+    if (secretKeys.has(key.toLowerCase().replace(/[^a-z0-9]/g, ''))) fail('Remove credential fields before importing or exporting configuration.')
+    const descriptor = Object.getOwnPropertyDescriptor(value, key)
+    if (!Object.hasOwn(descriptor, 'value')) fail('Import plain JSON values, without executable properties.')
+    checkData(descriptor.value, depth + 1, budget)
+  }
+}
+
+function checkedConfiguration(value) {
+  checkData(value)
+  if (!keysMatch(value, configurationKeys) || value.version !== 1) fail('Import a complete version 1 TraceHarness configuration export.')
+  const native = NATIVE_DRAFTS.some((runtime) => runtime.id === value.runtime_id)
+  if (value.runtime_id !== 'traceharness' && !native) fail('This configuration names an unsupported runtime. Choose a supported harness first.')
+  if (value.prompt_mode !== (native ? 'append' : 'replace')) fail('The prompt mode does not match this runtime.')
+  if (typeof value.model_id !== 'string' || value.model_id !== '' && !/^[A-Za-z0-9][A-Za-z0-9/_.:@+-]{1,150}$/.test(value.model_id)) fail('Use a valid OpenRouter model ID, or leave the model unset.')
+  if (typeof value.task_id !== 'string' || value.task_id !== '' && !/^[A-Za-z0-9][A-Za-z0-9_.-]{0,119}$/.test(value.task_id)) fail('Use a registered task ID, or leave the task unset.')
+  if (typeof value.prompt !== 'string' || new TextEncoder().encode(value.prompt).length > 250000) fail('The prompt must be text of at most 250,000 UTF-8 bytes.')
+  if (!keysMatch(value.limits, limitFields.map((field) => field.key))) fail('Include step, time and model-budget limits only.')
+  for (const field of limitFields) {
+    const issue = numberIssue(value.limits[field.key], field)
+    if (issue) fail(`${field.label}: ${issue}`)
+  }
+  if (native) {
+    if (!keysMatch(value.harness, [])) fail('Native runtimes cannot import TraceHarness tool or block settings.')
+  } else {
+    if (!keysMatch(value.harness, ['lane', 'blocks'], ['id', 'hash']) || !['fixed', 'minimal'].includes(value.harness.lane)) fail('Include a fixed or editable TraceHarness harness with its seven blocks.')
+    if (value.harness.id !== undefined && (typeof value.harness.id !== 'string' || !(value.harness.lane === 'fixed' ? CARDS.some((card) => card.id === value.harness.id) : /^min_[a-f0-9]{12}$/.test(value.harness.id)))) fail('The harness reference is not a recognized preset or saved harness.')
+    if (value.harness.lane === 'fixed' && !value.harness.id) fail('A fixed configuration must identify its original preset.')
+    if (value.harness.hash !== undefined && (typeof value.harness.hash !== 'string' || !/^[a-f0-9]{12}$/.test(value.harness.hash))) fail('The harness hash is malformed.')
+    const blocks = safeBlocks(value.harness.blocks)
+    if (!blocks || value.harness.blocks.some((block) => !keysMatch(block, ['type', ...fields[block.type]]))) fail('Include exactly one of each supported block, with no extra fields.')
+    const tools = blocks.find((block) => block.type === 'tools').names
+    if (tools.some((name) => !toolNames.has(name)) || new Set(tools).size !== tools.length) fail('The tools block contains an unsupported or repeated tool. Select tools from the editor.')
+    const issues = fieldIssues(blocks)
+    if (issues.length) fail(issues[0])
+    if (blocks.find((block) => block.type === 'prompt').text !== value.prompt) fail('The prompt and prompt block disagree. Export a consistent configuration from the editor.')
+    if (blocks.find((block) => block.type === 'stop').max_steps !== value.limits.max_steps) fail('The step limit and stop block disagree. Use the same step cap in both.')
+  }
+  if (new TextEncoder().encode(encodeMemberJSON(value)).length > CONFIGURATION_MAX_BYTES) fail('The configuration must be at most 1 MiB.')
+  return copy(value)
+}
+
+/** Validate a local file only; catalog membership and run readiness remain server checks. */
+export function parseConfiguration(text) {
+  if (typeof text !== 'string' || new TextEncoder().encode(text).length > CONFIGURATION_MAX_BYTES) fail('Choose a JSON configuration file of at most 1 MiB.')
+  let value
+  try { value = JSON.parse(text) } catch { fail('This file is not valid JSON. Choose a TraceHarness configuration export.') }
+  return checkedConfiguration(value)
+}
+
+export function configurationText(configuration) {
+  return encodeMemberJSON(checkedConfiguration(configuration))
+}
+
+/** Apply a checked file as a draft. This helper never saves, fetches, or runs. */
+export function applyConfiguration(state, configuration) {
+  const value = checkedConfiguration(configuration)
+  const previousState = copy(state)
+  const next = copy(state)
+  if (state.selection === 'custom' || state.selection.startsWith('saved:')) next.harness_drafts[state.selection] = safeBlocks(state.blocks)
+  next.model_id = value.model_id
+  next.task_id = value.task_id
+  next.limits = { ...value.limits }
+  const native = value.runtime_id !== 'traceharness'
+  if (native) {
+    next.selection = 'native:' + value.runtime_id
+    next.native_prompts[value.runtime_id] = value.prompt
+    next.edit_mode = 'prompt'
+  } else {
+    next.selection = 'custom'
+    next.blocks = safeBlocks(value.harness.blocks)
+    next.harness_drafts.custom = safeBlocks(value.harness.blocks)
+    next.edit_mode = 'advanced'
+  }
+  return { state: next, previousState, notice: native
+    ? 'Imported as a native runtime draft. Model and task availability still need runner review.'
+    : 'Imported as an editable custom draft. The original preset and account saves are unchanged.' }
+}
+
+export function forkAsCustom(state, context) {
+  if (state.selection.startsWith('native:')) fail('Native runtimes cannot be converted into TraceHarness blocks.')
+  const result = applyConfiguration(state, configurationFor(state, context))
+  return { ...result, notice: 'Created an editable custom copy. The original preset and account saves are unchanged.' }
 }

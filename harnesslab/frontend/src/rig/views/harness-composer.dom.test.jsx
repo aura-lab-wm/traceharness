@@ -65,10 +65,19 @@ beforeEach(() => {
   }))
 })
 afterEach(() => { cleanup(); vi.restoreAllMocks(); vi.unstubAllGlobals() })
+function choose(label, option) {
+  const input = screen.getByRole('combobox', { name: label, exact: true })
+  fireEvent.click(input)
+  fireEvent.change(input, { target: { value: option } })
+  fireEvent.click(screen.getByRole('option', { name: option, exact: true }))
+}
+async function catalogReady() {
+  await waitFor(() => expect(screen.getByRole('combobox', { name: 'Model', exact: true }).getAttribute('aria-busy')).not.toBe('true'))
+}
 async function ready() {
-  await screen.findByRole('option', { name: 'Model A' })
-  fireEvent.change(screen.getByRole('combobox', { name: 'Model', exact: true }), { target: { value: 'fixture/model-a' } })
-  fireEvent.change(screen.getByRole('combobox', { name: 'Task', exact: true }), { target: { value: 'fixture-task' } })
+  await catalogReady()
+  choose('Model', 'Model A')
+  choose('Task', 'Registered task fixture')
   await waitFor(() => expect(screen.getByRole('button', { name: 'Review run' }).disabled).toBe(false))
 }
 async function connect() {
@@ -77,9 +86,28 @@ async function connect() {
   await screen.findByRole('button', { name: 'Disconnect OpenRouter' })
 }
 function switchHarness(value, carry = false) {
-  fireEvent.change(screen.getByRole('combobox', { name: 'Harness', exact: true }), { target: { value } })
-  const button = screen.queryByRole('button', { name: carry ? 'Carry my prompt' : 'Use selected harness prompt' })
-  if (button) fireEvent.click(button)
+  const toggle = screen.getByRole('checkbox', { name: 'Keep prompt when switching harnesses' })
+  if (toggle.checked !== carry) fireEvent.click(toggle)
+  const label = value === 'custom' ? 'Custom TraceHarness harness'
+    : value.startsWith('fixed:') ? CARDS.find((card) => card.id === value.slice(6)).name + ' stand-in'
+      : value === 'native:native-claude-code' ? 'Claude Code' : 'Codex'
+  choose('Harness', label)
+  expect(screen.queryByRole('group', { name: 'Change harness' })).toBeNull()
+}
+function importFile(contents, name = 'configuration.json') {
+  const file = new File([contents], name, { type: 'application/json' })
+  Object.defineProperty(file, 'text', { value: () => Promise.resolve(contents) })
+  fireEvent.change(screen.getByLabelText('Import configuration file'), { target: { files: [file] } })
+}
+function captureDownload() {
+  let blob
+  vi.stubGlobal('URL', class extends URL { static createObjectURL(value) { blob = value; return 'blob:fixture' } static revokeObjectURL() {} })
+  vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(() => {})
+  return async () => {
+    fireEvent.click(screen.getByRole('button', { name: 'Export configuration' }))
+    expect(blob).toBeTruthy()
+    return await new Promise((resolve) => { const reader = new FileReader(); reader.onload = () => resolve(reader.result); reader.readAsText(blob) })
+  }
 }
 const prompt = () => screen.getByRole('textbox', { name: 'Prompt', exact: true })
 
@@ -89,9 +117,11 @@ describe('the unified member Harnesses composer', () => {
     render(<Composer />)
     await screen.findByText('Runner not connected')
     expect(screen.getAllByRole('textbox', { name: 'Prompt', exact: true })).toHaveLength(1)
-    for (const card of CARDS) expect(screen.getByRole('option', { name: card.name + ' stand-in' })).toBeTruthy()
-    expect(screen.getByRole('option', { name: 'Claude Code · unavailable' })).toBeTruthy()
-    expect(screen.getByRole('option', { name: 'No runnable task packages connected' })).toBeTruthy()
+    fireEvent.click(screen.getByRole('combobox', { name: 'Harness', exact: true }))
+    for (const card of CARDS) expect(screen.getByRole('option', { name: card.name + ' stand-in', exact: true })).toBeTruthy()
+    expect(screen.getByRole('option', { name: 'Claude Code', exact: true }).textContent).toContain('Unavailable')
+    fireEvent.keyDown(screen.getByRole('combobox', { name: 'Harness', exact: true }), { key: 'Escape' })
+    expect(screen.getByRole('combobox', { name: 'Task', exact: true }).placeholder).toBe('No runnable task packages connected')
     expect(screen.queryByLabelText('OpenRouter API key')).toBeNull()
     expect(screen.getByRole('button', { name: 'Run', exact: true }).disabled).toBe(true)
     expect(calls.filter((c) => c.url.startsWith('/api/runner/')).map((c) => c.url)).toEqual(['/api/runner/catalog'])
@@ -114,8 +144,8 @@ describe('the unified member Harnesses composer', () => {
     fireEvent.change(prompt(), { target: { value: 'Native Codex instructions.' } })
     switchHarness('native:native-claude-code')
     expect(prompt().value).toBe('Native Claude instructions.')
-    expect(screen.getByRole('combobox', { name: 'Model', exact: true }).value).toBe('fixture/model-a')
-    expect(screen.getByRole('combobox', { name: 'Task', exact: true }).value).toBe('fixture-task')
+    expect(screen.getByRole('combobox', { name: 'Model', exact: true }).value).toBe('Model A')
+    expect(screen.getByRole('combobox', { name: 'Task', exact: true }).value).toBe('Registered task fixture')
     fireEvent.click(screen.getByRole('button', { name: 'Review run' }))
     await screen.findByText('Configuration verified')
     const configuration = calls.findLast((c) => c.url === '/api/runner/preflight').body.configuration
@@ -241,11 +271,11 @@ describe('the unified member Harnesses composer', () => {
   it('does not claim compatibility from a public model catalog alone', async () => {
     delete catalog.runtimes[0].model_ids
     render(<Composer />)
-    await screen.findByRole('option', { name: 'Model A' })
-    fireEvent.change(screen.getByRole('combobox', { name: 'Model', exact: true }), { target: { value: 'fixture/model-a' } })
-    fireEvent.change(screen.getByRole('combobox', { name: 'Task', exact: true }), { target: { value: 'fixture-task' } })
+    await catalogReady()
+    choose('Model', 'Model A')
+    choose('Task', 'Registered task fixture')
     expect(screen.getByRole('button', { name: 'Review run' }).disabled).toBe(true)
-    expect(screen.getByText('Select a model supported by this runtime.')).toBeTruthy()
+    expect(screen.getByText('The selected model is not verified for this runtime. Choose a supported model.')).toBeTruthy()
     expect(calls.some((c) => c.url === '/api/runner/preflight')).toBe(false)
   })
 
@@ -342,13 +372,15 @@ describe('the unified member Harnesses composer', () => {
       model_catalog: { source: 'OpenRouter', status: 'current', fetched_at: 1794330000000 },
     }
     render(<Composer />)
-    await screen.findByRole('option', { name: 'Model A' })
-    expect(screen.getByRole('option', { name: 'Model B' })).toBeTruthy()
+    await catalogReady()
+    fireEvent.click(screen.getByRole('combobox', { name: 'Model', exact: true }))
+    expect(screen.getByRole('option', { name: 'Model A', exact: true })).toBeTruthy()
+    expect(screen.getByRole('option', { name: 'Model B', exact: true })).toBeTruthy()
     expect(screen.queryByText('The runner catalog is incomplete. Execution remains unavailable.')).toBeNull()
-    fireEvent.change(screen.getByRole('combobox', { name: 'Model', exact: true }), { target: { value: 'fixture/model-a' } })
-    expect(screen.getByRole('combobox', { name: 'Model', exact: true }).value).toBe('fixture/model-a')
+    fireEvent.click(screen.getByRole('option', { name: 'Model A', exact: true }))
+    expect(screen.getByRole('combobox', { name: 'Model', exact: true }).value).toBe('Model A')
     expect(screen.getByText('Runner not connected')).toBeTruthy()
-    expect(screen.getByRole('option', { name: 'No runnable task packages connected' })).toBeTruthy()
+    expect(screen.getByRole('combobox', { name: 'Task', exact: true }).placeholder).toBe('No runnable task packages connected')
     expect(screen.queryByLabelText('OpenRouter API key')).toBeNull()
     expect(screen.getByRole('button', { name: 'Review run' }).disabled).toBe(true)
     expect(screen.getByRole('button', { name: 'Run', exact: true }).disabled).toBe(true)
@@ -368,12 +400,137 @@ describe('the unified member Harnesses composer', () => {
     expect(screen.getByRole('button', { name: 'Run', exact: true }).disabled).toBe(true)
   })
 
+  it('imports the exported configuration as an editable draft and can undo without persistence or execution', async () => {
+    const download = captureDownload()
+    render(<Composer />); await ready()
+    fireEvent.change(prompt(), { target: { value: 'Portable instructions with Unicode: λ 🧪.' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Advanced settings' }))
+    fireEvent.change(screen.getByRole('spinbutton', { name: 'Temperature' }), { target: { value: '0.7' } })
+    const exported = await download()
+    fireEvent.change(prompt(), { target: { value: 'Keep this newer working draft.' } })
+    importFile(exported)
+    await waitFor(() => expect(prompt().value).toBe('Portable instructions with Unicode: λ 🧪.'))
+    expect(screen.getByRole('spinbutton', { name: 'Temperature' }).value).toBe('0.7')
+    expect(screen.getByRole('combobox', { name: 'Model', exact: true }).value).toBe('Model A')
+    expect(screen.getByRole('combobox', { name: 'Task', exact: true }).value).toBe('Registered task fixture')
+    fireEvent.click(screen.getByRole('button', { name: 'Undo configuration change' }))
+    expect(prompt().value).toBe('Keep this newer working draft.')
+    expect(calls.filter((call) => call.url.startsWith('/api/runner/') && call.method !== 'GET')).toHaveLength(0)
+    expect(calls.filter((call) => ['/api/shallow/wizard', '/api/shallow/harnesses'].includes(call.url) && call.method === 'POST')).toHaveLength(0)
+  })
+
+  it('blocks reviewed execution while an import is reading and requires fresh review after it resolves', async () => {
+    const download = captureDownload()
+    const pending = deferred()
+    render(<Composer />); await ready(); await connect()
+    const imported = JSON.parse(await download())
+    imported.prompt = 'Imported instructions must receive a fresh review.'
+    imported.harness.blocks.find((block) => block.type === 'prompt').text = imported.prompt
+    fireEvent.click(screen.getByRole('button', { name: 'Review run' }))
+    await screen.findByText('Configuration verified')
+    expect(screen.getByRole('button', { name: 'Run', exact: true }).disabled).toBe(false)
+    const file = new File(['pending'], 'configuration.json', { type: 'application/json' })
+    Object.defineProperty(file, 'text', { value: () => pending.promise })
+    fireEvent.change(screen.getByLabelText('Import configuration file'), { target: { files: [file] } })
+    expect(screen.getByRole('button', { name: 'Run', exact: true }).disabled).toBe(true)
+    expect(screen.getByRole('button', { name: 'Review run' }).disabled).toBe(true)
+    expect(prompt().disabled).toBe(true)
+    fireEvent.click(screen.getByRole('button', { name: 'Run', exact: true }))
+    fireEvent.click(screen.getByRole('button', { name: 'Review run' }))
+    expect(calls.filter((call) => call.url === '/api/runner/preflight')).toHaveLength(1)
+    expect(calls.some((call) => call.url === '/api/runner/jobs')).toBe(false)
+    await act(async () => pending.resolve(JSON.stringify(imported)))
+    await waitFor(() => expect(prompt().value).toBe(imported.prompt))
+    expect(screen.queryByText('Configuration verified')).toBeNull()
+    expect(screen.getByRole('button', { name: 'Run', exact: true }).disabled).toBe(true)
+    expect(screen.getByRole('button', { name: 'Review run' }).disabled).toBe(false)
+    fireEvent.click(screen.getByRole('button', { name: 'Review run' }))
+    await screen.findByText('Configuration verified')
+    expect(calls.filter((call) => call.url === '/api/runner/preflight')).toHaveLength(2)
+    expect(calls.findLast((call) => call.url === '/api/runner/preflight').body.configuration.prompt).toBe(imported.prompt)
+    expect(calls.some((call) => call.url === '/api/runner/jobs')).toBe(false)
+  })
+
+  it('keeps incompatible tasks inspectable but blocks review until their registered runtime is selected', async () => {
+    catalog.tasks[0].runtime_ids = ['native-codex']
+    render(<Composer />); await catalogReady()
+    choose('Model', 'Model A')
+    choose('Task', 'Registered task fixture')
+    expect(screen.getByText('This task is not registered for the selected runtime. Choose a supported task or harness.')).toBeTruthy()
+    expect(screen.getByRole('button', { name: 'Review run' }).disabled).toBe(true)
+    expect(calls.some((call) => call.url === '/api/runner/preflight')).toBe(false)
+    switchHarness('native:native-codex', true)
+    expect(screen.getByRole('combobox', { name: 'Task', exact: true }).value).toBe('Registered task fixture')
+    expect(screen.queryByText('This task is not registered for the selected runtime. Choose a supported task or harness.')).toBeNull()
+    expect(screen.getByRole('button', { name: 'Review run' }).disabled).toBe(false)
+    expect(calls.some((call) => call.url === '/api/runner/jobs')).toBe(false)
+  })
+
+  it('rejects credential-bearing or malformed imports without changing the current draft', async () => {
+    const download = captureDownload()
+    render(<Composer />); await ready()
+    fireEvent.change(prompt(), { target: { value: 'Retain this draft.' } })
+    const config = JSON.parse(await download())
+    importFile(JSON.stringify({ ...config, api_key: 'fixture-secret-do-not-persist' }))
+    await screen.findByText('Remove credential fields before importing or exporting configuration.')
+    expect(prompt().value).toBe('Retain this draft.')
+    expect(JSON.stringify(sessionStorage)).not.toContain('fixture-secret-do-not-persist')
+    expect(JSON.stringify(calls)).not.toContain('fixture-secret-do-not-persist')
+    importFile('{not valid json}')
+    await screen.findByText('This file is not valid JSON. Choose a TraceHarness configuration export.')
+    expect(prompt().value).toBe('Retain this draft.')
+    expect(calls.filter((call) => call.url.startsWith('/api/runner/') && call.method !== 'GET')).toHaveLength(0)
+  })
+
+  it('forks a fixed preset for complete editing while preserving the preset and previous custom draft through undo', async () => {
+    render(<Composer />); await ready()
+    fireEvent.change(prompt(), { target: { value: 'Original custom working draft.' } })
+    switchHarness('fixed:codex')
+    fireEvent.change(prompt(), { target: { value: 'Edited Codex stand-in draft.' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Customize tools and limits' }))
+    expect(screen.getByRole('combobox', { name: 'Harness', exact: true }).value).toBe('Custom TraceHarness harness')
+    expect(prompt().value).toBe('Edited Codex stand-in draft.')
+    for (const name of CARDS.find((card) => card.id === 'codex').tools) expect(screen.getByRole('checkbox', { name, exact: true }).checked).toBe(true)
+    fireEvent.change(screen.getByRole('spinbutton', { name: 'Step cap' }), { target: { value: '31' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Undo configuration change' }))
+    expect(screen.getByRole('combobox', { name: 'Harness', exact: true }).value).toBe('Codex stand-in')
+    expect(prompt().value).toBe('Edited Codex stand-in draft.')
+    switchHarness('custom')
+    expect(prompt().value).toBe('Original custom working draft.')
+    expect(calls.some((call) => call.url === '/api/runner/jobs')).toBe(false)
+  })
+
+  it('preserves unrelated advanced sampling values when a guided tools answer changes', async () => {
+    render(<Composer />); await ready()
+    fireEvent.click(screen.getByRole('button', { name: 'Advanced settings' }))
+    fireEvent.change(screen.getByRole('spinbutton', { name: 'Temperature' }), { target: { value: '0.7' } })
+    fireEvent.change(screen.getByRole('spinbutton', { name: 'Tokens per call' }), { target: { value: '4096' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Guide me' }))
+    fireEvent.click(screen.getByRole('radio', { name: 'Read only.', exact: true }))
+    fireEvent.click(screen.getByRole('button', { name: 'Advanced settings' }))
+    expect(screen.getByRole('spinbutton', { name: 'Temperature' }).value).toBe('0.7')
+    expect(screen.getByRole('spinbutton', { name: 'Tokens per call' }).value).toBe('4096')
+    expect(screen.getByRole('checkbox', { name: 'edit_file', exact: true }).checked).toBe(false)
+    expect(screen.getByRole('checkbox', { name: 'run_tests', exact: true }).checked).toBe(false)
+  })
+
+  it('expands the prompt editor without adding a nested main landmark or discarding text', async () => {
+    render(<Composer />); await ready()
+    fireEvent.change(prompt(), { target: { value: 'Prompt with a persistent edit.' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Expand editor' }))
+    expect(screen.getByRole('button', { name: 'Reduce editor' }).getAttribute('aria-expanded')).toBe('true')
+    expect(prompt().closest('section').classList.contains('is-expanded')).toBe(true)
+    expect(screen.queryByRole('main')).toBeNull()
+    fireEvent.click(screen.getByRole('button', { name: 'Reduce editor' }))
+    expect(prompt().value).toBe('Prompt with a persistent edit.')
+  })
+
   it('keeps guided radio groups independent when workbench panes coexist', () => {
     const first = render(<Composer args={['guided']} />)
     const second = render(<Composer args={['guided']} />)
     const firstGroup = first.container.querySelector('input[type=radio]')
     const secondGroup = second.container.querySelector('input[type=radio]')
     expect(firstGroup.name).not.toBe(secondGroup.name)
-    expect(first.container.querySelector('input[type=search]').id).not.toBe(second.container.querySelector('input[type=search]').id)
+    expect(first.container.querySelector('[role=combobox]').id).not.toBe(second.container.querySelector('[role=combobox]').id)
   })
 })

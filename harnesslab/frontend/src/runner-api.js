@@ -7,6 +7,8 @@ export const UNAVAILABLE_RUNNER = Object.freeze({
   runtimes: [], models: [], tasks: [], credentials_available: false, execution_available: false,
 })
 
+const RUNTIME_IDS = new Set(['traceharness', 'native-claude-code', 'native-codex'])
+
 const allowed = (path, method) => method === 'GET' && ['/catalog', '/jobs'].includes(path)
   || method === 'GET' && /^\/jobs\/[A-Za-z0-9_-]{1,100}$/.test(path)
   || method === 'POST' && ['/preflight', '/credentials', '/jobs'].includes(path)
@@ -70,8 +72,15 @@ export function runnerCatalog(data) {
       || !['replace', 'append'].includes(r.prompt_mode) || !optionalText(r.reason)
       || !(optionalText(r.version) || r.available === false && r.version === null)
       || r.model_ids !== undefined && (!Array.isArray(r.model_ids) || r.model_ids.some((id) => !text(id))))
-    || data.models.some((m) => !optionalText(m.name) || m.pricing !== undefined && (m.pricing === null || typeof m.pricing !== 'object' || Array.isArray(m.pricing)))
-    || data.tasks.some((t) => !optionalText(t.title) || !optionalText(t.repository) || !optionalText(t.revision) || !optionalText(t.reason) || typeof t.ready !== 'boolean')
+    || data.models.some((m) => !optionalText(m.name)
+      || m.context_length !== undefined && (!Number.isSafeInteger(m.context_length) || m.context_length <= 0)
+      || m.supported_parameters !== undefined && (!Array.isArray(m.supported_parameters) || m.supported_parameters.length > 50 || m.supported_parameters.some((p) => !text(p) || p.length > 80))
+      || m.pricing !== undefined && (m.pricing === null || typeof m.pricing !== 'object' || Array.isArray(m.pricing)
+        || ['prompt', 'completion'].some((key) => m.pricing[key] !== undefined && (!text(m.pricing[key]) || m.pricing[key].length > 40 || !/^\d+(?:\.\d+)?$/.test(m.pricing[key])))))
+    || data.tasks.some((t) => !optionalText(t.title) || !optionalText(t.repository) || !optionalText(t.revision) || !optionalText(t.reason) || typeof t.ready !== 'boolean'
+      || t.environment_digest !== undefined && (!text(t.environment_digest) || t.environment_digest.length > 256)
+      || t.runtime_ids !== undefined && (!Array.isArray(t.runtime_ids) || !t.runtime_ids.length || t.runtime_ids.length > RUNTIME_IDS.size
+        || t.runtime_ids.some((id) => !RUNTIME_IDS.has(id)) || new Set(t.runtime_ids).size !== t.runtime_ids.length))
     || ['runtimes', 'models', 'tasks'].some((key) => new Set(data[key].map((r) => r.id)).size !== data[key].length)) {
     throw new Error('The runner catalog is incomplete. Execution remains unavailable.')
   }

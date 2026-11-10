@@ -95,13 +95,16 @@ class Registry:
             if not re.fullmatch(r"[a-f0-9]{64}", row.get("content_sha256", "")):
                 raise ValueError("Task content needs a pinned digest")
             runtime_ids = row.get("runtime_ids")
-            if not isinstance(runtime_ids, list) or not runtime_ids or any(r not in self.runtimes for r in runtime_ids):
+            if (not isinstance(runtime_ids, list) or not runtime_ids or len(runtime_ids) > len(RUNTIME_NAMES)
+                    or any(not isinstance(r, str) or r not in self.runtimes for r in runtime_ids)
+                    or len(set(runtime_ids)) != len(runtime_ids)):
                 raise ValueError("Task must name installed runtime environments")
             # In v1 a runtime image also supplies the task's dependencies; no build or
             # package install is allowed in response to an untrusted browser request.
             if any(self.runtimes[r]["image_digest"] != row["environment_digest"] for r in runtime_ids):
                 raise ValueError("Runtime image must match the tested task environment")
             row["path"] = str(path)
+            row["runtime_ids"] = list(runtime_ids)
             self.tasks[tid] = row
 
     @classmethod
@@ -142,6 +145,7 @@ class Registry:
                              "prompt_mode": "replace" if rid == "traceharness" else "append", "supports_advanced": rid == "traceharness",
                              "model_ids": row.get("model_ids", [])})
         tasks = [{**{k: task[k] for k in ("id", "title", "repository", "revision", "environment_digest")},
+                  "runtime_ids": list(task["runtime_ids"]),
                   "ready": bool(health.get("tasks", {}).get(tid)),
                   "reason": "" if health.get("tasks", {}).get(tid) else "Task package or environment is unavailable."}
                  for tid, task in self.tasks.items()]

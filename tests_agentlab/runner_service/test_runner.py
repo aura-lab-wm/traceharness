@@ -159,6 +159,27 @@ class RunnerTests(unittest.TestCase):
         tampered = self.request("POST", "/api/runner/credentials", {"api_key": KEY}, extra={"x-traceharness-signature": "0" * 64})
         self.assertEqual(tampered.status_code, 401)
 
+    def test_task_catalog_preserves_runtime_constraints_without_private_paths(self):
+        response = self.request("GET", "/api/runner/catalog")
+        self.assertEqual(response.status_code, 200)
+        row = response.json()["tasks"][0]
+        self.assertEqual(row["runtime_ids"], ["traceharness"])
+        self.assertEqual(row["environment_digest"], IMAGE)
+        self.assertNotIn("path", row)
+        self.assertNotIn("grader_image_digest", row)
+        row = self.registry.catalog(self.executor.health())["tasks"][0]
+        row["runtime_ids"].append("native-codex")
+        self.assertEqual(self.registry.tasks["fixture-task"]["runtime_ids"], ["traceharness"])
+
+    def test_task_runtime_constraints_reject_malformed_or_duplicate_inventory(self):
+        for runtime_ids in [None, [], "traceharness", ["missing"], [None], [{}], [["traceharness"]],
+                            ["traceharness", "traceharness"], ["traceharness"] * 4]:
+            with self.subTest(runtime_ids=runtime_ids):
+                data = copy.deepcopy(self.data)
+                data["tasks"][0]["runtime_ids"] = runtime_ids
+                with self.assertRaises(ValueError):
+                    Registry(self.root, data)
+
     def test_authenticator_window_capacity_and_body_binding(self):
         auth = Authenticator(SECRET, clock=lambda: self.now[0], capacity=1)
         timestamp, nonce = str(int(self.now[0])), "a" * 32
