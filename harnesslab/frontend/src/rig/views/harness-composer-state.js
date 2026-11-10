@@ -67,6 +67,35 @@ export function configurationFor(state, { card, runtime, fixedPrompt }) {
   }
 }
 
+const GUIDED_FIELDS = { touch: ['tools', 'names'], dangerous: ['policy', 'mode'], history: ['context', 'window'], stop: ['stop', 'max_steps'] }
+const equalGuided = (a, b) => Array.isArray(a) && Array.isArray(b)
+  ? a.length === b.length && [...a].sort().every((value, index) => value === [...b].sort()[index]) : a === b
+
+// The current configuration and remembered reset answers are separate truths.
+export function guidanceFor(blocks, answers) {
+  const selections = { verify: answers.verify, mcp: 'none' }
+  const custom = []
+  const resetDifferences = []
+  for (const [id, [type, field]] of Object.entries(GUIDED_FIELDS)) {
+    const value = blocks.find((block) => block.type === type)?.[field]
+    const question = QUESTIONS.find((q) => q.id === id)
+    const found = question.options.find(([option]) => equalGuided(value, blocksFromAnswers({ [id]: option }).find((block) => block.type === type)[field]))
+    selections[id] = found?.[0] || null
+    if (!found) custom.push(id)
+    if (selections[id] !== answers[id]) resetDifferences.push(id)
+  }
+  return { selections, custom, resetDifferences }
+}
+
+export function answersFromConfiguration(blocks, remembered) {
+  const actual = guidanceFor(blocks, remembered).selections
+  const answers = { ...remembered, ...Object.fromEntries(Object.entries(actual).filter(([, value]) => value !== null)) }
+  const prompt = blocks.find((block) => block.type === 'prompt')?.text
+  const verify = QUESTIONS.find((q) => q.id === 'verify').options.find(([option]) => prompt === blocksFromAnswers({ verify: option }).find((block) => block.type === 'prompt').text)
+  if (verify) answers.verify = verify[0]
+  return answers
+}
+
 export function guidedBlocks(answers, prompt) {
   return blocksFromAnswers(answers).map((b) => b.type === 'prompt' && prompt !== undefined ? { ...b, text: prompt } : b)
 }
@@ -183,6 +212,7 @@ export function applyConfiguration(state, configuration) {
   } else {
     next.selection = 'custom'
     next.blocks = safeBlocks(value.harness.blocks)
+    next.answers = answersFromConfiguration(next.blocks, next.answers)
     next.harness_drafts.custom = safeBlocks(value.harness.blocks)
     next.edit_mode = 'advanced'
   }

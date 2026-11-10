@@ -1,0 +1,58 @@
+/* A compact notebook of full configurations, using the workbench's existing tokens. */
+.rg-configuration-library{min-width:0;margin:0 0 24px;padding:20px;border:1px solid var(--rig-line2);border-radius:6px;background:var(--rig-panel);color:var(--rig-text)}
+.rg-checkpoint-heading{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:16px}
+.rg-checkpoint-heading h2{font-size:15px;line-height:1.5;font-weight:600;letter-spacing:-.015em;margin:0 0 4px}
+.rg-checkpoint-heading p,.rg-checkpoint-boundary{font-size:12px;line-height:1.6;color:var(--rig-dim);margin:0}
+.rg-checkpoint-scope{flex:none;border:1px solid var(--rig-line2);border-radius:4px;padding:4px 7px;font:11px/1.5 var(--rig-mono);color:var(--rig-dim)}
+.rg-checkpoint-create,.rg-checkpoint-rename{display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap}
+.rg-checkpoint-name-field{flex:1 1 240px;min-width:0;max-width:560px}
+.rg-checkpoint-name-field>.rg-fld{min-width:0;margin:0;font-size:12px}
+.rg-checkpoint-name-count{display:block;font-size:10px;line-height:1.6;color:var(--rig-dim);margin-top:4px;overflow-wrap:anywhere}
+.rg-checkpoint-name-count.invalid{color:var(--rig-red-t)}
+.rg-checkpoint-create>.rg-btn,.rg-checkpoint-rename>.rg-btn{flex:none;min-height:36px}
+.rg-checkpoint-create>.rg-btn,.rg-checkpoint-rename>.rg-btn{margin-top:24px}
+.rg-checkpoint-boundary{margin-top:10px}
+.rg-checkpoint-error{font-size:12px;line-height:1.6;color:var(--rig-red-t);overflow-wrap:anywhere}
+.rg-checkpoint-empty{padding:24px 0 4px;font-size:12px;line-height:1.6}
+.rg-checkpoint-empty strong{font-weight:500}
+.rg-checkpoint-empty p{margin:4px 0 0;color:var(--rig-dim)}
+.rg-checkpoint-list{list-style:none;margin:20px 0 0;padding:0;border-top:1px solid var(--rig-line)}
+.rg-checkpoint-row{margin:0;padding:16px 0;border-bottom:1px solid var(--rig-line);min-width:0}
+.rg-checkpoint-row:last-child{padding-bottom:0;border-bottom:0}
+.rg-checkpoint-row-heading{display:flex;gap:12px;align-items:baseline;justify-content:space-between;flex-wrap:wrap;margin-bottom:10px}
+.rg-checkpoint-row-heading h3{font-size:13px;line-height:1.6;font-weight:600;margin:0;overflow-wrap:anywhere}
+.rg-checkpoint-row.is-compared .rg-checkpoint-row-heading h3{color:var(--rig-sel-t)}
+.rg-checkpoint-time{font:11px/1.5 var(--rig-sans);color:var(--rig-dim)}
+.rg-checkpoint-identity{display:grid;grid-template-columns:minmax(0,.8fr) minmax(0,1.1fr) minmax(0,1.1fr);gap:12px;margin:0 0 12px}
+.rg-checkpoint-identity>div{min-width:0}
+.rg-checkpoint-identity dt{font-size:10px;line-height:1.5;color:var(--rig-dim);margin:0 0 3px}
+.rg-checkpoint-identity dd{font:11px/1.6 var(--rig-mono);margin:0;overflow-wrap:anywhere}
+.rg-checkpoint-actions{display:flex;flex-wrap:wrap;align-items:center;gap:6px}
+.rg-checkpoint-actions .rg-btn{min-height:32px;padding:5px 10px;font-size:11px}
+.rg-checkpoint-delete{margin-left:auto}
+.rg-checkpoint-delete:hover:not(:disabled){color:var(--rig-red-t)}
+.rg-checkpoint-rename{margin-top:12px;padding:12px;background:var(--rig-bg);border:1px solid var(--rig-line);border-radius:4px}
+.rg-checkpoint-comparison{margin-top:20px;padding-top:20px;border-top:1px solid var(--rig-line2);min-width:0}
+.rg-checkpoint-comparison-heading h3{font-size:14px;line-height:1.6;font-weight:600;margin:0;overflow-wrap:anywhere}
+.rg-checkpoint-comparison-heading p{font:11px/1.6 var(--rig-mono);margin:4px 0 0;color:var(--rig-dim)}
+.rg-checkpoint-match{font-size:12px;line-height:1.6;color:var(--rig-dim);margin:16px 0 0}
+.rg-checkpoint-diff{margin:16px 0 0;display:grid;gap:16px}
+.rg-checkpoint-change{min-width:0}
+.rg-checkpoint-change>dt{font-size:12px;font-weight:600;line-height:1.5;margin:0 0 6px}
+.rg-checkpoint-change>dd{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin:0}
+.rg-checkpoint-change>dd>div{min-width:0;padding:10px 12px;border:1px solid var(--rig-line);border-radius:4px;background:var(--rig-bg)}
+.rg-checkpoint-change>dd>div>span{font-size:10px;line-height:1.5;color:var(--rig-dim)}
+.rg-checkpoint-change pre{font:11px/1.7 var(--rig-mono);margin:5px 0 0;white-space:pre-wrap;overflow-wrap:anywhere;max-height:180px;overflow:auto}
+.rg-checkpoint-prompt-diff{margin-top:20px;min-width:0}
+.rg-checkpoint-prompt-diff h4{font-size:12px;line-height:1.5;margin:0;font-weight:600}
+.rg-checkpoint-prompt-diff>p{display:flex;flex-wrap:wrap;gap:8px 16px;font-size:11px;line-height:1.6;margin:6px 0 10px;color:var(--rig-dim)}
+.rg-checkpoint-prompt-diff>pre{font:11px/1.75 var(--rig-mono);margin:0;background:var(--rig-bg);border:1px solid var(--rig-line);border-radius:4px;padding:8px;white-space:pre-wrap;overflow-wrap:anywhere;max-height:320px;overflow:auto}
+.rg-checkpoint-diff-line{display:block;padding:0 6px;min-height:1.75em}
+.rg-checkpoint-diff-line.added{background:var(--rig-sel-bg);color:var(--rig-text);border-left:2px solid var(--rig-sel)}
+.rg-checkpoint-diff-line.removed{background:color-mix(in srgb,var(--rig-red-t) 7%,transparent);color:var(--rig-text);border-left:2px solid var(--rig-red-t)}
+.rg-checkpoint-diff-line.context{border-left:2px solid transparent;color:var(--rig-dim)}
+.rg-checkpoint-prompt-diff>.rg-checkpoint-truncated{margin:10px 0 0}
+.rg-configuration-library .rg-btn:focus-visible,.rg-configuration-library input:focus-visible{outline:2px solid var(--rig-sel);outline-offset:3px}
+.rg-checkpoint-sr{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+@container(max-width:640px){.rg-checkpoint-identity{grid-template-columns:minmax(0,1fr)}.rg-checkpoint-identity>div{display:grid;grid-template-columns:48px minmax(0,1fr);gap:8px}.rg-checkpoint-change>dd{grid-template-columns:minmax(0,1fr)}.rg-checkpoint-name-field{flex-basis:100%;max-width:none}.rg-checkpoint-create>.rg-btn,.rg-checkpoint-rename>.rg-btn{margin-top:0}.rg-checkpoint-heading{flex-wrap:wrap;gap:8px}.rg-checkpoint-delete{margin-left:0}}
+@media(max-width:760px){.rg-configuration-library{padding:16px}.rg-configuration-library input.rg-inp{font-size:16px}.rg-checkpoint-actions .rg-btn{min-height:40px;padding:7px 10px}.rg-checkpoint-create>.rg-btn,.rg-checkpoint-rename>.rg-btn{min-height:40px}}

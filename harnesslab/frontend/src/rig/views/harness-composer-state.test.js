@@ -1,7 +1,7 @@
 // Pure draft/manifest tests: these do not prove a connected runner or a model run.
 import { describe, expect, it, vi } from 'vitest'
 import { CARDS, RECOMMENDED_ANSWERS, blocksFromAnswers } from './shallow-data'
-import { CONFIGURATION_MAX_BYTES, DEFAULT_LIMITS, NATIVE_DRAFTS, applyConfiguration, configurationFor, configurationText, forkAsCustom, initialComposer, parseConfiguration, safeBlocks } from './harness-composer-state'
+import { CONFIGURATION_MAX_BYTES, DEFAULT_LIMITS, NATIVE_DRAFTS, applyConfiguration, configurationFor, configurationText, forkAsCustom, guidanceFor, initialComposer, parseConfiguration, safeBlocks } from './harness-composer-state'
 
 const state = (changes = {}) => ({
   selection: 'custom', model_id: 'openai/gpt-example', task_id: 'real-repository-task',
@@ -182,5 +182,41 @@ describe('configuration import boundary', () => {
     expect(getter).not.toHaveBeenCalled()
     const arrayExtra = config(); arrayExtra.harness.blocks.extra = true
     expect(() => configurationText(arrayExtra)).toThrow('arrays cannot contain extra fields')
+  })
+})
+
+
+describe('guided settings reflect the actual configuration', () => {
+  it('reconciles imported permissive, 20-step and short-history reset answers', () => {
+    const blocks = blocksFromAnswers({ dangerous: 'permissive', stop: 'steps_20', history: 'last2' })
+    const imported = applyConfiguration(state(), configurationFor(state({ blocks }), {})).state
+    expect(imported.answers).toMatchObject({ dangerous: 'permissive', stop: 'steps_20', history: 'last2' })
+    expect(guidanceFor(imported.blocks, imported.answers).resetDifferences).toEqual([])
+  })
+
+  it('leaves unrepresentable tool sets and step caps explicitly custom', () => {
+    const original = state()
+    original.blocks.find((b) => b.type === 'tools').names = ['list_files', 'submit']
+    original.blocks.find((b) => b.type === 'stop').max_steps = 37
+    const guidance = guidanceFor(original.blocks, original.answers)
+    expect(guidance.selections).toMatchObject({ touch: null, stop: null })
+    expect(guidance.custom).toEqual(['touch', 'stop'])
+  })
+
+  it('reports advanced changes without overwriting remembered reset answers', () => {
+    const original = state({ blocks: blocksFromAnswers({ dangerous: 'permissive', stop: 'steps_6' }) })
+    const before = clone(original.answers)
+    const guidance = guidanceFor(original.blocks, original.answers)
+    expect(guidance.selections).toMatchObject({ dangerous: 'permissive', stop: 'steps_6' })
+    expect(guidance.resetDifferences).toEqual(['dangerous', 'stop'])
+    expect(original.answers).toEqual(before)
+  })
+
+  it('compares tool sets without ordering and recognizes an exact prompt template', () => {
+    const blocks = blocksFromAnswers({ verify: 'no' })
+    blocks.find((b) => b.type === 'tools').names.reverse()
+    expect(guidanceFor(blocks, RECOMMENDED_ANSWERS).selections.touch).toBe('read_edit_test')
+    const imported = applyConfiguration(state(), configurationFor(state({ blocks }), {})).state
+    expect(imported.answers.verify).toBe('no')
   })
 })
