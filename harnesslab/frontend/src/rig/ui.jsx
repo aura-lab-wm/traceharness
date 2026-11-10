@@ -151,10 +151,10 @@ export function Switch({ checked, onChange, label, el }) {
 
 /* ---------------------------------------------------------------- navigation */
 /** <Go spec side? className? title? el?>label</Go> — opens a tab. ⌘/Ctrl-click opens it to the side. */
-export function Go({ spec, side, className, children, title, el, chain, replace, label }) {
+export function Go({ spec, side, className, children, title, el, chain, replace, label, current }) {
   const { openTab } = useRig()
   return (
-    <button type="button" className={className || 'rg-go'} title={title} aria-label={label} data-el={el} data-spec={spec}
+    <button type="button" className={className || 'rg-go'} title={title} aria-label={label} aria-current={current ? 'page' : undefined} data-el={el} data-spec={spec}
       onClick={(e) => { e.preventDefault(); openTab(spec, { side: side || e.metaKey || e.ctrlKey, chain, replace }) }}>{children}</button>
   )
 }

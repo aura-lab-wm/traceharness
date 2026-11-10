@@ -1,16 +1,18 @@
 /* Door 2. Six questions, recommended answer first. MCP stays off. */
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { api, IS_MEMBER } from '../../api'
 import { requireStored } from '../../member-api'
 import { Go } from '../ui'
 import { EvidenceOrigin, evidenceOrigin, withEvidenceOrigin } from '../shallowEvidence'
 import { QUESTIONS, blocksFromAnswers } from './shallow-data.js'
 import { wizardAnswers, writeDraft } from './shallow-drafts'
-import { HarnessNav, HarnessSummary } from '../harnessWorkspace'
+import { HarnessNav, HarnessSummary, focusWorkspaceSection } from '../harnessWorkspace'
 
 const INITIAL = Object.fromEntries(QUESTIONS.map((row) => [row.id, row.recommended]))
 
 function ShallowWizard({ args } = {}) {
+  const summaryRef = useRef(null)
+  const questionsRef = useRef(null)
   const [answers, setAnswers] = useState(wizardAnswers)
   const [storageError, setStorageError] = useState('')
   const [preview, setPreview] = useState(null)
@@ -72,9 +74,10 @@ function ShallowWizard({ args } = {}) {
         </div>
       </div>
       <EvidenceOrigin args={args} />
+      <div className="rg-harness-toolbar"><span className="rg-small">Start with the recommended answers, then review your configuration.</span><button type="button" className="rg-btn pri" onClick={() => focusWorkspaceSection(summaryRef)}>Review configuration</button></div>
       {storageError && <p role="alert">{storageError}</p>}
       <div className="rg-harness-layout">
-      <div className="rg-harness-questions">
+      <div ref={questionsRef} tabIndex={-1} className="rg-harness-questions" role="group" aria-label="Wizard answers">
         {QUESTIONS.map((row, index) => (
           <fieldset key={row.id} className="rg-harness-question" data-question={row.id} role="radiogroup" aria-label={row.prompt}>
             <legend><span aria-hidden="true">{String(index + 1).padStart(2, '0')}</span>{row.prompt}</legend>
@@ -99,7 +102,9 @@ function ShallowWizard({ args } = {}) {
           </fieldset>
         ))}
       </div>
-      <HarnessSummary blocks={blocks}>
+      <HarnessSummary blocks={blocks} headingRef={summaryRef}>
+      <button type="button" className="rg-btn" onClick={() => focusWorkspaceSection(questionsRef)}>Back to answers</button>
+      {IS_MEMBER && !preview && !error && <p role="status" className="rg-small">Checking configuration…</p>}
       {preview && <p className="rg-small">Cell {preview.harness.id}</p>}
       {(preview?.warnings || []).map((warning) => <p key={warning} role="status" className="rg-harness-warning">{warning}</p>)}
       {error && <p role="alert">{error}{IS_MEMBER && error.includes('account changed') && <> <a href="/login">Account</a></>}</p>}

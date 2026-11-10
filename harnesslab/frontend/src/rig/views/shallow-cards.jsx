@@ -48,6 +48,7 @@ function ShallowCards({ args } = {}) {
       const rows = catalog.harnesses.map((row) => ({ ...row,
         ...(saved.has(row.id) ? { prompt: saved.get(row.id).prompt, hash: saved.get(row.id).hash } : {}),
         memberSaved: saved.has(row.id) && !(library.unconfirmed || []).includes(row.id),
+        memberUnconfirmed: (library.unconfirmed || []).includes(row.id),
       }))
       const restored = readDraft('fixed') || {}
       const valid = Object.fromEntries(rows.filter((row) => typeof restored[row.id]?.prompt === 'string' && /^[a-f0-9]{12}$/.test(restored[row.id]?.baseHash)).map((row) => [row.id, { ...restored[row.id], restored: true }]))
@@ -67,6 +68,7 @@ function ShallowCards({ args } = {}) {
     setDrafts((cur) => {
       const next = { ...cur, [row.id]: { prompt: value, baseHash: cur[row.id]?.baseHash || row.hash,
         basePresent: cur[row.id]?.basePresent ?? row.memberSaved } }
+      if (value === row.prompt && accountLoaded && !row.memberUnconfirmed) delete next[row.id]
       setStorageError(writeDraft('fixed', next))
       return next
     })
@@ -83,7 +85,7 @@ function ShallowCards({ args } = {}) {
         ...((drafts[row.id]?.basePresent ?? row.memberSaved)
           ? { if_hash: drafts[row.id]?.baseHash || row.hash } : { if_absent: true }),
       } }))
-      setCards((cur) => cur.map((card) => card.id === row.id ? { ...card, prompt: result.harness.prompt, hash: result.harness.hash, memberSaved: true } : card))
+      setCards((cur) => cur.map((card) => card.id === row.id ? { ...card, prompt: result.harness.prompt, hash: result.harness.hash, memberSaved: true, memberUnconfirmed: false } : card))
       setDrafts((cur) => {
         const next = { ...cur }
         delete next[row.id]

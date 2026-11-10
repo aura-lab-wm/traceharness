@@ -789,6 +789,7 @@ function TabSheet({ panes, focus, close, rail }) {
           })}
           <div className="rg-lbl" style={{ padding: '16px 12px 6px' }}>Go to</div>
           {[...rail.items, ...rail.bottom].map((r) => <button key={r.label} type="button" className="it" data-el={r.el} onClick={() => rig.openTab(r.spec)}><Icon name={r.icon} size={18} /><span>{r.label}</span></button>)}
+          {IS_MEMBER && <a className="it" href="/app/shallow" data-el="mobile-simple-editor"><Icon name="ext" size={18} /><span>Open simple harness editor</span></a>}
           <div className="rg-lbl" style={{ padding: '16px 12px 6px' }}>Panels</div>
           {listDocks().map((d) => <button key={d.id} type="button" className="it" onClick={() => { close(); rig.setDock(d.id) }}><Icon name={d.icon || 'log'} size={18} /><span>{d.label}</span></button>)}
           <button type="button" className="it" onClick={() => rig.setPalette(true)}><Icon name="search" size={18} /><span>Command palette…</span></button>

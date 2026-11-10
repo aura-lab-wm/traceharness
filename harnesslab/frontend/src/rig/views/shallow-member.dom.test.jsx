@@ -68,6 +68,56 @@ beforeEach(() => {
 afterEach(() => { cleanup(); vi.unstubAllGlobals() })
 
 describe('member shallow screens use the existing React workbench', () => {
+  it('clears the unsaved indicator and tab draft when a prompt is reset to its loaded value', async () => {
+    const { container } = render(<Cards />)
+    await screen.findAllByRole('button', { name: 'Save prompt' })
+    const card = within(container.querySelector('[data-agent="grok"]'))
+    const input = card.getByRole('textbox')
+    const original = input.value
+    fireEvent.change(input, { target: { value: 'Uncommitted edit' } })
+    expect(card.getByText('Unsaved draft')).toBeTruthy()
+    fireEvent.click(card.getByRole('button', { name: 'Reset prompt' }))
+    expect(input.value).toBe(original)
+    expect(card.queryByText('Unsaved draft')).toBeNull()
+    expect(JSON.parse(sessionStorage.getItem(`traceharness.shallow.member.${scope}.fixed`)).grok).toBeUndefined()
+    expect(requests.some((row) => row.method === 'POST')).toBe(false)
+  })
+
+  it('keeps cleared numeric drafts empty, blocks saving them, and accepts precise temperatures', async () => {
+    render(<Blocks />)
+    const field = await screen.findByRole('spinbutton', { name: 'Temperature', exact: true })
+    const save = screen.getByRole('button', { name: 'Save minimal harness' })
+    await waitFor(() => expect(save.disabled).toBe(false))
+    fireEvent.change(field, { target: { value: '' } })
+    expect(field.value).toBe('')
+    expect(field.getAttribute('aria-invalid')).toBe('true')
+    expect(screen.getByText('Enter a value.')).toBeTruthy()
+    expect(save.disabled).toBe(true)
+    const draft = JSON.parse(sessionStorage.getItem(`traceharness.shallow.member.${scope}.customize-draft`))
+    expect(draft.find((block) => block.type === 'sampling').temperature).toBe('')
+    cleanup()
+    render(<Blocks />)
+    const restored = await screen.findByRole('spinbutton', { name: 'Temperature', exact: true })
+    expect(restored.value).toBe('')
+    fireEvent.change(restored, { target: { value: '0.00001' } })
+    expect(restored.validity.valid).toBe(true)
+    expect(restored.getAttribute('aria-invalid')).toBe('false')
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Save minimal harness' }).disabled).toBe(false))
+    fireEvent.click(screen.getByRole('button', { name: 'Save minimal harness' }))
+    await screen.findByText(/Saved min_.*to your account/)
+    expect(requests.filter((row) => row.url === '/api/shallow/wizard').at(-1).body.blocks.find((block) => block.type === 'sampling').temperature).toBe(0.00001)
+  })
+
+  it('reports a fractional step cap at the field and keeps Save disabled', async () => {
+    render(<Blocks />)
+    const field = await screen.findByRole('spinbutton', { name: 'Step cap', exact: true })
+    fireEvent.change(field, { target: { value: '1.5' } })
+    expect(field.getAttribute('aria-invalid')).toBe('true')
+    expect(screen.getByText('Use a whole number.')).toBeTruthy()
+    expect(screen.getByRole('button', { name: 'Save minimal harness' }).disabled).toBe(true)
+    expect(screen.queryByRole('button', { name: 'Retry preview' })).toBeNull()
+  })
+
   it('loads the six real catalog cards, keeps failed saves as scoped drafts, and confirms only durable saves', async () => {
     const first = render(<Cards />)
     await screen.findAllByRole('button', { name: 'Save prompt' })

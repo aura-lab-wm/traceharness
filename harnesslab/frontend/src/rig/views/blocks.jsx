@@ -7,7 +7,8 @@ import { requireStored } from '../../member-api'
 import { Btn, Empty, ErrorState, Go, Loading, Note, Tag } from '../ui'
 import { EvidenceOrigin, evidenceOrigin, withEvidenceOrigin } from '../shallowEvidence'
 import { blocksFromHarness, readDraft, wizardBlocks, writeDraft } from './shallow-drafts'
-import { HarnessNav, HarnessSummary } from '../harnessWorkspace'
+import { HarnessNav, HarnessSummary, NumericField, focusWorkspaceSection } from '../harnessWorkspace'
+import { NUMBER_FIELDS, fieldIssues } from '../harnessFields'
 
 const TYPE_LABEL = {
   prompt: 'Prompt',
@@ -94,36 +95,9 @@ function BlockCard({ block, index, count, tools, onChange, onMove, onRemove }) {
             </select>
           </label>
         )}
-        {block.type === 'context' && (
-          <div className="rg-row rg-wrap">
-            <label className="rg-fld">Last observations kept (0 = full history)
-              <input className="rg-inp" type="number" min={0} max={100} value={block.window} onChange={(e) => set({ window: Number(e.target.value) })} />
-            </label>
-            <label className="rg-fld">Observation characters
-              <input className="rg-inp" type="number" min={200} max={50000} value={block.observation_chars} onChange={(e) => set({ observation_chars: Number(e.target.value) })} />
-            </label>
-          </div>
-        )}
-        {block.type === 'stop' && (
-          <div className="rg-row rg-wrap">
-            <label className="rg-fld">Step cap
-              <input className="rg-inp" type="number" min={1} max={200} value={block.max_steps} onChange={(e) => set({ max_steps: Number(e.target.value) })} />
-            </label>
-            <label className="rg-fld">Token cap
-              <input className="rg-inp" type="number" min={1000} max={2000000} value={block.max_total_tokens} onChange={(e) => set({ max_total_tokens: Number(e.target.value) })} />
-            </label>
-          </div>
-        )}
-        {block.type === 'sampling' && (
-          <div className="rg-row rg-wrap">
-            <label className="rg-fld">Temperature
-              <input className="rg-inp" type="number" min={0} max={2} step={0.1} value={block.temperature} onChange={(e) => set({ temperature: Number(e.target.value) })} />
-            </label>
-            <label className="rg-fld">Tokens per call
-              <input className="rg-inp" type="number" min={16} max={32000} value={block.max_tokens_per_call} onChange={(e) => set({ max_tokens_per_call: Number(e.target.value) })} />
-            </label>
-          </div>
-        )}
+        {NUMBER_FIELDS[block.type] && <div className="rg-row rg-wrap">
+          {NUMBER_FIELDS[block.type].map((field) => <NumericField key={field.key} field={field} value={block[field.key]} onChange={(value) => set({ [field.key]: value })} />)}
+        </div>}
         {block.type === 'listing' && (
           <label className="rg-row" style={{ gap: 6 }}>
             <input type="checkbox" checked={!!block.include} onChange={(e) => set({ include: e.target.checked })} />
@@ -138,6 +112,8 @@ function BlockCard({ block, index, count, tools, onChange, onMove, onRemove }) {
 function Blocks({ args } = {}) {
   const customize = IS_MEMBER || (Array.isArray(args) && args[0] === 'customize')
   const libraryRef = useRef(null)
+  const summaryRef = useRef(null)
+  const editorRef = useRef(null)
   const [catalog, setCatalog] = useState(null)
   const [tools, setTools] = useState([])
   const [types, setTypes] = useState([])
@@ -252,6 +228,11 @@ function Blocks({ args } = {}) {
       setCompiled(null)
       return
     }
+    const issues = fieldIssues(blocks)
+    if (issues.length) {
+      setCompiled({ ok: false, errors: issues, warnings: [] })
+      return
+    }
     let cancel = false
     const controller = new AbortController()
     setCompiled(null)
@@ -267,7 +248,7 @@ function Blocks({ args } = {}) {
 
   const liveModel = model !== 'mock' && !model.startsWith('mock')
   const missingKey = liveModel && !key.trim()
-  const stackBroken = compiled && compiled.ok === false
+  const stackBroken = !compiled?.ok || (blocks && fieldIssues(blocks).length > 0)
 
   async function save() {
     if (!accountLoaded) return
@@ -329,6 +310,7 @@ function Blocks({ args } = {}) {
           <p>{IS_MEMBER ? 'Shape the whole configuration. Edit the seven blocks, review how they fit together, and save your harness. MCP stays off. Previewing and saving do not run a model.' : 'Start from a common harness, or stack the blocks yourself. This lab runs the stack. A live model uses a key you paste here. The key is not saved.'}</p>
           {customize && (
             <div className="rg-row rg-wrap" data-el="minimal-customize-nav">
+              <button type="button" className="rg-btn pri" onClick={() => focusWorkspaceSection(summaryRef)}>Review configuration</button>
               {IS_MEMBER && <button type="button" className="rg-btn" onClick={() => libraryRef.current?.querySelector('input')?.focus()}>Open a saved harness</button>}
               <Go spec={withEvidenceOrigin('shallowWizard', evidenceOrigin(args))} className="rg-btn" el="back-to-wizard">Back to Minimal Wizard</Go>
               <button type="button" className="rg-btn" disabled={busy} data-el="reset-wizard-answers" onClick={resetToWizard}>Reset to Wizard Answers</button>
@@ -351,7 +333,7 @@ function Blocks({ args } = {}) {
       {preset && basis && <Note>{basis}{catalog.find((r) => r.id === preset)?.same_loop_as?.length ? ` Same loop as ${catalog.find((r) => r.id === preset).same_loop_as.join(', ')}.` : ''}</Note>}
       <div className="rg-harness-layout">
       <div>
-      <fieldset className="rg-harness-blocks" aria-label="Harness blocks" disabled={busy} style={{ border: 0, padding: 0, margin: 0, minWidth: 0 }}>
+      <fieldset ref={editorRef} tabIndex={-1} className="rg-harness-blocks" aria-label="Harness blocks" disabled={busy} style={{ border: 0, padding: 0, margin: 0, minWidth: 0 }}>
         {blocks.map((block, i) => (
           <BlockCard key={blockKey(block)} block={block} index={i} count={blocks.length} tools={tools} onChange={onChange} onMove={onMove} onRemove={onRemove} />
         ))}
@@ -375,20 +357,22 @@ function Blocks({ args } = {}) {
         </label></>}
       </div>
       </div>
-      <HarnessSummary blocks={blocks} title="Configuration preview">
+      <HarnessSummary blocks={compiled?.ok && compiled.harness ? blocksFromHarness(compiled.harness) : blocks} headingRef={summaryRef} title="Configuration preview">
+      <button type="button" className="rg-btn" onClick={() => focusWorkspaceSection(editorRef)}>Back to blocks</button>
+      {!compiled && blocks.length > 0 && <p role="status" className="rg-small">Checking configuration…</p>}
       {IS_MEMBER ? <div className="rg-col">
-        <button type="button" className="rg-btn pri" disabled={!accountLoaded || busy || !compiled?.ok} onClick={save}>{busy ? 'Saving…' : 'Save minimal harness'}</button>
+        <button type="button" className="rg-btn pri" disabled={!accountLoaded || busy || !compiled?.ok || fieldIssues(blocks).length > 0} onClick={save}>{busy ? 'Saving…' : 'Save minimal harness'}</button>
         {compiled?.ok && <p className="rg-small">Cell {compiled.harness.id}</p>}
         {saved && <p role="status">{saved}</p>}
         <p className="rg-small">To execute a harness locally, start <code>python -m harnesslab --host 127.0.0.1 --port 8742</code> and open <a href="http://127.0.0.1:8742" target="_blank" rel="noreferrer">the local app</a>.</p>
       </div> : <div className="rg-row rg-wrap">
-        <Btn className="pri" disabled={busy || !blocks.length || missingKey || stackBroken} why={missingKey ? 'Paste your own LLM key. The lab does not keep one for you.' : (stackBroken ? (compiled.errors || []).join(' ') : '')} onClick={run} data-el="harness-run">
+        <Btn className="pri" disabled={busy || !blocks.length || missingKey || stackBroken} why={missingKey ? 'Paste your own LLM key. The lab does not keep one for you.' : (stackBroken ? (compiled?.errors || ['Checking configuration…']).join(' ') : '')} onClick={run} data-el="harness-run">
           {busy ? 'Running…' : 'Run'}
         </Btn>
         {model === 'mock' && <Tag tone="dash">mock · no key</Tag>}
         {compiled && compiled.ok && <span className="rg-small rg-dim">Cell {customize ? `min_${compiled.hash}` : compiled.harness.id}</span>}
       </div>}
-      {compiled && compiled.ok === false && <Note tone="bad"><span role="alert">{(compiled.errors || []).join(' ')}{IS_MEMBER && (compiled.errors || []).some((message) => message.includes('account changed')) && <> <a href="/login">Account</a></>}</span>{IS_MEMBER && <button type="button" className="rg-btn" onClick={() => setPreviewRevision((n) => n + 1)}>Retry preview</button>}</Note>}
+      {compiled && compiled.ok === false && <Note tone="bad"><span role="alert">{(compiled.errors || []).join(' ')}{IS_MEMBER && (compiled.errors || []).some((message) => message.includes('account changed')) && <> <a href="/login">Account</a></>}</span>{IS_MEMBER && !fieldIssues(blocks).length && <button type="button" className="rg-btn" onClick={() => setPreviewRevision((n) => n + 1)}>Retry preview</button>}</Note>}
       {compiled && (compiled.warnings || []).length > 0 && compiled.ok && (compiled.warnings || []).map((w) => <p key={w} className="rg-harness-warning">{w}</p>)}
       {error && <Note tone="bad" el="harness-error"><span role="alert">{error}{IS_MEMBER && error.includes('account changed') && <> <a href="/login">Account</a></>}</span></Note>}
       {job && (
