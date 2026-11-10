@@ -20,6 +20,8 @@
 .rg-ds-disc{margin:0;max-width:72ch}
 @container rgdoc (max-width:640px){.rg-ds-next{padding:var(--rig-s3) var(--rig-s4)}.rg-ds-cond{margin-top:var(--rig-s6);padding-top:var(--rig-s5)}}
 .rg-ds-kpis .rg-stat>span{overflow-wrap:anywhere;min-width:0}
+.rg-ds-kpis .rg-stat>.rg-row,.rg-ds-next .rg-row{flex-wrap:wrap}
+.rg-ds-next .rg-mono{min-width:0;overflow-wrap:anywhere}
 
 @container rgdoc (min-width:1800px){
   .rg-ds-cond{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,1fr);gap:var(--rig-s5);align-items:start}

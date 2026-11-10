@@ -536,6 +536,7 @@ button.rg-stat:hover{background:var(--rig-panel2)}
   .rg-hide-sm{display:none!important}
   .rg-dh{flex-direction:column;align-items:stretch}
   .rg-pnl-h{flex-wrap:wrap;padding:var(--rig-s2) var(--rig-s4)}
+  .rg-pnl-h .rg-lbl{min-width:0;white-space:normal;overflow-wrap:anywhere}
   .rg-pnl-b{padding:var(--rig-s4)}
   .rg-stat{padding:var(--rig-s3) var(--rig-s4)}
   .rg-pnl-h .meta{white-space:normal;flex-wrap:wrap;margin-left:0}

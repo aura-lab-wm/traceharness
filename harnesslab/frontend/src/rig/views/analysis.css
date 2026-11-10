@@ -64,6 +64,7 @@
 .rg-an-tbl th{height:40px;padding:0 14px}
 .rg-an-tbl td{height:44px;padding:8px 14px}
 .rg-an-ladw{max-width:600px}
+.rg-an-ladw .rg-an-tbl th{white-space:normal;line-height:1.4;padding-block:var(--rig-s2)}
 /* rate bar in a table cell */
 .rg-an-rb{display:grid;grid-template-columns:minmax(56px,140px) 44px;gap:10px;align-items:center}
 .rg-an-rbt{display:block;height:6px;border-radius:3px;background:var(--rig-panel3);overflow:hidden}

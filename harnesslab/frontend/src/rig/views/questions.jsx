@@ -104,10 +104,10 @@ function Figure({ fig, dir, answer }) {
           <HBar label="hidden suite" value={o.rate_a.rate} text={pct(o.rate_a.rate)} tone="sky" />
           <HBar label="strengthened" value={o.rate_b.rate} text={pct(o.rate_b.rate)} tone="sky" />
         </div>
-        <table className="rg-tbl rg-q-2x2" style={{ marginTop: 12 }}><caption className="rg-lbl" style={{ textAlign: 'left', padding: '0 0 6px' }}>Agreement over {int(o.n_eligible)} runs graded by both · κ {fmt.fx(o.kappa)}</caption>
+        <div className="rg-tblwrap" role="region" aria-label="Grader agreement" tabIndex={0}><table className="rg-tbl rg-q-2x2" style={{ marginTop: 12 }}><caption className="rg-lbl" style={{ textAlign: 'left', padding: '0 0 6px' }}>Agreement over {int(o.n_eligible)} runs graded by both · κ {fmt.fx(o.kappa)}</caption>
           <thead><tr><th /><th className="rg-num">strengthened ✓</th><th className="rg-num">strengthened ×</th></tr></thead>
           <tbody><tr><th>hidden ✓</th><td className="rg-num rg-mono">{int(c.both_true)}</td><td className="rg-num rg-mono rg-red">{int(c.only_a_true)}</td></tr>
-            <tr><th>hidden ×</th><td className="rg-num rg-mono">{int(c.only_b_true)}</td><td className="rg-num rg-mono">{int(c.both_false)}</td></tr></tbody></table>
+            <tr><th>hidden ×</th><td className="rg-num rg-mono">{int(c.only_b_true)}</td><td className="rg-num rg-mono">{int(c.both_false)}</td></tr></tbody></table></div>
         {o.n_excluded ? <p className="rg-small rg-dim">{int(o.n_excluded)} runs lack one of the two grades and are excluded, not counted as failures.</p> : null}
       </>)
     }
@@ -149,7 +149,7 @@ function Figure({ fig, dir, answer }) {
     case 'run': {
       const r = fig.run
       return (
-        <dl className="rg-kv">
+        <dl className="rg-kv rg-q-run">
           <dt>run</dt><dd>{r.id}</dd><dt>task</dt><dd>{r.task} · repeat {r.rep}</dd><dt>condition</dt><dd>{short(r.model)} · {r.harness}</dd>
           <dt>{oracle} tests</dt><dd className="rg-row"><Verdict v={verdict(r, oracle)} /><FailureChip run={r} /></dd>
           <dt>visible · hidden · strengthened</dt><dd className="rg-row"><Verdict v={r.vis} /><Verdict v={r.hid} /><Verdict v={r.str} /></dd>
@@ -174,7 +174,7 @@ function Figure({ fig, dir, answer }) {
       return (<>
         <div className="rg-row" style={{ gap: 12, marginBottom: 8 }}><span className="rg-fig md">{pct(o.pass1)}</span><div className="rg-grow"><CiBar lo={o.ci95[0]} hi={o.ci95[1]} pt={o.pass1} /></div></div>
         <p className="rg-small"><Tag tone={fig.pooled ? 'amb' : undefined} nc>{fig.scope}</Tag> <span className="rg-dim">n = {int(fig.card.cell.runs)} · {fig.card.cell.repeats} repeats · {fig.card.cell.tasks.length} tasks</span></p>
-        <table className="rg-tbl"><thead><tr><th>k</th><th className="rg-num">pass@k (any of k)</th><th className="rg-num">pass^k (all of k)</th></tr></thead>
+        <table className="rg-tbl rg-q-metrics"><thead><tr><th>k</th><th className="rg-num">pass@k (any of k)</th><th className="rg-num">pass^k (all of k)</th></tr></thead>
           <tbody>{ks.map((k) => <tr key={k}><td className="rg-mono">{k}</td><td className="rg-num rg-mono">{pct(o.pass_at_k[k])}</td><td className="rg-num rg-mono">{pct(o.pass_pow_k[k])}</td></tr>)}</tbody></table>
         {(fig.card.missing || []).length > 0 && <><div className="rg-lbl" style={{ margin: '12px 0 6px' }}>What this card does not cover</div><ul className="rg-small rg-dim rg-q-list">{fig.card.missing.map((m, i) => <li key={i}>{m}</li>)}</ul></>}
       </>)

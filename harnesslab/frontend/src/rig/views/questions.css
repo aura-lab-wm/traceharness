@@ -41,6 +41,7 @@
 #rg-q-figure:focus{outline:none}
 .rg-q-2x2{max-width:420px}
 .rg-q-2x2 th{position:static}
+.rg-tbl.rg-q-metrics th{white-space:normal}
 .rg-q-strips{display:flex;flex-direction:column;gap:4px;margin-bottom:8px}
 .rg-q-strip{display:grid;grid-template-columns:minmax(110px,170px) minmax(0,1fr) 64px 56px;gap:10px;align-items:center;min-height:26px}
 .rg-q-rib{display:flex;gap:2px;flex-wrap:wrap}
@@ -51,6 +52,12 @@
 @container rgdoc (max-width:640px){.rg-q-strip{grid-template-columns:minmax(0,1fr) auto;row-gap:4px}.rg-q-strip .rg-q-rib{grid-column:1/-1}}
 .rg-q-probe{flex:none;min-width:0}
 .rg-q-list{margin:0;padding-left:0;list-style:none}
+.rg-q-run dd.rg-row{flex-wrap:wrap}
+.rg-q-run .rg-fchip{height:auto;min-height:22px;padding-block:2px;white-space:normal;line-height:1.4}
+@container rgdoc (max-width:640px){
+  .rg-kv.rg-q-run{grid-template-columns:minmax(0,1fr);row-gap:var(--rig-s1)}
+  .rg-q-run dd:not(:last-child){margin-bottom:var(--rig-s3)}
+}
 .rg-q-lesson{border:1px solid var(--rig-sel);background:var(--rig-sel-bg);padding:var(--rig-s4) var(--rig-s5);margin-bottom:var(--rig-s6);border-radius:14px}
 .rg-q-lesson ol{margin:8px 0 0;padding-left:18px;display:grid;gap:6px;font-size:12.5px}
 .rg-q-lesson b{display:inline-block;min-width:120px;color:var(--rig-text);font-weight:600;margin-right:6px}
