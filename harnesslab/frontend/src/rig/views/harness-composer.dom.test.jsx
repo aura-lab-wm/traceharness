@@ -327,6 +327,47 @@ describe('the unified member Harnesses composer', () => {
     expect(screen.queryByLabelText('OpenRouter API key')).toBeNull()
   })
 
+  it('keeps public models selectable with the gateway unavailable-runtime null metadata', async () => {
+    // Match auth/worker/src/runner.js unavailableCatalog(), including its nullable
+    // version/image metadata and deliberately absent compatibility registrations.
+    const reason = 'No execution service is connected.'
+    catalog = {
+      version: 1, runner: { available: false, message: reason },
+      runtimes: [
+        { id: 'traceharness', name: 'TraceHarness engine', kind: 'traceharness', prompt_mode: 'replace', supports_advanced: true },
+        { id: 'native-claude-code', name: 'Claude Code', kind: 'native', prompt_mode: 'append', supports_advanced: false },
+        { id: 'native-codex', name: 'Codex CLI', kind: 'native', prompt_mode: 'append', supports_advanced: false },
+      ].map((runtime) => ({ ...runtime, available: false, reason, version: null, image_digest: null })),
+      models: defaultCatalog().models, tasks: [], credentials_available: false, execution_available: false,
+      model_catalog: { source: 'OpenRouter', status: 'current', fetched_at: 1794330000000 },
+    }
+    render(<Composer />)
+    await screen.findByRole('option', { name: 'Model A' })
+    expect(screen.getByRole('option', { name: 'Model B' })).toBeTruthy()
+    expect(screen.queryByText('The runner catalog is incomplete. Execution remains unavailable.')).toBeNull()
+    fireEvent.change(screen.getByRole('combobox', { name: 'Model', exact: true }), { target: { value: 'fixture/model-a' } })
+    expect(screen.getByRole('combobox', { name: 'Model', exact: true }).value).toBe('fixture/model-a')
+    expect(screen.getByText('Runner not connected')).toBeTruthy()
+    expect(screen.getByRole('option', { name: 'No runnable task packages connected' })).toBeTruthy()
+    expect(screen.queryByLabelText('OpenRouter API key')).toBeNull()
+    expect(screen.getByRole('button', { name: 'Review run' }).disabled).toBe(true)
+    expect(screen.getByRole('button', { name: 'Run', exact: true }).disabled).toBe(true)
+    expect(calls.filter((call) => call.url.startsWith('/api/runner/')).map((call) => call.url)).toEqual(['/api/runner/catalog'])
+  })
+
+  it.each([
+    { available: true, version: null },
+    { available: false, version: 12 },
+    { available: false, version: { unexpected: 'version' } },
+  ])('still rejects invalid runtime version metadata: %j', async (runtime) => {
+    Object.assign(catalog.runtimes[0], runtime)
+    render(<Composer />)
+    await screen.findByText('The runner catalog is incomplete. Execution remains unavailable.')
+    expect(screen.queryByRole('option', { name: 'Model A' })).toBeNull()
+    expect(screen.queryByLabelText('OpenRouter API key')).toBeNull()
+    expect(screen.getByRole('button', { name: 'Run', exact: true }).disabled).toBe(true)
+  })
+
   it('keeps guided radio groups independent when workbench panes coexist', () => {
     const first = render(<Composer args={['guided']} />)
     const second = render(<Composer args={['guided']} />)

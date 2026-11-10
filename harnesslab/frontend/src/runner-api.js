@@ -67,7 +67,8 @@ export function runnerCatalog(data) {
   const optionalText = (value) => value === undefined || text(value)
   if (!optionalText(data.runner.message)
     || data.runtimes.some((r) => !text(r.name) || !['traceharness', 'native'].includes(r.kind) || typeof r.available !== 'boolean'
-      || !['replace', 'append'].includes(r.prompt_mode) || !optionalText(r.reason) || !optionalText(r.version)
+      || !['replace', 'append'].includes(r.prompt_mode) || !optionalText(r.reason)
+      || !(optionalText(r.version) || r.available === false && r.version === null)
       || r.model_ids !== undefined && (!Array.isArray(r.model_ids) || r.model_ids.some((id) => !text(id))))
     || data.models.some((m) => !optionalText(m.name) || m.pricing !== undefined && (m.pricing === null || typeof m.pricing !== 'object' || Array.isArray(m.pricing)))
     || data.tasks.some((t) => !optionalText(t.title) || !optionalText(t.repository) || !optionalText(t.revision) || !optionalText(t.reason) || typeof t.ready !== 'boolean')
