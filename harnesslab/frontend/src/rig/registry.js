@@ -39,6 +39,7 @@ import * as m_casefile from './views/casefile.jsx'
 import * as m_console from './views/console.jsx'
 import * as m_dataset from './views/dataset.jsx'
 import * as m_home from './views/home.jsx'
+import * as m_harness_composer from './views/harness-composer.jsx'
 import * as m_questions from './views/questions.jsx'
 import * as m_shallow_apply from './views/shallow-apply.jsx'
 import * as m_shallow_cards from './views/shallow-cards.jsx'
@@ -54,6 +55,7 @@ export const modules = {
   './views/console.jsx': m_console,
   './views/dataset.jsx': m_dataset,
   './views/home.jsx': m_home,
+  './views/harness-composer.jsx': m_harness_composer,
   './views/questions.jsx': m_questions,
   './views/shallow-apply.jsx': m_shallow_apply,
   './views/shallow-cards.jsx': m_shallow_cards,

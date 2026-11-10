@@ -122,7 +122,8 @@ describe('Rig shell', () => {
     const dialog = screen.getByRole('dialog', { name: 'Open documents' })
     expect(dialog.getAttribute('aria-modal')).toBe('true')
     expect(document.activeElement).toBe(dialog.querySelector('[aria-current="page"]'))
-    for (const name of ['Fixed harnesses', 'Minimal harness', 'Build a harness']) expect(within(dialog).getByRole('button', { name })).toBeTruthy()
+    expect(within(dialog).getByRole('button', { name: 'Harnesses' })).toBeTruthy()
+    for (const name of ['Fixed harnesses', 'Minimal harness', 'Build a harness']) expect(within(dialog).queryByRole('button', { name })).toBeNull()
     const buttons = within(dialog).getAllByRole('button')
     const first = buttons[0], last = buttons[buttons.length - 1]
     last.focus()

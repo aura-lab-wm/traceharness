@@ -1,6 +1,7 @@
 /* Harness authoring: the existing Rig palette, with a dedicated editing hierarchy.
    Shared by fixed, guided, flexible and shell-preview views; no global overrides. */
 .rig .rg-harness{max-width:1560px;margin-inline:auto;padding:24px;container-type:inline-size}
+.rg-harness-return{margin-bottom:24px}.rg-harness-return>.rg-btn{display:inline-flex;align-items:center;gap:10px;flex-wrap:wrap;text-align:left}
 .rg-harness-nav{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-bottom:24px}
 .rg-harness-lane{min-width:0;border:1px solid var(--rig-line2);border-radius:10px;background:var(--rig-panel)}
 .rg-harness-lane.active{border-color:var(--rig-sel);background:var(--rig-sel-bg)}

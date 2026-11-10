@@ -1,0 +1,75 @@
+/* One composition surface. Use the Rig tokens so both light and dark remain coherent. */
+.rig .rg-composer{max-width:1480px;padding:28px 32px 40px}
+.rg-composer .rg-dh{display:flex;align-items:flex-start;justify-content:space-between;gap:24px}
+.rg-composer-connection{display:inline-flex;align-items:center;gap:8px;flex-shrink:0;padding:8px 12px;border:1px solid var(--rig-line2);border-radius:20px;font-size:12px;line-height:1.5;color:var(--rig-dim);background:var(--rig-panel)}
+.rg-composer-connection>span{width:6px;height:6px;background:var(--rig-dim);border-radius:50%}
+.rg-composer-connection.connected{color:var(--rig-sel-t)}
+.rg-composer-connection.connected>span{background:currentColor}
+.rg-composer-selectors{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr) minmax(0,1fr);gap:24px;margin:0 0 28px;padding:24px;border:1px solid var(--rig-line2);border-radius:12px;background:var(--rig-panel)}
+.rg-composer-selectors>.rg-fld{min-width:0;align-content:start;display:grid;grid-template-rows:auto auto auto 1fr;margin:0;gap:10px}
+.rg-composer-selectors .rg-composer-step{font:500 11px/1.5 var(--rig-mono);text-transform:uppercase;letter-spacing:.08em;color:var(--rig-dim)}
+.rg-composer-selectors small{font-size:12px;line-height:1.6;color:var(--rig-dim);overflow-wrap:anywhere}
+.rg-composer-selectors>label .rg-selc{grid-row:2/4;height:54px;align-self:start}
+.rg-composer-selectors>label small{grid-row:4}
+.rg-composer-selectors .rg-selc{font-size:13px;text-overflow:ellipsis}
+.rg-composer-layout{display:grid;grid-template-columns:minmax(0,1fr) 320px;align-items:start;gap:28px}
+.rg-composer-layout>*{min-width:0}
+.rg-composer-editor{display:flex;flex-direction:column;gap:20px}
+.rg-composer .rg-pnl{border-radius:12px;border-color:var(--rig-line2);margin:0;overflow:hidden}
+.rg-composer .rg-pnl-h{padding:18px 20px;gap:12px;flex-wrap:wrap;background:var(--rig-panel)}
+.rg-composer .rg-pnl-h h2{font-size:16px;font-weight:600;margin:0;letter-spacing:-.015em}
+.rg-composer .rg-pnl-h .meta{margin-left:auto;color:var(--rig-dim);font-size:11px}
+.rg-composer .rg-pnl-b{padding:20px;display:flex;flex-direction:column;gap:14px}
+.rg-composer-prompt .rg-fld{margin:0}
+.rig .rg-composer-prompt textarea.rg-inp{min-height:260px;line-height:1.8}
+.rg-composer-prompt-actions{padding-top:4px;gap:8px}
+.rg-composer-prompt-actions [aria-expanded=true]{border-color:var(--rig-sel);color:var(--rig-sel-t);background:var(--rig-sel-bg)}
+.rg-composer-review{position:sticky;top:20px;border:1px solid var(--rig-line2);border-top:2px solid var(--rig-sel);border-radius:12px;background:var(--rig-panel);padding:20px;max-height:calc(100dvh - 150px);overflow:auto;scroll-padding:20px}
+.rg-composer-section-head{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:20px}
+.rg-composer-section-head h2{margin:0;font-size:16px;font-weight:600;letter-spacing:-.015em}
+.rg-composer-section-head>span{font-size:12px;color:var(--rig-dim)}
+.rg-composer-review>.rg-composer-section-head .rg-ico{color:var(--rig-sel-t)}
+.rg-composer-review dl{display:grid;gap:14px;margin:0 0 22px}
+.rg-composer-review dl>div{display:grid;grid-template-columns:52px minmax(0,1fr);gap:12px;align-items:baseline}
+.rg-composer-review dt{font-size:11px;color:var(--rig-dim)}
+.rg-composer-review dd{margin:0;font:12px/1.6 var(--rig-mono);overflow-wrap:anywhere}
+.rg-composer-review dd small{display:block;font:11px/1.6 var(--rig-sans);color:var(--rig-dim);margin-top:3px}
+.rg-composer-limits{border:0;border-top:1px solid var(--rig-line);margin:0;padding:18px 0;min-inline-size:0;display:grid;gap:14px}
+.rg-composer-limits legend{font-size:12px;font-weight:600;padding:0 8px 0 0}
+.rg-composer-limits .rg-fld{margin:0;font-size:12px}
+.rg-composer-readiness{padding:14px;background:var(--rig-panel2);border-radius:8px;font-size:12px;line-height:1.6;overflow-wrap:anywhere}
+.rg-composer-readiness strong{font-weight:600;color:var(--rig-text)}
+.rg-composer-readiness p{margin:8px 0 0;color:var(--rig-dim)}
+.rg-composer-readiness ul{margin:8px 0 0;padding-left:16px;display:grid;gap:6px;color:var(--rig-dim)}
+.rg-composer-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:16px 0 12px}
+.rg-composer-actions>.rg-btn:nth-child(n+3){grid-column:1/-1}
+.rg-composer .rg-btn:disabled{cursor:not-allowed}
+.rg-composer-service-note{border-top:1px solid var(--rig-line);padding-top:14px;margin-top:16px;font-size:12px;line-height:1.6;color:var(--rig-dim);overflow-wrap:anywhere}
+.rg-composer-service-note>p{margin:0 0 12px}
+.rg-composer-guide{display:flex;flex-direction:column;gap:24px;padding:24px;border:1px solid var(--rig-line2);border-radius:12px;background:var(--rig-panel)}
+.rg-composer-guide>.rg-composer-section-head{margin:0}
+.rg-composer-guide>.rg-btn{align-self:flex-start}
+.rg-composer-guide .rg-harness-question legend{font-size:14px}
+.rg-composer-guide .rg-harness-options{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}
+.rg-composer-guide .rg-harness-option{font-size:12px;padding:12px;min-height:48px}
+.rg-composer .rg-harness-blocks{display:block}
+.rg-composer-fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));border:0;padding:0;margin:0;gap:16px;min-inline-size:0}
+.rg-composer-fields>.rg-pnl{min-width:0}
+.rg-composer-fields>[data-block-type=tools]{grid-column:1/-1}
+.rg-composer-fields .rg-pnl-h{padding:12px 16px;gap:8px}
+.rg-composer-fields .rg-pnl-b{padding:16px}
+.rg-composer-key .rg-pnl-h>.rg-ico{color:var(--rig-dim)}
+.rg-composer-key .rg-pnl-b>.rg-fld{max-width:520px;margin:0}
+.rg-composer-key .rg-small{margin:0}
+.rg-composer [role=alert]{color:var(--rig-red-t);font-size:12px;line-height:1.65;overflow-wrap:anywhere}
+.rg-composer [role=status]{font-size:12px;line-height:1.65;overflow-wrap:anywhere}
+.rg-composer-job{margin-top:28px!important}
+.rg-composer-job .rg-mono{overflow-wrap:anywhere}
+.rg-composer-usage{display:flex;flex-wrap:wrap;gap:20px;margin:8px 0 0;font-size:12px}
+.rg-composer-usage dd{font-family:var(--rig-mono);margin:4px 0 0}
+.rg-composer-usage dt{color:var(--rig-dim)}
+.rg-composer-footer{display:flex;justify-content:space-between;flex-wrap:wrap;gap:12px;padding-top:24px;margin-top:28px;border-top:1px solid var(--rig-line);font-size:11px;line-height:1.6;color:var(--rig-dim)}
+.rg-composer-sr{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+@container(max-width:1050px){.rg-composer-layout{gap:20px;grid-template-columns:minmax(0,1fr) 280px}.rg-composer-selectors{padding:20px;gap:16px}.rg-composer-fields{grid-template-columns:minmax(0,1fr)}.rg-composer-guide .rg-harness-options{grid-template-columns:minmax(0,1fr)}}
+@container(max-width:800px){.rg-composer-layout{grid-template-columns:minmax(0,1fr)}.rg-composer-review{position:static;max-height:none;overflow:visible}.rg-composer-selectors{grid-template-columns:minmax(0,1fr)}.rg-composer-selectors>label .rg-selc,.rg-composer-selectors>label small{grid-row:auto}.rg-composer .rg-dh{flex-wrap:wrap;gap:16px}.rg-composer-actions{grid-template-columns:repeat(2,minmax(0,1fr))}.rg-composer-actions>.rg-btn:nth-child(n+3){grid-column:auto}}
+@media(max-width:760px){.rig .rg-composer{padding:20px 16px 32px}.rg-composer-selectors{padding:16px;gap:20px}.rg-composer .rg-pnl-h,.rg-composer .rg-pnl-b{padding:16px}.rg-composer .rg-pnl-h .meta{margin-left:0;flex-basis:100%}.rig .rg-composer textarea.rg-inp{font-size:16px}.rg-composer-guide{padding:18px 16px}.rg-composer-actions>.rg-btn:nth-child(n+3){grid-column:1/-1}.rg-composer-connection{flex-shrink:1}}

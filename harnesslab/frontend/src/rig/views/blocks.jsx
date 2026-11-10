@@ -44,7 +44,7 @@ function readCustomizeBlocks(tools, restoreDraft = true) {
   }))
 }
 
-function BlockCard({ block, index, count, tools, onChange, onMove, onRemove }) {
+export function BlockCard({ block, index, count, tools, onChange, onMove, onRemove, allowRemove = true }) {
   const set = (patch) => onChange(index, { ...block, ...patch })
   const moveButtons = useRef({})
   const focusAfterMove = useRef(null)
@@ -63,7 +63,7 @@ function BlockCard({ block, index, count, tools, onChange, onMove, onRemove }) {
         <span className="rg-row">
           <button ref={(node) => { moveButtons.current.up = node }} type="button" className="rg-btn ghost" disabled={index === 0} onClick={() => { focusAfterMove.current = 'up'; onMove(index, -1) }} aria-label="Move block up">Up</button>
           <button ref={(node) => { moveButtons.current.down = node }} type="button" className="rg-btn ghost" disabled={index === count - 1} onClick={() => { focusAfterMove.current = 'down'; onMove(index, 1) }} aria-label="Move block down">Down</button>
-          {!IS_MEMBER && <button type="button" className="rg-btn ghost" onClick={() => onRemove(index)}>Remove</button>}
+          {!IS_MEMBER && allowRemove && <button type="button" className="rg-btn ghost" onClick={() => onRemove(index)}>Remove</button>}
         </span>
       </div>
       <div className="rg-pnl-b rg-col">

@@ -311,7 +311,7 @@ export default function RigApp() {
   }, [rowOf, route.cond])
   const ctxOf = useCallback((spec) => {
     const { kind, args } = parseSpec(spec)
-    const source = ['shallowCards', 'shallowWizard', 'shallowApply', 'blocks'].includes(kind) ? evidenceOrigin(args) : null
+    const source = ['harnesses', 'shallowCards', 'shallowWizard', 'shallowApply', 'blocks'].includes(kind) ? evidenceOrigin(args) : null
     const contextSpec = source ? parseSpec(source) : { kind, args }
     const def = getView(contextSpec.kind)
     let raw = {}
@@ -524,9 +524,7 @@ function railItems(kind, dir, lab, condition) {
     { group: 'Workspace', spec: 'home', icon: 'db', label: 'Datasets', on: on(['home', 'ds', 'q']), el: 'nav-datasets' },
     { group: 'Workspace', spec: dir ? makeSpec('an', dir, 'family', ...cs) : 'home', icon: 'an', label: 'Analysis', on: on(['an']) },
     { group: 'Workspace', spec: dir ? makeSpec('field', dir, ...(condition && condition.dir === dir ? [condition.model, condition.harness] : [])) : 'home', icon: 'traj', label: 'Trajectories', on: on(['field', 'tasks', 'task', 'run', 'span', 'cmp', 'fork']) },
-    { group: 'Harnesses', spec: 'shallowCards', icon: 'tabs', label: 'Fixed harnesses', on: on(['shallowCards', 'shallowApply']), el: 'nav-fixed-harnesses' },
-    { group: 'Harnesses', spec: 'shallowWizard', icon: 'q', label: 'Minimal harness', on: on(['shallowWizard']), el: 'nav-minimal-harness' },
-    { group: 'Harnesses', spec: 'blocks', icon: 'data', label: 'Build a harness', on: on(['blocks']), el: 'nav-build-harness' },
+    { group: 'Harnesses', spec: 'harnesses', icon: 'tabs', label: 'Harnesses', on: on(['harnesses', 'shallowCards', 'shallowApply', 'shallowWizard', 'blocks']), el: 'nav-harnesses' },
     { group: 'Tools', spec: 'sources', icon: 'src', label: 'Sources & capture', on: on(['sources', 'capture']), el: 'nav-sources' },
     { group: 'Tools', spec: 'sentinel', icon: 'sent', label: 'Sentinel', on: on(['sentinel']) },
     { group: 'Tools', spec: 'canvas', icon: 'canvas', label: 'Canvas', on: on(['canvas']) },

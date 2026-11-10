@@ -60,9 +60,10 @@ describe('hosted workbench navigation', () => {
   it('keeps analysis and harness navigation together and exposes local model controls honestly', () => {
     const { container, requests } = renderRig('#/rig/home', { data })
     const rail = within(screen.getByRole('navigation', { name: 'Activity' }))
-    for (const name of ['Datasets', 'Analysis', 'Trajectories', 'Fixed harnesses', 'Minimal harness', 'Build a harness']) {
+    for (const name of ['Datasets', 'Analysis', 'Trajectories', 'Harnesses']) {
       expect(rail.getByRole('button', { name })).toBeTruthy()
     }
+    for (const name of ['Fixed harnesses', 'Minimal harness', 'Build a harness']) expect(rail.queryByRole('button', { name })).toBeNull()
     expect(container.querySelector('[data-el="runtime-status"]').textContent).toContain('recorded snapshot · member harness saves')
     expect(screen.getByRole('link', { name: 'Simple harness editor' }).getAttribute('href')).toBe('/app/shallow')
     expect(container.querySelector('[data-el="load-trajectories-cta"]')).toBeNull()
