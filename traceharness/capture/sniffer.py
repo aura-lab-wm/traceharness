@@ -344,7 +344,7 @@ FULL_SWEEP_S = 24 * 3600.0
 def loop(roots: list, runs_root: str, gap_s: float, interval_s: float,
          stop: Optional[Callable[[], bool]] = None, now: Optional[Callable[[], float]] = None,
          archive_root: Optional[str] = None, sleep=time.sleep,
-         full_sweep_s: float = FULL_SWEEP_S) -> None:
+         full_sweep_s: float = FULL_SWEEP_S, on_pass: Optional[Callable[[dict], None]] = None) -> None:
     """Tick until `stop()` says otherwise, obeying the control file between passes.
 
     Holds the `sniffer` lock for its whole life so a second one cannot start. `stop`, `now` and
@@ -388,6 +388,11 @@ def loop(roots: list, runs_root: str, gap_s: float, interval_s: float,
                     done = (full and not (rep or {}).get("interrupted")
                             and (rep or {}).get("state") != "locked")
                     presence.write(runs_root, error="", **({"last_full_sweep_at": t} if done else {}))
+                    if on_pass is not None:
+                        try:
+                            on_pass(rep or {})             # e.g. `capture --watch --sync`; never fatal
+                        except Exception:
+                            pass
                     if done:
                         _count_debris(runs_root, now)
                 except CaptureLocked:

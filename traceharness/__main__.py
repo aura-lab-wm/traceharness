@@ -26,6 +26,9 @@ def build_parser() -> argparse.ArgumentParser:
                "same canonical study-aggregate statistics as GET /api/results/<dir>/{oracle,"
                "comparisons,experiment} as JSON; `traceharness sources` lists the grids on disk, the import "
                "adapters, and the benchmarks that are not loaded; `traceharness serve` is this, the default. "
+               "`traceharness login` / `logout` / `whoami` sign this computer in to a TraceHarness site, "
+               "`traceharness capture push` sends captured runs (redacted) to that account, and "
+               "`traceharness capture --watch --sync` does so after every pass. "
                "`traceharness link --url wss://...` dials out to a signed-in console; it does not open a port.",
     )
     p.add_argument("--host", default=os.environ.get("TRACEHARNESS_HOST", "127.0.0.1"),
@@ -640,6 +643,21 @@ def main(argv: list[str] | None = None) -> int:
         return patterns_cli(argv[1:])
     if argv and argv[0] == "sources":
         return sources_cli(argv[1:])
+    if argv and argv[0] == "login":
+        from traceharness.capture.remote import login_main  # noqa: E402
+        return login_main(argv[1:])
+    if argv and argv[0] == "logout":
+        from traceharness.capture.remote import logout_main  # noqa: E402
+        return logout_main(argv[1:])
+    if argv and argv[0] == "whoami":
+        from traceharness.capture.remote import whoami_main  # noqa: E402
+        return whoami_main(argv[1:])
+    if argv and argv[0] == "capture":
+        if len(argv) > 1 and argv[1] == "push":
+            from traceharness.capture.push import push_main  # noqa: E402
+            return push_main(argv[2:])
+        from traceharness.capture.__main__ import main as capture_main  # noqa: E402
+        return capture_main(argv[1:])
     if argv and argv[0] == "link":
         from traceharness.backend.remote_link import link_main  # noqa: E402
         return link_main(argv[1:])

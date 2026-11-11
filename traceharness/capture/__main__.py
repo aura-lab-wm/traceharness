@@ -75,6 +75,9 @@ def build_parser() -> argparse.ArgumentParser:
                         "be read. By default that stops the pass, because a source hidden in there may "
                         "still produce the runs about to be deleted; runs whose own source lies in the "
                         "unreadable subtree are refused either way")
+    p.add_argument("--sync", action="store_true",
+                   help="with --watch: after each pass, send what changed to your signed-in TraceHarness "
+                        "account (redacted; run `traceharness login` first)")
     p.add_argument("--interval", type=float, default=60.0, metavar="S",
                    help="seconds between passes when watching (default 60)")
     p.add_argument("--path", action="append", default=[],
@@ -227,6 +230,9 @@ def main(argv: list[str] | None = None) -> int:
     if len(modes) > 1:
         print("choose one of --backfill, --watch, --seed-cursors, --sweep, --prune-orphans", file=sys.stderr)
         return 2
+    if args.sync and not args.watch:
+        print("--sync only goes with --watch", file=sys.stderr)
+        return 2
     if args.watch and args.interval <= 0:
         print("--interval must be positive", file=sys.stderr)
         return 2
@@ -302,8 +308,12 @@ def main(argv: list[str] | None = None) -> int:
         # loop checks it between short waits and exits through the same clean path as ctrl-c.
         print(f"watching {len(roots)} root(s) every {args.interval:g}s — ctrl-c to stop", file=sys.stderr)
         try:
+            on_pass = None
+            if args.sync:
+                from .push import sync_hook
+                on_pass = sync_hook(RUNS_ROOT)
             sniffer.loop(roots, RUNS_ROOT, gap_s=gap_s, interval_s=args.interval,
-                         archive_root=archive_root, stop=stopping.is_set)
+                         archive_root=archive_root, stop=stopping.is_set, on_pass=on_pass)
         except CaptureLocked as e:
             # The lock's own words: "another capture writer holds ..." for contention, "cannot
             # lock ..." for a mount without locking. Always claiming a second watcher misled.
