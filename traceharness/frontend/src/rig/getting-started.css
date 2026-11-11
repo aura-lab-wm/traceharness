@@ -1,0 +1,51 @@
+/* Intent: guide a researcher from recorded evidence to a bounded, inspectable experiment.
+   Existing Plex type, 4px spacing, charcoal surfaces and evidence-blue emphasis. */
+.rg-tour-launcher { gap: 6px; }
+.rg-guide-eyebrow { display: block; color: var(--rig-dim); font: 11px/1.5 var(--rig-mono); letter-spacing: .06em; margin-bottom: 8px; }
+.rig .rg-guide h2 { font: 600 20px/1.3 var(--rig-sans); margin: 0 0 12px; }
+.rig .rg-guide h3 { font-size: 16px; margin: 8px 0 12px; }
+.rg-guide form { display: grid; gap: 8px; margin-block: 16px; }
+.rg-guide form > button { justify-self: start; }
+.rg-guide-answer { border-top: 1px solid var(--rig-line); padding-top: 16px; margin-top: 16px; }
+.rg-guide-answer ol { padding-left: 20px; }
+.rg-guide-answer li { margin-block: 12px; line-height: 1.65; }
+.rg-guide-note { border-left: 2px solid var(--rig-sel); padding-left: 12px; color: var(--rig-dim); line-height: 1.6; }
+.rg-guide-topics { margin-top: 20px; }
+.rg-guide-topics summary { cursor: pointer; padding-block: 8px; }
+.rg-guide-topics > div { display: grid; gap: 8px; margin-top: 8px; }
+.rg-guide-topics button { text-align: left; white-space: normal; justify-content: start; min-height: 44px; }
+.rg-tour { color: var(--rig-text); background: var(--rig-panel); border: 1px solid var(--rig-line2); border-radius: 8px; width: min(880px, calc(100vw - 32px)); max-height: calc(100dvh - 32px); box-sizing: border-box; padding: 28px; overflow: auto; font: 14px/1.6 var(--rig-sans); }
+.rg-tour::backdrop { background: var(--rig-scrim); }
+.rg-tour header { display: flex; align-items: start; justify-content: space-between; gap: 16px; }
+.rig .rg-tour h2 { font: 600 24px/1.25 var(--rig-sans); margin: 0; }
+.rg-tour header p { color: var(--rig-dim); margin: 12px 0 0; }
+.rig .rg-tour h3 { font: 600 22px/1.3 var(--rig-sans); margin: 0 0 16px; }
+.rg-tour .rg-btn { min-height: 44px; white-space: normal; }
+.rg-tour-layout { display: grid; grid-template-columns: 200px minmax(0, 1fr); gap: 28px; margin-block: 28px; }
+.rg-tour nav { display: flex; flex-direction: column; gap: 4px; }
+.rg-tour nav button { display: flex; align-items: baseline; gap: 12px; text-align: left; border: 1px solid transparent; border-radius: 4px; background: transparent; color: var(--rig-dim); padding: 12px; cursor: pointer; min-height: 44px; font: inherit; }
+.rg-tour nav button span { font: 11px var(--rig-mono); color: var(--rig-mute); }
+.rg-tour nav [aria-current] { color: var(--rig-text); background: var(--rig-panel2); border-color: var(--rig-line2); }
+.rg-tour nav button:hover { color: var(--rig-text); }
+.rg-tour button:focus-visible { outline: 2px solid var(--rig-sel); outline-offset: 3px; }
+.rg-tour-player { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.rg-tour-player span { font-size: 11px; color: var(--rig-dim); max-width: 180px; }
+.rg-tour-transcript { color: var(--rig-dim); line-height: 1.8; margin-block: 20px; }
+.rg-tour footer { border-top: 1px solid var(--rig-line); padding-top: 20px; display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.rg-tour footer > div { display: flex; gap: 8px; }
+.rg-tour-notice { position: fixed; z-index: 100; right: 16px; bottom: 48px; max-width: min(360px, calc(100vw - 32px)); padding: 16px; background: var(--rig-panel2); border: 1px solid var(--rig-line2); border-radius: 6px; font: 13px/1.6 var(--rig-sans); }
+.rg-tour-notice button { margin: 8px 8px 0 0; }
+[data-guide-spotlight] { outline: 2px solid var(--rig-sel) !important; outline-offset: 5px; }
+@media (max-width: 600px) {
+  .rg-tour { width: calc(100vw - 16px); max-height: calc(100dvh - 16px); padding: 16px; }
+  .rig .rg-tour h2 { font-size: 20px; }
+  .rg-tour-layout { grid-template-columns: minmax(0, 1fr); gap: 20px; margin-block: 20px; }
+  .rg-tour nav { flex-direction: row; overflow-x: auto; }
+  .rg-tour nav button { flex: 0 0 144px; padding: 8px; font-size: 12px; }
+}
+@media (prefers-reduced-motion: reduce) { .rg-tour *, [data-guide-spotlight] { scroll-behavior: auto; } }
+.rg-buddy-workflows { padding: 20px; overflow-wrap: anywhere; }
+.rg-buddy-evidence-title { border-top: 1px solid var(--rig-line); padding-top: 24px; margin: 24px 0 0; font: 600 14px var(--rig-sans); }
+.rg-buddy-workflows > .rg-bud { display: flex; flex-direction: column; }
+.rg-buddy-workflows > .rg-bud > div { padding: 16px 0; border-left: 0; }
+.rig .rg-tour h2:focus { outline: none; }

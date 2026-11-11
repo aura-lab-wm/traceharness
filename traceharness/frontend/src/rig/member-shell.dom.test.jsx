@@ -72,7 +72,7 @@ describe('hosted workbench navigation', () => {
     expect(sample.textContent).toContain('Local workbench required.')
     expect(sample.textContent).toContain('127.0.0.1:8742')
     expect(within(sample).queryByRole('button', { name: 'Download SWE-agent sample' })).toBeNull()
-    expect(requests).toEqual([])
+    expect(requests).toEqual([{ url: '/api/onboarding', method: 'GET' }])
   })
 
   it('keeps analysis and harness navigation together and exposes local model controls honestly', () => {
@@ -91,7 +91,7 @@ describe('hosted workbench navigation', () => {
     fireEvent.click(rail.getByRole('button', { name: 'Settings' }))
     expect(container.querySelector('[data-el="member-local-keys"]')).toBeTruthy()
     expect(container.querySelectorAll('input[type="password"]')).toHaveLength(0)
-    expect(requests).toEqual([])
+    expect(requests).toEqual([{ url: '/api/onboarding', method: 'GET' }])
   })
 
   it('returns from a reloadable harness route to the actual source ledger and retains its dataset', () => {

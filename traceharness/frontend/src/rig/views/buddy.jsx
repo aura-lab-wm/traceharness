@@ -1,12 +1,7 @@
-/* ====================================================================================
-   Rig · views/buddy.jsx — the Buddy dock tab. Owner: Phase 1.
-   Uses the app's real Buddy client (src/workspace/buddyClient.js: buddySettings, buddyEvidence,
-   askBuddy, redactBuddy) and its BuddyModelPicker. Evidence to be sent = the case file: the
-   first pinned run (and a second pinned run of the same condition and task, as a comparison)
-   is packed with the client's own allowlist (buddyEvidence); every other pin travels as the
-   label + value it showed when pinned. With no key in this browser Buddy shows the
-   not-connected state and never an answer — no canned text, ever.
-   ==================================================================================== */
+/* Buddy has two explicit jobs: local, rule-based workflow guidance on every surface,
+   and the existing model-backed evidence interpretation in the local workbench.
+   The guide never calls a model or reads private prompt/evidence text. Evidence
+   sharing keeps its existing allowlist, key and explicit-consent requirements. */
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { IS_MEMBER } from '../../api'
 import { askBuddy, assertBuddySharing, buddyEvidence, buddySettings, redactBuddy } from '../../workspace/buddyClient'
@@ -18,6 +13,7 @@ import { useRig } from '../context'
 import { useRuns, useRunDetail, short, sfx, tally, verdict } from '../data'
 import { Tag, VerdictText, Icon, Btn } from '../ui'
 import './dock.css'
+import NavigationBuddy from '../NavigationBuddy'
 
 /** Build the classic client's `data` / `group` / `run` shapes for one pinned run. */
 function conditionShape(allRuns, run) {
@@ -61,7 +57,7 @@ function useEvidence(items, ctx, capturedOptIn) {
 }
 
 function BuddyDock(props) {
-  return IS_MEMBER ? <MemberBuddyDock {...props} /> : <LiveBuddyDock {...props} />
+  return <div className="rg-buddy-workflows"><NavigationBuddy {...props} /><h3 className="rg-buddy-evidence-title">Model interpretation &amp; pinned evidence</h3>{IS_MEMBER ? <MemberBuddyDock {...props} /> : <LiveBuddyDock {...props} />}</div>
 }
 
 function MemberBuddyDock({ ctx = {} }) {
@@ -70,7 +66,7 @@ function MemberBuddyDock({ ctx = {} }) {
   return (
     <div className="rg-bud" data-el="buddy-panel">
       <div className="rg-note" data-el="buddy-local-only"><div>
-        <b>Buddy runs in the local workbench.</b>
+        <b>Model interpretation runs in the local workbench.</b>
         <p>Keep inspecting and pinning evidence here. To ask a model about it, start <code>python -m traceharness --host 127.0.0.1 --port 8742</code> and open <code>127.0.0.1:8742</code>.</p>
       </div></div>
       {ctx.dir && <p className="rg-small">Selected dataset: <b>{ctx.dir}</b>{ctx.run && <> · run <span className="rg-mono">{ctx.run}</span></>}</p>}

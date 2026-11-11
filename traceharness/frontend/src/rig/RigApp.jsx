@@ -25,6 +25,8 @@ import { useCaseFile } from './caseFile'
 import { useBuildWatch } from './buildWatch'
 import { evidenceOrigin } from './shallowEvidence'
 import { AN_VIEWS } from './views/analysis.jsx'
+import GettingStarted from './GettingStarted'
+import { GUIDE_TOPICS, guideDestination } from './guidance'
 import { TaskSideNav } from './views/trajectory.jsx'
 import { Icon, Kbd, MOD, NotFound, EvidenceChain, Toaster, toast as showToast, Seg, NextSteps } from './ui'
 
@@ -152,6 +154,7 @@ export default function RigApp() {
   const [themePref, setThemePref] = useState(readTheme)
   const [pop, setPop] = useState(null)          // { id: 'cond'|'oracle', left } | null
   const [keysOpen, setKeysOpen] = useState(false)   // the ? shortcut sheet (not deep-linked)
+  const [guideTarget, setGuideTarget] = useState(null)
   const [navOpen, setNavOpenState] = useState(readNav)
   const setNavOpen = useCallback((open) => { setNavOpenState(open); writeNav(open) }, [])
   const [dockW, setDockWState] = useState(readDockW)
@@ -270,6 +273,38 @@ export default function RigApp() {
   const toggleDock = useCallback((id) => commit({ ...routeRef.current, dock: routeRef.current.dock === id ? null : id }, true), [commit])
   const setPalette = useCallback((on) => commit({ ...routeRef.current, pal: !!on, sheet: null }, true), [commit])
   const setSheet = useCallback((v) => commit({ ...routeRef.current, sheet: v, pal: false }, true), [commit])
+  const showGuidance = useCallback((topic, context = {}) => {
+    if (!GUIDE_TOPICS.includes(topic)) return
+    const destination = guideDestination(topic, context)
+    if (destination) openTab(destination)
+    if (['buddy', 'case'].includes(topic.destination)) setDock(topic.destination)
+    setGuideTarget(topic.target ? { selector: topic.target } : null)
+  }, [openTab, setDock])
+  useEffect(() => {
+    if (!guideTarget) return
+    let target, previousIndex, restoreTimer
+    const observer = new MutationObserver(reveal)
+    function reveal() {
+      const root = document.querySelector('.rg-pane.focus') || document.getElementById('rig-doc-main')
+      const found = root?.querySelector(guideTarget.selector)
+      if (!found) return
+      observer.disconnect(); target = found
+      for (let node = target; node && node !== root; node = node.parentElement) {
+        if (node.tagName === 'DETAILS' && !node.open) node.open = true
+      }
+      previousIndex = target.getAttribute('tabindex'); target.setAttribute('tabindex', '-1')
+      target.setAttribute('data-guide-spotlight', 'true')
+      target.scrollIntoView?.({ block: 'center', behavior: 'auto' }); target.focus({ preventScroll: true })
+      restoreTimer = setTimeout(() => target?.removeAttribute('data-guide-spotlight'), 6000)
+    }
+    observer.observe(document.getElementById('rig-doc-main') || document.body, { childList: true, subtree: true })
+    reveal()
+    const timeout = setTimeout(() => observer.disconnect(), 6000)
+    return () => {
+      observer.disconnect(); clearTimeout(timeout); clearTimeout(restoreTimer)
+      if (target) { target.removeAttribute('data-guide-spotlight'); if (previousIndex === null) target.removeAttribute('tabindex'); else target.setAttribute('tabindex', previousIndex) }
+    }
+  }, [guideTarget, curSpec])
   const setOracle = useCallback((o) => { if (SUITES.includes(o)) commit({ ...routeRef.current, oracle: o }) }, [commit])
   const setLab = useCallback((on) => {
     const ok = writeLab(on); setLabState(on)
@@ -362,8 +397,8 @@ export default function RigApp() {
   const rig = useMemo(() => ({
     state: route, openTab, replaceTab, closeTab, focusTab, toggleSplit, maximized: !!route.max, setMax, toggleMax, setDock, toggleDock, setPalette,
     oracle: route.oracle, setOracle, condition, conditionFor, setCondition,
-    lab, setLab, theme, themePref: pref, setTheme, isMobile, focusCtx, toast: showToast, datasets,
-  }), [route, openTab, replaceTab, closeTab, focusTab, toggleSplit, setMax, toggleMax, setDock, toggleDock, setPalette, setOracle, condition, conditionFor, setCondition, lab, setLab, theme, pref, setTheme, isMobile, focusCtx, datasets])
+    lab, setLab, theme, themePref: pref, setTheme, isMobile, focusCtx, toast: showToast, datasets, showGuidance,
+  }), [route, openTab, replaceTab, closeTab, focusTab, toggleSplit, setMax, toggleMax, setDock, toggleDock, setPalette, setOracle, condition, conditionFor, setCondition, lab, setLab, theme, pref, setTheme, isMobile, focusCtx, datasets, showGuidance])
 
   /* ---- keyboard */
   useEffect(() => {
@@ -428,6 +463,7 @@ export default function RigApp() {
           <button type="button" className="rg-mtab" aria-label={`Switch document (${nTabs} open)`} onClick={() => setSheet(route.sheet ? null : 'tabs')}><Icon name="tabs" size={16} /><span className="tt">{curInfo.title}</span><span className="n">{nTabs}</span></button>
           <button type="button" className="rg-cmd" aria-label="Open command palette" onClick={() => setPalette(true)}><Icon name="search" size={15} /><span className="rg-cmd-ph">Search datasets, runs, tasks and views…</span><span className="rg-cmd-k"><Kbd>{MOD}</Kbd><Kbd>K</Kbd></span></button>
           <div className="rg-tb-r">
+            <GettingStarted onGuide={topic => showGuidance(topic, focusCtx)} />
             {IS_MEMBER && <a className="rg-tbtn" href="/login" data-el="member-account">Account</a>}
             <button type="button" className={`rg-tbtn${route.dock === 'buddy' ? ' on' : ''}`} data-el="buddy-launcher" aria-label="Ask Buddy" aria-pressed={route.dock === 'buddy'} onClick={() => toggleDock('buddy')}><Icon name="buddy" size={16} /><span className="lbl-d">Ask Buddy</span></button>
             <span className="rg-tb-sep rg-hide-sm" aria-hidden="true" />
@@ -706,7 +742,7 @@ function Dock({ dock, side, setDock, ctx, onBack, caseCount = 0, width, setWidth
       <div className="rg-dock-h">
         <div className="rg-dock-tabs" role="tablist" aria-label="Panels">
           {docks.map((d) => (
-            <button key={d.id} type="button" role="tab" aria-selected={d.id === dock} className={cx('rg-dock-tab', d.id === dock && 'on')} onClick={() => setDock(d.id)} title={d.label}>
+            <button key={d.id} type="button" role="tab" aria-label={d.label} aria-selected={d.id === dock} className={cx('rg-dock-tab', d.id === dock && 'on')} onClick={() => setDock(d.id)} title={d.label}>
               <Icon name={d.icon || 'log'} size={14} /><span className="lbl">{d.label}</span>{d.id === 'case' && caseCount > 0 && <span className="n">{caseCount}</span>}
             </button>
           ))}

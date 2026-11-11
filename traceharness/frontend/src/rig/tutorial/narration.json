@@ -1,0 +1,47 @@
+[
+  {
+    "id": "evidence",
+    "transcript_sha256": "aec557e805f4fde8ae06b2715e92c3c5c461463da6e8b0c44c976bd4513907e0",
+    "audio_sha256": "c13b8a424f47075683d50afcc1d5f207615b93bd1b652af16e8b79551d651631",
+    "bytes": 129261,
+    "seconds": 21.434,
+    "voice": "macOS Samantha",
+    "codec": "MP3 mono 24kHz 48kbps"
+  },
+  {
+    "id": "harness",
+    "transcript_sha256": "7a49d77ed1929b0eb0f93a37464a68f0fcf81bf311633b3a7e991de755c8f020",
+    "audio_sha256": "614c4890cbefcfd79574469e07e9c9073cbab86a5a9571c9594236337fa54b63",
+    "bytes": 133869,
+    "seconds": 22.21475,
+    "voice": "macOS Samantha",
+    "codec": "MP3 mono 24kHz 48kbps"
+  },
+  {
+    "id": "dispatch",
+    "transcript_sha256": "f57bf7541504b2659fa61836f0db756f73094968fd9af963fb5be1eba41f2955",
+    "audio_sha256": "f5d16be77047dd15d4e596ea39f0d63614a4a639a2cef76302ee8dbf3d31ed16",
+    "bytes": 147549,
+    "seconds": 24.494042,
+    "voice": "macOS Samantha",
+    "codec": "MP3 mono 24kHz 48kbps"
+  },
+  {
+    "id": "results",
+    "transcript_sha256": "e06476c575e2004d9ac5f6765483112798412cbe93d1c5f06e58f8aef32d7e9b",
+    "audio_sha256": "8529b4d577fa58a7881bfa0f21d9968a1bab109cbf6f01f37d230f198f122bab",
+    "bytes": 158637,
+    "seconds": 26.3435,
+    "voice": "macOS Samantha",
+    "codec": "MP3 mono 24kHz 48kbps"
+  },
+  {
+    "id": "buddy",
+    "transcript_sha256": "5447de284d3d860bb60ad18fafd366779d7137e4ee9e83ad6869a9eb28b8829c",
+    "audio_sha256": "40355546df5a69e97d2cb3381923fa2954b5d7129d1c0fec8c9e1b5ef3942216",
+    "bytes": 148701,
+    "seconds": 24.679458,
+    "voice": "macOS Samantha",
+    "codec": "MP3 mono 24kHz 48kbps"
+  }
+]

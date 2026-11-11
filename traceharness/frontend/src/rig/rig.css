@@ -732,6 +732,15 @@ body.rg-resizing{cursor:col-resize;user-select:none}
   .rig[data-rig-nav="closed"] .rg-rail .rg-nav-it .tip{left:54px}
 }
 @media (max-width:760px){.rg-brand{padding:0 10px}.rg-dock-rs{display:none}}
+/* Dock tabs need an explicit phone layout as well as the desktop side-panel layout. */
+@media (max-width:760px){
+  .rg-dock-h{height:52px;padding:4px 8px;gap:4px}
+  .rg-dock-tabs{display:flex;align-items:center;gap:4px;min-width:0;flex:1;overflow-x:auto;scrollbar-width:thin}
+  .rg-dock-tab{display:flex;align-items:center;justify-content:center;gap:6px;flex:none;min-width:44px;height:44px;padding:0 10px;border:0;border-radius:6px;background:none;color:var(--rig-mute);font:500 12.5px/1 var(--rig-sans);white-space:nowrap}
+  .rg-dock-tab.on{background:var(--rig-panel3);color:var(--rig-text)}
+  .rg-dock-tab:not(.on) .lbl{display:none}
+  .rg-dock-h .dt{width:44px;height:44px;padding:0;justify-content:center}
+}
 .rg-sb .rg-sb-update{background:var(--rig-sel);color:var(--rig-sel-ink);font-weight:600}
 .rg-sb .rg-sb-update:hover{background:var(--rig-sel)!important;color:var(--rig-sel-ink)!important;filter:brightness(1.1)}
 
