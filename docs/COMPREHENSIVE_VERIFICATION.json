@@ -1,0 +1,673 @@
+{
+  "verified_at": "2026-11-11T22:52:47.235272+00:00",
+  "status": "Independent verification completed; account provisioning and requested Carbon audit remain blocked.",
+  "member_url": "https://traceharness.dev/app#/rig/harnesses",
+  "code_commit": "a2a7e63929744f19977db941fb40c90137eda251",
+  "ui_publication": {
+    "at": "2026-11-11T22:45:57.632285+00:00",
+    "exit_code": 0,
+    "key": "app.html.gz",
+    "namespace_id": "8a74dd2fba124b1a8d82e6eeff5ba3ae",
+    "source_commit": "a2a7e63929744f19977db941fb40c90137eda251",
+    "input_file": "/Users/amastro/Documents/TraceHarness-comprehensive-verification-2026-11-11/app-comprehensive-current-bootstrap.html.gz",
+    "input_sha256": "6f217cc845cd4f601ffa67e6238dde9890813e8cc0c81e20164f6a01aad08636",
+    "input_bytes": 15295627,
+    "html_sha256": "77e550efb1c311a09ce9169e0c06943b987a538c7d0a23d698d8bfd2568abc21",
+    "worker_version_id": "5ff30c89-62aa-4c90-ba78-b37a24ef4bf4",
+    "worker_redeployed": false,
+    "config_deleted_on_exit": true,
+    "last_10_log_lines": [
+      "",
+      " \u26c5\ufe0f wrangler 4.90.1 (update available 4.160.1)",
+      "\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500",
+      "Resource location: remote ",
+      "",
+      "Writing the contents of /Users/amastro/Documents/TraceHarness-comprehensive-verification-2026-11-11/app-comprehensive-current-bootstrap.html.gz to the key \"app.html.gz\" on namespace id: \"8a74dd2fba124b1a8d82e6eeff5ba3ae\".",
+      ""
+    ]
+  },
+  "automated_checks": {
+    "python": {
+      "ran": 1231,
+      "passed": 1165,
+      "skipped": 66,
+      "production_reader_resource_warnings": 0,
+      "sqlite_unclosed_warnings": 0,
+      "skip_reasons": {
+        "requires the full checkout: solutions/reference/ (instructor solutions are not part of the school replication package)": 2,
+        "requires the full checkout: <checkout>/tools/capture_census.py": 4,
+        "requires the full checkout: <checkout>/tools/census_cursor.py": 8,
+        "requires the full checkout: <checkout>/tools/census_gemini.py": 6,
+        "requires the full checkout: <checkout>/tools/census_qwen.py": 7,
+        "requires the full checkout: macos/CaptureMenubar": 1,
+        "requires the full checkout: <checkout>/macos/CaptureMenubar": 15,
+        "requires the full checkout: docs/capture.md": 3,
+        "requires the full checkout: traceharness/frontend/README.md": 1,
+        "requires the full checkout: traceharness/README.md": 2,
+        "inspect_ai not installed (pip install --break-system-packages inspect_ai)": 4,
+        "inspect_ai not installed": 1,
+        "pyarrow is installed with the [real] extra": 1,
+        "requires the full checkout: traceharness/data/models/real_swe_agent_500.json (the school package ships only the mock_prerecorded sentinel)": 1,
+        "requires the full checkout: web/src": 5,
+        "requires the full checkout: web/index.html": 1
+      }
+    },
+    "frontend": {
+      "passed": 1091,
+      "files": 65
+    },
+    "worker": {
+      "passed": 198
+    },
+    "dist_source_freshness": {
+      "passed": 2
+    },
+    "lint": {
+      "exit_code": 0,
+      "warnings": 0,
+      "warnings_fail_check": true
+    },
+    "isolated_archive_matches_committed_source": {
+      "complete": true,
+      "source_commit": "a2a7e63929744f19977db941fb40c90137eda251",
+      "files": 412,
+      "mismatches": []
+    }
+  },
+  "live_checks": {
+    "rendering": {
+      "checks": 1176,
+      "datasets": 8,
+      "widths": [
+        390,
+        768,
+        1440
+      ],
+      "themes": [
+        "dark",
+        "light"
+      ],
+      "errors": [],
+      "interpretation": "Navigation, nonblank rendering and crash/overflow checks. This is not proof of model performance."
+    },
+    "editing": {
+      "complete": true,
+      "at": "2026-11-11T22:48:39.019558+00:00",
+      "candidate": false,
+      "checks": [
+        "The member home has one accurate hosted-workflow entry into Harnesses",
+        "Whole-configuration Unicode JSON edits apply to the actual prompt and fields; pending edits block review",
+        "Invalid JSON cannot apply and Discard restores the current configuration",
+        "The actual exported file matches the complete configuration; review succeeds without collecting a key or starting a job",
+        "A named tab checkpoint restores the exact prompt, model, task and harness configuration",
+        "The exported file imports as an editable draft without account persistence or execution",
+        "Read-only and permissive warnings come from the real compiler; guided/advanced navigation preserves edits and explicit reset retains model/task selections"
+      ],
+      "published_html_sha256": "77e550efb1c311a09ce9169e0c06943b987a538c7d0a23d698d8bfd2568abc21",
+      "configuration_export_sha256": "4a66b7b60347a703cb4c7bb2a7ef4a53e35f38973d96bfc5ec970e50b470c95b",
+      "new_jobs": 0,
+      "page_errors": [],
+      "blocked_requests": []
+    },
+    "native_editor": {
+      "complete": true,
+      "at": "2026-11-11T22:50:48.846879+00:00",
+      "baseline": false,
+      "candidate": false,
+      "checks": [
+        "Replacement edits remain a valid excluded draft; explicit opt-in alone adds the exact hashed profile to configuration; Run stays gated",
+        "One-row bulk Disable and individual Include work while excluded and preserve replacement text",
+        "320/390/768/1440/1920 layouts fit; mobile list/inspector navigation works",
+        "Excluded profile, remembered replacement and named prompt set survive tab reload"
+      ],
+      "published_html_sha256": "77e550efb1c311a09ce9169e0c06943b987a538c7d0a23d698d8bfd2568abc21",
+      "inventory_sha256": "9592e2f237bfed2ea7702f0a88499d342631d4893ca276186abf8b173361b4b7",
+      "block_id": "codex-prompts-templates-permissions-approval_policy-on_request_rule_request_permission:98e8a78ac869d64f",
+      "new_jobs": 0,
+      "page_errors": [],
+      "blocked_requests": []
+    },
+    "readiness": {
+      "ui_choices": 9,
+      "reviews": 72,
+      "supported": 67,
+      "expected_rejections": 5,
+      "changed_or_invalid_configuration_blocks_dispatch": true,
+      "disconnect_blocks_dispatch": true,
+      "credential_revoked": true
+    },
+    "saved_result": {
+      "complete": true,
+      "at": "2026-11-11T22:49:58.272549+00:00",
+      "job_id": "f7437f477858ef916a71bf9d5bedb7dac589209189480ff6",
+      "status": "succeeded",
+      "grade": "passed",
+      "usage": {
+        "requests": 10,
+        "input_tokens": 162113,
+        "output_tokens": 2988,
+        "cost_usd": 0.177053
+      },
+      "manifest_sha256": "dd1bf0de185b409c16109a2e7ef329bcd120040015c5e272a78e3a522dfd104c",
+      "download_sha256": "f8328f1cf515ea3fe57b81f36f76a02207742d3e0cd67f2db2ca597c36536f33",
+      "published_html_sha256": "77e550efb1c311a09ce9169e0c06943b987a538c7d0a23d698d8bfd2568abc21",
+      "new_jobs": 0,
+      "page_errors": [],
+      "blocked_requests": []
+    },
+    "voice_and_buddy": {
+      "complete": true,
+      "at": "2026-11-11T22:49:07.229788+00:00",
+      "production_document": true,
+      "real_member_session": true,
+      "candidate_tour_acknowledgement_fixture": false,
+      "checks": [
+        "Existing tour acknowledgement retained; hostile Origin 403 and stale member-scope acknowledgement 409",
+        "An acknowledged real member can manually replay the exact published tour without autoplay",
+        "Tour fits 320, 390, 768 and 1440 pixels without horizontal content overflow",
+        "All five bundled MP3 chapters decode and advance in headless Chromium; pause/chapter change stop playback",
+        "Final tour action opens the real Ask Buddy workflow guide",
+        "JSON question yields real numbered steps, opens Harnesses, expands the editor and spotlights the actual control",
+        "Dispatch guidance checks the actual production catalog and opens the real matrix controls without submitting jobs",
+        "Local-only requests state the loopback boundary; unknown requests have no invented capability or action",
+        "Buddy guidance and question controls fit 320, 390, 768 and 1440 pixels",
+        "Light-theme narration layout, title hierarchy and modal backdrop checked",
+        "Voice tour can reopen without autoplay and Escape dismisses it",
+        "Tour dismissal is retained across reload in this member scope",
+        "A fresh browser context with the real session cookie and empty local storage reads the account acknowledgement without offering the tour again"
+      ],
+      "new_jobs": 0,
+      "published_html_sha256": "77e550efb1c311a09ce9169e0c06943b987a538c7d0a23d698d8bfd2568abc21",
+      "readback_attempts": 1,
+      "initial_preference": {
+        "version": 1,
+        "seen": true
+      },
+      "last_audio_probe": {
+        "duration": 24.679458,
+        "ready": 4,
+        "time": 0.177155,
+        "error": false,
+        "errorCode": null,
+        "paused": false,
+        "mp3": "probably"
+      },
+      "audio": [
+        {
+          "duration": 21.434,
+          "ready": 4,
+          "time": 0.248909,
+          "error": false,
+          "errorCode": null,
+          "paused": false,
+          "mp3": "probably"
+        },
+        {
+          "duration": 22.21475,
+          "ready": 4,
+          "time": 0.16641,
+          "error": false,
+          "errorCode": null,
+          "paused": false,
+          "mp3": "probably"
+        },
+        {
+          "duration": 24.494042,
+          "ready": 4,
+          "time": 0.172949,
+          "error": false,
+          "errorCode": null,
+          "paused": false,
+          "mp3": "probably"
+        },
+        {
+          "duration": 26.3435,
+          "ready": 4,
+          "time": 0.157245,
+          "error": false,
+          "errorCode": null,
+          "paused": false,
+          "mp3": "probably"
+        },
+        {
+          "duration": 24.679458,
+          "ready": 4,
+          "time": 0.177155,
+          "error": false,
+          "errorCode": null,
+          "paused": false,
+          "mp3": "probably"
+        }
+      ],
+      "page_errors": [],
+      "blocked_requests": [],
+      "mutations": [],
+      "live_account_acknowledged": true
+    },
+    "saved_prompt_postgres_refresh_and_paint": {
+      "complete": true,
+      "at": "2026-11-11T22:31:39.026158+00:00",
+      "service_role_key_used": false,
+      "new_jobs": 0,
+      "durable_write_confirmed": true,
+      "forced_account_refresh_confirmed": true,
+      "exact_saved_prompt_painted": true,
+      "record_id": "claude",
+      "saved_hash": "ffadbf5906f7",
+      "saved_prompt_sha256": "5e4f049331b9c0b1e61e3aabbebe2e57e5c17143c4ee0eb9be060419c4831384",
+      "original_restored_and_revalidated": true
+    },
+    "frozen_queue": {
+      "complete": true,
+      "at": "2026-11-11T22:26:58.130610+00:00",
+      "new_jobs": 0,
+      "new_model_requests": 0,
+      "checks": [
+        "A real four-cell mixed-runtime plan freezes as four pending trials without jobs or credentials",
+        "An acknowledged identical freeze replay returns the same experiment and schedule",
+        "Start without an explicit provider connection is rejected before creating a job",
+        "Cancel finalizes every unstarted trial as cancelled, with no invented grade or model call",
+        "The live saved-experiment view loads the cancelled queue and exact frozen plan; Start and Cancel remain disabled",
+        "The real saved-experiment result export contains the same experiment and frozen plan hash"
+      ],
+      "experiment": {
+        "id": "5a0ef314f30f3342800f1fa62978a4b7a0afc3a688c7af1c",
+        "status": "cancelled",
+        "plan_sha256": "2a93c2fff32fb88683148222b0912c8c3b95d27e0591692cb8a98f5d24e5636e",
+        "trial_count": 4,
+        "summary": {
+          "finalized_trials": 4,
+          "pending_trials": 0,
+          "active_trials": 0,
+          "confirmed_cost_usd": 0,
+          "cost_unknown_trials": 0,
+          "comparisons": []
+        }
+      },
+      "export_sha256": "73abb347070779c54b4823f00fd9cded923ff6532b027736760f02fcf700ecdf",
+      "plan_sha256": "2a93c2fff32fb88683148222b0912c8c3b95d27e0591692cb8a98f5d24e5636e",
+      "confirmed_new_cost_usd": 0
+    },
+    "anonymous_gate_count": 41,
+    "authenticated_boundary_checks": {
+      "complete": true,
+      "at": "2026-11-11T22:26:29.111737+00:00",
+      "checks": [
+        {
+          "name": "host-only secure session cookie",
+          "passed": true
+        },
+        {
+          "name": "authenticated hostile Origin /app",
+          "status": 403,
+          "passed": true
+        },
+        {
+          "name": "authenticated hostile Origin /app/shallow",
+          "status": 403,
+          "passed": true
+        },
+        {
+          "name": "authenticated hostile Origin /api/runner/catalog",
+          "status": 403,
+          "passed": true
+        },
+        {
+          "name": "authenticated hostile Origin /api/shallow/harnesses",
+          "status": 403,
+          "passed": true
+        },
+        {
+          "name": "stale member scope /api/runner/jobs",
+          "status": 409,
+          "passed": true
+        },
+        {
+          "name": "stale member scope /api/shallow/harnesses",
+          "status": 409,
+          "passed": true
+        },
+        {
+          "name": "stale member scope /api/onboarding",
+          "status": 409,
+          "passed": true
+        },
+        {
+          "name": "local-only mutation /api/jobs",
+          "status": 403,
+          "passed": true
+        },
+        {
+          "name": "local-only mutation /api/blocks/run",
+          "status": 403,
+          "passed": true
+        },
+        {
+          "name": "local-only mutation /api/judge/run",
+          "status": 403,
+          "passed": true
+        },
+        {
+          "name": "local-only mutation /api/real/import",
+          "status": 403,
+          "passed": true
+        },
+        {
+          "name": "local-only mutation /api/capture/control",
+          "status": 403,
+          "passed": true
+        },
+        {
+          "name": "local-only mutation /api/settings/key",
+          "status": 403,
+          "passed": true
+        },
+        {
+          "name": "local-only mutation /api/harness/ablate",
+          "status": 403,
+          "passed": true
+        },
+        {
+          "name": "invalid Pages code reaches clean Worker callback with a password path",
+          "passed": true
+        }
+      ],
+      "pages_callback": {
+        "landing_path": "/login/callback",
+        "query_scrubbed": true,
+        "has_signin_link": true
+      },
+      "real_email_or_oauth_code_exchange": "UNVERIFIED; negative unsupported-code handling only",
+      "new_jobs": 0
+    },
+    "public_links": {
+      "complete": true,
+      "at": "2026-11-11T22:40:33.304345+00:00",
+      "checks": [
+        {
+          "path": "/",
+          "status": 200,
+          "location": null,
+          "passed": true
+        },
+        {
+          "path": "/app/",
+          "status": 302,
+          "location": "/login",
+          "passed": true
+        },
+        {
+          "path": "/guide/",
+          "status": 200,
+          "location": null,
+          "passed": true
+        },
+        {
+          "path": "/login/",
+          "status": 200,
+          "location": null,
+          "passed": true
+        }
+      ],
+      "email_protection": {
+        "decoded_mailto_links": 2,
+        "remaining_protected_links": 0,
+        "passed": true
+      },
+      "external_links": "Not checked; internal live navigation only"
+    },
+    "runner_cleanup": {
+      "total_retained_jobs": 48,
+      "active_jobs": 0,
+      "needs_attention_jobs": 0,
+      "active_experiments": 0,
+      "containers": 0,
+      "residual_mounts": 0,
+      "registry_sha256": "2d90f0f7a9710890c2aedad0e972ac6d1f1a52ecebec4848d195793370496d10",
+      "at": "2026-11-11T22:52:18.891965+00:00",
+      "complete": true
+    },
+    "worker_version": {
+      "complete": true,
+      "at": "2026-11-11T22:49:47.504984+00:00",
+      "exit_code": 0,
+      "expected_version_id_present": true,
+      "worker_version_id": "5ff30c89-62aa-4c90-ba78-b37a24ef4bf4",
+      "read_only_deployment_metadata": true,
+      "production_traffic_percentage": 100
+    }
+  },
+  "offline_and_damaged_file_checks": {
+    "artifact": "/Users/amastro/Documents/TraceHarness-comprehensive-verification-2026-11-11/app-comprehensive-current-bootstrap.html",
+    "sha256": "77e550efb1c311a09ce9169e0c06943b987a538c7d0a23d698d8bfd2568abc21",
+    "html_bytes": 21109794,
+    "decoded_data_bytes": 177418286,
+    "coverage": {
+      "captured_claude_code": {
+        "index_rows": 1,
+        "embedded_runs": 1,
+        "spans": 63
+      },
+      "demo_mock": {
+        "index_rows": 24,
+        "embedded_runs": 24,
+        "spans": 586
+      },
+      "families_mock": {
+        "index_rows": 80,
+        "embedded_runs": 80,
+        "spans": 1525
+      },
+      "live": {
+        "index_rows": 576,
+        "embedded_runs": 576,
+        "spans": 12718
+      },
+      "llma4se_live": {
+        "index_rows": 1632,
+        "embedded_runs": 1632,
+        "spans": 29405
+      },
+      "prerecorded_mock": {
+        "index_rows": 480,
+        "embedded_runs": 480,
+        "spans": 7458
+      },
+      "prerecorded_mock_weak": {
+        "index_rows": 160,
+        "embedded_runs": 160,
+        "spans": 2292
+      },
+      "real_swe_agent_500": {
+        "index_rows": 500,
+        "embedded_runs": 500,
+        "spans": 26349
+      }
+    },
+    "checks": {
+      "offline_load": {
+        "ok": true,
+        "seconds": 0.646,
+        "network_requests": 0,
+        "page_errors": 0
+      },
+      "unsupported_browser": {
+        "ok": true,
+        "visible_error": "The recorded data could not be loaded.\n\nThis browser cannot decompress the export. Open it in a current browser, or create an export without --export-compress-data.\n\nReload the page or open a fresh export. No recorded data or saved harnesses were changed."
+      },
+      "truncated_html": {
+        "ok": true,
+        "visible_error": "The recorded data could not be loaded. This exported file is incomplete. Reload the page or open a fresh export."
+      },
+      "truncated_gzip": {
+        "ok": true,
+        "visible_error": "The recorded data could not be loaded.\n\nCompressed input was truncated.\n\nReload the page or open a fresh export. No recorded data or saved harnesses were changed."
+      },
+      "declared_size_mismatch": {
+        "ok": true,
+        "visible_error": "The recorded data could not be loaded.\n\nThe embedded data exceeds its declared size.\n\nReload the page or open a fresh export. No recorded data or saved harnesses were changed."
+      },
+      "oversize_declared_data": {
+        "ok": true,
+        "visible_error": "The recorded data could not be loaded.\n\nThe embedded data size is invalid or exceeds the export limit.\n\nReload the page or open a fresh export. No recorded data or saved harnesses were changed."
+      },
+      "unsupported_encoding": {
+        "ok": true,
+        "visible_error": "The recorded data could not be loaded.\n\nThe embedded data format is unsupported.\n\nReload the page or open a fresh export. No recorded data or saved harnesses were changed."
+      },
+      "hosted_failure_exit": {
+        "ok": true,
+        "href": "/app/shallow"
+      }
+    }
+  },
+  "snapshot": {
+    "base_html_sha256": "682c906dc023ace3b71a34f9cbe59054bf2985b09d52cc2e03c51bc162607b5b",
+    "html": {
+      "path": "/Users/amastro/Documents/TraceHarness-comprehensive-verification-2026-11-11/app-comprehensive-current-bootstrap.html",
+      "bytes": 21109794,
+      "sha256": "77e550efb1c311a09ce9169e0c06943b987a538c7d0a23d698d8bfd2568abc21"
+    },
+    "gzip": {
+      "path": "/Users/amastro/Documents/TraceHarness-comprehensive-verification-2026-11-11/app-comprehensive-current-bootstrap.html.gz",
+      "bytes": 15295627,
+      "sha256": "6f217cc845cd4f601ffa67e6238dde9890813e8cc0c81e20164f6a01aad08636"
+    },
+    "audio_chapters": 5,
+    "bundled_audio_hashes_verified": true,
+    "encoded_recorded_data_unchanged": true,
+    "encoded_recorded_data_sha256": "f15ee7595f1630cef32c32265fd6e0b1667dc6bd80549a032b2d43d284f9a5f3",
+    "datasets": [
+      "captured_claude_code",
+      "demo_mock",
+      "families_mock",
+      "live",
+      "llma4se_live",
+      "prerecorded_mock",
+      "prerecorded_mock_weak",
+      "real_swe_agent_500"
+    ],
+    "recorded_runs": 3453,
+    "replacements": [
+      {
+        "before": "/assets/index-DT-Su2yb.js",
+        "after": "/assets/index-Csn9ZICM.js",
+        "sha256": "308eff80f6f6076dd04d15df7a630e75c29dc63f878c9be85c96441fcb358df6"
+      },
+      {
+        "before": "/assets/index-BXp67ANa.css",
+        "after": "/assets/index-BXp67ANa.css",
+        "sha256": "6860c5b733f0ae775800cd53712df45cb1659532843e79cdca4e32fe7eb3db3c"
+      }
+    ],
+    "build_source": {
+      "sha256": "eda0bb25b626e7ed9fba14783296b51e3ace937fce5d4471a2e8f8ad6f9f91cf",
+      "files": 103
+    },
+    "bootstrap": {
+      "identifier_replacements": 2,
+      "canonical_exporter_wrapper_verified": true,
+      "exporter_source_sha256": "53715d1fc779996ebea27ec75b37fa9f82d2f0a6eeda11f8906ad902448ce8f1",
+      "recorded_data_and_compiled_app_unchanged": true
+    }
+  },
+  "blocked": {
+    "second_account": {
+      "login_http_status": 401,
+      "request_was_pending": true,
+      "approval_http_status": 503,
+      "reason": "Account creation is not configured on this host.",
+      "password_resets": 0,
+      "live_two_account_isolation": "UNVERIFIED",
+      "credential_source": "Existing 1Password Login, exact traceharness.dev origin, reviewed consumer; no secrets returned."
+    },
+    "requested_model_review": {
+      "requested_model": "gemini-4-carbon-high",
+      "effort": "high",
+      "requested_host": "Ultracode",
+      "available_host": "local agy subscription CLI",
+      "ultracode_not_exposed": true,
+      "invocations": 3,
+      "completed_audit": false,
+      "outcomes": [
+        {
+          "exit_code": 3,
+          "status": "ERROR",
+          "finished_reason": "print_timeout",
+          "elapsed_seconds": 301.72
+        },
+        {
+          "exit_code": 3,
+          "status": "ERROR",
+          "finished_reason": "print_timeout",
+          "elapsed_seconds": 122.07
+        },
+        {
+          "exit_code": 3,
+          "status": "ERROR",
+          "finished_reason": "print_timeout",
+          "elapsed_seconds": 242.27
+        }
+      ],
+      "model_tests_or_findings": "UNVERIFIED; no completed Carbon review was used as evidence."
+    }
+  },
+  "limits": [
+    "Five native task/runtime/model pairings lack compatibility receipts and remain blocked from execution.",
+    "Real email/OAuth/PKCE code exchange was not run; only invalid-code forwarding and recovery were proved.",
+    "General performance improvement, every possible native prompt intervention and arbitrary repositories/models are UNVERIFIED.",
+    "Sixty-six Python cases were skipped for missing optional/full-checkout components; they are not passed tests.",
+    "Some local test fixtures still emit file ResourceWarnings; Vite emits its existing large-chunk advisory; Python emits its third-party Starlette/httpx advisory. None was suppressed."
+  ],
+  "intermittent_verification_limit": {
+    "first_native_final_run_complete": false,
+    "feature_steps_passed": 4,
+    "failed_check": "Aggregate no-error/no-job postcondition after all feature steps",
+    "instrumented_repeat_passes": 3,
+    "original_cause": "UNVERIFIED; initial failure did not retain its individual guard values."
+  },
+  "new_hosted_execution_jobs": 0,
+  "new_hosted_model_requests": 0,
+  "new_hosted_execution_cost_usd": 0,
+  "service_role_key_used_by_proofs": false,
+  "worker_redeployed": false,
+  "runner_redeployed": false,
+  "private_evidence_sha256": {
+    "final-native-v4-proof.json": "67b0bfb12019a9e3e8635bd8299e27cb1782257f0a0c694811616010b5b913cf",
+    "final-editing-proof.json": "cae0071e89b91e3bb9e0dfdf9ba342ac2fef762516c3575b45c7fe0a0b17e441",
+    "final-readiness-proof.json": "8b295c87292d8a3bc976afea39fa88bef61bc54b624b7069d4be960b7f811ceb",
+    "final-smoke-proof.json": "f9c12c6efaa86be44fd7619a77c3faf773e1698317700ecd23779b47bfff18d9",
+    "final-voice-proof.json": "6ceca49a12664cc9885ef087a2c68bf6639cc4db03cb5ece6ce808406d0459a2",
+    "final-result-proof.json": "8334427e34401d93d7282afa750536736b17c67bc71617f7f02350cf41c5a537",
+    "boundary-proof.json": "e917e6e5c09e7cfa4456960caa55f6c99748ec89e739c35905620e9896d84492",
+    "queue-proof.json": "2e48cf457c586c6d30174f9d2f84db861c69f0dae71aa346b51d44308fd77813",
+    "persistence-proof.json": "31e45ef82448563ce81a6461b90e166f5ed01771fdb083f0551a7471cc46f56b",
+    "anonymous-proof.json": "1dd4b9e292d0013c6edfa249b389462d2b5df4aa483d1377bc396943634ae2bd",
+    "anonymous-mutation-proof.json": "2c6a7bd70d968eeb824457cb3149f3deedd0fcff1084f5d0bd72e5015b84f49d",
+    "final-runner-audit.json": "b2ef6db7c347bf1e597f2fa6d9421cae07397c951f70bdb057ff216175ccacbe",
+    "public-links-proof.json": "d4aa1dbfd8e5feff22b5aab82fc1ad6c107c7924a696e7530dca6b030d5fef74",
+    "tested-source-parity.json": "bdd2f020ed391b718dc8f2148b5f4ca926232c7b98ec1667926d407130713b48",
+    "worker-version-proof.json": "5f1f057d7e5424b21ad66e065acd955e0eca5369e91d529d0cb2e486ef297d3f",
+    "account-request-final-proof.json": "187067a988e23ee23ae0dbd90b6aaa213a955d45e3e63b416ed2eb48e5684802",
+    "final-native-proof.json": "8d846829b927a8241e5cc75b864e989b72f2a76cbd3d93487135ce183683efc5",
+    "final-native-v2-proof.json": "9c53e38ba3a677fa3d4f36baf31af88652fd06c22a5492573fb9d9d825e05853",
+    "final-native-v3-proof.json": "2700385d18c70e7e30eade6a2d5e5a665bfc2b129ee85236cd526857d292ef52",
+    "offline-verified-proof.json": "bcdedcceeffdc87f821b202c754af6cfb68af9cf5379bff384bfef5080429d51",
+    "carbon-receipt.json": "75b4e022e93362fbde839869dc9a47824948079df5fa64ec2d9ca90532446c6d",
+    "carbon-finish-receipt.json": "29bc0bc427adf8532a028e38d23403b05256dae8162bffa89be5c50080eccba8",
+    "carbon-compact-receipt.json": "90723062b0af4a3a4a32303a75751443c97f428dcfbdb3a2cc0d9b76a512e505",
+    "account-completion-proof.json": "a931646f8442742fa27c8b70a0ee2ea0c0f36ef94e99d038287b4fd846da70cf",
+    "two-member-diagnostic-proof.json": "2d0c2fe35bab6807258397a83be9e184155cf0b001eeebd5faad83ab55df588e",
+    "frontend-final.log": "78ddab4919c32d359e55cf06cdb4feca4730d69bd080c32afbd216b1bb87c1cf",
+    "python-verified.log": "07b093f0d45b2d7884d18f47e05af2ed181c19ec6f299874f2eaa7c9774121b3",
+    "worker.log": "84334544469e7e5666da06df3f590209944ca378ab827636b3700070f037f252",
+    "lint-final.log": "693c9d581abe91614daded2882861ae2c5c4c8625c11f4b4073fc696fb93f66e",
+    "build-final.log": "ce14928ffd4c2122d8ef3f6d8dc7237a56ce58d771449f82fe42dc817e9163c4",
+    "dist-final.log": "b38122eb00786a1dde791468e577d2a36fbd71bde53d316bdbbeaf12a03db7c1",
+    "home-red.log": "a614c5355d078cadc87d51d27145bdb67360e454d4215acb27b799d050521a0e",
+    "home-green.log": "c387c80e39000025efdde5da4413710a89cd38dc038f3085dca1e53bda719db4",
+    "store-lifecycle-red.log": "25c360b28f3bc05c87f2b473957790488dd068ace845f1fafe0c88a490057c7e",
+    "store-green.log": "b2c5e5a09fb774c6ad877a71e5742696cc2348691288c8a3e5b97af80cc6ea0e",
+    "kv-bootstrap-upload.json": "b53abf7eb412c2da21ac28fbe7ae44c954c69c96b8406e6dae3c5599582fd527"
+  }
+}
