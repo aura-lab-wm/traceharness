@@ -10,7 +10,7 @@ TWO KNOWN LIMITATIONS, from the format census (tools/census_gemini.py):
   * NO VERSION STRING appears anywhere in a transcript, so agent_version stays "" and
     harness_id_for emits a bare "gemini-cli" with NO version suffix -- verified by calling it, not
     inferred: the census's phrasing of this note said "gemini", which is not the string it returns.
-    The Harness lab therefore groups every CLI build together.
+    The Harnesses page therefore groups every CLI build together.
   * NO cwd. The project directory under ~/.gemini/tmp is the only hint, and it is a hash.
 
 One toolCalls entry becomes TWO events -- a call and its result -- because the source fuses them.
