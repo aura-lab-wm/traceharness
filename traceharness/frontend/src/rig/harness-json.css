@@ -1,0 +1,17 @@
+.rg-hjson{min-width:0;border:1px solid var(--rig-line);border-radius:6px;padding:var(--rig-s4);margin-block:var(--rig-s4);background:var(--rig-panel)}
+.rg-hjson-head{display:flex;align-items:center;justify-content:space-between;gap:var(--rig-s3);flex-wrap:wrap}
+.rg-hjson-source{font:500 10px/1.5 var(--rig-mono);color:var(--rig-dim);letter-spacing:.05em;text-transform:uppercase}
+.rg-hjson h3{font:600 14px/1.5 var(--rig-sans);color:var(--rig-text);margin:2px 0 0}
+.rg-hjson-actions,.rg-hjson-documents{display:flex;flex-wrap:wrap;gap:var(--rig-s2)}
+.rg-hjson .rg-btn{min-height:36px}
+.rg-hjson-description,.rg-hjson-missing{font-size:12px;line-height:1.6;color:var(--rig-dim);margin:var(--rig-s2) 0}
+.rg-hjson-identity{font:11px/1.6 var(--rig-mono);color:var(--rig-mute);overflow-wrap:anywhere;margin:var(--rig-s2) 0}
+.rg-hjson-documents{margin-top:var(--rig-s4)}
+.rg-hjson-documents [aria-pressed=true]{color:var(--rig-sel-t);border-color:var(--rig-sel)}
+.rg-hjson-file{display:flex;justify-content:space-between;flex-wrap:wrap;align-items:center;gap:var(--rig-s2);margin-top:var(--rig-s3);font:11px/1.6 var(--rig-mono);color:var(--rig-dim)}
+.rg-hjson-file label{display:flex;align-items:center;gap:var(--rig-s2);font-family:var(--rig-sans)}
+.rg-hjson pre{box-sizing:border-box;max-width:100%;max-height:32rem;overflow:auto;white-space:pre;background:var(--rig-panel2);border:1px solid var(--rig-line);border-radius:4px;padding:var(--rig-s4);margin:var(--rig-s2) 0 0;font:12px/1.7 var(--rig-mono);color:var(--rig-text);tab-size:2}
+.rg-hjson pre.wrap{white-space:pre-wrap;overflow-wrap:anywhere;word-break:normal}
+.rg-hjson-redaction{font-size:12px;color:var(--rig-amb);line-height:1.6}
+.rg-hjson-notice{font-size:12px;color:var(--rig-dim);margin:var(--rig-s2) 0 0}
+@container rgdoc (max-width:600px){.rg-hjson{padding:var(--rig-s3)}.rg-hjson .rg-btn{min-height:44px}.rg-hjson pre{padding:var(--rig-s3);font-size:11px}.rg-hjson-head{align-items:flex-start}.rg-hjson-actions{width:100%}.rg-hjson-actions .rg-btn{flex:1}}

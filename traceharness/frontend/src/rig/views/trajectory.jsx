@@ -29,6 +29,7 @@ import { RecordingProvenance } from '../RecordingProvenance'
 import { isSweRun, suiteLabel, tokenCoverage } from '../provenance'
 import { findings as checkpoints } from '../../directions/investigationFacts'
 import { RunConsole } from './console'
+import { RecordedHarnessJson } from '../HarnessJson'
 import './trajectory.css'
 
 const { int, usd, plural } = fmt
@@ -45,7 +46,7 @@ const callsOf = (s) => (s && Array.isArray(s.tool_calls) ? s.tool_calls : [])
 const callName = (t) => (t && (t.name || (t.function && t.function.name))) || 'tool'
 const startSpan = (spans) => (spans || []).find((s) => s.span === 'invoke_agent' && s.status === 'start') || null
 const endSpan = (spans) => [...(spans || [])].reverse().find((s) => s.span === 'invoke_agent' && s.status === 'end') || null
-export const harnessOf = (spans) => { const s = startSpan(spans); return (s && s.harness && typeof s.harness === 'object') ? s.harness : null }
+export const harnessOf = (spans) => { const s = startSpan(spans); return (s && s.harness && typeof s.harness === 'object' && !Array.isArray(s.harness)) ? s.harness : null }
 const seedOf = (spans) => { const s = startSpan(spans); return s && s.seed != null ? s.seed : null }
 const exitCode = (s) => { const m = /^exit=(-?\d+)/.exec(String((s && s.result_preview) || '')); return m ? +m[1] : null }
 function testsPassed(s) {
@@ -821,6 +822,7 @@ function TaskDoc({ spec, args }) {
             </span>
           </div>
         </section>
+        <RecordedHarnessJson run={run} detail={det.data} loading={det.loading} error={det.error} onRetry={det.reload} />
         <section className="rg-traj-evsec">
           <div className="rg-traj-facets" role="tablist" data-el="inv-tabs" aria-label="Evidence">
             {FACETS.map(([k, l]) => (
@@ -924,6 +926,7 @@ function RunDoc({ spec, args }) {
         </div>
       </header>
       <RecordingProvenance runs={[run]} />
+      <RecordedHarnessJson run={run} detail={det.data} loading={det.loading} error={det.error} onRetry={det.reload} />
       {replay && spans.length ? <ReplayLanes run={run} spans={spans} onExit={() => setReplay(false)} /> : (<>
         {v === false && det.data && <WhyFailed run={run} detail={det.data} oracle={oracle} meta={meta} onPick={onSel} />}
         <DetailGate det={det} run={run} what="event list" runs={runs}>

@@ -3,6 +3,7 @@
    state and is sent only on Run. It is not written into the tab store. */
 import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { api, IS_MEMBER } from '../../api'
+import { HarnessJson } from '../HarnessJson'
 import { requireStored } from '../../member-api'
 import { Btn, Empty, ErrorState, Go, Loading, Note, Tag } from '../ui'
 import { EvidenceOrigin, evidenceOrigin, withEvidenceOrigin } from '../shallowEvidence'
@@ -385,6 +386,8 @@ function Blocks({ args } = {}) {
           </div>
         </div>
       )}
+      <HarnessJson source="Current block draft" description="Every block and setting in this stack, with the compiled harness when valid."
+        documents={[{ id: 'blocks', label: 'Block configuration', value: { blocks }, filename: 'harness-blocks.json' }, { id: 'compiled', label: 'Compiled harness', value: compiled?.ok ? compiled.harness : null, filename: 'compiled-harness.json' }]} />
       </HarnessSummary>
       </div>
       {IS_MEMBER && <div className="rg-harness-library" ref={libraryRef} data-el="member-harness-library">

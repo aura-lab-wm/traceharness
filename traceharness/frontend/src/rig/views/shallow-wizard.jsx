@@ -7,6 +7,7 @@ import { EvidenceOrigin, evidenceOrigin, withEvidenceOrigin } from '../shallowEv
 import { QUESTIONS, blocksFromAnswers } from './shallow-data.js'
 import { wizardAnswers, writeDraft } from './shallow-drafts'
 import { HarnessNav, HarnessSummary, focusWorkspaceSection } from '../harnessWorkspace'
+import { HarnessJson } from '../HarnessJson'
 
 const INITIAL = Object.fromEntries(QUESTIONS.map((row) => [row.id, row.recommended]))
 
@@ -118,6 +119,8 @@ function ShallowWizard({ args } = {}) {
       <p className="rg-small">Network, privilege, secret access, and path escape are not a choice. They stay blocked.</p>
       {IS_MEMBER && <p className="rg-small">Answers stay in this tab until you save. Saving keeps the harness in your account and does not run a model.</p>}
       {IS_MEMBER && <p className="rg-small">Open Customize to reopen your saved minimal harnesses.</p>}
+      <HarnessJson source="Current wizard draft" description="The complete block configuration from these answers, with the compiled harness when available."
+        documents={[{ id: 'blocks', label: 'Block configuration', value: { blocks: blocksFromAnswers(answers) }, filename: 'minimal-harness-blocks.json' }, { id: 'compiled', label: 'Compiled harness', value: preview?.ok ? preview.harness : null, filename: 'minimal-harness.json' }]} />
       </HarnessSummary>
       </div>
     </div>

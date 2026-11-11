@@ -2,7 +2,8 @@
 import { useEffect, useState } from 'react'
 import { api, IS_MEMBER } from '../../api'
 import { requireStored } from '../../member-api'
-import { readDraft, writeDraft } from './shallow-drafts'
+import { blocksFromHarness, readDraft, writeDraft } from './shallow-drafts'
+import { HarnessJson } from '../HarnessJson'
 import { ErrorState, Go, Loading } from '../ui'
 import { EvidenceOrigin, evidenceOrigin, withEvidenceOrigin } from '../shallowEvidence'
 import { CARDS, PERMISSION } from './shallow-data.js'
@@ -143,6 +144,8 @@ function ShallowCards({ args } = {}) {
                   <textarea className="rg-inp" rows={8} value={value} disabled={!!busy[row.id]} onChange={(e) => edit(row, e.target.value)} spellCheck={false} />
                 </label>
                 <ByteMeter used={used} cap={row.cap_bytes} name={row.name} />
+                <HarnessJson source={value !== row.prompt ? 'Current prompt draft' : row.memberSaved ? 'Account-saved preset' : 'Stock preset'} description="Every supplied preset field and the current prompt. This is not the vendor’s native runtime configuration."
+                  documents={[{ id: 'preset', label: 'Preset configuration', value: { ...row, prompt: value }, filename: `harness-${row.id}.json` }]} />
                 {used > row.cap_bytes || dropsVerify ? <p className="rg-harness-warning">This prompt is over the byte cap, or the clipped text drops verify and modify the tests.</p> : null}
                 <div className="rg-harness-actions">
                   {IS_MEMBER && <button type="button" className="rg-btn pri" disabled={!accountLoaded || !!busy[row.id] || !value.trim()} onClick={() => save(row)}>{busy[row.id] ? 'Saving…' : 'Save prompt'}</button>}

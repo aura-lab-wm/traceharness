@@ -16,6 +16,7 @@ import { HarnessPicker } from '../harnessPicker'
 import { ConfigurationLibrary } from '../configurationLibrary'
 import { NativePrompts } from '../NativePrompts'
 import { PairedExperiments } from '../PairedExperiments'
+import { HarnessJson } from '../HarnessJson'
 import { promptCounts } from './native-prompts-state'
 import { addCheckpoint, compareConfigurations, deleteCheckpoint, loadCheckpoints, persistCheckpoints, renameCheckpoint, restoreCheckpoint } from '../configuration-checkpoints'
 import './harness-composer.css'
@@ -673,6 +674,11 @@ export function HarnessComposer({ args = [] }) {
       <div className="rg-composer-service-note">{catalogError && <p role="alert">{catalogError}</p>}<button className="rg-btn" disabled={catalogLoading} onClick={() => setCatalogRevision((n) => n + 1)}>Refresh runner</button></div>
       </aside>
     </div>
+    <HarnessJson source="Current editor draft" identity={`${fixed ? 'Stock preset · ' + card?.name : native ? 'Native runtime · ' + runtime?.name : 'Custom harness'} · not a historical run`}
+      description={native ? 'The configuration file includes additional instructions, limits and any native prompt interventions. Inspect the baseline inventory and pinned runtime alongside it; unrecorded native internals remain unknown.' : 'The complete configuration file for the current harness, model, task and limits. Edits update this view; inspecting it never saves or runs anything.'}
+      documents={[{ id: 'configuration', label: 'Configuration file', value: configuration, filename: 'traceharness-configuration.json' },
+        { id: 'inventory', label: 'Native baseline inventory', value: native ? inventoryForRuntime?.inventory : null, filename: 'native-prompt-inventory.json' },
+        { id: 'runtime', label: 'Runtime settings', value: runtime, filename: 'runtime.json' }]} />
     {showCheckpoints && <div id={instanceId + '-checkpoints'} className="rg-composer-checkpoints">
       {checkpointData.warning && <p role="alert">{checkpointData.warning}</p>}
       {checkpointNotice && <p role="status">{checkpointNotice}</p>}
@@ -697,6 +703,9 @@ export function HarnessComposer({ args = [] }) {
         {!terminal.has(job.status) && <p className="rg-small">This run continues on the runner while its connection remains valid. You can return through Recent runs after reloading.</p>}
         <p data-el="runner-job-grade"><strong>Task grade:</strong> {gradeLabels[job.grade] || 'Not reported'}</p>
         {job.manifest && <dl className="rg-composer-job-identity">{['runtime_id', 'runtime_version', 'model_id', 'task_id', 'task_revision'].filter((name) => typeof job.manifest[name] === 'string').map((name) => <div key={name}><dt>{name.replaceAll('_', ' ')}</dt><dd>{job.manifest[name]}</dd></div>)}</dl>}
+        <HarnessJson key={job.id} source="Recorded run manifest" identity={`Run ${job.id}${job.manifest_sha256 ? ' · manifest SHA-256 ' + job.manifest_sha256 : ''}`}
+          description="The complete manifest returned for this run: harness, prompts, runtime pins, model, task, limits and native interventions when recorded. Your editor draft is separate. The manifest artifact below provides the SHA-256-verified original file."
+          documents={[{ id: 'manifest', label: 'Run manifest', value: job.manifest, filename: `manifest-${job.id}.json` }]} />
         {job.manifest_sha256 && <p className="rg-small rg-mono">Configuration {job.manifest_sha256}</p>}{(job.issues || []).map((issue) => <p key={issue} role="alert">{issue}</p>)}{jobError && <p role="alert">{jobError}</p>}
         <div className="rg-row rg-wrap"><button className="rg-btn" disabled={launching || !!openingJob} onClick={() => refreshJob()}>Refresh status</button>{!terminal.has(job.status) && <button className="rg-btn" disabled={cancelling || job.cancellation_requested || !!openingJob} onClick={() => refreshJob(true)}>{cancelling ? 'Requesting cancellation…' : 'Cancel run'}</button>}</div>
         {job.usage && <><dl className="rg-composer-usage">{Object.entries(job.usage).filter(([, value]) => value != null).map(([name, value]) => <div key={name}><dt>{name.replaceAll('_', ' ')}</dt><dd>{name === 'cost_usd' ? '$' + value.toLocaleString(undefined, { maximumFractionDigits: 8 }) : value.toLocaleString()}</dd></div>)}</dl><p className="rg-small rg-mute">Only usage reported by the runner is shown. Missing token or cost totals are unconfirmed.</p></>}

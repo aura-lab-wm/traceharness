@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Go } from './ui'
 import { makeSpec } from './route'
+import { HarnessJson } from './HarnessJson'
 
 const object = (value) => value && typeof value === 'object' && !Array.isArray(value)
 const text = (value) => typeof value === 'string' && value.length ? value : null
@@ -96,6 +97,9 @@ export function FamilyConfiguration({ harness, modelLabel, cohort, baseline, loa
         </dl>
         <div className="rg-an-config-tools"><h3>{reconstructed ? 'Mapped tools from importer' : 'Available tools'}</h3>{tools ? tools.length ? <ul>{tools.map((tool, index) => <li key={index}><code>{tool}</code></li>)}</ul> : <p>{reconstructed ? 'No mapped tools supplied.' : 'No tools in this recorded configuration.'}</p> : <p>Not recorded</p>}</div>
         {!config && <p className="rg-an-config-warning">No harness settings were recorded for these {entry.runIds.length} runs.</p>}
+        <HarnessJson source={sourceNames[entry.source] || sourceNames.unknown} identity={`Snapshot ${entry.id} · harness hash ${entry.hash || 'not recorded'} · ${entry.runIds.length} matching runs`}
+          description="All recorded fields, including custom settings. A reconstruction is not a recovered original configuration."
+          documents={[{ id: 'harness', label: 'Harness configuration', value: config, filename: `harness-${harness}.json` }, { id: 'runtime', label: 'Recorded runtime', value: entry.runtime, filename: `runtime-${harness}.json` }]} />
         {config && <details className="rg-an-config-prompt"><summary>Standing prompt <span>{bytes(config.system_prompt) === null || reconstructed && config.system_prompt === '' ? 'Not supplied' : bytes(config.system_prompt).toLocaleString('en-US') + ' bytes'}</span></summary>
           {typeof config.system_prompt === 'string' ? config.system_prompt ? <pre>{config.system_prompt}</pre> : <p>{reconstructed ? 'Prompt text was not supplied by the importer.' : 'The recorded prompt is empty.'}</p> : <p>Not recorded</p>}
         </details>}
@@ -105,7 +109,7 @@ export function FamilyConfiguration({ harness, modelLabel, cohort, baseline, loa
           <div><dt>Snapshot identity</dt><dd><code>{entry.id}</code></dd></div>
           {text(entry.runtime?.image) && <div><dt>Runtime image</dt><dd><code>{entry.runtime.image}</code></dd></div>}
           {text(entry.runtime?.binary_sha256) && <div><dt>Executable SHA-256</dt><dd><code>{entry.runtime.binary_sha256}</code></dd></div>}
-        </dl>{entry.runtime && <><h3>Recorded runtime fields and sources</h3><pre>{JSON.stringify(entry.runtime, null, 2)}</pre></>}{config && <><h3>Exact recorded configuration</h3><pre>{JSON.stringify(config, null, 2)}</pre></>}</details>
+        </dl>{entry.runtime && <><h3>Recorded runtime fields and sources</h3><pre>{JSON.stringify(entry.runtime, null, 2)}</pre></>}</details>
         <div className="rg-an-config-footer"><span>Snapshot covers {entry.runIds.length} runs in this filter.</span><Go spec={makeSpec('run', entry.runIds[0])} className="rg-tlink">Open a matching run ledger →</Go></div>
       </> : <p>No recorded settings are available for this selection.</p>}
     </>}

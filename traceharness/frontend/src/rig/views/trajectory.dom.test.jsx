@@ -411,3 +411,20 @@ describe('dead ends are closed', () => {
     expect(within(log).getByRole('button', { name: 'Every run of mini' })).toBeTruthy()
   })
 })
+
+it('the run ledger exposes its own complete harness snapshot rather than a current preset', () => {
+ const d=data()
+ d[`/results/${MINI}/runs/${ID3}`].spans=cutSpans.map(s=>s.seq===0?{...s,harness:{...HARNESS,system_prompt:'Exact historic prompt',future_rule:{retry:0}}}:s)
+ renderRig('#/rig/run:'+ID3,{data:d})
+ const json=screen.getByRole('region',{name:'Full harness JSON'})
+ fireEvent.click(within(json).getByText('View JSON',{exact:true}))
+ expect(JSON.parse(within(json).getByRole('textbox',{name:'Harness JSON source'}).textContent)).toEqual({...HARNESS,system_prompt:'Exact historic prompt',future_rule:{retry:0}})
+ expect(json.textContent).toContain('Recorded ledger')
+})
+
+it('the selected task attempt exposes its own harness JSON without requiring the event drawer', () => {
+ renderRig('#/rig/task:mini:alpha-1:baseline:t2:1',{data:data()})
+ const json=screen.getByRole('region',{name:'Full harness JSON'})
+ fireEvent.click(within(json).getByRole('button',{name:'View JSON'}))
+ expect(JSON.parse(within(json).getByRole('textbox',{name:'Harness JSON source'}).textContent)).toEqual(HARNESS)
+})

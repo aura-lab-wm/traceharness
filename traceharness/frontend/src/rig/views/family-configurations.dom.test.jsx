@@ -271,3 +271,16 @@ describe('Family matrix recorded configuration inspector', () => {
     expect(fetchImpl.mock.calls[0][1].method).toBeUndefined()
   })
 })
+
+it('exposes every recorded harness field as a first-class JSON document, including custom nested settings', () => {
+ const data=fixture()
+ entry(data).config.future_control={routing:{strategy:'fixed'},permissions:['repository'],enabled:false}
+ renderRig('#/rig/an:mini:family',{data})
+ inspect('baseline')
+ const json=within(panel()).getByRole('region',{name:'Full harness JSON'})
+ fireEvent.click(within(json).getByText('View JSON',{exact:true}))
+ const source=within(json).getByRole('textbox',{name:'Harness JSON source'})
+ expect(JSON.parse(source.textContent)).toEqual({...baseline,future_control:{routing:{strategy:'fixed'},permissions:['repository'],enabled:false}})
+ expect(within(json).getByRole('button',{name:'Copy JSON'})).toBeTruthy()
+ expect(within(json).getByRole('button',{name:'Download JSON'})).toBeTruthy()
+})
