@@ -19,7 +19,7 @@ import urllib.request
 import sys
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-from harnesslab.runner_service.registry import tree_hash
+from traceharness.runner_service.registry import tree_hash
 
 MAX_ARCHIVE = 32 * 1024 * 1024
 MAX_EXPANDED = 256 * 1024 * 1024

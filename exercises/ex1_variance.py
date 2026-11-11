@@ -9,7 +9,7 @@ patches, and trajectories differ? What does one passing run actually tell you?
 from _common import parse, try_matplotlib, hr, LAB_ROOT
 import hashlib, os
 from collections import defaultdict
-from harnesslab.core.analysis import (load_index, load_ledger, filter_rows, task_table, aggregate, bootstrap_ci, tokens_of,
+from traceharness.core.analysis import (load_index, load_ledger, filter_rows, task_table, aggregate, bootstrap_ci, tokens_of,
                                flip_rate, pass_at_k, pass_pow_k)
 
 args = parse(__doc__)

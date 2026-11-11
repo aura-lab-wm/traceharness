@@ -29,12 +29,12 @@ import unittest
 LAB = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, LAB)
 
-from harnesslab.backend import export, fork, sentinel as S                     # noqa: E402
-from harnesslab.backend import importers                                        # noqa: E402
-from harnesslab.backend.importers import cursor, trajectory_fmt                 # noqa: E402
-from harnesslab.capture import adapters                                         # noqa: E402
-from harnesslab.core import reportcard                                          # noqa: E402
-from harnesslab.core.trajtest import Trajectory, load_runs                      # noqa: E402
+from traceharness.backend import export, fork, sentinel as S                     # noqa: E402
+from traceharness.backend import importers                                        # noqa: E402
+from traceharness.backend.importers import cursor, trajectory_fmt                 # noqa: E402
+from traceharness.capture import adapters                                         # noqa: E402
+from traceharness.core import reportcard                                          # noqa: E402
+from traceharness.core.trajtest import Trajectory, load_runs                      # noqa: E402
 
 FIXDIR = os.path.join(LAB, "tests_agentlab", "fixtures", "capture")
 CURSOR_FIXTURE = os.path.join(FIXDIR, "cursor_transcript.jsonl")
@@ -325,12 +325,12 @@ class TestNoZeroCoercionLeftInAnyBrowserSurface(unittest.TestCase):
     Two shapes of the same bug: `x || 0` says an unknown cost was zero, and `a + b` over the two
     token fields says the same thing more quietly still — `null + null` is 0 in JavaScript."""
 
-    FRONTEND = os.path.join(LAB, "harnesslab", "frontend", "src")
+    FRONTEND = os.path.join(LAB, "traceharness", "frontend", "src")
 
     def sources(self):
         # web/ is the legacy stdlib console: a real developer-repo target, but not part of the
         # school replication package (school-package.json never lists it). Skip candidates that
-        # are not on disk here instead of skipping the whole guard, so harnesslab/frontend/src --
+        # are not on disk here instead of skipping the whole guard, so traceharness/frontend/src --
         # which DOES ship, and is exactly what participants run -- is still checked for real in
         # the extracted package, not only in a full checkout.
         candidates = [os.path.join(WEB_SRC, name) for name in
@@ -419,13 +419,13 @@ class TestTheConsoleBundleCarriesWhatWasNotMeasured(unittest.TestCase):
     that span -- so in the console every unwatched run looked watched and the abstention never fired."""
 
     def test_the_end_span_keeps_its_unmeasured_list(self):
-        from harnesslab.core import console
+        from traceharness.core import console
         end = {"seq": 9, "span": "invoke_agent", "status": "end", "exit_reason": "no_action",
                "total_tokens": None, "cost_usd": None, "unmeasured": ["tool_calls", "edits"]}
         self.assertEqual(console.compact_span(end)["unmeasured"], ["tool_calls", "edits"])
 
     def test_a_measured_run_carries_no_such_list(self):
-        from harnesslab.core import console
+        from traceharness.core import console
         end = {"seq": 9, "span": "invoke_agent", "status": "end", "exit_reason": "submitted",
                "total_tokens": 10, "cost_usd": 0.1}
         self.assertNotIn("unmeasured", console.compact_span(end))

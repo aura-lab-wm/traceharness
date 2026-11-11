@@ -1,11 +1,11 @@
 """Self-test for the lab infrastructure. Run from lab/:  python -m unittest discover -s tests_agentlab -v"""
 import os, sys, tempfile, unittest
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from harnesslab.core.tools import check_command, check_write, Sandbox
-from harnesslab.core.analysis import pass_at_k, pass_pow_k, cohen_kappa, bootstrap_ci
-from harnesslab.core.harness import HarnessConfig, run_task
-from harnesslab.core.grader import load_task, grade
-from harnesslab.core.providers import make_provider
+from traceharness.core.tools import check_command, check_write, Sandbox
+from traceharness.core.analysis import pass_at_k, pass_pow_k, cohen_kappa, bootstrap_ci
+from traceharness.core.harness import HarnessConfig, run_task
+from traceharness.core.grader import load_task, grade
+from traceharness.core.providers import make_provider
 
 LAB = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 

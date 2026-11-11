@@ -10,7 +10,7 @@ from unittest import mock
 LAB = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, LAB)
 
-from harnesslab.capture import adapters, harness_config   # noqa: E402
+from traceharness.capture import adapters, harness_config   # noqa: E402
 
 FIXDIR = os.path.join(LAB, "tests_agentlab", "fixtures", "capture")
 
@@ -58,7 +58,7 @@ class TestResolve(unittest.TestCase):
                  "cwd": "/w", "version": "0.23.3", "provenance": "assistant_output",
                  "message": {"role": "model", "parts": [{"text": "hi"}]}} for i in range(4)]
         p = self.write("qwen_like.jsonl", rows)
-        from harnesslab.backend.importers import claude_code
+        from traceharness.backend.importers import claude_code
         self.assertGreaterEqual(claude_code.sniff(p), 0.5)      # the sniffer really is fooled
         self.assertNotEqual(adapters.resolve(p)[0], "claude_code")   # the registry is not
         self.assertEqual(adapters.resolve(p)[0], "qwen_code")        # and it goes to its owner

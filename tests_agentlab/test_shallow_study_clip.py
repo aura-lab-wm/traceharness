@@ -1,6 +1,6 @@
 """Clip the shared study prompt to each shell's byte cap."""
-from harnesslab.shallow.catalog import catalog
-from harnesslab.shallow.study import apply_prompt_to_all, paired_study
+from traceharness.shallow.catalog import catalog
+from traceharness.shallow.study import apply_prompt_to_all, paired_study
 
 
 def test_grok_clips_to_the_byte_cap_and_keeps_the_shell():

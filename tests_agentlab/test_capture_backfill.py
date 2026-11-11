@@ -13,8 +13,8 @@ from unittest import mock
 LAB = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, LAB)
 
-from harnesslab.backend import importers as I                   # noqa: E402
-from harnesslab.capture.lock import CaptureLock, CaptureLocked   # noqa: E402
+from traceharness.backend import importers as I                   # noqa: E402
+from traceharness.capture.lock import CaptureLock, CaptureLocked   # noqa: E402
 
 FIXDIR = os.path.join(LAB, "tests_agentlab", "fixtures", "capture")
 FIX = os.path.join(FIXDIR, "cc_session.jsonl")
@@ -78,7 +78,7 @@ class TestCaptureLock(Tmp):
         self.assertEqual(m.call_args[0][1], "sneaky")
 
 
-from harnesslab.capture import allowlist   # noqa: E402
+from traceharness.capture import allowlist   # noqa: E402
 
 
 class TestAllowlist(Tmp):
@@ -125,8 +125,8 @@ class TestAllowlist(Tmp):
         self.assertTrue(allowlist.is_allowed(root, [root + os.sep]))
 
 
-from harnesslab.backend.importers import claude_code, common as C   # noqa: E402
-from harnesslab.capture import regen                                # noqa: E402
+from traceharness.backend.importers import claude_code, common as C   # noqa: E402
+from traceharness.capture import regen                                # noqa: E402
 
 RESUMED_TAIL = [
     {"type": "user", "uuid": "u-0003", "parentUuid": "a-0008", "isSidechain": False, "sessionId": "sess-cap-1",
@@ -191,7 +191,7 @@ class TestRegenerate(Tmp):
         self.assertNotEqual(runs[1].summary.task_id, runs[0].summary.task_id)
 
 
-from harnesslab.capture import archive   # noqa: E402
+from traceharness.capture import archive   # noqa: E402
 
 
 class TestArchive(Tmp):
@@ -231,7 +231,7 @@ class TestArchive(Tmp):
             self.assertEqual(json.load(f)["size"], archived)
 
 
-from harnesslab.capture import backfill, identity   # noqa: E402
+from traceharness.capture import backfill, identity   # noqa: E402
 
 RESUME_TAIL = [
     {"type": "user", "uuid": "u-0004", "parentUuid": "a-0008", "isSidechain": False, "sessionId": "sess-cap-2",
@@ -278,7 +278,7 @@ class TestSwapInSurvivesAStaleLeftover(Tmp):
         the pid is in the name, it fails on EVERY subsequent backfill, so the run can never be
         regenerated until someone deletes the stray directory by hand.
         """
-        from harnesslab.capture.regen import _swap_in
+        from traceharness.capture.regen import _swap_in
         final = os.path.join(self.tmp, "run-1")
         tmp_dir = os.path.join(self.tmp, "run-1.tmp")
         os.makedirs(final); os.makedirs(tmp_dir)
@@ -368,7 +368,7 @@ class TestBackfill(Tmp):
             return json.load(f)
 
     def test_a_failing_archive_is_an_error_not_fatal(self):
-        from harnesslab.capture import archive as archive_mod
+        from traceharness.capture import archive as archive_mod
         with mock.patch.object(archive_mod, "archive_source", side_effect=FileNotFoundError("gone")):
             rep = backfill.run([self.src], self.runs, gap_s=1800, now=self.closed,
                                archive_root=os.path.join(self.tmp, "arch"))
@@ -530,7 +530,7 @@ class TestBackfill(Tmp):
 class TestCli(Tmp):
     def cli(self, *args, env_extra=None):
         env = dict(os.environ, **(env_extra or {}))
-        return subprocess.run([sys.executable, "-m", "harnesslab.capture", *args], cwd=LAB, env=env,
+        return subprocess.run([sys.executable, "-m", "traceharness.capture", *args], cwd=LAB, env=env,
                               capture_output=True, text=True, timeout=120)
 
     def test_backfill_writes_into_the_given_lab(self):
@@ -565,7 +565,7 @@ class TestCli(Tmp):
         """SIGTERM is how launchd, systemd and a plain `kill` ask a job to stop. With no handler,
         Python dies without running the loop's cleanup, and the page reports a crash."""
         import signal, time as _t
-        from harnesslab.capture import presence
+        from traceharness.capture import presence
         lab = os.path.join(self.tmp, "lab")
         for d in ("harnesses", "tasks", os.path.join("data", "runs")):
             os.makedirs(os.path.join(lab, d), exist_ok=True)
@@ -573,7 +573,7 @@ class TestCli(Tmp):
         os.makedirs(src)
         copy_fixture(os.path.join(src, "sess-cap-1.jsonl"))
         runs = os.path.join(lab, "data", "runs")
-        proc = subprocess.Popen([sys.executable, "-m", "harnesslab.capture", "--watch", "--interval", "1",
+        proc = subprocess.Popen([sys.executable, "-m", "traceharness.capture", "--watch", "--interval", "1",
                                  "--lab", lab, "--path", src, "--no-archive"],
                                 cwd=LAB, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
         try:
@@ -606,7 +606,7 @@ class TestCli(Tmp):
         self.assertEqual(json.loads(p.stdout)["seeded"], 1)
 
     def test_nothing_to_capture_exits_2(self):
-        p = self.cli("--backfill", env_extra={"HARNESSLAB_CAPTURE_CONFIG": os.path.join(self.tmp, "none.json")})
+        p = self.cli("--backfill", env_extra={"TRACEHARNESS_CAPTURE_CONFIG": os.path.join(self.tmp, "none.json")})
         self.assertEqual(p.returncode, 2)
         self.assertIn("nothing to capture", p.stderr)
 
@@ -639,7 +639,7 @@ class TestALockedFolderIsNotACaptureError(TestBackfill):
         self.assertGreaterEqual(rep["runs"], 1, "and it still captured what it could read")
 
     def test_the_prune_still_sees_it(self):
-        from harnesslab.capture import adapters
+        from traceharness.capture import adapters
         self.locked_dir()
         _found, errors = adapters.discover([os.path.dirname(self.src)])
         self.assertTrue(any(e.get("kind") == "directory" for e in errors), errors)

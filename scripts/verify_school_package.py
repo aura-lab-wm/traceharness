@@ -1,7 +1,7 @@
 """Prove a built school-package zip in a clean room: extract it, install it in a throwaway venv
-with no other harnesslab on the path, start the server, and drive it like a participant would.
+with no other traceharness on the path, start the server, and drive it like a participant would.
 
-Run standalone: python3 scripts/verify_school_package.py [ZIP]   (default: dist/harnesslab-school.zip)
+Run standalone: python3 scripts/verify_school_package.py [ZIP]   (default: dist/traceharness-school.zip)
 Or from build_school_package.py --verify, which builds the zip fresh first.
 
 Every check appends one {name, ok, detail, seconds} entry to the verdict; nothing here raises past
@@ -147,12 +147,12 @@ def verify(zip_path: Path) -> dict:
         with _check(verdict, "extract to a clean temp dir"):
             with zipfile.ZipFile(zip_path) as archive:
                 archive.extractall(extracted)
-            pkg = extracted / "harnesslab-school"
+            pkg = extracted / "traceharness-school"
             if not pkg.is_dir():
-                raise RuntimeError(f"expected harnesslab-school/ inside the archive, found: "
+                raise RuntimeError(f"expected traceharness-school/ inside the archive, found: "
                                    f"{sorted(p.name for p in extracted.iterdir())}")
 
-        pkg = extracted / "harnesslab-school"
+        pkg = extracted / "traceharness-school"
         venv_dir = tmp / ".venv"
         py = venv_dir / "bin" / "python"
         bin_dir = venv_dir / "bin"
@@ -162,21 +162,21 @@ def verify(zip_path: Path) -> dict:
             if not py.is_file():
                 raise RuntimeError(f"no python at {py} after venv creation")
 
-        with _check(verdict, "pip install -e . (editable, no other harnesslab on the path)"):
+        with _check(verdict, "pip install -e . (editable, no other traceharness on the path)"):
             r = _run([str(py), "-m", "pip", "install", "-e", "."], cwd=pkg, timeout=600)
             if r.returncode != 0:
                 raise RuntimeError(f"pip install failed (exit {r.returncode}):\n{r.stdout[-4000:]}\n{r.stderr[-4000:]}")
 
-        with _check(verdict, "harnesslab --version"):
-            r = _run([str(bin_dir / "harnesslab"), "--version"], cwd=pkg)
-            if r.returncode != 0 or "harnesslab" not in r.stdout.lower():
+        with _check(verdict, "traceharness --version"):
+            r = _run([str(bin_dir / "traceharness"), "--version"], cwd=pkg)
+            if r.returncode != 0 or "traceharness" not in r.stdout.lower():
                 raise RuntimeError(f"exit {r.returncode}: {r.stdout!r} {r.stderr!r}")
 
         port = free_port()
         base = f"http://127.0.0.1:{port}"
         with _check(verdict, f"start the server on 127.0.0.1:{port} (--no-browser)"):
             server = subprocess.Popen(
-                [str(bin_dir / "harnesslab"), "--host", "127.0.0.1", "--port", str(port), "--no-browser"],
+                [str(bin_dir / "traceharness"), "--host", "127.0.0.1", "--port", str(port), "--no-browser"],
                 cwd=pkg, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
             deadline = time.time() + 30
             up = False
@@ -195,7 +195,7 @@ def verify(zip_path: Path) -> dict:
                 raise RuntimeError(f"server did not answer /api/results within 30s: {last_err}")
 
         with _check(verdict, "GET /api/results matches the manifest's datasets and run counts"):
-            scope = json.loads((pkg / "harnesslab" / "school-package.json").read_text())
+            scope = json.loads((pkg / "traceharness" / "school-package.json").read_text())
             listed = json.loads(urllib.request.urlopen(f"{base}/api/results", timeout=10).read())
             names = {d["name"] for d in listed}
             wanted = set(scope["datasets"])
@@ -221,8 +221,8 @@ def verify(zip_path: Path) -> dict:
                 if r.returncode != 0:
                     raise RuntimeError(f"exit {r.returncode}:\n{r.stdout[-3000:]}\n{r.stderr[-3000:]}")
 
-        with _check(verdict, "harnesslab run --provider mock ... --out data/runs/verify exits 0"):
-            r = _run([str(bin_dir / "harnesslab"), "run", "--provider", "mock", "--tasks", "t01_slugify",
+        with _check(verdict, "traceharness run --provider mock ... --out data/runs/verify exits 0"):
+            r = _run([str(bin_dir / "traceharness"), "run", "--provider", "mock", "--tasks", "t01_slugify",
                      "--repeats", "1", "--out", "data/runs/verify"], cwd=pkg, timeout=120)
             if r.returncode != 0:
                 raise RuntimeError(f"exit {r.returncode}:\n{r.stdout[-3000:]}\n{r.stderr[-3000:]}")
@@ -272,7 +272,7 @@ def verify(zip_path: Path) -> dict:
 
 
 def main():
-    zip_path = Path(sys.argv[1]) if len(sys.argv) > 1 else ROOT / "dist" / "harnesslab-school.zip"
+    zip_path = Path(sys.argv[1]) if len(sys.argv) > 1 else ROOT / "dist" / "traceharness-school.zip"
     if not zip_path.is_file():
         print(json.dumps({"ok": False, "zip": str(zip_path), "checks": [
             {"name": "zip exists", "ok": False, "detail": f"no such file: {zip_path}", "seconds": 0}]}, indent=2))

@@ -56,7 +56,7 @@ If TraceHarness is already running for you (a GitHub Codespace starts it and ope
 to that tab. Otherwise start it from a terminal and open `http://127.0.0.1:8765`:
 
 ```bash
-python -m harnesslab
+python -m traceharness
 ```
 
 <details>
@@ -68,7 +68,7 @@ the reader for Hugging Face datasets, then start it:
 ```bash
 python3 -m venv .venv && source .venv/bin/activate
 pip install -e '.[real]'
-python -m harnesslab
+python -m traceharness
 ```
 
 </details>
@@ -336,7 +336,7 @@ They match when you load 1,000 runs with Model and Results directory blank, and 
 <details>
 <summary>TraceHarness stopped responding</summary>
 
-Start it again with `python -m harnesslab` (a codespace that went idle restarts it when you reopen it). Your
+Start it again with `python -m traceharness` (a codespace that went idle restarts it when you reopen it). Your
 datasets under `data/runs/` are kept.
 
 </details>
@@ -347,7 +347,7 @@ datasets under `data/runs/` are kept.
 `data/runs/real_swe_agent_1000/` holds one folder per run (`ledger.jsonl` with every step, `summary.json`,
 `patch.diff`, `messages.json`), plus `index.jsonl` and `real_features.jsonl`.
 
-The downloaded file is cached in `~/.cache/harnesslab/nebius/`, so a second download skips the network.
+The downloaded file is cached in `~/.cache/traceharness/nebius/`, so a second download skips the network.
 
 </details>
 

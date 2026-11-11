@@ -5,7 +5,7 @@ import tempfile
 import unittest
 from unittest.mock import patch
 
-from harnesslab.backend import harness_tools as HT
+from traceharness.backend import harness_tools as HT
 
 
 class TestRecordedConfigurations(unittest.TestCase):

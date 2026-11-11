@@ -9,7 +9,7 @@ costs move, and can you tell the difference from a paired comparison?
 """
 from _common import parse, try_matplotlib, hr
 import os
-from harnesslab.core.analysis import load_index, filter_rows, summarize, fmt_summary, paired_bootstrap, exit_reasons, tokens_per_solve, aggregate
+from traceharness.core.analysis import load_index, filter_rows, summarize, fmt_summary, paired_bootstrap, exit_reasons, tokens_per_solve, aggregate
 
 
 def extra(ap):

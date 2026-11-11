@@ -13,8 +13,8 @@ import re
 import sys
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
-from harnesslab.runner_service import native_prompts as N
-from harnesslab.runner_service import native_prompts_elf as ELF
+from traceharness.runner_service import native_prompts as N
+from traceharness.runner_service import native_prompts_elf as ELF
 
 
 def build_inventory(binary, candidates, *, image_digest, version):

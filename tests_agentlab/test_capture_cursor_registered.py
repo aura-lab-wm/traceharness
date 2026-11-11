@@ -20,8 +20,8 @@ import unittest
 LAB = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, LAB)
 
-from harnesslab.backend import importers as I                    # noqa: E402
-from harnesslab.capture import adapters, backfill, cursors, regen, sniffer   # noqa: E402
+from traceharness.backend import importers as I                    # noqa: E402
+from traceharness.capture import adapters, backfill, cursors, regen, sniffer   # noqa: E402
 
 FIXDIR = os.path.join(LAB, "tests_agentlab", "fixtures", "capture")
 CURSOR_FIX = os.path.join(FIXDIR, "cursor_transcript.jsonl")

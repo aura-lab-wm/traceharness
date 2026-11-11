@@ -18,11 +18,11 @@ import zipfile
 LAB = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, LAB)
 
-from harnesslab.core.analysis import filter_rows, load_index          # noqa: E402
-from harnesslab.backend import export as E                      # noqa: E402
-from harnesslab.backend import metrics as M                     # noqa: E402
-from harnesslab.backend import paths as P                       # noqa: E402
-from harnesslab.backend import store as ST                      # noqa: E402
+from traceharness.core.analysis import filter_rows, load_index          # noqa: E402
+from traceharness.backend import export as E                      # noqa: E402
+from traceharness.backend import metrics as M                     # noqa: E402
+from traceharness.backend import paths as P                       # noqa: E402
+from traceharness.backend import store as ST                      # noqa: E402
 
 DEMO, PRE = "demo_mock", "prerecorded_mock"
 
@@ -40,7 +40,7 @@ class TestPaths(unittest.TestCase):
 
     def test_env_override_wins_over_checkout(self):
         with tempfile.TemporaryDirectory() as t:
-            root = P.resolve_lab_root(env={"HARNESSLAB_LAB": t}, start=LAB)
+            root = P.resolve_lab_root(env={"TRACEHARNESS_LAB": t}, start=LAB)
             self.assertEqual(os.path.realpath(root), os.path.realpath(t))
             # a non-checkout override is seeded so live runs have somewhere to land
             self.assertTrue(os.path.isdir(os.path.join(t, "data", "runs")))
@@ -48,7 +48,7 @@ class TestPaths(unittest.TestCase):
     def test_env_override_expands_user_and_relative(self):
         with tempfile.TemporaryDirectory() as t:
             sub = os.path.join(t, "nested", "lab")
-            root = P.resolve_lab_root(env={"HARNESSLAB_LAB": sub}, start=LAB)
+            root = P.resolve_lab_root(env={"TRACEHARNESS_LAB": sub}, start=LAB)
             self.assertTrue(os.path.isabs(root))
             self.assertTrue(os.path.isdir(root))
 
@@ -79,18 +79,18 @@ class TestPaths(unittest.TestCase):
 
     def test_describe_reports_the_source(self):
         d = P.describe()
-        self.assertIn(d["source"], {"env HARNESSLAB_LAB", "checkout", "workspace"})
+        self.assertIn(d["source"], {"env TRACEHARNESS_LAB", "checkout", "workspace"})
         for k in ("lab_root", "runs_root", "harnesses", "tasks", "dist", "index_db"):
             self.assertTrue(d[k], k)
 
 
 class TestCli(unittest.TestCase):
-    """`harnesslab --help` / `--paths` must work without starting a server."""
+    """`traceharness --help` / `--paths` must work without starting a server."""
 
     def _run(self, args, env=None):
         e = dict(os.environ, PYTHONPATH=LAB)
         e.update(env or {})
-        return subprocess.run([sys.executable, "-m", "harnesslab", *args], capture_output=True,
+        return subprocess.run([sys.executable, "-m", "traceharness", *args], capture_output=True,
                               text=True, cwd=LAB, env=e, timeout=120)
 
     def test_help(self):
@@ -105,7 +105,7 @@ class TestCli(unittest.TestCase):
             self.assertEqual(r.returncode, 0, r.stderr)
             d = json.loads(r.stdout)
             self.assertEqual(os.path.realpath(d["lab_root"]), os.path.realpath(t))
-            self.assertEqual(d["source"], "env HARNESSLAB_LAB")
+            self.assertEqual(d["source"], "env TRACEHARNESS_LAB")
 
 
 # --------------------------------------------------------------------------- 2. store parity
@@ -266,7 +266,7 @@ class TestTrajectoryExport(unittest.TestCase):
         import re
         self.assertTrue(recs)
         self.assertEqual(recs[0]["role"], "meta", "the meta record must lead")
-        self.assertEqual(recs[0]["source"], "harnesslab")
+        self.assertEqual(recs[0]["source"], "traceharness")
         seen_meta = 0
         for i, r in enumerate(recs):
             role = r.get("role")
@@ -339,7 +339,7 @@ except ImportError:
     HAS_INSPECT = False
 
 
-@unittest.skipUnless(HAS_INSPECT, "inspect_ai is an optional extra: pip install 'harnesslab[inspect]'")
+@unittest.skipUnless(HAS_INSPECT, "inspect_ai is an optional extra: pip install 'traceharness[inspect]'")
 class TestInspectExport(unittest.TestCase):
     def _roundtrip(self, name, run_id):
         from inspect_ai.log import read_eval_log, write_eval_log
@@ -362,7 +362,7 @@ class TestInspectExport(unittest.TestCase):
         usage = s.model_usage[row["model"]]
         self.assertEqual(usage.input_tokens, row["input_tokens"])
         self.assertEqual(usage.output_tokens, row["output_tokens"])
-        self.assertEqual(s.metadata["harnesslab"]["harness_id"], row["harness_id"])
+        self.assertEqual(s.metadata["traceharness"]["harness_id"], row["harness_id"])
 
     def test_messages_survive_with_their_tool_calls(self):
         rid = ST.run_ids(DEMO)[0]
@@ -451,7 +451,7 @@ class TestBundle(unittest.TestCase):
     def test_manifest_describes_every_file(self):
         z = zipfile.ZipFile(io.BytesIO(E._bundle_bytes(DEMO)))
         man = json.loads(z.read(f"{DEMO}/MANIFEST.json"))
-        self.assertEqual(man["schema"], "harnesslab.bundle/1")
+        self.assertEqual(man["schema"], "traceharness.bundle/1")
         self.assertEqual(man["runs"], len(ST.rows(DEMO)))
         listed = {f["path"] for f in man["files"]}
         self.assertEqual(listed, set(z.namelist()) - {f"{DEMO}/MANIFEST.json"})
@@ -473,7 +473,7 @@ class TestEndpoints(unittest.TestCase):
             from fastapi.testclient import TestClient
         except ImportError as e:                                      # pragma: no cover
             raise unittest.SkipTest(f"fastapi TestClient unavailable: {e}")
-        from harnesslab.backend.app import app
+        from traceharness.backend.app import app
         cls.client = TestClient(app)
         cls.rid = ST.run_ids(DEMO)[0]
 
@@ -569,11 +569,11 @@ class TestStoreDegradesGracefully(unittest.TestCase):
         ST.close_all()
 
     def test_sidecar_path_is_local_and_keyed_by_lab_root(self):
-        a = ST._sidecar_path("/net/share/lab/data/.harnesslab_index.sqlite")
-        b = ST._sidecar_path("/other/lab/data/.harnesslab_index.sqlite")
+        a = ST._sidecar_path("/net/share/lab/data/.traceharness_index.sqlite")
+        b = ST._sidecar_path("/other/lab/data/.traceharness_index.sqlite")
         self.assertNotEqual(a, b)
         self.assertTrue(a.startswith(tempfile.gettempdir()))
-        self.assertEqual(a, ST._sidecar_path("/net/share/lab/data/.harnesslab_index.sqlite"))
+        self.assertEqual(a, ST._sidecar_path("/net/share/lab/data/.traceharness_index.sqlite"))
 
     def test_unhostable_path_falls_back_to_a_sidecar(self):
         # a path whose parent is a *file* can never hold a database
@@ -586,7 +586,7 @@ class TestStoreDegradesGracefully(unittest.TestCase):
 
     def test_queries_match_load_index_when_sqlite_is_unavailable(self):
         """With every SQLite path refused, the helpers still return the analysis-layer answer."""
-        from harnesslab.core.analysis import load_index
+        from traceharness.core.analysis import load_index
         want = load_index(os.path.join(M.RUNS_ROOT, DEMO))
         boom = lambda *a, **k: (_ for _ in ()).throw(sqlite3.OperationalError("disk I/O error"))
         real_refresh, real_connect = ST.refresh, ST._connect

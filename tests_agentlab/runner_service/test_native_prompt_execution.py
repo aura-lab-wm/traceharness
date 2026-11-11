@@ -14,16 +14,16 @@ import threading
 import unittest
 from unittest.mock import Mock, patch
 
-from harnesslab.runner_service.configuration import canonical, preflight
-from harnesslab.runner_service.execution import DockerExecutor, ExecutionError, CLAUDE_BINARY_TARGET, NATIVE_ARTIFACTS
-from harnesslab.runner_service.native_prompts import profile_sha256
-from harnesslab.runner_service.settings import Settings
+from traceharness.runner_service.configuration import canonical, preflight
+from traceharness.runner_service.execution import DockerExecutor, ExecutionError, CLAUDE_BINARY_TARGET, NATIVE_ARTIFACTS
+from traceharness.runner_service.native_prompts import profile_sha256
+from traceharness.runner_service.settings import Settings
 from tests_agentlab.runner_service import test_native_prompt_protocol as protocol_fixtures
 from tests_agentlab.runner_service.test_runner import SECRET
 
 
-MATERIALIZE = "harnesslab.runner_service.native_prompts_elf.materialize_native_binary"
-PROXY = "harnesslab.runner_service.execution.UnixModelProxy"
+MATERIALIZE = "traceharness.runner_service.native_prompts_elf.materialize_native_binary"
+PROXY = "traceharness.runner_service.execution.UnixModelProxy"
 
 
 class NativePromptExecutionTests(unittest.TestCase):
@@ -146,7 +146,7 @@ class NativePromptExecutionTests(unittest.TestCase):
             if Path(path).name == "native-prompt-observations.json":
                 raise OSError("Explicit observation write failure fixture")
             return original_open(path, flags, *args, **kwargs)
-        with patch("harnesslab.runner_service.execution.os.open", side_effect=failing_open):
+        with patch("traceharness.runner_service.execution.os.open", side_effect=failing_open):
             with self.assertRaises(OSError):
                 self.run_fixture()
         self.assertFalse((self.directory / "input" / "native-claude").exists())

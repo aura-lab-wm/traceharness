@@ -5,7 +5,7 @@ import subprocess
 import sys
 from pathlib import Path
 
-from harnesslab.shallow.jobs import KEY_SENTENCE
+from traceharness.shallow.jobs import KEY_SENTENCE
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -19,21 +19,21 @@ def test_cli_wizard_catalog_and_key_refusal():
         env.pop(name, None)
     env["PYTHONPATH"] = str(ROOT) + os.pathsep + env.get("PYTHONPATH", "")
     wizard = subprocess.run(
-        [str(exe), "-m", "harnesslab.shallow", "wizard"],
+        [str(exe), "-m", "traceharness.shallow", "wizard"],
         cwd=ROOT, env=env, capture_output=True, text=True, check=False,
     )
     assert wizard.returncode == 0, wizard.stderr
     built = json.loads(wizard.stdout)
     assert built["harness"]["id"] == "min_099dc52e693e"
     catalog = subprocess.run(
-        [str(exe), "-m", "harnesslab.shallow", "catalog"],
+        [str(exe), "-m", "traceharness.shallow", "catalog"],
         cwd=ROOT, env=env, capture_output=True, text=True, check=False,
     )
     assert catalog.returncode == 0, catalog.stderr
     rows = json.loads(catalog.stdout)
     assert len(rows) == 6
     refused = subprocess.run(
-        [str(exe), "-m", "harnesslab.shallow", "run", "--provider", "openrouter", "--agent", "claude", "--seed", "0"],
+        [str(exe), "-m", "traceharness.shallow", "run", "--provider", "openrouter", "--agent", "claude", "--seed", "0"],
         cwd=ROOT, env=env, capture_output=True, text=True, check=False,
     )
     assert refused.returncode == 2

@@ -15,7 +15,7 @@ from unittest import mock
 LAB = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, LAB)
 
-from harnesslab.backend import real_import as RI   # noqa: E402
+from traceharness.backend import real_import as RI   # noqa: E402
 
 
 def row(inst, model, resolved, cmds):
@@ -88,7 +88,7 @@ class Exercise7ToConsole(unittest.TestCase):
 
     def test_to_console_writes_an_importer_directory_every_time(self):
         import contextlib, io, runpy
-        from harnesslab.core import real_traj as RT
+        from traceharness.core import real_traj as RT
         script = os.path.join(LAB, "exercises", "ex7_real_trajectories.py")
         with tempfile.TemporaryDirectory() as root:
             out, dest = os.path.join(root, "out"), os.path.join(root, "runs", "nebius_4")
@@ -108,7 +108,7 @@ class OverviewModelRuns(unittest.TestCase):
     """/api/overview carries runs per model, so the workbench can open a dataset on its biggest model."""
 
     def test_both_overview_builders_count_runs_per_model(self):
-        from harnesslab.backend import metrics as M, store
+        from traceharness.backend import metrics as M, store
         with tempfile.TemporaryDirectory() as root:
             with mock.patch.object(RI, "load_nebius", return_value=[dict(r) for r in ROWS]):
                 RI.import_runs(len(ROWS), os.path.join(root, "sample"))
@@ -133,9 +133,9 @@ class FetchShard(unittest.TestCase):
         return r
 
     def test_downloads_once_with_progress_then_serves_the_cache(self):
-        from harnesslab.core import real_traj as RT
+        from traceharness.core import real_traj as RT
         body = b"x" * (3 << 20)
-        with tempfile.TemporaryDirectory() as cache, mock.patch.dict(os.environ, {"HARNESSLAB_NEBIUS_CACHE": cache}):
+        with tempfile.TemporaryDirectory() as cache, mock.patch.dict(os.environ, {"TRACEHARNESS_NEBIUS_CACHE": cache}):
             with mock.patch.object(RT.urllib.request, "urlopen", return_value=self.response(body)) as op:
                 seen = []
                 path = RT.fetch_shard(0, lambda d, t, u: seen.append((d, t, u)))
@@ -147,8 +147,8 @@ class FetchShard(unittest.TestCase):
             self.assertEqual(os.listdir(cache), ["train-00000-of-00012.parquet"])
 
     def test_a_failed_download_leaves_nothing_behind_and_says_where_it_failed(self):
-        from harnesslab.core import real_traj as RT
-        with tempfile.TemporaryDirectory() as cache, mock.patch.dict(os.environ, {"HARNESSLAB_NEBIUS_CACHE": cache}):
+        from traceharness.core import real_traj as RT
+        with tempfile.TemporaryDirectory() as cache, mock.patch.dict(os.environ, {"TRACEHARNESS_NEBIUS_CACHE": cache}):
             with mock.patch.object(RT.urllib.request, "urlopen", side_effect=RT.urllib.error.URLError("no route")):
                 with self.assertRaisesRegex(RuntimeError, "could not download https://huggingface.co/.*no route"):
                     RT.fetch_shard(3)
@@ -166,15 +166,15 @@ except ImportError:
 class LoadFromShards(unittest.TestCase):
     def shards(self, cache, *parts):
         import pyarrow as pa, pyarrow.parquet as pq
-        from harnesslab.core import real_traj as RT
+        from traceharness.core import real_traj as RT
         for i, rows in enumerate(parts):
             cols = {k: [r[k] for r in rows] for k in RT.COLUMNS}
             pq.write_table(pa.table(cols), os.path.join(cache, f"train-{i:05d}-of-00012.parquet"))
 
     def test_first_n_rows_in_dataset_order_across_shards_with_a_model_filter(self):
-        from harnesslab.core import real_traj as RT
+        from traceharness.core import real_traj as RT
         offline = mock.patch.object(RT.urllib.request, "urlopen", side_effect=AssertionError("the test must not download"))
-        with tempfile.TemporaryDirectory() as cache, mock.patch.dict(os.environ, {"HARNESSLAB_NEBIUS_CACHE": cache}), \
+        with tempfile.TemporaryDirectory() as cache, mock.patch.dict(os.environ, {"TRACEHARNESS_NEBIUS_CACHE": cache}), \
                 mock.patch.object(RT, "SHARDS", 2), offline:
             self.shards(cache, ROWS[:3], ROWS[3:] + ROWS[:2])
             seen = []

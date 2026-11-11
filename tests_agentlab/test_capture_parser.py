@@ -10,7 +10,7 @@ from unittest import mock
 LAB = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, LAB)
 
-from harnesslab.backend.importers import claude_code   # noqa: E402
+from traceharness.backend.importers import claude_code   # noqa: E402
 
 FIX = os.path.join(LAB, "tests_agentlab", "fixtures", "capture", "cc_session.jsonl")
 CXFIX = os.path.join(LAB, "tests_agentlab", "fixtures", "capture", "cx_rollout.jsonl")
@@ -130,7 +130,7 @@ GEMFIX = os.path.join(LAB, "tests_agentlab", "fixtures", "capture", "gemini_sess
 class TestGeminiCli(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        from harnesslab.backend.importers import gemini_cli
+        from traceharness.backend.importers import gemini_cli
         cls.mod = gemini_cli
         cls.sess = gemini_cli.parse_file(GEMFIX)
 
@@ -273,7 +273,7 @@ class TestCodexIdsAndUsage(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
-        from harnesslab.backend.importers import codex
+        from traceharness.backend.importers import codex
         cls.codex = codex
         cls.sess = codex.parse_file(CXFIX)
 
@@ -328,7 +328,7 @@ class TestCodexIdsAndUsage(unittest.TestCase):
     def test_conversational_uuids_are_now_real_for_codex(self):
         """Without record ids, identity.conv_uuids returns [] and the resume/fork graph is empty
         for every Codex run (identity.py:41-42, :121)."""
-        from harnesslab.capture import identity
+        from traceharness.capture import identity
         self.assertTrue(identity.conv_uuids(self.sess.events))
 
     def rewrite(self, name, fn):
@@ -473,7 +473,7 @@ class TestCodexIdsAndUsage(unittest.TestCase):
         self.assertEqual(call.name, "apply_patch")
         self.assertEqual(call.args.get("native_name"), "exec",
                          "the native tool name is preserved, not discarded")
-        from harnesslab.backend.importers import common as C
+        from traceharness.backend.importers import common as C
         tool, args = C.map_tool(call.name, call.args, self.sess.extra["tool_overrides"])
         self.assertEqual(tool, "edit_file")
         self.assertEqual(args["path"], "/srv/calcrepo/calc.py")
@@ -482,14 +482,14 @@ class TestCodexIdsAndUsage(unittest.TestCase):
         """Over all 1,423 rollouts on this machine approval_policy is one of {on-request, never}
         and sandbox_policy.type one of {workspace-write, danger-full-access, read-only}. The
         fixture is on-request + workspace-write: a real boundary, so `strict`."""
-        from harnesslab.capture.harness_config import POLICIES
+        from traceharness.capture.harness_config import POLICIES
         self.assertEqual(POLICIES["codex_approval"](self.sess),
                          ("strict", {"approval_policy": "on-request",
                                      "sandbox_policy": "workspace-write"}))
 
     def test_a_removed_boundary_is_permissive_and_an_unrecorded_one_is_unknown(self):
         """`permissive` only when a boundary was OBSERVED removed -- never inferred from silence."""
-        from harnesslab.capture.harness_config import POLICIES
+        from traceharness.capture.harness_config import POLICIES
 
         def run(approval, sandbox):
             def two(r):
@@ -516,7 +516,7 @@ class TestCodexIdsAndUsage(unittest.TestCase):
         """The re-name to apply_patch is the only way an `edit` span exists for Codex at all, but
         the ledger's `native_tool` must still say `exec` -- otherwise every Codex run on this
         machine asserts a tool call that never happened (40,260 exec against one apply_patch)."""
-        from harnesslab.capture import regen
+        from traceharness.capture import regen
         out = self.tmpdir()
         with mock.patch.dict(regen.ADAPTERS, {"codex": self.codex}):
             runs = regen.regenerate(CXFIX, out, 1800, adapter="codex")
@@ -532,7 +532,7 @@ class TestCodexIdsAndUsage(unittest.TestCase):
         """Measured on the newest 200 real rollouts: where both exist, the last token_count comes
         after the last assistant message 117 times out of 117. So a Codex run has a usage record
         for every model call, and an estimated chat span means the join dropped one."""
-        from harnesslab.capture import regen
+        from traceharness.capture import regen
         out = self.tmpdir()
         with mock.patch.dict(regen.ADAPTERS, {"codex": self.codex}):
             runs = regen.regenerate(CXFIX, out, 1800, adapter="codex")
@@ -604,7 +604,7 @@ class TestCodexIdsAndUsage(unittest.TestCase):
         self.assertEqual((res.raw or {})["structured_patch"], [])
 
     def test_the_system_prompt_is_read_from_base_instructions(self):
-        from harnesslab.backend.importers import common as C
+        from traceharness.backend.importers import common as C
         self.assertTrue(self.sess.system_prompt)
         fp = C.fingerprint(self.sess.events,
                            {"source": "codex", "system_prompt": self.sess.system_prompt})
@@ -643,7 +643,7 @@ class TestCodexIdsAndUsage(unittest.TestCase):
         self.assertEqual(self.sess.extra["unknown_record_types"], {})
 
     def test_exec_maps_to_bash_without_a_glued_on_prefix(self):
-        from harnesslab.backend.importers import common as C
+        from traceharness.backend.importers import common as C
         tool, args = C.map_tool("exec", {"input": "cat calc.py"},
                                 self.sess.extra["tool_overrides"])
         self.assertEqual(tool, "bash")
@@ -663,7 +663,7 @@ class TestCodexIdsAndUsage(unittest.TestCase):
                          "01936a4c-0000-0000-0000-00000000dead")
 
     def test_two_rollouts_of_different_sessions_declare_no_relation(self):
-        from harnesslab.capture import identity
+        from traceharness.capture import identity
         src = os.path.join(self.tmpdir(), "other.jsonl")
         rows = _cx_rows()
         rows[0]["payload"]["id"] = "01936a4c-1111-2222-3333-000000000009"
@@ -684,7 +684,7 @@ QWFIX = os.path.join(LAB, "tests_agentlab", "fixtures", "capture", "qwen_chat.js
 class TestQwenCode(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        from harnesslab.backend.importers import qwen_code
+        from traceharness.backend.importers import qwen_code
         cls.mod = qwen_code
         cls.sess = qwen_code.parse_file(QWFIX)
 
@@ -694,7 +694,7 @@ class TestQwenCode(unittest.TestCase):
         self.assertTrue(self.sess.events)
 
     def test_the_envelope_uuid_is_the_record_id_so_dedup_and_relations_work(self):
-        from harnesslab.capture import identity
+        from traceharness.capture import identity
         self.assertTrue(all(e.record_id for e in self.sess.events
                             if e.kind in ("user", "assistant", "reasoning",
                                           "tool_call", "tool_result")))
@@ -773,12 +773,12 @@ class TestQwenCode(unittest.TestCase):
         self.assertEqual(self.sess.extra["decisions"], ["auto_accept"])
 
     def test_the_approval_decision_drives_the_policy(self):
-        from harnesslab.capture.harness_config import POLICIES
+        from traceharness.capture.harness_config import POLICIES
         self.assertEqual(POLICIES["qwen_decision"](self.sess),
                          ("permissive", {"decisions": ["auto_accept"]}))
 
     def test_a_session_with_no_observed_decision_is_unknown_not_a_guess(self):
-        from harnesslab.capture.harness_config import POLICIES
+        from traceharness.capture.harness_config import POLICIES
 
         class _Sess:
             extra = {"decisions": []}
@@ -788,7 +788,7 @@ class TestQwenCode(unittest.TestCase):
         """The descriptor lands in adapters.REGISTRY in its own change; this proves the rest of
         the chain -- BY_NAME -> descriptor.policy -> POLICIES -> capture_harness."""
         from unittest import mock as _mock
-        from harnesslab.capture import adapters, harness_config
+        from traceharness.capture import adapters, harness_config
         row = adapters.CaptureAdapter(
             name="qwen_code", module=self.mod, description="Qwen Code chats",
             fixture="qwen_chat.jsonl", golden="qwen_chat.expected.ledger.jsonl",
@@ -822,7 +822,7 @@ class TestCodexJoinDoesNotDependOnRecordOrder(unittest.TestCase):
         return pl.get("type") or r.get("type") or ""
 
     def _measure(self, rows):
-        from harnesslab.backend.importers import codex
+        from traceharness.backend.importers import codex
         d = tempfile.mkdtemp(prefix="hl-cxorder-")
         self.addCleanup(shutil.rmtree, d, True)
         path = os.path.join(d, "rollout-probe.jsonl")
@@ -864,7 +864,7 @@ class TestCodexRecordIdsDoNotCollide(unittest.TestCase):
                        "fixtures", "capture", "cx_rollout.jsonl")
 
     def test_a_zero_based_build_does_not_lose_a_record_to_a_collision(self):
-        from harnesslab.backend.importers import codex
+        from traceharness.backend.importers import codex
         rows = [json.loads(l) for l in open(self.FIX, encoding="utf-8") if l.strip()]
         shifted = []
         for r in rows:                              # a 0-based build: every ordinal one lower
@@ -901,7 +901,7 @@ class TestGeminiSetIsAPatchNotAReplacement(unittest.TestCase):
                        "fixtures", "capture", "gemini_session.jsonl")
 
     def _parse(self, rows):
-        from harnesslab.backend.importers import gemini_cli
+        from traceharness.backend.importers import gemini_cli
         d = tempfile.mkdtemp(prefix="hl-gmset-")
         self.addCleanup(shutil.rmtree, d, True)
         path = os.path.join(d, "session.jsonl")

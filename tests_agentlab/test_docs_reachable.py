@@ -37,13 +37,13 @@ def in_a_checkout() -> bool:
 HAVE_GIT = in_a_checkout()
 
 # These read repository areas the school replication package intentionally does not ship
-# (harnesslab/school-package.json "exclude", and the top-level docs/ dir is simply not in
-# "include" at all): the design-note tree, the developer-facing harnesslab/README.md, and the
+# (traceharness/school-package.json "exclude", and the top-level docs/ dir is simply not in
+# "include" at all): the design-note tree, the developer-facing traceharness/README.md, and the
 # frontend scaffold's own README. They stay real, un-skippable checks against a full checkout;
 # they only stop being reachable inside the trimmed package, where the narrower guard applies.
 HAVE_ROOT_DOCS_CAPTURE = os.path.isfile(os.path.join(LAB, "docs", "capture.md"))
-HAVE_HARNESSLAB_README = os.path.isfile(os.path.join(LAB, "harnesslab", "README.md"))
-HAVE_FRONTEND_README = os.path.isfile(os.path.join(LAB, "harnesslab", "frontend", "README.md"))
+HAVE_TRACEHARNESS_README = os.path.isfile(os.path.join(LAB, "traceharness", "README.md"))
+HAVE_FRONTEND_README = os.path.isfile(os.path.join(LAB, "traceharness", "frontend", "README.md"))
 
 
 def tracked(rel: str) -> bool:
@@ -66,35 +66,35 @@ class TestTheCaptureRunbookIsInTheRepo(unittest.TestCase):
 
     def test_the_capture_package_points_at_a_document_a_clone_has(self):
         """__init__.py named docs/superpowers/specs/..., which .gitignore excludes."""
-        text = read("harnesslab", "capture", "__init__.py")
+        text = read("traceharness", "capture", "__init__.py")
         refs = re.findall(r"docs/[\w./-]+\.md", text)
         self.assertTrue(refs, "the capture package names no design document at all")
         for ref in refs:
             self.assertTrue(os.path.exists(os.path.join(LAB, ref)),
-                            f"harnesslab/capture/__init__.py points at {ref}, which is not in the repo")
+                            f"traceharness/capture/__init__.py points at {ref}, which is not in the repo")
             if HAVE_GIT:
                 self.assertTrue(tracked(ref), f"{ref} is in the working copy but git does not ship it")
 
 
-@unittest.skipUnless(HAVE_HARNESSLAB_README, "requires the full checkout: harnesslab/README.md")
+@unittest.skipUnless(HAVE_TRACEHARNESS_README, "requires the full checkout: traceharness/README.md")
 class TestTheReadmeNamesEveryCaptureRoute(unittest.TestCase):
     """The API list omitted every /api/capture/* route. Read the routes off the router itself, so
     adding one and forgetting the README fails here instead of shipping."""
 
     def routes(self) -> list:
-        from harnesslab.backend.capture_api import capture_router
+        from traceharness.backend.capture_api import capture_router
         return sorted(r.path for r in capture_router(lambda: LAB).routes)
 
     def test_every_capture_route_appears_in_the_readme(self):
-        readme = read("harnesslab", "README.md")
+        readme = read("traceharness", "README.md")
         self.assertTrue(self.routes(), "no capture routes found to check")
         for path in self.routes():
-            self.assertIn(path, readme, f"{path} is served but harnesslab/README.md never names it")
+            self.assertIn(path, readme, f"{path} is served but traceharness/README.md never names it")
 
     def test_the_readme_has_a_capture_section(self):
-        readme = read("harnesslab", "README.md")
+        readme = read("traceharness", "README.md")
         self.assertIn("docs/capture.md", readme,
-                      "harnesslab/README.md does not point at the capture runbook")
+                      "traceharness/README.md does not point at the capture runbook")
 
 
 @unittest.skipUnless(HAVE_ROOT_DOCS_CAPTURE, "requires the full checkout: docs/capture.md")
@@ -116,7 +116,7 @@ class TestTheRunbookPrintsTheWholeReport(unittest.TestCase):
     def real_keys(self) -> set:
         import shutil
         import tempfile
-        from harnesslab.capture import backfill
+        from traceharness.capture import backfill
         tmp = tempfile.mkdtemp(prefix="hl-doc-backfill-")
         self.addCleanup(shutil.rmtree, tmp, True)
         src, lab = os.path.join(tmp, "src"), os.path.join(tmp, "lab")
@@ -155,10 +155,10 @@ class TestTheSwiftSuiteHasAMakeTarget(unittest.TestCase):
                          "menubar-test is missing from .PHONY")
 
 
-@unittest.skipUnless(HAVE_FRONTEND_README, "requires the full checkout: harnesslab/frontend/README.md")
+@unittest.skipUnless(HAVE_FRONTEND_README, "requires the full checkout: traceharness/frontend/README.md")
 class TestTheFrontendReadmeIsNotBoilerplate(unittest.TestCase):
     def test_it_does_not_still_ship_the_create_vite_template(self):
-        text = read("harnesslab", "frontend", "README.md")
+        text = read("traceharness", "frontend", "README.md")
         for tell in ("This template provides a minimal setup",
                      "two official plugins are available",
                      "Expanding the Oxlint configuration"):

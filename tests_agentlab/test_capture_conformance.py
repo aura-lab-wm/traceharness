@@ -13,8 +13,8 @@ import unittest
 LAB = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, LAB)
 
-from harnesslab.backend.importers import common as C            # noqa: E402
-from harnesslab.capture import adapters, identity, regen        # noqa: E402
+from traceharness.backend.importers import common as C            # noqa: E402
+from traceharness.capture import adapters, identity, regen        # noqa: E402
 
 FIXDIR = os.path.join(LAB, "tests_agentlab", "fixtures", "capture")
 CASES = [(a.name, os.path.join(FIXDIR, a.fixture), os.path.join(FIXDIR, a.golden))

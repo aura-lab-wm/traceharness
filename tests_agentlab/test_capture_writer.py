@@ -9,7 +9,7 @@ import unittest
 LAB = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, LAB)
 
-from harnesslab.core import providers as P   # noqa: E402
+from traceharness.core import providers as P   # noqa: E402
 
 FIX = os.path.join(LAB, "tests_agentlab", "fixtures", "capture", "cc_session.jsonl")
 
@@ -44,8 +44,8 @@ class TestCacheAwareCost(unittest.TestCase):
         self.assertFalse(P.is_priced("some-new-model"))
 
 
-from harnesslab.backend.importers.common import Event as E, Session   # noqa: E402
-from harnesslab.capture.harness_config import capture_harness          # noqa: E402
+from traceharness.backend.importers.common import Event as E, Session   # noqa: E402
+from traceharness.capture.harness_config import capture_harness          # noqa: E402
 
 
 class TestCaptureHarness(unittest.TestCase):
@@ -68,7 +68,7 @@ class TestCaptureHarness(unittest.TestCase):
         self.assertEqual(capture_harness(self.sess([], 1))["policy"], "unknown")
 
     def test_no_fingerprint_in_the_config_and_the_hash_matches_the_lab(self):
-        from harnesslab.core.harness import content_hash
+        from traceharness.core.harness import content_hash
         h = capture_harness(self.sess(["default"], 3))
         self.assertNotIn("fingerprint", h)
         self.assertEqual(h["hash"], content_hash(h))
@@ -77,7 +77,7 @@ class TestCaptureHarness(unittest.TestCase):
                                                 "agent_version": "2.1.3"})
 
 
-from harnesslab.capture.writer import model_calls   # noqa: E402
+from traceharness.capture.writer import model_calls   # noqa: E402
 
 
 class TestModelCalls(unittest.TestCase):
@@ -136,9 +136,9 @@ class TestModelCalls(unittest.TestCase):
         self.assertEqual(calls[-1]["usage"]["output_tokens"], 0)
 
 
-from harnesslab.backend.importers import claude_code, common as C   # noqa: E402
-from harnesslab.capture import identity                             # noqa: E402
-from harnesslab.capture.writer import write_run                     # noqa: E402
+from traceharness.backend.importers import claude_code, common as C   # noqa: E402
+from traceharness.capture import identity                             # noqa: E402
+from traceharness.capture.writer import write_run                     # noqa: E402
 
 
 def build_fixture_run(out_dir):

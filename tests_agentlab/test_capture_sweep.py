@@ -11,15 +11,15 @@ import sys
 import tempfile
 import unittest
 
-from harnesslab.capture.lock import CaptureLock                    # noqa: E402
+from traceharness.capture.lock import CaptureLock                    # noqa: E402
 
 LAB = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, LAB)
 sys.path.insert(0, os.path.join(LAB, "tests_agentlab"))
 
 from test_capture_backfill import FIX                      # noqa: E402
-from harnesslab.capture import regen, sweep                 # noqa: E402
-from harnesslab.capture.lock import CaptureLock             # noqa: E402
+from traceharness.capture import regen, sweep                 # noqa: E402
+from traceharness.capture.lock import CaptureLock             # noqa: E402
 
 NOW = 2.0e9
 OLD = NOW - 7 * 24 * 3600          # a week before NOW: far past any safety age
@@ -273,8 +273,8 @@ class TestAnUnaskableLock(Lab):
         """_capture_lock_free returns None on a mount with no flock, or an unreadable lock file. That
         refused every entry -- but left `locked` false, so the CLI said clean and the watcher
         published debris 0 over the last true count."""
-        from harnesslab.capture import sniffer, sweep as sw
-        from harnesslab.capture import presence
+        from traceharness.capture import sniffer, sweep as sw
+        from traceharness.capture import presence
         self.scratch("tmp", dead_pid())
         real = sw._capture_lock_free
         sw._capture_lock_free = lambda *_a, **_k: None
@@ -342,7 +342,7 @@ class TestASweepPublishesWhatItJustChanged(Lab):
     def test_the_count_on_the_page_is_not_a_day_out_of_date(self):
         """Only the watcher's daily hook wrote the debris count, so after a removal by hand the
         Capture page kept publishing debris that was no longer in the lab."""
-        from harnesslab.capture import presence
+        from traceharness.capture import presence
         presence.write(self.runs, state="idle", debris=3, debris_checked_at=1.0)
         self.scratch("tmp", dead_pid())
         rep = self.sweep(apply=True)
@@ -352,7 +352,7 @@ class TestASweepPublishesWhatItJustChanged(Lab):
         self.assertEqual(p["debris_checked_at"], NOW)
 
     def test_a_report_only_sweep_publishes_nothing(self):
-        from harnesslab.capture import presence
+        from traceharness.capture import presence
         presence.write(self.runs, state="idle", debris=3, debris_checked_at=1.0)
         self.scratch("tmp", dead_pid())
         self.sweep()
@@ -361,7 +361,7 @@ class TestASweepPublishesWhatItJustChanged(Lab):
 
 
 class TestCli(unittest.TestCase):
-    """python -m harnesslab.capture --sweep | --prune-orphans, against a lab built here."""
+    """python -m traceharness.capture --sweep | --prune-orphans, against a lab built here."""
 
     def setUp(self):
         self.tmp = tempfile.mkdtemp(prefix="hl-sweep-cli-")
@@ -375,15 +375,15 @@ class TestCli(unittest.TestCase):
         os.makedirs(self.src)
 
     def cli(self, *args):
-        env = dict(os.environ, HARNESSLAB_CAPTURE_CONFIG=os.path.join(self.tmp, "no-allowlist.json"))
-        return subprocess.run([sys.executable, "-B", "-m", "harnesslab.capture", *args, "--lab", self.lab],
+        env = dict(os.environ, TRACEHARNESS_CAPTURE_CONFIG=os.path.join(self.tmp, "no-allowlist.json"))
+        return subprocess.run([sys.executable, "-B", "-m", "traceharness.capture", *args, "--lab", self.lab],
                               cwd=LAB, env=env, capture_output=True, text=True, timeout=120)
 
     def test_a_prune_that_could_not_read_a_source_does_not_exit_zero(self):
         """`1 if any source failed`, as --backfill and --seed-cursors already report: a caller cannot
         otherwise tell a clean "no orphans" from a pass that established nothing."""
         import json
-        from harnesslab.capture import sniffer
+        from traceharness.capture import sniffer
         src = os.path.join(self.src, "sess-cap-1.jsonl")
         shutil.copy(FIX, src)
         sniffer.tick([self.src], self.runs, gap_s=1800, now=1.8e9)
@@ -398,7 +398,7 @@ class TestCli(unittest.TestCase):
     def test_a_prune_that_could_not_remove_a_directory_does_not_exit_zero(self):
         """--sweep already reports a failed removal with exit 1; the two modes must agree."""
         import json
-        from harnesslab.capture import cursors, sniffer
+        from traceharness.capture import cursors, sniffer
         from test_capture_backfill import RESUMED_TAIL, copy_fixture
         src = os.path.join(self.src, "s.jsonl")
         copy_fixture(src, RESUMED_TAIL)
@@ -448,7 +448,7 @@ class TestCli(unittest.TestCase):
 
     def test_prune_orphans_reports_by_default_and_prunes_only_with_apply(self):
         import json
-        from harnesslab.capture import sniffer
+        from traceharness.capture import sniffer
         src = os.path.join(self.src, "sess-cap-1.jsonl")
         shutil.copy(FIX, src)
         with open(os.path.join(self.src, "notes.txt"), "w", encoding="utf-8") as f:
@@ -518,7 +518,7 @@ class TestTheWatchersDailySweepOnlyCounts(unittest.TestCase):
         age(self.debris, when=1_000_000_000)
 
     def loop(self, full_sweep_s):
-        from harnesslab.capture import sniffer
+        from traceharness.capture import sniffer
         calls = {"n": 0}
         real = sniffer.tick
         def counted(*a, **k):
@@ -534,7 +534,7 @@ class TestTheWatchersDailySweepOnlyCounts(unittest.TestCase):
             sniffer.tick = real
 
     def test_a_full_sweep_publishes_the_debris_count_and_deletes_nothing(self):
-        from harnesslab.capture import presence
+        from traceharness.capture import presence
         self.loop(full_sweep_s=100)
         doc = presence.read(self.runs)
         self.assertEqual(doc["debris"], 1, "the daily sweep did not count the debris")
@@ -542,12 +542,12 @@ class TestTheWatchersDailySweepOnlyCounts(unittest.TestCase):
         self.assertTrue(os.path.isdir(self.debris), "the watcher removed debris; it may only count it")
 
     def test_an_ordinary_tick_does_not_sweep(self):
-        from harnesslab.capture import presence
+        from traceharness.capture import presence
         self.loop(full_sweep_s=0)
         self.assertEqual(presence.read(self.runs)["debris_checked_at"], 0.0)
 
     def test_a_failing_sweep_does_not_kill_the_watcher(self):
-        from harnesslab.capture import presence
+        from traceharness.capture import presence
         real = sweep.sweep
         sweep.sweep = lambda *a, **k: (_ for _ in ()).throw(OSError(5, "I/O error"))
         try:
@@ -583,7 +583,7 @@ class TestReviewFixes(Lab):
 
     def test_a_live_writer_still_holds_off_a_restore(self):
         """Alive AND the capture lock held: a swap really is in flight, so nothing is put back."""
-        from harnesslab.capture.lock import CaptureLock
+        from traceharness.capture.lock import CaptureLock
         old = f"{self.final}.old-{self.live_pid()}"
         os.replace(self.final, old)
         age(old, NOW - 60)
@@ -595,8 +595,8 @@ class TestReviewFixes(Lab):
     def test_a_count_taken_while_the_lab_was_locked_is_not_published_as_the_count(self):
         """sweep() refuses what it cannot judge while the capture lock is held, so its count is a
         floor, not a reading. Stamping it as just-checked overwrote the true count with a smaller one."""
-        from harnesslab.capture import presence, sniffer
-        from harnesslab.capture.lock import CaptureLock
+        from traceharness.capture import presence, sniffer
+        from traceharness.capture.lock import CaptureLock
         presence.write(self.runs, state="idle", debris=7, debris_checked_at=1.0)
         self.scratch("tmp", dead_pid())
         with CaptureLock(self.runs, name=""):

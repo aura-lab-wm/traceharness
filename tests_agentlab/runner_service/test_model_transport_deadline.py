@@ -4,7 +4,7 @@ import threading
 import time
 import unittest
 
-from harnesslab.runner_service.provider import OpenRouter, ProviderError
+from traceharness.runner_service.provider import OpenRouter, ProviderError
 
 PAYLOAD = b'event: response.completed\ndata: {"type":"response.completed","response":{"status":"completed","usage":{"input_tokens":3,"output_tokens":1,"cost":0.0001}}}\n\n'
 

@@ -16,7 +16,7 @@ image alone does not establish readiness.
 The member continues to use `https://traceharness.dev/app`. Its runner requests
 go through the existing authenticated Worker at `/api/runner/*`. The private
 service never receives a member JWT and is not a browser-facing application.
-`python -m harnesslab` remains the local lab on `127.0.0.1:8742`; this package
+`python -m traceharness` remains the local lab on `127.0.0.1:8742`; this package
 does not change that command or the existing compiler.
 
 ## Boundaries
@@ -177,7 +177,7 @@ invalid visible command prevents the task from becoming ready.
 
 Each task entry requires `id`, `title`, HTTPS `repository`, immutable Git
 `revision` (40 or 64 hex characters), relative `path`, `content_sha256` from
-`harnesslab.runner_service.registry.tree_hash`, pinned `grader_image_digest`,
+`traceharness.runner_service.registry.tree_hash`, pinned `grader_image_digest`,
 registered `runtime_ids`, and an `environment_digests` mapping whose keys exactly
 match those runtime IDs. Each value must match that runtime's pinned image.
 Legacy `environment_digest` inventories remain accepted for a shared image.
@@ -257,7 +257,7 @@ member key on a command line. Set `RUNNER_STATE_DIR` to an exclusive private
 directory and `RUNNER_REGISTRY` to the reviewed inventory. Only after the host,
 images, task packages and compatibility evidence are ready set
 `RUNNER_EXECUTION_ENABLED=1`, `RUNNER_DOCKER`, and `RUNNER_ISOLATION_RUNTIME`.
-The command `python -m harnesslab.runner_service` binds only `127.0.0.1:8743`.
+The command `python -m traceharness.runner_service` binds only `127.0.0.1:8743`.
 A dedicated VM launcher may instead bind the VM's explicit private interface
 address behind its HTTPS proxy; do not bind `0.0.0.0` or publish task-container
 ports. The service accepts no browser session or direct unsigned operation.

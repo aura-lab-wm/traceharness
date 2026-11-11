@@ -1,4 +1,4 @@
-"""harnesslab.backend.guard -- the Host allow-list and the same-origin write check.
+"""traceharness.backend.guard -- the Host allow-list and the same-origin write check.
 
 Two threats, one middleware (see guard.py's module docstring for the full reasoning):
 
@@ -10,7 +10,7 @@ Two threats, one middleware (see guard.py's module docstring for the full reason
 Most tests build a tiny standalone app with only `security_guard()` wired in, so the guard's own
 logic is exercised in isolation from the rest of the API surface (the same style
 test_capture_control.py's `TestControlRoute` already uses for `private_results_guard`). A handful of
-tests hit the real `harnesslab.backend.app.app` singleton, to prove the wiring in app.py actually
+tests hit the real `traceharness.backend.app.app` singleton, to prove the wiring in app.py actually
 runs and runs BEFORE routing -- without touching anything that writes to disk or spends money.
 """
 from __future__ import annotations
@@ -25,8 +25,8 @@ sys.path.insert(0, LAB)
 from fastapi import FastAPI, Request           # noqa: E402
 from fastapi.testclient import TestClient       # noqa: E402
 
-from harnesslab.backend import guard            # noqa: E402
-from harnesslab.backend.guard import (          # noqa: E402
+from traceharness.backend import guard            # noqa: E402
+from traceharness.backend.guard import (          # noqa: E402
     ENV_EXTRA_HOSTS, security_guard, set_bound_host,
 )
 
@@ -251,19 +251,19 @@ class TestSecurityGuardOnTheRealApp(unittest.TestCase):
         set_bound_host("127.0.0.1")
 
     def test_get_api_results_is_unaffected_by_the_guard(self):
-        from harnesslab.backend.app import app
+        from traceharness.backend.app import app
         r = TestClient(app).get("/api/results")
         self.assertEqual(r.status_code, 200)
 
     def test_get_api_results_with_a_hostile_host_is_rejected_before_the_route_runs(self):
-        from harnesslab.backend.app import app
+        from traceharness.backend.app import app
         r = TestClient(app).get("/api/results", headers={"host": "evil.example"})
         self.assertEqual(r.status_code, 400)
 
     def test_a_hostile_origin_write_never_reaches_the_route(self):
         """/api/jobs/{jid}/cancel with a made-up jid would 404 from the route (the id isn't in JOBS)
         if the guard let it through; getting 403 instead proves the guard, not the route, answered."""
-        from harnesslab.backend.app import app
+        from traceharness.backend.app import app
         r = TestClient(app).post("/api/jobs/not-a-real-job/cancel",
                                   headers={"host": "127.0.0.1", "origin": "https://evil.example",
                                           "content-type": "application/json"})
@@ -273,7 +273,7 @@ class TestSecurityGuardOnTheRealApp(unittest.TestCase):
         """The mirror image of the test above: same request, allowed Origin -- the guard steps
         aside and the ROUTE's own 404 (unknown job id) is what comes back, proving nothing was
         launched or written by this request."""
-        from harnesslab.backend.app import app
+        from traceharness.backend.app import app
         r = TestClient(app).post("/api/jobs/not-a-real-job/cancel",
                                   headers={"host": "127.0.0.1", "origin": "http://127.0.0.1",
                                           "content-type": "application/json"})

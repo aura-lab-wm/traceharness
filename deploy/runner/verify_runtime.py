@@ -23,13 +23,13 @@ import sys
 import time
 import uuid
 
-from harnesslab.runner_service.configuration import canonical, preflight, RUNTIME_NAMES
-from harnesslab.runner_service.credentials import CredentialVault
-from harnesslab.runner_service.execution import DockerExecutor
-from harnesslab.runner_service.jobs import Jobs, TERMINAL
-from harnesslab.runner_service.provider import OpenRouter
-from harnesslab.runner_service.registry import Registry, COMPATIBILITY_FIELDS
-from harnesslab.runner_service.settings import Settings
+from traceharness.runner_service.configuration import canonical, preflight, RUNTIME_NAMES
+from traceharness.runner_service.credentials import CredentialVault
+from traceharness.runner_service.execution import DockerExecutor
+from traceharness.runner_service.jobs import Jobs, TERMINAL
+from traceharness.runner_service.provider import OpenRouter
+from traceharness.runner_service.registry import Registry, COMPATIBILITY_FIELDS
+from traceharness.runner_service.settings import Settings
 
 ARTIFACT_NAMES = {"manifest.json", "grade.json", "trace.jsonl", "messages.json", "summary.json", "patch.diff"}
 
@@ -174,7 +174,7 @@ def receipt_for(job, manifest, successful_responses):
 
 
 def validate_artifact_files(state_dir, job):
-    from harnesslab.runner_service.execution import _read_artifact
+    from traceharness.runner_service.execution import _read_artifact
     if not re.fullmatch(r"[a-f0-9]{48}", job.get("id", "")):
         raise VerificationRefused("Execution identity is invalid.")
     directory = state_dir / job["id"]
@@ -234,7 +234,7 @@ def register_receipt(registry_path, original_raw, receipt):
 def safe_job(job):
     # Never print the prompt, provider body, transcript, credential handle or raw
     # exception. Adapter-authored fixed issues are bounded and redacted defensively.
-    from harnesslab.runner_service.execution import _redacted
+    from traceharness.runner_service.execution import _redacted
     artifacts = [{key: item[key] for key in ("name", "bytes", "sha256")}
                  for item in job.get("artifacts", []) if isinstance(item, dict) and item.get("name") in ARTIFACT_NAMES
                  and all(key in item for key in ("bytes", "sha256"))]

@@ -18,7 +18,7 @@ import unittest
 LAB = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, LAB)
 
-from harnesslab.capture import activity                       # noqa: E402
+from traceharness.capture import activity                       # noqa: E402
 
 
 class TestTheLog(unittest.TestCase):
@@ -57,7 +57,7 @@ class TestTheLog(unittest.TestCase):
         self.assertEqual([r["runs"] for r in rows], [1, 2])
 
     def test_a_tick_records_one_sample(self):
-        from harnesslab.capture import sniffer
+        from traceharness.capture import sniffer
         src = os.path.join(self.root, "src")
         os.makedirs(src)
         from test_capture_backfill import copy_fixture

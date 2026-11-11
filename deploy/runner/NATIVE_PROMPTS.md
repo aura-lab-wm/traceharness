@@ -88,7 +88,7 @@ member response containing baseline text; “public” here means the response
 shape without private anchors, not permission to publish proprietary source.
 
 1. Extract the source graph with
-   `harnesslab.runner_service.native_prompts_elf.extract_native_source(binary)`
+   `traceharness.runner_service.native_prompts_elf.extract_native_source(binary)`
    and its map with `native_source_layout(binary)`. Write the returned bytes as
    `source-graph.bin` and the map as `source-layout.json`. Both operations are
    bounded parsing; they do not launch Claude. The binary limit is 512 MiB.

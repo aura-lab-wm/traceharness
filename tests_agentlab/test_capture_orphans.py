@@ -19,8 +19,8 @@ sys.path.insert(0, LAB)
 sys.path.insert(0, os.path.join(LAB, "tests_agentlab"))
 
 from test_capture_backfill import RESUME_TAIL, RESUMED_TAIL, copy_fixture   # noqa: E402
-from harnesslab.capture import cursors, orphans, presence, sniffer, sweep   # noqa: E402
-from harnesslab.capture.lock import CaptureLock                             # noqa: E402
+from traceharness.capture import cursors, orphans, presence, sniffer, sweep   # noqa: E402
+from traceharness.capture.lock import CaptureLock                             # noqa: E402
 
 CLOSED = 1.8e9
 GAP = 1800
@@ -660,7 +660,7 @@ class TestFourthReviewFixes(Lab):
         """sweep --apply restores a `<run>.old-<pid>/` whose run is missing -- it has no idea a prune
         put it there. That recreated a run with no index row and no cursor: invisible to every later
         prune, and to every aggregate, forever."""
-        from harnesslab.capture import sweep as sw
+        from traceharness.capture import sweep as sw
         base, s1 = self.shrunk()
         scratch = os.path.join(self.cap, f"{s1}.old-999999")
         shutil.copytree(os.path.join(self.cap, s1), scratch)
@@ -686,7 +686,7 @@ class TestFourthReviewFixes(Lab):
     def test_a_sidecar_that_cannot_be_written_is_reported_not_raised(self):
         """The index, inflight and identity writes come AFTER the directories are gone and were
         unguarded: an ENOSPC or EIO there lost the cursor save and the report with it."""
-        import harnesslab.capture.orphans as orph
+        import traceharness.capture.orphans as orph
         base, s1 = self.shrunk()
         real = orph._atomic_write
         def failing(path, text):
@@ -865,7 +865,7 @@ class TestFifthReviewFixes(Lab):
         """_source_state asked discover() about a bare FILE, which lets every descriptor answer --
         the explicit-request branch. Under the roots the same file is claimed by glob scoping, so the
         two passes could read one source with two different adapters."""
-        from harnesslab.capture import adapters
+        from traceharness.capture import adapters
         qwen = os.path.join(LAB, "tests_agentlab", "fixtures", "capture", "qwen_chat.jsonl")
         if not os.path.exists(qwen):
             self.skipTest("needs the qwen fixture")

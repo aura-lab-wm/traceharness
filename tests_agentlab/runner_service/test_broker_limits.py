@@ -7,9 +7,9 @@ import time
 import unittest
 from unittest.mock import patch
 
-from harnesslab.runner_service import jobs as jobs_module
-from harnesslab.runner_service.execution import ExecutionError
-from harnesslab.runner_service.provider import ProviderError
+from traceharness.runner_service import jobs as jobs_module
+from traceharness.runner_service.execution import ExecutionError
+from traceharness.runner_service.provider import ProviderError
 from tests_agentlab.runner_service import test_broker as fixtures
 
 PRIVATE = 'fixture-arbitrary-private-text-must-not-be-retained'

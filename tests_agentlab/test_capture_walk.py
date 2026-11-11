@@ -15,7 +15,7 @@ import unittest
 LAB = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, LAB)
 
-from harnesslab.capture import adapters                       # noqa: E402
+from traceharness.capture import adapters                       # noqa: E402
 
 PATTERNS = ["**/*.jsonl", "**/rollout-*.jsonl", "**/chats/**/*.jsonl", "*.jsonl", "a/*/c.jsonl"]
 

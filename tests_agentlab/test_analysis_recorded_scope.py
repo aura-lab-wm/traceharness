@@ -10,10 +10,10 @@ import unittest
 from urllib.parse import quote
 
 from starlette.testclient import TestClient
-from harnesslab.backend.app import app
-from harnesslab.backend import metrics as M, static_export as SE
-from harnesslab.backend.private_guard import OPT_IN_HEADER
-from harnesslab.core import analysis as A, reportcard
+from traceharness.backend.app import app
+from traceharness.backend import metrics as M, static_export as SE
+from traceharness.backend.private_guard import OPT_IN_HEADER
+from traceharness.core import analysis as A, reportcard
 from tests_agentlab.test_metrics_unmeasured import row
 
 

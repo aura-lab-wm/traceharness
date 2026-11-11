@@ -12,9 +12,9 @@ sys.path.insert(0, LAB)
 
 from fastapi.testclient import TestClient  # noqa: E402
 
-from harnesslab.core.blocks import CATALOG, compile_blocks, palette  # noqa: E402
-from harnesslab.backend.app import SETTINGS, app  # noqa: E402
-from harnesslab.backend import metrics as M  # noqa: E402
+from traceharness.core.blocks import CATALOG, compile_blocks, palette  # noqa: E402
+from traceharness.backend.app import SETTINGS, app  # noqa: E402
+from traceharness.backend import metrics as M  # noqa: E402
 
 
 class TestCompile(unittest.TestCase):
@@ -60,7 +60,7 @@ class TestCompile(unittest.TestCase):
         self.assertTrue(any("key" in e for e in compiled["errors"]))
 
     def test_catalog_and_palette_are_public_reads_the_export_bakes(self):
-        from harnesslab.backend import static_export as SE
+        from traceharness.backend import static_export as SE
 
         client = TestClient(app)
         for path in ("/api/blocks/catalog", "/api/blocks/palette"):

@@ -15,14 +15,14 @@ from pathlib import Path
 
 import pytest
 
-from harnesslab.core.harness import content_hash
-from harnesslab.core.tools import check_command
-from harnesslab.shallow.catalog import AGENTS, CAPS, catalog, card
-from harnesslab.shallow.identity import clip_prompt, shallow_hash
-from harnesslab.shallow.jobs import KEY_SENTENCE, ShallowJobError, run_shallow_job
-from harnesslab.shallow.store import FileStore, MemoryStore, StoreError
-from harnesslab.shallow.study import apply_prompt_to_all, include_in_vendor_ladder, paired_study
-from harnesslab.shallow.wizard import compile_minimal, recommended_answers
+from traceharness.core.harness import content_hash
+from traceharness.core.tools import check_command
+from traceharness.shallow.catalog import AGENTS, CAPS, catalog, card
+from traceharness.shallow.identity import clip_prompt, shallow_hash
+from traceharness.shallow.jobs import KEY_SENTENCE, ShallowJobError, run_shallow_job
+from traceharness.shallow.store import FileStore, MemoryStore, StoreError
+from traceharness.shallow.study import apply_prompt_to_all, include_in_vendor_ladder, paired_study
+from traceharness.shallow.wizard import compile_minimal, recommended_answers
 
 ROOT = Path(__file__).resolve().parents[1]
 KEY = "This run calls a live model. Paste your own LLM key. The lab does not keep one for you."
@@ -244,21 +244,21 @@ def test_cli_catalog_and_the_key_refusal(tmp_path):
     env["PYTHONPATH"] = str(ROOT) + os.pathsep + env.get("PYTHONPATH", "")
     env["OPENROUTER_API_KEY"] = "sk-should-not-be-read"
     catalog_run = subprocess.run(
-        [str(exe), "-m", "harnesslab.shallow", "catalog"],
+        [str(exe), "-m", "traceharness.shallow", "catalog"],
         cwd=ROOT, env=env, capture_output=True, text=True, check=False,
     )
     assert catalog_run.returncode == 0, catalog_run.stderr
     rows = json.loads(catalog_run.stdout)
     assert [row["id"] for row in rows] == list(AGENTS)
     refused = subprocess.run(
-        [str(exe), "-m", "harnesslab.shallow", "run", "--provider", "openrouter", "--agent", "claude", "--seed", "0"],
+        [str(exe), "-m", "traceharness.shallow", "run", "--provider", "openrouter", "--agent", "claude", "--seed", "0"],
         cwd=ROOT, env=env, capture_output=True, text=True, check=False,
     )
     assert refused.returncode == 2
     assert refused.stderr.strip() == KEY_SENTENCE
     assert "sk-should-not-be-read" not in refused.stdout + refused.stderr
     mock = subprocess.run(
-        [str(exe), "-m", "harnesslab.shallow", "run", "--provider", "mock", "--agent", "claude", "--seed", "0"],
+        [str(exe), "-m", "traceharness.shallow", "run", "--provider", "mock", "--agent", "claude", "--seed", "0"],
         cwd=ROOT, env=env, capture_output=True, text=True, check=False,
     )
     assert mock.returncode == 0, mock.stderr

@@ -17,7 +17,7 @@ import unittest
 LAB = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, LAB)
 
-from harnesslab.capture import launchd                        # noqa: E402
+from traceharness.capture import launchd                        # noqa: E402
 
 
 class TestLaunchdPlist(unittest.TestCase):
@@ -46,10 +46,10 @@ class TestLaunchdPlist(unittest.TestCase):
 
     def test_its_command_line_is_one_the_cli_accepts_as_watch(self):
         """The ProgramArguments are parsed by the real parser, so a renamed flag fails here."""
-        from harnesslab.capture.__main__ import build_parser
+        from traceharness.capture.__main__ import build_parser
         doc = self.render(archive=False)
         argv = doc["ProgramArguments"]
-        self.assertEqual(argv[:3], ["/usr/bin/python3", "-m", "harnesslab.capture"])
+        self.assertEqual(argv[:3], ["/usr/bin/python3", "-m", "traceharness.capture"])
         args = build_parser().parse_args(argv[3:])
         self.assertTrue(args.watch)
         self.assertEqual(args.lab, self.lab)
@@ -59,7 +59,7 @@ class TestLaunchdPlist(unittest.TestCase):
 
     def test_the_interval_and_gap_survive_the_round_trip_exactly(self):
         """%g keeps six significant digits: 90.1234567 became 90.1235, 1234567 became 1.23457e+06."""
-        from harnesslab.capture.__main__ import build_parser
+        from traceharness.capture.__main__ import build_parser
         for interval, gap in ((90.1234567, 30.0), (1234567.0, 12.345678901)):
             with self.subTest(interval=interval, gap=gap):
                 argv = self.render(interval_s=interval, gap_minutes=gap)["ProgramArguments"]
@@ -71,13 +71,13 @@ class TestLaunchdPlist(unittest.TestCase):
         """python -m puts the working directory first on sys.path. In site-packages, a stray module
         with a standard-library name would shadow the real one and the watcher would crash-loop."""
         from unittest import mock
-        with mock.patch("harnesslab.backend.labroot._is_checkout", return_value=False):
+        with mock.patch("traceharness.backend.labroot._is_checkout", return_value=False):
             doc = self.render()
         self.assertEqual(doc["WorkingDirectory"], os.path.abspath(self.lab))
 
     def test_the_working_directory_is_where_the_package_can_be_imported(self):
         doc = self.render()
-        self.assertTrue(os.path.isdir(os.path.join(doc["WorkingDirectory"], "harnesslab", "capture")))
+        self.assertTrue(os.path.isdir(os.path.join(doc["WorkingDirectory"], "traceharness", "capture")))
 
     def test_plutil_accepts_it(self):
         if not shutil.which("plutil"):
@@ -90,7 +90,7 @@ class TestLaunchdPlist(unittest.TestCase):
 
     def test_the_cli_prints_and_installs_nothing(self):
         env = dict(os.environ, HOME=self.home)
-        r = subprocess.run([sys.executable, "-m", "harnesslab.capture", "--print-launchd",
+        r = subprocess.run([sys.executable, "-m", "traceharness.capture", "--print-launchd",
                             "--lab", self.lab, "--path", "/Users/x/.claude/projects"],
                            cwd=LAB, env=env, capture_output=True, text=True, timeout=120)
         self.assertEqual(r.returncode, 0, r.stderr)
@@ -106,7 +106,7 @@ class TestPrintLaunchdCli(unittest.TestCase):
     def run_main(self, argv):
         import io
         from unittest import mock
-        from harnesslab.capture.__main__ import main
+        from traceharness.capture.__main__ import main
         out = io.BytesIO()
         fake = mock.Mock()
         fake.buffer = out
@@ -128,7 +128,7 @@ class TestPrintLaunchdCli(unittest.TestCase):
         """Not the package directory: from an installed wheel that is site-packages, and the watcher
         would write ledgers there instead of where the Capture page reads."""
         from unittest import mock
-        with mock.patch("harnesslab.backend.labroot.resolve_lab_root", return_value="/resolved/lab") as r:
+        with mock.patch("traceharness.backend.labroot.resolve_lab_root", return_value="/resolved/lab") as r:
             code, out, _ = self.run_main(["--print-launchd", "--path", "/x"])
         self.assertEqual(code, 0)
         argv = plistlib.loads(out)["ProgramArguments"]
@@ -164,22 +164,22 @@ class TestPrintLaunchdTouchesNothing(unittest.TestCase):
     def cli(self, *args, extra_env=None):
         env = {k: v for k, v in os.environ.items() if not k.endswith("_LAB")}
         env.update({"HOME": self.home}, **(extra_env or {}))
-        return subprocess.run([sys.executable, "-B", "-m", "harnesslab.capture", *args], cwd=LAB,
+        return subprocess.run([sys.executable, "-B", "-m", "traceharness.capture", *args], cwd=LAB,
                               env=env, capture_output=True, text=True, timeout=120)
 
     def test_printing_a_plist_creates_no_workspace(self):
         """Reproduced before the fix: this left newlab/{data,harnesses,tasks} on disk."""
         newlab = os.path.join(self.home, "newlab")
-        r = self.cli("--print-launchd", "--path", "/x", extra_env={"HARNESSLAB_LAB": newlab})
+        r = self.cli("--print-launchd", "--path", "/x", extra_env={"TRACEHARNESS_LAB": newlab})
         self.assertEqual(r.returncode, 0, r.stderr)
         self.assertFalse(os.path.exists(newlab), "printing a plist created a lab workspace")
 
     def test_the_pure_resolver_can_be_imported_without_side_effects(self):
         newlab = os.path.join(self.home, "elsewhere")
         env = {k: v for k, v in os.environ.items() if not k.endswith("_LAB")}
-        env.update({"HOME": self.home, "HARNESSLAB_LAB": newlab})
+        env.update({"HOME": self.home, "TRACEHARNESS_LAB": newlab})
         r = subprocess.run([sys.executable, "-B", "-c",
-                            "from harnesslab.backend.labroot import resolve_lab_root as r; print(r(seed=False))"],
+                            "from traceharness.backend.labroot import resolve_lab_root as r; print(r(seed=False))"],
                            cwd=LAB, env=env, capture_output=True, text=True, timeout=120)
         self.assertEqual(r.returncode, 0, r.stderr)
         self.assertEqual(r.stdout.strip(), newlab)
@@ -208,11 +208,11 @@ class TestThePlistCarriesTheEnvironmentItWasPrintedWith(unittest.TestCase):
         later without being carried fails here rather than in a review."""
         import re
         read = set()
-        for root, _, files in os.walk(os.path.join(LAB, "harnesslab", "capture")):
+        for root, _, files in os.walk(os.path.join(LAB, "traceharness", "capture")):
             for name in files:
                 if name.endswith(".py"):
                     with open(os.path.join(root, name), encoding="utf-8") as f:
-                        read |= set(re.findall(r"HARNESSLAB_CAPTURE_[A-Z_]+", f.read()))
+                        read |= set(re.findall(r"TRACEHARNESS_CAPTURE_[A-Z_]+", f.read()))
         self.assertTrue(read, "the scan found nothing -- it is no longer looking in the right place")
         self.assertEqual(read - set(launchd.CARRIED), set(), "read from the environment but not carried")
 
@@ -221,15 +221,15 @@ class TestThePlistCarriesTheEnvironmentItWasPrintedWith(unittest.TestCase):
         with open(cfg, "w", encoding="utf-8") as f:
             f.write('{"paths": ["%s"]}' % self.home)
         env = {k: v for k, v in os.environ.items() if not k.endswith("_LAB")}
-        env.update(HOME=self.home, HARNESSLAB_CAPTURE_CONFIG=cfg,
-                   HARNESSLAB_CAPTURE_ARCHIVE=os.path.join(self.home, "big-archive"))
-        r = subprocess.run([sys.executable, "-B", "-m", "harnesslab.capture", "--print-launchd",
+        env.update(HOME=self.home, TRACEHARNESS_CAPTURE_CONFIG=cfg,
+                   TRACEHARNESS_CAPTURE_ARCHIVE=os.path.join(self.home, "big-archive"))
+        r = subprocess.run([sys.executable, "-B", "-m", "traceharness.capture", "--print-launchd",
                             "--lab", os.path.join(self.home, "lab")],
                            cwd=LAB, env=env, capture_output=True, text=True, timeout=120)
         self.assertEqual(r.returncode, 0, r.stderr)
         carried = plistlib.loads(r.stdout.encode())["EnvironmentVariables"]
-        self.assertEqual(carried.get("HARNESSLAB_CAPTURE_CONFIG"), cfg)
-        self.assertEqual(carried.get("HARNESSLAB_CAPTURE_ARCHIVE"), os.path.join(self.home, "big-archive"))
+        self.assertEqual(carried.get("TRACEHARNESS_CAPTURE_CONFIG"), cfg)
+        self.assertEqual(carried.get("TRACEHARNESS_CAPTURE_ARCHIVE"), os.path.join(self.home, "big-archive"))
 
     def test_unset_settings_are_not_invented(self):
         doc = launchd.render(lab="/l", paths=["/p"], interval_s=60, gap_minutes=30, archive=True, env={})
@@ -239,7 +239,7 @@ class TestThePlistCarriesTheEnvironmentItWasPrintedWith(unittest.TestCase):
 class TestMenubarAgent(unittest.TestCase):
     """The menubar app at login: a GUI job, printed like the watcher's and never loaded here."""
 
-    APP = "/Applications/HarnessLab Capture v1.app"
+    APP = "/Applications/TraceHarness Capture v1.app"
 
     def render(self):
         return launchd.render_menubar(app=self.APP, lab="/some/lab")
@@ -263,12 +263,12 @@ class TestMenubarAgent(unittest.TestCase):
     def cli(self, home, app):
         env = {k: v for k, v in os.environ.items() if not k.endswith("_LAB")}
         env["HOME"] = home
-        return subprocess.run([sys.executable, "-B", "-m", "harnesslab.capture", "--print-menubar-agent",
+        return subprocess.run([sys.executable, "-B", "-m", "traceharness.capture", "--print-menubar-agent",
                                "--app", app, "--lab", os.path.join(home, "lab")],
                               cwd=LAB, env=env, capture_output=True, text=True, timeout=120)
 
     def fake_bundle(self, home):
-        app = os.path.join(home, "Applications", "HarnessLab Capture v1.app")
+        app = os.path.join(home, "Applications", "TraceHarness Capture v1.app")
         os.makedirs(os.path.join(app, "Contents", "MacOS"))
         exe = os.path.join(app, "Contents", "MacOS", "CaptureMenubar")
         with open(exe, "w") as f:

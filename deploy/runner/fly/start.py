@@ -44,7 +44,7 @@ else:
 inventory = json.loads(Path('/opt/traceharness-inventory/registry.json').read_text())
 references = {row['image_digest'] for row in inventory['runtimes']}
 references.update(row['grader_image_digest'] for row in inventory['tasks'])
-from harnesslab.runner_service.execution import pinned_image_matches
+from traceharness.runner_service.execution import pinned_image_matches
 def installed(reference):
     result = subprocess.run(['docker', 'image', 'inspect', reference], capture_output=True, timeout=15)
     return result.returncode == 0 and pinned_image_matches(reference, json.loads(result.stdout)[0])
@@ -65,7 +65,7 @@ addresses = json.loads(subprocess.check_output(['ip', '-j', '-4', 'addr', 'show'
 host = next(item['local'] for link in addresses for item in link['addr_info'] if item['scope'] == 'global')
 if not ipaddress.ip_address(host).is_private or host == '0.0.0.0':
     raise SystemExit('Expected a private VM address.')
-service = subprocess.Popen([sys.executable, '-m', 'uvicorn', 'harnesslab.runner_service:create_app', '--factory',
+service = subprocess.Popen([sys.executable, '-m', 'uvicorn', 'traceharness.runner_service:create_app', '--factory',
                             '--host', host, '--port', '8743', '--no-access-log', '--limit-concurrency', '32'])
 def stop(_signal, _frame):
     service.terminate()

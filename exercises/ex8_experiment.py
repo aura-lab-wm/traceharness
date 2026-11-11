@@ -13,7 +13,7 @@ within each model with a paired-task bootstrap. Then add your own factor.
 """
 from _common import parse, try_matplotlib, hr, LAB_ROOT
 import os
-from harnesslab.core.analysis import load_index, filter_rows, factorial, paired_bootstrap, bootstrap_ci, per_task_rates
+from traceharness.core.analysis import load_index, filter_rows, factorial, paired_bootstrap, bootstrap_ci, per_task_rates
 
 
 def extra(ap):

@@ -14,17 +14,17 @@ from unittest.mock import patch
 
 from fastapi.testclient import TestClient
 
-from harnesslab.runner_service import create_app
-from harnesslab.runner_service.auth import Authenticator, AuthenticationError, sign
-from harnesslab.runner_service.configuration import preflight, canonical
-from harnesslab.runner_service.credentials import CredentialVault, CredentialUnavailable
-from harnesslab.runner_service.execution import DockerExecutor, ExecutionError
-from harnesslab.runner_service.jobs import JobError
-from harnesslab.runner_service.provider import OpenRouter, ProviderError, bounded_transport
-from harnesslab.runner_service.registry import Registry, tree_hash
-from harnesslab.runner_service.settings import Settings
-from harnesslab.runner_service.container_entrypoint import native_command
-from harnesslab.runner_service.proxy import UnixModelProxy
+from traceharness.runner_service import create_app
+from traceharness.runner_service.auth import Authenticator, AuthenticationError, sign
+from traceharness.runner_service.configuration import preflight, canonical
+from traceharness.runner_service.credentials import CredentialVault, CredentialUnavailable
+from traceharness.runner_service.execution import DockerExecutor, ExecutionError
+from traceharness.runner_service.jobs import JobError
+from traceharness.runner_service.provider import OpenRouter, ProviderError, bounded_transport
+from traceharness.runner_service.registry import Registry, tree_hash
+from traceharness.runner_service.settings import Settings
+from traceharness.runner_service.container_entrypoint import native_command
+from traceharness.runner_service.proxy import UnixModelProxy
 
 SECRET = "unit-fixture-shared-secret-32-characters"
 OWNER = "11111111-1111-4111-8111-111111111111"
@@ -399,7 +399,7 @@ class RunnerTests(unittest.TestCase):
         self.assertLess(time.monotonic() - started, 2)
 
     def test_invalid_or_missing_state_record_blocks_restart(self):
-        from harnesslab.runner_service.jobs import Jobs
+        from traceharness.runner_service.jobs import Jobs
         invalid = self.root / "restart-state"
         (invalid / ("d" * 48)).mkdir(parents=True)
         settings = Settings(shared_secret=SECRET, state_dir=invalid)
@@ -430,7 +430,7 @@ class RunnerTests(unittest.TestCase):
         self.assertEqual(self.app.state.jobs.list(OWNER), [])
 
     def test_cleanup_failure_prevents_already_queued_job_from_starting(self):
-        from harnesslab.runner_service.jobs import Jobs
+        from traceharness.runner_service.jobs import Jobs
         settings = Settings(shared_secret=SECRET, state_dir=self.root / "queue-state", max_workers=1)
         executor = FixtureExecutor()
         executor.release.clear()

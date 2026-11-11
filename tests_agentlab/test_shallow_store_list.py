@@ -3,7 +3,7 @@ import json
 
 import pytest
 
-from harnesslab.shallow.store import FileStore, MemoryStore, StoreError
+from traceharness.shallow.store import FileStore, MemoryStore, StoreError
 
 
 def test_memory_list_is_sorted_copied_and_scoped():

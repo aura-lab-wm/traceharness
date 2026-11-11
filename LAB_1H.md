@@ -1,11 +1,11 @@
 # The lab in one hour — run sheet
 
-> **Platform note (2026-09-08).** This run sheet now targets **harnesslab 0.3.0**, not the older
-> `harnesslab.core.serve` console. Page names changed: Board → **Runs**, Comparison folded into
+> **Platform note (2026-09-08).** This run sheet now targets **traceharness 0.3.0**, not the older
+> `traceharness.core.serve` console. Page names changed: Board → **Runs**, Comparison folded into
 > **Harness lab**, Trajectories → **Explorer**. The Field is the console's own page now (**The Field**, second in
 > the nav, and slide 2 of Present) — no separate file to open; it follows the console's results dir, oracle and theme.
 > The lecture deck is now the console's own **Present** page (16 slides, follows this clock).
-> Participants can skip setup entirely with the offline bundle: `python -m harnesslab --export lab.html`.
+> Participants can skip setup entirely with the offline bundle: `python -m traceharness --export lab.html`.
 
 
 The handout is written for two hours (0:00–2:00). You have one. The cut is simple: setup is
@@ -15,8 +15,8 @@ a network or an API key; everything runs on the 640 pre-recorded runs.
 
 | clock | block | what happens | what they must see before you move on |
 |---|---|---|---|
-| 0:00 | Open · 3 min · you only | `python3 -m harnesslab --no-browser` on your laptop, then http://127.0.0.1:8765/#present on the projector (the lecture deck; slide 2 is the cold open). Switch the oracle: 163 runs change verdict. Press **rank**, then **resample**: the leader changes in 50% of 2,000 task sets. Press **flags**: 295 runs fail a trajectory test, 165 of them pass the hidden oracle. One sentence: "you measure this yourselves in the next hour." | — |
-| 0:03 | Setup · 9 min · everyone | `python3 --version` (3.10+) · `cd harnesslab` · `python3 -m harnesslab` — opens the console on **Command center**. Launch from there: model `mock` and harness `baseline` are preselected, click task chips until only `t01_slugify` stays highlighted, repeats `2`, results dir stays `mine`, press **Launch 4 runs → data/runs/mine**. Terminal alternative: `python3 -m harnesslab run --provider mock --tasks t01_slugify --repeats 2 --out data/runs/mine -v` | Four runs under **Live runs** ending PASS (two `baseline`, two `baseline`+sentinel — the A/B toggle is on); **Jobs** reads `finished · mine`; the results selector offers `mine · 4 runs`. Then click **The Field** in the left rail. **Do not leave setup until every screen shows this.** |
+| 0:00 | Open · 3 min · you only | `python3 -m traceharness --no-browser` on your laptop, then http://127.0.0.1:8765/#present on the projector (the lecture deck; slide 2 is the cold open). Switch the oracle: 163 runs change verdict. Press **rank**, then **resample**: the leader changes in 50% of 2,000 task sets. Press **flags**: 295 runs fail a trajectory test, 165 of them pass the hidden oracle. One sentence: "you measure this yourselves in the next hour." | — |
+| 0:03 | Setup · 9 min · everyone | `python3 --version` (3.10+) · `cd traceharness` · `python3 -m traceharness` — opens the console on **Command center**. Launch from there: model `mock` and harness `baseline` are preselected, click task chips until only `t01_slugify` stays highlighted, repeats `2`, results dir stays `mine`, press **Launch 4 runs → data/runs/mine**. Terminal alternative: `python3 -m traceharness run --provider mock --tasks t01_slugify --repeats 2 --out data/runs/mine -v` | Four runs under **Live runs** ending PASS (two `baseline`, two `baseline`+sentinel — the A/B toggle is on); **Jobs** reads `finished · mine`; the results selector offers `mine · 4 runs`. Then click **The Field** in the left rail. **Do not leave setup until every screen shows this.** |
 | 0:12 | Ex 1 together · 12 min | `python3 exercises/ex1_variance.py`. Read the table aloud: pass@1 0.66, pass^5 0.34 on the same 80 runs; the run-level CI [0.56, 0.76] against the task-level [0.46, 0.86], twice as wide. Then the console: Outcome → change the oracle chip → read the event card. | They can say why 0.66 and 0.34 describe the same 80 runs, and which interval is honest. |
 | 0:24 | Ex 2 together · 12 min | `python3 exercises/ex2_harness.py`. baseline vs no_test_tool: pass@1 0.66 → 0.59, tokens per solve 9,023 → 4,939, verified 0.93 → 0.00; paired Δ −0.075, 95% [−0.30, +0.11], covers zero. Console: Harness lab, A = baseline, B = no_test_tool — one field differs. | They can name the one field that differs and say why the pass column is not the finding. |
 | 0:36 | Ex 3 together · 12 min | `python3 exercises/ex3_trajectories.py`. baseline fails only process-quality tests (unverified submits); permissive lets one destructive shell through on t07 and also fails `test_tests_never_modified`. Console: Trajectories (Explorer) → open a run → the bill of materials: a passing run with "verified after last edit: no". | They can read one ledger and say what the score is blind to. |
@@ -29,7 +29,7 @@ Setup. Nine minutes only works if the repo is already on their machines. Send th
 above before lunch, with the repo as a zip that includes `data/runs/` (the pre-recorded runs are
 what make everything else work offline). On a stock Mac the command is `python3`, not `python`;
 the runner already resolves the interpreter itself, but the command they type must be `python3`.
-If port 8765 is taken: `python3 -m harnesslab --port 8766 --no-browser`.
+If port 8765 is taken: `python3 -m traceharness --port 8766 --no-browser`.
 
 Live runs from the Field. On your laptop the Field's **run** panel (`n`) launches the runner through
 `/api/launch` with the backends that exist today as presets: mock, mock-weak, rocco (local vLLM :8003),

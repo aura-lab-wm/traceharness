@@ -16,13 +16,13 @@ RUN python -m pip install --no-cache-dir --only-binary=:all: --require-hashes -r
 FROM dependencies AS runtime
 ARG RUNTIME_ID
 ARG RUNTIME_VERSION
-COPY harnesslab-0.3.0-py3-none-any.whl /opt/harnesslab-0.3.0-py3-none-any.whl
-RUN python -m pip install --no-deps /opt/harnesslab-0.3.0-py3-none-any.whl && rm /opt/harnesslab-0.3.0-py3-none-any.whl
+COPY traceharness-0.3.0-py3-none-any.whl /opt/traceharness-0.3.0-py3-none-any.whl
+RUN python -m pip install --no-deps /opt/traceharness-0.3.0-py3-none-any.whl && rm /opt/traceharness-0.3.0-py3-none-any.whl
 ENV PYTHONDONTWRITEBYTECODE=1
 LABEL org.traceharness.runtime="${RUNTIME_ID}" org.traceharness.version="${RUNTIME_VERSION}"
 USER 10001:10001
 WORKDIR /workspace
-ENTRYPOINT ["python", "-m", "harnesslab.runner_service.container_entrypoint"]
+ENTRYPOINT ["python", "-m", "traceharness.runner_service.container_entrypoint"]
 
 FROM dependencies AS grader
 COPY grader/ /opt/traceharness-grader/
@@ -34,7 +34,7 @@ COPY --from=docker /usr/local/bin/docker /usr/local/bin/dockerd /usr/local/bin/d
 COPY gvisor-x86_64.tar.bz2 /tmp/gvisor.tar.bz2
 RUN echo '6f6b1a8f0f4665a403238135167d0d990bfaeaff5544abf68f5e0d822b35484a  /tmp/gvisor.tar.bz2' | sha256sum -c - \
     && tar -xjf /tmp/gvisor.tar.bz2 -C /usr/local/bin && rm /tmp/gvisor.tar.bz2
-COPY harnesslab/ /opt/traceharness/harnesslab/
+COPY traceharness/ /opt/traceharness/traceharness/
 COPY images.tar.gz /opt/traceharness-images.tar.gz
 COPY inventory/ /opt/traceharness-inventory/
 COPY start.py /opt/start.py

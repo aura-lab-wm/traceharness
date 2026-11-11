@@ -5,7 +5,7 @@ import shutil
 import subprocess
 import unittest
 
-from harnesslab.runner_service import native_prompts as N
+from traceharness.runner_service import native_prompts as N
 
 
 SOURCE = (b'const first="baseline instruction";const second="baseline instruction";'

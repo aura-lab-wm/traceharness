@@ -32,7 +32,7 @@ import unittest
 LAB = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, LAB)
 
-SRC = os.path.join(LAB, "harnesslab", "frontend", "src")
+SRC = os.path.join(LAB, "traceharness", "frontend", "src")
 TESTS = os.path.join(LAB, "tests_agentlab")
 
 #: Routes with no caller that are nonetheless kept, each with the reason it earns the exemption.
@@ -110,7 +110,7 @@ def registered_routes() -> list[tuple[str, str, str]]:
     `app.routes`, so a flat read of `app.routes` misses `/api/export/*`, `/api/fork/*` and every
     other mounted router -- which would make this test pass by not looking.
     """
-    from harnesslab.backend.app import app
+    from traceharness.backend.app import app
 
     def walk(routes, prefix=""):
         out = []
@@ -196,15 +196,15 @@ def caller_text() -> str:
             with open(f, encoding="utf-8") as fh:
                 chunks.append(fh.read())
     chunks.append(test_text())
-    for p in (os.path.join(LAB, "harnesslab", "backend", "static_export.py"),
-              os.path.join(LAB, "harnesslab", "__main__.py"),
+    for p in (os.path.join(LAB, "traceharness", "backend", "static_export.py"),
+              os.path.join(LAB, "traceharness", "__main__.py"),
               # A served document is a caller. field.html is handed to a browser by
               # GET /api/field/html and fetches this app's routes from there -- including the cancel
               # button on every running job. Leaving it out of this list is what let a route the
               # Field view calls read as dead: deleting it did not remove the button, it only made
               # the button POST into the SPA catch-all, take a 200 back, and report success for a
               # job that kept running.
-              os.path.join(LAB, "harnesslab", "backend", "field.html")):
+              os.path.join(LAB, "traceharness", "backend", "field.html")):
         with open(p, encoding="utf-8") as fh:
             chunks.append(fh.read())
     return "\n".join(chunks)
@@ -256,12 +256,12 @@ class EveryCallHasARoute(unittest.TestCase):
     @staticmethod
     def served_patterns() -> set[str]:
         fast = {p.rstrip("/") for _m, p, _ep in registered_routes() if p not in FRAMEWORK_PATHS}
-        with open(os.path.join(LAB, "harnesslab", "core", "serve.py"), encoding="utf-8") as f:
+        with open(os.path.join(LAB, "traceharness", "core", "serve.py"), encoding="utf-8") as f:
             legacy = set(re.findall(r"""u\.path(?:\.startswith)?\s*(?:==|\()\s*["']([^"']+)["']""", f.read()))
         return {re.sub(r"\{[^}]*\}", "{}", p) for p in fast | {l.rstrip("/") for l in legacy}}
 
     def test_every_api_path_the_field_document_fetches_is_served_by_one_of_them(self):
-        with open(os.path.join(LAB, "harnesslab", "backend", "field.html"), encoding="utf-8") as f:
+        with open(os.path.join(LAB, "traceharness", "backend", "field.html"), encoding="utf-8") as f:
             doc = f.read()
         served = self.served_patterns()
         missing = sorted(u for u in self.urls_fetched(doc)

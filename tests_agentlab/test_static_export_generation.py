@@ -25,14 +25,14 @@ from unittest.mock import patch
 LAB = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, LAB)
 
-from harnesslab.backend import static_export as SE   # noqa: E402
+from traceharness.backend import static_export as SE   # noqa: E402
 
 DIRS = ["demo_mock", "families_mock"]
 
 
 def _blob(html_path: str) -> dict:
     html = open(html_path, encoding="utf-8").read()
-    m = re.search(r"window\.__HARNESSLAB_DATA__=(.*?);</script>", html, re.S)
+    m = re.search(r"window\.__TRACEHARNESS_DATA__=(.*?);</script>", html, re.S)
     assert m, "the export's embedded-data banner was not found in the built HTML"
     return json.loads(m.group(1))
 
@@ -55,7 +55,7 @@ class TestGenerationPinning(unittest.TestCase):
 
         with tempfile.TemporaryDirectory() as td:
             out_path = os.path.join(td, "export.html")
-            with patch("harnesslab.backend.static_export._generation_fingerprint",
+            with patch("traceharness.backend.static_export._generation_fingerprint",
                        side_effect=always_moving):
                 result = SE.build(out_path, results=DIRS)
             data = _blob(out_path)
@@ -85,7 +85,7 @@ class TestGenerationPinning(unittest.TestCase):
 
         with tempfile.TemporaryDirectory() as td:
             out_path = os.path.join(td, "export.html")
-            with patch("harnesslab.backend.static_export._generation_fingerprint",
+            with patch("traceharness.backend.static_export._generation_fingerprint",
                        side_effect=mismatch_once):
                 result = SE.build(out_path, results=DIRS)
             data = _blob(out_path)
@@ -105,7 +105,7 @@ class TestGenerationPinning(unittest.TestCase):
         matches) must still produce a complete, internally consistent bake."""
         with tempfile.TemporaryDirectory() as td:
             out_path = os.path.join(td, "export.html")
-            with patch("harnesslab.backend.static_export._generation_fingerprint",
+            with patch("traceharness.backend.static_export._generation_fingerprint",
                        return_value=("constant",)):
                 result = SE.build(out_path, results=DIRS)
             data = _blob(out_path)

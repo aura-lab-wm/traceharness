@@ -3,7 +3,7 @@ requires = ["setuptools>=68", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "harnesslab"
+name = "traceharness"
 version = "0.3.0"
 description = "Measure coding agents, not just score them: a harness you can vary, a ledger of every consequential action, and a platform that intervenes on trajectories while they run."
 readme = "README.md"
@@ -48,12 +48,12 @@ dev = [
 ]
 
 [project.scripts]
-harnesslab = "harnesslab.__main__:main"
+traceharness = "traceharness.__main__:main"
 
 [project.urls]
-Homepage = "https://github.com/antonio-mastropaolo/harnesslab"
-Repository = "https://github.com/antonio-mastropaolo/harnesslab"
-Issues = "https://github.com/antonio-mastropaolo/harnesslab/issues"
+Homepage = "https://github.com/aura-lab-wm/traceharness"
+Repository = "https://github.com/aura-lab-wm/traceharness"
+Issues = "https://github.com/aura-lab-wm/traceharness/issues"
 
 # --------------------------------------------------------------------------- packaging
 # `packages` and `package-dir` are computed in setup.py: the backend grows subpackages and a
@@ -63,15 +63,15 @@ include-package-data = false
 zip-safe = false
 
 [tool.setuptools.package-data]
-"harnesslab" = ["py.typed", "school-package.json"]
+"traceharness" = ["py.typed", "school-package.json"]
 # The Field template. It is a fragment rendered by backend/field.py, not a static asset,
 # so it lives in the package and must ship with the wheel.
-"harnesslab.backend" = ["field.html"]
-"harnesslab.data" = ["*.txt"]
-"harnesslab.data.models" = ["*.json"]
-# The built UI. Absent until `npm run build` has been run in harnesslab/frontend.
-"harnesslab.frontend" = ["dist/*", "dist/**/*"]
-"harnesslab.plugins" = ["*.json", "*.py"]
-"harnesslab.docs" = ["*.md"]
-"harnesslab.bundle.harnesses" = ["*.json"]
-"harnesslab.bundle.tasks" = ["**/*.py", "**/*.json", "**/*.md", "**/*.txt"]
+"traceharness.backend" = ["field.html"]
+"traceharness.data" = ["*.txt"]
+"traceharness.data.models" = ["*.json"]
+# The built UI. Absent until `npm run build` has been run in traceharness/frontend.
+"traceharness.frontend" = ["dist/*", "dist/**/*"]
+"traceharness.plugins" = ["*.json", "*.py"]
+"traceharness.docs" = ["*.md"]
+"traceharness.bundle.harnesses" = ["*.json"]
+"traceharness.bundle.tasks" = ["**/*.py", "**/*.json", "**/*.md", "**/*.txt"]

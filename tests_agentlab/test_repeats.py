@@ -1,5 +1,5 @@
-"""Self-tests for the repeated-commands chart's backend (harnesslab/core/repeats.py), its API
-router (harnesslab/backend/repeats_api.py), and its CLI.
+"""Self-tests for the repeated-commands chart's backend (traceharness/core/repeats.py), its API
+router (traceharness/backend/repeats_api.py), and its CLI.
 
 Three layers, matching the module's own claim of "one definition, shared everywhere":
   1. the pure functions (`key`, `series`, `crossing`, `loop_onset`, `study`) against synthetic
@@ -24,8 +24,8 @@ from contextlib import redirect_stdout
 LAB = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, LAB)
 
-from harnesslab.core import repeats as R                              # noqa: E402
-from harnesslab.core.trajtest import Trajectory, load_runs            # noqa: E402
+from traceharness.core import repeats as R                              # noqa: E402
+from traceharness.core.trajtest import Trajectory, load_runs            # noqa: E402
 
 
 def tool_call(name, args):
@@ -446,7 +446,7 @@ class TestRepeatsApi(unittest.TestCase):
         self.root = make_results_dir(parent=self.runs_root)
         self.dirname = os.path.basename(self.root)
 
-        import harnesslab.backend.repeats_api as api_mod
+        import traceharness.backend.repeats_api as api_mod
         self._api_mod = api_mod
         self._orig_root = api_mod.RUNS_ROOT
         api_mod.RUNS_ROOT = self.runs_root
@@ -634,8 +634,8 @@ class TestCli(unittest.TestCase):
             self.assertEqual(header, "run_id,outcome,i,cumulative,is_repeat")
 
     def test_module_entrypoint_runs_as_a_subprocess(self):
-        """`python -m harnesslab.core.repeats` -- the exact invocation the spec and the docs use."""
-        p = subprocess.run([sys.executable, "-m", "harnesslab.core.repeats", "--results", self.root],
+        """`python -m traceharness.core.repeats` -- the exact invocation the spec and the docs use."""
+        p = subprocess.run([sys.executable, "-m", "traceharness.core.repeats", "--results", self.root],
                            cwd=LAB, capture_output=True, text=True, timeout=30)
         self.assertEqual(p.returncode, 0, p.stderr)
         self.assertIn("definition:", p.stdout)

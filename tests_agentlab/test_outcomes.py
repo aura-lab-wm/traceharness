@@ -1,4 +1,4 @@
-"""Self-tests for harnesslab/backend/outcomes_api.py: the failure-mode classifier and its route.
+"""Self-tests for traceharness/backend/outcomes_api.py: the failure-mode classifier and its route.
 
 The classifier is pure, so most cases are synthetic rows where the right answer is put there on
 purpose. The route is exercised against the shipped llma4se_live directory, whose counts were
@@ -14,7 +14,7 @@ import unittest
 LAB = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, LAB)
 
-from harnesslab.backend import outcomes_api as O                       # noqa: E402
+from traceharness.backend import outcomes_api as O                       # noqa: E402
 
 
 def row(**kw):

@@ -9,8 +9,8 @@ cannot see a patch of the canonical function's name, so its output stays the rea
 value and the assertion catches it immediately, no matter how numerically close its answer is.
 
 Two real lookup sites, not one, because of ordinary Python import semantics: `paired_bootstrap`
-is imported by name into BOTH harnesslab.backend.metrics (metrics.harness_comparison, the
-/metrics endpoint's comparison) and used inside harnesslab.core.analysis (comparisons_for, which
+is imported by name into BOTH traceharness.backend.metrics (metrics.harness_comparison, the
+/metrics endpoint's comparison) and used inside traceharness.core.analysis (comparisons_for, which
 /comparisons AND the `comparisons` CLI subcommand both call). `from X import name` binds a
 SEPARATE reference in each importing module's own namespace, so patching one does not patch the
 other -- both must be proven independently for "delegates" to mean anything.
@@ -28,8 +28,8 @@ LAB = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, LAB)
 
 from starlette.testclient import TestClient          # noqa: E402
-from harnesslab.backend.app import app, _STUDY_CACHE  # noqa: E402
-from harnesslab import __main__ as cli                # noqa: E402
+from traceharness.backend.app import app, _STUDY_CACHE  # noqa: E402
+from traceharness import __main__ as cli                # noqa: E402
 
 # A results dir checked into the repo as a stable fixture (tests_agentlab/test_harness_tools.py
 # already depends on it): two models ("mock", "mock-b") that ran the exact same five tasks under
@@ -92,7 +92,7 @@ class TestPairedBootstrapDelegation(unittest.TestCase):
         directly, once per non-baseline harness -- patching metrics.py's own imported name must
         make every harness's comparison come back as the sentinel."""
         client = TestClient(app)
-        with patch("harnesslab.backend.metrics.paired_bootstrap", side_effect=_fake_pb):
+        with patch("traceharness.backend.metrics.paired_bootstrap", side_effect=_fake_pb):
             r = client.get(f"/api/results/{DIR}/metrics", params={"model": "mock", "baseline": "baseline"})
         self.assertEqual(r.status_code, 200)
         comparisons = r.json()["comparison"]
@@ -125,17 +125,17 @@ class TestPairedBootstrapDelegation(unittest.TestCase):
         spy sits there. (An earlier version went through core.analysis.comparisons_for and compared
         MODELS against a baseline MODEL, pooling harnesses; that dropped the harness axis.)"""
         client = TestClient(app)
-        with patch("harnesslab.backend.metrics.paired_bootstrap", side_effect=_fake_pb):
+        with patch("traceharness.backend.metrics.paired_bootstrap", side_effect=_fake_pb):
             r = client.get(f"/api/results/{DIR}/comparisons", params={"baseline": "baseline"})
         self.assertEqual(r.status_code, 200)
         self._assert_grid_carries_sentinel(r.json())
 
     def test_cli_comparisons_subcommand_surfaces_the_sentinel(self):
-        """`harnesslab comparisons <dir> --baseline B`: the CLI calls M.comparisons ->
+        """`traceharness comparisons <dir> --baseline B`: the CLI calls M.comparisons ->
         harness_comparison, the identical path the endpoint uses -- no HTTP layer, no cache, and
         no second implementation the CLI could have grown on its own."""
         out = io.StringIO()
-        with patch("harnesslab.backend.metrics.paired_bootstrap", side_effect=_fake_pb):
+        with patch("traceharness.backend.metrics.paired_bootstrap", side_effect=_fake_pb):
             with redirect_stdout(out):
                 rc = cli.main(["comparisons", DIR, "--baseline", "baseline"])
         self.assertEqual(rc, 0)
@@ -147,7 +147,7 @@ class TestPairedBootstrapDelegation(unittest.TestCase):
         someone re-pointed /comparisons at comparisons_for (and so back to comparing models
         against each other), this is the test that notices."""
         client = TestClient(app)
-        with patch("harnesslab.core.analysis.paired_bootstrap", side_effect=_fake_pb):
+        with patch("traceharness.core.analysis.paired_bootstrap", side_effect=_fake_pb):
             r = client.get(f"/api/results/{DIR}/comparisons", params={"baseline": "baseline"})
         self.assertEqual(r.status_code, 200)
         for model, row in r.json()["comparisons"].items():
@@ -166,7 +166,7 @@ class TestPairedBootstrapDelegation(unittest.TestCase):
         test_metrics_endpoint_surfaces_the_sentinel is patching a binding /metrics actually needs,
         not one it happens to ignore."""
         client = TestClient(app)
-        with patch("harnesslab.core.analysis.paired_bootstrap", side_effect=_fake_pb):
+        with patch("traceharness.core.analysis.paired_bootstrap", side_effect=_fake_pb):
             r = client.get(f"/api/results/{DIR}/metrics", params={"model": "mock", "baseline": "baseline"})
         comparisons = r.json()["comparison"]
         self.assertTrue(comparisons)
@@ -185,7 +185,7 @@ class TestKappaDelegation(unittest.TestCase):
         """/api/results/<d>/oracle: M.oracle calls cohens_kappa directly -- metrics.py's own
         imported name is the real lookup site both the HTTP route and the CLI go through."""
         client = TestClient(app)
-        with patch("harnesslab.backend.metrics.cohens_kappa", side_effect=_fake_kappa):
+        with patch("traceharness.backend.metrics.cohens_kappa", side_effect=_fake_kappa):
             r = client.get(f"/api/results/{DIR}/oracle")
         self.assertEqual(r.status_code, 200)
         body = r.json()
@@ -197,7 +197,7 @@ class TestKappaDelegation(unittest.TestCase):
 
     def test_cli_oracle_subcommand_surfaces_the_sentinel(self):
         out = io.StringIO()
-        with patch("harnesslab.backend.metrics.cohens_kappa", side_effect=_fake_kappa):
+        with patch("traceharness.backend.metrics.cohens_kappa", side_effect=_fake_kappa):
             with redirect_stdout(out):
                 rc = cli.main(["oracle", DIR])
         self.assertEqual(rc, 0)

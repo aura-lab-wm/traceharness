@@ -1,7 +1,7 @@
 """Read-only adoption of a previously admitted paired-job identity."""
 import unittest
 
-from harnesslab.runner_service.jobs import JobError
+from traceharness.runner_service.jobs import JobError
 from tests_agentlab.runner_service import test_broker as fixtures
 
 

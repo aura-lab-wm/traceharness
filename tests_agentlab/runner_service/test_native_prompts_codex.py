@@ -3,8 +3,8 @@ import copy
 import struct
 import unittest
 
-from harnesslab.runner_service import native_prompts as shared
-from harnesslab.runner_service import native_prompts_codex as codex
+from traceharness.runner_service import native_prompts as shared
+from traceharness.runner_service import native_prompts_codex as codex
 
 
 def fixture():
@@ -139,8 +139,8 @@ class CodexProtocolTests(unittest.TestCase):
     def setUp(self):
         import tempfile
         from pathlib import Path
-        from harnesslab.runner_service.configuration import canonical
-        from harnesslab.runner_service.registry import Registry, NATIVE_PROMPT_CHECKS
+        from traceharness.runner_service.configuration import canonical
+        from traceharness.runner_service.registry import Registry, NATIVE_PROMPT_CHECKS
         from tests_agentlab.runner_service.test_runner import fixture_registry, configuration
         self.temporary = tempfile.TemporaryDirectory(); self.addCleanup(self.temporary.cleanup)
         self.root = Path(self.temporary.name); _, data = fixture_registry(self.root)
@@ -165,7 +165,7 @@ class CodexProtocolTests(unittest.TestCase):
         self.configuration = configuration(); self.configuration.update(version=2, runtime_id="native-codex", prompt="", prompt_mode="append", harness={}, native_prompt_profile=profile)
 
     def test_registry_selects_codex_adapter_and_does_not_require_treatment_grade(self):
-        from harnesslab.runner_service.configuration import preflight
+        from traceharness.runner_service.configuration import preflight
         result = preflight(self.configuration, self.installed, self.health)
         self.assertTrue(result["ok"], result)
         public = self.installed.native_prompt_inventory("native-codex", self.health)
@@ -175,9 +175,9 @@ class CodexProtocolTests(unittest.TestCase):
         self.assertFalse(preflight(self.configuration, self.installed, self.health)["ok"])
 
     def test_real_materializer_is_mounted_readonly_at_fixed_codex_path(self):
-        from harnesslab.runner_service.execution import DockerExecutor
-        from harnesslab.runner_service.configuration import preflight
-        from harnesslab.runner_service.settings import Settings
+        from traceharness.runner_service.execution import DockerExecutor
+        from traceharness.runner_service.configuration import preflight
+        from traceharness.runner_service.settings import Settings
         from tests_agentlab.runner_service.test_runner import SECRET
         from unittest.mock import Mock
         directory = self.root / "job"; directory.mkdir(); (directory / "input").mkdir()

@@ -6,7 +6,7 @@ The block builder lets a person stack those decisions and run the stack.
 
 ## Common harnesses
 
-The catalog is `harnesslab/core/blocks.py`. Each row is a preset of that loop,
+The catalog is `traceharness/core/blocks.py`. Each row is a preset of that loop,
 not a copy of the vendor program.
 
 | Id | Name | What the preset changes | Default model |

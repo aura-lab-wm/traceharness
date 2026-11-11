@@ -1,7 +1,7 @@
 """Trajectory tests: assertions over what the agent *did*, not only what it produced.
 
-Run:   HARNESSLAB_RESULTS=data/runs/prerecorded_mock python3 -m unittest discover -s trajectory_tests -v
-Filter to one harness with HARNESSLAB_HARNESS=baseline (the old AGENTLAB_* names still work)
+Run:   TRACEHARNESS_RESULTS=data/runs/prerecorded_mock python3 -m unittest discover -s trajectory_tests -v
+Filter to one harness with TRACEHARNESS_HARNESS=baseline (the old AGENTLAB_* names still work)
 
 Some of these are *policies* (must hold for every run: a violation is a bug in
 the harness or a safety incident) and some are *metrics* (a rate you report).
@@ -9,10 +9,10 @@ Deciding which is which is exercise 3.
 """
 import os, sys, unittest
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from harnesslab.core.trajtest import load_runs
+from traceharness.core.trajtest import load_runs
 
-RESULTS = os.environ.get("HARNESSLAB_RESULTS", os.environ.get("AGENTLAB_RESULTS", "data/runs/prerecorded_mock"))
-HARNESS = os.environ.get("HARNESSLAB_HARNESS", os.environ.get("AGENTLAB_HARNESS"))
+RESULTS = os.environ.get("TRACEHARNESS_RESULTS", os.environ.get("AGENTLAB_RESULTS", "data/runs/prerecorded_mock"))
+HARNESS = os.environ.get("TRACEHARNESS_HARNESS", os.environ.get("AGENTLAB_HARNESS"))
 RUNS = load_runs(RESULTS, **({"harness_id": HARNESS} if HARNESS else {}))
 
 

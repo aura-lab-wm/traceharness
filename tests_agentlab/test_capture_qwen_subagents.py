@@ -14,8 +14,8 @@ import unittest
 LAB = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, LAB)
 
-from harnesslab.backend.importers import qwen_code           # noqa: E402
-from harnesslab.capture import adapters                      # noqa: E402
+from traceharness.backend.importers import qwen_code           # noqa: E402
+from traceharness.capture import adapters                      # noqa: E402
 
 PARENT = "11111111-2222-3333-4444-555555555555"
 

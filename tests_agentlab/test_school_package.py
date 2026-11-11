@@ -17,20 +17,20 @@ class SchoolPackageTests(unittest.TestCase):
         self.root = Path(self.tmp.name)
         self.scope = {
             'title': 'School package', 'datasets': ['demo_mock'],
-            'include': ['harnesslab/', 'SCHOOL_PACKAGE.md'],
-            'exclude': ['harnesslab/data/'],
-            'extra_files': ['harnesslab/data/models/mock_prerecorded.json'],
+            'include': ['traceharness/', 'SCHOOL_PACKAGE.md'],
+            'exclude': ['traceharness/data/'],
+            'extra_files': ['traceharness/data/models/mock_prerecorded.json'],
         }
         for name, content in {
-            'harnesslab/school-package.json': json.dumps(self.scope),
-            'harnesslab/frontend/dist/index.html': '<html>Dashboard</html>',
-            'harnesslab/data/active_model.txt': 'private_local_model',
-            'harnesslab/data/models/mock_prerecorded.json': '{}',
-            'harnesslab/data/models/private_local_model.json': 'private training data',
-            'harnesslab/data/openrouter.key': 'secret-key',
-            'harnesslab/frontend/node_modules/vendor/index.js': 'vendor',
-            'harnesslab/__pycache__/app.pyc': 'bytecode',
-            'harnesslab/.env': 'SECRET=value',
+            'traceharness/school-package.json': json.dumps(self.scope),
+            'traceharness/frontend/dist/index.html': '<html>Dashboard</html>',
+            'traceharness/data/active_model.txt': 'private_local_model',
+            'traceharness/data/models/mock_prerecorded.json': '{}',
+            'traceharness/data/models/private_local_model.json': 'private training data',
+            'traceharness/data/openrouter.key': 'secret-key',
+            'traceharness/frontend/node_modules/vendor/index.js': 'vendor',
+            'traceharness/__pycache__/app.pyc': 'bytecode',
+            'traceharness/.env': 'SECRET=value',
             'SCHOOL_PACKAGE.md': 'School instructions',
             'data/runs/demo_mock/run-1/patch.diff': 'diff --git a/example.py b/example.py',
             'data/runs/demo_mock/index.jsonl': '{"run_id":"demo"}\n',
@@ -45,13 +45,13 @@ class SchoolPackageTests(unittest.TestCase):
         out = self.root / 'school.zip'
         build(self.root, out)
         with zipfile.ZipFile(out) as archive:
-            files = {name.removeprefix('harnesslab-school/'): archive.read(name) for name in archive.namelist()}
+            files = {name.removeprefix('traceharness-school/'): archive.read(name) for name in archive.namelist()}
         text = b'\n'.join(files.values())
         for forbidden in (b'private_local_model', b'secret-key', b'private session', b'local experiment', b'SECRET=value', b'bytecode'):
             self.assertNotIn(forbidden, text)
-        self.assertNotIn('harnesslab/frontend/node_modules/vendor/index.js', files)
-        self.assertEqual(files['harnesslab/data/active_model.txt'], b'mock_prerecorded\n')
-        self.assertEqual((self.root / 'harnesslab/data/active_model.txt').read_text(), 'private_local_model')
+        self.assertNotIn('traceharness/frontend/node_modules/vendor/index.js', files)
+        self.assertEqual(files['traceharness/data/active_model.txt'], b'mock_prerecorded\n')
+        self.assertEqual((self.root / 'traceharness/data/active_model.txt').read_text(), 'private_local_model')
         self.assertEqual(files['README.md'], b'School instructions')
         self.assertIn('data/runs/demo_mock/run-1/patch.diff', files)
         inventory = json.loads(files['PACKAGE_MANIFEST.json'])
@@ -65,7 +65,7 @@ class SchoolPackageTests(unittest.TestCase):
             build(self.root, self.root / 'school.zip')
 
     def test_included_symlink_is_rejected(self):
-        (self.root / 'harnesslab/aliased.jsonl').symlink_to(self.root / 'data/runs/captured/index.jsonl')
+        (self.root / 'traceharness/aliased.jsonl').symlink_to(self.root / 'data/runs/captured/index.jsonl')
         with self.assertRaisesRegex(ValueError, 'symlink'):
             build(self.root, self.root / 'school.zip')
 
@@ -75,21 +75,21 @@ class SchoolPackageTests(unittest.TestCase):
         whose extension nobody had anticipated -- with no error at build time. `selected()` must
         ship anything under an included root regardless of extension; only `exclude`,
         hidden-file/cache skipping, and symlink rejection may drop something."""
-        odd = self.root / 'harnesslab/plugins/notes.xyz'
+        odd = self.root / 'traceharness/plugins/notes.xyz'
         odd.parent.mkdir(parents=True, exist_ok=True)
         odd.write_text('#not a suffix this builder was told about\n')
         out = self.root / 'school.zip'
         build(self.root, out)
         with zipfile.ZipFile(out) as archive:
-            names = {n.removeprefix('harnesslab-school/') for n in archive.namelist()}
-        self.assertIn('harnesslab/plugins/notes.xyz', names)
+            names = {n.removeprefix('traceharness-school/') for n in archive.namelist()}
+        self.assertIn('traceharness/plugins/notes.xyz', names)
 
     def test_selected_never_rejects_on_suffix_alone(self):
         """Direct check on the predicate itself, not just the archive it produces."""
-        self.assertTrue(selected('harnesslab/plugins/rule.some-weird-ext', self.scope))
-        self.assertTrue(selected('harnesslab/data/models/mock_prerecorded.json', self.scope))  # extra_files
-        self.assertFalse(selected('harnesslab/data/models/other.json', self.scope))            # excluded root
-        self.assertFalse(selected('harnesslab/.hidden/thing.py', self.scope))                  # hidden part
+        self.assertTrue(selected('traceharness/plugins/rule.some-weird-ext', self.scope))
+        self.assertTrue(selected('traceharness/data/models/mock_prerecorded.json', self.scope))  # extra_files
+        self.assertFalse(selected('traceharness/data/models/other.json', self.scope))            # excluded root
+        self.assertFalse(selected('traceharness/.hidden/thing.py', self.scope))                  # hidden part
 
 
 class NoSilentDropTests(unittest.TestCase):
@@ -103,15 +103,15 @@ class NoSilentDropTests(unittest.TestCase):
         self.root = Path(self.tmp.name)
         self.scope = {
             'title': 'School package', 'datasets': ['demo_mock'],
-            'include': ['harnesslab/', 'SCHOOL_PACKAGE.md'],
-            'exclude': ['harnesslab/data/'],
-            'extra_files': ['harnesslab/data/models/mock_prerecorded.json'],
+            'include': ['traceharness/', 'SCHOOL_PACKAGE.md'],
+            'exclude': ['traceharness/data/'],
+            'extra_files': ['traceharness/data/models/mock_prerecorded.json'],
         }
         for name, content in {
-            'harnesslab/school-package.json': json.dumps(self.scope),
-            'harnesslab/frontend/dist/index.html': '<html>Dashboard</html>',
-            'harnesslab/data/active_model.txt': 'private_local_model',
-            'harnesslab/data/models/mock_prerecorded.json': '{}',
+            'traceharness/school-package.json': json.dumps(self.scope),
+            'traceharness/frontend/dist/index.html': '<html>Dashboard</html>',
+            'traceharness/data/active_model.txt': 'private_local_model',
+            'traceharness/data/models/mock_prerecorded.json': '{}',
             'SCHOOL_PACKAGE.md': 'School instructions',
             'data/runs/demo_mock/index.jsonl': '{"run_id":"demo"}\n',
         }.items():
@@ -141,10 +141,10 @@ class NoSilentDropTests(unittest.TestCase):
         include root, a broken rglob, or (as it actually happened) a suffix filter would otherwise
         ship a quietly incomplete package with no error at all."""
         self.init_repo()
-        extra = self.root / 'harnesslab' / 'plugins' / 'extra_rule.py'
+        extra = self.root / 'traceharness' / 'plugins' / 'extra_rule.py'
         extra.parent.mkdir(parents=True, exist_ok=True)
         extra.write_text('# a rule the plugin loader expects to find\n')
-        self.git('add', 'harnesslab/plugins/extra_rule.py')
+        self.git('add', 'traceharness/plugins/extra_rule.py')
         self.git('commit', '-q', '-m', 'add extra rule')
         extra.unlink()                                    # tracked, but gone from the working tree
         with self.assertRaisesRegex(ValueError, 'silently dropped'):
@@ -154,9 +154,9 @@ class NoSilentDropTests(unittest.TestCase):
         """The check must not fight the selection policy: a file under `exclude` is a deliberate
         omission, not a silent one, even when git still has it and the working tree does not."""
         self.init_repo()
-        excluded = self.root / 'harnesslab' / 'data' / 'stale_note.txt'
+        excluded = self.root / 'traceharness' / 'data' / 'stale_note.txt'
         excluded.write_text('developer scratch note\n')
-        self.git('add', 'harnesslab/data/stale_note.txt')
+        self.git('add', 'traceharness/data/stale_note.txt')
         self.git('commit', '-q', '-m', 'add a note under the excluded data/ root')
         excluded.unlink()
         result = build(self.root, self.root / 'school.zip')

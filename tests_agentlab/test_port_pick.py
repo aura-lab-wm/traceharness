@@ -1,7 +1,7 @@
 """A busy port must never send the browser to the wrong server.
 
 Before: uvicorn failed to bind *after* the browser had been told to open the URL, so the tab
-showed whatever else was listening there -- typically an older harnesslab with a different UI.
+showed whatever else was listening there -- typically an older traceharness with a different UI.
 """
 import os
 import socket
@@ -10,7 +10,7 @@ import unittest
 from unittest import mock
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from harnesslab import __main__ as M  # noqa: E402
+from traceharness import __main__ as M  # noqa: E402
 
 
 def _occupy():
@@ -44,11 +44,11 @@ class PickPort(unittest.TestCase):
 
     def test_explicit_means_flag_or_environment(self):
         with mock.patch.dict(os.environ, {}, clear=False):
-            os.environ.pop("HARNESSLAB_PORT", None)
+            os.environ.pop("TRACEHARNESS_PORT", None)
             self.assertFalse(M._port_is_explicit([]))
             self.assertTrue(M._port_is_explicit(["--port", "9000"]))
             self.assertTrue(M._port_is_explicit(["--port=9000"]))
-        with mock.patch.dict(os.environ, {"HARNESSLAB_PORT": "9000"}):
+        with mock.patch.dict(os.environ, {"TRACEHARNESS_PORT": "9000"}):
             self.assertTrue(M._port_is_explicit([]))
 
 

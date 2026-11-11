@@ -15,8 +15,8 @@ localisation applied to runs instead of statements).
 from _common import parse, try_matplotlib, hr
 import json, os, statistics
 from collections import Counter
-from harnesslab.core.real_traj import load_nebius, features, ledger_rows_as_features, parse_trajectory
-from harnesslab.core.analysis import ochiai_attribution, bootstrap_ci
+from traceharness.core.real_traj import load_nebius, features, ledger_rows_as_features, parse_trajectory
+from traceharness.core.analysis import ochiai_attribution, bootstrap_ci
 
 
 def extra(ap):
@@ -52,7 +52,7 @@ else:
         raw = load_nebius(args.n, seed=args.seed, model=args.model)
         rows = [features(r) for r in raw]
         if args.to_console:
-            from harnesslab.backend.real_import import write_runs   # the same writer as the workbench's download
+            from traceharness.backend.real_import import write_runs   # the same writer as the workbench's download
             n_written = write_runs(raw, args.to_console)["n"]
             print(f"wrote {n_written} real trajectories as a results directory: {args.to_console} (open it in the workbench)")
         with open(cache, "w") as f:

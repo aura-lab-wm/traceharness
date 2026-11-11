@@ -14,7 +14,7 @@ import unittest
 LAB = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, LAB)
 
-from harnesslab.capture import cursors                        # noqa: E402
+from traceharness.capture import cursors                        # noqa: E402
 
 
 class TestCursors(unittest.TestCase):

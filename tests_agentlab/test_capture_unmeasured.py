@@ -16,8 +16,8 @@ import unittest
 LAB = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, LAB)
 
-from harnesslab.backend.importers import claude_code, common as C, cursor   # noqa: E402
-from harnesslab.capture import harness_config, writer                         # noqa: E402
+from traceharness.backend.importers import claude_code, common as C, cursor   # noqa: E402
+from traceharness.capture import harness_config, writer                         # noqa: E402
 
 FIXDIR = os.path.join(LAB, "tests_agentlab", "fixtures", "capture")
 MISSING = frozenset({"tool_spans", "usage", "timestamps"})
@@ -123,7 +123,7 @@ class TestExportSaysUnknownOnlyWhenItIs(unittest.TestCase):
     def test_a_metered_run_exports_its_token_count(self):
         """The end span carries total_tokens, never input_tokens/output_tokens, so reading those two
         made every fully measured run export `tokens=unknown`."""
-        from harnesslab.backend import export
+        from traceharness.backend import export
         spans, summary = self.spans_and_summary()
         recs = export.trajectory_records(spans, "issue", summary)
         line = [r for r in recs if "invoke_agent end" in str(r.get("content"))]
@@ -132,7 +132,7 @@ class TestExportSaysUnknownOnlyWhenItIs(unittest.TestCase):
         self.assertRegex(line[0]["content"], r"tokens=\d")
 
     def test_a_run_with_no_usage_at_all_still_says_unknown(self):
-        from harnesslab.backend import export
+        from traceharness.backend import export
         spans, summary = self.spans_and_summary()
         stripped = [dict(s) for s in spans]
         for s in stripped:
@@ -148,7 +148,7 @@ class TestCursorDeclinesWhatIsNotCursor(unittest.TestCase):
     def test_a_file_that_is_mostly_something_else_scores_below_the_threshold(self):
         """The fallback returned exactly the 0.5 that resolve() accepts with >=, so the declining
         branch never declined."""
-        from harnesslab.backend.importers import cursor
+        from traceharness.backend.importers import cursor
         d = tempfile.mkdtemp(prefix="hl-sniff-")
         self.addCleanup(shutil.rmtree, d, True)
         p = os.path.join(d, "mostly-other.jsonl")

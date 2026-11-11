@@ -7,11 +7,11 @@ import threading
 import time
 import unittest
 
-from harnesslab.runner_service.configuration import digest
-from harnesslab.runner_service.credentials import CredentialUnavailable, CredentialVault
-from harnesslab.runner_service.experiments import Experiments, review_plan, summarize
-from harnesslab.runner_service.jobs import JobError
-from harnesslab.runner_service.settings import Settings
+from traceharness.runner_service.configuration import digest
+from traceharness.runner_service.credentials import CredentialUnavailable, CredentialVault
+from traceharness.runner_service.experiments import Experiments, review_plan, summarize
+from traceharness.runner_service.jobs import JobError
+from traceharness.runner_service.settings import Settings
 
 OWNER, OTHER = 'owner-fixture', 'other-fixture'
 PINS = {'runtime_id': 'native-claude-code', 'runtime_version': 'fixture', 'image_digest': 'sha256:'+'a'*64,
@@ -271,7 +271,7 @@ class ExperimentAPITests(unittest.TestCase):
     """Signed private-boundary tests with explicit fixture runtimes/executors."""
     def setUp(self):
         from fastapi.testclient import TestClient
-        from harnesslab.runner_service.service import create_app
+        from traceharness.runner_service.service import create_app
         from tests_agentlab.runner_service.test_native_prompt_protocol import NativePromptProtocolTests
         from tests_agentlab.runner_service.test_runner import FixtureExecutor, FixtureProvider, SECRET, OWNER as AUTH_OWNER
         self.fixture=NativePromptProtocolTests();self.fixture.setUp();self.addCleanup(self.fixture.doCleanups)
@@ -284,8 +284,8 @@ class ExperimentAPITests(unittest.TestCase):
         self.plan['arms'][1]['configuration']=copy.deepcopy(self.fixture.config)
         self.plan['arms'][1]['configuration']['native_prompt_profile']['default_action']='disable'
     def request(self,method,path,body=None,owner=None):
-        from harnesslab.runner_service.auth import sign
-        from harnesslab.runner_service.configuration import canonical
+        from traceharness.runner_service.auth import sign
+        from traceharness.runner_service.configuration import canonical
         raw=canonical(body) if body is not None else b'';self.nonce+=1;nonce=f'{self.nonce:032x}';owner=owner or self.owner;timestamp=str(self.now)
         headers={'content-type':'application/json','x-traceharness-user':owner,'x-traceharness-timestamp':timestamp,'x-traceharness-nonce':nonce,
                  'x-traceharness-signature':sign(self.secret,method,path,owner,timestamp,nonce,raw)}

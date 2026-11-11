@@ -1,4 +1,4 @@
-"""Check that HarnessLab works on this machine: one command, about ten seconds, offline, free.
+"""Check that TraceHarness works on this machine: one command, about ten seconds, offline, free.
 
     python scripts/check_install.py          # or: make check
 
@@ -40,24 +40,24 @@ def run(*args: str, timeout: int = 180) -> subprocess.CompletedProcess:
 
 
 def main() -> int:
-    print(f"HarnessLab install check  (python {sys.version.split()[0]}, {ROOT})\n")
+    print(f"TraceHarness install check  (python {sys.version.split()[0]}, {ROOT})\n")
 
     # 1. version
-    p = run("-m", "harnesslab", "--version")
+    p = run("-m", "traceharness", "--version")
     out = (p.stdout + p.stderr).strip()
     check("version", p.returncode == 0 and EXPECTED_VERSION in out,
           out or "no output" if p.returncode == 0 else
-          "harnesslab does not import: activate your .venv, then run `python -m pip install -e .`")
+          "traceharness does not import: activate your .venv, then run `python -m pip install -e .`")
 
     # 2. web interface
-    p = run("-m", "harnesslab", "--paths")
+    p = run("-m", "traceharness", "--paths")
     try:
         paths = json.loads(p.stdout)
         built = bool(paths.get("dist_built"))
     except (ValueError, TypeError):
         paths, built = {}, False
     check("web interface", built,
-          "built" if built else "not built: unzip/clone again, or `cd harnesslab/frontend && npm ci && npm run build`")
+          "built" if built else "not built: unzip/clone again, or `cd traceharness/frontend && npm ci && npm run build`")
 
     # 3. recorded data
     idx = ROOT / "data" / "runs" / "llma4se_live" / "index.jsonl"
@@ -65,9 +65,9 @@ def main() -> int:
     check("recorded data", n > 0, f"llma4se_live has {n:,} runs" if n else "data/runs/llma4se_live is missing")
 
     # 4 + 5. mock sweep, then an exercise on it
-    with tempfile.TemporaryDirectory(prefix="harnesslab-check-") as tmp:
+    with tempfile.TemporaryDirectory(prefix="traceharness-check-") as tmp:
         out_dir = Path(tmp) / "check"
-        p = run("-m", "harnesslab", "run", "--provider", "mock", "--tasks", "all", "--repeats", "3",
+        p = run("-m", "traceharness", "run", "--provider", "mock", "--tasks", "all", "--repeats", "3",
                 "--price", "0,0", "--out", str(out_dir))
         index = out_dir / "index.jsonl"
         rows = [json.loads(l) for l in index.open() if l.strip()] if index.exists() else []
@@ -92,7 +92,7 @@ def main() -> int:
     if failed:
         print(f"{len(failed)} of {len(results)} checks failed. Send this output to your instructor.")
         return 1
-    print(f"All {len(results)} checks passed. Start the workbench with `python -m harnesslab` "
+    print(f"All {len(results)} checks passed. Start the workbench with `python -m traceharness` "
           "(in Codespaces it is already running on port 8765).")
     return 0
 

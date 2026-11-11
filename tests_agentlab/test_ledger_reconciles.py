@@ -18,7 +18,7 @@ class TestLedgerReconciles(unittest.TestCase):
         # mock-weak's prices (0.25 / 1.25 per M) put the per-call cost well past six decimals,
         # which is where the old rounding actually bit; at mock's prices it happened to be exact,
         # so a sweep with the default model would pass against the bug it is meant to catch.
-        r = subprocess.run([sys.executable, "-m", "harnesslab.core.runner", "--provider", "mock", "--model", "mock-weak",
+        r = subprocess.run([sys.executable, "-m", "traceharness.core.runner", "--provider", "mock", "--model", "mock-weak",
                             "--tasks", "t01_slugify,t02_intervals", "--repeats", "2", "--out", cls.out],
                            cwd=ROOT, capture_output=True, text=True, timeout=600)
         assert r.returncode == 0, r.stderr[-2000:]

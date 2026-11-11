@@ -19,13 +19,13 @@ import unittest
 LAB = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, LAB)
 
-from harnesslab.backend.private_guard import OPT_IN_HEADER          # noqa: E402
+from traceharness.backend.private_guard import OPT_IN_HEADER          # noqa: E402
 
 OPT_IN = {OPT_IN_HEADER: "1"}
 
 
 class TestControlCli(unittest.TestCase):
-    """`python -m harnesslab.capture --pause | --resume | --nudge`.
+    """`python -m traceharness.capture --pause | --resume | --nudge`.
 
     Run as a subprocess: RUNS_ROOT is resolved at import, so a lab passed with --lab is only really
     honoured by a process that had not already imported paths.
@@ -47,9 +47,9 @@ class TestControlCli(unittest.TestCase):
     def run_cli(self, *argv):
         env = dict(os.environ, HOME=self.home,
                    # no allow-list: a control write reads no source, so it must not need one
-                   HARNESSLAB_CAPTURE_CONFIG=os.path.join(self.home, "nothing.json"))
-        env.pop("HARNESSLAB_LAB", None)
-        return subprocess.run([sys.executable, "-B", "-m", "harnesslab.capture", "--lab", self.lab, *argv],
+                   TRACEHARNESS_CAPTURE_CONFIG=os.path.join(self.home, "nothing.json"))
+        env.pop("TRACEHARNESS_LAB", None)
+        return subprocess.run([sys.executable, "-B", "-m", "traceharness.capture", "--lab", self.lab, *argv],
                               cwd=LAB, env=env, capture_output=True, text=True, timeout=120)
 
     def test_a_nudge_while_paused_says_the_watcher_will_throw_it_away(self):
@@ -122,7 +122,7 @@ class TestControlCli(unittest.TestCase):
         self.assertEqual(r.returncode, 2)
 
     def test_the_parser_accepts_the_three_flags_by_their_full_spelling_only(self):
-        from harnesslab.capture.__main__ import build_parser
+        from traceharness.capture.__main__ import build_parser
         args = build_parser().parse_args(["--pause"])
         self.assertTrue(args.pause)
         with self.assertRaises(SystemExit):
@@ -142,15 +142,15 @@ class TestControlRoute(unittest.TestCase):
     def _client(root):
         from fastapi import FastAPI
         from fastapi.testclient import TestClient
-        from harnesslab.backend.private_guard import private_results_guard
-        from harnesslab.backend.capture_api import capture_router
+        from traceharness.backend.private_guard import private_results_guard
+        from traceharness.backend.capture_api import capture_router
         app = FastAPI()
         app.middleware("http")(private_results_guard(lambda: root))
         app.include_router(capture_router(lambda: root))
         return TestClient(app)
 
     def control(self):
-        from harnesslab.capture import presence
+        from traceharness.capture import presence
         return presence.read_control(self.root)
 
     def test_it_is_404_without_the_opt_in(self):
@@ -200,7 +200,7 @@ class TestControlRoute(unittest.TestCase):
 
     def test_the_route_answers_on_the_real_app_and_demands_the_opt_in(self):
         from fastapi.testclient import TestClient
-        from harnesslab.backend.app import app
+        from traceharness.backend.app import app
         client = TestClient(app)
         self.assertEqual(client.post("/api/capture/control", json={"action": "nudge"}).status_code, 404,
                          "served without the opt-in")

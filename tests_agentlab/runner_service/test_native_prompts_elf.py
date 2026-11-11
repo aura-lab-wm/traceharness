@@ -3,8 +3,8 @@ import copy
 import struct
 import unittest
 
-from harnesslab.runner_service import native_prompts as N
-from harnesslab.runner_service import native_prompts_elf as E
+from traceharness.runner_service import native_prompts as N
+from traceharness.runner_service import native_prompts_elf as E
 
 
 def binary_fixture():

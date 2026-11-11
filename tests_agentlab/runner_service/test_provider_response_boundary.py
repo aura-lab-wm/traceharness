@@ -5,8 +5,8 @@ from unittest.mock import patch
 
 import httpx
 
-from harnesslab.runner_service.execution import ExecutionError
-from harnesslab.runner_service.provider import OpenRouter, ProviderError, _transport_child
+from traceharness.runner_service.execution import ExecutionError
+from traceharness.runner_service.provider import OpenRouter, ProviderError, _transport_child
 from tests_agentlab.runner_service import test_broker as fixtures
 
 PRIVATE = 'private-provider-message-or-key-must-not-cross-the-boundary'
@@ -32,7 +32,7 @@ class ProviderResponseBoundaryTests(unittest.TestCase):
             self.assertFalse(kwargs['follow_redirects'])
             self.assertFalse(kwargs['trust_env'])
             return real_client(transport=transport, **kwargs)
-        return patch('harnesslab.runner_service.provider.httpx.Client', side_effect=factory)
+        return patch('traceharness.runner_service.provider.httpx.Client', side_effect=factory)
 
     def refuse(self, raw, protocol='chat/completions'):
         with self.client(raw), self.assertRaises(ProviderError) as caught:
@@ -112,7 +112,7 @@ class ProviderResponseBoundaryTests(unittest.TestCase):
     def test_size_and_deadline_refusals_still_happen_before_json_validation(self):
         with self.client(b'x' * (4 * 1024 * 1024 + 1)), self.assertRaisesRegex(ProviderError, 'exceeded the limit'):
             OpenRouter()._forward_local('chat/completions', 'fixture-not-a-real-key', {})
-        with self.client(json.dumps(VALID).encode()), patch('harnesslab.runner_service.provider.time.monotonic', side_effect=[0, 2]), self.assertRaisesRegex(ProviderError, 'deadline'):
+        with self.client(json.dumps(VALID).encode()), patch('traceharness.runner_service.provider.time.monotonic', side_effect=[0, 2]), self.assertRaisesRegex(ProviderError, 'deadline'):
             OpenRouter()._forward_local('chat/completions', 'fixture-not-a-real-key', {}, timeout_seconds=1)
 
 
@@ -137,7 +137,7 @@ class InvalidResponseBrokerTests(unittest.TestCase):
                     forward('chat/completions', {'model': 'fixture/model', 'messages': []})
             raise ExecutionError('Model response was not accepted.')
         self.behavior = behavior
-        with patch('harnesslab.runner_service.provider.httpx.Client', side_effect=lambda **kwargs: real_client(transport=transport, **kwargs)):
+        with patch('traceharness.runner_service.provider.httpx.Client', side_effect=lambda **kwargs: real_client(transport=transport, **kwargs)):
             job = self.submit(budget=100)
         self.assertEqual(len(issued), 2)
         self.assertEqual(job['usage'], {'requests': 2})

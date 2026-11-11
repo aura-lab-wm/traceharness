@@ -17,7 +17,7 @@ Imported SWE-agent recordings retain their source and license attribution. Their
 Run the full Python backend only on loopback:
 
 ```sh
-python -m harnesslab --host 127.0.0.1 --port 8742
+python -m traceharness --host 127.0.0.1 --port 8742
 ```
 
 Hosted `/app` does not run watch, launch, import, capture, judge, or model calls, and does not accept model keys. Those workflows belong to the local runner. The hosted member API permits only the supported harness read, compile, and save operations.
@@ -27,7 +27,7 @@ Hosted `/app` does not run watch, launch, import, capture, judge, or model calls
 After building the frontend, create a complete local export from the intended corpus:
 
 ```sh
-python -m harnesslab --export /absolute/path/app.html --export-runs 2000 --export-compress-data
+python -m traceharness --export /absolute/path/app.html --export-runs 2000 --export-compress-data
 ```
 
 The run limit is per dataset; choose a limit at least as large as the largest dataset. Review `ledger_coverage`, not only the requested limit. The command fails if any requested endpoint fails. Compressed exports include all data, JavaScript, CSS, fonts, and the favicon, and fail visibly on corrupt or oversized payloads. Compression requires a browser with `DecompressionStream`.

@@ -11,11 +11,11 @@ from unittest.mock import Mock, patch
 
 from fastapi.testclient import TestClient
 
-from harnesslab.runner_service.auth import sign
-from harnesslab.runner_service.configuration import canonical, preflight
-from harnesslab.runner_service.registry import Registry, tree_hash
-from harnesslab.runner_service.service import create_app
-from harnesslab.runner_service.settings import Settings
+from traceharness.runner_service.auth import sign
+from traceharness.runner_service.configuration import canonical, preflight
+from traceharness.runner_service.registry import Registry, tree_hash
+from traceharness.runner_service.service import create_app
+from traceharness.runner_service.settings import Settings
 from tests_agentlab.runner_service.test_operator_verification import verify
 from tests_agentlab.runner_service.test_runner import (
     SECRET, OWNER, FixtureExecutor, FixtureProvider, configuration, fixture_registry,

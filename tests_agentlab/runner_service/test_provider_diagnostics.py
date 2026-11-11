@@ -6,8 +6,8 @@ from unittest.mock import patch
 
 import httpx
 
-from harnesslab.runner_service.execution import ExecutionError
-from harnesslab.runner_service.provider import OpenRouter, ProviderError, _transport_child, bounded_transport
+from traceharness.runner_service.execution import ExecutionError
+from traceharness.runner_service.provider import OpenRouter, ProviderError, _transport_child, bounded_transport
 from tests_agentlab.runner_service import test_broker as fixtures
 
 PAYLOAD = 'fixture-private-response-and-key-never-echo-this'
@@ -89,7 +89,7 @@ class ProviderDiagnosticTests(unittest.TestCase):
                     transport = httpx.MockTransport(lambda request: httpx.Response(status, stream=NeverReadBody()))
                     def client(**kwargs):
                         return real_client(transport=transport, **kwargs)
-                    with patch('harnesslab.runner_service.provider.httpx.Client', side_effect=client), self.assertRaises(ProviderError) as caught:
+                    with patch('traceharness.runner_service.provider.httpx.Client', side_effect=client), self.assertRaises(ProviderError) as caught:
                         if method == '_request_local':
                             OpenRouter()._request_local('GET', '/v1/key', 'fixture-only-key')
                         else:

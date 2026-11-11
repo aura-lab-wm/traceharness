@@ -27,8 +27,8 @@ class ReplaceTreeTest(unittest.TestCase):
             (dest / 'stale.txt').write_text('gone')
             (dest / 'old' / 'x').mkdir(parents=True)
             archive = self._archive(tmp, {
-                'harnesslab-school/README.md': 'hi',
-                'harnesslab-school/.devcontainer/devcontainer.json': '{}',
+                'traceharness-school/README.md': 'hi',
+                'traceharness-school/.devcontainer/devcontainer.json': '{}',
                 'elsewhere/ignored.txt': 'no',
             })
             pub.replace_tree(dest, archive)
@@ -40,7 +40,7 @@ class ReplaceTreeTest(unittest.TestCase):
             tmp = Path(tmp)
             dest = tmp / 'repo'
             dest.mkdir()
-            archive = self._archive(tmp, {'harnesslab-school/../evil': 'x'})
+            archive = self._archive(tmp, {'traceharness-school/../evil': 'x'})
             with self.assertRaises(ValueError):
                 pub.replace_tree(dest, archive)
 

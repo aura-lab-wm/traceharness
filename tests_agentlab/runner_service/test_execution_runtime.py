@@ -12,12 +12,12 @@ from types import SimpleNamespace
 import unittest
 from unittest.mock import patch, Mock
 
-from harnesslab.core.blocks import compile_blocks
-from harnesslab.core.providers import ChatResponse, ToolCall
-from harnesslab.runner_service.container_entrypoint import execute, one_model_attempt, native_patch
-from harnesslab.runner_service.execution import DockerExecutor, ExecutionError, ARTIFACT_LIMIT, pinned_image_matches
-from harnesslab.runner_service.registry import tree_hash
-from harnesslab.runner_service.settings import Settings
+from traceharness.core.blocks import compile_blocks
+from traceharness.core.providers import ChatResponse, ToolCall
+from traceharness.runner_service.container_entrypoint import execute, one_model_attempt, native_patch
+from traceharness.runner_service.execution import DockerExecutor, ExecutionError, ARTIFACT_LIMIT, pinned_image_matches
+from traceharness.runner_service.registry import tree_hash
+from traceharness.runner_service.settings import Settings
 
 
 class ExecutionRuntimeTests(unittest.TestCase):
@@ -55,7 +55,7 @@ class ExecutionRuntimeTests(unittest.TestCase):
                       ToolCall('two', 'run_tests', {}), ToolCall('three', 'submit', {})])
         provider = SimpleNamespace(name='explicit-unit-fixture', model='fixture/model', cost=lambda *_: 0,
                                    chat=lambda *_, **__: ChatResponse('', [next(calls)], 0, 0))
-        with patch('harnesslab.core.providers.make_provider', return_value=provider), patch('importlib.metadata.version', return_value='0.3.0'):
+        with patch('traceharness.core.providers.make_provider', return_value=provider), patch('importlib.metadata.version', return_value='0.3.0'):
             code = execute(self.manifest, 'http://127.0.0.1:1', workspace=self.directory/'workspace',
                            taskrepo=self.package/'repo', inputs=inputs, output=self.directory/'output', home=self.root/'home')
         self.assertEqual(code, 0)
@@ -69,7 +69,7 @@ class ExecutionRuntimeTests(unittest.TestCase):
         self.assertEqual(json.loads((self.directory/'output/summary.json').read_text())['exit_reason'], 'submitted')
 
     def test_job_provider_disables_retries_and_restores_lab_default(self):
-        from harnesslab.core import providers
+        from traceharness.core import providers
         original=Mock(return_value={'fixture': True})
         with patch.object(providers, '_post_json', original):
             with one_model_attempt():
@@ -127,7 +127,7 @@ class ExecutionRuntimeTests(unittest.TestCase):
             calls.append(args)
             if name.endswith('-grade'):
                 (self.directory/'grading/grade.json').write_bytes(grade)
-        with patch.object(self.executor,'_run',side_effect=fake_run), patch('harnesslab.runner_service.execution.UnixModelProxy',return_value=nullcontext()):
+        with patch.object(self.executor,'_run',side_effect=fake_run), patch('traceharness.runner_service.execution.UnixModelProxy',return_value=nullcontext()):
             result=self.executor._execute_bounded('a'*48,self.manifest,self.directory,threading.Event(),lambda *_:None)
         return result,calls
 

@@ -15,7 +15,7 @@ sys.path.insert(0, LAB)
 
 class TestAssistContextStaysInsideRunsRoot(unittest.TestCase):
     def setUp(self):
-        from harnesslab.backend import metrics as M
+        from traceharness.backend import metrics as M
         self.outside = os.path.join(os.path.dirname(os.path.dirname(M.RUNS_ROOT)), "outside_probe")
         os.makedirs(self.outside, exist_ok=True)
         self.addCleanup(shutil.rmtree, self.outside, True)
@@ -25,7 +25,7 @@ class TestAssistContextStaysInsideRunsRoot(unittest.TestCase):
 
     def test_a_relative_name_cannot_reach_an_index_outside_runs_root(self):
         from fastapi.testclient import TestClient
-        from harnesslab.backend.app import app
+        from traceharness.backend.app import app
         r = TestClient(app).get("/api/assist/context?results=../../outside_probe")
         self.assertNotEqual(r.status_code, 200,
                             "a traversal read an index.jsonl outside the runs root")
@@ -33,6 +33,6 @@ class TestAssistContextStaysInsideRunsRoot(unittest.TestCase):
 
     def test_a_bare_name_still_works(self):
         from fastapi.testclient import TestClient
-        from harnesslab.backend.app import app
+        from traceharness.backend.app import app
         r = TestClient(app).get("/api/assist/context?results=demo_mock")
         self.assertEqual(r.status_code, 200)

@@ -1,4 +1,4 @@
-"""Unit tests for the pure study-aggregate functions in harnesslab/core/analysis.py:
+"""Unit tests for the pure study-aggregate functions in traceharness/core/analysis.py:
 cohens_kappa, factor_summary, comparisons_for. Fixture-free -- every fixture here is built
 in-line, no results directory required. Run from lab/:
   python -m unittest discover -s tests_agentlab -v
@@ -9,7 +9,7 @@ import sys
 import unittest
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from harnesslab.core.analysis import (  # noqa: E402
+from traceharness.core.analysis import (  # noqa: E402
     cohens_kappa, factor_summary, comparisons_for, paired_bootstrap,
 )
 
@@ -114,7 +114,7 @@ class TestFactorSummary(unittest.TestCase):
     def test_does_not_refit_real_factorial_result(self):
         """Sanity-checks factor_summary against the real factorial() output shape, without
         duplicating its arithmetic here."""
-        from harnesslab.core.analysis import factorial
+        from traceharness.core.analysis import factorial
         rows = []
         for model, bump in (("strong", 0.9), ("weak", 0.1)):
             for harness in ("h1", "h2"):

@@ -1,4 +1,4 @@
-"""harnesslab.core.live -- tailing a ledger while it is written, classifying runs on disk, and
+"""traceharness.core.live -- tailing a ledger while it is written, classifying runs on disk, and
 the two-lane terminal rendering `watch` prints. Everything runs against temp files this file
 writes itself; no dataset is read."""
 from __future__ import annotations
@@ -15,7 +15,7 @@ LAB = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, LAB)
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-from harnesslab.core import live                                    # noqa: E402
+from traceharness.core import live                                    # noqa: E402
 from live_fixtures import (append, append_raw, boundary, chat, edit, end, grade, ledger,  # noqa: E402
                            span, start, tool, write)
 

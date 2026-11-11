@@ -1,19 +1,19 @@
 #!/usr/bin/env python3
-"""Live end-to-end check for the run page, `harnesslab watch` and Stop -- headless, on a throwaway
+"""Live end-to-end check for the run page, `traceharness watch` and Stop -- headless, on a throwaway
 server, never the one on :8765.
 
     PORT=$(~/.claude/bin/freeport 9000 9099)
     /opt/homebrew/bin/python3.14 scripts/live_run_e2e.py --port "$PORT" --out /path/to/scratch
 
-Starts its own `python -m harnesslab` on 127.0.0.1:<port> against a scratch lab root (harnesses/
-and tasks/ copied from this checkout, an empty data/runs/), with HARNESSLAB_MOCK_PACE_MS so a mock
+Starts its own `python -m traceharness` on 127.0.0.1:<port> against a scratch lab root (harnesses/
+and tasks/ copied from this checkout, an empty data/runs/), with TRACEHARNESS_MOCK_PACE_MS so a mock
 run takes a few seconds, and drives it with headless Chromium (Playwright). Every check appends a
 verdict entry; exit 0 only when all pass. Screenshots and the verdict land in --out.
 
 Proves: (1) a WEB-APP run's page, opened mid-run, shows steps while the badge says running, then
 reaches finished with the outcome block; Stop on the job's next run lets that run finish and keeps
 the queued one from starting; (2) a CLI run's page shows steps mid-run with the terminal note (no
-Stop) and reaches finished, while `harnesslab watch <dir>/<run_id>` printed the same steps and
+Stop) and reaches finished, while `traceharness watch <dir>/<run_id>` printed the same steps and
 exited 0; (3) a run id that does not exist renders the not-found page. Stdlib + playwright only.
 """
 from __future__ import annotations
@@ -102,13 +102,13 @@ def main():
     shutil.copytree(ROOT / "harnesses", lab / "harnesses")
     shutil.copytree(ROOT / "tasks", lab / "tasks")
     base = f"http://127.0.0.1:{args.port}"
-    env = {**os.environ, "HARNESSLAB_MOCK_PACE_MS": PACE_MS, "HARNESSLAB_NO_BROWSER": "1", "HARNESSLAB_LAB": str(lab)}
+    env = {**os.environ, "TRACEHARNESS_MOCK_PACE_MS": PACE_MS, "TRACEHARNESS_NO_BROWSER": "1", "TRACEHARNESS_LAB": str(lab)}
     verdict = []
     server = None
     errors = []
     try:
         with Check(verdict, f"start the throwaway server on 127.0.0.1:{args.port} (--no-browser, scratch lab)"):
-            server = subprocess.Popen([PY, "-m", "harnesslab", "--lab", str(lab), "--host", "127.0.0.1", "--port", str(args.port), "--no-browser"],
+            server = subprocess.Popen([PY, "-m", "traceharness", "--lab", str(lab), "--host", "127.0.0.1", "--port", str(args.port), "--no-browser"],
                                       cwd=ROOT, env=env, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
             wait_for(lambda: server.poll() is None and _up(base), 30, what="the server")
         if server is None or server.poll() is not None:
@@ -149,15 +149,15 @@ def main():
 
             # ---- 2. a run started from the CLI, watched in the terminal and on its page ----------
             cli = None
-            with Check(verdict, "cli: python -m harnesslab run --provider mock writes a paced run into the scratch lab"):
-                cli = subprocess.Popen([PY, "-m", "harnesslab", "run", "--provider", "mock", "--tasks", "t01_slugify", "--repeats", "1",
+            with Check(verdict, "cli: python -m traceharness run --provider mock writes a paced run into the scratch lab"):
+                cli = subprocess.Popen([PY, "-m", "traceharness", "run", "--provider", "mock", "--tasks", "t01_slugify", "--repeats", "1",
                                         "--out", str(lab / "data" / "runs" / "e2e_cli")], cwd=ROOT, env=env,
                                        stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
             watch = None
             cli_run = None
             with Check(verdict, "cli: the run page shows steps while running, with the terminal note and no Stop, then finishes"):
                 cli_run = wait_for(lambda: next((r["run_id"] for r in get(f"{base}/api/live") if r["dir"] == "e2e_cli" and r["state"] == "running"), None), 20, what="the CLI run in /api/live")
-                watch = subprocess.Popen([PY, "-m", "harnesslab", "watch", "--lab", str(lab), f"e2e_cli/{cli_run}"], cwd=ROOT, env=env,
+                watch = subprocess.Popen([PY, "-m", "traceharness", "watch", "--lab", str(lab), f"e2e_cli/{cli_run}"], cwd=ROOT, env=env,
                                          stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
                 goto_run(page, base, "e2e_cli", cli_run)
                 page.wait_for_function(JS_RUNNING_WITH_STEPS, timeout=20000)
@@ -167,7 +167,7 @@ def main():
                 page.screenshot(path=str(out / "cli-running.png"))
                 page.wait_for_function(JS_FINISHED, timeout=60000)
                 page.screenshot(path=str(out / "cli-finished.png"))
-            with Check(verdict, "cli: `harnesslab watch e2e_cli/<run_id>` printed the steps live and exited 0 at the end"):
+            with Check(verdict, "cli: `traceharness watch e2e_cli/<run_id>` printed the steps live and exited 0 at the end"):
                 cli.wait(timeout=90)
                 wout, _ = watch.communicate(timeout=30)
                 lines = [l for l in wout.splitlines() if " │ " in l]

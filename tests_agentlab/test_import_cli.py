@@ -1,4 +1,4 @@
-"""`harnesslab import` -- the command line over the nine import adapters.
+"""`traceharness import` -- the command line over the nine import adapters.
 
 The adapters and the confidence-scored detector have been reachable only over HTTP since they
 were written, which means the one way to exercise them was to start a server and drive a page.
@@ -19,7 +19,7 @@ import unittest
 LAB = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, LAB)
 
-from harnesslab.__main__ import suggest_results_dir            # noqa: E402
+from traceharness.__main__ import suggest_results_dir            # noqa: E402
 
 FIX = os.path.join(LAB, "tests_agentlab", "fixtures", "importers")
 CC = os.path.join(FIX, "claude_code_session.jsonl")
@@ -31,16 +31,16 @@ class CLI(unittest.TestCase):
     """Runs the real command, in a subprocess, against a throwaway lab root."""
 
     def setUp(self):
-        self.lab = tempfile.mkdtemp(prefix="harnesslab-cli-")
+        self.lab = tempfile.mkdtemp(prefix="traceharness-cli-")
         self.addCleanup(shutil.rmtree, self.lab, True)
 
     def run_cli(self, *args, lab=True):
         env = {**os.environ, "NO_COLOR": "1"}
         if lab:
-            env["HARNESSLAB_LAB"] = self.lab
+            env["TRACEHARNESS_LAB"] = self.lab
         else:
-            env.pop("HARNESSLAB_LAB", None)
-        return subprocess.run([sys.executable, "-B", "-m", "harnesslab", "import", *args],
+            env.pop("TRACEHARNESS_LAB", None)
+        return subprocess.run([sys.executable, "-B", "-m", "traceharness", "import", *args],
                               cwd=LAB, env=env, capture_output=True, text=True, timeout=180)
 
     def runs_dir(self, name):
@@ -72,7 +72,7 @@ class TestDetectMode(CLI):
 
     def test_detect_imports_nothing(self):
         """--detect is a question. It resolves the lab root like every other subcommand, so a
-        fresh --lab gets seeded (harnesslab.backend.paths does that at import time); what it must
+        fresh --lab gets seeded (traceharness.backend.paths does that at import time); what it must
         never do is write a run."""
         r = self.run_cli("--detect", CC)
         self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
@@ -184,7 +184,7 @@ class TestWhenSomethingElseHoldsTheLock(CLI):
     the watcher happened to be running was a Python traceback with a flock path in it."""
 
     def test_a_held_lock_is_a_sentence_and_an_exit_code_not_a_traceback(self):
-        from harnesslab.capture.lock import CaptureLock
+        from traceharness.capture.lock import CaptureLock
         with CaptureLock(os.path.join(self.lab, "data", "runs")):
             r = self.run_cli(CC, "--results-dir", "captured")
         self.assertEqual(r.returncode, 1, r.stdout + r.stderr)

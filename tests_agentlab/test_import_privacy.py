@@ -4,7 +4,7 @@
 `private_guard` answers 404 for it on every route without the opt-in header, and the static
 export never reaches it. None of that is about the BYTES -- it is about the directory NAME.
 
-So `harnesslab import ~/.claude/projects --results-dir demo_mock` walks the whole boundary
+So `traceharness import ~/.claude/projects --results-dir demo_mock` walks the whole boundary
 around: the same transcripts land in a directory the API serves to anyone, `--export` freezes
 into a single shareable HTML file, and `/api/export/demo_mock/bundle.zip` hands out as a zip.
 Before the CLI and the import screen there was no reachable way to ask for that; there is now,
@@ -20,8 +20,8 @@ import unittest
 LAB = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, LAB)
 
-from harnesslab.backend import importers as I               # noqa: E402
-from harnesslab.capture import adapters as CA               # noqa: E402
+from traceharness.backend import importers as I               # noqa: E402
+from traceharness.capture import adapters as CA               # noqa: E402
 
 FIX = os.path.join(LAB, "tests_agentlab", "fixtures", "importers")
 CC = os.path.join(FIX, "claude_code_session.jsonl")
@@ -46,15 +46,15 @@ class TestWhereASessionStoreLives(unittest.TestCase):
         os.makedirs(watched)
         with open(cfg, "w", encoding="utf-8") as f:
             json.dump({"paths": [watched]}, f)
-        old = os.environ.get("HARNESSLAB_CAPTURE_CONFIG")
-        os.environ["HARNESSLAB_CAPTURE_CONFIG"] = cfg
+        old = os.environ.get("TRACEHARNESS_CAPTURE_CONFIG")
+        os.environ["TRACEHARNESS_CAPTURE_CONFIG"] = cfg
         try:
             self.assertIn(os.path.realpath(watched), CA.private_source_roots())
         finally:
             if old is None:
-                os.environ.pop("HARNESSLAB_CAPTURE_CONFIG", None)
+                os.environ.pop("TRACEHARNESS_CAPTURE_CONFIG", None)
             else:
-                os.environ["HARNESSLAB_CAPTURE_CONFIG"] = old
+                os.environ["TRACEHARNESS_CAPTURE_CONFIG"] = old
 
 
 class TestTheImportRefuses(unittest.TestCase):
@@ -70,15 +70,15 @@ class TestTheImportRefuses(unittest.TestCase):
         cfg = os.path.join(self.tmp, "capture.json")
         with open(cfg, "w", encoding="utf-8") as f:
             json.dump({"paths": [self.store]}, f)
-        self._old = os.environ.get("HARNESSLAB_CAPTURE_CONFIG")
-        os.environ["HARNESSLAB_CAPTURE_CONFIG"] = cfg
+        self._old = os.environ.get("TRACEHARNESS_CAPTURE_CONFIG")
+        os.environ["TRACEHARNESS_CAPTURE_CONFIG"] = cfg
         self.addCleanup(self._restore)
 
     def _restore(self):
         if self._old is None:
-            os.environ.pop("HARNESSLAB_CAPTURE_CONFIG", None)
+            os.environ.pop("TRACEHARNESS_CAPTURE_CONFIG", None)
         else:
-            os.environ["HARNESSLAB_CAPTURE_CONFIG"] = self._old
+            os.environ["TRACEHARNESS_CAPTURE_CONFIG"] = self._old
 
     def test_a_private_source_will_not_land_in_a_public_directory(self):
         with self.assertRaises(ValueError) as cm:

@@ -1,4 +1,4 @@
-"""/api/results/<d>/{patterns,query} and `harnesslab patterns <d>` are one read, not two.
+"""/api/results/<d>/{patterns,query} and `traceharness patterns <d>` are one read, not two.
 
 Both call metrics.patterns / metrics.run_query, so a sentinel patched at that lookup site must reach
 BOTH surfaces. The counts the Trajectory features view shows are checked against an independent
@@ -15,11 +15,11 @@ from unittest.mock import patch
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from starlette.testclient import TestClient          # noqa: E402
-from harnesslab.backend.app import app, _STUDY_CACHE  # noqa: E402
-from harnesslab.backend import metrics as M           # noqa: E402
-from harnesslab.backend import paths                  # noqa: E402
-from harnesslab.core.trajtest import load_runs        # noqa: E402
-from harnesslab import __main__ as cli                # noqa: E402
+from traceharness.backend.app import app, _STUDY_CACHE  # noqa: E402
+from traceharness.backend import metrics as M           # noqa: E402
+from traceharness.backend import paths                  # noqa: E402
+from traceharness.core.trajtest import load_runs        # noqa: E402
+from traceharness import __main__ as cli                # noqa: E402
 
 DIR, H, PATTERN = "prerecorded_mock", "baseline", r"[WE](?!.*T)"
 

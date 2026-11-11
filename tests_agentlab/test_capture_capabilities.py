@@ -14,9 +14,9 @@ import unittest
 LAB = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, LAB)
 
-from harnesslab.backend.importers import cursor                 # noqa: E402
-from harnesslab.backend.importers.common import Event           # noqa: E402
-from harnesslab.capture import adapters, identity               # noqa: E402
+from traceharness.backend.importers import cursor                 # noqa: E402
+from traceharness.backend.importers.common import Event           # noqa: E402
+from traceharness.capture import adapters, identity               # noqa: E402
 
 FIXDIR = os.path.join(LAB, "tests_agentlab", "fixtures", "capture")
 

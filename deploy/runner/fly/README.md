@@ -7,7 +7,7 @@ a container on a shared production Docker host. The browser continues to use
 
 The VM exposes only the HMAC-authenticated control API through Fly's HTTPS
 proxy. Uvicorn binds the VM's actual private IPv4 address, not a wildcard.
-The local lab command remains `python -m harnesslab` on `127.0.0.1:8742`.
+The local lab command remains `python -m traceharness` on `127.0.0.1:8742`.
 This recipe does not add Cloudflare routes or expose a Docker TCP socket.
 
 ## Build inputs
@@ -20,8 +20,8 @@ release record; a successful build is not a compatibility receipt.
 The build context contains:
 
 - `Dockerfile`, `start.py`, and `../verify_runtime.py` from this directory tree.
-- `harnesslab/`: the reviewed coordinator source, without caches or secrets.
-- `harnesslab-0.3.0-py3-none-any.whl`: a wheel built from that same source.
+- `traceharness/`: the reviewed coordinator source, without caches or secrets.
+- `traceharness-0.3.0-py3-none-any.whl`: a wheel built from that same source.
 - `requirements.lock`: the reviewed task's dependency lock file.
 - `grader/grade.py`: `../tasks/grade.py`.
 - `gvisor-x86_64.tar.bz2`: release `20261102.0`, checked against the SHA-256

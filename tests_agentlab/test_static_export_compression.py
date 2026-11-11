@@ -1,6 +1,6 @@
 """Compressed snapshots retain the real recorded API payload and report actual ledger coverage.
 
-Run against an isolated copy with HARNESSLAB_LAB; these tests never write run data. Browser
+Run against an isolated copy with TRACEHARNESS_LAB; these tests never write run data. Browser
 checks live in test_static_export_browser.py so they can use a separately installed Playwright.
 """
 import base64
@@ -16,12 +16,12 @@ import tempfile
 import unittest
 from unittest.mock import patch
 
-from harnesslab.backend import static_export as SE
-from harnesslab.__main__ import build_parser, main
+from traceharness.backend import static_export as SE
+from traceharness.__main__ import build_parser, main
 
 
 def compressed_data(html):
-    match = re.search(r'<script id="harnesslab-data"[^>]*data-bytes="(\d+)">([^<]*)</script>', html)
+    match = re.search(r'<script id="traceharness-data"[^>]*data-bytes="(\d+)">([^<]*)</script>', html)
     assert match, "missing inert compressed-data element"
     raw = gzip.decompress(base64.b64decode(match[2], validate=True))
     assert len(raw) == int(match[1]), "declared decoded length differs"
@@ -39,22 +39,22 @@ class TestRecordedCompressedExport(unittest.TestCase):
         cls.addClassCleanup(cls.temp.cleanup)
         cls.path = Path(cls.temp.name, "recorded.html")
         # A caller may freeze dist before another process rebuilds the frontend.
-        with patch.object(SE, "DIST", os.environ.get("HARNESSLAB_EXPORT_TEST_DIST", SE.DIST)):
+        with patch.object(SE, "DIST", os.environ.get("TRACEHARNESS_EXPORT_TEST_DIST", SE.DIST)):
             cls.result = SE.build(str(cls.path), cls.DIRS, n_runs=2, compress_data=True)
         cls.html = cls.path.read_text()
         cls.data = compressed_data(cls.html)
 
     def test_every_requested_recorded_endpoint_is_embedded(self):
         from starlette.testclient import TestClient
-        from harnesslab.backend.app import app
-        from harnesslab.backend.private_guard import OPT_IN_HEADER
+        from traceharness.backend.app import app
+        from traceharness.backend.private_guard import OPT_IN_HEADER
 
         with TestClient(app, headers={OPT_IN_HEADER: "1"}) as client:
             expected = SE._urls(client, self.DIRS, 2)
         self.assertEqual(self.result["failed"], [])
         self.assertEqual(set(self.data) - {"__meta__"}, {url[4:] for url in expected})
-        self.assertIn('await window.__HARNESSLAB_DATA_READY__;', self.html)
-        self.assertNotIn('window.__HARNESSLAB_DATA__={', self.html)
+        self.assertIn('await window.__TRACEHARNESS_DATA_READY__;', self.html)
+        self.assertNotIn('window.__TRACEHARNESS_DATA__={', self.html)
 
     def test_coverage_counts_successful_detail_keys_not_requested_limit(self):
         coverage = self.data["__meta__"]["ledger_coverage"]
@@ -79,7 +79,7 @@ class TestRecordedCompressedExport(unittest.TestCase):
         self.assertIsNotNone(icon)
         self.assertTrue(icon[1].startswith('data:image/svg+xml;base64,'))
         embedded = base64.b64decode(icon[1].split(',', 1)[1], validate=True)
-        dist = Path(os.environ.get("HARNESSLAB_EXPORT_TEST_DIST", SE.DIST))
+        dist = Path(os.environ.get("TRACEHARNESS_EXPORT_TEST_DIST", SE.DIST))
         self.assertEqual(embedded, (dist / 'favicon.svg').read_bytes())
 
     def test_missing_response_does_not_claim_coverage(self):
@@ -116,7 +116,7 @@ class TestRecordedCompressedExport(unittest.TestCase):
         self.assertEqual(banner, SE._data_banner(self.data, True))
         self.assertEqual(compressed_data(banner), self.data)
         plain = SE._data_banner(self.data)
-        self.assertEqual(json.loads(plain.removeprefix('<script>window.__HARNESSLAB_DATA__=').removesuffix(';</script>')), self.data)
+        self.assertEqual(json.loads(plain.removeprefix('<script>window.__TRACEHARNESS_DATA__=').removesuffix(';</script>')), self.data)
 
     def test_html_payload_cannot_terminate_or_double_escape_a_script(self):
         data = {**self.data, "hostile_text": '</ScRiPt><script>window.injected=1</script><!--<script>\u2028'}
@@ -138,7 +138,7 @@ class TestRecordedCompressedExport(unittest.TestCase):
             if compressed:
                 self.assertEqual(compressed_data(banner), data)
             else:
-                self.assertEqual(json.loads(banner.removeprefix('<script>window.__HARNESSLAB_DATA__=').removesuffix(';</script>')), data)
+                self.assertEqual(json.loads(banner.removeprefix('<script>window.__TRACEHARNESS_DATA__=').removesuffix(';</script>')), data)
 
     def test_export_rejects_oversize_compressed_snapshots(self):
         with patch.object(SE, "MAX_DATA_BYTES", 1), self.assertRaisesRegex(ValueError, "decoded limit"):

@@ -17,7 +17,7 @@ import tempfile
 import time
 
 
-PAYLOAD = re.compile(r'(<script id="harnesslab-data"[^>]*data-bytes=")(\d+)(">)([^<]*)(</script>)')
+PAYLOAD = re.compile(r'(<script id="traceharness-data"[^>]*data-bytes=")(\d+)(">)([^<]*)(</script>)')
 
 
 def inventory(data):
@@ -60,10 +60,10 @@ def main():
         page.route('https://**/*', lambda route: route.abort())
         started = time.monotonic()
         page.goto(args.workbench_export.resolve().as_uri(), wait_until='domcontentloaded')
-        page.wait_for_function('!!window.__HARNESSLAB_DATA__', timeout=60000)
+        page.wait_for_function('!!window.__TRACEHARNESS_DATA__', timeout=60000)
         page.wait_for_function('!document.getElementById("hl-boot") && document.getElementById("root").children.length > 0', timeout=60000)
-        actual = page.evaluate('''() => Object.fromEntries(window.__HARNESSLAB_DATA__.__meta__.results.map(directory => {
-          const data = window.__HARNESSLAB_DATA__;
+        actual = page.evaluate('''() => Object.fromEntries(window.__TRACEHARNESS_DATA__.__meta__.results.map(directory => {
+          const data = window.__TRACEHARNESS_DATA__;
           const rows = data[`/results/${directory}/runs`];
           const details = rows.map(row => data[`/results/${directory}/runs/${row.run_id}`]).filter(Boolean);
           if (!details.every(detail => detail.summary && Array.isArray(detail.spans))) throw new Error('invalid browser ledger');
@@ -92,10 +92,10 @@ def main():
             if unsupported:
                 page.add_init_script('window.DecompressionStream = undefined;')
             page.goto(path.as_uri(), wait_until='domcontentloaded')
-            panel = page.locator('#harnesslab-export-error')
+            panel = page.locator('#traceharness-export-error')
             panel.wait_for(state='visible', timeout=30000)
             assert 'The recorded data could not be loaded.' in panel.inner_text()
-            assert page.evaluate('typeof window.__HARNESSLAB_DATA__') == 'undefined'
+            assert page.evaluate('typeof window.__TRACEHARNESS_DATA__') == 'undefined'
             assert page.locator('a[href="/app/shallow"]').count() == 0, 'local file must not invent a hosted member link'
             report['checks'][name] = {'ok': True, 'visible_error': panel.inner_text()}
             page.close()
@@ -105,7 +105,7 @@ def main():
         page.add_init_script('window.DecompressionStream = undefined; window.__TRACEHARNESS_MEMBER__ = {version: 1, scope: "a".repeat(24)};')
         page.route('http://traceharness.test/app', lambda route: route.fulfill(status=200, content_type='text/html', body=html))
         page.goto('http://traceharness.test/app', wait_until='domcontentloaded')
-        page.locator('#harnesslab-export-error').wait_for(state='visible')
+        page.locator('#traceharness-export-error').wait_for(state='visible')
         link = page.get_by_role('link', name='Open the simple harness editor')
         assert link.get_attribute('href') == '/app/shallow'
         report['checks']['hosted_failure_exit'] = {'ok': True, 'href': '/app/shallow'}

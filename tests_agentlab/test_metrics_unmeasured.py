@@ -15,10 +15,10 @@ import unittest
 LAB = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, LAB)
 
-from harnesslab.backend import harness_tools, metrics           # noqa: E402
-from harnesslab.core import analysis, console, reportcard       # noqa: E402
-from harnesslab.core.patterns import sequences                 # noqa: E402
-from harnesslab.core.trajtest import Trajectory                # noqa: E402
+from traceharness.backend import harness_tools, metrics           # noqa: E402
+from traceharness.core import analysis, console, reportcard       # noqa: E402
+from traceharness.core.patterns import sequences                 # noqa: E402
+from traceharness.core.trajtest import Trajectory                # noqa: E402
 
 TOOL_FACTS = ("tool_calls", "edits", "lines_added", "lines_removed", "files_touched", "boundary_events",
               "boundary_kinds", "tests_run_by_agent", "ran_tests_before_submit", "tests_modified",
@@ -127,7 +127,7 @@ class TestPlatformMetrics(unittest.TestCase):
         self.assertEqual(console.run_features(Trajectory("r1", "t1", "h", "m", row(1), []))["n_edit"], 0)
 
     def test_fork_outcome_reports_unknown_tokens_as_unknown(self):
-        from harnesslab.backend import fork
+        from traceharness.backend import fork
         self.assertIsNone(fork.outcome_of("", "r1", [], unmeasured(1))["tokens"])
         self.assertEqual(fork.outcome_of("", "r1", [], row(1))["tokens"], 150)
 
@@ -135,7 +135,7 @@ class TestPlatformMetrics(unittest.TestCase):
         import json as _json
         import shutil as _shutil
         import tempfile as _tempfile
-        from harnesslab.backend import judge_runner
+        from traceharness.backend import judge_runner
         d = _tempfile.mkdtemp(prefix="hl-judge-")
         self.addCleanup(_shutil.rmtree, d, True)
         with open(os.path.join(d, "index.jsonl"), "w", encoding="utf-8") as f:
@@ -149,7 +149,7 @@ class TestPlatformMetrics(unittest.TestCase):
         import json as _json
         import shutil as _shutil
         import tempfile as _tempfile
-        from harnesslab.core.real_traj import ledger_rows_as_features
+        from traceharness.core.real_traj import ledger_rows_as_features
         d = _tempfile.mkdtemp(prefix="hl-feat-")
         self.addCleanup(_shutil.rmtree, d, True)
         for r in (row(1, hidden_pass=True), unmeasured(2)):
@@ -194,7 +194,7 @@ class TestFeatureRowsStayWithTheirRuns(unittest.TestCase):
                 f.write(json.dumps(r) + "\n")
 
     def test_the_filter_keeps_the_rows_of_the_runs_it_was_asked_for(self):
-        from harnesslab.core.real_traj import ledger_rows_as_features_with_ids
+        from traceharness.core.real_traj import ledger_rows_as_features_with_ids
         rows = metrics.ledger_rows_as_features_filtered(self.d, self.keep)
         want = [f for rid, f in ledger_rows_as_features_with_ids(self.d) if rid in self.keep]
         self.assertEqual(len(rows), 2, "both measured runs are described")
@@ -211,14 +211,14 @@ class TestTimeTravelStateIsUnknownAware(unittest.TestCase):
                  "tools": [], "edits": [], "boundary": [], "sentinel": None}]
 
     def test_a_run_with_no_tool_record_reports_unknown_not_zero(self):
-        from harnesslab.backend import fork
+        from traceharness.backend import fork
         (v,) = fork.state_vectors(self.steps(), unmeasured=["tool_calls", "edits", "files_touched"])
         for k in ("edits", "lines_added", "lines_removed", "files_touched", "tests_run", "last_test",
                   "boundary_events", "boundary_kinds"):
             self.assertIsNone(v[k], f"{k} was drawn as a measurement")
 
     def test_a_measured_run_still_reports_its_counts(self):
-        from harnesslab.backend import fork
+        from traceharness.backend import fork
         (v,) = fork.state_vectors(self.steps(), unmeasured=[])
         self.assertEqual((v["edits"], v["files_touched"], v["boundary_events"]), (0, [], 0))
 
@@ -238,13 +238,13 @@ class TestTheReplayedSentinelSaysNothingAboutAnUnwatchedRun(unittest.TestCase):
         return [{"step": 0}]
 
     def test_a_run_with_no_tool_record_gets_no_replayed_score(self):
-        from harnesslab.backend import fork
+        from traceharness.backend import fork
         (sv,) = fork.with_replay(self.state(), self.spans(["tool_calls", "edits"]))
         self.assertIsNone(sv["risk_replay"])
         self.assertEqual(sv["replay_patterns"], [])
 
     def test_a_measured_run_is_still_replayed(self):
-        from harnesslab.backend import fork
+        from traceharness.backend import fork
         (sv,) = fork.with_replay(self.state(), self.spans([]))
         self.assertIn("risk_replay", sv)
 

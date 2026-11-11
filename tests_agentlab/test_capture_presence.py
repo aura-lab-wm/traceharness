@@ -15,7 +15,7 @@ import unittest
 LAB = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, LAB)
 
-from harnesslab.capture import presence                      # noqa: E402
+from traceharness.capture import presence                      # noqa: E402
 from test_capture_backfill import copy_fixture               # noqa: E402
 
 
@@ -153,7 +153,7 @@ class TestTotalsNeverHoldThePassInsteadOfTheCorpus(unittest.TestCase):
         self.assertEqual(presence.read(self.runs)["errors"], 0)
 
     def test_no_document_written_during_a_tick_says_the_pass_count(self):
-        from harnesslab.capture import sniffer
+        from traceharness.capture import sniffer
 
         # An ESTABLISHED corpus first -- which is the situation the defect needs. A reader looking
         # at a fresh lab mid-first-pass sees zeros, and zero really is what it holds.
@@ -207,14 +207,14 @@ class TestTheDocumentHasNoFieldsNobodyWrites(unittest.TestCase):
         copy_fixture(os.path.join(self.src, "sess-cap-1.jsonl"))
 
     def test_a_completed_scan_records_when_it_happened(self):
-        from harnesslab.capture import sniffer
+        from traceharness.capture import sniffer
         sniffer.tick([self.src], self.runs, gap_s=1800.0, now=1.8e9)
         d = presence.read(self.runs)
         self.assertEqual(d["last_tick_at"], 1.8e9,
                          "a scan ran and the document still says it never did")
 
     def test_the_capture_pass_reports_progress_against_a_real_total(self):
-        from harnesslab.capture import backfill
+        from traceharness.capture import backfill
         copy_fixture(os.path.join(self.src, "sess-cap-2.jsonl"))
         seen = []
         backfill.run([self.src], self.runs, 1800.0, now=1.8e9,
@@ -226,7 +226,7 @@ class TestTheDocumentHasNoFieldsNobodyWrites(unittest.TestCase):
         self.assertEqual([d for d, _ in seen], [1, 2], "done did not count up")
 
     def test_a_tick_publishes_that_progress_where_the_menu_reads_it(self):
-        from harnesslab.capture import sniffer
+        from traceharness.capture import sniffer
         copy_fixture(os.path.join(self.src, "sess-cap-2.jsonl"))
         seen = []
         real = presence._atomic
@@ -257,7 +257,7 @@ class TestTheErrorLineCarriesNoPath(unittest.TestCase):
     this document into a menu title.
 
     The class name says what went wrong and carries nothing; the message goes to stderr, which is
-    the watcher's log under launchd (~/Library/Logs/harnesslab-capture.log).
+    the watcher's log under launchd (~/Library/Logs/traceharness-capture.log).
     """
 
     def setUp(self):
@@ -268,7 +268,7 @@ class TestTheErrorLineCarriesNoPath(unittest.TestCase):
     def test_a_tick_that_raises_records_the_kind_and_not_the_message(self):
         import io
         import contextlib
-        from harnesslab.capture import sniffer
+        from traceharness.capture import sniffer
 
         secret = "/Users/someone/.claude/projects/-Users-someone-Projects-acme/abc.jsonl"
 
@@ -304,13 +304,13 @@ class TestLiveness(unittest.TestCase):
         self.assertIs(presence.sniffer_alive(self.root), False)
 
     def test_a_held_sniffer_lock_is_alive(self):
-        from harnesslab.capture.lock import CaptureLock
+        from traceharness.capture.lock import CaptureLock
         with CaptureLock(self.root, name="sniffer"):
             self.assertIs(presence.sniffer_alive(self.root), True)
 
     def test_a_released_lock_is_not_alive_whatever_the_document_says(self):
         """kill -9 releases the flock but leaves presence.json saying idle."""
-        from harnesslab.capture.lock import CaptureLock
+        from traceharness.capture.lock import CaptureLock
         with CaptureLock(self.root, name="sniffer"):
             presence.write(self.root, state="idle", pid=4242)
         self.assertIs(presence.sniffer_alive(self.root), False)
@@ -320,7 +320,7 @@ class TestLiveness(unittest.TestCase):
         """ENOLCK is not contention. Reporting it as a live watcher read a dead pid out of a file."""
         import errno, fcntl
         from unittest import mock
-        from harnesslab.capture.lock import CaptureLock
+        from traceharness.capture.lock import CaptureLock
         with CaptureLock(self.root, name="sniffer"):
             pass                                  # create the lock file
         with mock.patch.object(fcntl, "flock", side_effect=OSError(errno.ENOLCK, "No locks")):

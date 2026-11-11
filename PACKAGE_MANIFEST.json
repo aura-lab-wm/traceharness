@@ -50,7 +50,7 @@
       {
         "title": "Application and measurement engine",
         "paths": [
-          "harnesslab/",
+          "traceharness/",
           "pyproject.toml",
           "setup.py",
           "requirements.txt"
@@ -102,24 +102,24 @@
       "trajectory_tests/",
       "tests_agentlab/",
       "scripts/",
-      "harnesslab/"
+      "traceharness/"
     ],
     "exclude": [
-      "harnesslab/data/",
-      "harnesslab/README.md",
-      "harnesslab/docs/",
-      "harnesslab/frontend/test/",
-      "harnesslab/frontend/scripts/",
-      "harnesslab/frontend/README.md"
+      "traceharness/data/",
+      "traceharness/README.md",
+      "traceharness/docs/",
+      "traceharness/frontend/test/",
+      "traceharness/frontend/scripts/",
+      "traceharness/frontend/README.md"
     ],
     "extra_files": [
-      "harnesslab/data/models/mock_prerecorded.json",
-      "harnesslab/frontend/test/rig-testing.jsx"
+      "traceharness/data/models/mock_prerecorded.json",
+      "traceharness/frontend/test/rig-testing.jsx"
     ],
     "generated_files": [
       "README.md",
       "PACKAGE_MANIFEST.json",
-      "harnesslab/data/active_model.txt"
+      "traceharness/data/active_model.txt"
     ]
   },
   "files": [
@@ -69484,1047 +69484,1047 @@
       "sha256": "8d14cd5096732dc951bef08aae8f864c4759464ccb68d6de1ea08d28b099fcc2"
     },
     {
-      "path": "harnesslab/__init__.py",
+      "path": "traceharness/__init__.py",
       "bytes": 0,
       "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
     },
     {
-      "path": "harnesslab/__main__.py",
+      "path": "traceharness/__main__.py",
       "bytes": 35555,
       "sha256": "45fd265712cbaa265c389985c8153d211a5d20910ef7c76dd8d29b4e96b0efc0"
     },
     {
-      "path": "harnesslab/backend/__init__.py",
+      "path": "traceharness/backend/__init__.py",
       "bytes": 0,
       "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
     },
     {
-      "path": "harnesslab/backend/app.py",
+      "path": "traceharness/backend/app.py",
       "bytes": 40565,
       "sha256": "f91075f31df04ca4294bbbcafdfc81461462d2e633e4b338e6a9073b13076112"
     },
     {
-      "path": "harnesslab/backend/assist.py",
+      "path": "traceharness/backend/assist.py",
       "bytes": 7681,
       "sha256": "6056994a6140a15007e15126cd75fe682fda3b2e9a8db6f6271dc469fa2df8de"
     },
     {
-      "path": "harnesslab/backend/capture_api.py",
+      "path": "traceharness/backend/capture_api.py",
       "bytes": 9098,
       "sha256": "df96d9190705ffdc88529deda26e6fe9cb81a376e9144d526d0dce4f4dbf7693"
     },
     {
-      "path": "harnesslab/backend/export.py",
+      "path": "traceharness/backend/export.py",
       "bytes": 30969,
       "sha256": "5f3757f2050d86ecba042b579c8a0dd951735514162bbc9bd6d5bb427aa958a7"
     },
     {
-      "path": "harnesslab/backend/field.html",
+      "path": "traceharness/backend/field.html",
       "bytes": 66843,
       "sha256": "0b245ebbc71dd3590be30be1b5a3389737699428ec1883c0d316dd869187e2a6"
     },
     {
-      "path": "harnesslab/backend/field.py",
+      "path": "traceharness/backend/field.py",
       "bytes": 6272,
       "sha256": "0315ba87a90fd3cbba38abba4c15b54965ee3f9ebc8faecee3171f3be4e1796c"
     },
     {
-      "path": "harnesslab/backend/fonts.css",
+      "path": "traceharness/backend/fonts.css",
       "bytes": 81054,
       "sha256": "b40e8b04ee84d6f7f7ea008c597f326a3b51bd511eaa3283623a876a3f8da838"
     },
     {
-      "path": "harnesslab/backend/fork.py",
+      "path": "traceharness/backend/fork.py",
       "bytes": 32115,
       "sha256": "e442f0d94fae13170800bd69815176a556c92103ba112ec4dfbc5c74e7109cb4"
     },
     {
-      "path": "harnesslab/backend/guard.py",
+      "path": "traceharness/backend/guard.py",
       "bytes": 10827,
       "sha256": "61b76bf804a472343745ed90fa872be750c9429b45e3d039f29f439b8d73e8dd"
     },
     {
-      "path": "harnesslab/backend/harness_tools.py",
+      "path": "traceharness/backend/harness_tools.py",
       "bytes": 43296,
       "sha256": "de0768e97c353ddf45819d9eac1131215cd0775cc0361338852597dd20d43973"
     },
     {
-      "path": "harnesslab/backend/importers/__init__.py",
+      "path": "traceharness/backend/importers/__init__.py",
       "bytes": 18334,
       "sha256": "8c450dfd3f050b269abf2ed29b5c77539844e8dcd41e8cbb3ce02ab041fc022d"
     },
     {
-      "path": "harnesslab/backend/importers/claude_code.py",
+      "path": "traceharness/backend/importers/claude_code.py",
       "bytes": 12589,
       "sha256": "16bd91d621d7d532bc5940298fe22850fd11754d2717a3689da80df1a6e90efa"
     },
     {
-      "path": "harnesslab/backend/importers/codex.py",
+      "path": "traceharness/backend/importers/codex.py",
       "bytes": 25642,
       "sha256": "099945c0cef28e89b5c19c1ad0d232bb5fe6c90b1f72081bd82feae44cde1471"
     },
     {
-      "path": "harnesslab/backend/importers/common.py",
+      "path": "traceharness/backend/importers/common.py",
       "bytes": 36038,
       "sha256": "f98f5ea30650ddb2922f7ac7dcff6515404db134714de50aa98288a404866cf4"
     },
     {
-      "path": "harnesslab/backend/importers/cursor.py",
+      "path": "traceharness/backend/importers/cursor.py",
       "bytes": 9362,
       "sha256": "a6eb88c1de125ab129a5e542705e48f67068ec0a8b4f9fee9487ae8db139f1d3"
     },
     {
-      "path": "harnesslab/backend/importers/gemini_cli.py",
+      "path": "traceharness/backend/importers/gemini_cli.py",
       "bytes": 12475,
       "sha256": "fd5fbae095174c852a97d1ac91ba00220c57418d3f4c7e8cd83ce56b88b22592"
     },
     {
-      "path": "harnesslab/backend/importers/inspect_log.py",
+      "path": "traceharness/backend/importers/inspect_log.py",
       "bytes": 10745,
       "sha256": "0d00c249feaa95eb5d344e33a2db577f26fdd21db353de00a4b0f1096d9078c4"
     },
     {
-      "path": "harnesslab/backend/importers/openhands.py",
+      "path": "traceharness/backend/importers/openhands.py",
       "bytes": 14063,
       "sha256": "49ecc32cab2584778a540fc47c74a0eb3da99b3dd89ad7a0a90040a2a3d67d0f"
     },
     {
-      "path": "harnesslab/backend/importers/qwen_code.py",
+      "path": "traceharness/backend/importers/qwen_code.py",
       "bytes": 13090,
       "sha256": "5cb8d3836e2136e2d47dc7bbbf1c3fe0d9f6d802d2328ba6cb7df3238d954e84"
     },
     {
-      "path": "harnesslab/backend/importers/routes.py",
+      "path": "traceharness/backend/importers/routes.py",
       "bytes": 6304,
       "sha256": "9b2f3bfafb30312665353d4ac567a359d671c6fae47f664942027f21bf1dbce9"
     },
     {
-      "path": "harnesslab/backend/importers/swe_agent.py",
+      "path": "traceharness/backend/importers/swe_agent.py",
       "bytes": 9353,
       "sha256": "d3165d66affac15d544c41c042ef1ea6e9b32a6653293d68befc832fc7582752"
     },
     {
-      "path": "harnesslab/backend/importers/trajectory_fmt.py",
+      "path": "traceharness/backend/importers/trajectory_fmt.py",
       "bytes": 10289,
       "sha256": "20bb8a838306f24a4362bcd88d71fff0087bee6909449df845e7ae950eef3c3e"
     },
     {
-      "path": "harnesslab/backend/judge_runner.py",
+      "path": "traceharness/backend/judge_runner.py",
       "bytes": 6084,
       "sha256": "31bec87d122339e9157050c8a908a33b915d7bdd64a7a47acb61be7ebdd250ae"
     },
     {
-      "path": "harnesslab/backend/labroot.py",
+      "path": "traceharness/backend/labroot.py",
       "bytes": 3424,
       "sha256": "7721594252f1dd4d08b9d22e7672a4c44e3f781d9dbc02e664f47372db48c763"
     },
     {
-      "path": "harnesslab/backend/live_api.py",
+      "path": "traceharness/backend/live_api.py",
       "bytes": 7533,
       "sha256": "d0a57a3196ecd5521c7afe442bccc50efd59e9688f8e05e838022e3c1cd9ca15"
     },
     {
-      "path": "harnesslab/backend/metrics.py",
+      "path": "traceharness/backend/metrics.py",
       "bytes": 23624,
       "sha256": "a740ad2e66b70cead8d857a63a44804b4963b5fdabb93cb5ec40199552cb22d3"
     },
     {
-      "path": "harnesslab/backend/outcomes_api.py",
+      "path": "traceharness/backend/outcomes_api.py",
       "bytes": 5366,
       "sha256": "21ef598dee58ed095678f297eebea19d345019f2b7db91fcc3dd72d63eb62499"
     },
     {
-      "path": "harnesslab/backend/paths.py",
+      "path": "traceharness/backend/paths.py",
       "bytes": 2529,
       "sha256": "c2dbbeccb5a5e20a79a0bf309ad3a631365a4a10a9de9bb93664c14f375af83b"
     },
     {
-      "path": "harnesslab/backend/private_guard.py",
+      "path": "traceharness/backend/private_guard.py",
       "bytes": 1999,
       "sha256": "004f756522a1df0404156072bf4af0c7a250b2ba594d5d1743b0461642f633f3"
     },
     {
-      "path": "harnesslab/backend/real_import.py",
+      "path": "traceharness/backend/real_import.py",
       "bytes": 15075,
       "sha256": "78428408254d65e4ef034fde1f8d12cc1ab974959624c6d4ce6649e4cea80ae0"
     },
     {
-      "path": "harnesslab/backend/repeats_api.py",
+      "path": "traceharness/backend/repeats_api.py",
       "bytes": 4026,
       "sha256": "458eba0725789a66a695d5aa658c0cb11ee8daeb10219b5f07d0a437e4027541"
     },
     {
-      "path": "harnesslab/backend/results_scope.py",
+      "path": "traceharness/backend/results_scope.py",
       "bytes": 3103,
       "sha256": "f65e8970de1ed23157f0b6082a25fcb4418fe0beebe1d856dab2b9510b646753"
     },
     {
-      "path": "harnesslab/backend/sentinel.py",
+      "path": "traceharness/backend/sentinel.py",
       "bytes": 58495,
       "sha256": "e38de2b94d9e185181b6cfebbbd64e62313d08cb46a7a3cf45431d7bac91c42c"
     },
     {
-      "path": "harnesslab/backend/sentinel_ext.py",
+      "path": "traceharness/backend/sentinel_ext.py",
       "bytes": 24019,
       "sha256": "f44e0af6b856063dda7cf75b61bafdb92797860bf24839f0c0fb0f1db68caff8"
     },
     {
-      "path": "harnesslab/backend/static_export.py",
+      "path": "traceharness/backend/static_export.py",
       "bytes": 16527,
       "sha256": "05669f67fa567caf736232aca8c482b6c4237c7221f5e04c42563cfe1b9d8488"
     },
     {
-      "path": "harnesslab/backend/store.py",
+      "path": "traceharness/backend/store.py",
       "bytes": 18521,
       "sha256": "5488a7f9728cf4d1240ccdad21fe91a447ad99565a6b1da94f8c9e279d4ca772"
     },
     {
-      "path": "harnesslab/capture/__init__.py",
+      "path": "traceharness/capture/__init__.py",
       "bytes": 424,
       "sha256": "9716b93c31c4f0051f45099cfa75eaa3eb782efc9eacfcdb01ca7251b30f9e1d"
     },
     {
-      "path": "harnesslab/capture/__main__.py",
+      "path": "traceharness/capture/__main__.py",
       "bytes": 18847,
       "sha256": "f32c8990408184cd367626260df41ff09318ad469c6504dee832c325d59c815a"
     },
     {
-      "path": "harnesslab/capture/activity.py",
+      "path": "traceharness/capture/activity.py",
       "bytes": 4002,
       "sha256": "6971d8c41688a43b41dff64649ee93d965e0b0c1b2fc47a66d7e528eab492ffe"
     },
     {
-      "path": "harnesslab/capture/adapters.py",
+      "path": "traceharness/capture/adapters.py",
       "bytes": 23401,
       "sha256": "a0b153e2ca47c7a94f5d902d99cf77125f14e7cd4e2f94716e38905670dcc81b"
     },
     {
-      "path": "harnesslab/capture/allowlist.py",
+      "path": "traceharness/capture/allowlist.py",
       "bytes": 1400,
       "sha256": "9c38b6d984b90cee630ce7d527eb69ff0113ae54da6e6212970750f5cce39ee4"
     },
     {
-      "path": "harnesslab/capture/archive.py",
+      "path": "traceharness/capture/archive.py",
       "bytes": 2116,
       "sha256": "c92694909b570c1f8d52a5f6009497c22352916c1cb54c5da668b4d3af046c5b"
     },
     {
-      "path": "harnesslab/capture/backfill.py",
+      "path": "traceharness/capture/backfill.py",
       "bytes": 16788,
       "sha256": "133c149ad688d0e608d41eedf8f10a0dd14763d0f53e0b9f06205edf76018d3d"
     },
     {
-      "path": "harnesslab/capture/cursors.py",
+      "path": "traceharness/capture/cursors.py",
       "bytes": 5167,
       "sha256": "d5d3b9fa291b82733badc63953c6a69c0762111de8ea7733f021bf6b4829485e"
     },
     {
-      "path": "harnesslab/capture/harness_config.py",
+      "path": "traceharness/capture/harness_config.py",
       "bytes": 5349,
       "sha256": "d6a9f3872084948841aa525352205f7d8719bb60fbf54ffa246b539084f2eda0"
     },
     {
-      "path": "harnesslab/capture/identity.py",
+      "path": "traceharness/capture/identity.py",
       "bytes": 5859,
       "sha256": "60613d9c2dca9659aa936b7c1d2fa333e4b9176880811579ef5885afc2379675"
     },
     {
-      "path": "harnesslab/capture/launchd.py",
+      "path": "traceharness/capture/launchd.py",
       "bytes": 6292,
       "sha256": "49000e3cef830c3807ef3bc75016b14ad2023076d2bd4bb71cee445dcc151936"
     },
     {
-      "path": "harnesslab/capture/lock.py",
+      "path": "traceharness/capture/lock.py",
       "bytes": 1954,
       "sha256": "fc0a55243df610ef5d4c4658d35d544e230ffbe007def4210bc2398ae867bda2"
     },
     {
-      "path": "harnesslab/capture/orphans.py",
+      "path": "traceharness/capture/orphans.py",
       "bytes": 32181,
       "sha256": "2bf9fa53a2eb2bd4cca68e96dd5c18c56b57b9aa51e37333fd200c48b77b01bb"
     },
     {
-      "path": "harnesslab/capture/presence.py",
+      "path": "traceharness/capture/presence.py",
       "bytes": 8519,
       "sha256": "89900e403d90e1d83113697c3e6883368948a7b864e384ac9c407c57d57031c7"
     },
     {
-      "path": "harnesslab/capture/regen.py",
+      "path": "traceharness/capture/regen.py",
       "bytes": 4216,
       "sha256": "4100eb66ca53c9d011da9b24873c1743111fac2a787289030eb5309d39e7a5ac"
     },
     {
-      "path": "harnesslab/capture/sniffer.py",
+      "path": "traceharness/capture/sniffer.py",
       "bytes": 31327,
       "sha256": "a1b293cdc36da84a4b0897954707a8d8aed42cce3a5ff06a6db9fbcff6ab97be"
     },
     {
-      "path": "harnesslab/capture/sweep.py",
+      "path": "traceharness/capture/sweep.py",
       "bytes": 14357,
       "sha256": "b495f88723e9ff79ff9f09a120e61ea98f865ca6b151b74a66706cd97277ca41"
     },
     {
-      "path": "harnesslab/capture/writer.py",
+      "path": "traceharness/capture/writer.py",
       "bytes": 15699,
       "sha256": "e2a97f74d805683c859aef38a2768a7c08a691e68c327a96921aa8e7c441d7e2"
     },
     {
-      "path": "harnesslab/core/__init__.py",
+      "path": "traceharness/core/__init__.py",
       "bytes": 842,
       "sha256": "f939eb7ffd1759896b83921ad0b4699691c6186c96de37060e789e2a1acb8c0d"
     },
     {
-      "path": "harnesslab/core/_mock_knowledge.py",
+      "path": "traceharness/core/_mock_knowledge.py",
       "bytes": 12151,
       "sha256": "e904cdc866a305ca2b428d60a35130b7baf405a62f40fb67895a88acec44dd23"
     },
     {
-      "path": "harnesslab/core/analysis.py",
+      "path": "traceharness/core/analysis.py",
       "bytes": 22722,
       "sha256": "0bcddb86212a57931947ca066ffd54890e3a111e3e5efcbd4e4dc53d84e45081"
     },
     {
-      "path": "harnesslab/core/console.py",
+      "path": "traceharness/core/console.py",
       "bytes": 13934,
       "sha256": "341505e47510f7756340fc86ef3968b6ed6963752c8f0059c9b8948cb9d710ef"
     },
     {
-      "path": "harnesslab/core/grader.py",
+      "path": "traceharness/core/grader.py",
       "bytes": 2787,
       "sha256": "90aa6e35e349fe947b78efd52c7b871042b762a96de887fb15765f2ff2e1d2f1"
     },
     {
-      "path": "harnesslab/core/harness.py",
+      "path": "traceharness/core/harness.py",
       "bytes": 18329,
       "sha256": "060d6be082c76dc9a8cc66978b77e007a8b943a246cc1673920b7d1fb4c3b9bf"
     },
     {
-      "path": "harnesslab/core/import_traj.py",
+      "path": "traceharness/core/import_traj.py",
       "bytes": 6029,
       "sha256": "785c1bc5c40e8c00c4a3ff60e4e79f0549a12955547d0b3c7eeb1e90751c7b87"
     },
     {
-      "path": "harnesslab/core/judge.py",
+      "path": "traceharness/core/judge.py",
       "bytes": 9423,
       "sha256": "c44e0b5ceac109344cfce4f9656b59c77db2b3c975f530b357d60963f60b8b6e"
     },
     {
-      "path": "harnesslab/core/ledger.py",
+      "path": "traceharness/core/ledger.py",
       "bytes": 4793,
       "sha256": "a452a28e77543bbf92e44d9cc65a66ff7a1e19655e4968df3b81164f01bdc03a"
     },
     {
-      "path": "harnesslab/core/live.py",
+      "path": "traceharness/core/live.py",
       "bytes": 12343,
       "sha256": "8609d8a84b229c6b846c864edd296d0d8a96101a5ff656f3ab0e45430329d459"
     },
     {
-      "path": "harnesslab/core/mate.py",
+      "path": "traceharness/core/mate.py",
       "bytes": 7388,
       "sha256": "75f4dfa32779fd5e8b99c0d780e9c114dde0623ee0c05ecdc639e36eccbdb652"
     },
     {
-      "path": "harnesslab/core/mock.py",
+      "path": "traceharness/core/mock.py",
       "bytes": 9642,
       "sha256": "ce57aa91f08a6ddda806449fcd58dc8dcafe49f85264d96e4950ce0a80d8447e"
     },
     {
-      "path": "harnesslab/core/patterns.py",
+      "path": "traceharness/core/patterns.py",
       "bytes": 9650,
       "sha256": "a0e0b881a4747eee9f92aad33448c1fca3264bc4f428a6f66c57887c9baa0cf7"
     },
     {
-      "path": "harnesslab/core/providers.py",
+      "path": "traceharness/core/providers.py",
       "bytes": 13669,
       "sha256": "1616e13620cb078d57c69743445dcd5a4fd44c4f332d7b0d7a78b7d10f491b63"
     },
     {
-      "path": "harnesslab/core/pyexe.py",
+      "path": "traceharness/core/pyexe.py",
       "bytes": 4014,
       "sha256": "b46e1b97cc547dd4ceb4581ceb7a365dafb74dae540663a7e0d65e38e3f95a03"
     },
     {
-      "path": "harnesslab/core/real_traj.py",
+      "path": "traceharness/core/real_traj.py",
       "bytes": 17057,
       "sha256": "2f36c89466cf1e1918aa0e40724ba8e8663b8abdce1624e595572c1c4720f062"
     },
     {
-      "path": "harnesslab/core/repeats.py",
+      "path": "traceharness/core/repeats.py",
       "bytes": 17520,
       "sha256": "5006ef7b880d8f7d726ec9069c502e595ace3b71be541983f0d16a0feb85b1bc"
     },
     {
-      "path": "harnesslab/core/reportcard.py",
+      "path": "traceharness/core/reportcard.py",
       "bytes": 10050,
       "sha256": "b30d2dfe1f56bd05730e9bee4d5a7dc330e1b414c57310399f534f0c048253e4"
     },
     {
-      "path": "harnesslab/core/runner.py",
+      "path": "traceharness/core/runner.py",
       "bytes": 4954,
       "sha256": "113d4a816f5ab27f5a27a1c650b6694d11c6d943502000f979e2bffeeed49dd3"
     },
     {
-      "path": "harnesslab/core/serve.py",
+      "path": "traceharness/core/serve.py",
       "bytes": 11784,
       "sha256": "918a87953b5d220266b12f413432d1089892f2bf86aa0a91d4e81526737369a3"
     },
     {
-      "path": "harnesslab/core/tools.py",
+      "path": "traceharness/core/tools.py",
       "bytes": 14181,
       "sha256": "b17298d2c788134f38ce5561abb0671e252d81cfc57e2506ed93bd30a1668419"
     },
     {
-      "path": "harnesslab/core/trajtest.py",
+      "path": "traceharness/core/trajtest.py",
       "bytes": 7370,
       "sha256": "4681710ce49f0479124bfd928441afe229221255ac1f5cd8eb5d94c4c93195dd"
     },
     {
-      "path": "harnesslab/data/active_model.txt",
+      "path": "traceharness/data/active_model.txt",
       "bytes": 17,
       "sha256": "d8b9f6442ede41beae557ee50d3bd935f043b4ae39b07d655562123e99595723"
     },
     {
-      "path": "harnesslab/data/models/mock_prerecorded.json",
+      "path": "traceharness/data/models/mock_prerecorded.json",
       "bytes": 6129,
       "sha256": "d5ba37a83499d73bd22ca9d114891d154257149055b2d6a58d21483d6112d664"
     },
     {
-      "path": "harnesslab/frontend/dist/assets/index-B38bxl-D.js",
+      "path": "traceharness/frontend/dist/assets/index-B38bxl-D.js",
       "bytes": 690690,
       "sha256": "dde3c03155d67a5bfa44986b5caa853ce7adab1317393a4a728f4c1c5d8cabdb"
     },
     {
-      "path": "harnesslab/frontend/dist/assets/index-sQKz2MgP.css",
+      "path": "traceharness/frontend/dist/assets/index-sQKz2MgP.css",
       "bytes": 267487,
       "sha256": "f0a96e38de99b4cc63551c600ab2c84f7e6e35eb3acd54609996a9bac70bb232"
     },
     {
-      "path": "harnesslab/frontend/dist/build-source.json",
+      "path": "traceharness/frontend/dist/build-source.json",
       "bytes": 96,
       "sha256": "46529f8b7cbcb8f5395fc144dc6cf0a8630d2cbe56438878a9ed9ca222591d62"
     },
     {
-      "path": "harnesslab/frontend/dist/design-directions/README.md",
+      "path": "traceharness/frontend/dist/design-directions/README.md",
       "bytes": 5654,
       "sha256": "6ecf6bef4e2b198490ace960ede18e4984b39ff28fb63bd89269fd21d55085df"
     },
     {
-      "path": "harnesslab/frontend/dist/design-directions/compare.html",
+      "path": "traceharness/frontend/dist/design-directions/compare.html",
       "bytes": 7779,
       "sha256": "13ed474022ad19088ad1bd129a8f916da6a7746e634f05bc5a032786005ed654"
     },
     {
-      "path": "harnesslab/frontend/dist/design-directions/directions.css",
+      "path": "traceharness/frontend/dist/design-directions/directions.css",
       "bytes": 41106,
       "sha256": "1f69b78ed77a2ebcd2a96d284cd4cb109ff1bf9eb11a0a1ca98e9b412b5bcf9a"
     },
     {
-      "path": "harnesslab/frontend/dist/design-directions/directions.js",
+      "path": "traceharness/frontend/dist/design-directions/directions.js",
       "bytes": 25699,
       "sha256": "d016f045cf214c5d89d075caf7b83a24db0d8d6c0ce44c06fa0747152911f70f"
     },
     {
-      "path": "harnesslab/frontend/dist/design-directions/index.html",
+      "path": "traceharness/frontend/dist/design-directions/index.html",
       "bytes": 985,
       "sha256": "4576c5e3c1b375262d44c0eb09ca63af49cef660ec229d63ea55535575b88af7"
     },
     {
-      "path": "harnesslab/frontend/dist/design-directions/previews/atlas.png",
+      "path": "traceharness/frontend/dist/design-directions/previews/atlas.png",
       "bytes": 98135,
       "sha256": "3f871575168ee29580af1df7855b86d15994e70901eacc4add1f100b4b70ca11"
     },
     {
-      "path": "harnesslab/frontend/dist/design-directions/previews/comparison.png",
+      "path": "traceharness/frontend/dist/design-directions/previews/comparison.png",
       "bytes": 457583,
       "sha256": "a06a25b5e1f94b6f0629812dd0f19028aca74539d7259c43b63410ba51df68f6"
     },
     {
-      "path": "harnesslab/frontend/dist/design-directions/previews/console.png",
+      "path": "traceharness/frontend/dist/design-directions/previews/console.png",
       "bytes": 129931,
       "sha256": "8e67c67e799e661e2bda1b0d8e601a13077b1f8a694fea335239c71bc4d870e0"
     },
     {
-      "path": "harnesslab/frontend/dist/design-directions/previews/desk.png",
+      "path": "traceharness/frontend/dist/design-directions/previews/desk.png",
       "bytes": 135346,
       "sha256": "6fdef4a63080cb2aea35f761d7ae5f65282299d6616a142c7b275b4bd683a472"
     },
     {
-      "path": "harnesslab/frontend/dist/design-directions/previews/notebook.png",
+      "path": "traceharness/frontend/dist/design-directions/previews/notebook.png",
       "bytes": 150878,
       "sha256": "d8c72bfa430749a553825190e6fe4f20c5a6b66ce84e3c206c91f4a4fc1fda2a"
     },
     {
-      "path": "harnesslab/frontend/dist/design-directions/previews/studio.png",
+      "path": "traceharness/frontend/dist/design-directions/previews/studio.png",
       "bytes": 117392,
       "sha256": "fa775add3c3b658ad48693954694487f28cf1102f48fbd22a07dc07fb3a1584d"
     },
     {
-      "path": "harnesslab/frontend/dist/favicon.svg",
+      "path": "traceharness/frontend/dist/favicon.svg",
       "bytes": 349,
       "sha256": "b2cb4232fa80d2ce611c356e4f93628adf9f035041bb97e3d48d25aeda33f815"
     },
     {
-      "path": "harnesslab/frontend/dist/fonts/ibm-plex-mono-500.woff2",
+      "path": "traceharness/frontend/dist/fonts/ibm-plex-mono-500.woff2",
       "bytes": 10060,
       "sha256": "a76f53ca6612e7b3828eec2311098675b7f9849ae4169a8bcef6302aec02a6c0"
     },
     {
-      "path": "harnesslab/frontend/dist/fonts/ibm-plex-mono.woff2",
+      "path": "traceharness/frontend/dist/fonts/ibm-plex-mono.woff2",
       "bytes": 10052,
       "sha256": "c36f509c0a8f9f85f29cb44bc8701d8a9e0b14c499e77a884f789ead7093a7ac"
     },
     {
-      "path": "harnesslab/frontend/dist/fonts/ibm-plex-sans.woff2",
+      "path": "traceharness/frontend/dist/fonts/ibm-plex-sans.woff2",
       "bytes": 40240,
       "sha256": "056e4e2459f57a0033c8c9c844ff19d6e42ac8602027803d4345823bcc939818"
     },
     {
-      "path": "harnesslab/frontend/dist/icons.svg",
+      "path": "traceharness/frontend/dist/icons.svg",
       "bytes": 5031,
       "sha256": "b45fa506195cfcdef406ba9f0c77b36ddc1a7c224040926ec70abc2fdea7b93a"
     },
     {
-      "path": "harnesslab/frontend/dist/index.html",
+      "path": "traceharness/frontend/dist/index.html",
       "bytes": 4373,
       "sha256": "eb111471c1f71093f655061aae3bfdd882503c1dcb07f1c6be9a0dea690018bf"
     },
     {
-      "path": "harnesslab/frontend/index.html",
+      "path": "traceharness/frontend/index.html",
       "bytes": 4275,
       "sha256": "bae9c5999a52ee2a038c6855f4b727a6cc2f5609dbd9eccbbf00c5f7594e6dd1"
     },
     {
-      "path": "harnesslab/frontend/package-lock.json",
+      "path": "traceharness/frontend/package-lock.json",
       "bytes": 113236,
       "sha256": "51b7e2b87805a53ce4eb240e3492e820ae04c8e45aefbbd7d428223ae6280c99"
     },
     {
-      "path": "harnesslab/frontend/package.json",
+      "path": "traceharness/frontend/package.json",
       "bytes": 719,
       "sha256": "f9e0719ee42023417c61bcea4df07948ab74d915b9fac874b3441c1f3507a2f5"
     },
     {
-      "path": "harnesslab/frontend/public/design-directions/README.md",
+      "path": "traceharness/frontend/public/design-directions/README.md",
       "bytes": 5654,
       "sha256": "6ecf6bef4e2b198490ace960ede18e4984b39ff28fb63bd89269fd21d55085df"
     },
     {
-      "path": "harnesslab/frontend/public/design-directions/compare.html",
+      "path": "traceharness/frontend/public/design-directions/compare.html",
       "bytes": 7779,
       "sha256": "13ed474022ad19088ad1bd129a8f916da6a7746e634f05bc5a032786005ed654"
     },
     {
-      "path": "harnesslab/frontend/public/design-directions/directions.css",
+      "path": "traceharness/frontend/public/design-directions/directions.css",
       "bytes": 41106,
       "sha256": "1f69b78ed77a2ebcd2a96d284cd4cb109ff1bf9eb11a0a1ca98e9b412b5bcf9a"
     },
     {
-      "path": "harnesslab/frontend/public/design-directions/directions.js",
+      "path": "traceharness/frontend/public/design-directions/directions.js",
       "bytes": 25699,
       "sha256": "d016f045cf214c5d89d075caf7b83a24db0d8d6c0ce44c06fa0747152911f70f"
     },
     {
-      "path": "harnesslab/frontend/public/design-directions/index.html",
+      "path": "traceharness/frontend/public/design-directions/index.html",
       "bytes": 985,
       "sha256": "4576c5e3c1b375262d44c0eb09ca63af49cef660ec229d63ea55535575b88af7"
     },
     {
-      "path": "harnesslab/frontend/public/design-directions/previews/atlas.png",
+      "path": "traceharness/frontend/public/design-directions/previews/atlas.png",
       "bytes": 98135,
       "sha256": "3f871575168ee29580af1df7855b86d15994e70901eacc4add1f100b4b70ca11"
     },
     {
-      "path": "harnesslab/frontend/public/design-directions/previews/comparison.png",
+      "path": "traceharness/frontend/public/design-directions/previews/comparison.png",
       "bytes": 457583,
       "sha256": "a06a25b5e1f94b6f0629812dd0f19028aca74539d7259c43b63410ba51df68f6"
     },
     {
-      "path": "harnesslab/frontend/public/design-directions/previews/console.png",
+      "path": "traceharness/frontend/public/design-directions/previews/console.png",
       "bytes": 129931,
       "sha256": "8e67c67e799e661e2bda1b0d8e601a13077b1f8a694fea335239c71bc4d870e0"
     },
     {
-      "path": "harnesslab/frontend/public/design-directions/previews/desk.png",
+      "path": "traceharness/frontend/public/design-directions/previews/desk.png",
       "bytes": 135346,
       "sha256": "6fdef4a63080cb2aea35f761d7ae5f65282299d6616a142c7b275b4bd683a472"
     },
     {
-      "path": "harnesslab/frontend/public/design-directions/previews/notebook.png",
+      "path": "traceharness/frontend/public/design-directions/previews/notebook.png",
       "bytes": 150878,
       "sha256": "d8c72bfa430749a553825190e6fe4f20c5a6b66ce84e3c206c91f4a4fc1fda2a"
     },
     {
-      "path": "harnesslab/frontend/public/design-directions/previews/studio.png",
+      "path": "traceharness/frontend/public/design-directions/previews/studio.png",
       "bytes": 117392,
       "sha256": "fa775add3c3b658ad48693954694487f28cf1102f48fbd22a07dc07fb3a1584d"
     },
     {
-      "path": "harnesslab/frontend/public/favicon.svg",
+      "path": "traceharness/frontend/public/favicon.svg",
       "bytes": 349,
       "sha256": "b2cb4232fa80d2ce611c356e4f93628adf9f035041bb97e3d48d25aeda33f815"
     },
     {
-      "path": "harnesslab/frontend/public/fonts/ibm-plex-mono-500.woff2",
+      "path": "traceharness/frontend/public/fonts/ibm-plex-mono-500.woff2",
       "bytes": 10060,
       "sha256": "a76f53ca6612e7b3828eec2311098675b7f9849ae4169a8bcef6302aec02a6c0"
     },
     {
-      "path": "harnesslab/frontend/public/fonts/ibm-plex-mono.woff2",
+      "path": "traceharness/frontend/public/fonts/ibm-plex-mono.woff2",
       "bytes": 10052,
       "sha256": "c36f509c0a8f9f85f29cb44bc8701d8a9e0b14c499e77a884f789ead7093a7ac"
     },
     {
-      "path": "harnesslab/frontend/public/fonts/ibm-plex-sans.woff2",
+      "path": "traceharness/frontend/public/fonts/ibm-plex-sans.woff2",
       "bytes": 40240,
       "sha256": "056e4e2459f57a0033c8c9c844ff19d6e42ac8602027803d4345823bcc939818"
     },
     {
-      "path": "harnesslab/frontend/public/icons.svg",
+      "path": "traceharness/frontend/public/icons.svg",
       "bytes": 5031,
       "sha256": "b45fa506195cfcdef406ba9f0c77b36ddc1a7c224040926ec70abc2fdea7b93a"
     },
     {
-      "path": "harnesslab/frontend/src/App.dom.test.jsx",
+      "path": "traceharness/frontend/src/App.dom.test.jsx",
       "bytes": 4656,
       "sha256": "9dc16836eb56372b36ba4874eac53e09f6b97ed0ff8f225346023874eb611bc6"
     },
     {
-      "path": "harnesslab/frontend/src/App.jsx",
+      "path": "traceharness/frontend/src/App.jsx",
       "bytes": 5812,
       "sha256": "d82106c93e3fad68f8f713b736edc357ad65388663649ba4aefcc1a51e90e70b"
     },
     {
-      "path": "harnesslab/frontend/src/App.static.dom.test.jsx",
+      "path": "traceharness/frontend/src/App.static.dom.test.jsx",
       "bytes": 1740,
       "sha256": "492d14e1416fa7030206e5685c4d07f86fd942e5fd8c6d61a00bad1d5c0c8659"
     },
     {
-      "path": "harnesslab/frontend/src/LiveRun.dom.test.jsx",
+      "path": "traceharness/frontend/src/LiveRun.dom.test.jsx",
       "bytes": 4653,
       "sha256": "9ce2f44705e5ba568cb50f4b8abd1e2adc8d945885478b04e08ddefb2cd69a77"
     },
     {
-      "path": "harnesslab/frontend/src/api.js",
+      "path": "traceharness/frontend/src/api.js",
       "bytes": 11256,
       "sha256": "c305df8033307fc0e7315665b0c819c7ce53e2225ebf7bf98ce13257e7d7f7b9"
     },
     {
-      "path": "harnesslab/frontend/src/directions/investigationFacts.js",
+      "path": "traceharness/frontend/src/directions/investigationFacts.js",
       "bytes": 2720,
       "sha256": "b23819e1219997f3b175a16cb2d47f13cacb0cfa1e4600a204afc0fb63d0ac98"
     },
     {
-      "path": "harnesslab/frontend/src/directions/investigationFacts.test.js",
+      "path": "traceharness/frontend/src/directions/investigationFacts.test.js",
       "bytes": 2185,
       "sha256": "1bd9ccf4864453f5697052fc791a7040a0e0253a4509d2597282055d6dd8238f"
     },
     {
-      "path": "harnesslab/frontend/src/directions/shared.dom.test.jsx",
+      "path": "traceharness/frontend/src/directions/shared.dom.test.jsx",
       "bytes": 3265,
       "sha256": "c9102e44ed06f136f6766a26020078db5b648df5b1791f87beb9d92987029ff2"
     },
     {
-      "path": "harnesslab/frontend/src/directions/shared.jsx",
+      "path": "traceharness/frontend/src/directions/shared.jsx",
       "bytes": 10098,
       "sha256": "3f8d11f1cc05df72cc7d8b69a2a6519f09c0dfc1a0b780ae0aefdf3246736dd7"
     },
     {
-      "path": "harnesslab/frontend/src/directions/shared.race.dom.test.jsx",
+      "path": "traceharness/frontend/src/directions/shared.race.dom.test.jsx",
       "bytes": 3120,
       "sha256": "0956c714e67fab4599b08f3313cb8836eb2e905d9819773280976b582269dc15"
     },
     {
-      "path": "harnesslab/frontend/src/fonts.css",
+      "path": "traceharness/frontend/src/fonts.css",
       "bytes": 81054,
       "sha256": "b40e8b04ee84d6f7f7ea008c597f326a3b51bd511eaa3283623a876a3f8da838"
     },
     {
-      "path": "harnesslab/frontend/src/index.css",
+      "path": "traceharness/frontend/src/index.css",
       "bytes": 49974,
       "sha256": "b94cad3d69f9502d3bf1f0e75497f6870d7697ebf2b4275dd1ecbffe0fb1359a"
     },
     {
-      "path": "harnesslab/frontend/src/main.jsx",
+      "path": "traceharness/frontend/src/main.jsx",
       "bytes": 349,
       "sha256": "431e2affdb8db16dec585cb3ffa9ede707840668d1cf54852e7ca4ed184a366f"
     },
     {
-      "path": "harnesslab/frontend/src/mate/openrouter.js",
+      "path": "traceharness/frontend/src/mate/openrouter.js",
       "bytes": 21013,
       "sha256": "ce4ff96009c9f1567346b9e4a4f2228996491f02c088b249f103ce9e832fdda1"
     },
     {
-      "path": "harnesslab/frontend/src/mate/openrouter.test.js",
+      "path": "traceharness/frontend/src/mate/openrouter.test.js",
       "bytes": 33074,
       "sha256": "41b81fecad3cd4b132492c7d41246111303df420870e8410b433eb0245c520a7"
     },
     {
-      "path": "harnesslab/frontend/src/mate/openrouter.validate.test.js",
+      "path": "traceharness/frontend/src/mate/openrouter.validate.test.js",
       "bytes": 7291,
       "sha256": "1a2beba72b05f266360ad41bce9fe2b27b440bfad1e3811fda5d9d2e0756469b"
     },
     {
-      "path": "harnesslab/frontend/src/mate/pack.js",
+      "path": "traceharness/frontend/src/mate/pack.js",
       "bytes": 18634,
       "sha256": "969ba29f96845694540e2298b6332335e9a01aedd334c2fa008e9030312f18b0"
     },
     {
-      "path": "harnesslab/frontend/src/mate/pack.test.js",
+      "path": "traceharness/frontend/src/mate/pack.test.js",
       "bytes": 30324,
       "sha256": "042bce630ecb907cbc3859241c662db219601b2fcdf67d60c3d78cbfeaa34883"
     },
     {
-      "path": "harnesslab/frontend/src/matekey.js",
+      "path": "traceharness/frontend/src/matekey.js",
       "bytes": 5416,
       "sha256": "4cf1c7f3ff42857721afd65218617a60dc76718ef8040b7ba199dcb46a81124e"
     },
     {
-      "path": "harnesslab/frontend/src/matekey.test.js",
+      "path": "traceharness/frontend/src/matekey.test.js",
       "bytes": 7195,
       "sha256": "00caa2fab1693b014db256345eeb6ddc46e53e8c3e1ed2ca6d83b238e7fa51ad"
     },
     {
-      "path": "harnesslab/frontend/src/method/importing.js",
+      "path": "traceharness/frontend/src/method/importing.js",
       "bytes": 6519,
       "sha256": "cdc445534e6b3219b06b414801fc6d9a2f11fbbdf4e0d487b9af695951af292d"
     },
     {
-      "path": "harnesslab/frontend/src/method/importing.test.js",
+      "path": "traceharness/frontend/src/method/importing.test.js",
       "bytes": 8790,
       "sha256": "45a701bf904da37e4dca6380705d7fd98be71c6dc0b859c97687d3fa8173ca95"
     },
     {
-      "path": "harnesslab/frontend/src/no-hardcoded-color.test.js",
+      "path": "traceharness/frontend/src/no-hardcoded-color.test.js",
       "bytes": 6014,
       "sha256": "280e2c2a051e9c5bb00373f123ce1f52788878e25509b4b2af93472318a95d2d"
     },
     {
-      "path": "harnesslab/frontend/src/rig/RigApp.dom.test.jsx",
+      "path": "traceharness/frontend/src/rig/RigApp.dom.test.jsx",
       "bytes": 17950,
       "sha256": "37325b7c57d4d0fd00ea4dbe4dc7c387941eedb3b59b2965a1d8f3bd2f7b95fd"
     },
     {
-      "path": "harnesslab/frontend/src/rig/RigApp.jsx",
+      "path": "traceharness/frontend/src/rig/RigApp.jsx",
       "bytes": 57989,
       "sha256": "b92f60626e1f8f8d12304f459410ffd87d794dd05c0f0574f2fa6df74a2d3bee"
     },
     {
-      "path": "harnesslab/frontend/src/rig/answers.js",
+      "path": "traceharness/frontend/src/rig/answers.js",
       "bytes": 19478,
       "sha256": "c194142d19223d9340744979bc08b3736dcdd0e69271c88dc6bfe2e1cc9ae5a5"
     },
     {
-      "path": "harnesslab/frontend/src/rig/answers.test.js",
+      "path": "traceharness/frontend/src/rig/answers.test.js",
       "bytes": 4311,
       "sha256": "02e38c1b34a21051d5834669b769d3e6206a4c3f598c6a990ba4b9e7de4cca00"
     },
     {
-      "path": "harnesslab/frontend/src/rig/buildWatch.js",
+      "path": "traceharness/frontend/src/rig/buildWatch.js",
       "bytes": 2629,
       "sha256": "c36b23455d67e6f02687b7285c4296f23f41bd8cddaf1e4dc13b25e81071049d"
     },
     {
-      "path": "harnesslab/frontend/src/rig/buildWatch.test.js",
+      "path": "traceharness/frontend/src/rig/buildWatch.test.js",
       "bytes": 1085,
       "sha256": "e1ad03180e356fb0fe6db4f3ef3d4ef14cf6e9315107b276a1f78e0e24f31ab3"
     },
     {
-      "path": "harnesslab/frontend/src/rig/caseFile.js",
+      "path": "traceharness/frontend/src/rig/caseFile.js",
       "bytes": 5234,
       "sha256": "8354a15763810050f9509f89a808dce672706db83724fc12831f8a73fcaadcb0"
     },
     {
-      "path": "harnesslab/frontend/src/rig/caseFile.test.js",
+      "path": "traceharness/frontend/src/rig/caseFile.test.js",
       "bytes": 2029,
       "sha256": "010f21237e00cab549d5595099d61facc15e0253b1f735fc4274daacee2b5801"
     },
     {
-      "path": "harnesslab/frontend/src/rig/context.js",
+      "path": "traceharness/frontend/src/rig/context.js",
       "bytes": 3182,
       "sha256": "1bd274cb2e55cce00ac8046abd456d436f997a8308b101abc39d14dace97148f"
     },
     {
-      "path": "harnesslab/frontend/src/rig/data.js",
+      "path": "traceharness/frontend/src/rig/data.js",
       "bytes": 22763,
       "sha256": "d504fd46a836b4f0c9cc898ea1d34a1a45d6f6561ba000d61159fab993da2765"
     },
     {
-      "path": "harnesslab/frontend/src/rig/data.test.js",
+      "path": "traceharness/frontend/src/rig/data.test.js",
       "bytes": 5863,
       "sha256": "5f3f000725c754bd4fc67c36c4750105d713a06bee4fe34fbb81035d7c54b329"
     },
     {
-      "path": "harnesslab/frontend/src/rig/registry.js",
+      "path": "traceharness/frontend/src/rig/registry.js",
       "bytes": 4731,
       "sha256": "9da4875f1e2447ad9d1549263caa5e885494c454f2f00e04f75d019dcc75b144"
     },
     {
-      "path": "harnesslab/frontend/src/rig/registry.test.js",
+      "path": "traceharness/frontend/src/rig/registry.test.js",
       "bytes": 2521,
       "sha256": "61138ae2c2a41f7b6f6e38271a014e775eb47cf87ac607456e6d6691bd6a7032"
     },
     {
-      "path": "harnesslab/frontend/src/rig/rig-css.test.js",
+      "path": "traceharness/frontend/src/rig/rig-css.test.js",
       "bytes": 12267,
       "sha256": "14efcb63f88d1fa974983cce71fb1cd713ee2d5492336ddae8958f376a13d5b1"
     },
     {
-      "path": "harnesslab/frontend/src/rig/rig.css",
+      "path": "traceharness/frontend/src/rig/rig.css",
       "bytes": 76585,
       "sha256": "e9257b7cb76bc0342234cf158791d58a7b68674f1b4cbd0ab7e3769d9895ed09"
     },
     {
-      "path": "harnesslab/frontend/src/rig/route.js",
+      "path": "traceharness/frontend/src/rig/route.js",
       "bytes": 7195,
       "sha256": "b5eb3e2ad23f2f95821436c8936b72036f5445287b2755930d2bd4ca6fffef9d"
     },
     {
-      "path": "harnesslab/frontend/src/rig/route.test.js",
+      "path": "traceharness/frontend/src/rig/route.test.js",
       "bytes": 4361,
       "sha256": "694511b92f3c7e4bee2d6aa83483ad1d671d92067d49abb6fb9ee57baff32889"
     },
     {
-      "path": "harnesslab/frontend/src/rig/ui.dom.test.jsx",
+      "path": "traceharness/frontend/src/rig/ui.dom.test.jsx",
       "bytes": 641,
       "sha256": "0c7cf2802dd78057f8facd78bfdc604724aea83cee2ae4718003637c7ddd3578"
     },
     {
-      "path": "harnesslab/frontend/src/rig/ui.jsx",
+      "path": "traceharness/frontend/src/rig/ui.jsx",
       "bytes": 30456,
       "sha256": "e60643cdf27704f9d7df11d6f7076cc5ef8cfc8a8a2a7baea496a1195dc9111f"
     },
     {
-      "path": "harnesslab/frontend/src/rig/views/_pending.jsx",
+      "path": "traceharness/frontend/src/rig/views/_pending.jsx",
       "bytes": 8132,
       "sha256": "3324bb9dae624b5c5fd1fb9cb3e3b79b2a00fb6eccdad860f52609456c5e9c47"
     },
     {
-      "path": "harnesslab/frontend/src/rig/views/analysis.css",
+      "path": "traceharness/frontend/src/rig/views/analysis.css",
       "bytes": 18720,
       "sha256": "febf4a7c048ad7fd3f80d672b2b2e25339a00504da6156de7f6a7a5b0aed2d35"
     },
     {
-      "path": "harnesslab/frontend/src/rig/views/analysis.dom.test.jsx",
+      "path": "traceharness/frontend/src/rig/views/analysis.dom.test.jsx",
       "bytes": 37905,
       "sha256": "87031414e03bd0ccea51407864e48cccec8db8c595efeb64fad59f9746cefbd6"
     },
     {
-      "path": "harnesslab/frontend/src/rig/views/analysis.jsx",
+      "path": "traceharness/frontend/src/rig/views/analysis.jsx",
       "bytes": 113728,
       "sha256": "81f465e350e0579cc844eeef041a54096946561d681d62dfae1a61b940862846"
     },
     {
-      "path": "harnesslab/frontend/src/rig/views/buddy.jsx",
+      "path": "traceharness/frontend/src/rig/views/buddy.jsx",
       "bytes": 13881,
       "sha256": "69bfaa38ddf304e1f059210f2fd424274cbb61c14b007948531d6ac57b5ca55a"
     },
     {
-      "path": "harnesslab/frontend/src/rig/views/casefile.dom.test.jsx",
+      "path": "traceharness/frontend/src/rig/views/casefile.dom.test.jsx",
       "bytes": 6078,
       "sha256": "866632eca90f9b56532d6f623ee7d5f4a3d0e54f17b727e9fe8ddbdc78791788"
     },
     {
-      "path": "harnesslab/frontend/src/rig/views/casefile.jsx",
+      "path": "traceharness/frontend/src/rig/views/casefile.jsx",
       "bytes": 7671,
       "sha256": "e90ee9eccc7b55f5b87e8785e6b9e366b4b6b85078b12a209b257292b57ff539"
     },
     {
-      "path": "harnesslab/frontend/src/rig/views/console.css",
+      "path": "traceharness/frontend/src/rig/views/console.css",
       "bytes": 10688,
       "sha256": "934b305df8860a956cd92667d28946f8e9ab8abea9e19be8663691d3129dda99"
     },
     {
-      "path": "harnesslab/frontend/src/rig/views/console.dom.test.jsx",
+      "path": "traceharness/frontend/src/rig/views/console.dom.test.jsx",
       "bytes": 14005,
       "sha256": "bbef86a4ab39cf233ee1e29aff7a1d0630a45f547a441371153c5a90e8bb2a26"
     },
     {
-      "path": "harnesslab/frontend/src/rig/views/console.jsx",
+      "path": "traceharness/frontend/src/rig/views/console.jsx",
       "bytes": 25194,
       "sha256": "3a1e773c46eb88105c16a81267c3f53d82ebe54a7b0426eb69a9116919a565ac"
     },
     {
-      "path": "harnesslab/frontend/src/rig/views/dataset.css",
+      "path": "traceharness/frontend/src/rig/views/dataset.css",
       "bytes": 2486,
       "sha256": "6b66b1ba5f67432bd1d4ec85564cb055df322ba9f501164b33de4f3a76adcc96"
     },
     {
-      "path": "harnesslab/frontend/src/rig/views/dataset.dom.test.jsx",
+      "path": "traceharness/frontend/src/rig/views/dataset.dom.test.jsx",
       "bytes": 3502,
       "sha256": "00f7bb69f9b6544a77ce4e8d159fc5353c956b8d04d01512d7f363de9b2f9571"
     },
     {
-      "path": "harnesslab/frontend/src/rig/views/dataset.jsx",
+      "path": "traceharness/frontend/src/rig/views/dataset.jsx",
       "bytes": 14277,
       "sha256": "14d27b5ed4326beca48f50aa53d658f5f696b5a90d7af024ee82f45789674154"
     },
     {
-      "path": "harnesslab/frontend/src/rig/views/dock.css",
+      "path": "traceharness/frontend/src/rig/views/dock.css",
       "bytes": 5941,
       "sha256": "9482887d16eb636835fef67e7beb3f3857200102a4bf15358b0fb19bc4dadaae"
     },
     {
-      "path": "harnesslab/frontend/src/rig/views/home.css",
+      "path": "traceharness/frontend/src/rig/views/home.css",
       "bytes": 994,
       "sha256": "0b7dc299a082692e9b86b5eb9deff0732c099191a6089d08032d62002cfabe76"
     },
     {
-      "path": "harnesslab/frontend/src/rig/views/home.dom.test.jsx",
+      "path": "traceharness/frontend/src/rig/views/home.dom.test.jsx",
       "bytes": 3148,
       "sha256": "c2e7a4252703e87f769cf94f42ba61dfd724247a0befd10b9851c2d6848c801b"
     },
     {
-      "path": "harnesslab/frontend/src/rig/views/home.jsx",
+      "path": "traceharness/frontend/src/rig/views/home.jsx",
       "bytes": 7041,
       "sha256": "421f0162ada7b210cee40ac3351481a8aaecb5351f50777d6d19d59c32169568"
     },
     {
-      "path": "harnesslab/frontend/src/rig/views/questions.css",
+      "path": "traceharness/frontend/src/rig/views/questions.css",
       "bytes": 5590,
       "sha256": "9a466cdc51ef36c957b3520c3852307bcda024135361496a6b375d3686765f43"
     },
     {
-      "path": "harnesslab/frontend/src/rig/views/questions.dom.test.jsx",
+      "path": "traceharness/frontend/src/rig/views/questions.dom.test.jsx",
       "bytes": 6448,
       "sha256": "c6d2b6f93c71018538e4895dc22989c55e82cc7bc2703fb6b3e10864623fae04"
     },
     {
-      "path": "harnesslab/frontend/src/rig/views/questions.jsx",
+      "path": "traceharness/frontend/src/rig/views/questions.jsx",
       "bytes": 31467,
       "sha256": "bba61b96e306cfa25dfa544f22decad642d78275b849683ee44aa4baff59dfea"
     },
     {
-      "path": "harnesslab/frontend/src/rig/views/trajectory.css",
+      "path": "traceharness/frontend/src/rig/views/trajectory.css",
       "bytes": 24322,
       "sha256": "568abb1fe922b4988ea6624c8a5c1c69d2e43d074b03a7f38030759392456d41"
     },
     {
-      "path": "harnesslab/frontend/src/rig/views/trajectory.dom.test.jsx",
+      "path": "traceharness/frontend/src/rig/views/trajectory.dom.test.jsx",
       "bytes": 31365,
       "sha256": "b14b71c87084b7dc45a7796f6431988d037b2484261f4154228b3fe84c1b28dc"
     },
     {
-      "path": "harnesslab/frontend/src/rig/views/trajectory.jsx",
+      "path": "traceharness/frontend/src/rig/views/trajectory.jsx",
       "bytes": 114808,
       "sha256": "348c19d24810ac84eefe22bde8440166657ba476dc995f6c5f961b0da79a15f2"
     },
     {
-      "path": "harnesslab/frontend/src/rig/views/workspace.css",
+      "path": "traceharness/frontend/src/rig/views/workspace.css",
       "bytes": 17777,
       "sha256": "3948a4fad9eaaeec523fb445a0b886ee132f9d3d019e3122c6b14d26a1794c74"
     },
     {
-      "path": "harnesslab/frontend/src/rig/views/workspace.dom.test.jsx",
+      "path": "traceharness/frontend/src/rig/views/workspace.dom.test.jsx",
       "bytes": 40367,
       "sha256": "43050d5537832ae9cdaa147c8fa2e769430f3c596966c14f3328394c7f2decdd"
     },
     {
-      "path": "harnesslab/frontend/src/rig/views/workspace.jsx",
+      "path": "traceharness/frontend/src/rig/views/workspace.jsx",
       "bytes": 120318,
       "sha256": "208242e2595fe5c01b229fe3e4091b4b3812640c03dfb6b0c4bfcb91f07075e9"
     },
     {
-      "path": "harnesslab/frontend/src/sr-only.test.js",
+      "path": "traceharness/frontend/src/sr-only.test.js",
       "bytes": 4222,
       "sha256": "61f0ba96266de4fa206c6796da7b3f4a22ffa2560d5c254427c2a30036fcc26f"
     },
     {
-      "path": "harnesslab/frontend/src/studentFacts.js",
+      "path": "traceharness/frontend/src/studentFacts.js",
       "bytes": 4390,
       "sha256": "6dab18c6475cece60885d21f24c0e8f78776b62c0c1614a13014359ac2318e0f"
     },
     {
-      "path": "harnesslab/frontend/src/taskLabels.js",
+      "path": "traceharness/frontend/src/taskLabels.js",
       "bytes": 944,
       "sha256": "7c17383d1a277fd2f62f66b70fa0a55d81aad74573c2e23a67255ad277f17009"
     },
     {
-      "path": "harnesslab/frontend/src/theme.js",
+      "path": "traceharness/frontend/src/theme.js",
       "bytes": 697,
       "sha256": "4f7a6b0e37d0759b027928d0a38477cc217ba24ba5a6e936aaa13951c3c80c17"
     },
     {
-      "path": "harnesslab/frontend/src/workspace/BuddyMessage.jsx",
+      "path": "traceharness/frontend/src/workspace/BuddyMessage.jsx",
       "bytes": 1680,
       "sha256": "41a5d08a646d276bb19596474d7c0e4782d5d096825f8c20fea29a1bfa99a08a"
     },
     {
-      "path": "harnesslab/frontend/src/workspace/BuddyModelPicker.dom.test.jsx",
+      "path": "traceharness/frontend/src/workspace/BuddyModelPicker.dom.test.jsx",
       "bytes": 6150,
       "sha256": "7cae1b87d5dcde0557a1d86a01518ecf07cc55dd7f0817554a6f49c27a9b6bbb"
     },
     {
-      "path": "harnesslab/frontend/src/workspace/BuddyModelPicker.jsx",
+      "path": "traceharness/frontend/src/workspace/BuddyModelPicker.jsx",
       "bytes": 7614,
       "sha256": "d78319da6a3744048a213ed9f3532f4ddf21ce1c545ca012561d5a0c9b7dfd7f"
     },
     {
-      "path": "harnesslab/frontend/src/workspace/WorkspaceUI.dom.test.jsx",
+      "path": "traceharness/frontend/src/workspace/WorkspaceUI.dom.test.jsx",
       "bytes": 812,
       "sha256": "bb25b2e8736f096971f996324a4681457a776a233516fda6644031ba0839db48"
     },
     {
-      "path": "harnesslab/frontend/src/workspace/WorkspaceUI.jsx",
+      "path": "traceharness/frontend/src/workspace/WorkspaceUI.jsx",
       "bytes": 4792,
       "sha256": "d73a28be294227bdbd6f41a8a05f924b6a7dee0de4d04e7a404de37d7bac9fdb"
     },
     {
-      "path": "harnesslab/frontend/src/workspace/buddyClient.js",
+      "path": "traceharness/frontend/src/workspace/buddyClient.js",
       "bytes": 8892,
       "sha256": "7746bef9dd51676a685da82bca00a8fa432c371ce664d46ef361750b9c011970"
     },
     {
-      "path": "harnesslab/frontend/src/workspace/buddyClient.test.js",
+      "path": "traceharness/frontend/src/workspace/buddyClient.test.js",
       "bytes": 5423,
       "sha256": "49d7fe469db4bd5fdf0697702cd59e507835625a7681ea7972429dc9e2360087"
     },
     {
-      "path": "harnesslab/frontend/src/workspace/workspaceFacts.js",
+      "path": "traceharness/frontend/src/workspace/workspaceFacts.js",
       "bytes": 2771,
       "sha256": "52827da8670721daff9a18ed62ce8a6174be24d3f776b2b1013744f475875dc4"
     },
     {
-      "path": "harnesslab/frontend/src/workspace/workspaceFacts.test.js",
+      "path": "traceharness/frontend/src/workspace/workspaceFacts.test.js",
       "bytes": 2436,
       "sha256": "5ee8a6b6d6a2dacbe66034ef29b6c7bdb75d399311aa31aa539f290e849d45d3"
     },
     {
-      "path": "harnesslab/frontend/src/workspace/workspaceTheme.js",
+      "path": "traceharness/frontend/src/workspace/workspaceTheme.js",
       "bytes": 1673,
       "sha256": "1d2f6013a3e9506677f03b34c772f3eaa53eeca03f8ac23aa6a3be0af39d9972"
     },
     {
-      "path": "harnesslab/frontend/test/rig-testing.jsx",
+      "path": "traceharness/frontend/test/rig-testing.jsx",
       "bytes": 9809,
       "sha256": "3d857afcc06f440d4617506c58f245ac3007af5d273429ecf92ed41761f9939b"
     },
     {
-      "path": "harnesslab/frontend/vite.config.js",
+      "path": "traceharness/frontend/vite.config.js",
       "bytes": 2273,
       "sha256": "689a9670a7adbc089c39dea8f8200d52a87f73eae2639a3395e922212f07c294"
     },
     {
-      "path": "harnesslab/plugins/blind_flailing.rule.json",
+      "path": "traceharness/plugins/blind_flailing.rule.json",
       "bytes": 712,
       "sha256": "a504026211bb67f673362507c91494df5b8b39ce1594d2b70cad65581ca2ad08"
     },
     {
-      "path": "harnesslab/plugins/edit_storm.py",
+      "path": "traceharness/plugins/edit_storm.py",
       "bytes": 2515,
       "sha256": "0f40ef2f7625bbcb842951022a5431a4d0126b26dbe1a2a168becd4ad96a3eb0"
     },
     {
-      "path": "harnesslab/plugins/unverified_edit_streak.rule.json",
+      "path": "traceharness/plugins/unverified_edit_streak.rule.json",
       "bytes": 957,
       "sha256": "8655dba64c73b802602a6bfb98a53794fab654ad9ee1a078b553e0f9e72301c2"
     },
     {
-      "path": "harnesslab/requirements.txt",
+      "path": "traceharness/requirements.txt",
       "bytes": 506,
       "sha256": "5c396824a4ffd8fd3c8ba829610a8d9dbc5bb8395277545c556445a6e6de6402"
     },
     {
-      "path": "harnesslab/school-package.json",
+      "path": "traceharness/school-package.json",
       "bytes": 4475,
       "sha256": "939f481e72eddd759027afaf78c1ab16cbfad5df643dc36d6142219b1966b9ee"
     },
@@ -71164,7 +71164,7 @@
       "sha256": "8d2bce545650e7dccc2774d67f5f6d4c6f2431cf1aa433a47df009195c226808"
     },
     {
-      "path": "tests_agentlab/test_harnesslab.py",
+      "path": "tests_agentlab/test_traceharness.py",
       "bytes": 14720,
       "sha256": "2273e9f3f45d0c5886c77fa90cd94eb43b0b892704cfe019a5f8fd3b35eb5ff5"
     },

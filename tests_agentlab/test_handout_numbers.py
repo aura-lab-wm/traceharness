@@ -14,7 +14,7 @@ import unittest
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, ROOT)
 
-from harnesslab.core.analysis import factorial, filter_rows, load_index, paired_bootstrap  # noqa: E402
+from traceharness.core.analysis import factorial, filter_rows, load_index, paired_bootstrap  # noqa: E402
 
 RUNS = os.path.join(ROOT, "data", "runs")
 HARNESSES = ("baseline", "no_test_tool")          # ex8's default --harnesses
@@ -105,14 +105,14 @@ class HandoutMatchesTheData(unittest.TestCase):
 
 def _package_datasets():
     import json
-    return set(json.loads(_read("harnesslab/school-package.json"))["datasets"])
+    return set(json.loads(_read("traceharness/school-package.json"))["datasets"])
 
 
 class RunCountsMatchTheData(unittest.TestCase):
     """'2,208 runs', '1,632', '576', '500' appear in the guide, the package page and the docs."""
 
-    SOURCES = ["SCHOOL_PACKAGE.md", "README.md", "harnesslab/school-package.json",
-               "harnesslab/frontend/src/rig/views/workspace.jsx"]   # the Rig's guide and package pages
+    SOURCES = ["SCHOOL_PACKAGE.md", "README.md", "traceharness/school-package.json",
+               "traceharness/frontend/src/rig/views/workspace.jsx"]   # the Rig's guide and package pages
 
     def test_quoted_counts(self):
         llma, live, swe = _count("llma4se_live"), _count("live"), _count("real_swe_agent_500")

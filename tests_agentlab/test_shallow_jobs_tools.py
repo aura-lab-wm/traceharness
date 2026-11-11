@@ -1,8 +1,8 @@
 """Tool names stay on the allow-list, and a negative step count is refused."""
 import pytest
 
-from harnesslab.shallow.jobs import ShallowJobError, run_shallow_job
-from harnesslab.shallow.store import MemoryStore
+from traceharness.shallow.jobs import ShallowJobError, run_shallow_job
+from traceharness.shallow.store import MemoryStore
 
 FIXTURE_KEY = "fixture-key"
 

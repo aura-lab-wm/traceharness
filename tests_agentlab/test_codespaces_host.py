@@ -1,4 +1,4 @@
-"""harnesslab.backend.guard in GitHub Codespaces, where students run TraceHarness.
+"""traceharness.backend.guard in GitHub Codespaces, where students run TraceHarness.
 
 Inside a codespace the student's browser reaches the server through GitHub's port-forwarding proxy
 at https://<CODESPACE_NAME>-<port>.<GITHUB_CODESPACES_PORT_FORWARDING_DOMAIN>, and that name arrives
@@ -18,8 +18,8 @@ sys.path.insert(0, LAB)
 from fastapi import FastAPI                      # noqa: E402
 from fastapi.testclient import TestClient        # noqa: E402
 
-from harnesslab.backend import guard             # noqa: E402
-from harnesslab.backend.guard import codespaces_host, security_guard, set_bound_host, set_bound_port  # noqa: E402
+from traceharness.backend import guard             # noqa: E402
+from traceharness.backend.guard import codespaces_host, security_guard, set_bound_host, set_bound_port  # noqa: E402
 
 CS = {"CODESPACES": "true", "CODESPACE_NAME": "fuzzy-orbit-7g4q9x", "GITHUB_CODESPACES_PORT_FORWARDING_DOMAIN": "app.github.dev"}
 MINE = "fuzzy-orbit-7g4q9x-8765.app.github.dev"

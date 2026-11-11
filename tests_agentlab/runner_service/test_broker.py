@@ -6,10 +6,10 @@ import tempfile
 import time
 import unittest
 
-from harnesslab.runner_service.credentials import CredentialVault
-from harnesslab.runner_service.jobs import Jobs, reported_usage, standard_request
-from harnesslab.runner_service.provider import ProviderError
-from harnesslab.runner_service.settings import Settings
+from traceharness.runner_service.credentials import CredentialVault
+from traceharness.runner_service.jobs import Jobs, reported_usage, standard_request
+from traceharness.runner_service.provider import ProviderError
+from traceharness.runner_service.settings import Settings
 
 OWNER = '11111111-1111-4111-8111-111111111111'
 MODEL = {'id': 'fixture/model', 'pricing': {'prompt': '0.000001', 'completion': '0.000002', 'request': '0.001'}}

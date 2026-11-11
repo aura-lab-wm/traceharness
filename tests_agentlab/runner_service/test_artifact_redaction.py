@@ -6,7 +6,7 @@ from pathlib import Path
 import tempfile
 import unittest
 
-from harnesslab.runner_service.execution import DockerExecutor, _redacted
+from traceharness.runner_service.execution import DockerExecutor, _redacted
 
 
 def encoded(value):

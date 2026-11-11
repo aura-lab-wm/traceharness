@@ -12,7 +12,7 @@ import unittest
 LAB = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, LAB)
 
-from harnesslab.backend import static_export as SE      # noqa: E402
+from traceharness.backend import static_export as SE      # noqa: E402
 
 SECRETY = ("key_hint", "lab_root", "results_root", "harness_dir", "task_dir")
 
@@ -21,8 +21,8 @@ class TestExportRedaction(unittest.TestCase):
     def test_the_settings_payload_keeps_nothing_that_identifies_the_machine(self):
         raw = {"key_present": True, "key_hint": "sk-or-v…9f2a",
                "base_url": "https://openrouter.ai/api/v1",
-               "lab_root": "/Users/someone/Projects/harnesslab",
-               "results_root": "/Users/someone/Projects/harnesslab/data/runs",
+               "lab_root": "/Users/someone/Projects/traceharness",
+               "results_root": "/Users/someone/Projects/traceharness/data/runs",
                "harness_dir": "/Users/someone/h", "task_dir": "/Users/someone/t",
                "results": ["demo_mock"], "harnesses": ["baseline"], "sentinel": {"trained": True}}
         out = SE.redact("/settings", raw)
@@ -65,7 +65,7 @@ class TestExportRedaction(unittest.TestCase):
         anything, and it reads as though it still does. Checked for every path in the table, not
         just the first one that had one."""
         from fastapi.testclient import TestClient
-        from harnesslab.backend.app import app
+        from traceharness.backend.app import app
         client = TestClient(app)
         for path, names in SE.REDACT.items():
             live = client.get("/api" + path).json()

@@ -12,10 +12,10 @@ import unittest
 
 from fastapi.testclient import TestClient
 
-from harnesslab.runner_service.auth import sign
-from harnesslab.runner_service.configuration import canonical
-from harnesslab.runner_service.service import create_app
-from harnesslab.runner_service.settings import Settings
+from traceharness.runner_service.auth import sign
+from traceharness.runner_service.configuration import canonical
+from traceharness.runner_service.service import create_app
+from traceharness.runner_service.settings import Settings
 from tests_agentlab.runner_service.test_runner import fixture_registry, FixtureExecutor, FixtureProvider, SECRET, OWNER
 
 

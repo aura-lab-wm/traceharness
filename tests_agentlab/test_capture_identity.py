@@ -6,9 +6,9 @@ import unittest
 LAB = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, LAB)
 
-from harnesslab.backend.importers import claude_code                  # noqa: E402
-from harnesslab.backend.importers.common import Event as E, Session   # noqa: E402
-from harnesslab.capture import identity                               # noqa: E402
+from traceharness.backend.importers import claude_code                  # noqa: E402
+from traceharness.backend.importers.common import Event as E, Session   # noqa: E402
+from traceharness.capture import identity                               # noqa: E402
 
 FIX = os.path.join(LAB, "tests_agentlab", "fixtures", "capture", "cc_session.jsonl")
 

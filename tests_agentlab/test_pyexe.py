@@ -8,7 +8,7 @@ the sweep reads 0% with a transcript that looks correct. These tests are the tri
 import os, subprocess, sys, tempfile, unittest
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from harnesslab.core import pyexe
+from traceharness.core import pyexe
 
 
 class TestInterpreterResolution(unittest.TestCase):
@@ -44,7 +44,7 @@ class TestGradingWithoutPythonOnPath(unittest.TestCase):
     def test_sweep_grades_with_no_python_on_path(self):
         root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
         out = tempfile.mkdtemp(prefix="agentlab_sweep_")
-        r = subprocess.run([sys.executable, "-m", "harnesslab.core.runner", "--provider", "mock",
+        r = subprocess.run([sys.executable, "-m", "traceharness.core.runner", "--provider", "mock",
                             "--tasks", "t01_slugify", "--repeats", "2", "--out", out],
                            cwd=root, capture_output=True, text=True, timeout=300,
                            env={"PATH": "/nonexistent", "HOME": os.path.expanduser("~")})

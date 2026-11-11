@@ -1,5 +1,5 @@
 """Secret field names are stripped in any case, including compound names."""
-from harnesslab.shallow.identity import public_record
+from traceharness.shallow.identity import public_record
 
 
 def test_compound_and_uppercase_secret_names_drop():

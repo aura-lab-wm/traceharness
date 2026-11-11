@@ -7,7 +7,7 @@ from unittest.mock import patch
 import urllib.error
 import urllib.request
 
-from harnesslab.runner_service.container_entrypoint import native_command, relay
+from traceharness.runner_service.container_entrypoint import native_command, relay
 
 
 class NativeGatewayTests(unittest.TestCase):
@@ -20,7 +20,7 @@ class NativeGatewayTests(unittest.TestCase):
             def post(self, url, **kwargs):
                 calls.append((url, kwargs['content']))
                 return SimpleNamespace(status_code=200, headers={'content-type':'application/json'}, content=b'{}')
-        with patch('harnesslab.runner_service.container_entrypoint.httpx.Client', Client):
+        with patch('traceharness.runner_service.container_entrypoint.httpx.Client', Client):
             server = relay()
             try:
                 for path, expected in [('/v1/messages?beta=true', 200), ('/v1/messages', 200),

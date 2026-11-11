@@ -4,8 +4,8 @@ import hashlib
 import json
 import unittest
 
-from harnesslab.runner_service.native_observations import NativePromptObserver, instruction_texts
-from harnesslab.runner_service.native_prompts import PINS
+from traceharness.runner_service.native_observations import NativePromptObserver, instruction_texts
+from traceharness.runner_service.native_prompts import PINS
 
 
 def fixture():

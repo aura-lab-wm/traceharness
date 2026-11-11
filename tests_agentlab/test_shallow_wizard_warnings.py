@@ -1,6 +1,6 @@
 """Read-only minimal cells warn without changing the compiled harness."""
-from harnesslab.core.harness import content_hash
-from harnesslab.shallow.wizard import compile_minimal, recommended_answers
+from traceharness.core.harness import content_hash
+from traceharness.shallow.wizard import compile_minimal, recommended_answers
 
 VERIFY = "This prompt asks to edit files and run tests, and neither edit_file nor run_tests is mounted."
 PERMISSIVE = "Read only is paired with a permissive policy."

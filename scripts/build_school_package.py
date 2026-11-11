@@ -18,7 +18,7 @@ from pathlib import Path
 import zipfile
 
 ROOT = Path(__file__).resolve().parents[1]
-SCOPE = ROOT / 'harnesslab' / 'school-package.json'
+SCOPE = ROOT / 'traceharness' / 'school-package.json'
 SKIP_PARTS = {'node_modules', '__pycache__', '.git', '.venv', '.pytest_cache', '.DS_Store'}
 #: Dot-directories that ship anyway: the dev container is how the package opens in
 #: GitHub Codespaces (docs/CODESPACES.md). Every other hidden file or directory stays out.
@@ -132,12 +132,12 @@ def scrub_machine_traces(content: bytes) -> bytes:
 
 
 def build(root: Path, output: Path) -> dict:
-    scope = json.loads((root / 'harnesslab/school-package.json').read_text())
+    scope = json.loads((root / 'traceharness/school-package.json').read_text())
     for name in scope['datasets']:
         if not (root / 'data/runs' / name / 'index.jsonl').is_file():
             raise ValueError(f'Missing dataset index: {name}')
-    if not (root / 'harnesslab/frontend/dist/index.html').is_file():
-        raise ValueError('Build the dashboard first: cd harnesslab/frontend && npm ci && npm run build')
+    if not (root / 'traceharness/frontend/dist/index.html').is_file():
+        raise ValueError('Build the dashboard first: cd traceharness/frontend && npm ci && npm run build')
     payload = {p.relative_to(root).as_posix(): p.read_bytes() for p in files_for(root, scope)}
     dropped = check_no_silent_drops(root, scope, set(payload))
     if dropped is None:
@@ -150,7 +150,7 @@ def build(root: Path, output: Path) -> dict:
         if name.startswith('data/runs/'):
             payload[name] = scrub_machine_traces(payload[name])
     # Never carry this machine's selected sentinel into the handoff.
-    payload['harnesslab/data/active_model.txt'] = b'mock_prerecorded\n'
+    payload['traceharness/data/active_model.txt'] = b'mock_prerecorded\n'
     payload['README.md'] = (root / 'SCHOOL_PACKAGE.md').read_bytes()
     inventory = {'title': scope['title'], 'scope': scope, 'files': [
         {'path': name, 'bytes': len(content), 'sha256': hashlib.sha256(content).hexdigest()}
@@ -159,7 +159,7 @@ def build(root: Path, output: Path) -> dict:
     output.parent.mkdir(parents=True, exist_ok=True)
     with zipfile.ZipFile(output, 'w', compression=zipfile.ZIP_DEFLATED) as archive:
         for name, content in sorted(payload.items()):
-            entry = zipfile.ZipInfo('harnesslab-school/' + name, date_time=(2026, 1, 1, 0, 0, 0))
+            entry = zipfile.ZipInfo('traceharness-school/' + name, date_time=(2026, 1, 1, 0, 0, 0))
             entry.compress_type = zipfile.ZIP_DEFLATED
             entry.external_attr = 0o100644 << 16
             archive.writestr(entry, content)
@@ -169,7 +169,7 @@ def build(root: Path, output: Path) -> dict:
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('--out', type=Path, default=ROOT / 'dist/harnesslab-school.zip')
+    parser.add_argument('--out', type=Path, default=ROOT / 'dist/traceharness-school.zip')
     parser.add_argument('--verify', action='store_true',
                          help='after building, extract to a clean room and prove it installs and runs '
                               '(prints a JSON verdict; exits non-zero on any failed check)')

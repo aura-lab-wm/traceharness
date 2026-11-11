@@ -19,9 +19,9 @@ import unittest
 LAB = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, LAB)
 
-from harnesslab.backend import importers as I                  # noqa: E402
-from harnesslab.backend.importers import common as C           # noqa: E402
-from harnesslab.capture import adapters, harness_config        # noqa: E402
+from traceharness.backend import importers as I                  # noqa: E402
+from traceharness.backend.importers import common as C           # noqa: E402
+from traceharness.capture import adapters, harness_config        # noqa: E402
 
 #: the usage dict every adapter emits, priced by writer.write_run. A fifth key would be dropped
 #: silently; a missing one would be read as a zero-token call.

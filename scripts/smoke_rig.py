@@ -19,7 +19,7 @@ then coming back (the open page must heal without a reload); and a static export
 disk (no network at all).
 
 Needs Playwright for Python (`pip install playwright`). It uses an installed Chromium; set
-HARNESSLAB_CHROMIUM to a browser binary if Playwright cannot find one.
+TRACEHARNESS_CHROMIUM to a browser binary if Playwright cannot find one.
 """
 from __future__ import annotations
 
@@ -59,7 +59,7 @@ PROBE = """() => {
 
 
 def chromium_path() -> str | None:
-    env = os.environ.get("HARNESSLAB_CHROMIUM")
+    env = os.environ.get("TRACEHARNESS_CHROMIUM")
     if env:
         return env
     pats = [
@@ -86,10 +86,10 @@ def get_json(url: str):
 
 
 def start_server(port: int, lab: str | None) -> subprocess.Popen:
-    env = dict(os.environ, HARNESSLAB_NO_BROWSER="1")
+    env = dict(os.environ, TRACEHARNESS_NO_BROWSER="1")
     if lab:
-        env["HARNESSLAB_LAB"] = lab
-    proc = subprocess.Popen([sys.executable, "-m", "harnesslab", "--port", str(port), "--no-browser"],
+        env["TRACEHARNESS_LAB"] = lab
+    proc = subprocess.Popen([sys.executable, "-m", "traceharness", "--port", str(port), "--no-browser"],
                             cwd=ROOT, env=env, stdout=subprocess.DEVNULL, stderr=subprocess.PIPE)
     for _ in range(80):
         try:
@@ -293,9 +293,9 @@ def run(args) -> int:
                 out = os.path.join(tempfile.mkdtemp(), "lab.html")
                 env = dict(os.environ)
                 if args.lab:
-                    env["HARNESSLAB_LAB"] = args.lab
+                    env["TRACEHARNESS_LAB"] = args.lab
                 small = sorted(datasets, key=lambda d: d["runs"])[0]["name"]
-                subprocess.run([sys.executable, "-m", "harnesslab", "--export", out, "--export-results", small,
+                subprocess.run([sys.executable, "-m", "traceharness", "--export", out, "--export-results", small,
                                 "--export-runs", "5", "--yes"], cwd=ROOT, env=env, check=True,
                                stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
                 ctx = browser.new_context(viewport={"width": 1512, "height": 860})
@@ -328,7 +328,7 @@ def run(args) -> int:
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__.split("\n")[0])
     ap.add_argument("--base", help="use a running server instead of starting one")
-    ap.add_argument("--lab", help="lab root for the server this script starts (HARNESSLAB_LAB)")
+    ap.add_argument("--lab", help="lab root for the server this script starts (TRACEHARNESS_LAB)")
     ap.add_argument("--quick", action="store_true", help="largest dataset, dark theme, laptop width only")
     ap.add_argument("--export", action="store_true", help="also build and check a static export")
     ap.add_argument("--degraded", action="store_true", help="only the degraded modes (missing bundle, outage, export)")

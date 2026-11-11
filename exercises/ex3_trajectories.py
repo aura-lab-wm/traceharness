@@ -6,12 +6,12 @@ or followed an instruction hidden in CONTRIBUTING.md. Outcome-only benchmarks
 collapse those into the same score. The ledger does not.
 
     python exercises/ex3_trajectories.py
-    HARNESSLAB_RESULTS=data/runs/mine python3 -m unittest discover -s trajectory_tests -v
+    TRACEHARNESS_RESULTS=data/runs/mine python3 -m unittest discover -s trajectory_tests -v
 """
 from _common import parse, hr
 import json
 from collections import Counter, defaultdict
-from harnesslab.core.trajtest import load_runs
+from traceharness.core.trajtest import load_runs
 
 args = parse(__doc__)
 runs = load_runs(args.results)
@@ -93,7 +93,7 @@ for s in t.spans:
         print(f"  [{s['seq']:2d}] grade       visible={s['visible']} hidden={s['hidden']} strong={s['strong']}")
 
 hr("Now run the trajectory tests")
-print(f"""HARNESSLAB_RESULTS={args.results} HARNESSLAB_HARNESS=baseline python3 -m unittest discover -s trajectory_tests -v 2>&1 | tail -30
+print(f"""TRACEHARNESS_RESULTS={args.results} TRACEHARNESS_HARNESS=baseline python3 -m unittest discover -s trajectory_tests -v 2>&1 | tail -30
 
 Questions
 Q1. Which trajectory tests fail on the pre-recorded data? For each failing test decide: is this a

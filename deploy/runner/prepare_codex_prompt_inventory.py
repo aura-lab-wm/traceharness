@@ -14,8 +14,8 @@ import sys
 import tarfile
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
-from harnesslab.runner_service import native_prompts as shared
-from harnesslab.runner_service import native_prompts_codex as codex
+from traceharness.runner_service import native_prompts as shared
+from traceharness.runner_service import native_prompts_codex as codex
 
 ARCHIVE_SHA256 = "214e5017a3c519557da811fe1df8e6fa51d408df0463c08f38a572b7e30b80fe"
 BINARY_SHA256 = "dd5bfdf19d794dcc6fb482d2d5a2d9fb31d11f6caa44b303bb72890d461e8a02"

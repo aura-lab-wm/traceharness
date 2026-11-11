@@ -18,8 +18,8 @@ sys.path.insert(0, LAB)
 sys.path.insert(0, os.path.join(LAB, "tests_agentlab"))
 
 from test_capture_backfill import copy_fixture                   # noqa: E402
-from harnesslab.capture import presence, sniffer                  # noqa: E402
-from harnesslab.capture.lock import CaptureLock                   # noqa: E402
+from traceharness.capture import presence, sniffer                  # noqa: E402
+from traceharness.capture.lock import CaptureLock                   # noqa: E402
 
 PKG = os.path.join(LAB, "macos", "CaptureMenubar")
 CLOSED = 1.8e9
@@ -210,8 +210,8 @@ class TestMenubarReviewFixes(unittest.TestCase):
                 self.assertTrue(all(abs(a - b) <= 3 for a, b in zip(got, want)), f"{state} drew {d['mean_color']}")
 
     def test_the_pause_row_follows_the_request_while_the_watcher_catches_up(self):
-        from harnesslab.capture import presence
-        from harnesslab.capture.lock import CaptureLock
+        from traceharness.capture import presence
+        from traceharness.capture.lock import CaptureLock
         os.makedirs(os.path.join(self.runs, "captured"), exist_ok=True)
         presence.write(self.runs, state="idle", interval_s=60, roots=1, heartbeat_at=CLOSED)
         self.run_app("--pause")                          # asked, not yet applied by the watcher
@@ -235,7 +235,7 @@ class TestMenubarReviewFixes(unittest.TestCase):
             self.assertEqual(r.returncode, 2, f"{pair} -> {r.stdout[:200]}")
 
     def test_an_uninstalled_service_offers_the_setup_command(self):
-        if subprocess.run(["launchctl", "print", f"gui/{os.getuid()}/com.harnesslab.capture.sniffer"],
+        if subprocess.run(["launchctl", "print", f"gui/{os.getuid()}/com.traceharness.capture.sniffer"],
                           capture_output=True).returncode == 0:
             self.skipTest("the real watcher agent is loaded on this machine")
         rows = self.run_app("--menu-json")["rows"]
@@ -256,7 +256,7 @@ class TestMenubarReviewFixes(unittest.TestCase):
                 if f.endswith(".swift"):
                     with open(os.path.join(root, f), encoding="utf-8") as fh:
                         src += fh.read()
-        self.assertEqual(src.count('"com.harnesslab.capture.sniffer"'), 1, "one definition, in Setup.swift")
+        self.assertEqual(src.count('"com.traceharness.capture.sniffer"'), 1, "one definition, in Setup.swift")
 
 
 if __name__ == "__main__":

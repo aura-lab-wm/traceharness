@@ -4,8 +4,8 @@ import json, os, shutil, sys, tempfile, time, unittest
 
 LAB = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, LAB)
-from harnesslab.backend import sentinel as S            # noqa: E402
-from harnesslab.backend import sentinel_ext as X        # noqa: E402
+from traceharness.backend import sentinel as S            # noqa: E402
+from traceharness.backend import sentinel_ext as X        # noqa: E402
 
 ZERO = dict.fromkeys(S.FEATURE_NAMES, 0.0)
 
@@ -212,12 +212,12 @@ class TestExportImport(unittest.TestCase):
     NAME = "roundtrip_tmp"
 
     def setUp(self):
-        # Imported models land in a temp MODELS_DIR, never in harnesslab/data/models/. Removing
+        # Imported models land in a temp MODELS_DIR, never in traceharness/data/models/. Removing
         # them in tearDown only works when the unlink succeeds; redirecting the directory means
         # a failed removal cannot leave a stray model in the shipped registry either way.
         # list_models()/load_model() read the module global at call time, so the source model
         # is copied in first and stays readable.
-        self._tmp = tempfile.mkdtemp(prefix="harnesslab-models-test-")
+        self._tmp = tempfile.mkdtemp(prefix="traceharness-models-test-")
         self._real = S.MODELS_DIR
         for fn in os.listdir(self._real):
             if fn.endswith(".json"):
@@ -305,8 +305,8 @@ class TestLeaderboard(unittest.TestCase):
         self.assertGreater(lb["n_prefixes"], lb["n_runs"])
         self.assertIn("EW-AUC@k", lb["metric"])
 
-    @unittest.skipUnless(os.path.isfile(os.path.join(LAB, "harnesslab", "data", "models", "real_swe_agent_500.json")),
-                          "requires the full checkout: harnesslab/data/models/real_swe_agent_500.json "
+    @unittest.skipUnless(os.path.isfile(os.path.join(LAB, "traceharness", "data", "models", "real_swe_agent_500.json")),
+                          "requires the full checkout: traceharness/data/models/real_swe_agent_500.json "
                           "(the school package ships only the mock_prerecorded sentinel)")
     def test_every_entrant_is_present(self):
         names = [r["model"] for r in self.lb["rows"]]
@@ -394,7 +394,7 @@ class TestLeaderboard(unittest.TestCase):
 
 class TestRoutesDoNotCollide(unittest.TestCase):
     def test_new_paths_are_distinct_from_app_paths(self):
-        from harnesslab.backend import app as A
+        from traceharness.backend import app as A
         existing = {getattr(r, "path", None) for r in A.app.router.routes if getattr(r, "path", None)}
         mine = {r.path for r in X.router.routes}
         self.assertTrue(mine, "sentinel_ext registers no routes")

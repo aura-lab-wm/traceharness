@@ -8,7 +8,7 @@ from types import SimpleNamespace
 import unittest
 from unittest.mock import Mock, patch
 
-from harnesslab.core.blocks import compile_blocks
+from traceharness.core.blocks import compile_blocks
 
 spec=importlib.util.spec_from_file_location('operator_verify',Path(__file__).resolve().parents[2]/'deploy/runner/verify_runtime.py')
 verify=importlib.util.module_from_spec(spec);spec.loader.exec_module(verify)

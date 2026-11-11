@@ -5,7 +5,7 @@ import tempfile
 import unittest
 from unittest.mock import patch
 
-from harnesslab.backend import metrics, store
+from traceharness.backend import metrics, store
 
 
 class OverviewUnknownGrades(unittest.TestCase):

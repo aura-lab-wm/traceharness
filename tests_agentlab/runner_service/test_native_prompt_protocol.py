@@ -9,13 +9,13 @@ import unittest
 
 from fastapi.testclient import TestClient
 
-from harnesslab.runner_service.auth import sign
-from harnesslab.runner_service.configuration import canonical, digest, preflight
-from harnesslab.runner_service.native_prompts import (PINS, inventory_sha256, materializer_sha256,
+from traceharness.runner_service.auth import sign
+from traceharness.runner_service.configuration import canonical, digest, preflight
+from traceharness.runner_service.native_prompts import (PINS, inventory_sha256, materializer_sha256,
     taxonomy_sha256, profile_sha256)
-from harnesslab.runner_service.registry import Registry, NATIVE_PROMPT_CHECKS
-from harnesslab.runner_service.service import create_app
-from harnesslab.runner_service.settings import Settings
+from traceharness.runner_service.registry import Registry, NATIVE_PROMPT_CHECKS
+from traceharness.runner_service.service import create_app
+from traceharness.runner_service.settings import Settings
 from tests_agentlab.runner_service.test_runner import (fixture_registry, configuration, FixtureExecutor,
     FixtureProvider, SECRET, OWNER, OTHER)
 
@@ -118,7 +118,7 @@ class NativePromptProtocolTests(unittest.TestCase):
                 self.assertFalse(preflight(dict(self.config, native_prompt_profile=profile), registry, self.health)["ok"])
 
     def test_template_placeholder_changes_refuse_before_execution(self):
-        from harnesslab.runner_service.native_prompts import canonical_profile, NativePromptError
+        from traceharness.runner_service.native_prompts import canonical_profile, NativePromptError
         public = {key: copy.deepcopy(value) for key, value in self.inventory.items() if key != "_private"}
         block = public["blocks"][0]
         block.update(baseline_utf8="fixture ${TH_PROMPT_EXPR_0}", baseline_sha256=sha(b"fixture ${TH_PROMPT_EXPR_0}"), required_placeholders=["${TH_PROMPT_EXPR_0}"])

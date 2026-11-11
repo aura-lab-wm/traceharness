@@ -1,4 +1,4 @@
-"""Tests for harnesslab/backend/importers: detect + import + fingerprint + unknown outcomes.
+"""Tests for traceharness/backend/importers: detect + import + fingerprint + unknown outcomes.
 
 Fixtures live in tests_agentlab/fixtures/importers/:
 
@@ -27,9 +27,9 @@ import unittest
 LAB = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, LAB)
 
-from harnesslab.backend import importers as I                      # noqa: E402
-from harnesslab.backend.importers import common as C               # noqa: E402
-from harnesslab.backend.importers import (claude_code, codex, inspect_log,   # noqa: E402
+from traceharness.backend import importers as I                      # noqa: E402
+from traceharness.backend.importers import common as C               # noqa: E402
+from traceharness.backend.importers import (claude_code, codex, inspect_log,   # noqa: E402
                                          openhands, swe_agent, trajectory_fmt)
 
 FIX = os.path.join(LAB, "tests_agentlab", "fixtures", "importers")
@@ -44,7 +44,7 @@ EV = os.path.join(FIX, "tiny_swe.eval")
 
 class Tmp(unittest.TestCase):
     def setUp(self):
-        self.root = tempfile.mkdtemp(prefix="harnesslab-imp-")
+        self.root = tempfile.mkdtemp(prefix="traceharness-imp-")
         self.addCleanup(shutil.rmtree, self.root, True)
 
     def imp(self, path, name="d", **kw):
@@ -127,17 +127,17 @@ class TestDetect(Tmp):
     def test_runs_root_matches_the_platform(self):
         """Regression: importers/ is one directory deeper than backend/, so the LAB_ROOT walk
         needs four dirname() calls, not three. Getting this wrong writes runs into
-        harnesslab/data/runs where every /api/results/<dir> endpoint 404s."""
-        from harnesslab.backend import metrics as M
+        traceharness/data/runs where every /api/results/<dir> endpoint 404s."""
+        from traceharness.backend import metrics as M
         self.assertEqual(I.RUNS_ROOT, M.RUNS_ROOT)
         # LAB_ROOT must be the lab checkout (the one holding tasks/, harnesses/ and data/),
-        # never the harnesslab package directory. tasks/ and harnesses/ are the sentinels:
+        # never the traceharness package directory. tasks/ and harnesses/ are the sentinels:
         # the engine used to sit at the root as agentlab/ and no longer does.
         for d in ("tasks", "harnesses", "data"):
             self.assertTrue(os.path.isdir(os.path.join(I.LAB_ROOT, d)), f"LAB_ROOT missing {d}/")
         # the package must sit *inside* the checkout; if LAB_ROOT ever walks up one level too
         # few it lands on the package itself and runs get written where the API cannot see them
-        self.assertTrue(os.path.isdir(os.path.join(I.LAB_ROOT, "harnesslab", "backend")))
+        self.assertTrue(os.path.isdir(os.path.join(I.LAB_ROOT, "traceharness", "backend")))
 
     def test_sources_registry_is_complete(self):
         names = {s["name"] for s in I.list_sources()}
@@ -153,8 +153,8 @@ class TestDetect(Tmp):
         or stops watching a source, this fails until frontend/src/method/importing.js is updated
         with it."""
         import re
-        from harnesslab.capture.adapters import BY_NAME
-        js = os.path.join(LAB, "harnesslab", "frontend", "src", "method", "importing.js")
+        from traceharness.capture.adapters import BY_NAME
+        js = os.path.join(LAB, "traceharness", "frontend", "src", "method", "importing.js")
         with open(js, encoding="utf-8") as f:
             src = f.read()
         block = re.search(r"export const WATCHED\s*=\s*\[(.*?)\]", src, re.S)
@@ -530,7 +530,7 @@ class TestFingerprint(Tmp):
         self.assertEqual(self.fp(CC)["hash"], self.fp(CC)["hash"])
 
     def test_harness_dict_has_the_HarnessConfig_shape_with_honest_unknowns(self):
-        from harnesslab.core.harness import HarnessConfig
+        from traceharness.core.harness import HarnessConfig
         from dataclasses import fields
         h = self.fp(CC)
         known = {f.name for f in fields(HarnessConfig)}
@@ -641,7 +641,7 @@ class TestDownstreamToleratesUnknownOutcomes(Tmp):
         self.assertTrue(any(r["hidden_pass"] is not None for r in self.rows))
 
     def test_analysis_functions_do_not_crash_on_none(self):
-        from harnesslab.core.analysis import (aggregate, task_table, summarize, flip_rate,
+        from traceharness.core.analysis import (aggregate, task_table, summarize, flip_rate,
                                        exit_reasons, boundary_rate, tokens_per_solve)
         self.assertIn("pass@1", aggregate(self.rows))
         self.assertTrue(task_table(self.rows))
@@ -653,12 +653,12 @@ class TestDownstreamToleratesUnknownOutcomes(Tmp):
 
     def test_unknown_grades_are_excluded_instead_of_counted_as_failures(self):
         """Imported sessions without oracle grades have no measurable pass rate."""
-        from harnesslab.core.analysis import aggregate
+        from traceharness.core.analysis import aggregate
         unknown = [r for r in self.rows if r["hidden_pass"] is None]
         self.assertIsNone(aggregate(unknown).get("pass@1"))
 
     def test_metrics_endpoints_logic_does_not_crash(self):
-        from harnesslab.backend import metrics as M
+        from traceharness.backend import metrics as M
         old = M.RUNS_ROOT
         M.RUNS_ROOT = self.root
         try:
@@ -676,8 +676,8 @@ class TestDownstreamToleratesUnknownOutcomes(Tmp):
             M.RUNS_ROOT = old
 
     def test_trajectory_tests_and_the_sentinel_can_read_imported_ledgers(self):
-        from harnesslab.core.trajtest import load_runs
-        from harnesslab.backend import sentinel as S
+        from traceharness.core.trajtest import load_runs
+        from traceharness.backend import sentinel as S
         traj = load_runs(os.path.join(self.root, "mix"))
         self.assertEqual(len(traj), 7)
         for t in traj:
@@ -698,7 +698,7 @@ class TestRoutes(Tmp):
         from fastapi.testclient import TestClient
         from fastapi import FastAPI
         from fastapi.responses import PlainTextResponse
-        from harnesslab.backend.importers import routes
+        from traceharness.backend.importers import routes
         self.routes = routes
         app = FastAPI()
 
@@ -742,7 +742,7 @@ class TestRoutes(Tmp):
         # ignore_errors=True) is not a cleanup guarantee: on any filesystem that refuses the
         # unlink it fails silently and the directory accumulates. Redirecting the root means
         # there is nothing to leave behind even when removal fails.
-        tmp_root = tempfile.mkdtemp(prefix="harnesslab-import-test-")
+        tmp_root = tempfile.mkdtemp(prefix="traceharness-import-test-")
         self.addCleanup(shutil.rmtree, tmp_root, True)
         real_root, I.RUNS_ROOT = I.RUNS_ROOT, tmp_root
         self.addCleanup(setattr, I, "RUNS_ROOT", real_root)
@@ -766,7 +766,7 @@ class TestRoutes(Tmp):
         it on every clean iteration, which made the bar on the import screen read 100% from the
         first session to the last. An unknown quantity is reported as unknown here, the way the
         ledger reports one: null, never a number that looks measured."""
-        tmp_root = tempfile.mkdtemp(prefix="harnesslab-progress-")
+        tmp_root = tempfile.mkdtemp(prefix="traceharness-progress-")
         self.addCleanup(shutil.rmtree, tmp_root, True)
         seen = []
         r = I.import_path(SA, "p_%s" % uuid.uuid4().hex[:8], progress=lambda d, t, l: seen.append((d, t)),
@@ -783,8 +783,8 @@ class TestRoutes(Tmp):
         home -- and this payload is frozen verbatim into `--export`. Contention is normal
         operation anyway, so the page gets a sentence about it instead of an exception class."""
         import time
-        from harnesslab.capture.lock import CaptureLock
-        tmp_root = tempfile.mkdtemp(prefix="harnesslab-locked-")
+        from traceharness.capture.lock import CaptureLock
+        tmp_root = tempfile.mkdtemp(prefix="traceharness-locked-")
         self.addCleanup(shutil.rmtree, tmp_root, True)
         real_root, I.RUNS_ROOT = I.RUNS_ROOT, tmp_root
         self.addCleanup(setattr, I, "RUNS_ROOT", real_root)

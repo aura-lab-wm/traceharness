@@ -8,8 +8,8 @@ DEFAULT_RESULTS = os.path.join(LAB_ROOT, "data", "runs", "llma4se_live")
 
 def parse(description, extra=None):
     ap = argparse.ArgumentParser(description=description)
-    ap.add_argument("--results", default=os.environ.get("HARNESSLAB_RESULTS", os.environ.get("AGENTLAB_RESULTS", DEFAULT_RESULTS)),
-                    help="results directory produced by harnesslab.core.runner (default: llma4se_live, 1,632 real runs recorded through OpenRouter)")
+    ap.add_argument("--results", default=os.environ.get("TRACEHARNESS_RESULTS", os.environ.get("AGENTLAB_RESULTS", DEFAULT_RESULTS)),
+                    help="results directory produced by traceharness.core.runner (default: llma4se_live, 1,632 real runs recorded through OpenRouter)")
     ap.add_argument("--harness", default="baseline", help="harness id to focus on")
     ap.add_argument("--out", default=os.path.join(LAB_ROOT, "data", "figures"), help="where to write figures")
     if extra:

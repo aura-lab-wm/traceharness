@@ -14,8 +14,8 @@ sys.path.insert(0, LAB)
 sys.path.insert(0, os.path.join(LAB, "tests_agentlab"))
 
 from test_capture_backfill import RESUME_TAIL, copy_fixture  # noqa: E402
-from harnesslab.capture import cursors, presence, sniffer    # noqa: E402
-from harnesslab.capture.lock import CaptureLock              # noqa: E402
+from traceharness.capture import cursors, presence, sniffer    # noqa: E402
+from traceharness.capture.lock import CaptureLock              # noqa: E402
 
 CLOSED = 1.8e9          # far past the fixture's last activity, so its run is finished
 
@@ -153,7 +153,7 @@ class TestSeed(unittest.TestCase):
     """
 
     def setUp(self):
-        from harnesslab.capture import backfill
+        from traceharness.capture import backfill
         self.tmp = tempfile.mkdtemp(prefix="hl-seed-")
         self.addCleanup(shutil.rmtree, self.tmp, True)
         self.runs = os.path.join(self.tmp, "runs")
@@ -220,7 +220,7 @@ class TestSeed(unittest.TestCase):
     def test_seeding_refuses_while_a_watcher_is_running(self):
         """Seeding loads cursors, walks for twenty seconds, then saves the whole file. A tick in
         between loses on one side or the other -- silently, with the seed still reporting success."""
-        from harnesslab.capture.lock import CaptureLock, CaptureLocked
+        from traceharness.capture.lock import CaptureLock, CaptureLocked
         with CaptureLock(self.runs, name="sniffer"):
             with self.assertRaises(CaptureLocked):
                 sniffer.seed([self.src], self.runs, gap_s=1800, now=CLOSED)
@@ -284,7 +284,7 @@ class TestSeed(unittest.TestCase):
         """The discovered side can look unique while the LAB holds runs of two different sessions
         under that basename -- from a root not being seeded, or a source since moved."""
         import json as _json
-        from harnesslab.capture import backfill
+        from traceharness.capture import backfill
         other = os.path.join(self.tmp, "elsewhere")
         os.makedirs(other)
         twin = os.path.join(other, "sess-cap-1.jsonl")
@@ -331,7 +331,7 @@ class TestSeed(unittest.TestCase):
         leaves run folders the lab never recorded; adopting their source meant the watcher skipped it
         for good and those runs were never indexed. Reproduced before this test existed: 1 folder,
         0 index rows, seeded=1."""
-        from harnesslab.capture import backfill
+        from traceharness.capture import backfill
         shutil.rmtree(self.runs, True)
         second = copy_fixture(os.path.join(self.src, "sess-cap-2.jsonl"))
         q = os.stat(second).st_mtime_ns - 3600 * 10 ** 9
@@ -377,13 +377,13 @@ class TestSeed(unittest.TestCase):
         self.assertEqual(rep["unrecorded"], 1)
 
     def test_seeding_waits_for_no_capture_it_would_be_racing(self):
-        from harnesslab.capture.lock import CaptureLock, CaptureLocked
+        from traceharness.capture.lock import CaptureLock, CaptureLocked
         with CaptureLock(self.runs):                        # a backfill is mid-pass
             with self.assertRaises(CaptureLocked):
                 sniffer.seed([self.src], self.runs, gap_s=1800, now=CLOSED)
 
     def test_a_run_still_open_at_capture_is_scheduled_for_a_recheck(self):
-        from harnesslab.capture import backfill
+        from traceharness.capture import backfill
         shutil.rmtree(self.runs, True)
         open_now = 1757499000.0
         backfill.run([self.src], self.runs, gap_s=1800, now=open_now)   # captured while still open
@@ -529,7 +529,7 @@ class TestLoop(unittest.TestCase):
 
     def test_a_stop_request_is_honoured_between_files_of_a_pass(self):
         """The first pass reads the whole corpus -- minutes. A stop must not have to wait it out."""
-        from harnesslab.capture import backfill
+        from traceharness.capture import backfill
         copy_fixture(os.path.join(self.src, "sess-cap-9.jsonl"))
         seen = {"n": 0}
         def stop():
@@ -582,7 +582,7 @@ class TestLoop(unittest.TestCase):
     def test_a_full_sweep_locked_out_by_another_writer_is_not_recorded_as_done(self):
         """tick() catches CaptureLocked and RETURNS, so the loop's own except never fires. A sweep that
         read nothing because a --backfill held the lock was recorded as done, skipping a day."""
-        from harnesslab.capture.lock import CaptureLock
+        from traceharness.capture.lock import CaptureLock
         calls = {"n": 0}
         real = sniffer.tick
         def counted(*a, **k):
@@ -621,7 +621,7 @@ class TestLoop(unittest.TestCase):
         self.assertLess(slept[0], 1000)
 
     def test_a_second_sniffer_refuses_to_start(self):
-        from harnesslab.capture.lock import CaptureLocked
+        from traceharness.capture.lock import CaptureLocked
         with CaptureLock(self.runs, name="sniffer"):
             with self.assertRaises(CaptureLocked):
                 sniffer.loop([self.src], self.runs, gap_s=1800, interval_s=0,

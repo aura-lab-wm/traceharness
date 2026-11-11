@@ -15,7 +15,7 @@ import unittest
 LAB = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, LAB)
 
-from harnesslab.backend.private_guard import OPT_IN_HEADER          # noqa: E402
+from traceharness.backend.private_guard import OPT_IN_HEADER          # noqa: E402
 
 OPT_IN = {OPT_IN_HEADER: "1"}
 
@@ -50,8 +50,8 @@ class TestCaptureApi(unittest.TestCase):
     def _client(root):
         from fastapi import FastAPI
         from fastapi.testclient import TestClient
-        from harnesslab.backend.private_guard import private_results_guard
-        from harnesslab.backend.capture_api import capture_router
+        from traceharness.backend.private_guard import private_results_guard
+        from traceharness.backend.capture_api import capture_router
         app = FastAPI()
         app.middleware("http")(private_results_guard(lambda: root))
         app.include_router(capture_router(lambda: root))
@@ -98,15 +98,15 @@ class TestCaptureApi(unittest.TestCase):
 
     def test_a_watcher_that_died_is_not_shown_as_running(self):
         """After kill -9 the document still says idle; only the lock knows nobody is there."""
-        from harnesslab.capture import presence
+        from traceharness.capture import presence
         presence.write(self.root, state="idle", pid=4242, interval_s=60, roots=1)
         d = self.client.get("/api/capture/status", headers=OPT_IN).json()
         self.assertNotEqual(d["sniffer"]["state"], "idle", "a dead watcher reads as running")
         self.assertEqual(d["sniffer"]["state"], "error")
 
     def test_a_live_watcher_is_shown_as_it_reports_itself(self):
-        from harnesslab.capture import presence
-        from harnesslab.capture.lock import CaptureLock
+        from traceharness.capture import presence
+        from traceharness.capture.lock import CaptureLock
         with CaptureLock(self.root, name="sniffer"):
             presence.write(self.root, state="idle", pid=os.getpid(), interval_s=60, roots=1)
             d = self.client.get("/api/capture/status", headers=OPT_IN).json()
@@ -116,7 +116,7 @@ class TestCaptureApi(unittest.TestCase):
         """The daily full sweep counts crash debris into presence.json and never removes it. Served
         here or it is written into a document nothing renders, and the operator is never told there
         is anything to sweep."""
-        from harnesslab.capture import presence
+        from traceharness.capture import presence
         presence.write(self.root, debris=3, debris_checked_at=1_789_000_000.0)
         d = self.client.get("/api/capture/status", headers=OPT_IN).json()
         self.assertEqual(d["sniffer"]["debris"], 3)
@@ -132,7 +132,7 @@ class TestCaptureApi(unittest.TestCase):
     def test_status_says_how_many_sources_are_remembered_and_how_many_were_seeded(self):
         """--seed-cursors adopts an already-captured corpus so --watch does not read it again. It
         left no trace anywhere anyone could see, so whether it had been run was unanswerable."""
-        from harnesslab.capture import cursors
+        from traceharness.capture import cursors
         cursors.save(cursors.path_for(self.root), {
             "/a/one.jsonl": cursors.cur(size=10, mtime_ns=1, runs=["r1"], seeded=True),
             "/a/two.jsonl": cursors.cur(size=20, mtime_ns=2, runs=["r2"], seeded=True),
@@ -190,7 +190,7 @@ class TestCaptureApiIsMountedOnTheRealApp(unittest.TestCase):
         an _IncludedRouter that carries no `path`, so scanning the route list finds nothing and
         proves nothing. What matters is whether a request is answered."""
         from fastapi.testclient import TestClient
-        from harnesslab.backend.app import app
+        from traceharness.backend.app import app
         client = TestClient(app)
         for path in ("/api/capture/status", "/api/capture/runs", "/api/capture/relations"):
             with self.subTest(path=path):

@@ -23,7 +23,7 @@ ROOT = Path(__file__).resolve().parents[1]
 REPO = 'aura-lab-wm/traceharness'
 DESCRIPTION = ('TraceHarness: measure coding agents from their trajectories. '
                'Open in GitHub Codespaces; no key needed for the recorded datasets.')
-PACKAGE_DIR = 'harnesslab-school'
+PACKAGE_DIR = 'traceharness-school'
 
 
 def run(cmd, cwd=None, capture=False) -> str:
@@ -89,7 +89,7 @@ def main() -> None:
         if args.dry_run:
             print('Dry run: nothing pushed.')
             return
-        run(['git', 'commit', '--quiet', '-m', f'TraceHarness from harnesslab {source}'], cwd=work)
+        run(['git', 'commit', '--quiet', '-m', f'TraceHarness from {source}'], cwd=work)
         run(['git', 'branch', '-M', 'main'], cwd=work)
         run(['git', 'push', '--quiet', 'origin', 'main'], cwd=work)
         print(f'Published https://github.com/{args.repo} from {source}.')

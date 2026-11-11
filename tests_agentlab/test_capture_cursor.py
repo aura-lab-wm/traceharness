@@ -18,7 +18,7 @@ import unittest
 LAB = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, LAB)
 
-from harnesslab.backend.importers import common as C, cursor   # noqa: E402
+from traceharness.backend.importers import common as C, cursor   # noqa: E402
 
 FIXDIR = os.path.join(LAB, "tests_agentlab", "fixtures", "capture")
 FIXTURE = os.path.join(FIXDIR, "cursor_transcript.jsonl")
@@ -106,7 +106,7 @@ class TestCursorParse(unittest.TestCase):
         census = ["AskQuestion", "AwaitShell", "CallDynamicTool", "GetDynamicTools", "Glob", "Grep",
                   "Read", "ReadLints", "SearchConversations", "SetActiveBranch", "Shell", "StrReplace",
                   "SwitchMode", "Task", "TodoWrite", "UpdateCurrentStep", "Write"]
-        from harnesslab.backend.importers import common as C
+        from traceharness.backend.importers import common as C
         for name in census:
             with self.subTest(tool=name):
                 self.assertTrue(name.lower() in cursor.TOOL_OVERRIDES or name.lower() in C.TOOL_MAP)
@@ -190,7 +190,7 @@ class TestTheTwoEntryPointsAgree(unittest.TestCase):
     def test_a_directory_import_claims_exactly_what_the_capture_glob_claims(self):
         """Not just "everything but subagents": canvases/, terminals/ and agent-tools/ sit beside the
         transcripts, and importing them made the same tree produce four times the runs."""
-        from harnesslab.capture import adapters
+        from traceharness.capture import adapters
         d, top = self.tree()
         fix = os.path.join(LAB, "tests_agentlab", "fixtures", "capture", "cursor_transcript.jsonl")
         for sibling in ("canvases", "terminals", "agent-tools"):

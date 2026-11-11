@@ -3,8 +3,8 @@ import copy
 import time
 import unittest
 
-from harnesslab.runner_service.configuration import preflight
-from harnesslab.runner_service.provider import ProviderError
+from traceharness.runner_service.configuration import preflight
+from traceharness.runner_service.provider import ProviderError
 from tests_agentlab.runner_service import test_broker as broker
 from tests_agentlab.runner_service import test_native_prompt_protocol as protocol_fixtures
 from tests_agentlab.runner_service.test_runner import configuration

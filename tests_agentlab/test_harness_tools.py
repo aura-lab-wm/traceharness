@@ -6,9 +6,9 @@ from dataclasses import asdict
 LAB = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, LAB)
 
-from harnesslab.core.harness import HarnessConfig, content_hash          # noqa: E402
-from harnesslab.core.ledger import RunSummary                            # noqa: E402
-from harnesslab.backend import harness_tools as HT                 # noqa: E402
+from traceharness.core.harness import HarnessConfig, content_hash          # noqa: E402
+from traceharness.core.ledger import RunSummary                            # noqa: E402
+from traceharness.backend import harness_tools as HT                 # noqa: E402
 
 
 # --------------------------------------------------------------------------- content hash
@@ -160,7 +160,7 @@ class TestAblationPlan(unittest.TestCase):
         self.assertNotIn("baseline~policy=permissive", p["job"]["harnesses"])
 
     def test_job_body_matches_JobIn(self):
-        from harnesslab.backend.app import JobIn
+        from traceharness.backend.app import JobIn
         p = HT.ablate_plan(base="baseline", models="mock", repeats=2)
         job = JobIn(**p["job"])                        # raises if a field is missing or mistyped
         self.assertEqual(job.repeats, 2)
@@ -188,7 +188,7 @@ class TestAblationPlan(unittest.TestCase):
         try:
             shutil.copy(os.path.join(LAB, "harnesses", "baseline.json"), os.path.join(tmp, "baseline.json"))
             HT.HARNESS_DIR = tmp
-            from harnesslab.backend.harness_tools import AblateIn
+            from traceharness.backend.harness_tools import AblateIn
             r1 = HT.ablate(AblateIn(base="baseline", factors=["temperature"], save=True))
             self.assertEqual(r1["saved"], ["baseline~temperature=0.7"])
             written = os.path.join(tmp, "baseline~temperature=0.7.json")
@@ -337,7 +337,7 @@ class TestRoutes(unittest.TestCase):
             from fastapi.testclient import TestClient
         except Exception:                                   # httpx not installed
             self.skipTest("fastapi.testclient unavailable")
-        from harnesslab.backend.app import app
+        from traceharness.backend.app import app
         c = TestClient(app)
         for url in ["/api/harness/knobs", "/api/harness/list",
                     "/api/harness/ablate/plan?base=baseline"] + ([

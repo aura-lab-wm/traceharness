@@ -1,4 +1,4 @@
-"""`harnesslab watch` -- the terminal view over harnesslab.core.live.tail: one run, the newest run
+"""`traceharness watch` -- the terminal view over traceharness.core.live.tail: one run, the newest run
 in progress in a directory, or the listing. Every form is exercised in-process with an explicit
 runs root, plus one subprocess run of the real entrypoint with --lab."""
 from __future__ import annotations
@@ -18,7 +18,7 @@ LAB = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, LAB)
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-from harnesslab.__main__ import watch_cli                 # noqa: E402
+from traceharness.__main__ import watch_cli                 # noqa: E402
 from live_fixtures import append, chat, end, ledger, start, tool   # noqa: E402
 
 
@@ -114,7 +114,7 @@ class TestWatchCli(unittest.TestCase):
 
     def test_module_entrypoint_runs_as_a_subprocess_with_lab(self):
         ledger(self.root, "d", "r1", [start(0), end(1)])
-        p = subprocess.run([sys.executable, "-m", "harnesslab", "watch", "--lab", self.lab],
+        p = subprocess.run([sys.executable, "-m", "traceharness", "watch", "--lab", self.lab],
                            cwd=LAB, capture_output=True, text=True, timeout=60)
         self.assertEqual(p.returncode, 0, p.stderr)
         self.assertIn("d/r1", p.stdout)

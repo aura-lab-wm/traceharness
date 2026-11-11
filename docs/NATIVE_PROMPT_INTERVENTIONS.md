@@ -30,7 +30,7 @@ a third member application or replace the recorded-data workbench.
 `/app` is the React export served by the authenticated Worker from `app.html.gz`.
 Editing React source or agent-patcher does not update that snapshot.
 `/app/shallow` remains the separate plain-JavaScript editor. The local lab remains
-`python -m harnesslab` on `127.0.0.1:8742`. See
+`python -m traceharness` on `127.0.0.1:8742`. See
 [One harness workspace](UNIFIED_HARNESS_WORKSPACE.md) for the surface boundaries.
 
 ## Implementation at the design baseline
@@ -276,7 +276,7 @@ a new profile revision and digest. A human-readable name is not an identity.
 Keep restored editor drafts and undo history outside the execution profile.
 
 The following summarizes the implemented schema-1 profile. See the
-[validated contract](../harnesslab/runner_service/native_prompts.py) and
+[validated contract](../traceharness/runner_service/native_prompts.py) and
 [operational guide](../deploy/runner/NATIVE_PROMPTS.md) for exact field bounds and
 canonicalization. `SHA256`, `ImageDigest`, `BlockId` and `RuntimeId` denote
 validated values, not fabricated hashes or prompt contents.

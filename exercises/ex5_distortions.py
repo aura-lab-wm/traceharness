@@ -12,10 +12,10 @@
 from _common import parse, try_matplotlib, hr, LAB_ROOT
 import difflib, os, re
 from collections import defaultdict
-from harnesslab.core.analysis import load_index, filter_rows, aggregate, task_table, mean, tokens_of
-from harnesslab.core.grader import load_task
-from harnesslab.core.reportcard import added_lines, similarity
-from harnesslab.core.trajtest import load_runs
+from traceharness.core.analysis import load_index, filter_rows, aggregate, task_table, mean, tokens_of
+from traceharness.core.grader import load_task
+from traceharness.core.reportcard import added_lines, similarity
+from traceharness.core.trajtest import load_runs
 
 args = parse(__doc__)
 rows = load_index(args.results)

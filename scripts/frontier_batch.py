@@ -16,10 +16,10 @@ from dataclasses import asdict
 
 LAB_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, LAB_ROOT)
-from harnesslab.core.grader import load_task
-from harnesslab.core.harness import HarnessConfig, run_task
-from harnesslab.core.providers import make_provider, price_for
-from harnesslab.core.runner import all_task_ids
+from traceharness.core.grader import load_task
+from traceharness.core.harness import HarnessConfig, run_task
+from traceharness.core.providers import make_provider, price_for
+from traceharness.core.runner import all_task_ids
 
 DEFAULT_MODELS = "anthropic/claude-sonnet-5,openai/gpt-5.6-sol,deepseek/deepseek-v4-pro,z-ai/glm-5.3"
 DEFAULT_HARNESSES = "baseline,no_test_tool,terse_prompt"

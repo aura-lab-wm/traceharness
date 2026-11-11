@@ -6,8 +6,8 @@ from pathlib import Path
 import tempfile
 import unittest
 
-from harnesslab.runner_service.configuration import canonical, preflight
-from harnesslab.runner_service.registry import Registry, tree_hash
+from traceharness.runner_service.configuration import canonical, preflight
+from traceharness.runner_service.registry import Registry, tree_hash
 from tests_agentlab.runner_service.test_runner import IMAGE, configuration, fixture_registry
 
 

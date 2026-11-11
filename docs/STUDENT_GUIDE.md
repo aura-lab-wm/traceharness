@@ -3,7 +3,7 @@
 This guide takes you from downloading TraceHarness to running, reading and testing it on your own
 machine. Follow it in order the first time. Later you can jump to the section you need.
 
-Everything below was checked on 23 September 2026 by unzipping the same `harnesslab-school.zip`
+Everything below was checked on 23 September 2026 by unzipping the same `traceharness-school.zip`
 you received on a clean machine and following this guide step by step. That covered installing,
 the mock agent, a real local model, real OpenRouter runs and Buddy, all eight exercises, the web
 app, the offline HTML export, the Docker image, and both test suites. Where something did *not* behave
@@ -59,9 +59,9 @@ TraceHarness has three parts:
 
 | part | what it does |
 |---|---|
-| **The runner** (`python -m harnesslab run`) | Runs a model on tasks under a harness, many times over, and writes everything down. |
+| **The runner** (`python -m traceharness run`) | Runs a model on tasks under a harness, many times over, and writes everything down. |
 | **The ledger** (`ledger.jsonl`, one per run) | One line per consequential action: every model call, tool call, edit, blocked action and grade. Nothing is reconstructed afterwards. |
-| **The web app** (`python -m harnesslab`) | Lets you browse, compare and question thousands of recorded runs, and launch new ones. |
+| **The web app** (`python -m traceharness`) | Lets you browse, compare and question thousands of recorded runs, and launch new ones. |
 
 Four ideas you will meet everywhere:
 
@@ -121,19 +121,19 @@ On Windows: install 3.12 from python.org and tick **Add python.exe to PATH**. Th
 
 ## 3. Get the code
 
-You will receive a zip file, **`harnesslab-school.zip`**. Unzip it anywhere you like, for example
-your home folder. It creates a folder called **`harnesslab-school/`**. Open a terminal and move
+You will receive a zip file, **`traceharness-school.zip`**. Unzip it anywhere you like, for example
+your home folder. It creates a folder called **`traceharness-school/`**. Open a terminal and move
 into that folder:
 
 ```bash
-cd ~/harnesslab-school          # or wherever you unzipped it
-ls                              # README.md  HANDOUT.md  docs/  tasks/  data/  harnesslab/ ...
+cd ~/traceharness-school          # or wherever you unzipped it
+ls                              # README.md  HANDOUT.md  docs/  tasks/  data/  traceharness/ ...
 ```
 
 On macOS, double-clicking the zip in Finder unzips it. On Windows, use right-click → *Extract
 All*.
 
-From here on, every command is run **from inside `harnesslab-school/`**: the folder that contains
+From here on, every command is run **from inside `traceharness-school/`**: the folder that contains
 `README.md`, `tasks/` and `data/`.
 
 The zip holds the complete application, its built web interface, the eight tasks, the six
@@ -182,31 +182,31 @@ about 8 seconds on a good connection.
 ### Check the install
 
 ```bash
-python -m harnesslab --version
+python -m traceharness --version
 ```
 
 Expected output:
 
 ```
-harnesslab 0.3.0
+traceharness 0.3.0
 ```
 
 Then:
 
 ```bash
-python -m harnesslab --paths
+python -m traceharness --paths
 ```
 
 Expected output (your paths will differ):
 
 ```json
 {
-  "lab_root": "/…/harnesslab",
+  "lab_root": "/…/traceharness",
   "source": "checkout",
-  "runs_root": "/…/harnesslab/data/runs",
-  "harnesses": "/…/harnesslab/harnesses",
-  "tasks": "/…/harnesslab/tasks",
-  "dist": "/…/harnesslab/harnesslab/frontend/dist",
+  "runs_root": "/…/traceharness/data/runs",
+  "harnesses": "/…/traceharness/harnesses",
+  "tasks": "/…/traceharness/tasks",
+  "dist": "/…/traceharness/traceharness/frontend/dist",
   "dist_built": true,
   ...
 }
@@ -225,7 +225,7 @@ This runs the **mock agent**, a scripted stand-in for a model, on one task, thre
 no network and no key, and it takes about a second.
 
 ```bash
-python -m harnesslab run --provider mock --tasks t01_slugify --repeats 3 --price 0,0 --out data/runs/mine -v
+python -m traceharness run --provider mock --tasks t01_slugify --repeats 3 --price 0,0 --out data/runs/mine -v
 ```
 
 With `-v` you see every step the agent takes. The last lines look like this (your token counts
@@ -274,24 +274,24 @@ ls data/runs/mine/<one_run_id>/     # ledger.jsonl  messages.json  patch.diff  s
 ## 6. Start the web app
 
 ```bash
-python -m harnesslab
+python -m traceharness
 ```
 
 This starts a local server on **http://127.0.0.1:8765** and opens your browser. The terminal
 prints:
 
 ```
-harnesslab 0.3.0 -> http://127.0.0.1:8765   (lab root: /…/harnesslab; OpenRouter key: NOT set)
+traceharness 0.3.0 -> http://127.0.0.1:8765   (lab root: /…/traceharness; OpenRouter key: NOT set)
 ```
 
 "OpenRouter key: NOT set" is normal; you do not need one.
 
 | want to… | run |
 |---|---|
-| start without opening a browser | `python -m harnesslab --no-browser` |
-| use another port (8765 is taken) | `python -m harnesslab --port 8766` |
+| start without opening a browser | `python -m traceharness --no-browser` |
+| use another port (8765 is taken) | `python -m traceharness --port 8766` |
 | stop the server | press **Ctrl+C** in that terminal |
-| see all options | `python -m harnesslab --help` |
+| see all options | `python -m traceharness --help` |
 
 The app reads every folder under `data/runs/`. New runs appear as they are written; you do not
 need to restart the server.
@@ -378,7 +378,7 @@ alphabet (L list · R read · F search · W write · E edit · T run tests · B 
 sequences pass, where the runs of a task diverge, and a query box: a regex such as `[WE](?!.*T)` (an edit never
 followed by a test) gives the pass rate inside and outside the match, Ochiai, the risk ratio, and the query as a
 unittest. On imported SWE-agent sets the page starts with the Ochiai ranking of trajectory features. The terminal
-version is `python -m harnesslab patterns <dataset> [--harness H] [--query REGEX]`.
+version is `python -m traceharness patterns <dataset> [--harness H] [--query REGEX]`.
 
 ![TraceHarness: trajectory features, action sequences and the query box](img/student-guide/trajectory-features.png)
 
@@ -494,7 +494,7 @@ table says.
 Then run it next to baseline:
 
 ```bash
-python -m harnesslab run --provider mock --harness harnesses/mine.json,harnesses/baseline.json \
+python -m traceharness run --provider mock --harness harnesses/mine.json,harnesses/baseline.json \
     --tasks all --repeats 5 --price 0,0 --out data/runs/mine_mock
 python exercises/ex2_harness.py --results data/runs/mine_mock --treatment mine
 ```
@@ -506,7 +506,7 @@ python exercises/ex2_harness.py --results data/runs/mine_mock --treatment mine
 ### 8.3 Mock runs (always free, always offline)
 
 ```bash
-python -m harnesslab run --provider mock --tasks all --repeats 3 --price 0,0 --out data/runs/mock_check
+python -m traceharness run --provider mock --tasks all --repeats 3 --price 0,0 --out data/runs/mock_check
 ```
 
 This ran 24 runs in 6 seconds, and **14 of 24 passed the hidden tests**. The mock agent is
@@ -520,7 +520,7 @@ broke, not the model; see [Troubleshooting](#13-troubleshooting). The weaker moc
 
 ```bash
 export OPENROUTER_API_KEY=sk-or-...        # Windows PowerShell: $env:OPENROUTER_API_KEY="sk-or-..."
-python -m harnesslab run --provider openrouter --model deepseek/deepseek-v4.1-flash \
+python -m traceharness run --provider openrouter --model deepseek/deepseek-v4.1-flash \
     --tasks t01_slugify,t03_ratelimit --repeats 2 --max-cost 1.00 --out data/runs/live_mine -v
 ```
 
@@ -545,11 +545,11 @@ Any server that speaks the OpenAI chat API works:
 
 ```bash
 # Ollama on this machine: use a model name that `ollama list` shows
-python -m harnesslab run --provider openai --base-url http://127.0.0.1:11434/v1 \
+python -m traceharness run --provider openai --base-url http://127.0.0.1:11434/v1 \
     --model <model> --tasks t01_slugify --repeats 2 --price 0,0 --out data/runs/local_ollama -v
 
 # a vLLM server
-python -m harnesslab run --provider openai --base-url http://127.0.0.1:8000/v1 \
+python -m traceharness run --provider openai --base-url http://127.0.0.1:8000/v1 \
     --model <served-model-name> --tasks all --repeats 2 --price 0,0 --out data/runs/local_vllm
 ```
 
@@ -585,8 +585,8 @@ and the runs appear live.
 ### 8.7 Watching a run in the terminal
 
 ```bash
-python -m harnesslab watch live_mine              # follow the run in progress in data/runs/live_mine
-python -m harnesslab watch live_mine/<run_id>     # print (or follow) one run's ledger, two lanes
+python -m traceharness watch live_mine              # follow the run in progress in data/runs/live_mine
+python -m traceharness watch live_mine/<run_id>     # print (or follow) one run's ledger, two lanes
 ```
 
 Give the folder **name** under `data/runs/`, not a path. With nothing running, the first form
@@ -738,8 +738,8 @@ file" or "verified after the last edit". **Failures here are findings about the 
 in TraceHarness.**
 
 ```bash
-HARNESSLAB_RESULTS=data/runs/prerecorded_mock HARNESSLAB_HARNESS=baseline python -m unittest discover -s trajectory_tests -v
-HARNESSLAB_RESULTS=data/runs/mine python -m unittest discover -s trajectory_tests
+TRACEHARNESS_RESULTS=data/runs/prerecorded_mock TRACEHARNESS_HARNESS=baseline python -m unittest discover -s trajectory_tests -v
+TRACEHARNESS_RESULTS=data/runs/mine python -m unittest discover -s trajectory_tests
 ```
 
 On the mock data under `baseline`, expect `Ran 11 tests … FAILED (failures=13)`. The count is
@@ -749,8 +749,8 @@ is the point of the exercise.
 On Windows PowerShell, set the variables first:
 
 ```powershell
-$env:HARNESSLAB_RESULTS="data/runs/prerecorded_mock"
-$env:HARNESSLAB_HARNESS="baseline"
+$env:TRACEHARNESS_RESULTS="data/runs/prerecorded_mock"
+$env:TRACEHARNESS_HARNESS="baseline"
 ```
 
 ### 11.2 The infrastructure test suite (Python)
@@ -774,7 +774,7 @@ Anything else is worth reporting; see section 11.5.
 ### 11.3 The frontend test suite (optional, needs Node.js 20+)
 
 ```bash
-cd harnesslab/frontend
+cd traceharness/frontend
 npm ci                  # about 10 s
 npx vitest run          # about 1.5 min
 cd ../..
@@ -786,7 +786,7 @@ If you see *"act(...) is not supported in production builds of React"*, your she
 `NODE_ENV=production` set. Run `NODE_ENV=test npx vitest run` instead.
 
 To rebuild the interface after changing its source, run `npm run build` in the same folder, then
-restart `python -m harnesslab`.
+restart `python -m traceharness`.
 
 ### 11.4 A five-minute smoke test
 
@@ -800,11 +800,11 @@ python scripts/check_install.py      # or: make check  ->  All 5 checks passed
 The same steps by hand:
 
 ```bash
-python -m harnesslab --version                                   # harnesslab 0.3.0
-python -m harnesslab run --provider mock --tasks all --repeats 3 --price 0,0 --out data/runs/smoke
+python -m traceharness --version                                   # traceharness 0.3.0
+python -m traceharness run --provider mock --tasks all --repeats 3 --price 0,0 --out data/runs/smoke
 #   -> 24 runs, 14 PASS
 python exercises/ex1_variance.py --results data/runs/smoke       # prints four sections
-python -m harnesslab --no-browser &                              # then open http://127.0.0.1:8765/#/rig/
+python -m traceharness --no-browser &                              # then open http://127.0.0.1:8765/#/rig/
 ```
 
 In the browser, check four things:
@@ -821,7 +821,7 @@ Send your instructor:
 1. what you ran (the exact command, or the URL from the address bar; the part after `#` records
    the exact view)
 2. what you expected, and what happened instead (paste the full terminal output)
-3. `python --version`, your operating system, and the output of `python -m harnesslab --paths`
+3. `python --version`, your operating system, and the output of `python -m traceharness --paths`
 4. a screenshot, if it is a display problem
 
 ---
@@ -831,16 +831,16 @@ Send your instructor:
 ### 12.1 Docker (no local Python setup)
 
 ```bash
-docker build -t harnesslab .
-docker run -d --rm -p 127.0.0.1:8765:8765 --name harnesslab harnesslab
-# open http://127.0.0.1:8765 ; stop with: docker stop harnesslab
+docker build -t traceharness .
+docker run -d --rm -p 127.0.0.1:8765:8765 --name traceharness traceharness
+# open http://127.0.0.1:8765 ; stop with: docker stop traceharness
 ```
 
 The image uses Python 3.12 and is a few hundred MB. It includes whatever is in `data/runs/` when
 you build it.
 
 - New runs started from its web app use the bundled mock model unless you pass a key.
-- Launch runs from the web app (Analysis → Run setup). `harnesslab run` typed inside the
+- Launch runs from the web app (Analysis → Run setup). `traceharness run` typed inside the
   container cannot find the tasks.
 - `docker compose up --build` also works, and it keeps new runs in `./data/runs` on your
   machine.
@@ -848,7 +848,7 @@ you build it.
 ### 12.2 One offline HTML file
 
 ```bash
-python -m harnesslab --export lab.html --export-results prerecorded_mock --export-runs 10
+python -m traceharness --export lab.html --export-results prerecorded_mock --export-runs 10
 ```
 
 This writes a single self-contained file, about 6 MB for this example, that opens straight from
@@ -860,9 +860,9 @@ disk with no server. TraceHarness works in it, read-only.
 
 ### 12.3 The legacy console
 
-Older material mentions a second console (`python -m harnesslab.core.serve`). It is not part of this package.
+Older material mentions a second console (`python -m traceharness.core.serve`). It is not part of this package.
 Its Patterns, Queries and Attribution views are in TraceHarness under Analysis → **Trajectory features**, and
-`python -m harnesslab patterns <dataset>` prints the same in the terminal.
+`python -m traceharness patterns <dataset>` prints the same in the terminal.
 
 ---
 
@@ -870,22 +870,22 @@ Its Patterns, Queries and Attribution views are in TraceHarness under Analysis �
 
 | symptom | cause | fix |
 |---|---|---|
-| `ERROR: Package 'harnesslab' requires a different Python: 3.9.6 not in '>=3.10'` | you are on the system Python 3.9 (common on macOS) | install Python 3.12 and recreate the venv with `python3.12 -m venv .venv` (section 2) |
+| `ERROR: Package 'traceharness' requires a different Python: 3.9.6 not in '>=3.10'` | you are on the system Python 3.9 (common on macOS) | install Python 3.12 and recreate the venv with `python3.12 -m venv .venv` (section 2) |
 | `ModuleNotFoundError: No module named 'fastapi'` | the virtual environment is not active, or the install did not run | `source .venv/bin/activate` (Windows: `.venv\Scripts\Activate.ps1`), then `python -m pip install -e .` |
-| `address already in use` / port 8765 busy | another TraceHarness (or another app) is running | stop it with Ctrl+C, or use `python -m harnesslab --port 8766` |
+| `address already in use` / port 8765 busy | another TraceHarness (or another app) is running | stop it with Ctrl+C, or use `python -m traceharness --port 8766` |
 | the browser did not open | `--no-browser`, or no default browser | open <http://127.0.0.1:8765> yourself |
-| blank page, or `"dist_built": false` in `--paths` | the built interface is missing (a partial or damaged unzip) | unzip the archive again, or run `cd harnesslab/frontend && npm ci && npm run build` |
+| blank page, or `"dist_built": false` in `--paths` | the built interface is missing (a partial or damaged unzip) | unzip the archive again, or run `cd traceharness/frontend && npm ci && npm run build` |
 | **every run grades `fail`, but the agent's own tests pass in the transcript** | the grader could not run Python in the task sandbox. Typical with **pyenv**, where a `python` shim exists but exits with an error. | Run the task's test command yourself in a fresh folder. Fix your pyenv global version or use a plain venv. Check a mock sweep gives 14 / 24 (section 8.3). **Never believe a 0 % or 100 % mock sweep.** |
 | a mock sweep is all pass or all fail | same as above: the grader, not the model | as above |
 | `RuntimeError: OPENROUTER_API_KEY is not set` | a real-model run without a key | `export OPENROUTER_API_KEY=...` in **the same terminal** (for the web app: the terminal that started the server) |
 | HTTP 429 / 529 from the provider | rate limit or overload | the runner retries with back-off; lower `--repeats` or switch model |
 | every run ends `exit=no_action` | the model does not call tools, or its replies are cut off at `max_tokens_per_call` | try a larger model, or raise `max_tokens_per_call` in a copied harness |
 | costs look wrong for a mock or local model | no `--price` was given, so the default table was used | re-run with `--price 0,0` |
-| the app shows no runs | it reads `data/runs/*` under the lab root | check `python -m harnesslab --paths`; start it from inside `harnesslab-school/` |
-| "Invalid host" when opening from another machine | the server only accepts `127.0.0.1` / `localhost` by default | set `HARNESSLAB_ALLOWED_HOSTS=my-hostname` and start with `--host 0.0.0.0`. Only do this on a network you trust. |
+| the app shows no runs | it reads `data/runs/*` under the lab root | check `python -m traceharness --paths`; start it from inside `traceharness-school/` |
+| "Invalid host" when opening from another machine | the server only accepts `127.0.0.1` / `localhost` by default | set `TRACEHARNESS_ALLOWED_HOSTS=my-hostname` and start with `--host 0.0.0.0`. Only do this on a network you trust. |
 | Buddy says *not connected* | no OpenRouter key saved in this browser | Settings → Buddy → paste the key → Save |
 | Buddy's answer is cut off | the reply hit its output limit | ask a narrower question; the footer shows how many tokens were hidden reasoning |
-| `python -m unittest discover` finds no tests | you are not in the package's top folder | `cd` into `harnesslab-school/`, the folder that contains `tests_agentlab/` |
+| `python -m unittest discover` finds no tests | you are not in the package's top folder | `cd` into `traceharness-school/`, the folder that contains `tests_agentlab/` |
 | trajectory tests fail | that is usually the finding, not a bug | see section 11.1 |
 | `request failed after 4 attempts: timed out` (run ends `exit=error`) | the model took more than 120 s per call | use a faster model (section 8.5) |
 | `npm ci` adds only ~77 packages, then vitest says *Cannot find package '@vitejs/plugin-react'* | your shell has `NODE_ENV=production`, so npm skipped the development packages | `NODE_ENV=development npm ci`, then `NODE_ENV=test npx vitest run` |

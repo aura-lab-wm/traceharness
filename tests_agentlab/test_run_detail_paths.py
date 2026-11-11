@@ -16,8 +16,8 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from fastapi.testclient import TestClient            # noqa: E402
 
-import harnesslab.backend.metrics as M               # noqa: E402
-from harnesslab.backend.app import app               # noqa: E402
+import traceharness.backend.metrics as M               # noqa: E402
+from traceharness.backend.app import app               # noqa: E402
 from live_fixtures import chat, end, ledger, start, tool   # noqa: E402
 
 
@@ -68,7 +68,7 @@ class TestRunDetailPaths(unittest.TestCase):
         (see the test above), the guard `run_detail` calls must still refuse that value outright if
         anything ever reaches it with one -- e.g. a future route without the SPA catch-all, or a
         direct call."""
-        import harnesslab.backend.app as APP
+        import traceharness.backend.app as APP
         with self.assertRaises(Exception) as ctx:
             APP._safe_name("../..", "run_id")
         self.assertEqual(getattr(ctx.exception, "status_code", None), 400)

@@ -18,12 +18,12 @@ We will discuss them in the last ten minutes.
 ## The platform: TraceHarness
 
 Every exercise below is a command-line script, and every one of them has a view in TraceHarness. Use whichever
-you prefer — they call the same functions in `harnesslab/core/analysis.py`, so the numbers agree by construction.
+you prefer — they call the same functions in `traceharness/core/analysis.py`, so the numbers agree by construction.
 TraceHarness is better for exploring; the scripts are better for the hand-in.
 
 ```bash
 python -m pip install -e '.[real]'         # once; a codespace has done this for you
-python -m harnesslab                       # TraceHarness: http://127.0.0.1:8765
+python -m traceharness                       # TraceHarness: http://127.0.0.1:8765
 ```
 
 | where in TraceHarness | what it is for | exercise |
@@ -55,8 +55,8 @@ the queries in **Trajectory features** — and the tests you generate from them 
 In the terminal, at the top of the repository:
 
 ```bash
-python3 -m harnesslab run --provider mock --tasks t01_slugify --repeats 2 --out data/runs/mine -v
-python -m harnesslab                       # TraceHarness: http://127.0.0.1:8765 (a codespace starts it for you)
+python3 -m traceharness run --provider mock --tasks t01_slugify --repeats 2 --out data/runs/mine -v
+python -m traceharness                       # TraceHarness: http://127.0.0.1:8765 (a codespace starts it for you)
 ```
 
 You should see two runs, each a handful of steps, ending in `PASS` or `fail`, and TraceHarness opening on
@@ -73,7 +73,7 @@ second terminal:
 
 ```bash
 export OPENROUTER_API_KEY=...                      # your own key; give it a credit limit, e.g. $5
-python -m harnesslab run --provider openrouter --model google/gemini-2.5-flash \
+python -m traceharness run --provider openrouter --model google/gemini-2.5-flash \
     --harness harnesses/baseline.json,harnesses/no_test_tool.json \
     --tasks t01_slugify,t03_ratelimit,t06_injected_config,t07_cache_cleanup,t08_ambiguous_handler \
     --repeats 4 --out data/runs/live
@@ -87,7 +87,7 @@ with your own keys also work. Both harnesses write
 into `data/runs/live`, so its **Family matrix** shows both cells, and runs appear as they are written. The runs take
 5–10 minutes; do not wait for them.
 
-While they run, skim `harnesslab/core/harness.py::run_task` (the control loop, 120 lines) and `harnesslab/core/tools.py`
+While they run, skim `traceharness/core/harness.py::run_task` (the control loop, 120 lines) and `traceharness/core/tools.py`
 (the tool surface and the policy). Find: where the stopping rule is; where a boundary event is recorded; what
 `context_window` does. You will change all three later.
 
@@ -146,7 +146,7 @@ from Analysis → **Run setup**, which lists every file in `harnesses/` (5 repea
 A = `baseline`, B = yours:
 
 ```bash
-python -m harnesslab run --provider mock --harness harnesses/mine.json,harnesses/baseline.json --repeats 5 --out data/runs/mine_mock
+python -m traceharness run --provider mock --harness harnesses/mine.json,harnesses/baseline.json --repeats 5 --out data/runs/mine_mock
 python exercises/ex2_harness.py --results data/runs/mine_mock --treatment <your id>
 ```
 
@@ -158,9 +158,9 @@ shape of that result in miniature.
 
 ```bash
 python exercises/ex3_trajectories.py
-HARNESSLAB_RESULTS=data/runs/prerecorded_mock HARNESSLAB_HARNESS=baseline   python -m unittest discover -s trajectory_tests -v 2>&1 | tail -25
-HARNESSLAB_RESULTS=data/runs/prerecorded_mock HARNESSLAB_HARNESS=permissive python -m unittest discover -s trajectory_tests 2>&1 | grep FAIL | cut -c1-110
-HARNESSLAB_RESULTS=data/runs/live python -m unittest discover -s trajectory_tests -v 2>&1 | tail -25
+TRACEHARNESS_RESULTS=data/runs/prerecorded_mock TRACEHARNESS_HARNESS=baseline   python -m unittest discover -s trajectory_tests -v 2>&1 | tail -25
+TRACEHARNESS_RESULTS=data/runs/prerecorded_mock TRACEHARNESS_HARNESS=permissive python -m unittest discover -s trajectory_tests 2>&1 | grep FAIL | cut -c1-110
+TRACEHARNESS_RESULTS=data/runs/live python -m unittest discover -s trajectory_tests -v 2>&1 | tail -25
 ```
 
 `trajectory_tests/test_conduct.py` contains three groups: safety policies (a failure is an incident), process
@@ -187,9 +187,9 @@ unittest that fails when more runs match than you allow. The same from the termi
 transition matrices for passing and failing runs and what happens at each step:
 
 ```bash
-python -m harnesslab patterns prerecorded_mock --harness baseline
-python -m harnesslab patterns prerecorded_mock --harness baseline --query '[WE](?!.*T)'
-python -m harnesslab patterns prerecorded_mock --harness baseline --query '[WE](?!.*T)' --unittest > trajectory_tests/test_edit_never_tested.py
+python -m traceharness patterns prerecorded_mock --harness baseline
+python -m traceharness patterns prerecorded_mock --harness baseline --query '[WE](?!.*T)'
+python -m traceharness patterns prerecorded_mock --harness baseline --query '[WE](?!.*T)' --unittest > trajectory_tests/test_edit_never_tested.py
 ```
 
 Write one new trajectory test. The issue for t04 says "do not use the `csv` module"; t01 says "do not change
@@ -289,7 +289,7 @@ up on the report card?) are the ones to bring to the discussion.
 
 Stretch. These trajectories were generated to train agents. Pick a feature that predicts failure and argue
 whether filtering training data on it would teach the model to avoid the failure or to avoid the symptom. Then
-look at `harnesslab/core/real_traj.py::classify_command` and improve the action classifier; check whether the ranking
+look at `traceharness/core/real_traj.py::classify_command` and improve the action classifier; check whether the ranking
 changes.
 
 ## 8. From benchmark to experiment (1:50 – 1:58)
@@ -355,6 +355,6 @@ live model as a third level and see whether the harness lines stay parallel.
 * A model that never calls tools (exit `no_action`): try a different model; some small models are poor at tool
   use. The mock provider always works.
 * `python -m unittest discover` finds no tests: run it from the top of the repository, the folder with `tests_agentlab/`.
-* TraceHarness shows no runs: it reads `data/runs/*`; `python -m harnesslab --paths` prints the folder it uses.
+* TraceHarness shows no runs: it reads `data/runs/*`; `python -m traceharness --paths` prints the folder it uses.
 * `pip install datasets` fails or there is no network: `python exercises/ex7_real_trajectories.py --offline`.
 * Windows: use `set` instead of `export`, and forward slashes are fine in paths.

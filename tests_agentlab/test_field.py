@@ -1,13 +1,13 @@
 """The Field is served live and exported whole, from the same template.
 
-`harnesslab/backend/field.html` carries exactly one `__DATA__` slot and is a *fragment*.
+`traceharness/backend/field.html` carries exactly one `__DATA__` slot and is a *fragment*.
 `GET /field` fills it with `{"live": true}`, so the page pulls its corpus from `/api/bundle`;
 `--export-field` fills it with the whole bundle so one file works with no server at all. The page
 reduces the bundle itself either way, which is why the export embeds it rather than doing a
 second, Python-side reduction.
 
 Ported from agent-lab, where this exercised `agentlab.serve`. The Field now lives in
-`harnesslab.backend.field` behind FastAPI, and its launch panel is deliberately not wired here --
+`traceharness.backend.field` behind FastAPI, and its launch panel is deliberately not wired here --
 launching runs belongs to Command center on this platform -- so the old TestLaunchCmd cases are
 gone rather than rewritten against a function that no longer exists.
 """
@@ -20,7 +20,7 @@ import unittest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
-from harnesslab.backend import field as F
+from traceharness.backend import field as F
 
 
 def _client():

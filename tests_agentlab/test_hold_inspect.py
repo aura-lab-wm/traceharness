@@ -14,10 +14,10 @@ from unittest.mock import patch
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from harnesslab.core.analysis import factorial, factor_summary, load_index  # noqa: E402
-from harnesslab.backend import metrics as M  # noqa: E402
-from harnesslab.backend.private_guard import DIR_PARAMS  # noqa: E402
-from harnesslab.backend.results_scope import is_private  # noqa: E402
+from traceharness.core.analysis import factorial, factor_summary, load_index  # noqa: E402
+from traceharness.backend import metrics as M  # noqa: E402
+from traceharness.backend.private_guard import DIR_PARAMS  # noqa: E402
+from traceharness.backend.results_scope import is_private  # noqa: E402
 
 REPO = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 RUNS = os.path.join(REPO, "data", "runs")
@@ -41,12 +41,12 @@ def _balanced():
 
 def _cli(args):
     env = os.environ.copy()
-    for key in ("HARNESSLAB_LAB", "SINGLETREE_LAB", "ARGUS_LAB", "HOLDSTILL_LAB",
-                "HARNESSLAB_PORT", "SINGLETREE_PORT", "ARGUS_PORT", "HOLDSTILL_PORT"):
+    for key in ("TRACEHARNESS_LAB", "SINGLETREE_LAB", "ARGUS_LAB", "HOLDSTILL_LAB",
+                "TRACEHARNESS_PORT", "SINGLETREE_PORT", "ARGUS_PORT", "HOLDSTILL_PORT"):
         env.pop(key, None)
     env["PYTHONPATH"] = REPO
     return subprocess.run(
-        [PY, "-m", "harnesslab", *args, "--lab", REPO],
+        [PY, "-m", "traceharness", *args, "--lab", REPO],
         cwd=REPO, env=env, capture_output=True, text=True, timeout=180,
     )
 
@@ -149,7 +149,7 @@ class TestHolds(unittest.TestCase):
                 raise AssertionError(parts)
             return real(*parts)
 
-        with patch("harnesslab.backend.metrics.os.path.join", spy):
+        with patch("traceharness.backend.metrics.os.path.join", spy):
             out = M.experiment(rows, holds=[("task_id", "../captured")])
         self.assertEqual(out["fit"]["reason"], "hold_excluded_every_row")
         self.assertEqual(out["n_after"], 0)
@@ -188,8 +188,8 @@ class TestCatalogDoesNotReadCaptured(unittest.TestCase):
                 return real_list(root, include_private)
 
             try:
-                with patch("harnesslab.backend.metrics.count_runs", count_spy), \
-                        patch("harnesslab.backend.metrics.list_results_dirs", list_spy):
+                with patch("traceharness.backend.metrics.count_runs", count_spy), \
+                        patch("traceharness.backend.metrics.list_results_dirs", list_spy):
                     cat = M.source_catalog(tmp)
             finally:
                 os.chmod(index, 0o644)
@@ -202,7 +202,7 @@ class TestCatalogDoesNotReadCaptured(unittest.TestCase):
         self.assertFalse(cat["capture"]["starts_from_the_website"])
         self.assertFalse(cat["capture"]["listed_by_default"])
         self.assertEqual(cat["capture"]["directory"], "captured")
-        self.assertEqual(cat["capture"]["command"], "python -m harnesslab.capture --watch")
+        self.assertEqual(cat["capture"]["command"], "python -m traceharness.capture --watch")
         self.assertTrue(is_private(tmp, "captured"))
 
 

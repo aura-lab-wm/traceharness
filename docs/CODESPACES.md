@@ -30,7 +30,7 @@ steps, every run and span, the judge and integrity checks, the sentinel, the can
 agent also runs offline from the terminal:
 
 ```bash
-python -m harnesslab run --provider mock --tasks t01_slugify --repeats 3 --out data/runs/mine
+python -m traceharness run --provider mock --tasks t01_slugify --repeats 3 --out data/runs/mine
 python exercises/ex1_variance.py --results data/runs/mine
 ```
 
@@ -53,7 +53,7 @@ TraceHarness itself needs no account. Live model calls go on **your own OpenRout
 Launch runs from **Analysis → Run setup** in TraceHarness, or from the terminal:
 
 ```bash
-python -m harnesslab run --provider openrouter --model deepseek/deepseek-v4-flash \
+python -m traceharness run --provider openrouter --model deepseek/deepseek-v4-flash \
   --tasks t01_slugify,t03_ratelimit --repeats 3 --out data/runs/live-mine
 ```
 
@@ -71,7 +71,7 @@ named `OPENROUTER_API_KEY` (github.com → Settings → Codespaces), then restar
   machine, far more than you need here. Delete the codespace afterwards from
   github.com/codespaces.
 - **If TraceHarness is not there,** run `bash .devcontainer/start.sh` in the terminal. It starts
-  the server, or tells you it is already running. The server log is `/tmp/harnesslab.log`.
+  the server, or tells you it is already running. The server log is `/tmp/traceharness.log`.
 
 ## Other ways in
 

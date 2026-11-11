@@ -12,11 +12,11 @@ position bias under swapping, and a verbosity check.
 import json, os, time
 from _common import parse, hr, LAB_ROOT
 import os, random
-from harnesslab.core.analysis import load_index, filter_rows, cohen_kappa
-from harnesslab.core.grader import load_task
-from harnesslab.core.judge import (MockJudge, completer_from_provider, calibrate_single, calibrate_pairwise, judge_process)
-from harnesslab.core.providers import make_provider
-from harnesslab.core.trajtest import load_runs
+from traceharness.core.analysis import load_index, filter_rows, cohen_kappa
+from traceharness.core.grader import load_task
+from traceharness.core.judge import (MockJudge, completer_from_provider, calibrate_single, calibrate_pairwise, judge_process)
+from traceharness.core.providers import make_provider
+from traceharness.core.trajtest import load_runs
 
 
 def extra(ap):

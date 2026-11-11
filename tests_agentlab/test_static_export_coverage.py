@@ -17,7 +17,7 @@ LAB = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, LAB)
 sys.path.insert(0, os.path.join(LAB, "tests_agentlab"))
 
-from harnesslab.backend import static_export as SE           # noqa: E402
+from traceharness.backend import static_export as SE           # noqa: E402
 from test_no_dead_surface import registered_routes           # noqa: E402
 
 #: GET routes under /api/ a static export deliberately never snapshots, each with why. A route
@@ -110,7 +110,7 @@ def _route_regex(path: str) -> re.Pattern:
 class ExportCoversEveryReadOnlyRoute(unittest.TestCase):
     def test_every_get_route_is_exported_or_named_as_excluded(self):
         from starlette.testclient import TestClient
-        from harnesslab.backend.app import app
+        from traceharness.backend.app import app
 
         client = TestClient(app)
         dirs = SE.default_dirs()
@@ -154,7 +154,7 @@ class ExportBakesExactlyWhatItRequests(unittest.TestCase):
     query string and all -- see static_export.py's module docstring on the exact-URL problem, and
     docs/superpowers/specs/2026-09-21-study-aggregates-design.md #2/#3). This runs the real
     build() over small, real results dirs and checks the closed loop end to end: every URL
-    _urls() names for them lands as an exact key in the embedded __HARNESSLAB_DATA__ blob.
+    _urls() names for them lands as an exact key in the embedded __TRACEHARNESS_DATA__ blob.
     """
     #: Kept small and real (both are checked-in fixtures test_harness_tools.py also depends on)
     #: rather than SE.default_dirs()'s full set -- build() actually performs every one of these
@@ -166,7 +166,7 @@ class ExportBakesExactlyWhatItRequests(unittest.TestCase):
         import json
         import tempfile
         from starlette.testclient import TestClient
-        from harnesslab.backend.app import app
+        from traceharness.backend.app import app
 
         for d in self.DIRS:
             self.assertTrue(
@@ -184,7 +184,7 @@ class ExportBakesExactlyWhatItRequests(unittest.TestCase):
                               f"these URLs failed during the real export: {result['failed']}")
             html = open(out_path, encoding="utf-8").read()
 
-        m = re.search(r"window\.__HARNESSLAB_DATA__=(.*?);</script>", html, re.S)
+        m = re.search(r"window\.__TRACEHARNESS_DATA__=(.*?);</script>", html, re.S)
         self.assertIsNotNone(m, "the export's embedded-data banner was not found in the built HTML")
         data = json.loads(m.group(1))
 

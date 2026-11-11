@@ -1,4 +1,4 @@
-"""harnesslab.backend.live_api -- the run list and the SSE stream over harnesslab.core.live.
+"""traceharness.backend.live_api -- the run list and the SSE stream over traceharness.core.live.
 
 The router is mounted on a bare FastAPI app with RUNS_ROOT pointed at a temp directory (the same
 pattern test_repeats.py uses), so every check here is about this router's own behaviour. On the
@@ -27,7 +27,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from fastapi import FastAPI                     # noqa: E402
 from fastapi.testclient import TestClient       # noqa: E402
 
-import harnesslab.backend.live_api as api_mod   # noqa: E402
+import traceharness.backend.live_api as api_mod   # noqa: E402
 from live_fixtures import append, append_raw, chat, end, ledger, start, tool   # noqa: E402
 
 

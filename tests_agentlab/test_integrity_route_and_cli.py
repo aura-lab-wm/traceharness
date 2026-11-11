@@ -1,4 +1,4 @@
-"""/api/results/<d>/integrity and `harnesslab integrity <d>` are one read, not two.
+"""/api/results/<d>/integrity and `traceharness integrity <d>` are one read, not two.
 
 Both call `metrics.integrity`. A sentinel patched at that lookup site must reach BOTH surfaces --
 agreement on an ordinary fixture would not show that, since two copies of the same assembly agree
@@ -16,9 +16,9 @@ from unittest.mock import patch
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from starlette.testclient import TestClient          # noqa: E402
-from harnesslab.backend.app import app, _STUDY_CACHE  # noqa: E402
-from harnesslab.backend import metrics as M           # noqa: E402
-from harnesslab import __main__ as cli                # noqa: E402
+from traceharness.backend.app import app, _STUDY_CACHE  # noqa: E402
+from traceharness.backend import metrics as M           # noqa: E402
+from traceharness import __main__ as cli                # noqa: E402
 
 DIR = "families_mock"
 SENTINEL = {"leakage": [{"task": "__sentinel__", "pass1": 42.0}], "weak_tests": {}, "self_report": [],
@@ -52,7 +52,7 @@ class IntegrityOneRead(unittest.TestCase):
         self.assertEqual(r.json(), body)
 
     def test_a_sentinel_at_metrics_integrity_reaches_both_surfaces(self):
-        with patch("harnesslab.backend.metrics.integrity", return_value=SENTINEL):
+        with patch("traceharness.backend.metrics.integrity", return_value=SENTINEL):
             r = TestClient(app).get(f"/api/results/{DIR}/integrity?harness=baseline")
             rc, body = self._cli("--harness", "baseline")
         self.assertEqual(r.json()["harness"], "__sentinel_harness__")

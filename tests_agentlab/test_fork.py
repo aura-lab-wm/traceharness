@@ -1,4 +1,4 @@
-"""Self-tests for the fork view (harnesslab/backend/fork.py).
+"""Self-tests for the fork view (traceharness/backend/fork.py).
 
 Two halves: synthetic ledgers where the difference between the two runs is put there on purpose, so the
 divergence indices have a known right answer; and the shipped mock results dirs, where we only assert
@@ -12,7 +12,7 @@ import unittest
 LAB = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, LAB)
 
-from harnesslab.backend import fork as F  # noqa: E402
+from traceharness.backend import fork as F  # noqa: E402
 
 RUNS = os.path.join(LAB, "data", "runs")
 
@@ -355,7 +355,7 @@ class TestRouterWiring(unittest.TestCase):
 
     def test_the_platform_app_serves_the_fork_routes(self):
         try:
-            from harnesslab.backend.app import app
+            from traceharness.backend.app import app
         except ImportError:  # pragma: no cover
             self.skipTest("platform app not importable")
         c = self._client(app)
