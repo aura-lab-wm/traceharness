@@ -16,6 +16,9 @@
    nothing), the consent does not, because sending private transcript text is a
    per-session act by design. */
 
+export const MATE_SETTINGS_EVENT = 'traceharness:mate-settings'
+const notifySettings = () => { if (typeof window !== 'undefined') window.dispatchEvent(new window.Event(MATE_SETTINGS_EVENT)) }
+
 export const KEY_SLOT = 'hs.mate.key'
 export const MODEL_SLOT = 'hs.mate.model'
 export const CAPTURED_SLOT = 'hs.mate.captured'
@@ -80,6 +83,7 @@ export function writeKey(stores, raw, remember = isKeyRemembered(stores)) {
   if (get(target, KEY_SLOT) !== key) return key
   del(remember ? stores.session : stores.local, KEY_SLOT)
   if (key !== previous) { del(stores.session, CAPTURED_SLOT); del(stores.session, CAPTURED_KEY_SLOT) }
+  notifySettings()
   return key
 }
 
@@ -88,6 +92,7 @@ export function forgetKey(stores) {
   del(stores.session, KEY_SLOT)
   del(stores.session, CAPTURED_SLOT)   // consent does not outlive the key it was given with
   del(stores.session, CAPTURED_KEY_SLOT)
+  notifySettings()
 }
 
 export function writeModel(stores, raw) {
@@ -102,5 +107,6 @@ export function setCaptured(stores, on) {
   // cannot silently inherit this tab's permission to send captured text.
   if (on) { put(stores.session, CAPTURED_KEY_SLOT, readMate(stores).key); put(stores.session, CAPTURED_SLOT, '1') }
   else { del(stores.session, CAPTURED_SLOT); del(stores.session, CAPTURED_KEY_SLOT) }
+  notifySettings()
   return !!on
 }

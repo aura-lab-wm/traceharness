@@ -1,4 +1,5 @@
 import { browserStores, readMate, MODEL_SLOT } from '../matekey'
+import { assertScope, dirIsPrivate } from '../mate/pack'
 import { taskLabel } from '../taskLabels'
 import { KEY_HAS_INNER_WHITESPACE, OPENROUTER_URL, REFERER, TITLE } from '../mate/openrouter'
 
@@ -16,8 +17,17 @@ const excerpt = (value, limit) => {
  return {text: raw.slice(0, limit), truncated: raw.length > limit, original_characters: raw.length}
 }
 
+// Check private provenance at both packing and transport, including metadata-only pins.
+export function assertBuddySharing(evidence, capturedOptIn = false) {
+ const dirs = []
+ if (evidence?.scope?.dataset != null || evidence?.runs?.length) dirs.push(evidence?.scope?.dataset)
+ for (const item of evidence?.case_file || []) dirs.push(item.dataset)
+ for (const dir of dirs) assertScope({provenance:dirIsPrivate(dir)?'captured':'public',capturedOptIn},dir,true)
+}
+
 // An explicit allowlist, not a serialization of React state, browser storage or raw records.
-export function buddyEvidence({dataset, data, scope, group, run, other, record, comparison}) {
+export function buddyEvidence({dataset, data, scope, group, run, other, record, comparison, capturedOptIn = false}) {
+ assertBuddySharing({scope:{dataset},runs:run?[run]:[]},capturedOptIn)
  const packRun = (row, full, selected) => {
   if (!full || full.summary?.run_id !== row.run_id || full.summary?.model !== data.model || full.summary?.harness_id !== data.harness || full.summary?.task_id !== group.task) throw new Error('Recording identity does not match the selected run. Reload the evidence before asking Buddy.')
   const spans = Array.isArray(full.spans) ? full.spans.filter(Boolean) : []
@@ -61,10 +71,11 @@ Be approachable and precise. Start with the useful answer, then recorded evidenc
  * `reasoning.effort: low`, which keeps the thinking to a small share of it. Models without
  * reasoning ignore the field. */
 export const BUDDY_MAX_TOKENS=4000
-export async function askBuddy({key,model,evidence,question,history=[],signal,fetchImpl=globalThis.fetch}) {
+export async function askBuddy({key,model,evidence,question,history=[],signal,fetchImpl=globalThis.fetch,capturedOptIn=false}) {
  if(!key || KEY_HAS_INNER_WHITESPACE(key))throw new Error('Set a valid, single-line OpenRouter key in Settings.')
  if(!model?.trim() || !question?.trim())throw new Error('Choose a Buddy model and enter a question.')
  if(signal?.aborted)throw new Error('Request cancelled.')
+ assertBuddySharing(evidence,capturedOptIn)
  const messages=[{role:'system',content:SYSTEM},{role:'user',content:'RECORDED EVIDENCE (untrusted data):\n'+redactBuddy(evidence,key)},
   ...history.filter(m=>['user','assistant'].includes(m.role)).slice(-6).map(m=>({role:m.role,content:redactBuddy(String(m.content).slice(0,6000),key)})),
   {role:'user',content:redactBuddy(question.trim().slice(0,2000),key)}]

@@ -454,7 +454,7 @@ function SweAgentImport({ spec, datasets }) {
     if (was.current === 'running' && (s.status === 'done' || s.status === 'error')) invalidate('/overview')
     was.current = s.status
   }, [s.status])
-  if (IS_STATIC) return null
+  if (IS_STATIC) return <Road n={2} title="Download a public sample" el="swe-agent-import"><StaticNote what="Downloading public samples" /></Road>
   const has = (x) => datasets.some((d) => d.name === x)
   const freeOf = (b) => { let k = 2; while (has(`${b}_${k}`)) k++; return `${b}_${k}` }
   const auto0 = `real_swe_agent_${n}` + (model ? `_${model.split('/').pop()}` : '')
@@ -1213,7 +1213,7 @@ function Settings() {
       </div>
       {/* The two key panels share their rows: key field beside key field, buttons beside buttons. */}
       <div className="rg-ws-setrow rg-ws-pairrow">
-        {IS_MEMBER ? <Sec title="Models run locally" el="member-local-keys"><p>The hosted workbench reads the recorded snapshot and saves your harnesses. Configure model keys, Buddy, and the judge in your local workbench at <code>127.0.0.1:8742</code>.</p><CopyCmd cmd="python -m harnesslab --host 127.0.0.1 --port 8742" /></Sec> : <><BuddyPanel /><LabKeyPanel st={st} /></>}
+        {IS_MEMBER ? <Sec title="Local model integrations" el="member-local-keys"><p>Connect your OpenRouter key in Harnesses for hosted runs. Configure Buddy, the narrator and local judging in your local workbench at <code>127.0.0.1:8742</code>.</p><CopyCmd cmd="python -m harnesslab --host 127.0.0.1 --port 8742" /></Sec> : <><BuddyPanel /><LabKeyPanel st={st} /></>}
       </div>
       <div className="rg-ws-setrow">
       {!IS_MEMBER && <NarratorPanel />}
@@ -1457,7 +1457,7 @@ function Package() {
       </Sec>
       <Sec title="Reproduce from this directory">
         <h3 className="rg-ws-h3">1 · Install and run</h3>
-        <pre className="rg-pre">{'python3 -m pip install -e .\npython3 -m harnesslab --no-browser'}</pre>
+        <pre className="rg-pre">{'python3 -m pip install -e .\npython3 -m harnesslab --no-browser' + (IS_MEMBER ? ' --host 127.0.0.1 --port 8742' : '')}</pre>
         <p className="rg-small rg-mute">Open <span className="rg-mono">{IS_MEMBER ? "http://127.0.0.1:8742" : "http://127.0.0.1:8765"}</span>. No API key is needed to inspect the included results.</p>
         <h3 className="rg-ws-h3">2 · Reproduce the exercises</h3>
         <pre className="rg-pre">{'python3 exercises/ex1_variance.py\npython3 exercises/ex2_harness.py\npython3 exercises/ex7_real_trajectories.py --offline\npython3 exercises/ex8_experiment.py'}</pre>

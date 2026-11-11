@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { act, fireEvent, screen, within } from '@testing-library/react'
+import { browserStores, writeKey, forgetKey, setCaptured } from '../../matekey'
 import { renderRig, resetRig } from '../../../test/rig-testing'
 
 afterEach(resetRig)
@@ -90,4 +91,31 @@ describe('Buddy dock', () => {
     expect(ev.textContent).toContain('1 recording')
     expect(document.querySelector('[data-el="buddy-key-state"]').textContent).toContain('Connected')
   })
+})
+
+it('Buddy blocks private pin metadata until the per-session captured permission is enabled and tracks same-tab key changes', () => {
+ const privatePin={id:'cell:captured',kind:'cell',dir:'./captured/.',label:'private task slug',value:'private value'}
+ const {requests}=renderRig('#/rig/ds:mini?dock=buddy',{storage:pins([privatePin])})
+ const panel=document.querySelector('[data-el="buddy-panel"]')
+ expect(within(panel).getByText(/Not connected/)).toBeTruthy()
+ act(()=>writeKey(browserStores(),'fixture-not-a-real-provider-key'))
+ expect(within(panel).getByText('Connected')).toBeTruthy()
+ expect(panel.querySelector('[data-el="buddy-evidence"]').textContent).toContain('per-session opt-in is off')
+ expect(within(panel).queryByText('Preview the exact payload')).toBeNull()
+ const input=within(panel).getByRole('textbox',{name:'Ask Buddy about the case file'})
+ fireEvent.change(input,{target:{value:'Explain this evidence'}})
+ const checkbox=within(panel).getByRole('checkbox',{name:/Send this evidence/})
+ fireEvent.click(checkbox)
+ expect(within(panel).getByRole('button',{name:'Send question'}).disabled).toBe(true)
+ act(()=>setCaptured(browserStores(),true))
+ expect(within(panel).getByText('Preview the exact payload')).toBeTruthy()
+ expect(checkbox.checked).toBe(false)
+ fireEvent.click(checkbox)
+ expect(within(panel).getByRole('button',{name:'Send question'}).disabled).toBe(false)
+ act(()=>setCaptured(browserStores(),false))
+ expect(within(panel).queryByText('Preview the exact payload')).toBeNull()
+ expect(within(panel).getByRole('button',{name:'Send question'}).disabled).toBe(true)
+ act(()=>forgetKey(browserStores()))
+ expect(within(panel).getByText(/Not connected/)).toBeTruthy()
+ expect(requests.filter(r=>/openrouter/.test(r.url))).toEqual([])
 })

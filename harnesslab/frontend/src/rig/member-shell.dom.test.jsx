@@ -57,6 +57,24 @@ const data = {
 }
 
 describe('hosted workbench navigation', () => {
+  it('keeps the public sample import discoverable while explaining its local execution boundary', () => {
+    const { container, requests } = renderRig('#/rig/sources', { data: {
+      ...data,
+      '/settings': { results_root: 'data/runs', key_present: false },
+      '/import/sources': { sources: [] },
+      '/import/status': { status: 'idle', history: [] },
+      '/real/status': { status: 'idle' },
+      [`/harness/versions?dir=${dir}`]: { dir, versions: [] },
+    } })
+    const sample = container.querySelector('[data-el="swe-agent-import"]')
+    expect(sample).not.toBeNull()
+    expect(within(sample).getByRole('heading', { name: 'Download a public sample' })).toBeTruthy()
+    expect(sample.textContent).toContain('Local workbench required.')
+    expect(sample.textContent).toContain('127.0.0.1:8742')
+    expect(within(sample).queryByRole('button', { name: 'Download SWE-agent sample' })).toBeNull()
+    expect(requests).toEqual([])
+  })
+
   it('keeps analysis and harness navigation together and exposes local model controls honestly', () => {
     const { container, requests } = renderRig('#/rig/home', { data })
     const rail = within(screen.getByRole('navigation', { name: 'Activity' }))

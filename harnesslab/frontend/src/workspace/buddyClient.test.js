@@ -65,3 +65,18 @@ it('explains an answer lost entirely to reasoning instead of calling it an empty
  const fetchImpl=async()=>({ok:true,json:async()=>({choices:[{finish_reason:'length',message:{content:''}}],usage:{completion_tokens:4000,completion_tokens_details:{reasoning_tokens:4000}}})})
  await expect(askBuddy({key:'test-key',model:'m',question:'Explain',evidence:{},fetchImpl})).rejects.toThrow(/hidden reasoning/)
 })
+
+it('requires captured-session opt-in for recording text and private case-file pins before packing or sending', async () => {
+ for (const dataset of ['captured', './captured/.', 'public/../captured']) {
+  expect(() => buddyEvidence({dataset,data,scope:{},group,run,record:full})).toThrow(/private|opt-in/)
+  const fetchImpl=vi.fn()
+  for (const evidence of [{scope:{dataset},runs:[{summary:run}]}, {scope:{dataset:'recordings'},case_file:[{dataset,label:'PRIVATE PIN'}]}]) {
+   await expect(askBuddy({key:'fixture-key',model:'assistant/model',question:'Explain',evidence,fetchImpl})).rejects.toThrow(/private|opt-in/)
+  }
+  expect(fetchImpl).not.toHaveBeenCalled()
+ }
+ const pack=buddyEvidence({dataset:'captured',data,scope:{},group,run,record:full,capturedOptIn:true})
+ const fetchImpl=vi.fn(async()=>({ok:true,json:async()=>({choices:[{message:{content:'Explicitly shared evidence.'}}]})}))
+ await expect(askBuddy({key:'fixture-key',model:'assistant/model',question:'Explain',evidence:pack,capturedOptIn:true,fetchImpl})).resolves.toHaveProperty('answer')
+ expect(fetchImpl).toHaveBeenCalledOnce()
+})

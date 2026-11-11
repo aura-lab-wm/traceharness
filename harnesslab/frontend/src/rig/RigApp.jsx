@@ -478,7 +478,7 @@ export default function RigApp() {
             launchers on the right (a closed dock takes no row of its own). */}
         <footer className="rg-sb" aria-label="Status">
           <span className="it" data-el="runtime-status">
-            {IS_MEMBER ? <><span className="rg-dot" /><span data-el="member-workspace-state" title={STATIC_DATA?.__meta__?.generated_at ? `Snapshot created ${STATIC_DATA.__meta__.generated_at}; saved harnesses are read from your account.` : 'Recorded data snapshot; saved harnesses are read from your account.'}>recorded snapshot · member harness saves</span></>
+            {IS_MEMBER ? <><span className="rg-dot" /><span data-el="member-workspace-state" title={STATIC_DATA?.__meta__?.generated_at ? `Snapshot created ${STATIC_DATA.__meta__.generated_at}; saved harnesses and hosted runs are read from your account.` : 'Recorded data snapshot; saved harnesses and hosted runs are read from your account.'}>recorded snapshot · member harness saves · hosted runs</span></>
               : IS_STATIC ? <><span className="rg-dot off" /><span data-el="read-only-export-state">read-only snapshot</span></>
               : ov.error || !online ? <><span className="rg-dot warn" /><span data-el="backend-down">backend unreachable · retrying</span></>
                 : ov.data ? <><span className="rg-dot" />local workspace · connected</> : <><span className="rg-dot off" />connecting…</>}

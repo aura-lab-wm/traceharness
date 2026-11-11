@@ -87,7 +87,7 @@ Four ideas you will meet everywhere:
 |---|---|
 | **Operating system** | macOS or Linux. On Windows, WSL2 or Docker is the safest route; see [Windows](#windows). |
 | **Python 3.10, 3.11 or 3.12** | **3.12 is recommended.** 3.9 does **not** work: installation stops with `requires a different Python`. |
-| **Disk** | About 150 MB once unzipped. The zip ships 3,452 recorded runs. |
+| **Disk** | About 150 MB once unzipped. The zip ships 3,453 recorded runs. |
 | **A browser** | Any recent Chrome, Firefox, Safari or Edge. |
 | **unzip** | Built into macOS, Windows and most Linux desktops. |
 | *Optional:* **Node.js 20+** | Only needed to run the frontend tests or change the web interface. The built interface is already included. |
@@ -137,7 +137,7 @@ From here on, every command is run **from inside `harnesslab-school/`**: the fol
 `README.md`, `tasks/` and `data/`.
 
 The zip holds the complete application, its built web interface, the eight tasks, the six
-harnesses, the exercises, the tests, and 3,452 recorded runs. It holds no API keys and no
+harnesses, the exercises, the tests, and 3,453 recorded runs. It holds no API keys and no
 personal data. `PACKAGE_MANIFEST.json` lists every file with its checksum.
 
 > If you were instead given access to the GitHub repository, `git clone` it and work from its top

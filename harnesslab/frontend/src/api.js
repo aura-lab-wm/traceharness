@@ -12,7 +12,7 @@ export async function api(path, opts = {}) {
   if (IS_MEMBER && memberRoute(path, method)) return memberRequest(path, opts)
   if (IS_STATIC || IS_MEMBER) {
     if (method !== 'GET') {
-      if (IS_MEMBER) throw new Error('Execution and local changes need the local app. Start it with python -m harnesslab --host 127.0.0.1 --port 8742. Member harness saves are available in Fixed harnesses and Minimal harness.')
+      if (IS_MEMBER) throw new Error('Use the Harnesses workspace for hosted runs and member harness saves. Watching, imports, capture, judging and other machine-local changes need the local app: python -m harnesslab --host 127.0.0.1 --port 8742.')
       throw new Error('This is a static export — launching runs and training need the live app.')
     }
     if (STATIC_DATA && Object.hasOwn(STATIC_DATA, path)) return STATIC_DATA[path]

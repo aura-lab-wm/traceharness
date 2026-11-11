@@ -9,10 +9,10 @@
    ==================================================================================== */
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { IS_MEMBER } from '../../api'
-import { askBuddy, buddyEvidence, buddySettings, redactBuddy } from '../../workspace/buddyClient'
+import { askBuddy, assertBuddySharing, buddyEvidence, buddySettings, redactBuddy } from '../../workspace/buddyClient'
 import BuddyModelPicker from '../../workspace/BuddyModelPicker'
 import BuddyMessage from '../../workspace/BuddyMessage'
-import { browserStores, writeModel } from '../../matekey'
+import { browserStores, MATE_SETTINGS_EVENT, writeModel } from '../../matekey'
 import { useCaseFile } from '../caseFile'
 import { useRig } from '../context'
 import { useRuns, useRunDetail, short, sfx, tally, verdict } from '../data'
@@ -32,7 +32,7 @@ function conditionShape(allRuns, run) {
   return { data: { model: run.model, harness: run.harness, total: t.n, passed: t.p, failed: t.f, unknown: t.u, groups }, group: groups.find((g) => g.task === run.task) }
 }
 
-function useEvidence(items, ctx) {
+function useEvidence(items, ctx, capturedOptIn) {
   const pinnedRuns = items.filter((x) => x.kind === 'run' && x.run && x.dir)
   const first = pinnedRuns[0] || null
   const second = first ? pinnedRuns.find((x) => x !== first && x.dir === first.dir && x.model === first.model && x.harness === first.harness && x.task === first.task) || null : null
@@ -42,6 +42,7 @@ function useEvidence(items, ctx) {
   const B = useRunDetail(second ? second.dir : null, second ? second.run : null)
   return useMemo(() => {
     const caseFile = items.map((x) => ({ kind: x.kind, label: x.label, value: x.value || null, dataset: x.dir || null, run: x.run || null, event: x.seq ?? null, note: x.note || null }))
+    try { assertBuddySharing({ scope: { dataset: dir }, case_file: caseFile }, capturedOptIn) } catch (e) { return { evidence: null, loading: false, error: e.message } }
     const base = { case_file: caseFile, limitations: 'Pinned values are what the workbench showed when pinned. Unknown grades are not failures. Recorded observations, not root-cause proof.' }
     if (!first) return { evidence: { scope: { dataset: dir || null, view: 'case file' }, ...base }, runsIncluded: 0, loading: false, error: null }
     if (R.error || A.error || B.error) return { evidence: null, loading: false, error: 'Could not load a pinned recording. Unpin it or try again.' }
@@ -53,10 +54,10 @@ function useEvidence(items, ctx) {
     const row = group.runs.find((r) => r.run_id === run.id)
     const otherRow = other ? group.runs.find((r) => r.run_id === other.id) : null
     try {
-      const ev = buddyEvidence({ dataset: first.dir, data, scope: { view: 'tasks', task: run.task, run: run.id, compare: otherRow ? other.id : undefined }, group, run: row, other: otherRow, record: A.data, comparison: otherRow ? B.data : null })
+      const ev = buddyEvidence({ capturedOptIn, dataset: first.dir, data, scope: { view: 'tasks', task: run.task, run: run.id, compare: otherRow ? other.id : undefined }, group, run: row, other: otherRow, record: A.data, comparison: otherRow ? B.data : null })
       return { evidence: { ...ev, ...base }, runsIncluded: ev.runs.length, loading: false, error: null }
     } catch (e) { return { evidence: null, loading: false, error: e.message } }
-  }, [items, dir, first, second, R.data, R.error, A.data, A.loading, A.error, B.data, B.loading, B.error])
+  }, [items, capturedOptIn, dir, first, second, R.data, R.error, A.data, A.loading, A.error, B.data, B.loading, B.error])
 }
 
 function BuddyDock(props) {
@@ -97,10 +98,11 @@ function LiveBuddyDock({ ctx = {} }) {
   useEffect(() => () => abort.current && abort.current.abort(), [])
   useEffect(() => {  // a key saved in Settings (any tab) connects Buddy without a reload
     const on = () => setSettings(buddySettings())
-    window.addEventListener('storage', on); window.addEventListener('focus', on)
-    return () => { window.removeEventListener('storage', on); window.removeEventListener('focus', on) }
+    window.addEventListener('storage', on); window.addEventListener('focus', on); window.addEventListener(MATE_SETTINGS_EVENT, on)
+    return () => { window.removeEventListener('storage', on); window.removeEventListener('focus', on); window.removeEventListener(MATE_SETTINGS_EVENT, on) }
   }, [])
-  const ev = useEvidence(items, ctx)
+  useEffect(() => { abort.current?.abort(); setBusy(false); setConsent(false); setMessages([]) }, [settings.key, settings.captured])
+  const ev = useEvidence(items, ctx, settings.captured)
   const R = useRuns(ctx.dir || null)
   const focusRun = ctx.run && R.data ? R.data.find((r) => r.id === ctx.run || sfx(r.id) === ctx.run) : null
   const sugg = focusRun
@@ -116,12 +118,14 @@ function LiveBuddyDock({ ctx = {} }) {
   const send = async (e) => {
     e.preventDefault()
     if (busy || !consent || !ev.evidence || !settings.keyPresent || !question.trim()) return
+    const current = buddySettings()
+    if (current.key !== settings.key || current.captured !== settings.captured) { setSettings(current); setConsent(false); setMessages([]); setError('Sharing settings changed. Review the evidence and sharing permission again.'); return }
     const controller = new AbortController(); abort.current = controller
     setBusy(true); setError('')
     const asked = question.trim(), history = messages.map((m) => ({ role: m.role, content: m.content }))
     const timer = setTimeout(() => controller.abort(), 60000)
     try {
-      const answer = await askBuddy({ key: settings.key, model: settings.model, evidence: ev.evidence, question: asked, history, signal: controller.signal })
+      const answer = await askBuddy({ capturedOptIn: current.captured, key: current.key, model: settings.model, evidence: ev.evidence, question: asked, history, signal: controller.signal })
       if (controller.signal.aborted) return
       setMessages((prev) => [...prev, { role: 'user', content: redactBuddy(asked, settings.key) }, { role: 'assistant', content: answer.answer, usage: answer }])
       setQuestion('')
