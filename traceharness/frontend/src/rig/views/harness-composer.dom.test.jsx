@@ -1176,3 +1176,30 @@ it('shows the entire historical run manifest without substituting the editor dra
  expect(screen.getByRole('textbox',{name:'Prompt',exact:true}).value).toBe('Independent current draft')
  expect(calls.filter(call=>call.method==='POST'&&call.url==='/api/runner/jobs')).toHaveLength(0)
 })
+
+
+describe('integrated configuration editing and dispatch', () => {
+  it('applies a JSON draft atomically and blocks run review until unapplied edits are resolved', async () => {
+    render(<Composer />); await ready()
+    fireEvent.click(screen.getByText('Edit configuration JSON', { exact: true }))
+    const editor = screen.getByRole('region', { name: 'Configuration JSON editor' })
+    const input = within(editor).getByRole('textbox')
+    const value = JSON.parse(input.value)
+    value.prompt = 'Inspect the repository and verify the changed behavior.'
+    value.harness.blocks.find((block) => block.type === 'prompt').text = value.prompt
+    fireEvent.change(input, { target: { value: JSON.stringify(value, null, 2) } })
+    expect(screen.getByRole('button', { name: 'Review run', exact: true }).disabled).toBe(true)
+    expect(prompt().value).not.toBe(value.prompt)
+    fireEvent.click(within(editor).getByRole('button', { name: 'Apply JSON', exact: true }))
+    await waitFor(() => expect(prompt().value).toBe(value.prompt))
+    expect(screen.getByRole('button', { name: 'Review run', exact: true }).disabled).toBe(false)
+    expect(calls.some((call) => call.method === 'POST' && call.url === '/api/runner/jobs')).toBe(false)
+  })
+
+  it('makes general experiment dispatch available alongside current harness authoring', async () => {
+    render(<Composer />); await catalogReady()
+    expect(screen.getByRole('region', { name: 'Experiment dispatch' })).toBeTruthy()
+    expect(screen.getByText('Edit configuration JSON', { exact: true })).toBeTruthy()
+    expect(calls.some((call) => call.method === 'POST' && call.url === '/api/runner/experiments')).toBe(false)
+  })
+})

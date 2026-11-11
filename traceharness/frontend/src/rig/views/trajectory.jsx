@@ -30,6 +30,7 @@ import { isSweRun, suiteLabel, tokenCoverage } from '../provenance'
 import { findings as checkpoints } from '../../directions/investigationFacts'
 import { RunConsole } from './console'
 import { RecordedHarnessJson } from '../HarnessJson'
+import { ForkRecordedHarness } from '../RecordingFork'
 import './trajectory.css'
 
 const { int, usd, plural } = fmt
@@ -823,6 +824,7 @@ function TaskDoc({ spec, args }) {
           </div>
         </section>
         <RecordedHarnessJson run={run} detail={det.data} loading={det.loading} error={det.error} onRetry={det.reload} />
+      <ForkRecordedHarness run={run} detail={det.data} loading={det.loading} error={det.error} />
         <section className="rg-traj-evsec">
           <div className="rg-traj-facets" role="tablist" data-el="inv-tabs" aria-label="Evidence">
             {FACETS.map(([k, l]) => (
@@ -927,6 +929,7 @@ function RunDoc({ spec, args }) {
       </header>
       <RecordingProvenance runs={[run]} />
       <RecordedHarnessJson run={run} detail={det.data} loading={det.loading} error={det.error} onRetry={det.reload} />
+      <ForkRecordedHarness run={run} detail={det.data} loading={det.loading} error={det.error} />
       {replay && spans.length ? <ReplayLanes run={run} spans={spans} onExit={() => setReplay(false)} /> : (<>
         {v === false && det.data && <WhyFailed run={run} detail={det.data} oracle={oracle} meta={meta} onPick={onSel} />}
         <DetailGate det={det} run={run} what="event list" runs={runs}>

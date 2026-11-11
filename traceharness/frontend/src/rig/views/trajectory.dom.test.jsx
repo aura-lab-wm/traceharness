@@ -428,3 +428,16 @@ it('the selected task attempt exposes its own harness JSON without requiring the
  fireEvent.click(within(json).getByRole('button',{name:'View JSON'}))
  expect(JSON.parse(within(json).getByRole('textbox',{name:'Harness JSON source'}).textContent)).toEqual(HARNESS)
 })
+
+
+it('forks a complete recorded harness into an editable draft without changing the recording', () => {
+  const config = { ...HARNESS, system_prompt: 'Inspect, edit, verify, and submit.', policy: 'strict', context_window: 0, observation_chars: 6000, max_total_tokens: 400000, temperature: 0, include_file_listing: true, sentinel: {} }
+  const detail = { summary: summaryOf(ID3), spans: cutSpans.map((span) => span.seq === 0 ? { ...span, harness: config } : span), patch: '', messages: [], issue: '' }
+  renderRig('#/rig/run:a00003', { data: data({ [`/results/${MINI}/runs/${ID3}`]: detail }) })
+  fireEvent.click(screen.getByRole('button', { name: 'Fork recorded harness', exact: true }))
+  expect(location.hash).toContain('harnesses:fork:')
+  expect(detail.spans[0].harness).toEqual(config)
+  const stored = JSON.parse(sessionStorage.getItem('traceharness.shallow.recorded-fork'))
+  expect(stored.source.value).toEqual(config)
+  expect(stored.configuration.prompt).toBe(config.system_prompt)
+})

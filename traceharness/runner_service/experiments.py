@@ -1,4 +1,4 @@
-"""Frozen, owner-bound paired native prompt experiments.
+"""Frozen, owner-bound paired-native and general matrix experiments.
 
 A schedule is persisted before paid work. Submission identities never change,
 uncertain submissions never retry, and credentials exist only in process memory.
@@ -49,21 +49,33 @@ def _label(value, maximum):
 
 def _core_plan(value):
     """Validate authoring shape without consulting execution readiness."""
-    _require(isinstance(value,dict) and set(value)=={'version','name','seed','repeats','arms'},'Invalid experiment plan fields.')
-    _require(type(value['version']) is int and value['version']==1,'Unsupported experiment plan version.')
+    _require(isinstance(value,dict) and type(value.get('version')) is int and value['version'] in {1,2},'Unsupported experiment plan version.')
+    matrix=value['version']==2
+    expected={'version','name','seed','repeats','arms'} | ({'budget_usd'} if matrix else set())
+    _require(set(value)==expected,'Invalid experiment plan fields.')
+    if matrix:
+        ceiling=value['budget_usd']
+        _require(type(ceiling) in (int,float) and math.isfinite(ceiling) and 0 < ceiling <= 100,'Set an aggregate experiment ceiling greater than zero and at most $100.')
     _require(_label(value['name'],120),'Enter an experiment name of at most 120 characters.')
     _require(type(value['seed']) is int and 0 <= value['seed'] <= 2**32-1,'Use an integer schedule seed from 0 to 4294967295.')
     _require(type(value['repeats']) is int and 1 <= value['repeats'] <= 10,'Use 1 to 10 paired repetitions.')
     arms=value['arms']
-    _require(isinstance(arms,list) and 2 <= len(arms) <= 8 and len(arms)*value['repeats'] <= 64,
-             'An experiment requires 2 to 8 arms and at most 64 scheduled trials.')
+    _require(isinstance(arms,list) and (1 if matrix else 2) <= len(arms) <= (64 if matrix else 8) and len(arms)*value['repeats'] <= 64,
+             'A matrix needs 1 to 64 distinct cells and at most 64 trials.' if matrix else 'An experiment requires 2 to 8 arms and at most 64 scheduled trials.')
     _require(not has_secret(value) and len(canonical(value)) <= 1024*1024,'Experiment plans cannot contain credentials or exceed one MiB.')
-    ids=set();reference=pins=None
+    ids=set();configurations=set();reference=pins=None
     for arm in arms:
         _require(isinstance(arm,dict) and set(arm)=={'id','label','configuration'},'Invalid experiment arm fields.')
         _require(isinstance(arm['id'],str) and ARM_ID.fullmatch(arm['id']) and arm['id'] not in ids,'Use unique experiment arm identities.')
         ids.add(arm['id']);_require(_label(arm['label'],80),'Use arm labels of at most 80 characters.')
         c=arm['configuration']
+        if matrix:
+            _require(isinstance(c,dict) and type(c.get('version')) is int and c['version'] in {1,2}
+                     and c.get('runtime_id') in {'traceharness','native-claude-code','native-codex'}, f"Configuration {arm['label']} requires a supported run configuration.")
+            identity=digest(c)
+            _require(identity not in configurations,'Matrix cells must have distinct configurations.')
+            configurations.add(identity)
+            continue
         _require(isinstance(c,dict) and type(c.get('version')) is int and c['version']==2
                  and c.get('runtime_id') in {'native-claude-code','native-codex'} and isinstance(c.get('native_prompt_profile'),dict),
                  'Each arm requires a native version-2 prompt configuration.')
@@ -94,12 +106,14 @@ def review_plan(value, review):
         draft=_core_plan(value);arms=[]
         for arm in draft['arms']:
             result,_=review(arm['configuration'])
-            _require(isinstance(result,dict) and result.get('ok') is True,'An experiment arm did not pass current runner review.')
+            _require(isinstance(result,dict) and result.get('ok') is True,f"Configuration {arm['label']} did not pass current runner review.")
             _require(isinstance(result.get('manifest'),dict) and digest(result['manifest'])==result.get('manifest_sha256'),
                      'An experiment arm manifest could not be verified.')
             arms.append({**arm,'manifest':result['manifest'],'manifest_sha256':result['manifest_sha256']})
         total=sum((Decimal(str(a['configuration']['limits']['max_cost_usd'])) for a in arms),Decimal('0'))*draft['repeats']
         _require(total.is_finite() and Decimal('0') < total <= Decimal('100'),'The maximum aggregate experiment budget must be at most $100.')
+        if draft['version']==2:
+            _require(total <= Decimal(str(draft['budget_usd'])),'The worst-case trial total exceeds the aggregate experiment ceiling.')
         plan={**draft,'reference_arm_id':arms[0]['id'],'order_algorithm':ALGORITHM,'arms':arms,
               'maximum_cost_usd':float(total),'trial_count':len(arms)*draft['repeats']}
         plan['schedule']=_schedule(plan)
@@ -110,9 +124,11 @@ def review_plan(value, review):
 
 
 def _validated_plan(plan, expected):
-    _require(isinstance(plan,dict) and set(plan)=={'version','name','seed','repeats','reference_arm_id','order_algorithm','arms','schedule','maximum_cost_usd','trial_count'},'Invalid frozen experiment plan.')
+    expected_fields={'version','name','seed','repeats','reference_arm_id','order_algorithm','arms','schedule','maximum_cost_usd','trial_count'}
+    _require(isinstance(plan,dict) and set(plan)==expected_fields | ({'budget_usd'} if plan.get('version')==2 else set()),'Invalid frozen experiment plan.')
     _require(isinstance(expected,str) and SHA.fullmatch(expected) and digest(plan)==expected,'Experiment plan integrity changed.')
     draft={k:copy.deepcopy(plan[k]) for k in ('version','name','seed','repeats')}
+    if plan['version']==2:draft['budget_usd']=copy.deepcopy(plan['budget_usd'])
     draft['arms']=[]
     for arm in plan['arms']:
         _require(isinstance(arm,dict) and set(arm)=={'id','label','configuration','manifest','manifest_sha256'},'Invalid frozen experiment arm.')
@@ -124,6 +140,7 @@ def _validated_plan(plan, expected):
              and plan['schedule']==_schedule(base) and plan['trial_count']==len(plan['schedule']), 'Frozen experiment schedule changed.')
     total=sum((Decimal(str(a['configuration']['limits']['max_cost_usd'])) for a in plan['arms']),Decimal('0'))*plan['repeats']
     _require(total==Decimal(str(plan['maximum_cost_usd'])) and 0 < total <= 100 and len(canonical(plan))<=MAX_PLAN_BYTES,'Invalid frozen experiment budget or size.')
+    if plan['version']==2:_require(total <= Decimal(str(plan['budget_usd'])),'Frozen trial total exceeds its reviewed aggregate ceiling.')
     return plan
 
 
@@ -137,6 +154,7 @@ def summarize(experiment):
     out={'finalized_trials':len(final),'pending_trials':sum(t['status']=='pending' for t in trials),
          'active_trials':sum(t['status'] in TRIAL_ACTIVE for t in trials),'confirmed_cost_usd':float(sum(known,Decimal('0'))),
          'cost_unknown_trials':sum(reported(t) is None for t in issued),'comparisons':[]}
+    if plan.get('version')==2:return out
     by_pair={(t['arm_id'],t['repeat']):t for t in trials}
     for arm in plan['arms']:
         if arm['id']==plan['reference_arm_id']:continue

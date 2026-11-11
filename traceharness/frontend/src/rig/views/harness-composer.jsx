@@ -10,13 +10,18 @@ import { EvidenceOrigin } from '../shallowEvidence'
 import { Go, Icon } from '../ui'
 import { BlockCard } from './blocks'
 import { CARDS, QUESTIONS, blocksFromAnswers } from './shallow-data'
-import { blocksFromHarness, writeDraft } from './shallow-drafts'
+import { blocksFromHarness, readDraft, writeDraft } from './shallow-drafts'
 import { applyConfiguration, configurationFor, configurationText, expiryTime, fixedComposerDrafts, forkAsCustom, guidanceFor, initialComposer, NATIVE_DRAFTS, parseConfiguration } from './harness-composer-state'
 import { HarnessPicker } from '../harnessPicker'
 import { ConfigurationLibrary } from '../configurationLibrary'
 import { NativePrompts } from '../NativePrompts'
 import { PairedExperiments } from '../PairedExperiments'
 import { HarnessJson } from '../HarnessJson'
+import { ConfigurationEditor } from '../ConfigurationEditor'
+import { ExperimentWorkspace } from '../ExperimentWorkspace'
+import { safeRecordingSource, stagedRecordingFork } from '../RecordingFork'
+import { configurationFromManifest } from '../configuration-from-recording'
+import { prepareHarnessJSON } from '../harness-json'
 import { promptCounts } from './native-prompts-state'
 import { addCheckpoint, compareConfigurations, deleteCheckpoint, loadCheckpoints, persistCheckpoints, renameCheckpoint, restoreCheckpoint } from '../configuration-checkpoints'
 import './harness-composer.css'
@@ -48,7 +53,12 @@ const LIMIT_FIELDS = [
 
 export function HarnessComposer({ args = [] }) {
   const instanceId = useId()
-  const [state, setState] = useState(() => initialComposer(args))
+  const [initialFork] = useState(() => stagedRecordingFork(args))
+  const [state, setState] = useState(() => initialFork?.configuration ? applyConfiguration(initialComposer(args), initialFork.configuration).state : initialComposer(args))
+  const [forkSource, setForkSource] = useState(() => initialFork?.source || safeRecordingSource(readDraft('composer-source')))
+  const [forkError, setForkError] = useState(initialFork?.error || '')
+  const appliedFork = useRef(args[0] === 'fork' ? String(args[1]) : null)
+  const [jsonPending, setJsonPending] = useState(false)
   const [cards, setCards] = useState(CARDS)
   const [library, setLibrary] = useState([])
   const [fixedDrafts, setFixedDrafts] = useState(fixedComposerDrafts)
@@ -151,6 +161,8 @@ export function HarnessComposer({ args = [] }) {
   const jobActive = job && !terminal.has(job.status)
   const blocksIssues = native || fixed ? [] : fieldIssues(state.blocks)
   const readyIssues = [
+    ...(jsonPending ? ['Apply or discard the pending JSON edits before reviewing or dispatching.'] : []),
+    ...(forkError ? ['The requested recorded fork has not loaded. Resolve or dismiss its error before dispatching.'] : []),
     ...(catalogLoading ? ['Checking current task and model compatibility.'] : []),
     ...(!catalog.execution_available || !catalog.runner.available ? [catalog.runner.message || 'No execution service is connected.'] : []),
     ...(!runtime?.available ? [runtime?.reason || 'This runtime is not available on the connected runner.'] : []),
@@ -165,8 +177,25 @@ export function HarnessComposer({ args = [] }) {
     ...LIMIT_FIELDS.flatMap((original) => { const field = original.key === 'max_output_tokens' && configuration.runtime_id === 'native-claude-code' ? { ...original, min: 2049 } : original; const issue = numberIssue(configuration.limits[field.key], field); return issue ? [`${native && field.key === 'max_steps' ? 'Model request cap' : field.label}: ${issue}`] : [] }),
     ...(fixed && (!card || new TextEncoder().encode(prompt).length > card.cap_bytes) ? ['The fixed prompt is over its byte cap.'] : []),
   ]
-  const currentReview = preflight?.key === configurationKey && preflight.catalog === catalog && preflight.revision === catalogRevision && preflight.nativeInventoryRevision === nativeInventoryRevision && !catalogLoading
+  const currentReview = !jsonPending && !forkError && preflight?.key === configurationKey && preflight.catalog === catalog && preflight.revision === catalogRevision && preflight.nativeInventoryRevision === nativeInventoryRevision && !catalogLoading
   const reviewed = currentReview && preflight.result?.ok === true && preflight.result.issues.length === 0
+
+  useEffect(() => {
+    setStorageError(writeDraft('composer-source', forkSource), 'source')
+  }, [forkSource])
+  useEffect(() => {
+    if (args[0] !== 'fork') { setForkError(''); return }
+    const request = String(args[1])
+    if (appliedFork.current === request) return
+    appliedFork.current = request
+    const loaded = stagedRecordingFork(args)
+    if (loaded?.error) { setForkError(loaded.error); return }
+    if (loaded?.configuration) {
+      applyDraft({ ...applyConfiguration(state, loaded.configuration), source: loaded.source, notice: 'Created a draft from the recorded configuration. Review its model, task and resource caps.' })
+      setForkError('')
+    }
+  }, [args[0], args[1]])
+
 
   useEffect(() => {
     const media = window.matchMedia?.('(max-width: 760px)')
@@ -334,7 +363,7 @@ export function HarnessComposer({ args = [] }) {
     })
   }
   function selectHarness(selection, carry = false) {
-    setError(''); setSaved('')
+    setError(''); setSaved(''); setForkSource(null); setForkError('')
     const row = selection.startsWith('fixed:') ? cards.find((c) => c.id === selection.slice(6)) : library.find((c) => selection === 'saved:' + c.id)
     if (selection.startsWith('fixed:') && row && carry) {
       setFixedDrafts((old) => {
@@ -551,11 +580,11 @@ export function HarnessComposer({ args = [] }) {
   function editorSnapshot(previous = state) {
     const drafts = JSON.parse(jsonKey(fixedDrafts))
     if (fixed && card) drafts[card.id] = { prompt: fixedPrompt, baseHash: fixedDrafts[card.id]?.baseHash || card.hash, basePresent: fixedDrafts[card.id]?.basePresent ?? !!card.memberSaved }
-    return { state: JSON.parse(jsonKey(previous)), fixedDrafts: drafts }
+    return { state: JSON.parse(jsonKey(previous)), fixedDrafts: drafts, source: forkSource }
   }
   function undoEditorChange() {
     if (!undoConfiguration || editLocked) return
-    setState(undoConfiguration.state); setFixedDrafts(undoConfiguration.fixedDrafts)
+    setState(undoConfiguration.state); setFixedDrafts(undoConfiguration.fixedDrafts); setForkSource(undoConfiguration.source || null)
     setStorageError(writeDraft('fixed', undoConfiguration.fixedDrafts))
     setUndoConfiguration(null); setConfigNotice('Restored the configuration from before the last change.'); setSaved(''); setError('')
   }
@@ -572,7 +601,17 @@ export function HarnessComposer({ args = [] }) {
   function applyDraft(result) {
     setUndoConfiguration(editorSnapshot(result.previousState || state))
     if (result.fixedDrafts) { setFixedDrafts(result.fixedDrafts); setStorageError(writeDraft('fixed', result.fixedDrafts)) }
-    setState(result.state); setConfigNotice(result.notice); setError(''); setSaved('')
+    setState(result.state); setForkSource(result.source || null); setConfigNotice(result.notice); setError(''); setSaved('')
+  }
+  function forkHostedRun() {
+    if (!job?.manifest || editLocked || jsonPending) return
+    try {
+      const value = parseConfiguration(encodeMemberJSON(configurationFromManifest(job.manifest)))
+      const prepared = prepareHarnessJSON(job.manifest)
+      const source = { kind: 'Recorded run manifest', title: `Run ${job.id}`, hash: job.manifest_sha256 || null, value: JSON.parse(prepared.json), redacted: prepared.redactions > 0,
+        note: 'Forked from the recorded manifest. The original runtime/task pins remain in the source document; the new dispatch must pass current compatibility and manifest review.' }
+      applyDraft({ ...applyConfiguration(state, value), source, notice: 'Forked the run configuration into a new draft. Review current runtime/task pins and budget before dispatching.' })
+    } catch (failure) { setError(failure.message) }
   }
   function customizeCurrent() {
     try { applyDraft(forkAsCustom(state, { card, runtime, fixedPrompt })) }
@@ -674,11 +713,15 @@ export function HarnessComposer({ args = [] }) {
       <div className="rg-composer-service-note">{catalogError && <p role="alert">{catalogError}</p>}<button className="rg-btn" disabled={catalogLoading} onClick={() => setCatalogRevision((n) => n + 1)}>Refresh runner</button></div>
       </aside>
     </div>
+    {forkError && <p role="alert">{forkError} <button className="rg-btn" onClick={() => setForkError('')}>Keep previous draft</button></p>}
+    {forkSource?.value && <aside className="rg-pnl rg-pnl-b" aria-label="Draft source"><strong>Derived from {forkSource.title}</strong><p className="rg-small">{forkSource.note}</p>{forkSource.redacted && <p className="rg-small">Credential-shaped source values were redacted before copying this provenance into the draft.</p>}</aside>}
+    <details className="rg-composer-details"><summary>Edit configuration JSON</summary><section aria-label="Configuration JSON editor"><ConfigurationEditor configuration={configuration} disabled={editLocked} onApply={(value) => applyDraft({ ...applyConfiguration(state, value), source: forkSource })} onPendingChange={setJsonPending} /></section></details>
     <HarnessJson source="Current editor draft" identity={`${fixed ? 'Stock preset · ' + card?.name : native ? 'Native runtime · ' + runtime?.name : 'Custom harness'} · not a historical run`}
       description={native ? 'The configuration file includes additional instructions, limits and any native prompt interventions. Inspect the baseline inventory and pinned runtime alongside it; unrecorded native internals remain unknown.' : 'The complete configuration file for the current harness, model, task and limits. Edits update this view; inspecting it never saves or runs anything.'}
       documents={[{ id: 'configuration', label: 'Configuration file', value: configuration, filename: 'traceharness-configuration.json' },
         { id: 'inventory', label: 'Native baseline inventory', value: native ? inventoryForRuntime?.inventory : null, filename: 'native-prompt-inventory.json' },
-        { id: 'runtime', label: 'Runtime settings', value: runtime, filename: 'runtime.json' }]} />
+        { id: 'runtime', label: 'Runtime settings', value: runtime, filename: 'runtime.json' },
+        { id: 'source', label: 'Source recording', value: forkSource?.value, filename: 'source-recording.json' }]} />
     {showCheckpoints && <div id={instanceId + '-checkpoints'} className="rg-composer-checkpoints">
       {checkpointData.warning && <p role="alert">{checkpointData.warning}</p>}
       {checkpointNotice && <p role="status">{checkpointNotice}</p>}
@@ -706,6 +749,7 @@ export function HarnessComposer({ args = [] }) {
         <HarnessJson key={job.id} source="Recorded run manifest" identity={`Run ${job.id}${job.manifest_sha256 ? ' · manifest SHA-256 ' + job.manifest_sha256 : ''}`}
           description="The complete manifest returned for this run: harness, prompts, runtime pins, model, task, limits and native interventions when recorded. Your editor draft is separate. The manifest artifact below provides the SHA-256-verified original file."
           documents={[{ id: 'manifest', label: 'Run manifest', value: job.manifest, filename: `manifest-${job.id}.json` }]} />
+        {job.manifest && <button className="rg-btn" disabled={editLocked || jsonPending} onClick={forkHostedRun}>Fork this run configuration</button>}
         {job.manifest_sha256 && <p className="rg-small rg-mono">Configuration {job.manifest_sha256}</p>}{(job.issues || []).map((issue) => <p key={issue} role="alert">{issue}</p>)}{jobError && <p role="alert">{jobError}</p>}
         <div className="rg-row rg-wrap"><button className="rg-btn" disabled={launching || !!openingJob} onClick={() => refreshJob()}>Refresh status</button>{!terminal.has(job.status) && <button className="rg-btn" disabled={cancelling || job.cancellation_requested || !!openingJob} onClick={() => refreshJob(true)}>{cancelling ? 'Requesting cancellation…' : 'Cancel run'}</button>}</div>
         {job.usage && <><dl className="rg-composer-usage">{Object.entries(job.usage).filter(([, value]) => value != null).map(([name, value]) => <div key={name}><dt>{name.replaceAll('_', ' ')}</dt><dd>{name === 'cost_usd' ? '$' + value.toLocaleString(undefined, { maximumFractionDigits: 8 }) : value.toLocaleString()}</dd></div>)}</dl><p className="rg-small rg-mute">Only usage reported by the runner is shown. Missing token or cost totals are unconfirmed.</p></>}
@@ -713,6 +757,7 @@ export function HarnessComposer({ args = [] }) {
         {job.artifacts?.length > 0 && <ul className="rg-composer-artifacts" aria-label="Run artifacts">{job.artifacts.map((artifact) => <li key={artifact.name}><div><strong>{artifact.name}</strong><span>{artifact.bytes.toLocaleString()} bytes · SHA-256 verified before download</span></div><button type="button" className="rg-btn" aria-label={'Download ' + artifact.name} disabled={!!downloadingArtifact} onClick={() => downloadArtifact(artifact)}>{downloadingArtifact === artifact.name ? 'Verifying…' : 'Download'}</button></li>)}</ul>}
       </div>
     </section>}
+    <section aria-label="Experiment dispatch"><ExperimentWorkspace configuration={configuration} catalog={catalog} credential={credential} available={catalog.execution_available} disabled={editLocked || jsonPending || !!forkError} lease={experimentLease} onOpenJob={openJob} /></section>
     <PairedExperiments configuration={configuration} credential={credential} available={catalog.execution_available} disabled={editLocked || !!readyIssues.length} lease={experimentLease} />
     <footer className="rg-composer-footer"><Go spec="shallowApply" className="rg-tlink">Compare one prompt across the six TraceHarness shells</Go><span>Native runtimes and lab stand-ins are distinct engines.</span></footer>
   </div>

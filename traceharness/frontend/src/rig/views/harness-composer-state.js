@@ -130,6 +130,8 @@ const fail = (message) => { throw new Error(message) }
 
 // Check before copying or serializing: imports are configuration, never an
 // endpoint, credential, object prototype, or executable instruction to the UI.
+export function assertConfigurationJSON(value) { checkData(value) }
+
 function checkData(value, depth = 0, budget = { nodes: 0 }) {
   if (++budget.nodes > 100000 || depth > 8) fail('The configuration is too complex. Import a TraceHarness configuration export.')
   if (typeof value === 'string') {

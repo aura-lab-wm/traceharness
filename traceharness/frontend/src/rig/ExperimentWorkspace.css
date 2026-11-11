@@ -1,0 +1,74 @@
+/* Matrix experiment workspace: Rig design tokens only, responsive axes and scrollable results. */
+.rg-matrix-experiments { margin-top: 24px; overflow: hidden; }
+.rg-matrix-experiments > summary { padding: 18px 20px; cursor: pointer; font-weight: 600; }
+.rg-matrix-experiments > summary span { margin-left: 12px; color: var(--rig-dim); font-size: 12px; font-weight: 400; }
+.rg-matrix-experiments .rg-mono { overflow-wrap: anywhere; }
+
+.rg-matrix-fields { display: flex; align-items: end; flex-wrap: wrap; gap: 12px; margin-block: 12px; }
+.rg-matrix-fields .rg-fld { flex: 1 1 160px; min-width: 0; margin: 0; }
+
+.rg-matrix-snapshots { list-style: none; padding: 0; margin: 12px 0; display: grid; gap: 8px; }
+.rg-matrix-snapshot { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; padding: 10px 12px; border: 1px solid var(--rig-line); border-radius: 5px; background: var(--rig-panel2); }
+.rg-matrix-snapshot-copy { display: flex; flex-direction: column; gap: 3px; min-width: 0; overflow-wrap: anywhere; }
+.rg-matrix-snapshot-copy small { font-size: 11px; color: var(--rig-dim); }
+.rg-matrix-snapshot-actions { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+
+.rg-matrix-axes { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; margin-block: 16px; }
+.rg-matrix-axis { display: flex; flex-direction: column; gap: 10px; min-width: 0; padding: 14px; border: 1px solid var(--rig-line2); border-radius: 6px; background: var(--rig-panel); }
+.rg-matrix-axis-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap; }
+.rg-matrix-axis-head h3 { font-size: 13px; margin: 0; }
+.rg-matrix-axis-head > span { font-size: 11px; color: var(--rig-dim); }
+.rg-matrix-axis-tools { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.rg-matrix-axis-tools .rg-fld { flex: 1 1 140px; min-width: 0; margin: 0; }
+
+.rg-matrix-choices { list-style: none; padding: 0; margin: 0; max-height: 240px; overflow-y: auto; display: grid; gap: 6px; scrollbar-width: thin; }
+.rg-matrix-choice { display: flex; align-items: flex-start; gap: 8px; padding: 8px 10px; border: 1px solid var(--rig-line); border-radius: 4px; background: var(--rig-bg); min-width: 0; }
+.rg-matrix-choice.is-selected { border-color: var(--rig-line3); background: var(--rig-sel-bg); }
+.rg-matrix-choice.is-disabled { opacity: 0.72; }
+.rg-matrix-choice input { accent-color: var(--rig-sel); margin-top: 3px; flex-shrink: 0; }
+.rg-matrix-choice-body { display: flex; flex-direction: column; gap: 2px; min-width: 0; overflow-wrap: anywhere; }
+.rg-matrix-choice-body strong { font-size: 12.5px; font-weight: 500; }
+.rg-matrix-choice-body small { font-size: 11px; color: var(--rig-dim); }
+.rg-matrix-choice-reason { font-size: 11px; color: var(--rig-amb-t); }
+
+.rg-matrix-preview { border: 1px solid var(--rig-line2); border-radius: 6px; padding: 14px; margin-block: 16px; background: var(--rig-panel); }
+.rg-matrix-preview-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-bottom: 10px; font-size: 12px; color: var(--rig-dim); }
+.rg-matrix-preview-head strong { color: var(--rig-text); }
+.rg-matrix-cells { list-style: none; padding: 0; margin: 0; max-height: 280px; overflow-y: auto; display: grid; gap: 6px; scrollbar-width: thin; }
+.rg-matrix-cell { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; flex-wrap: wrap; padding: 8px 10px; border: 1px solid var(--rig-line); border-radius: 4px; background: var(--rig-bg); font-size: 12px; }
+.rg-matrix-cell.is-incompatible { border-color: var(--rig-red); background: var(--rig-red-bg); }
+.rg-matrix-cell-main { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; min-width: 0; overflow-wrap: anywhere; }
+.rg-matrix-cell-meta { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; font-size: 11px; color: var(--rig-dim); overflow-wrap: anywhere; }
+.rg-matrix-cell.is-incompatible .rg-matrix-cell-meta { color: var(--rig-red-t); }
+
+.rg-matrix-issue { margin: 10px 0; padding: 10px 12px; border-left: 2px solid var(--rig-amb); background: var(--rig-amb-bg); color: var(--rig-text); font-size: 12px; line-height: 1.6; overflow-wrap: anywhere; }
+.rg-matrix-review { border: 1px solid var(--rig-line2); border-radius: 6px; padding: 16px; margin-block: 16px; background: var(--rig-panel2); }
+.rg-matrix-review ol { max-height: 240px; overflow-y: auto; padding-left: 22px; margin: 10px 0 0; font-size: 12px; }
+.rg-matrix-review li { padding: 4px 0; overflow-wrap: anywhere; }
+
+.rg-matrix-results { border-top: 1px solid var(--rig-line); padding-top: 16px; margin-top: 16px; }
+.rg-matrix-result-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-bottom: 8px; }
+.rg-matrix-scroll { width: 100%; overflow-x: auto; max-height: 520px; overflow-y: auto; margin-block: 14px; border: 1px solid var(--rig-line); border-radius: 5px; scrollbar-width: thin; }
+.rg-matrix-table { width: 100%; min-width: 960px; border-collapse: collapse; font-size: 12.5px; }
+.rg-matrix-table td, .rg-matrix-table th { padding: 10px 12px; text-align: left; border-bottom: 1px solid var(--rig-line); vertical-align: top; }
+.rg-matrix-identity { min-width: 240px; display: flex; flex-direction: column; gap: 2px; font-size: 11px; color: var(--rig-dim); overflow-wrap: anywhere; }
+.rg-matrix-identity code { font-size: 10.5px; overflow-wrap: anywhere; }
+.rg-matrix-cost { font-family: var(--rig-mono); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.rg-matrix-history { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-top: 20px; }
+.rg-matrix-history-list { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+
+@media (max-width: 860px) {
+  .rg-matrix-axes { grid-template-columns: 1fr; }
+}
+@media (max-width: 600px) {
+  .rg-matrix-experiments > summary span { display: block; margin: 6px 0 0; }
+  .rg-matrix-fields { flex-direction: column; align-items: stretch; }
+  .rg-matrix-fields .rg-fld { flex: auto; }
+}
+
+.rg-matrix-snapshot > .rg-hjson { flex-basis: 100%; min-width: 0; margin: 0; }
+.rg-matrix-cell > input { accent-color: var(--rig-sel); flex-shrink: 0; }
+.rg-matrix-cell:has(> input:not(:checked)) { opacity: .65; }
+
+.rg-matrix-table th { white-space: nowrap; }
+.rg-matrix-table td:nth-child(2) { min-width: 160px; }
