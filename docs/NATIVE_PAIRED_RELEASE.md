@@ -1,5 +1,9 @@
 # Native Codex editing and paired experiments
 
+This is the original release receipt. Subsequent task completions and the
+transport repair are recorded separately in the
+[completion verification follow-up](NATIVE_COMPLETION_VERIFICATION.md).
+
 The 2026-11-11 follow-up adds **native Codex embedded asset editing** and a
 **paired native experiment scheduler** to the existing member
 [Harnesses workspace](https://traceharness.dev/app#/rig/harnesses).

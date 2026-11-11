@@ -159,7 +159,10 @@ class OpenRouter:
         try:
             total = min(30, max(0.1, timeout_seconds))
             deadline = time.monotonic() + total
-            with httpx.Client(timeout=httpx.Timeout(min(3, total), connect=min(3, total)), follow_redirects=False, trust_env=False) as client:
+            # Model generation can pause between chunks. The watchdog and monotonic
+            # deadline bound the whole call; a short socket idle timeout must not
+            # cut that reviewed allowance down to three seconds.
+            with httpx.Client(timeout=httpx.Timeout(total, connect=min(3, total), write=min(3, total), pool=min(3, total)), follow_redirects=False, trust_env=False) as client:
                 with client.stream("POST", self.base + path, headers=headers, json=body) as response:
                     if not 200 <= response.status_code < 300:
                         raise ProviderError("Provider refused the model request.", status_code=response.status_code)

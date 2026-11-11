@@ -1,0 +1,609 @@
+{
+  "release": "Native completion and resource verification",
+  "verified_at": "2026-11-11T10:40:50.021758+00:00",
+  "source_base_commit": "51e8d1e3cc6ea2b842aed05c79bbe1c8150fc35d",
+  "member_url": "https://traceharness.dev/app#/rig/harnesses",
+  "deployment": {
+    "at": "2026-11-11T10:28:43.525824+00:00",
+    "exit_code": 0,
+    "image": "registry.fly.io/traceharness-runner@sha256:6d6d8510ed9ec1efb54c677306139ff77121194e943ce514763c7892a7bbda68",
+    "registry_sha256": "2d90f0f7a9710890c2aedad0e972ac6d1f1a52ecebec4848d195793370496d10",
+    "previous_image": "registry.fly.io/traceharness-runner@sha256:f59388e1926fb8fa47ed471fb63f3cb75f32b4de6ce2ce10e71062df0b82904d",
+    "previous_registry": "/data/inventory-eight-v2/registry-native-codex-paired-v1.json",
+    "last_10_log_lines": [
+      "> Updating 8e64d7b7d01e68 [app]",
+      "> Updated machine config for 8e64d7b7d01e68",
+      "\u2714 Machine 8e64d7b7d01e68 is now in a good state",
+      "> Clearing lease for 8e64d7b7d01e68",
+      "\u2714 Cleared lease for 8e64d7b7d01e68",
+      "Checking DNS configuration for traceharness-runner.fly.dev",
+      "\u2713 DNS configuration verified",
+      "",
+      "Visit your newly deployed app at https://traceharness-runner.fly.dev/",
+      ""
+    ],
+    "release_version": 14,
+    "health_verified": {
+      "release_status": "complete",
+      "machines_started": 1,
+      "machines_total": 1,
+      "checks_passing": 1,
+      "checks_total": 1
+    }
+  },
+  "worker_or_kv_changed": false,
+  "transport_repair": {
+    "socket_read_allowance_uses_existing_total_deadline": true,
+    "total_maximum_seconds": 30,
+    "connect_write_pool_maximum_seconds": 3,
+    "paid_retries_added": false,
+    "historical_failure_cause_proved": false
+  },
+  "task": {
+    "id": "requests-unicode-length",
+    "revision": "f6707042d8b18d2a3737380bf58ff020872fb07b"
+  },
+  "edited_codex_completion": {
+    "live_real_member_session": true,
+    "passed": true,
+    "read_only_collector_recovery_no_new_jobs": true,
+    "credential_revoked": true,
+    "jobs": [
+      {
+        "id": "66ce15958aa7948d4bed9d9c3335c4e649503aac3eaee086",
+        "status": "succeeded",
+        "grade": "passed",
+        "issues": [],
+        "usage": {
+          "requests": 12,
+          "input_tokens": 102525,
+          "output_tokens": 1483,
+          "cost_usd": 0.00911053
+        },
+        "manifest_sha256": "199e260606caa1bdcc5c7df9508347ce0ebea8781436f41b8cfe7788662448f5",
+        "created_at": 1794393090,
+        "updated_at": 1794393147,
+        "artifacts": [
+          {
+            "name": "manifest.json",
+            "bytes": 2849,
+            "sha256": "ccb3a525e067d22095a462b4a4b1fe83c8dbde0875e14a5707285e9ad902a41b"
+          },
+          {
+            "name": "grade.json",
+            "bytes": 21,
+            "sha256": "878982568e5e39420f9fc8fca5caaade78f526a402b42f08357919732d5a1cd5"
+          },
+          {
+            "name": "trace.jsonl",
+            "bytes": 11156,
+            "sha256": "607ab4f6caf643be007712f9fe010bdc6936ada4fa311843a70b8e5c43229271"
+          },
+          {
+            "name": "patch.diff",
+            "bytes": 421,
+            "sha256": "02235a9b56e226e68f5abe120415d6759a8a67e380bac681bf876ccc8036981f"
+          },
+          {
+            "name": "native-prompt-profile.json",
+            "bytes": 891,
+            "sha256": "12c2bf757a0b010ca76a5d4e4d5f5ee1bab7b4423a255c23f67ff8c06912d6a5"
+          },
+          {
+            "name": "native-prompt-application.json",
+            "bytes": 1492,
+            "sha256": "78c881bf712ec9284acb1e7001e662c2bf874682f1e884e4170588f8583f90c2"
+          },
+          {
+            "name": "native-prompt-observations.json",
+            "bytes": 22850,
+            "sha256": "bcc04e3d66ba4b4b3db79acedc27d0463d2ea0ecf38278f1760ea8c1e7de5ee8"
+          }
+        ],
+        "native_application": {
+          "runtime_id": "native-codex",
+          "runtime_version": "0.167.1",
+          "inventory_sha256": "9592e2f237bfed2ea7702f0a88499d342631d4893ca276186abf8b173361b4b7",
+          "materializer_sha256": "8a1ee9f8fba86a80c057f7712d4aeddb02096ec17f3c22451ecaf5ded9c1c185",
+          "native_prompt_profile_sha256": "12c2bf757a0b010ca76a5d4e4d5f5ee1bab7b4423a255c23f67ff8c06912d6a5",
+          "readback_verified": true,
+          "changed_source_occurrences": 1
+        },
+        "replacement_observed": true
+      }
+    ]
+  },
+  "preregistration": {
+    "at": "2026-11-11T10:28:25.258955+00:00",
+    "single_task": "requests-unicode-length",
+    "revision": "f6707042d8b18d2a3737380bf58ff020872fb07b",
+    "hypothesis": "Blanking the pinned base instruction asset reduces native input-token usage while retaining task success in this task.",
+    "primary_metrics": [
+      "task_grade",
+      "provider-reported input_tokens"
+    ],
+    "secondary_metrics": [
+      "reported cost_usd",
+      "output_tokens",
+      "requests",
+      "job wall seconds including preparation and grading"
+    ],
+    "planned_pairs": 2,
+    "input_reduction_threshold": 0.2,
+    "success_rule": "All four trials graded passed and mean treatment input tokens at least20% lower; report all costs and timing regardless direction.",
+    "inference_scope": "Descriptive within this single task; not general performance or statistical significance.",
+    "protocol": "No replacement trials for failures. Each separate verification stage must fit the then-available credit with0.02USD headroom.",
+    "maximum_stage_caps_usd": {
+      "codex_completion": 0.05,
+      "codex_performance": 0.16,
+      "claude_completion": 0.15
+    },
+    "configuration_sha256": {
+      "codex-completion-config.json": "b5c6b1d0e0efeae8b6288523625c982a11ae86079ec6209316db886aa351d43e",
+      "codex-performance-plan.json": "2efc22137e7406fdddb6456eddccf75a36eef3b24af3eb93074a4eba540212ca",
+      "claude-completion-config.json": "d7c94aa68e43e2ce8173eccca25a0248795b45d6566f80e3c0170d94a0b52360"
+    }
+  },
+  "paired_resource_study": {
+    "at": "2026-11-11T10:37:14.756067+00:00",
+    "experiment_id": "96a2fa376d92da2b39175f616234540fb25313f209eb7a68",
+    "plan_sha256": "c3a27d6bc98a8b53c5a6f683d491acb602840ebd06a0339d8a7de1de5b980fbc",
+    "status": "completed",
+    "task": "requests-unicode-length",
+    "task_revision": "f6707042d8b18d2a3737380bf58ff020872fb07b",
+    "model": "openai/gpt-5.1-codex-mini",
+    "planned_trials": 4,
+    "all_outcomes_retained": true,
+    "trials": [
+      {
+        "id": "9f8a5889fe1be4f5ea52ac3646fd83bb60b5793d9101cab1",
+        "arm_id": "keep",
+        "repeat": 1,
+        "status": "failed",
+        "job_id": "eda6d0b20d990062db420777d8b980ff3ced54328f58665d",
+        "grade": "ungraded",
+        "usage": {
+          "requests": 2
+        },
+        "readback_verified": true,
+        "job_wall_seconds": 46
+      },
+      {
+        "id": "568d6f5e759980f3429f12cea6d431566b38ea585b24e8f8",
+        "arm_id": "disable-base",
+        "repeat": 1,
+        "status": "succeeded",
+        "job_id": "0a91df9661f41e6be7151419768626c9c186df38caa117f6",
+        "grade": "passed",
+        "usage": {
+          "requests": 6,
+          "input_tokens": 31741,
+          "output_tokens": 738,
+          "cost_usd": 0.00403269
+        },
+        "readback_verified": true,
+        "job_wall_seconds": 36
+      },
+      {
+        "id": "fadb08ce0270eba10534d0259f6cea9f9d4edba967d7b215",
+        "arm_id": "disable-base",
+        "repeat": 2,
+        "status": "succeeded",
+        "job_id": "a4ff7ccc6b6fb011947ec527ad00727484db552165ac4866",
+        "grade": "passed",
+        "usage": {
+          "requests": 5,
+          "input_tokens": 26793,
+          "output_tokens": 545,
+          "cost_usd": 0.00314185
+        },
+        "readback_verified": true,
+        "job_wall_seconds": 62
+      },
+      {
+        "id": "d0417c8391c216c03ab142fe3ff73fa4b43af18e4c7c7e67",
+        "arm_id": "keep",
+        "repeat": 2,
+        "status": "failed",
+        "job_id": "62f2261dbca10cd04cf0b91a518120fd3b6ec24d638d9fcb",
+        "grade": "ungraded",
+        "usage": {
+          "requests": 10,
+          "input_tokens": 91110,
+          "output_tokens": 1862,
+          "cost_usd": 0.01121062
+        },
+        "readback_verified": true,
+        "job_wall_seconds": 54
+      }
+    ],
+    "arm_summary": {
+      "keep": {
+        "planned": 2,
+        "passed": 0,
+        "mean_requests": 6,
+        "mean_input_tokens": null,
+        "mean_output_tokens": null,
+        "mean_cost_usd": null,
+        "mean_job_wall_seconds": 50
+      },
+      "disable-base": {
+        "planned": 2,
+        "passed": 2,
+        "mean_requests": 5.5,
+        "mean_input_tokens": 29267,
+        "mean_output_tokens": 641.5,
+        "mean_cost_usd": 0.00358727,
+        "mean_job_wall_seconds": 49
+      }
+    },
+    "effects": {
+      "input_tokens_reduction_fraction": null,
+      "output_tokens_reduction_fraction": null,
+      "cost_usd_reduction_fraction": null,
+      "job_wall_seconds_reduction_fraction": null,
+      "requests_reduction_fraction": null
+    },
+    "all_four_tasks_passed": false,
+    "preregistered_input_reduction_threshold": 0.2,
+    "preregistered_success_rule_met": false,
+    "scope": "Descriptive comparison within one repository task. No general performance or statistical significance claim.",
+    "summary": {
+      "finalized_trials": 4,
+      "pending_trials": 0,
+      "active_trials": 0,
+      "confirmed_cost_usd": 0.01838516,
+      "cost_unknown_trials": 1,
+      "comparisons": [
+        {
+          "graded_pairs": 0,
+          "control_only_pass": 0,
+          "variant_only_pass": 0,
+          "both_pass": 0,
+          "both_fail": 0,
+          "incomplete_pairs": 2,
+          "known_cost_pairs": 1,
+          "arm_id": "disable-base",
+          "planned_pairs": 2
+        }
+      ]
+    },
+    "credential_revoked": true,
+    "private_proof_sha256": "e13750aaaf3ca0a0b501c085619077fc66d73e7fd8e4ce7e37707888a870b2c4",
+    "effect_estimates_withheld_reason": "Both controls are failed/ungraded; request and elapsed-time differences across failed and completed tasks do not estimate an efficiency gain."
+  },
+  "edited_claude_attempt": {
+    "live_real_member_session": true,
+    "task_completion_verified": false,
+    "credential_revoked": true,
+    "jobs": [
+      {
+        "id": "4ac360254835b1318d29229c31c0ca939a217d0d79d80793",
+        "status": "failed",
+        "grade": "ungraded",
+        "issues": [
+          "Runtime process did not complete successfully.",
+          "The remaining cost reservation cannot cover this request.",
+          "Next request reservation: $0.128911. Remaining reservation allowance: $0.071833 of the $0.150000 run cap. Reported usage may be lower than reserved charges."
+        ],
+        "usage": {
+          "requests": 5,
+          "input_tokens": 74472,
+          "output_tokens": 739,
+          "cost_usd": 0.078167
+        },
+        "manifest_sha256": "6e837487524f4b1597ee4112005bf46c2afa8a5dd5103b2461c7f8d8eb189f12",
+        "created_at": 1794393446,
+        "updated_at": 1794393480,
+        "artifacts": [
+          {
+            "name": "manifest.json",
+            "bytes": 2518,
+            "sha256": "3c5d9e5583ef0b29d3b1e63b177bc7b1dddf473382b0d88af2fe438dccd8b718"
+          },
+          {
+            "name": "trace.jsonl",
+            "bytes": 128075,
+            "sha256": "e98dec4721730229e52e93f0d3f64a571ee33727b0df2f8991762d17dc9ae0cc"
+          },
+          {
+            "name": "patch.diff",
+            "bytes": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          {
+            "name": "native-prompt-profile.json",
+            "bytes": 556,
+            "sha256": "d6f2d93a660427daa4e5954f54dfcb2362690f9d7a14450fd25cfe38aa07a677"
+          },
+          {
+            "name": "native-prompt-application.json",
+            "bytes": 397652,
+            "sha256": "0d9bdc9c4891a8176e6e09c32472f6330a6c16c7978364e689bd9480a0156bf7"
+          },
+          {
+            "name": "native-prompt-observations.json",
+            "bytes": 22429,
+            "sha256": "fc3f0fc183a2e4417046aa024d67a587d5bf9ed6156d6bbd4a53aada30c29f59"
+          }
+        ],
+        "native_application": {
+          "runtime_id": "native-claude-code",
+          "runtime_version": "2.1.322",
+          "inventory_sha256": "94399d069ff5af15ce644eb5906470e75673e7417ef75210d6983eb79b83fcfa",
+          "materializer_sha256": "ba6245da8b07901b6793898e70e2e974a1e641a2c3be0d357ba53d15101f4081",
+          "native_prompt_profile_sha256": null,
+          "readback_verified": true,
+          "changed_source_occurrences": 1865
+        }
+      }
+    ]
+  },
+  "unexecuted_claude_followup": {
+    "reason": "Insufficient provider credit for registered cap plus headroom",
+    "maximum_cost_usd": 0.19,
+    "headroom_usd": 0.02,
+    "jobs_submitted": 0,
+    "credentials_created": 0,
+    "configuration_sha256": "9d1f56567472a9414898e61e6566f39c6de9c87fa56ad2c4af68491f62bd4464"
+  },
+  "anonymous_gates": {
+    "complete": true,
+    "at": "2026-11-11T10:31:35.789818+00:00",
+    "user_agent": "traceharness-proof",
+    "max_redirs": 0,
+    "checks": [
+      {
+        "path": "/app",
+        "hostile_origin": false,
+        "status": 302,
+        "location": "/login",
+        "acao": false,
+        "pass": true
+      },
+      {
+        "path": "/app/shallow",
+        "hostile_origin": false,
+        "status": 302,
+        "location": "/login",
+        "acao": false,
+        "pass": true
+      },
+      {
+        "path": "/link",
+        "hostile_origin": false,
+        "status": 302,
+        "location": "/login",
+        "acao": false,
+        "pass": true
+      },
+      {
+        "path": "/api/shallow/harnesses",
+        "hostile_origin": false,
+        "status": 401,
+        "location": null,
+        "acao": false,
+        "pass": true
+      },
+      {
+        "path": "/api/shallow/harnesses",
+        "hostile_origin": true,
+        "status": 401,
+        "location": null,
+        "acao": false,
+        "pass": true
+      },
+      {
+        "path": "/api/shallow/jobs",
+        "hostile_origin": false,
+        "status": 401,
+        "location": null,
+        "acao": false,
+        "pass": true
+      },
+      {
+        "path": "/api/shallow/jobs",
+        "hostile_origin": true,
+        "status": 401,
+        "location": null,
+        "acao": false,
+        "pass": true
+      },
+      {
+        "path": "/api/runner/catalog",
+        "hostile_origin": false,
+        "status": 401,
+        "location": null,
+        "acao": false,
+        "pass": true
+      },
+      {
+        "path": "/api/runner/catalog",
+        "hostile_origin": true,
+        "status": 401,
+        "location": null,
+        "acao": false,
+        "pass": true
+      },
+      {
+        "path": "/api/runner/jobs",
+        "hostile_origin": false,
+        "status": 401,
+        "location": null,
+        "acao": false,
+        "pass": true
+      },
+      {
+        "path": "/api/runner/jobs",
+        "hostile_origin": true,
+        "status": 401,
+        "location": null,
+        "acao": false,
+        "pass": true
+      },
+      {
+        "path": "/api/runner/prompt-inventory/native-claude-code",
+        "hostile_origin": false,
+        "status": 401,
+        "location": null,
+        "acao": false,
+        "pass": true
+      },
+      {
+        "path": "/api/runner/prompt-inventory/native-claude-code",
+        "hostile_origin": true,
+        "status": 401,
+        "location": null,
+        "acao": false,
+        "pass": true
+      },
+      {
+        "path": "/api/runner/prompt-inventory/native-codex",
+        "hostile_origin": false,
+        "status": 401,
+        "location": null,
+        "acao": false,
+        "pass": true
+      },
+      {
+        "path": "/api/runner/prompt-inventory/native-codex",
+        "hostile_origin": true,
+        "status": 401,
+        "location": null,
+        "acao": false,
+        "pass": true
+      },
+      {
+        "path": "/api/runner/experiments",
+        "hostile_origin": false,
+        "status": 401,
+        "location": null,
+        "acao": false,
+        "pass": true
+      },
+      {
+        "path": "/api/runner/experiments",
+        "hostile_origin": true,
+        "status": 401,
+        "location": null,
+        "acao": false,
+        "pass": true
+      },
+      {
+        "path": "/api/runner/experiments/preflight",
+        "hostile_origin": false,
+        "status": 401,
+        "location": null,
+        "acao": false,
+        "pass": true
+      },
+      {
+        "path": "/api/runner/experiments/preflight",
+        "hostile_origin": true,
+        "status": 401,
+        "location": null,
+        "acao": false,
+        "pass": true
+      },
+      {
+        "path": "/api/runner/experiments/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "hostile_origin": false,
+        "status": 401,
+        "location": null,
+        "acao": false,
+        "pass": true
+      },
+      {
+        "path": "/api/runner/experiments/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "hostile_origin": true,
+        "status": 401,
+        "location": null,
+        "acao": false,
+        "pass": true
+      },
+      {
+        "path": "/api/runner/experiments/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/start",
+        "hostile_origin": false,
+        "status": 401,
+        "location": null,
+        "acao": false,
+        "pass": true
+      },
+      {
+        "path": "/api/runner/experiments/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/start",
+        "hostile_origin": true,
+        "status": 401,
+        "location": null,
+        "acao": false,
+        "pass": true
+      },
+      {
+        "path": "/api/runner/experiments/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/cancel",
+        "hostile_origin": false,
+        "status": 401,
+        "location": null,
+        "acao": false,
+        "pass": true
+      },
+      {
+        "path": "/api/runner/experiments/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/cancel",
+        "hostile_origin": true,
+        "status": 401,
+        "location": null,
+        "acao": false,
+        "pass": true
+      }
+    ]
+  },
+  "automated_tests": {
+    "runner": {
+      "ran": 281,
+      "passed": 280,
+      "skipped": 1,
+      "skip": "Linux-only local test"
+    },
+    "new_model_socket_regressions": {
+      "ran": 3,
+      "passed": 3,
+      "two_long_pause_regressions_failed_before_fix": true
+    },
+    "frontend_or_worker_rerun": false,
+    "frontend_or_worker_source_changed": false
+  },
+  "idle_audit": {
+    "active_or_needs_attention_jobs": 0,
+    "residual_containers": 0,
+    "residual_task_mounts": 0,
+    "registry_unchanged": true
+  },
+  "remaining_unverified": [
+    "Claude edited-profile task completion",
+    "Performance improvement: no graded control pairs in the frozen study",
+    "Specific historical edited-trial charge: no generation IDs and analytics403",
+    "Specific new uncertain control-trial charge",
+    "Generalization beyond this one repository task",
+    "All native instructions and conditional-path coverage",
+    "Live isolation with a second real member"
+  ],
+  "private_evidence_sha256": {
+    "study-registration.json": "d6a28d9166f4eb848510ea63e38b0c607f347dc47f3bf096c86accdcf248e987",
+    "codex-completion-attempt.json": "5e6b487eb9ba0893b00bc7211e686626c857e1203b5ce44fa973e2a7e248ec09",
+    "codex-completion-proof.json": "1cab931ca8e7bf404f7293af5a3aaa3fd8f9405195c265054ef7187e144669f5",
+    "codex-completion-recovered-proof.json": "ad11c8abf8977f772509a905b9b2016e713862ad4c75ef1a33b24971f8683e8f",
+    "codex-performance-attempt.json": "f72498dada0459768da464d6a7bddb274b137517c7d5e189db403e65ad5ec969",
+    "codex-performance-proof.json": "e13750aaaf3ca0a0b501c085619077fc66d73e7fd8e4ce7e37707888a870b2c4",
+    "performance-analysis.json": "66b839d1508cf0630f877f78973efecd8b48306708b19b93f63eaca535b68b59",
+    "claude-completion-attempt.json": "20e2ba8a1d7c45d7ed03dcfbf911b42656d2f564e069cc6df2b7beec921bba8b",
+    "claude-completion-proof.json": "127e8bde8995556e7e24d0c1aa5513cd4319eba71469ba14ee8ddb47003a0e7a",
+    "claude-bounded-review-registration.json": "a54ce65138ec581c165c4eab5fec17adf2c882099d7def4b1e0d499c6a1b61fc",
+    "claude-bounded-review-proof.json": "68d9247974b9073dcd2474c161b0eec1a883172e09ce7e6cfdd4ae58075d3f79",
+    "runner-deployment-verified.json": "fd38d9df9e5f8ac30d2b04f638cd075f356c7239b20a6bb6838f22ec5d1e3ea6",
+    "anonymous-proof.json": "2079440cf039f4335aee5a572ea936ca16102c29f77b5050ce560349e8b2722f",
+    "final-idle-audit.json": "3ddf70552577a426bdf861bba42517199847ebe65721f3537264d5766ed565e5",
+    "runner-tests.log": "b69c5eb5f5b577593c98b0e5bcd14594fb5e80a849508b9667643fa476a41e04",
+    "transport-red.log": "9a5af1350cddbc1ee7bafb75a35eace2982c559f7c73d313e1e7571f2ebfa6d1",
+    "transport-green.log": "0ba8cfc0e6647a9f037909cdf3a9a429fb8fa4565de7b8571ef46de091f17122",
+    "old-failure-trace-metadata.json": "a63b6b65c55d77f046714f89fbf960e854f5989cdc97282e2ac5e96bd5c888b6",
+    "analytics-read-access.json": "41c41023b77001829a60abdfd439642cea252eeaeef11c661cb7e8512fefa124"
+  }
+}
