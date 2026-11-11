@@ -30,13 +30,13 @@
    there, which would read as a measured collapse.
    Classes: rg-an-* (analysis.css). Local helpers only; nothing here is shared.
    ==================================================================================== */
-import { useMemo, useState } from 'react'
+import { useId, useMemo, useState } from 'react'
 import { makeSpec } from '../route'
 import { api, IS_STATIC, IS_MEMBER } from '../../api'
 import {
   useDataset, useDatasets, useOverview, useRuns, useMetrics, useComparisons, useExperiment, isCapturedDir, useOracle, useIntegrity, useReport,
   useTasks, useModels, useJobs, useApi, useRealAnalysis, usePatterns, useQuery, short, fmt, tally, tokStats, conditionRuns, resolveCondition, metricsCell,
-  verdict, invalidate, paths,
+  verdict, invalidate, paths, useHarnessVersions,
 } from '../data'
 import { useRig, useTabState } from '../context'
 import { RecordingProvenance } from '../RecordingProvenance'
@@ -46,6 +46,7 @@ import {
   Loading, ErrorState, NotFound, Empty, NextSteps, Btn, ConfirmAction, About, CopyCmd, Kbd, MOD, failureModeOf, failureSummary,
 } from '../ui'
 import './analysis.css'
+import { configurationCohort, ConfigurationSummary, FamilyConfiguration } from '../FamilyConfigurations'
 
 const { pct, pp, int, fx, usd, plural } = fmt
 const cx = (...a) => a.filter(Boolean).join(' ')
@@ -220,8 +221,11 @@ function Sec({ title, meta, actions, el, children, className }) {
 function Family({ spec, dir, row, c }) {
   const { oracle, isMobile } = useRig()
   const R = useRuns(dir)
+  const configurations = useHarnessVersions(dir)
+  const configurationPanelId = useId()
   const [mf, setMf] = useTabState(spec, 'mf', 'all')
   const [pg0, setPg] = useTabState(spec, 'pg', 0)
+  const [configurationHarness, setConfigurationHarness] = useTabState(spec, 'configurationHarness', c.harness)
   const d = useMemo(() => {
     if (!R.data) return null
     const by = new Map()
@@ -246,6 +250,9 @@ function Family({ spec, dir, row, c }) {
   const pg = Math.max(0, Math.min(pg0, pages - 1))
   const cols = H.slice(pg * ps, pg * ps + ps)
   const models = row.models.filter((m) => mf === 'all' || m === mf)
+  const filteredRuns = R.data.filter((run) => models.includes(run.model))
+  const configurationByHarness = Object.fromEntries(H.map((harness) => [harness, configurationCohort(configurations.data?.versions, filteredRuns, harness)]))
+  const inspectedHarness = cols.includes(configurationHarness) ? configurationHarness : cols.includes(c.harness) ? c.harness : cols[0]
   const maxRep = Math.max(0, ...Object.values(d.reps).flat())
   const fewer = row.models.filter((m) => d.reps[m].length && d.reps[m][d.reps[m].length - 1] < maxRep)
   const nObserved = row.models.reduce((a, m) => a + H.filter((h) => d.cell(m, h).length).length, 0)
@@ -309,9 +316,18 @@ function Family({ spec, dir, row, c }) {
           {fewer.length ? <> ({fewer.map((m) => `${short(m)} has ${d.reps[m].join('–')} repeat${d.reps[m].join() === '1' ? '' : 's'} per task`).join('; ')})</> : null}, so intervals are wider where there are fewer.</div></Note>
       )}
       <div className="rg-pnl rg-an-mxp"><div className="rg-tblwrap">
-        <table className="rg-an-mx">
+        <table className="rg-an-mx rg-an-family-matrix">
           <thead><tr><th>model × harness</th>{cols.map((h) => (
-            <th key={h}><Go spec={makeSpec('tasks', dir, short(c.model), h)} className="rg-an-colh" title={`Open ${short(c.model)} under ${h} (the focused model) in the trajectory explorer`}>{h}</Go></th>))}</tr></thead>
+            <th key={h} className={h === inspectedHarness ? 'rg-an-config-column' : ''}><Go spec={makeSpec('tasks', dir, short(c.model), h)} className="rg-an-colh" title={`Open ${short(c.model)} under ${h} (the focused model) in the trajectory explorer`}>{h}</Go>
+              <ConfigurationSummary cohort={configurationByHarness[h]} loading={configurations.loading} error={configurations.error} />
+              <button type="button" className="rg-an-config-inspect" aria-label={`Inspect ${h} configuration`} aria-pressed={h === inspectedHarness} aria-controls={configurationPanelId} onClick={() => {
+                setConfigurationHarness(h)
+                requestAnimationFrame(() => {
+                  const panel = document.getElementById(configurationPanelId)
+                  panel?.focus({ preventScroll: true }); panel?.scrollIntoView?.({ block: 'nearest' })
+                })
+              }}>Inspect configuration</button>
+            </th>))}</tr></thead>
           <tbody>{models.map((m) => (
             <tr key={m}><td className="rh"><span className="rg-mono">{short(m)}</span>{m.includes('/') && <div className="rg-tiny rg-mute">{m.split('/')[0]}</div>}</td>{cols.map((h) => td(m, h))}</tr>
           ))}</tbody>
@@ -321,6 +337,7 @@ function Family({ spec, dir, row, c }) {
         <span data-el="grade-basis">{models.length * H.length} families in the current filter · grade basis: <b className="rg-dim">{suiteLabel(R.data, oracle)}, among known grades</b>; unknown is shown, never folded into fail.</span>
         <Go spec={makeSpec('field', dir)} className="rg-tlink">Every run, every span →</Go>
       </div>
+      {inspectedHarness && <div id={configurationPanelId} tabIndex={-1} className="rg-an-config-anchor"><FamilyConfiguration key={dir + ':' + mf + ':' + inspectedHarness} harness={inspectedHarness} modelLabel={mf === 'all' ? 'All models in this matrix' : mf} cohort={configurationByHarness[inspectedHarness]} baseline={configurationByHarness.baseline} loading={configurations.loading} error={configurations.error} onRetry={configurations.reload} /></div>}
     </div>
   </>)
 }

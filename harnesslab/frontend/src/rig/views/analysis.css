@@ -83,6 +83,46 @@
 .rg-an-colh{all:unset;cursor:pointer}
 .rg-an-colh:hover{color:var(--rig-sel-t);text-decoration:underline}
 .rg-an-colh:focus-visible{outline:2px solid var(--rig-sel);outline-offset:2px}
+.rg-an-config-summary{display:block;margin-top:8px;color:var(--rig-dim);font:400 11px/1.6 var(--rig-sans);white-space:normal;overflow-wrap:anywhere}
+.rg-an-mx th.rg-an-config-column{box-shadow:inset 0 2px var(--rig-sel)}
+.rg-an-mx .rg-an-config-inspect{display:block;background:none;border:0;padding:8px 0 0;color:var(--rig-sel-t);font:500 11px/1.5 var(--rig-sans);text-align:left;cursor:pointer;min-height:32px;white-space:normal;letter-spacing:normal}
+.rg-an-family-matrix{table-layout:fixed}
+.rg-an-family-matrix th:first-child{width:170px}
+.rg-an-mx.rg-an-family-matrix thead th,.rg-an-family-matrix td.rh{white-space:normal;overflow-wrap:anywhere}
+.rg-an-config-inspect:hover{text-decoration:underline}
+.rg-an-config-inspect:focus-visible{outline:2px solid var(--rig-sel);outline-offset:2px}
+.rg-an-config-anchor:focus{outline:0}
+.rg-an-config-anchor:focus-visible{outline:2px solid var(--rig-sel);outline-offset:2px}
+.rg-an-config{margin-top:var(--rig-s5);padding:var(--rig-s5);font-size:13px;line-height:1.55;min-width:0}
+.rg-an-config-head{display:flex;justify-content:space-between;gap:var(--rig-s4);align-items:flex-start;margin-bottom:var(--rig-s4)}
+.rg-an-config-head h2{margin:4px 0;font:600 18px/1.4 var(--rig-mono);overflow-wrap:anywhere}
+.rg-an-config-head p{margin:0;color:var(--rig-dim);overflow-wrap:anywhere}
+.rg-an-config-head>.rg-small{color:var(--rig-dim);text-align:right}
+.rg-an-config-fields{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:var(--rig-s4);margin:var(--rig-s4) 0}
+.rg-an-config dt{color:var(--rig-mute);font-size:11px;line-height:1.5;margin-bottom:4px}
+.rg-an-config dd{margin:0;color:var(--rig-text);overflow-wrap:anywhere}
+.rg-an-config-fields>div{min-width:0}
+.rg-an-config h3{font-size:12px;font-weight:500;color:var(--rig-dim);margin:0 0 8px}
+.rg-an-config-tools{padding-block:var(--rig-s4);border-top:1px solid var(--rig-line)}
+.rg-an-config-tools ul{display:flex;flex-wrap:wrap;gap:6px;list-style:none;padding:0;margin:0}
+.rg-an-config-tools li{background:var(--rig-panel2);padding:3px 7px;border-radius:4px;font-size:11px}
+.rg-an-config-tools p{margin:0}
+.rg-an-config summary{cursor:pointer;min-height:36px;align-content:center;color:var(--rig-text);overflow-wrap:anywhere}
+.rg-an-config summary:focus-visible{outline:2px solid var(--rig-sel);outline-offset:2px}
+.rg-an-config summary span{margin-left:10px;color:var(--rig-dim);font-size:11px}
+.rg-an-config-prompt,.rg-an-config-provenance{border-top:1px solid var(--rig-line);padding-block:4px}
+.rg-an-config pre{white-space:pre-wrap;overflow-wrap:anywhere;max-height:360px;overflow:auto;background:var(--rig-panel2);padding:var(--rig-s4);border-radius:4px;font:12px/1.7 var(--rig-mono);margin:8px 0}
+.rg-an-config-provenance dl{display:grid;gap:12px}
+.rg-an-config-diff{padding-block:var(--rig-s3);border-top:1px solid var(--rig-line)}
+.rg-an-config-diff b{font-size:12px;font-weight:500;color:var(--rig-dim)}
+.rg-an-config-diff ul{padding-left:18px;margin:8px 0}
+.rg-an-config-diff p{margin:8px 0;color:var(--rig-dim)}
+.rg-an-config-warning{padding:var(--rig-s3);border-left:2px solid var(--rig-amb);background:var(--rig-panel2);color:var(--rig-dim)}
+.rg-an-config-versions{margin:var(--rig-s4) 0}
+.rg-an-config-versions .rg-btn[aria-pressed=true]{border-color:var(--rig-sel);color:var(--rig-sel-t)}
+.rg-an-config-footer{display:flex;justify-content:space-between;flex-wrap:wrap;gap:var(--rig-s3);border-top:1px solid var(--rig-line);padding-top:var(--rig-s3);margin-top:var(--rig-s2);color:var(--rig-dim);font-size:12px}
+@container rgdoc (max-width:900px){.rg-an-config-fields{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@container rgdoc (max-width:600px){.rg-an-config{padding:var(--rig-s4)}.rg-an-config-head{display:block}.rg-an-config-head>.rg-small{display:block;text-align:left;margin-top:10px}.rg-an-config-fields{grid-template-columns:repeat(2,minmax(0,1fr))}.rg-an-mx .rg-an-config-inspect{min-height:44px}.rg-an-config-fields dd{font-size:12px}.rg-an-family-matrix th:first-child{width:90px}.rg-an-family-matrix th,.rg-an-family-matrix .rg-an-mc{padding:10px}.rg-an-family-matrix td.rh{padding:10px;font-size:11px}}
 .rg-an-mcw{position:relative;height:100%}
 .rg-an-mcw .pin{position:absolute;top:8px;right:8px;opacity:0;transition:opacity .12s}
 .rg-an-mcw:hover .pin,.rg-an-mcw:focus-within .pin,.rg-an-mcw .pin:has(.on){opacity:1}

@@ -1,0 +1,416 @@
+{
+  "feature": "Recorded family configurations",
+  "date": "2026-11-10",
+  "surface": "https://traceharness.dev/app#/rig/an:llma4se_live:family",
+  "frontend_build": {
+    "sha256": "6230671aaee709951aab22029589a38f9545034efcdde4faa12dcb77fcd3346d",
+    "files": 74
+  },
+  "artifact": {
+    "html": {
+      "bytes": 19988802,
+      "sha256": "fe4533d68b05f26a25ab337f43bfa443568158f7948a76f61d93785d643f2654"
+    },
+    "gzip": {
+      "bytes": 14538954,
+      "sha256": "aa1e0d0719274105ca42671cbea364f8e6c9a417b6880bdea66f101e6e8e8c0c"
+    }
+  },
+  "publication": {
+    "at": "2026-11-11T01:17:30.596186+00:00",
+    "exit_code": 0,
+    "worker_deployed": false,
+    "worker_version_unchanged": "a84991b5-a7f0-4ea1-90c5-ee48dbaaff5b"
+  },
+  "corpus": {
+    "dataset_count": 8,
+    "embedded_runs": 3453,
+    "all_indexes_and_run_details_unchanged": true,
+    "datasets": [
+      {
+        "name": "captured_claude_code",
+        "index_rows": 1,
+        "embedded_runs": 1,
+        "missing_runs": 0,
+        "versions": 1,
+        "recorded_configurations": 1,
+        "configuration_coverage": {
+          "total_runs": 1,
+          "scanned_runs": 1,
+          "configured_runs": 1,
+          "missing_config_runs": 0,
+          "complete": true
+        },
+        "config_source_runs": {
+          "captured": 1
+        },
+        "explicit_runtime_metadata_runs": 1,
+        "index_canonical_sha256": "5450d226129bde2114b846c2bf746fe8c1ab9f3b5e0083303a2d637b3785e777",
+        "run_details_canonical_sha256": "847873c5655c933481a2d6f625473f93e28a16b8cf15b7e92c36080794f6b7e2",
+        "old_versions_canonical_sha256": "2ade338a8cc1e235f650876c6a727d343b664848d0d32af4f48b0d6b9fa4980e",
+        "new_versions_canonical_sha256": "4c1c0cae9fa9859963abcf72e32605b4216537f08e38506e1f450774f62acef6"
+      },
+      {
+        "name": "demo_mock",
+        "index_rows": 24,
+        "embedded_runs": 24,
+        "missing_runs": 0,
+        "versions": 2,
+        "recorded_configurations": 2,
+        "configuration_coverage": {
+          "total_runs": 24,
+          "scanned_runs": 24,
+          "configured_runs": 24,
+          "missing_config_runs": 0,
+          "complete": true
+        },
+        "config_source_runs": {
+          "ledger": 24
+        },
+        "explicit_runtime_metadata_runs": 0,
+        "index_canonical_sha256": "bdfce31f6e927347dd3142828416a76d83f0e2cc2ba29645e0982285631aaf4d",
+        "run_details_canonical_sha256": "96cfb9d656d33f8456ba7cd870071b36df9fbc5fb279fc1353cd78e237aca5c8",
+        "old_versions_canonical_sha256": "9b79e75ee60bd2bc1b04476ef13c8504effeb9a1c295e45470aa7207d909a00a",
+        "new_versions_canonical_sha256": "dc588870d411804e9d289ea70d22e161a5e4cde58ef1725d9609fd1af665a25f"
+      },
+      {
+        "name": "families_mock",
+        "index_rows": 80,
+        "embedded_runs": 80,
+        "missing_runs": 0,
+        "versions": 4,
+        "recorded_configurations": 4,
+        "configuration_coverage": {
+          "total_runs": 80,
+          "scanned_runs": 80,
+          "configured_runs": 80,
+          "missing_config_runs": 0,
+          "complete": true
+        },
+        "config_source_runs": {
+          "ledger": 80
+        },
+        "explicit_runtime_metadata_runs": 0,
+        "index_canonical_sha256": "3ef5eddb41933d99211cde424a5cd8f834356245eb4183a02085d375e9eafc0e",
+        "run_details_canonical_sha256": "6357c0e493638d7849fa7d8aa62637b8ba7a8e75df2ac9241bba38e9f600480f",
+        "old_versions_canonical_sha256": "ef74ad5e452c0c22f03bb7e447a48cc085eeefdd98fc1c1c1cae8a6f458e5fef",
+        "new_versions_canonical_sha256": "104199cf40ad6c773849275901a5de624732cc1adfcc6d0f0c5ed185d7fc0a07"
+      },
+      {
+        "name": "live",
+        "index_rows": 576,
+        "embedded_runs": 576,
+        "missing_runs": 0,
+        "versions": 8,
+        "recorded_configurations": 8,
+        "configuration_coverage": {
+          "total_runs": 576,
+          "scanned_runs": 576,
+          "configured_runs": 576,
+          "missing_config_runs": 0,
+          "complete": true
+        },
+        "config_source_runs": {
+          "ledger": 576
+        },
+        "explicit_runtime_metadata_runs": 0,
+        "index_canonical_sha256": "4b243fe2448e8ae92ef3e5d2d725659a84f3cd4d145d106bc817e8dfdf08dd8a",
+        "run_details_canonical_sha256": "02947a80fd137ec3562d719768a91b99008c47a9c28672c388871663db79134b",
+        "old_versions_canonical_sha256": "90e1918119d2a98d7a8cb9e0a4b39b11e58dfd2e8789931f464295ca47534a2b",
+        "new_versions_canonical_sha256": "3d4d8be1b429dbf330fce0b4b4c7a6f2f5c8f0bf3d73953996c37ad47f68c866"
+      },
+      {
+        "name": "llma4se_live",
+        "index_rows": 1632,
+        "embedded_runs": 1632,
+        "missing_runs": 0,
+        "versions": 6,
+        "recorded_configurations": 6,
+        "configuration_coverage": {
+          "total_runs": 1632,
+          "scanned_runs": 1632,
+          "configured_runs": 1632,
+          "missing_config_runs": 0,
+          "complete": true
+        },
+        "config_source_runs": {
+          "ledger": 1632
+        },
+        "explicit_runtime_metadata_runs": 0,
+        "index_canonical_sha256": "7da358c000eb8befd86f7c8b122d1b4b006f188e931d2b432a6314a23428c0e3",
+        "run_details_canonical_sha256": "9b9ee8ba2070377edca82e0a88b658e1dcd9c89df384ed0d1b94e4e639d8555f",
+        "old_versions_canonical_sha256": "c45b0b27aef940ca0de23f78db35d434b3792d2d3988d491a30ac3e816403ca4",
+        "new_versions_canonical_sha256": "c5bf80b5e0599af01cb7ada6d0458aeaa2dcbf782e0cb7601b983761378da625"
+      },
+      {
+        "name": "prerecorded_mock",
+        "index_rows": 480,
+        "embedded_runs": 480,
+        "missing_runs": 0,
+        "versions": 6,
+        "recorded_configurations": 6,
+        "configuration_coverage": {
+          "total_runs": 480,
+          "scanned_runs": 480,
+          "configured_runs": 480,
+          "missing_config_runs": 0,
+          "complete": true
+        },
+        "config_source_runs": {
+          "ledger": 480
+        },
+        "explicit_runtime_metadata_runs": 0,
+        "index_canonical_sha256": "290a5122bba9b718123ff54e915bb6d3b3f2ac4e6e6ecc1f9e9fd625558ff4b8",
+        "run_details_canonical_sha256": "cb2981a5763a85abc0c65213fce4b28d99638833247fa010208880c9d9370691",
+        "old_versions_canonical_sha256": "95397c074b357cd377c87059a95efc2df75caa26ff59a7a60507654a1ce3b070",
+        "new_versions_canonical_sha256": "81c1eab227cbe7ae7efa6b2f882d35ba3cd942c7e807fd16b4cfbf92d404076b"
+      },
+      {
+        "name": "prerecorded_mock_weak",
+        "index_rows": 160,
+        "embedded_runs": 160,
+        "missing_runs": 0,
+        "versions": 2,
+        "recorded_configurations": 2,
+        "configuration_coverage": {
+          "total_runs": 160,
+          "scanned_runs": 160,
+          "configured_runs": 160,
+          "missing_config_runs": 0,
+          "complete": true
+        },
+        "config_source_runs": {
+          "ledger": 160
+        },
+        "explicit_runtime_metadata_runs": 0,
+        "index_canonical_sha256": "a8561ec12628f2b9fbe74d7399e61bec7ab32ea7b76be05a94dcc61a33e006a1",
+        "run_details_canonical_sha256": "b11668b8e0bce50a578b708be12c4f0c54bb121e894fce1cfdc74a954f7ae344",
+        "old_versions_canonical_sha256": "59e053b170c187fa6a100c3fc9e63c7e226566810ad8cc5f475289cf76d105c4",
+        "new_versions_canonical_sha256": "baad8387ab3ad2225aedc0f04e6b4b08315a2ec46b7a090d3de651873c1ddeef"
+      },
+      {
+        "name": "real_swe_agent_500",
+        "index_rows": 500,
+        "embedded_runs": 500,
+        "missing_runs": 0,
+        "versions": 1,
+        "recorded_configurations": 2,
+        "configuration_coverage": {
+          "total_runs": 500,
+          "scanned_runs": 500,
+          "configured_runs": 500,
+          "missing_config_runs": 0,
+          "complete": true
+        },
+        "config_source_runs": {
+          "importer-reconstructed": 500
+        },
+        "explicit_runtime_metadata_runs": 0,
+        "index_canonical_sha256": "7d8d3306c72f3717080af4279e09b0aa2a684dcb02b1b1a0f2f384e5b0cd7db2",
+        "run_details_canonical_sha256": "3cc6bc30ff63c8991c8cbfe311b3c92f1ce5beb7ff4f07cfbfff9743aef6fe70",
+        "old_versions_canonical_sha256": "95941f1cacd09f8edee8520a1a28ada3c1f11d1111cbabd98f9e5bf32eef8502",
+        "new_versions_canonical_sha256": "d52b0a37b9a5427d088a6487b28e0c8dee6590a6dbc80e488c663b447ea3918c"
+      }
+    ]
+  },
+  "other_embedded_payload_paths_unchanged": true,
+  "unchanged_payload_path_count": 11120,
+  "checks": {
+    "frontend_suite": {
+      "passed": 911,
+      "files": 48
+    },
+    "targeted_frontend_after_layout_changes": {
+      "passed": 145,
+      "files": 4
+    },
+    "backend_and_build": {
+      "passed": 48
+    },
+    "final_build_source_freshness": {
+      "passed": 2
+    }
+  },
+  "live": {
+    "complete": true,
+    "evidence": "production-real-member",
+    "artifact": {
+      "sha256": "fe4533d68b05f26a25ab337f43bfa443568158f7948a76f61d93785d643f2654",
+      "bytes": 19988802
+    },
+    "checks": [
+      "Real operator identity, production issuer and secure session cookie",
+      "baseline: exact prompt, tools, scoped run count and honest runtime identity",
+      "no_test_tool: exact prompt, tools, scoped run count and honest runtime identity",
+      "permissive: exact prompt, tools, scoped run count and honest runtime identity",
+      "short_context: exact prompt, tools, scoped run count and honest runtime identity",
+      "terse_prompt: exact prompt, tools, scoped run count and honest runtime identity",
+      "tight_budget: exact prompt, tools, scoped run count and honest runtime identity",
+      "Ten layouts: five widths, dark and light, no page or inspector overflow",
+      "Reload retains the recorded inspector and matching ledger navigation works",
+      "No application errors, configuration writes, job submissions or model calls"
+    ],
+    "layouts": [
+      {
+        "width": 320,
+        "theme": "dark",
+        "pass": true
+      },
+      {
+        "width": 320,
+        "theme": "light",
+        "pass": true
+      },
+      {
+        "width": 390,
+        "theme": "dark",
+        "pass": true
+      },
+      {
+        "width": 390,
+        "theme": "light",
+        "pass": true
+      },
+      {
+        "width": 640,
+        "theme": "dark",
+        "pass": true
+      },
+      {
+        "width": 640,
+        "theme": "light",
+        "pass": true
+      },
+      {
+        "width": 1024,
+        "theme": "dark",
+        "pass": true
+      },
+      {
+        "width": 1024,
+        "theme": "light",
+        "pass": true
+      },
+      {
+        "width": 1440,
+        "theme": "dark",
+        "pass": true
+      },
+      {
+        "width": 1440,
+        "theme": "light",
+        "pass": true
+      }
+    ],
+    "model_calls": 0,
+    "configuration_writes": 0,
+    "browser_health": {
+      "page_errors": 0,
+      "console_errors": 0,
+      "blocked_edge_analytics_console": 2,
+      "application_csp_violations": 0,
+      "blocked_edge_analytics_csp": 1
+    }
+  },
+  "anonymous": {
+    "complete": true,
+    "at": "2026-11-11T01:17:57.363520+00:00",
+    "user_agent": "traceharness-proof",
+    "max_redirs": 0,
+    "checks": [
+      {
+        "path": "/app",
+        "hostile_origin": false,
+        "status": 302,
+        "location": "/login",
+        "acao": false,
+        "pass": true
+      },
+      {
+        "path": "/app/shallow",
+        "hostile_origin": false,
+        "status": 302,
+        "location": "/login",
+        "acao": false,
+        "pass": true
+      },
+      {
+        "path": "/link",
+        "hostile_origin": false,
+        "status": 302,
+        "location": "/login",
+        "acao": false,
+        "pass": true
+      },
+      {
+        "path": "/api/shallow/harnesses",
+        "hostile_origin": false,
+        "status": 401,
+        "location": null,
+        "acao": false,
+        "pass": true
+      },
+      {
+        "path": "/api/shallow/harnesses",
+        "hostile_origin": true,
+        "status": 401,
+        "location": null,
+        "acao": false,
+        "pass": true
+      },
+      {
+        "path": "/api/shallow/jobs",
+        "hostile_origin": false,
+        "status": 401,
+        "location": null,
+        "acao": false,
+        "pass": true
+      },
+      {
+        "path": "/api/shallow/jobs",
+        "hostile_origin": true,
+        "status": 401,
+        "location": null,
+        "acao": false,
+        "pass": true
+      },
+      {
+        "path": "/api/runner/catalog",
+        "hostile_origin": false,
+        "status": 401,
+        "location": null,
+        "acao": false,
+        "pass": true
+      },
+      {
+        "path": "/api/runner/catalog",
+        "hostile_origin": true,
+        "status": 401,
+        "location": null,
+        "acao": false,
+        "pass": true
+      },
+      {
+        "path": "/api/runner/jobs",
+        "hostile_origin": false,
+        "status": 401,
+        "location": null,
+        "acao": false,
+        "pass": true
+      },
+      {
+        "path": "/api/runner/jobs",
+        "hostile_origin": true,
+        "status": 401,
+        "location": null,
+        "acao": false,
+        "pass": true
+      }
+    ]
+  },
+  "unverified": [
+    "Native prompt-class patching is not implemented or tested by this release.",
+    "New model execution and paired prompt-performance experiments were not run.",
+    "Historical native executable identity is absent from llma4se_live and remains unknown."
+  ]
+}

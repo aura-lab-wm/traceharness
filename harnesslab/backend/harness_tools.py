@@ -26,6 +26,7 @@ Design notes
 from __future__ import annotations
 
 import json
+import hashlib
 import math
 import os
 import random
@@ -132,7 +133,9 @@ def _first_span(results_dir: str, run_id: str) -> Optional[dict]:
     try:
         with open(p, encoding="utf-8") as f:
             line = f.readline()
-        return json.loads(line) if line.strip() else None
+        span = json.loads(line) if line.strip() else None
+        return span if (isinstance(span, dict) and span.get("span") == "invoke_agent"
+                        and span.get("status") == "start") else None
     except Exception:
         return None
 
@@ -140,26 +143,97 @@ def _first_span(results_dir: str, run_id: str) -> Optional[dict]:
 _LEDGER_CACHE: dict = {}
 
 
-def _recorded_harnesses(results_dir: str, limit_per_id: int = 2000) -> dict:
+def _config_source(row: dict, span: Optional[dict], cfg: Optional[dict]) -> str:
+    """Describe how the snapshot was recorded, never infer an engine from a model name."""
+    if cfg is None or span is None:
+        return "unknown"
+    provider = row.get("provider") or ""
+    if isinstance(provider, str) and provider.startswith("capture:"):
+        return "captured"
+    if ((isinstance(provider, str) and provider.startswith("import:"))
+            or provider in ("imported", "nebius", "nebius/SWE-agent-trajectories", "SWE-bench/experiments")
+            or span.get("import_source")):
+        return "importer-reconstructed"
+    return "ledger"
+
+
+def _recorded_runtime(row: dict, span: Optional[dict], cfg: Optional[dict]) -> Optional[dict]:
+    """Only explicit, allowlisted identity fields; keep provenance and conflicting values.
+
+    In particular, a provider adapter, model name, or harness id is not an agent binary.
+    Nested runtime objects may contain credentials, so never copy them wholesale.
+    """
+    fields = {
+        "runtime_id": "id", "runtime_version": "version", "image_digest": "image",
+        "runtime_image_digest": "image", "binary_sha256": "binary_sha256",
+        "agent": "agent", "agent_version": "agent_version", "engine": "engine",
+        "scaffold": "scaffold", "scaffold_version": "scaffold_version", "entrypoint": "entrypoint",
+    }
+    values = defaultdict(list)
+
+    def collect(obj, path, names):
+        if not isinstance(obj, dict):
+            return
+        for key, dest in names.items():
+            value = obj.get(key)
+            if isinstance(value, str) and value.strip():
+                values[dest].append({"source": f"{path}.{key}", "value": value})
+
+    for obj, path in ((row, "index"), (span, "ledger"), (cfg, "ledger.harness")):
+        collect(obj, path, fields)
+        if isinstance(obj, dict):
+            collect(obj.get("runtime"), f"{path}.runtime", {
+                **fields, "id": "id", "version": "version", "image": "image",
+            })
+    if isinstance(cfg, dict):
+        collect(cfg.get("observed_config"), "ledger.harness.observed_config", fields)
+        collect(cfg.get("fingerprint"), "ledger.harness.fingerprint", fields)
+    if not values:
+        return None
+    runtime, sources, conflicts = {}, {}, {}
+    for key, records in sorted(values.items()):
+        distinct = {record["value"] for record in records}
+        if len(distinct) == 1:
+            runtime[key] = records[0]["value"]
+            sources[key] = [record["source"] for record in records]
+        else:
+            conflicts[key] = records
+    runtime["source_paths"] = sources
+    if conflicts:
+        runtime["conflicts"] = conflicts
+    return runtime
+
+
+def _ledger_stamp(results_dir: str, run_id: str):
+    try:
+        st = os.stat(os.path.join(results_dir, run_id, "ledger.jsonl"))
+        return (run_id, st.st_mtime_ns, st.st_ctime_ns, st.st_size)
+    except OSError:
+        return (run_id, None)
+
+
+def _recorded_harnesses(results_dir: str) -> dict:
     """{harness_id: {hash: {"config":…, "runs":[run_id…]}}} read from the ledgers of a results dir.
 
-    Cached on (dir, index mtime) because it touches one line of every ledger file.
+    Read every indexed run, with no per-harness sampling cap. Cache invalidation includes
+    ledger metadata so a missing or replaced ledger does not leave stale coverage/configs.
     """
     idx = os.path.join(results_dir, "index.jsonl")
-    key = (results_dir, os.path.getmtime(idx))
+    rows = load_index(results_dir)
+    stat = os.stat(idx)
+    key = (results_dir, stat.st_mtime_ns, stat.st_size,
+           tuple(_ledger_stamp(results_dir, r["run_id"]) for r in rows))
     if key in _LEDGER_CACHE:
         return _LEDGER_CACHE[key]
-    out: dict = defaultdict(lambda: defaultdict(lambda: {"config": None, "runs": [], "seeds": {}}))
-    seen = Counter()
-    for r in load_index(results_dir):
+    out: dict = defaultdict(lambda: defaultdict(lambda: {
+        "config": None, "runs": [], "seeds": {}, "recorded_configurations": {},
+    }))
+    for r in rows:
         hid = r["harness_id"]
-        if seen[hid] >= limit_per_id:
-            continue
-        seen[hid] += 1
         h, cfg, seed = r.get("harness_hash") or "", None, None
         span = _first_span(results_dir, r["run_id"])
         if span:
-            cfg = span.get("harness")
+            cfg = span.get("harness") if isinstance(span.get("harness"), dict) else None
             seed = span.get("seed")
             if not h:
                 h = span.get("harness_hash") or (content_hash(cfg) if isinstance(cfg, dict) else "")
@@ -168,6 +242,14 @@ def _recorded_harnesses(results_dir: str, limit_per_id: int = 2000) -> dict:
         slot = out[hid][h]
         if slot["config"] is None and isinstance(cfg, dict):
             slot["config"] = _normalise(cfg)
+        recorded = {"config": cfg, "source": _config_source(r, span, cfg),
+                    "runtime": _recorded_runtime(r, span, cfg)}
+        identity = hashlib.sha256(json.dumps(recorded, sort_keys=True, separators=(",", ":"),
+                                            ensure_ascii=False).encode("utf-8")).hexdigest()
+        cohort = slot["recorded_configurations"].setdefault(identity, {
+            "id": identity, **recorded, "run_ids": [],
+        })
+        cohort["run_ids"].append(r["run_id"])
         slot["runs"].append(r["run_id"])
         slot["seeds"][(r["task_id"], r.get("repeat_index", 0))] = seed
     res = {k: dict(v) for k, v in out.items()}
@@ -808,6 +890,7 @@ def versions(dir: str):
                 "has_file": hid in files, "file": files.get(hid, {}).get("file"),
                 "current_hash": cur, "matches_current": matches,
                 "config": slot["config"],
+                "recorded_configurations": list(slot["recorded_configurations"].values()),
             })
             if cur and not matches:
                 drift.append({"harness_id": hid, "hash": h, "runs": len(slot["runs"]), "current_hash": cur,
@@ -816,8 +899,16 @@ def versions(dir: str):
                                           f"({h}); harnesses/{files[hid]['file']} now hashes to {cur}. "
                                           "Those runs are not directly comparable to new ones.")})
     unseen = sorted(set(files) - set(rec))
+    scanned_runs = sum(v["runs"] for v in out_versions)
+    configured_runs = sum(len(c["run_ids"]) for v in out_versions
+                          for c in v["recorded_configurations"] if c["config"] is not None)
     return _clean({
         "dir": dir, "runs": len(rows),
+        "scanned_runs": scanned_runs,
+        "coverage": {"total_runs": len(rows), "scanned_runs": scanned_runs,
+                     "configured_runs": configured_runs,
+                     "missing_config_runs": scanned_runs - configured_runs,
+                     "complete": scanned_runs == len(rows)},
         "versions": out_versions,
         "n_versions": len(out_versions),
         "multi_version": sorted({v["harness_id"] for v in out_versions
@@ -827,7 +918,10 @@ def versions(dir: str):
         "no_hash_runs": sum(v["runs"] for v in out_versions if v["hash"] == "unknown"),
         "note": ("`harness_hash` is stamped into every new run's index row and invoke_agent span. "
                  "For runs recorded before that field existed the hash is recomputed from the harness "
-                 "config the ledger already carried, so old directories still version correctly."),
+                 "config using current defaults. `config` is the legacy normalized representative; "
+                 "`recorded_configurations` preserves exact recorded fields and per-run coverage "
+                 "without filling defaults. Imported/captured snapshots can contain unknown-value "
+                 "placeholders or observed behavior, not declared runtime limits."),
     })
 
 
