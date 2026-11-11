@@ -685,33 +685,35 @@ def build_training_examples(results_dirs: list[str], harness_filter: Optional[st
         idx = os.path.join(d, "index.jsonl")
         if not os.path.exists(idx):
             continue
-        for line in open(idx):
-            if not line.strip():
-                continue
-            row = json.loads(line)
-            if harness_filter and row["harness_id"] != harness_filter:
-                continue
-            if row.get("hidden_pass") is None:
-                continue
-            run_dir = os.path.join(d, row["run_id"])
-            try:
-                spans = [json.loads(l) for l in open(os.path.join(run_dir, "ledger.jsonl")) if l.strip()]
-            except FileNotFoundError:
-                continue
-            harness = next((s.get("harness", {}) for s in spans if s.get("span") == "invoke_agent" and s.get("status") == "start"), {})
-            events = events_from_spans(spans)
-            label = 0 if row["hidden_pass"] else 1
-            steps = sorted({e["step"] for e in events})
-            tokens = 0
-            chat_tokens = {s["step"]: (s.get("gen_ai.usage.input_tokens") or 0) + (s.get("gen_ai.usage.output_tokens") or 0) for s in spans if s.get("span") == "chat"}
-            for k in steps:
-                tokens += chat_tokens.get(k, 0)
-                # pre-action view: events before step k, pending = step k's calls
-                before = [e for e in events if e["step"] < k]
-                pending = [{"name": e["tool"]} for e in events if e["step"] == k and e["tool"]]
-                f = prefix_features(before, harness, tokens, pending=pending, step=k)
-                examples.append({"run_id": row["run_id"], "task_id": row["task_id"], "harness_id": row["harness_id"], "step": k,
-                                 "step_frac": f["step_frac"], "features": f, "label": label, "total_steps": len(steps)})
+        with open(idx) as index_stream:
+            for line in index_stream:
+                if not line.strip():
+                    continue
+                row = json.loads(line)
+                if harness_filter and row["harness_id"] != harness_filter:
+                    continue
+                if row.get("hidden_pass") is None:
+                    continue
+                run_dir = os.path.join(d, row["run_id"])
+                try:
+                    with open(os.path.join(run_dir, "ledger.jsonl")) as ledger_stream:
+                        spans = [json.loads(l) for l in ledger_stream if l.strip()]
+                except FileNotFoundError:
+                    continue
+                harness = next((s.get("harness", {}) for s in spans if s.get("span") == "invoke_agent" and s.get("status") == "start"), {})
+                events = events_from_spans(spans)
+                label = 0 if row["hidden_pass"] else 1
+                steps = sorted({e["step"] for e in events})
+                tokens = 0
+                chat_tokens = {s["step"]: (s.get("gen_ai.usage.input_tokens") or 0) + (s.get("gen_ai.usage.output_tokens") or 0) for s in spans if s.get("span") == "chat"}
+                for k in steps:
+                    tokens += chat_tokens.get(k, 0)
+                    # pre-action view: events before step k, pending = step k's calls
+                    before = [e for e in events if e["step"] < k]
+                    pending = [{"name": e["tool"]} for e in events if e["step"] == k and e["tool"]]
+                    f = prefix_features(before, harness, tokens, pending=pending, step=k)
+                    examples.append({"run_id": row["run_id"], "task_id": row["task_id"], "harness_id": row["harness_id"], "step": k,
+                                     "step_frac": f["step_frac"], "features": f, "label": label, "total_steps": len(steps)})
     return examples
 
 
@@ -858,15 +860,16 @@ def train(results_dirs: list[str], epochs: int = 400, lr: float = 0.2, l2: float
     for d in results_dirs:
         idx = os.path.join(d, "index.jsonl")
         if os.path.exists(idx):
-            for line in open(idx):
-                if line.strip():
-                    r = json.loads(line)
-                    if harness_filter and r["harness_id"] != harness_filter:
-                        continue
-                    if r.get("hidden_pass") is False:
-                        oi["n_fail"] += 1
-                        vp = r.get("visible_pass")
-                        oi["invisible" if vp is True else "visible_fail" if vp is False else "unknown"] += 1
+            with open(idx) as index_stream:
+                for line in index_stream:
+                    if line.strip():
+                        r = json.loads(line)
+                        if harness_filter and r["harness_id"] != harness_filter:
+                            continue
+                        if r.get("hidden_pass") is False:
+                            oi["n_fail"] += 1
+                            vp = r.get("visible_pass")
+                            oi["invisible" if vp is True else "visible_fail" if vp is False else "unknown"] += 1
     nf = oi["n_fail"] or 1
     oi.update(invisible_share=oi["invisible"] / nf, visible_fail_share=oi["visible_fail"] / nf, unknown_share=oi["unknown"] / nf)
     report = {

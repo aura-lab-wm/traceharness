@@ -194,7 +194,8 @@ def analysis(out_root: str) -> dict:
     p = os.path.join(out_root, "real_features.jsonl")
     if not os.path.exists(p):
         return {"error": "no real_features.jsonl in this directory"}
-    rows = [json.loads(l) for l in open(p)]
+    with open(p) as stream:
+        rows = [json.loads(l) for l in stream]
     ok = [r for r in rows if r["resolved"]]; ko = [r for r in rows if not r["resolved"]]
     def m(rs, k): return sum(r[k] for r in rs) / len(rs) if rs else None
     def rate(rs, k): return sum(1 for r in rs if r[k]) / len(rs) if rs else None
@@ -228,7 +229,10 @@ def _run_ids(out_root: str, n: int) -> list:
     in the same order, so line i of one is line i of the other; a directory where the counts differ
     (edited by hand) gets no ids rather than wrong ones."""
     p = os.path.join(out_root, "index.jsonl")
-    ids = [json.loads(l).get("run_id") for l in open(p) if l.strip()] if os.path.exists(p) else []
+    ids = []
+    if os.path.exists(p):
+        with open(p) as stream:
+            ids = [json.loads(l).get("run_id") for l in stream if l.strip()]
     return ids if len(ids) == n else [None] * n
 
 

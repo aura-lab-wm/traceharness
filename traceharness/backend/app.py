@@ -705,7 +705,8 @@ def sentinel_replay_all(name: str, harness: Optional[str] = None):
         p = os.path.join(d, r["run_id"], "ledger.jsonl")
         if not os.path.exists(p):
             continue
-        spans = [json.loads(l) for l in open(p) if l.strip()]
+        with open(p) as stream:
+            spans = [json.loads(l) for l in stream if l.strip()]
         rp = S.replay(spans, model)
         out.append({"run_id": r["run_id"], "task": r["task_id"], "harness": r["harness_id"], "hidden_pass": r["hidden_pass"],
                     "visible_pass": r.get("visible_pass"), "risk": [x["risk"] for x in rp], "patterns": [x["patterns"] for x in rp],
