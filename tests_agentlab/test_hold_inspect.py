@@ -21,7 +21,7 @@ from traceharness.backend.results_scope import is_private  # noqa: E402
 
 REPO = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 RUNS = os.path.join(REPO, "data", "runs")
-PY = os.path.join(REPO, ".venv", "bin", "python")
+PY = sys.executable
 
 
 def _row(model, harness, task, hidden, **extra):

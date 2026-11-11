@@ -57,6 +57,17 @@ const data = {
 }
 
 describe('hosted workbench navigation', () => {
+  it('directs the member home workflow to unified hosted configuration and execution', () => {
+    const { container, requests } = renderRig('#/rig/home', { data })
+    const workflow = container.querySelector('[data-el="harness-workflow"]')
+    expect(workflow.textContent).toContain('hosted run')
+    expect(workflow.textContent).not.toContain('execute experiments locally')
+    expect(within(workflow).getAllByRole('button')).toHaveLength(1)
+    fireEvent.click(within(workflow).getByRole('button', { name: 'Open Harnesses' }))
+    expect(location.hash).toContain('harnesses')
+    expect(requests.some(({ method }) => method !== 'GET')).toBe(false)
+  })
+
   it('keeps the public sample import discoverable while explaining its local execution boundary', () => {
     const { container, requests } = renderRig('#/rig/sources', { data: {
       ...data,

@@ -45,10 +45,12 @@ function Home({ spec }) {
       </div>
       <div className="rg-pnl rg-home-list" data-el="harness-workflow">
         <div className="rg-pnl-b rg-row rg-wrap">
-          <div className="rg-grow"><b>Design from the evidence</b><p className="rg-small">Open a run and choose Design a harness to keep a link back to it. {IS_MEMBER ? 'Save harnesses to your member account; execute experiments locally at 127.0.0.1:8742.' : 'Or begin with a fixed shell, six questions, or a block stack.'}</p></div>
-          <Go spec="shallowWizard" className="rg-btn pri" el="minimal-harness-cta">Minimal harness</Go>
-          <Go spec="shallowCards" className="rg-btn" el="fixed-harnesses-cta">Fixed harnesses</Go>
-          <Go spec="blocks" className="rg-btn" el="build-harness-cta">Build a harness</Go>
+          <div className="rg-grow"><b>Design from the evidence</b><p className="rg-small">Open a run and choose Design a harness to keep a link back to it. {IS_MEMBER ? 'Choose a harness, compatible model and registered task in Harnesses. Save to your account, review the full configuration, then start a hosted run.' : 'Or begin with a fixed shell, six questions, or a block stack.'}</p></div>
+          {IS_MEMBER ? <Go spec="harnesses" className="rg-btn pri" el="open-harnesses-cta">Open Harnesses</Go> : <>
+            <Go spec="shallowWizard" className="rg-btn pri" el="minimal-harness-cta">Minimal harness</Go>
+            <Go spec="shallowCards" className="rg-btn" el="fixed-harnesses-cta">Fixed harnesses</Go>
+            <Go spec="blocks" className="rg-btn" el="build-harness-cta">Build a harness</Go>
+          </>}
         </div>
       </div>
       <div className="rg-row rg-wrap rg-home-bar">
