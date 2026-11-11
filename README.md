@@ -28,6 +28,8 @@ the grader, not the model, is broken (see `docs/STUDENT_GUIDE.md`, section 13).
 
 **Execution verification:** [live results, accounting/partial-grading fixes and manual review checklist](docs/EXECUTION_PERFORMANCE.md).
 
+**First visit and help:** [narrated tour and Ask Buddy workflow guidance](docs/VOICE_TOUR_AND_BUDDY.md), with transcripts, real control navigation and current runner availability.
+
 ## Run the dashboard
 
 Python 3.10 or newer is required (3.12 recommended). On macOS the built-in `python3` is 3.9 and

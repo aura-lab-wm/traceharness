@@ -1,0 +1,667 @@
+{
+  "verified_at": "2026-11-11T19:23:17.183642+00:00",
+  "source_commit": "eb7a246a9a8677e34699aa30bb09e282eedcd216",
+  "site_commit": "06484eb",
+  "surface": "https://traceharness.dev/app",
+  "candidate": {
+    "complete": true,
+    "at": "2026-11-11T19:19:00.086275+00:00",
+    "production_document": false,
+    "real_member_session": true,
+    "candidate_tour_acknowledgement_fixture": true,
+    "checks": [
+      "Real first-use flag absent; hostile Origin 403 and stale member-scope acknowledgement 409",
+      "First real member visit automatically offers the exact candidate/live tour, without autoplay",
+      "Tour fits 320, 390, 768 and 1440 pixels without horizontal content overflow",
+      "All five bundled MP3 chapters decode and advance in headless Chromium; pause/chapter change stop playback",
+      "Final tour action opens the real Ask Buddy workflow guide",
+      "JSON question yields real numbered steps, opens Harnesses, expands the editor and spotlights the actual control",
+      "Dispatch guidance checks the actual production catalog and opens the real matrix controls without submitting jobs",
+      "Local-only requests state the loopback boundary; unknown requests have no invented capability or action",
+      "Buddy guidance and question controls fit 320, 390, 768 and 1440 pixels",
+      "Light-theme narration layout, title hierarchy and modal backdrop checked",
+      "Voice tour can reopen without autoplay and Escape dismisses it",
+      "Tour dismissal is retained across reload in this member scope"
+    ],
+    "new_jobs": 0,
+    "initial_preference": {
+      "version": 1,
+      "seen": false
+    },
+    "last_audio_probe": {
+      "duration": 24.679458,
+      "ready": 4,
+      "time": 0.159165,
+      "error": false,
+      "errorCode": null,
+      "paused": false,
+      "mp3": "probably"
+    },
+    "audio": [
+      {
+        "duration": 21.434,
+        "ready": 4,
+        "time": 0.17031,
+        "error": false,
+        "errorCode": null,
+        "paused": false,
+        "mp3": "probably"
+      },
+      {
+        "duration": 22.21475,
+        "ready": 4,
+        "time": 0.158268,
+        "error": false,
+        "errorCode": null,
+        "paused": false,
+        "mp3": "probably"
+      },
+      {
+        "duration": 24.494042,
+        "ready": 4,
+        "time": 0.15915,
+        "error": false,
+        "errorCode": null,
+        "paused": false,
+        "mp3": "probably"
+      },
+      {
+        "duration": 26.3435,
+        "ready": 4,
+        "time": 0.161536,
+        "error": false,
+        "errorCode": null,
+        "paused": false,
+        "mp3": "probably"
+      },
+      {
+        "duration": 24.679458,
+        "ready": 4,
+        "time": 0.159165,
+        "error": false,
+        "errorCode": null,
+        "paused": false,
+        "mp3": "probably"
+      }
+    ],
+    "page_errors": [],
+    "blocked_requests": [],
+    "mutations": [
+      {
+        "method": "POST",
+        "path": "/api/onboarding",
+        "fixture": true
+      }
+    ],
+    "candidate_only_no_account_preference_write": true
+  },
+  "live": {
+    "complete": true,
+    "at": "2026-11-11T19:22:06.567273+00:00",
+    "production_document": true,
+    "real_member_session": true,
+    "candidate_tour_acknowledgement_fixture": false,
+    "checks": [
+      "Real first-use flag absent; hostile Origin 403 and stale member-scope acknowledgement 409",
+      "First real member visit automatically offers the exact candidate/live tour, without autoplay",
+      "Tour fits 320, 390, 768 and 1440 pixels without horizontal content overflow",
+      "All five bundled MP3 chapters decode and advance in headless Chromium; pause/chapter change stop playback",
+      "Final tour action opens the real Ask Buddy workflow guide",
+      "JSON question yields real numbered steps, opens Harnesses, expands the editor and spotlights the actual control",
+      "Dispatch guidance checks the actual production catalog and opens the real matrix controls without submitting jobs",
+      "Local-only requests state the loopback boundary; unknown requests have no invented capability or action",
+      "Buddy guidance and question controls fit 320, 390, 768 and 1440 pixels",
+      "Light-theme narration layout, title hierarchy and modal backdrop checked",
+      "Voice tour can reopen without autoplay and Escape dismisses it",
+      "Tour dismissal is retained across reload in this member scope",
+      "Fresh authenticated browser with empty local storage reads account-level completion and does not show the tour again"
+    ],
+    "new_jobs": 0,
+    "published_html_sha256": "cccac52e3b7bf80b5bbef48627fe2ee9acc5ff3bfbdb1d5840082a1d880aa888",
+    "readback_attempts": 1,
+    "initial_preference": {
+      "version": 1,
+      "seen": false
+    },
+    "last_audio_probe": {
+      "duration": 24.679458,
+      "ready": 4,
+      "time": 0.165698,
+      "error": false,
+      "errorCode": null,
+      "paused": false,
+      "mp3": "probably"
+    },
+    "audio": [
+      {
+        "duration": 21.434,
+        "ready": 4,
+        "time": 0.181666,
+        "error": false,
+        "errorCode": null,
+        "paused": false,
+        "mp3": "probably"
+      },
+      {
+        "duration": 22.21475,
+        "ready": 4,
+        "time": 0.254201,
+        "error": false,
+        "errorCode": null,
+        "paused": false,
+        "mp3": "probably"
+      },
+      {
+        "duration": 24.494042,
+        "ready": 4,
+        "time": 0.160809,
+        "error": false,
+        "errorCode": null,
+        "paused": false,
+        "mp3": "probably"
+      },
+      {
+        "duration": 26.3435,
+        "ready": 4,
+        "time": 0.161587,
+        "error": false,
+        "errorCode": null,
+        "paused": false,
+        "mp3": "probably"
+      },
+      {
+        "duration": 24.679458,
+        "ready": 4,
+        "time": 0.165698,
+        "error": false,
+        "errorCode": null,
+        "paused": false,
+        "mp3": "probably"
+      }
+    ],
+    "page_errors": [],
+    "blocked_requests": [],
+    "mutations": [
+      {
+        "method": "POST",
+        "path": "/api/onboarding",
+        "fixture": false
+      }
+    ],
+    "live_account_acknowledged": true
+  },
+  "local_checks": {
+    "frontend_tests_passed": 1081,
+    "worker_tests_passed": 198,
+    "dist_source_tests_passed": 2,
+    "new_guide_and_tour_tests_passed": 24,
+    "narration": {
+      "complete": true,
+      "checks": [
+        {
+          "id": "evidence",
+          "decoded": true,
+          "non_silent": true,
+          "seconds": 21.434,
+          "bytes": 129261
+        },
+        {
+          "id": "harness",
+          "decoded": true,
+          "non_silent": true,
+          "seconds": 22.21475,
+          "bytes": 133869
+        },
+        {
+          "id": "dispatch",
+          "decoded": true,
+          "non_silent": true,
+          "seconds": 24.494042,
+          "bytes": 147549
+        },
+        {
+          "id": "results",
+          "decoded": true,
+          "non_silent": true,
+          "seconds": 26.3435,
+          "bytes": 158637
+        },
+        {
+          "id": "buddy",
+          "decoded": true,
+          "non_silent": true,
+          "seconds": 24.679458,
+          "bytes": 148701
+        }
+      ],
+      "transcript_audio_integrity": true
+    },
+    "lint": "Completed with existing unrelated warnings; no new guide/tour warnings."
+  },
+  "snapshot": {
+    "audio_chapters": 5,
+    "bundled_audio_hashes_verified": true,
+    "encoded_recorded_data_unchanged": true,
+    "encoded_recorded_data_sha256": "f15ee7595f1630cef32c32265fd6e0b1667dc6bd80549a032b2d43d284f9a5f3",
+    "datasets": [
+      "captured_claude_code",
+      "demo_mock",
+      "families_mock",
+      "live",
+      "llma4se_live",
+      "prerecorded_mock",
+      "prerecorded_mock_weak",
+      "real_swe_agent_500"
+    ],
+    "recorded_runs": 3453,
+    "replacements": [
+      {
+        "before": "/assets/index-CB0YGjqf.js",
+        "after": "/assets/index-Ce6n5C1K.js",
+        "sha256": "5f04ea5ed2b76ebd459ce178a6e25d95e0491a2f8dd81d3e8fee7511209127ae"
+      },
+      {
+        "before": "/assets/index-Y65sB8di.css",
+        "after": "/assets/index-Bq77DYJK.css",
+        "sha256": "7f14dcc33ab62e2f8e7354c826d336e4f911ed5f1b0d779a8627c929f9cf2dac"
+      }
+    ],
+    "build_source": {
+      "sha256": "2174aeea8ed125daca640d2f3d9ac2538117a2dc0f215bf5adf06c1861ef734b",
+      "files": 103
+    }
+  },
+  "html": {
+    "bytes": 21107642,
+    "sha256": "cccac52e3b7bf80b5bbef48627fe2ee9acc5ff3bfbdb1d5840082a1d880aa888"
+  },
+  "gzip": {
+    "bytes": 15295294,
+    "sha256": "16a78ba26a46b20bf1f11bb1f4c10c9119d82c132c1a5503481caa1c704e65d2"
+  },
+  "worker_deployment": {
+    "at": "2026-11-11T19:12:31.887980+00:00",
+    "exit_code": 0,
+    "version_id": "5ff30c89-62aa-4c90-ba78-b37a24ef4bf4",
+    "site_commit": "06484eb",
+    "last_10_log_lines": [
+      "Worker Startup Time: 5 ms",
+      "Your Worker has access to the following bindings:",
+      "Binding                                                  Resource                  ",
+      "env.SNAPSHOT (8a74dd2fba124b1a8d82e6eeff5ba3ae)          KV Namespace              ",
+      "env.ADMIN_EMAILS (\"amastropaolo@wm.edu\")                 Environment Variable      ",
+      "",
+      "Uploaded traceharness-platform (2.54 sec)",
+      "No deploy targets for traceharness-platform (0.74 sec)",
+      "Current Version ID: 5ff30c89-62aa-4c90-ba78-b37a24ef4bf4",
+      ""
+    ],
+    "config_deleted_on_exit": true,
+    "routes_changed": false,
+    "durable_objects_changed": false,
+    "source_sha256": {
+      "index.js": "03ebb3ca1f279ad019ef5824cbc56f26f864be86e6e644176e9149f66cb6742c",
+      "workbench.js": "18608594d314fd03a169939e84f741ac73a5a3e9f067106cca8af5acccf1064d",
+      "onboarding.js": "6bd59bb3585998ee498139828d8edd37499105d794c30a91e27ce2ea094c1473"
+    }
+  },
+  "kv_upload": {
+    "at": "2026-11-11T19:21:23.495229+00:00",
+    "exit_code": 0,
+    "key": "app.html.gz",
+    "namespace_id": "8a74dd2fba124b1a8d82e6eeff5ba3ae",
+    "source_commit": "eb7a246",
+    "input_file": "app-voice-guide-v3.html.gz",
+    "input_sha256": "16a78ba26a46b20bf1f11bb1f4c10c9119d82c132c1a5503481caa1c704e65d2",
+    "input_bytes": 15295294,
+    "html_sha256": "cccac52e3b7bf80b5bbef48627fe2ee9acc5ff3bfbdb1d5840082a1d880aa888",
+    "worker_version_id": "5ff30c89-62aa-4c90-ba78-b37a24ef4bf4",
+    "config_deleted_on_exit": true,
+    "last_10_log_lines": [
+      "",
+      " ⛅️ wrangler 4.90.1 (update available 4.160.1)",
+      "──────────────────────────────────────────────",
+      "Resource location: remote ",
+      "",
+      "Writing the contents of /Users/amastro/Documents/TraceHarness-voice-guide-2026-11-11/app-voice-guide-v3.html.gz to the key \"app.html.gz\" on namespace id: \"8a74dd2fba124b1a8d82e6eeff5ba3ae\".",
+      ""
+    ]
+  },
+  "anonymous": [
+    {
+      "path": "/app",
+      "hostile_origin": false,
+      "status": 302,
+      "location": "/login",
+      "acao": false,
+      "pass": true
+    },
+    {
+      "path": "/app/shallow",
+      "hostile_origin": false,
+      "status": 302,
+      "location": "/login",
+      "acao": false,
+      "pass": true
+    },
+    {
+      "path": "/link",
+      "hostile_origin": false,
+      "status": 302,
+      "location": "/login",
+      "acao": false,
+      "pass": true
+    },
+    {
+      "path": "/api/onboarding",
+      "hostile_origin": false,
+      "status": 401,
+      "location": null,
+      "acao": false,
+      "pass": true
+    },
+    {
+      "path": "/api/onboarding",
+      "hostile_origin": true,
+      "status": 401,
+      "location": null,
+      "acao": false,
+      "pass": true
+    },
+    {
+      "path": "/api/shallow/harnesses",
+      "hostile_origin": false,
+      "status": 401,
+      "location": null,
+      "acao": false,
+      "pass": true
+    },
+    {
+      "path": "/api/shallow/harnesses",
+      "hostile_origin": true,
+      "status": 401,
+      "location": null,
+      "acao": false,
+      "pass": true
+    },
+    {
+      "path": "/api/shallow/jobs",
+      "hostile_origin": false,
+      "status": 401,
+      "location": null,
+      "acao": false,
+      "pass": true
+    },
+    {
+      "path": "/api/shallow/jobs",
+      "hostile_origin": true,
+      "status": 401,
+      "location": null,
+      "acao": false,
+      "pass": true
+    },
+    {
+      "path": "/api/runner/catalog",
+      "hostile_origin": false,
+      "status": 401,
+      "location": null,
+      "acao": false,
+      "pass": true
+    },
+    {
+      "path": "/api/runner/catalog",
+      "hostile_origin": true,
+      "status": 401,
+      "location": null,
+      "acao": false,
+      "pass": true
+    },
+    {
+      "path": "/api/runner/jobs",
+      "hostile_origin": false,
+      "status": 401,
+      "location": null,
+      "acao": false,
+      "pass": true
+    },
+    {
+      "path": "/api/runner/jobs",
+      "hostile_origin": true,
+      "status": 401,
+      "location": null,
+      "acao": false,
+      "pass": true
+    },
+    {
+      "path": "/api/runner/prompt-inventory/native-claude-code",
+      "hostile_origin": false,
+      "status": 401,
+      "location": null,
+      "acao": false,
+      "pass": true
+    },
+    {
+      "path": "/api/runner/prompt-inventory/native-claude-code",
+      "hostile_origin": true,
+      "status": 401,
+      "location": null,
+      "acao": false,
+      "pass": true
+    },
+    {
+      "path": "/api/runner/prompt-inventory/native-codex",
+      "hostile_origin": false,
+      "status": 401,
+      "location": null,
+      "acao": false,
+      "pass": true
+    },
+    {
+      "path": "/api/runner/prompt-inventory/native-codex",
+      "hostile_origin": true,
+      "status": 401,
+      "location": null,
+      "acao": false,
+      "pass": true
+    },
+    {
+      "path": "/api/runner/experiments",
+      "hostile_origin": false,
+      "status": 401,
+      "location": null,
+      "acao": false,
+      "pass": true
+    },
+    {
+      "path": "/api/runner/experiments",
+      "hostile_origin": true,
+      "status": 401,
+      "location": null,
+      "acao": false,
+      "pass": true
+    },
+    {
+      "path": "/api/runner/experiments/preflight",
+      "hostile_origin": false,
+      "status": 401,
+      "location": null,
+      "acao": false,
+      "pass": true
+    },
+    {
+      "path": "/api/runner/experiments/preflight",
+      "hostile_origin": true,
+      "status": 401,
+      "location": null,
+      "acao": false,
+      "pass": true
+    },
+    {
+      "path": "/api/runner/experiments/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "hostile_origin": false,
+      "status": 401,
+      "location": null,
+      "acao": false,
+      "pass": true
+    },
+    {
+      "path": "/api/runner/experiments/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "hostile_origin": true,
+      "status": 401,
+      "location": null,
+      "acao": false,
+      "pass": true
+    },
+    {
+      "path": "/api/runner/experiments/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/start",
+      "hostile_origin": false,
+      "status": 401,
+      "location": null,
+      "acao": false,
+      "pass": true
+    },
+    {
+      "path": "/api/runner/experiments/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/start",
+      "hostile_origin": true,
+      "status": 401,
+      "location": null,
+      "acao": false,
+      "pass": true
+    },
+    {
+      "path": "/api/runner/experiments/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/cancel",
+      "hostile_origin": false,
+      "status": 401,
+      "location": null,
+      "acao": false,
+      "pass": true
+    },
+    {
+      "path": "/api/runner/experiments/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/cancel",
+      "hostile_origin": true,
+      "status": 401,
+      "location": null,
+      "acao": false,
+      "pass": true
+    },
+    {
+      "method": "POST",
+      "path": "/api/onboarding",
+      "hostile_origin": false,
+      "status": 401,
+      "acao": false,
+      "pass": true
+    },
+    {
+      "method": "POST",
+      "path": "/api/onboarding",
+      "hostile_origin": true,
+      "status": 401,
+      "acao": false,
+      "pass": true
+    },
+    {
+      "method": "POST",
+      "path": "/api/runner/experiments",
+      "hostile_origin": false,
+      "status": 401,
+      "acao": false,
+      "pass": true
+    },
+    {
+      "method": "POST",
+      "path": "/api/runner/experiments",
+      "hostile_origin": true,
+      "status": 401,
+      "acao": false,
+      "pass": true
+    },
+    {
+      "method": "POST",
+      "path": "/api/runner/experiments/preflight",
+      "hostile_origin": false,
+      "status": 401,
+      "acao": false,
+      "pass": true
+    },
+    {
+      "method": "POST",
+      "path": "/api/runner/experiments/preflight",
+      "hostile_origin": true,
+      "status": 401,
+      "acao": false,
+      "pass": true
+    },
+    {
+      "method": "POST",
+      "path": "/api/runner/experiments/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/start",
+      "hostile_origin": false,
+      "status": 401,
+      "acao": false,
+      "pass": true
+    },
+    {
+      "method": "POST",
+      "path": "/api/runner/experiments/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/start",
+      "hostile_origin": true,
+      "status": 401,
+      "acao": false,
+      "pass": true
+    },
+    {
+      "method": "POST",
+      "path": "/api/runner/experiments/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/cancel",
+      "hostile_origin": false,
+      "status": 401,
+      "acao": false,
+      "pass": true
+    },
+    {
+      "method": "POST",
+      "path": "/api/runner/experiments/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/cancel",
+      "hostile_origin": true,
+      "status": 401,
+      "acao": false,
+      "pass": true
+    },
+    {
+      "method": "POST",
+      "path": "/api/runner/credentials",
+      "hostile_origin": false,
+      "status": 401,
+      "acao": false,
+      "pass": true
+    },
+    {
+      "method": "POST",
+      "path": "/api/runner/credentials",
+      "hostile_origin": true,
+      "status": 401,
+      "acao": false,
+      "pass": true
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/runner/credentials/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "hostile_origin": false,
+      "status": 401,
+      "acao": false,
+      "pass": true
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/runner/credentials/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "hostile_origin": true,
+      "status": 401,
+      "acao": false,
+      "pass": true
+    }
+  ],
+  "remaining_unverified": [
+    "Hardware speaker output and human listening quality.",
+    "Safari and Firefox rendering/playback.",
+    "A different physical member account in production; distinct-account isolation is covered by Worker tests.",
+    "Every storage failure, provider availability and intent paraphrase permutation.",
+    "No fresh PostgreSQL prompt save/reload or paid model execution was performed for this release."
+  ]
+}
