@@ -164,7 +164,7 @@ def summarize(experiment):
             a=by_pair.get((plan['reference_arm_id'],repeat),{});b=by_pair.get((arm['id'],repeat),{})
             def grade(t):
                 job=t.get('job') or {}
-                return job.get('grade') if t.get('status')=='succeeded' and job.get('status')=='succeeded' and job.get('grade') in {'passed','failed'} else None
+                return job.get('grade') if t.get('status') in {'succeeded','failed'} and job.get('status') in {'succeeded','failed'} and job.get('grade') in {'passed','failed'} else None
             ga,gb=grade(a),grade(b)
             if ga is not None and gb is not None:
                 row['graded_pairs']+=1

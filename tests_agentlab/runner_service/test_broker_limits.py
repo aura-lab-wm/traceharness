@@ -108,7 +108,7 @@ class BrokerBoundaryTests(unittest.TestCase):
             raise ExecutionError('Runtime process did not complete successfully.')
         self.behavior = behavior
         job = self.submit(budget=0.001)
-        self.assertEqual(job['usage'], {'requests': 0})
+        self.assertEqual(job['usage'], {'requests': 0, 'input_tokens': 0, 'output_tokens': 0, 'cost_usd': 0})
         self.assertEqual(self.calls, [])
         self.assertIn('Model does not match the reviewed run.', observed[0])
         self.assertIn('Unsupported provider request options.', observed[1])

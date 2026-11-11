@@ -409,14 +409,20 @@ class Jobs:
         # resolved provider key in queued jobs, manifests, exceptions or disk.
 
     def _execute(self, jid, credential_id, model):
+        zero_usage = {"requests": 0, "input_tokens": 0, "output_tokens": 0, "cost_usd": 0}
         with self.lock:
             row, cancel = self.rows[jid], self.events[jid]
             if cancel.is_set():
+                if row["job"]["usage"].get("requests") == 0:
+                    row["job"]["usage"] = dict(zero_usage)
                 row["job"].update(status="cancelled", updated_at=int(self.clock()))
                 self._save(row)
                 return
             if self.blocked_reason or any(item["job"]["status"] == "needs_attention" for item in self.rows.values()):
-                row["job"].update(status="failed", issues=["Runner cleanup requires operator review; this queued run was not started."], updated_at=int(self.clock()))
+                if row["job"]["usage"].get("requests") == 0:
+                    row["job"]["usage"] = dict(zero_usage)
+                row["job"].update(status="failed", issues=["Runner cleanup requires operator review; this queued run was not started."],
+                                  updated_at=int(self.clock()))
                 self._save(row)
                 return
             row["job"].update(status="running", updated_at=int(self.clock()))
@@ -425,6 +431,8 @@ class Jobs:
         broker_lock, reserved = threading.Lock(), Decimal("0")
         observed = {key: Decimal("0") for key in ("input_tokens", "output_tokens", "cost_usd")}
         complete_usage = {key: True for key in observed}
+        accepting_calls = True
+        provider_attempted = False
         transport_failed = False
         transport_issue = None
         broker_issue = None
@@ -437,13 +445,13 @@ class Jobs:
             return [*issues, *(issue for issue in (transport_issue, broker_issue, budget_issue) if issue and issue not in issues)]
 
         def forward(protocol, body):
-            nonlocal reserved, transport_failed, transport_issue, broker_issue, budget_issue
+            nonlocal reserved, provider_attempted, transport_failed, transport_issue, broker_issue, budget_issue
             budget_refusal = None
             with broker_lock:
                 try:
                     if transport_failed:
                         raise ProviderError("A previous model request had an uncertain outcome; this job cannot retry it.")
-                    if cancel.is_set() or self.clock() >= deadline:
+                    if not accepting_calls or cancel.is_set() or self.clock() >= deadline:
                         raise ProviderError("Job is no longer accepting model calls.")
                     expected_protocol = {"traceharness": "chat/completions", "native-codex": "responses", "native-claude-code": "messages"}[manifest["runtime_id"]]
                     if protocol != expected_protocol:
@@ -529,6 +537,7 @@ class Jobs:
                     with self.lock:
                         row["job"]["usage"]["requests"] += 1
                         self._save(row)
+                    provider_attempted = True
                     try:
                         response = self.provider.forward(protocol, key, body, timeout_seconds=max(0.1, deadline - self.clock()))
                         usage = reported_usage(protocol, *response)
@@ -563,7 +572,7 @@ class Jobs:
                         self._save(row)
                     return response
                 except ProviderError as error:
-                    if not transport_failed:
+                    if accepting_calls and not transport_failed:
                         # Never serialize arbitrary exception text. A closed map
                         # selects an authored literal, or a fixed generic refusal.
                         argument = error.args[0] if len(error.args) == 1 and type(error.args[0]) is str else None
@@ -575,31 +584,55 @@ class Jobs:
                             self._save(row)
                     raise
 
+        artifacts, issues, result_grade = [], [], None
+        failure = None
         try:
             self.vault.resolve(owner, credential_id)
             result = self.executor.execute(jid, manifest, self.root / jid, cancel, forward)
-            with self.lock:
+            if not isinstance(result, dict):
+                raise ValueError("Invalid executor result.")
+            artifacts = result.get("artifacts", [])
+            issues = result.get("issues", [])
+            result_grade = result.get("grade")
+            if (not isinstance(artifacts, list) or not isinstance(issues, list)
+                    or not all(type(item) is str for item in issues)
+                    or (result_grade is not None and type(result_grade) is not str)):
+                raise ValueError("Invalid executor result.")
+            canonical(artifacts)
+        except BaseException as error:
+            failure = error
+            if not isinstance(error, Exception):
+                with broker_lock:
+                    accepting_calls = False
+                raise
+        with broker_lock:
+            accepting_calls = False
+        with self.lock:
+            if failure is None:
                 if cancel.is_set():
-                    row["job"].update(status="cancelled", artifacts=[], issues=with_diagnostics([]))
+                    row["job"].update(status="cancelled", artifacts=[], issues=with_diagnostics([]), grade="ungraded")
                 else:
-                    row["job"].update(status="succeeded", artifacts=result.get("artifacts", []), issues=with_diagnostics(result.get("issues", [])),
-                                      grade=result.get("grade") if result.get("grade") in {"passed", "failed", "error"} else "ungraded")
-        except CredentialUnavailable:
-            with self.lock:
-                row["job"].update(status="failed", issues=with_diagnostics(["The credential expired or was revoked. Reconnect it before reviewing another run."]))
-        except ExecutionError as error:
-            with self.lock:
+                    row["job"].update(status="succeeded", artifacts=list(artifacts), issues=with_diagnostics(issues),
+                                      grade=result_grade if result_grade in {"passed", "failed", "error"} else "ungraded")
+            elif isinstance(failure, CredentialUnavailable):
+                row["job"].update(status="failed", issues=with_diagnostics(["The credential expired or was revoked. Reconnect it before reviewing another run."]),
+                                  grade="ungraded")
+            elif isinstance(failure, ExecutionError):
                 # ExecutionError contains only adapter-authored fixed messages.
-                cleanup_failed = "cleanup" in str(error).lower()
+                cleanup_failed = "cleanup" in str(failure).lower()
                 status = "needs_attention" if cleanup_failed else "cancelled" if cancel.is_set() else "failed"
-                row["job"].update(status=status, issues=with_diagnostics([str(error)]), artifacts=getattr(error, "artifacts", []))
-        except Exception:
-            with self.lock:
-                row["job"].update(status="needs_attention", issues=with_diagnostics(["Execution did not finish safely. Operator review is required."]))
-        finally:
-            with self.lock:
-                row["job"]["updated_at"] = int(self.clock())
-                self._save(row)
+                trusted_grade = getattr(failure, "grade", None)
+                raw_artifacts = getattr(failure, "artifacts", None)
+                grade = trusted_grade if status == "failed" and type(trusted_grade) is str and trusted_grade in {"passed", "failed", "error"} else "ungraded"
+                row["job"].update(status=status, issues=with_diagnostics([str(failure)]),
+                                  artifacts=list(raw_artifacts) if isinstance(raw_artifacts, list) else [], grade=grade)
+            else:
+                row["job"].update(status="needs_attention", issues=with_diagnostics(["Execution did not finish safely. Operator review is required."]),
+                                  grade="ungraded")
+            if not provider_attempted and not transport_failed and row["job"]["usage"].get("requests") == 0:
+                row["job"]["usage"] = dict(zero_usage)
+            row["job"]["updated_at"] = int(self.clock())
+            self._save(row)
 
     def close(self):
         with self.lock:

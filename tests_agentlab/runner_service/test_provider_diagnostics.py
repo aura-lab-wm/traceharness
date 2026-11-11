@@ -178,7 +178,7 @@ class ResponsesNamespaceTests(unittest.TestCase):
                     forward('chat/completions', {'model': 'fixture/model', 'messages': [], **extra})
             return {}
         self.behavior = behavior
-        self.assertEqual(self.submit()['usage'], {'requests': 0})
+        self.assertEqual(self.submit()['usage'], {'requests': 0, 'input_tokens': 0, 'output_tokens': 0, 'cost_usd': 0})
         self.assertEqual(self.calls, [])
 
     def test_hosted_nested_empty_and_malformed_namespaces_never_reach_provider(self):
@@ -201,7 +201,7 @@ class ResponsesNamespaceTests(unittest.TestCase):
                     {**namespace, 'tools': [local] * 60}, {**namespace, 'name': 'other', 'tools': [local] * 60}]})
             return {}
         self.behavior = behavior
-        self.assertEqual(self.submit(runtime='native-codex')['usage'], {'requests': 0})
+        self.assertEqual(self.submit(runtime='native-codex')['usage'], {'requests': 0, 'input_tokens': 0, 'output_tokens': 0, 'cost_usd': 0})
         self.assertEqual(self.calls, [])
 
 

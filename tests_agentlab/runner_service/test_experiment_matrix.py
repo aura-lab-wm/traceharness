@@ -847,7 +847,9 @@ class ExperimentMatrixAPITests(unittest.TestCase):
         self.assertEqual(result['plan']['reference_arm_id'], 'th-a')
         self.assertEqual(result['summary']['comparisons'], [])
         self.assertEqual([t['job']['grade'] for t in result['trials']], ['passed', 'ungraded', 'error'])
-        self.assertEqual(result['summary']['cost_unknown_trials'], 3)
+        # This adapter fixture issues no provider calls; all three charges are known zero.
+        self.assertEqual(result['summary']['cost_unknown_trials'], 0)
+        self.assertTrue(all(t['job']['usage']['requests'] == 0 and t['job']['usage']['cost_usd'] == 0 for t in result['trials']))
         self.assertNotIn('credential_id', json.dumps(result))
         self.assertNotIn('owner', result)
 

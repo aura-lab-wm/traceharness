@@ -17,10 +17,23 @@ from .proxy import UnixModelProxy
 from .registry import tree_hash
 
 
+TRUSTED_GRADES = frozenset({"passed", "failed", "error"})
+RUNTIME_FAILURE = "Runtime process did not complete successfully."
+
+
 class ExecutionError(Exception):
-    def __init__(self, message, *, artifacts=None):
+    def __init__(self, message, *, artifacts=None, grade=None):
         super().__init__(message)
         self.artifacts = artifacts or []
+        self.grade = grade
+
+    @property
+    def grade(self):
+        return self._grade
+
+    @grade.setter
+    def grade(self, value):
+        self._grade = value if type(value) is str and value in TRUSTED_GRADES else None
 
 
 ARTIFACT_LIMIT = 1024 * 1024
@@ -195,7 +208,7 @@ class DockerExecutor:
                     raise ExecutionError("Execution was cancelled." if cancel.is_set() else "Execution reached its deadline.")
                 time.sleep(0.1)
             if process.returncode:
-                raise ExecutionError("Runtime process did not complete successfully.")
+                raise ExecutionError("The trusted grader did not complete successfully." if name.endswith("-grade") else RUNTIME_FAILURE)
         finally:
             if process.poll() is None:
                 process.kill()
@@ -207,24 +220,33 @@ class DockerExecutor:
 
     def execute(self, job_id, manifest, directory: Path, cancel, forward):
         artifacts = []
+        inner_error = None
         try:
             with self.bounded_storage(directory):
                 try:
                     result = self._execute_bounded(job_id, manifest, directory, cancel, forward)
                 except ExecutionError as error:
-                    artifacts, _ = self.persist_artifacts(directory, manifest)
+                    grade = error.grade if type(error.grade) is str and error.grade in TRUSTED_GRADES else None
+                    error.grade = grade
+                    artifacts, _ = self.persist_artifacts(directory, manifest, grade=grade)
                     error.artifacts = artifacts
+                    inner_error = error
                     raise
                 artifacts, issues = self.persist_artifacts(directory, manifest, grade=result["grade"])
                 return {**result, "artifacts": artifacts, "issues": result.get("issues", []) + issues}
         except ExecutionError as error:
+            if error is not inner_error:
+                if any(item.get("name") == "grade.json" for item in artifacts):
+                    (directory / "grade.json").unlink(missing_ok=True)
+                    artifacts = [item for item in artifacts if item.get("name") != "grade.json"]
+                error.grade = None
             error.artifacts = artifacts
             raise
 
     def persist_artifacts(self, directory, manifest, *, grade=None):
         artifacts, issues = [], []
         values = {"manifest.json": json.dumps(manifest, ensure_ascii=False, sort_keys=True).encode()}
-        if grade is not None:
+        if type(grade) is str and grade in TRUSTED_GRADES:
             values["grade.json"] = json.dumps({"outcome": grade}, sort_keys=True).encode()
         for name in RUNTIME_ARTIFACTS:
             path = directory / "output" / name
@@ -351,11 +373,17 @@ class DockerExecutor:
                   (gateway, "/gateway", True), (source / "repo", "/taskrepo", True)]
         if native_mount:
             mounts.append(native_mount)
+        runtime_error = None
         try:
             with UnixModelProxy(gateway / "runner.sock", observer.wrap(forward) if observer else forward):
                 args = self.container_args(name, manifest["image_digest"], mounts,
                     entrypoint="python") + ["-m", "traceharness.runner_service.container_entrypoint"]
-                self._run(args, name, cancel, deadline)
+                try:
+                    self._run(args, name, cancel, deadline)
+                except ExecutionError as error:
+                    if type(error) is not ExecutionError or str(error) != RUNTIME_FAILURE or error.grade is not None:
+                        raise
+                    runtime_error = error
         finally:
             try:
                 if observer:
@@ -367,7 +395,10 @@ class DockerExecutor:
             finally:
                 if native_mount:
                     native_mount[0].unlink(missing_ok=True)
-        if cancel.is_set():
+        if runtime_error is not None:
+            if cancel.is_set() or time.monotonic() >= deadline:
+                raise runtime_error
+        elif cancel.is_set():
             raise ExecutionError("Execution was cancelled.")
         # Grading is a separate offline process. The agent never sees hidden tests.
         grading = directory / "grading"
@@ -375,14 +406,25 @@ class DockerExecutor:
             [(work, "/workspace", True), (source, "/task", True), (grading, "/output", False)],
             entrypoint="/opt/traceharness-grade", grader=True)
         self._run(args, name + "-grade", cancel, deadline)
+        if cancel.is_set():
+            raise ExecutionError("Execution was cancelled.")
         grade = grading / "grade.json"
         if grade.is_symlink() or not grade.is_file() or grade.stat().st_size > 65536:
             raise ExecutionError("The trusted grader did not return a bounded result.")
         try:
-            result = json.loads(_read_artifact(grade))
+            raw = _read_artifact(grade)
+            if len(raw) > 65536:
+                raise ExecutionError("The trusted grader did not return a bounded result.")
+            result = json.loads(raw, parse_constant=lambda _: (_ for _ in ()).throw(ValueError()))
+        except ExecutionError:
+            raise
         except (OSError, ValueError, UnicodeError):
             raise ExecutionError("The trusted grader returned an invalid result.") from None
-        if not isinstance(result, dict) or result.get("outcome") not in {"passed", "failed", "error"}:
+        outcome = result.get("outcome") if isinstance(result, dict) else None
+        if type(outcome) is not str or outcome not in TRUSTED_GRADES:
             raise ExecutionError("The trusted grader returned an invalid result.")
-        return {"grade": result["outcome"],
-                "issues": [] if result["outcome"] == "passed" else ["Execution finished; the trusted grader reported " + result["outcome"] + "."]}
+        if runtime_error is not None:
+            runtime_error.grade = outcome
+            raise runtime_error
+        return {"grade": outcome,
+                "issues": [] if outcome == "passed" else ["Execution finished; the trusted grader reported " + outcome + "."]}
