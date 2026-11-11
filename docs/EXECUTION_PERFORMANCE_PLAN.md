@@ -38,7 +38,7 @@ All items below are `INFERRED (static source trace; wall-time delta unverified u
 1. **Deterministic Pre-Transport Refusal Proof Job (`1` Job, `$0.01` Cap, `0` Provider Calls)**:
    - Standalone job configured so pre-transport broker reservation refuses request 1 before network dispatch (`requests = 0`, `not transport_failed`), proving live `status = "failed"`, `cost_usd = 0.0` (not `unknown`), and clean container/tmpfs teardown.
 2. **Cohort A — `traceharness` Engine Matrix (`8` Trials, `$0.40` Aggregate Cap)**:
-   - Version-2 matrix: `2 harnesses (engine_baseline vs engine_edited) × 2 real Requests tasks (requests-jsondecode-pickle-6628, requests-unicode-length) × 2 reps = 8 trials` (`sha256-cyclic-v1`, `openai/gpt-4.1-mini`).
+   - Version-2 matrix: `2 harnesses (engine_baseline vs engine_edited) × 2 real Requests tasks (requests-unicode-length, requests-leading-slashes) × 2 reps = 8 trials` (`sha256-cyclic-v1`, `openai/gpt-4.1-mini`).
    - Limits: `max_steps = 12`, `wall_time_seconds = 180`, `max_output_tokens = 512`, `max_cost_usd = 0.05`/trial (`budget_usd = 0.40`).
    - **Confound Disclosure**: Expanded limits (`12` steps / `$0.05` vs historical `4` steps / `$0.01`) preclude clean causal comparison to the old 4 trials; evaluate `engine_baseline` vs `engine_edited` strictly within Cohort A.
 3. **Cohort B — `native-codex` Paired Prompt Cohort (`4` Trials, `$0.78` Aggregate Cap)**:

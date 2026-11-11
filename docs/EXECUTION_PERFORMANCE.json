@@ -1,0 +1,1128 @@
+{
+  "verified_at": "2026-11-11T16:53:00.885491+00:00",
+  "source_commit": "6b7666dceecb582699f7ad127eec3d06af602317",
+  "live_url": "https://traceharness.dev/app#/rig/harnesses",
+  "provider_retries": 0,
+  "hard_aggregate_cap_usd": 1.19,
+  "cohorts": {
+    "zero": {
+      "verification_complete": true,
+      "hard_cap_usd": 0.01,
+      "experiment_id": null,
+      "credential_revoked": true,
+      "summary": null,
+      "by_arm": {
+        "zero-request-negative": {
+          "trials": 1,
+          "execution_states": {
+            "failed": 1
+          },
+          "task_grades": {
+            "failed": 1
+          },
+          "known_cost_usd": 0,
+          "unknown_cost_trials": 0,
+          "mean_wall_seconds": 6,
+          "input_tokens": 0,
+          "output_tokens": 0,
+          "requests": 0
+        }
+      },
+      "jobs": [
+        {
+          "id": "190ca7721cc9944a2712b1a28c2aedce6ea24e3cda3c44cd",
+          "runtime_id": "traceharness",
+          "model_id": "openai/gpt-4.1-mini",
+          "task_id": "requests-unicode-length",
+          "status": "failed",
+          "grade": "failed",
+          "usage": {
+            "requests": 0,
+            "input_tokens": 0,
+            "output_tokens": 0,
+            "cost_usd": 0
+          },
+          "wall_seconds": 6,
+          "manifest_sha256": "cc0c182d48ab15ee6ca83b4a63634067cbd7837b7a8a001fb13d0d252e9c9669",
+          "runtime_image": "sha256:73cc2e983cf0f818c058227f70d3a12ec553d0112cd786a8707c2f892ef600ed",
+          "grader_image": "sha256:b6bc5bf5a8a16225ffe35975f1ee30c6a5b86ceee5fae5a001e9221face4dded",
+          "task_content_sha256": "4a98a5b8095eab35a956c9972675ff53242d844854aac0a1af3ef6738f59dbef",
+          "arm_id": "zero-request-negative",
+          "repeat": 0,
+          "runtime_summary": {
+            "exit_reason": "error",
+            "steps": 0,
+            "tool_calls": 0,
+            "edits": 0,
+            "tests_run_by_agent": 0,
+            "wall_ms": 1321
+          },
+          "grade_artifact_verified": true,
+          "artifact_sha256": {
+            "manifest.json": "1e769729092e124daaff0469e197f5250e2305f3697054ba841ba67b57ba86e0",
+            "grade.json": "eb90d9b066e2fee61604dfa5095851f68860d1ab1f85f191e3b1ffe6b7be8816",
+            "trace.jsonl": "6423936696edbe9ac2b5bbcbd4ade5c2b6756c3caacc24fecaf9dab7759ea231",
+            "messages.json": "85e473e53a8f17cc58673333b1562fc5bfbae01746497d58b5a63ae14f0b4fea",
+            "patch.diff": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "summary.json": "bf18ecd93e4bd7e00d6eec798a79263e45863bc746c475a279019fb3335cde28"
+          }
+        }
+      ],
+      "preregistered_source_sha256": "5154f1a2ae471b7e4e5496a4f3825da5024aab0a08aef2038d512dad4c3ce633",
+      "frozen_plan_sha256": null
+    },
+    "engine": {
+      "verification_complete": true,
+      "hard_cap_usd": 0.4,
+      "experiment_id": "f499a677019e64b273045ad044bde920a9c44e53a72a02ce",
+      "credential_revoked": true,
+      "summary": {
+        "finalized_trials": 8,
+        "pending_trials": 0,
+        "active_trials": 0,
+        "confirmed_cost_usd": 0.0190248,
+        "cost_unknown_trials": 0,
+        "comparisons": []
+      },
+      "by_arm": {
+        "arm-1": {
+          "trials": 2,
+          "execution_states": {
+            "succeeded": 2
+          },
+          "task_grades": {
+            "passed": 2
+          },
+          "known_cost_usd": 0.0047656,
+          "unknown_cost_trials": 0,
+          "mean_wall_seconds": 11,
+          "input_tokens": 23786,
+          "output_tokens": 368,
+          "requests": 8
+        },
+        "arm-2": {
+          "trials": 2,
+          "execution_states": {
+            "succeeded": 2
+          },
+          "task_grades": {
+            "passed": 2
+          },
+          "known_cost_usd": 0.0049456,
+          "unknown_cost_trials": 0,
+          "mean_wall_seconds": 11.5,
+          "input_tokens": 21812,
+          "output_tokens": 374,
+          "requests": 8
+        },
+        "arm-3": {
+          "trials": 2,
+          "execution_states": {
+            "succeeded": 2
+          },
+          "task_grades": {
+            "passed": 2
+          },
+          "known_cost_usd": 0.0050904,
+          "unknown_cost_trials": 0,
+          "mean_wall_seconds": 11,
+          "input_tokens": 22974,
+          "output_tokens": 342,
+          "requests": 8
+        },
+        "arm-4": {
+          "trials": 2,
+          "execution_states": {
+            "succeeded": 2
+          },
+          "task_grades": {
+            "passed": 2
+          },
+          "known_cost_usd": 0.0042232,
+          "unknown_cost_trials": 0,
+          "mean_wall_seconds": 12,
+          "input_tokens": 21006,
+          "output_tokens": 340,
+          "requests": 8
+        }
+      },
+      "jobs": [
+        {
+          "id": "ad276b715d81213a5558d13271e91ad3d94ef4a33c42e726",
+          "runtime_id": "traceharness",
+          "model_id": "openai/gpt-4.1-mini",
+          "task_id": "requests-unicode-length",
+          "status": "succeeded",
+          "grade": "passed",
+          "usage": {
+            "requests": 4,
+            "input_tokens": 11893,
+            "output_tokens": 183,
+            "cost_usd": 0.0026308
+          },
+          "wall_seconds": 11,
+          "manifest_sha256": "54d3e7e9a96d306e8159adce8a3e2ef7ad738707171fbb249d8cca0ab24c7389",
+          "runtime_image": "sha256:73cc2e983cf0f818c058227f70d3a12ec553d0112cd786a8707c2f892ef600ed",
+          "grader_image": "sha256:b6bc5bf5a8a16225ffe35975f1ee30c6a5b86ceee5fae5a001e9221face4dded",
+          "task_content_sha256": "4a98a5b8095eab35a956c9972675ff53242d844854aac0a1af3ef6738f59dbef",
+          "arm_id": "arm-1",
+          "repeat": 1,
+          "runtime_summary": {
+            "exit_reason": "submitted",
+            "steps": 4,
+            "tool_calls": 5,
+            "edits": 1,
+            "tests_run_by_agent": 1,
+            "wall_ms": 7954
+          },
+          "grade_artifact_verified": true,
+          "artifact_sha256": {
+            "manifest.json": "eb4b6322ea19c42105abf07b1d87e97cf1412a1ee16804123f80386bbd501c78",
+            "grade.json": "878982568e5e39420f9fc8fca5caaade78f526a402b42f08357919732d5a1cd5",
+            "trace.jsonl": "a89e6c453b9b2a59eb2f4c17a3704746203526f90e1bfe7d56b81a904c87b7bf",
+            "messages.json": "9e41d81a50c58209264273df70eb98efdcd4177a5fd7085221385493af1ae27d",
+            "patch.diff": "2df959ac16757bc308830b4dcac8c72ddc364f2408ea7af282e804c4c486e6cb",
+            "summary.json": "97f3e5024eb6005cebe04c445c40c7318bf3ac30e1d1db721e49952f2dbc3872"
+          }
+        },
+        {
+          "id": "6267b340b85d7b08411634c67a7fc0885d408250637621e2",
+          "runtime_id": "traceharness",
+          "model_id": "openai/gpt-4.1-mini",
+          "task_id": "requests-leading-slashes",
+          "status": "succeeded",
+          "grade": "passed",
+          "usage": {
+            "requests": 4,
+            "input_tokens": 11341,
+            "output_tokens": 210,
+            "cost_usd": 0.0026068
+          },
+          "wall_seconds": 12,
+          "manifest_sha256": "386e1c2d0696e85a84c861b51e683966038845f7334ed0dc17ea67efb6030d88",
+          "runtime_image": "sha256:73cc2e983cf0f818c058227f70d3a12ec553d0112cd786a8707c2f892ef600ed",
+          "grader_image": "sha256:b6bc5bf5a8a16225ffe35975f1ee30c6a5b86ceee5fae5a001e9221face4dded",
+          "task_content_sha256": "aae3b7b73c84044395ab0fa1edfe357abde29998adc5025e436c607a72115c22",
+          "arm_id": "arm-2",
+          "repeat": 1,
+          "runtime_summary": {
+            "exit_reason": "submitted",
+            "steps": 4,
+            "tool_calls": 5,
+            "edits": 1,
+            "tests_run_by_agent": 1,
+            "wall_ms": 8401
+          },
+          "grade_artifact_verified": true,
+          "artifact_sha256": {
+            "manifest.json": "2e2ff147d915e61702e492ff18f994deea01408610a8bd2ce9a1202e83aed83c",
+            "grade.json": "878982568e5e39420f9fc8fca5caaade78f526a402b42f08357919732d5a1cd5",
+            "trace.jsonl": "c857b4811fbddf9437b7c20177719a8fa8d8d0dfc997fcb2d1e8f2643f4d8e13",
+            "messages.json": "0fc071c49f798baa7fd2ae671742712448dccd8541029675d8759c058c795612",
+            "patch.diff": "18423e902fef379320eaa57e4a815d19401d534b52b77868624e445a595b0f63",
+            "summary.json": "cd3f7329f56524d60d7f5b851e580ceaeaa689dc926eee1402209c9e1d72e972"
+          }
+        },
+        {
+          "id": "b2e56d4288f6eebdaa455e5542d3af8fcc88eabbe17e27bb",
+          "runtime_id": "traceharness",
+          "model_id": "openai/gpt-4.1-mini",
+          "task_id": "requests-leading-slashes",
+          "status": "succeeded",
+          "grade": "passed",
+          "usage": {
+            "requests": 4,
+            "input_tokens": 10503,
+            "output_tokens": 170,
+            "cost_usd": 0.0023612
+          },
+          "wall_seconds": 12,
+          "manifest_sha256": "815cf001de58ea9647af3c3a3d32c869cd9ccf0acb02015fb50647a385fc15f6",
+          "runtime_image": "sha256:73cc2e983cf0f818c058227f70d3a12ec553d0112cd786a8707c2f892ef600ed",
+          "grader_image": "sha256:b6bc5bf5a8a16225ffe35975f1ee30c6a5b86ceee5fae5a001e9221face4dded",
+          "task_content_sha256": "aae3b7b73c84044395ab0fa1edfe357abde29998adc5025e436c607a72115c22",
+          "arm_id": "arm-4",
+          "repeat": 1,
+          "runtime_summary": {
+            "exit_reason": "submitted",
+            "steps": 4,
+            "tool_calls": 4,
+            "edits": 1,
+            "tests_run_by_agent": 1,
+            "wall_ms": 8604
+          },
+          "grade_artifact_verified": true,
+          "artifact_sha256": {
+            "manifest.json": "3bb71c7520c0dd287d76a8e365643fae8c63b543e1b494226e1fbb81c0cf0a89",
+            "grade.json": "878982568e5e39420f9fc8fca5caaade78f526a402b42f08357919732d5a1cd5",
+            "trace.jsonl": "f607347e4deec558c1cce7463dc32eb9a1b232825706914800fc978fa5b71af1",
+            "messages.json": "a95700e2b164aea662f5cb4ec357802bca4f3a9fc60ffd85f51f350751d9037d",
+            "patch.diff": "18423e902fef379320eaa57e4a815d19401d534b52b77868624e445a595b0f63",
+            "summary.json": "c1e125042643c5258a2e0b2716705ba6643641499d07fdf0024f7aa0e7fa6adb"
+          }
+        },
+        {
+          "id": "e0e68c68a70dee1e6f6279dbf5b04802cc4e7d7a814aad25",
+          "runtime_id": "traceharness",
+          "model_id": "openai/gpt-4.1-mini",
+          "task_id": "requests-unicode-length",
+          "status": "succeeded",
+          "grade": "passed",
+          "usage": {
+            "requests": 4,
+            "input_tokens": 11049,
+            "output_tokens": 151,
+            "cost_usd": 0.002434
+          },
+          "wall_seconds": 11,
+          "manifest_sha256": "15cf56ddf352b8e0d6aeb48a7dfaed6de703b53e178420892e5c74e36c4536e0",
+          "runtime_image": "sha256:73cc2e983cf0f818c058227f70d3a12ec553d0112cd786a8707c2f892ef600ed",
+          "grader_image": "sha256:b6bc5bf5a8a16225ffe35975f1ee30c6a5b86ceee5fae5a001e9221face4dded",
+          "task_content_sha256": "4a98a5b8095eab35a956c9972675ff53242d844854aac0a1af3ef6738f59dbef",
+          "arm_id": "arm-3",
+          "repeat": 1,
+          "runtime_summary": {
+            "exit_reason": "submitted",
+            "steps": 4,
+            "tool_calls": 4,
+            "edits": 1,
+            "tests_run_by_agent": 1,
+            "wall_ms": 8335
+          },
+          "grade_artifact_verified": true,
+          "artifact_sha256": {
+            "manifest.json": "af013297b33238be501f4dacdd629334c0d7b659eb6aa325e712a8dae01a25d5",
+            "grade.json": "878982568e5e39420f9fc8fca5caaade78f526a402b42f08357919732d5a1cd5",
+            "trace.jsonl": "3a5eca0697756f7a4eb63c64c28998fbcb56a194fb585d5658064eff469838cc",
+            "messages.json": "d741f6858267e0041940b7a8b88eac03dab872b79153ce668b6050ceaa1f2679",
+            "patch.diff": "2df959ac16757bc308830b4dcac8c72ddc364f2408ea7af282e804c4c486e6cb",
+            "summary.json": "43f40e82b78f4b5bfb6910f867fe3f88150c7374f39a42827daab928d1ce8b38"
+          }
+        },
+        {
+          "id": "0c87cf00988b7c12613a990b6a8d969373e91caa9f151f6b",
+          "runtime_id": "traceharness",
+          "model_id": "openai/gpt-4.1-mini",
+          "task_id": "requests-leading-slashes",
+          "status": "succeeded",
+          "grade": "passed",
+          "usage": {
+            "requests": 4,
+            "input_tokens": 10471,
+            "output_tokens": 164,
+            "cost_usd": 0.0023388
+          },
+          "wall_seconds": 11,
+          "manifest_sha256": "386e1c2d0696e85a84c861b51e683966038845f7334ed0dc17ea67efb6030d88",
+          "runtime_image": "sha256:73cc2e983cf0f818c058227f70d3a12ec553d0112cd786a8707c2f892ef600ed",
+          "grader_image": "sha256:b6bc5bf5a8a16225ffe35975f1ee30c6a5b86ceee5fae5a001e9221face4dded",
+          "task_content_sha256": "aae3b7b73c84044395ab0fa1edfe357abde29998adc5025e436c607a72115c22",
+          "arm_id": "arm-2",
+          "repeat": 2,
+          "runtime_summary": {
+            "exit_reason": "submitted",
+            "steps": 4,
+            "tool_calls": 4,
+            "edits": 1,
+            "tests_run_by_agent": 1,
+            "wall_ms": 7336
+          },
+          "grade_artifact_verified": true,
+          "artifact_sha256": {
+            "manifest.json": "2e2ff147d915e61702e492ff18f994deea01408610a8bd2ce9a1202e83aed83c",
+            "grade.json": "878982568e5e39420f9fc8fca5caaade78f526a402b42f08357919732d5a1cd5",
+            "trace.jsonl": "47daed82dd2996ae7db6b69bb6ee3862b8e5a5cdb9b1ce78b40d4177bc14488b",
+            "messages.json": "7bf4d14f471f19c2e0602a9e88322e4d7a6f205f17f1f8e227996cca0b9f5199",
+            "patch.diff": "18423e902fef379320eaa57e4a815d19401d534b52b77868624e445a595b0f63",
+            "summary.json": "677dd6be65164ee089ecfcddd7f21ee17378c5bb3a9bd7a0a711c129f6b5a12a"
+          }
+        },
+        {
+          "id": "2270cb0c7ca8d8648837fdea6499506fbe1d36b1ab6774d5",
+          "runtime_id": "traceharness",
+          "model_id": "openai/gpt-4.1-mini",
+          "task_id": "requests-leading-slashes",
+          "status": "succeeded",
+          "grade": "passed",
+          "usage": {
+            "requests": 4,
+            "input_tokens": 10503,
+            "output_tokens": 170,
+            "cost_usd": 0.001862
+          },
+          "wall_seconds": 12,
+          "manifest_sha256": "815cf001de58ea9647af3c3a3d32c869cd9ccf0acb02015fb50647a385fc15f6",
+          "runtime_image": "sha256:73cc2e983cf0f818c058227f70d3a12ec553d0112cd786a8707c2f892ef600ed",
+          "grader_image": "sha256:b6bc5bf5a8a16225ffe35975f1ee30c6a5b86ceee5fae5a001e9221face4dded",
+          "task_content_sha256": "aae3b7b73c84044395ab0fa1edfe357abde29998adc5025e436c607a72115c22",
+          "arm_id": "arm-4",
+          "repeat": 2,
+          "runtime_summary": {
+            "exit_reason": "submitted",
+            "steps": 4,
+            "tool_calls": 4,
+            "edits": 1,
+            "tests_run_by_agent": 1,
+            "wall_ms": 8954
+          },
+          "grade_artifact_verified": true,
+          "artifact_sha256": {
+            "manifest.json": "3bb71c7520c0dd287d76a8e365643fae8c63b543e1b494226e1fbb81c0cf0a89",
+            "grade.json": "878982568e5e39420f9fc8fca5caaade78f526a402b42f08357919732d5a1cd5",
+            "trace.jsonl": "c4b979a028ca4e65a270eb04e15bee25b87345302a7c4765f949ef3ee3cdd2e0",
+            "messages.json": "4f1f0e77edbdcdcef8771101669e4bff5c1b5f241f7e0ec2997d546f7102bce8",
+            "patch.diff": "18423e902fef379320eaa57e4a815d19401d534b52b77868624e445a595b0f63",
+            "summary.json": "75942e9768c2083d8e7628aeeca5bdc2eca8bd199340678f3187907c66f17c5b"
+          }
+        },
+        {
+          "id": "8ec6efedb014615cb9124d6aa5f835cec63d1ba359bedf8f",
+          "runtime_id": "traceharness",
+          "model_id": "openai/gpt-4.1-mini",
+          "task_id": "requests-unicode-length",
+          "status": "succeeded",
+          "grade": "passed",
+          "usage": {
+            "requests": 4,
+            "input_tokens": 11925,
+            "output_tokens": 191,
+            "cost_usd": 0.0026564
+          },
+          "wall_seconds": 11,
+          "manifest_sha256": "15cf56ddf352b8e0d6aeb48a7dfaed6de703b53e178420892e5c74e36c4536e0",
+          "runtime_image": "sha256:73cc2e983cf0f818c058227f70d3a12ec553d0112cd786a8707c2f892ef600ed",
+          "grader_image": "sha256:b6bc5bf5a8a16225ffe35975f1ee30c6a5b86ceee5fae5a001e9221face4dded",
+          "task_content_sha256": "4a98a5b8095eab35a956c9972675ff53242d844854aac0a1af3ef6738f59dbef",
+          "arm_id": "arm-3",
+          "repeat": 2,
+          "runtime_summary": {
+            "exit_reason": "submitted",
+            "steps": 4,
+            "tool_calls": 5,
+            "edits": 1,
+            "tests_run_by_agent": 1,
+            "wall_ms": 7576
+          },
+          "grade_artifact_verified": true,
+          "artifact_sha256": {
+            "manifest.json": "af013297b33238be501f4dacdd629334c0d7b659eb6aa325e712a8dae01a25d5",
+            "grade.json": "878982568e5e39420f9fc8fca5caaade78f526a402b42f08357919732d5a1cd5",
+            "trace.jsonl": "0fc2a01a08da2f94258061e2d0680fa7e12412bbd992f50c526f77a2b9017216",
+            "messages.json": "78a9e929f4dffae337e94ac7d661dd792ab33194f83dfb98debaa85073c5d3e6",
+            "patch.diff": "2df959ac16757bc308830b4dcac8c72ddc364f2408ea7af282e804c4c486e6cb",
+            "summary.json": "6c39857882bd92305f176f4f1cdeb2388892dd75cd66862f528197c8a64b5b35"
+          }
+        },
+        {
+          "id": "7e5622b66cd8af5c875834f2aaab4bc9bb288bddd786f29b",
+          "runtime_id": "traceharness",
+          "model_id": "openai/gpt-4.1-mini",
+          "task_id": "requests-unicode-length",
+          "status": "succeeded",
+          "grade": "passed",
+          "usage": {
+            "requests": 4,
+            "input_tokens": 11893,
+            "output_tokens": 185,
+            "cost_usd": 0.0021348
+          },
+          "wall_seconds": 11,
+          "manifest_sha256": "54d3e7e9a96d306e8159adce8a3e2ef7ad738707171fbb249d8cca0ab24c7389",
+          "runtime_image": "sha256:73cc2e983cf0f818c058227f70d3a12ec553d0112cd786a8707c2f892ef600ed",
+          "grader_image": "sha256:b6bc5bf5a8a16225ffe35975f1ee30c6a5b86ceee5fae5a001e9221face4dded",
+          "task_content_sha256": "4a98a5b8095eab35a956c9972675ff53242d844854aac0a1af3ef6738f59dbef",
+          "arm_id": "arm-1",
+          "repeat": 2,
+          "runtime_summary": {
+            "exit_reason": "submitted",
+            "steps": 4,
+            "tool_calls": 5,
+            "edits": 1,
+            "tests_run_by_agent": 1,
+            "wall_ms": 7367
+          },
+          "grade_artifact_verified": true,
+          "artifact_sha256": {
+            "manifest.json": "eb4b6322ea19c42105abf07b1d87e97cf1412a1ee16804123f80386bbd501c78",
+            "grade.json": "878982568e5e39420f9fc8fca5caaade78f526a402b42f08357919732d5a1cd5",
+            "trace.jsonl": "6d4f3d5e9c887a32df98abae56ba462df6f6d393cebfefdfecf9b2c8a9b958bd",
+            "messages.json": "8d0de1a98b735ea4a51878d8276557a0c205aa46a2c5695a7b71dd1d0bcd3411",
+            "patch.diff": "2df959ac16757bc308830b4dcac8c72ddc364f2408ea7af282e804c4c486e6cb",
+            "summary.json": "aa654be8dc8b9479098bc352997368d6f9e453f3b4d5ef2290083fabe8ee385a"
+          }
+        }
+      ],
+      "preregistered_source_sha256": "abb3d92d9cc9f266514f70fb7d567f9ffc6b0c333d1384df94e15c92129d80de",
+      "frozen_plan_sha256": "02a44370418932d51a85f26b5e07bc5683986e34a964739b5d9e30b503468012"
+    },
+    "native-codex": {
+      "verification_complete": true,
+      "hard_cap_usd": 0.78,
+      "experiment_id": "ab93a85eec693081750a52116e180e72bdbcefa41ec4ccb1",
+      "credential_revoked": true,
+      "summary": {
+        "finalized_trials": 4,
+        "pending_trials": 0,
+        "active_trials": 0,
+        "confirmed_cost_usd": 0.03707668,
+        "cost_unknown_trials": 0,
+        "comparisons": [
+          {
+            "graded_pairs": 2,
+            "control_only_pass": 0,
+            "variant_only_pass": 0,
+            "both_pass": 2,
+            "both_fail": 0,
+            "incomplete_pairs": 0,
+            "known_cost_pairs": 2,
+            "arm_id": "edited",
+            "planned_pairs": 2
+          }
+        ]
+      },
+      "by_arm": {
+        "control": {
+          "trials": 2,
+          "execution_states": {
+            "succeeded": 2
+          },
+          "task_grades": {
+            "passed": 2
+          },
+          "known_cost_usd": 0.02273214,
+          "unknown_cost_trials": 0,
+          "mean_wall_seconds": 65,
+          "input_tokens": 204014,
+          "output_tokens": 5168,
+          "requests": 21
+        },
+        "edited": {
+          "trials": 2,
+          "execution_states": {
+            "succeeded": 2
+          },
+          "task_grades": {
+            "passed": 2
+          },
+          "known_cost_usd": 0.01434454,
+          "unknown_cost_trials": 0,
+          "mean_wall_seconds": 51.5,
+          "input_tokens": 167822,
+          "output_tokens": 2471,
+          "requests": 18
+        }
+      },
+      "jobs": [
+        {
+          "id": "d2e5505fe5580d871943ac145d2732ed0d725082836e9f93",
+          "runtime_id": "native-codex",
+          "model_id": "openai/gpt-5.1-codex-mini",
+          "task_id": "requests-unicode-length",
+          "status": "succeeded",
+          "grade": "passed",
+          "usage": {
+            "requests": 13,
+            "input_tokens": 133085,
+            "output_tokens": 4074,
+            "cost_usd": 0.01652581
+          },
+          "wall_seconds": 85,
+          "manifest_sha256": "1e84740724bd3a073d311ba8e57cd077dc69aed100228189014c9f342d6b1ac8",
+          "runtime_image": "sha256:e1e4ef84997e7c17acdb210ef55679b3d637fb590cdf469614fc6ab60459f2b0",
+          "grader_image": "sha256:b6bc5bf5a8a16225ffe35975f1ee30c6a5b86ceee5fae5a001e9221face4dded",
+          "task_content_sha256": "4a98a5b8095eab35a956c9972675ff53242d844854aac0a1af3ef6738f59dbef",
+          "arm_id": "control",
+          "repeat": 1,
+          "profile_sha256": "544c3097e1b13796a22b3b1fa17a4682c0649c1c07c603f938dc2006ca8708f3",
+          "profile_overrides": 0,
+          "baseline_literal_observed": true,
+          "grade_artifact_verified": true,
+          "artifact_sha256": {
+            "manifest.json": "2a128e4b23830e42f2debc3627bfc7a59262e00fdbe04e06b2f57cd54b2fc2dc",
+            "grade.json": "878982568e5e39420f9fc8fca5caaade78f526a402b42f08357919732d5a1cd5",
+            "trace.jsonl": "c33e41892fe09e3eea78f85aea850f4cb9189373c8084141b1adc0544282e718",
+            "patch.diff": "02235a9b56e226e68f5abe120415d6759a8a67e380bac681bf876ccc8036981f",
+            "native-prompt-profile.json": "544c3097e1b13796a22b3b1fa17a4682c0649c1c07c603f938dc2006ca8708f3",
+            "native-prompt-application.json": "a418214a96cacb948c63b827a24389dd1324024836fd454b5c1a2b4da9a7aca4",
+            "native-prompt-observations.json": "c1850f980ad38800dac69ffa7a2b9eeec3e7aba99e96ef4ac6702f534dffd525"
+          },
+          "native_readback_verified": true
+        },
+        {
+          "id": "7c29eef310631678cfd8de6c7a987cc906b08f3378960a41",
+          "runtime_id": "native-codex",
+          "model_id": "openai/gpt-5.1-codex-mini",
+          "task_id": "requests-unicode-length",
+          "status": "succeeded",
+          "grade": "passed",
+          "usage": {
+            "requests": 10,
+            "input_tokens": 96744,
+            "output_tokens": 1470,
+            "cost_usd": 0.00887832
+          },
+          "wall_seconds": 58,
+          "manifest_sha256": "8d37b29724af9f3c6f11a9b938524843f60864a3698285cf3758794b910c1b7d",
+          "runtime_image": "sha256:e1e4ef84997e7c17acdb210ef55679b3d637fb590cdf469614fc6ab60459f2b0",
+          "grader_image": "sha256:b6bc5bf5a8a16225ffe35975f1ee30c6a5b86ceee5fae5a001e9221face4dded",
+          "task_content_sha256": "4a98a5b8095eab35a956c9972675ff53242d844854aac0a1af3ef6738f59dbef",
+          "arm_id": "edited",
+          "repeat": 1,
+          "profile_sha256": "12c2bf757a0b010ca76a5d4e4d5f5ee1bab7b4423a255c23f67ff8c06912d6a5",
+          "profile_overrides": 1,
+          "edited_literal_observed": true,
+          "grade_artifact_verified": true,
+          "artifact_sha256": {
+            "manifest.json": "2ce09199ced6aad62cef9484436f85b8bb6843ff1f5ba0e536c1f0226bd64813",
+            "grade.json": "878982568e5e39420f9fc8fca5caaade78f526a402b42f08357919732d5a1cd5",
+            "trace.jsonl": "3c4cc8b5719ed306c4a2749c6b96c852f1f711bbb20dfb9eea798868268b0ce4",
+            "patch.diff": "02235a9b56e226e68f5abe120415d6759a8a67e380bac681bf876ccc8036981f",
+            "native-prompt-profile.json": "12c2bf757a0b010ca76a5d4e4d5f5ee1bab7b4423a255c23f67ff8c06912d6a5",
+            "native-prompt-application.json": "78c881bf712ec9284acb1e7001e662c2bf874682f1e884e4170588f8583f90c2",
+            "native-prompt-observations.json": "e0e1ba1751983e64844694e14de7062ad38fc960ebb542a490e64d20ebaac9d7"
+          },
+          "native_readback_verified": true
+        },
+        {
+          "id": "7fda95925dc0fb4bf3d462ec187f11733c2e4d5d559d40be",
+          "runtime_id": "native-codex",
+          "model_id": "openai/gpt-5.1-codex-mini",
+          "task_id": "requests-unicode-length",
+          "status": "succeeded",
+          "grade": "passed",
+          "usage": {
+            "requests": 8,
+            "input_tokens": 71078,
+            "output_tokens": 1001,
+            "cost_usd": 0.00546622
+          },
+          "wall_seconds": 45,
+          "manifest_sha256": "8d37b29724af9f3c6f11a9b938524843f60864a3698285cf3758794b910c1b7d",
+          "runtime_image": "sha256:e1e4ef84997e7c17acdb210ef55679b3d637fb590cdf469614fc6ab60459f2b0",
+          "grader_image": "sha256:b6bc5bf5a8a16225ffe35975f1ee30c6a5b86ceee5fae5a001e9221face4dded",
+          "task_content_sha256": "4a98a5b8095eab35a956c9972675ff53242d844854aac0a1af3ef6738f59dbef",
+          "arm_id": "edited",
+          "repeat": 2,
+          "profile_sha256": "12c2bf757a0b010ca76a5d4e4d5f5ee1bab7b4423a255c23f67ff8c06912d6a5",
+          "profile_overrides": 1,
+          "edited_literal_observed": true,
+          "grade_artifact_verified": true,
+          "artifact_sha256": {
+            "manifest.json": "2ce09199ced6aad62cef9484436f85b8bb6843ff1f5ba0e536c1f0226bd64813",
+            "grade.json": "878982568e5e39420f9fc8fca5caaade78f526a402b42f08357919732d5a1cd5",
+            "trace.jsonl": "190de99c08788c8f4133fe8222ab63e020c6ce6b0b0a989b8afa8e80853abd4e",
+            "patch.diff": "07914cde599045162da569b94503f04b0aa09317864fc57e42169799920b7019",
+            "native-prompt-profile.json": "12c2bf757a0b010ca76a5d4e4d5f5ee1bab7b4423a255c23f67ff8c06912d6a5",
+            "native-prompt-application.json": "78c881bf712ec9284acb1e7001e662c2bf874682f1e884e4170588f8583f90c2",
+            "native-prompt-observations.json": "dd35fa312c9c7eeba2b5e29959493e1cf661557356f1da70a74b74d2b534b067"
+          },
+          "native_readback_verified": true
+        },
+        {
+          "id": "786e48b909163b0e89b5de3766048cb8fdb47f297a42da16",
+          "runtime_id": "native-codex",
+          "model_id": "openai/gpt-5.1-codex-mini",
+          "task_id": "requests-unicode-length",
+          "status": "succeeded",
+          "grade": "passed",
+          "usage": {
+            "requests": 8,
+            "input_tokens": 70929,
+            "output_tokens": 1094,
+            "cost_usd": 0.00620633
+          },
+          "wall_seconds": 45,
+          "manifest_sha256": "1e84740724bd3a073d311ba8e57cd077dc69aed100228189014c9f342d6b1ac8",
+          "runtime_image": "sha256:e1e4ef84997e7c17acdb210ef55679b3d637fb590cdf469614fc6ab60459f2b0",
+          "grader_image": "sha256:b6bc5bf5a8a16225ffe35975f1ee30c6a5b86ceee5fae5a001e9221face4dded",
+          "task_content_sha256": "4a98a5b8095eab35a956c9972675ff53242d844854aac0a1af3ef6738f59dbef",
+          "arm_id": "control",
+          "repeat": 2,
+          "profile_sha256": "544c3097e1b13796a22b3b1fa17a4682c0649c1c07c603f938dc2006ca8708f3",
+          "profile_overrides": 0,
+          "baseline_literal_observed": true,
+          "grade_artifact_verified": true,
+          "artifact_sha256": {
+            "manifest.json": "2a128e4b23830e42f2debc3627bfc7a59262e00fdbe04e06b2f57cd54b2fc2dc",
+            "grade.json": "878982568e5e39420f9fc8fca5caaade78f526a402b42f08357919732d5a1cd5",
+            "trace.jsonl": "d52bed0526b407c1a4479c944c5ecc0196c6dc2b4520d4e4158923c066487354",
+            "patch.diff": "07914cde599045162da569b94503f04b0aa09317864fc57e42169799920b7019",
+            "native-prompt-profile.json": "544c3097e1b13796a22b3b1fa17a4682c0649c1c07c603f938dc2006ca8708f3",
+            "native-prompt-application.json": "a418214a96cacb948c63b827a24389dd1324024836fd454b5c1a2b4da9a7aca4",
+            "native-prompt-observations.json": "cc256bced46e31e70029beab73491bc63d6cdad2af725fdff1cec0d6a8cc499b"
+          },
+          "native_readback_verified": true
+        }
+      ],
+      "preregistered_source_sha256": "d5ab6f7adfa6255cd95bba7eea1356f8f90d861cc0b7757ca95580809d564ad1",
+      "frozen_plan_sha256": "08d120463b9599d77564f8dd6e497c82aff35cebeb7b542f5ca5945860055f7b"
+    }
+  },
+  "known_cost_usd": 0.05610148,
+  "unknown_cost_trials": 0,
+  "live_jobs": 13,
+  "task_grades": {
+    "failed": 1,
+    "passed": 12
+  },
+  "execution_states": {
+    "failed": 1,
+    "succeeded": 12
+  },
+  "deployment": {
+    "platform": "Fly.io",
+    "release": "v16",
+    "exit_code": 0,
+    "at": "2026-11-11T16:44:55.360917+00:00",
+    "image": "registry.fly.io/traceharness-runner@sha256:b336f41a0d10dfab76989443ed67ec11a203df103f5d284a6ba1e552e6ab8c89",
+    "parent": "registry.fly.io/traceharness-runner@sha256:9efe316875a3711b7892bf33ba74381b8f7194d3c457e8faa2abb71f18781388",
+    "source_sha256": {
+      "jobs.py": "60dc178a94103798842c0b246b07395a18ced683ed555d4fde620610fb0b2dcf",
+      "execution.py": "2b32f2f7fc166b6e0596acfd0fdbbc9eaa063a2fbfdd5d90e548a70f17f55280",
+      "experiments.py": "c61c9a2f5bd1acf5338cb8f76a5fd236eac66cc3b8a454ae21c80dc5e6c8478b"
+    },
+    "deployed_sha256": {
+      "jobs.py": "60dc178a94103798842c0b246b07395a18ced683ed555d4fde620610fb0b2dcf",
+      "execution.py": "84265002c794295465c0627cdf93b067ed5e6426a1d3fa845116c52e3a5e0e7d",
+      "experiments.py": "c61c9a2f5bd1acf5338cb8f76a5fd236eac66cc3b8a454ae21c80dc5e6c8478b"
+    },
+    "compatibility_transforms": [
+      {
+        "file": "execution.py",
+        "reason": "Pinned live runtime images still use the pre-rename harnesslab package; task/runtime/grader images and receipts remain unchanged.",
+        "from": "traceharness.runner_service.container_entrypoint",
+        "to": "harnesslab.runner_service.container_entrypoint",
+        "count": 1
+      }
+    ],
+    "build_exit_code": 0,
+    "push_exit_code": 0,
+    "runtime_images_changed": false,
+    "registry_changed": false,
+    "last_10_log_lines": [
+      "> Updating 8e64d7b7d01e68 [app]",
+      "> Updated machine config for 8e64d7b7d01e68",
+      "✔ Machine 8e64d7b7d01e68 is now in a good state",
+      "> Clearing lease for 8e64d7b7d01e68",
+      "✔ Cleared lease for 8e64d7b7d01e68",
+      "Checking DNS configuration for traceharness-runner.fly.dev",
+      "✓ DNS configuration verified",
+      "",
+      "Visit your newly deployed app at https://traceharness-runner.fly.dev/",
+      ""
+    ],
+    "release_status": "complete",
+    "health": "1/1 machine started; 1/1 checks passing"
+  },
+  "automated_checks": {
+    "runner_tests_passed": 312,
+    "runner_skipped": 9,
+    "runner_subtests_passed": 554,
+    "worker_tests_passed": 193,
+    "gateway_actual_runner_fixture_executions": 2,
+    "gateway_fixture_provider_calls": 0
+  },
+  "anonymous_gate_checks": 37,
+  "remaining_limits": [
+    "Small cohorts are descriptive; no general model-performance or statistical-significance claim.",
+    "Expanded engine limits versus the historical sample confound before/after performance attribution.",
+    "Historical job records and their unknown charge are unchanged.",
+    "Fresh member-JWT PostgreSQL save/reload was not repeated.",
+    "Maximum-size 64-trial paid matrices, multi-model paid matrices and second-member live isolation remain unverified.",
+    "Exhaustive live crash, cancellation, cleanup and ambiguous-provider-failure permutations remain unverified; related regression tests passed.",
+    "All tasks, runtimes, conditional native fragments and model combinations were not exercised."
+  ],
+  "live_member_ui": {
+    "complete": true,
+    "at": "2026-11-11T16:53:00.939486+00:00",
+    "real_member_session": true,
+    "production_document": true,
+    "checks": [
+      "Signed-in hostile Origin rejected with 403 and no ACAO",
+      "engine durable queue, separate execution/grade, complete reported costs, full pinned JSON, exported results and SHA-verified grade/manifest downloads",
+      "Published results fit 320, 390, 768 and 1440 pixel viewports",
+      "native-codex durable queue, separate execution/grade, complete reported costs, full pinned JSON, exported results and SHA-verified grade/manifest downloads",
+      "Zero-request failure paints exact zero tokens and $0, separate trusted failed grade",
+      "Fresh reload restores saved results without a provider credential"
+    ],
+    "new_jobs": 0,
+    "page_errors": [],
+    "blocked_requests": []
+  },
+  "queue_paint": {
+    "complete": true,
+    "rows": 9,
+    "scroll": {
+      "top": 0,
+      "left": 0,
+      "scrollHeight": 772,
+      "height": 518
+    },
+    "top_and_bottom_visually_reviewed": true,
+    "note": "The initial offscreen element screenshot was clipped; an independent viewport-centered proof showed all eight rows correctly while scrolling."
+  },
+  "final_runner_audit": {
+    "total_retained_jobs": 51,
+    "active_jobs": 0,
+    "needs_attention_jobs": 0,
+    "active_experiments": 0,
+    "containers": 0,
+    "residual_mounts": 0,
+    "registry_sha256": "2d90f0f7a9710890c2aedad0e972ac6d1f1a52ecebec4848d195793370496d10",
+    "at": "2026-11-11T16:53:02.186800+00:00",
+    "complete": true
+  },
+  "anonymous_checks": [
+    {
+      "path": "/app",
+      "hostile_origin": false,
+      "status": 302,
+      "location": "/login",
+      "acao": false,
+      "pass": true
+    },
+    {
+      "path": "/app/shallow",
+      "hostile_origin": false,
+      "status": 302,
+      "location": "/login",
+      "acao": false,
+      "pass": true
+    },
+    {
+      "path": "/link",
+      "hostile_origin": false,
+      "status": 302,
+      "location": "/login",
+      "acao": false,
+      "pass": true
+    },
+    {
+      "path": "/api/shallow/harnesses",
+      "hostile_origin": false,
+      "status": 401,
+      "location": null,
+      "acao": false,
+      "pass": true
+    },
+    {
+      "path": "/api/shallow/harnesses",
+      "hostile_origin": true,
+      "status": 401,
+      "location": null,
+      "acao": false,
+      "pass": true
+    },
+    {
+      "path": "/api/shallow/jobs",
+      "hostile_origin": false,
+      "status": 401,
+      "location": null,
+      "acao": false,
+      "pass": true
+    },
+    {
+      "path": "/api/shallow/jobs",
+      "hostile_origin": true,
+      "status": 401,
+      "location": null,
+      "acao": false,
+      "pass": true
+    },
+    {
+      "path": "/api/runner/catalog",
+      "hostile_origin": false,
+      "status": 401,
+      "location": null,
+      "acao": false,
+      "pass": true
+    },
+    {
+      "path": "/api/runner/catalog",
+      "hostile_origin": true,
+      "status": 401,
+      "location": null,
+      "acao": false,
+      "pass": true
+    },
+    {
+      "path": "/api/runner/jobs",
+      "hostile_origin": false,
+      "status": 401,
+      "location": null,
+      "acao": false,
+      "pass": true
+    },
+    {
+      "path": "/api/runner/jobs",
+      "hostile_origin": true,
+      "status": 401,
+      "location": null,
+      "acao": false,
+      "pass": true
+    },
+    {
+      "path": "/api/runner/prompt-inventory/native-claude-code",
+      "hostile_origin": false,
+      "status": 401,
+      "location": null,
+      "acao": false,
+      "pass": true
+    },
+    {
+      "path": "/api/runner/prompt-inventory/native-claude-code",
+      "hostile_origin": true,
+      "status": 401,
+      "location": null,
+      "acao": false,
+      "pass": true
+    },
+    {
+      "path": "/api/runner/prompt-inventory/native-codex",
+      "hostile_origin": false,
+      "status": 401,
+      "location": null,
+      "acao": false,
+      "pass": true
+    },
+    {
+      "path": "/api/runner/prompt-inventory/native-codex",
+      "hostile_origin": true,
+      "status": 401,
+      "location": null,
+      "acao": false,
+      "pass": true
+    },
+    {
+      "path": "/api/runner/experiments",
+      "hostile_origin": false,
+      "status": 401,
+      "location": null,
+      "acao": false,
+      "pass": true
+    },
+    {
+      "path": "/api/runner/experiments",
+      "hostile_origin": true,
+      "status": 401,
+      "location": null,
+      "acao": false,
+      "pass": true
+    },
+    {
+      "path": "/api/runner/experiments/preflight",
+      "hostile_origin": false,
+      "status": 401,
+      "location": null,
+      "acao": false,
+      "pass": true
+    },
+    {
+      "path": "/api/runner/experiments/preflight",
+      "hostile_origin": true,
+      "status": 401,
+      "location": null,
+      "acao": false,
+      "pass": true
+    },
+    {
+      "path": "/api/runner/experiments/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "hostile_origin": false,
+      "status": 401,
+      "location": null,
+      "acao": false,
+      "pass": true
+    },
+    {
+      "path": "/api/runner/experiments/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "hostile_origin": true,
+      "status": 401,
+      "location": null,
+      "acao": false,
+      "pass": true
+    },
+    {
+      "path": "/api/runner/experiments/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/start",
+      "hostile_origin": false,
+      "status": 401,
+      "location": null,
+      "acao": false,
+      "pass": true
+    },
+    {
+      "path": "/api/runner/experiments/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/start",
+      "hostile_origin": true,
+      "status": 401,
+      "location": null,
+      "acao": false,
+      "pass": true
+    },
+    {
+      "path": "/api/runner/experiments/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/cancel",
+      "hostile_origin": false,
+      "status": 401,
+      "location": null,
+      "acao": false,
+      "pass": true
+    },
+    {
+      "path": "/api/runner/experiments/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/cancel",
+      "hostile_origin": true,
+      "status": 401,
+      "location": null,
+      "acao": false,
+      "pass": true
+    },
+    {
+      "method": "POST",
+      "path": "/api/runner/experiments",
+      "hostile_origin": false,
+      "status": 401,
+      "acao": false,
+      "pass": true
+    },
+    {
+      "method": "POST",
+      "path": "/api/runner/experiments",
+      "hostile_origin": true,
+      "status": 401,
+      "acao": false,
+      "pass": true
+    },
+    {
+      "method": "POST",
+      "path": "/api/runner/experiments/preflight",
+      "hostile_origin": false,
+      "status": 401,
+      "acao": false,
+      "pass": true
+    },
+    {
+      "method": "POST",
+      "path": "/api/runner/experiments/preflight",
+      "hostile_origin": true,
+      "status": 401,
+      "acao": false,
+      "pass": true
+    },
+    {
+      "method": "POST",
+      "path": "/api/runner/experiments/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/start",
+      "hostile_origin": false,
+      "status": 401,
+      "acao": false,
+      "pass": true
+    },
+    {
+      "method": "POST",
+      "path": "/api/runner/experiments/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/start",
+      "hostile_origin": true,
+      "status": 401,
+      "acao": false,
+      "pass": true
+    },
+    {
+      "method": "POST",
+      "path": "/api/runner/experiments/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/cancel",
+      "hostile_origin": false,
+      "status": 401,
+      "acao": false,
+      "pass": true
+    },
+    {
+      "method": "POST",
+      "path": "/api/runner/experiments/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/cancel",
+      "hostile_origin": true,
+      "status": 401,
+      "acao": false,
+      "pass": true
+    },
+    {
+      "method": "POST",
+      "path": "/api/runner/credentials",
+      "hostile_origin": false,
+      "status": 401,
+      "acao": false,
+      "pass": true
+    },
+    {
+      "method": "POST",
+      "path": "/api/runner/credentials",
+      "hostile_origin": true,
+      "status": 401,
+      "acao": false,
+      "pass": true
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/runner/credentials/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "hostile_origin": false,
+      "status": 401,
+      "acao": false,
+      "pass": true
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/runner/credentials/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "hostile_origin": true,
+      "status": 401,
+      "acao": false,
+      "pass": true
+    }
+  ],
+  "historical_patch_replay": {
+    "complete": true,
+    "model_calls": 0,
+    "historical_jobs_modified": false,
+    "rows": [
+      {
+        "original_job_id": "3c1d5ae910f109ae6ce6a24f33710114f07570a3348892a5",
+        "original_execution": "failed",
+        "original_grade": "ungraded",
+        "task_id": "requests-leading-slashes",
+        "task_content_sha256": "aae3b7b73c84044395ab0fa1edfe357abde29998adc5025e436c607a72115c22",
+        "grader_image_digest": "sha256:b6bc5bf5a8a16225ffe35975f1ee30c6a5b86ceee5fae5a001e9221face4dded",
+        "patch_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "replayed_grade": "failed",
+        "grade_sha256": "092f9ffd956be877b5edc166644ae7bad31f6b937733f1f77f3044930a07bb1b",
+        "model_calls": 0
+      },
+      {
+        "original_job_id": "516e1d4967b1b8525641213ca4bea2e68928b2b4d292e8ed",
+        "original_execution": "failed",
+        "original_grade": "ungraded",
+        "task_id": "requests-unicode-length",
+        "task_content_sha256": "4a98a5b8095eab35a956c9972675ff53242d844854aac0a1af3ef6738f59dbef",
+        "grader_image_digest": "sha256:b6bc5bf5a8a16225ffe35975f1ee30c6a5b86ceee5fae5a001e9221face4dded",
+        "patch_sha256": "2df959ac16757bc308830b4dcac8c72ddc364f2408ea7af282e804c4c486e6cb",
+        "replayed_grade": "passed",
+        "grade_sha256": "b973b1e2430f6c2872c0eb8053892b477c8533e7e541218cbd4194ce69b313da",
+        "model_calls": 0
+      },
+      {
+        "original_job_id": "64b9d81f91638f6ab03a5e9c996ebb391ef8efd5c87d5db6",
+        "original_execution": "failed",
+        "original_grade": "ungraded",
+        "task_id": "requests-leading-slashes",
+        "task_content_sha256": "aae3b7b73c84044395ab0fa1edfe357abde29998adc5025e436c607a72115c22",
+        "grader_image_digest": "sha256:b6bc5bf5a8a16225ffe35975f1ee30c6a5b86ceee5fae5a001e9221face4dded",
+        "patch_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "replayed_grade": "failed",
+        "grade_sha256": "092f9ffd956be877b5edc166644ae7bad31f6b937733f1f77f3044930a07bb1b",
+        "model_calls": 0
+      },
+      {
+        "original_job_id": "72bf3a02d8d36fe01d1795733cc99236cd621bdf76675a4a",
+        "original_execution": "succeeded",
+        "original_grade": "passed",
+        "task_id": "requests-unicode-length",
+        "task_content_sha256": "4a98a5b8095eab35a956c9972675ff53242d844854aac0a1af3ef6738f59dbef",
+        "grader_image_digest": "sha256:b6bc5bf5a8a16225ffe35975f1ee30c6a5b86ceee5fae5a001e9221face4dded",
+        "patch_sha256": "2df959ac16757bc308830b4dcac8c72ddc364f2408ea7af282e804c4c486e6cb",
+        "replayed_grade": "passed",
+        "grade_sha256": "b973b1e2430f6c2872c0eb8053892b477c8533e7e541218cbd4194ce69b313da",
+        "model_calls": 0
+      }
+    ]
+  }
+}

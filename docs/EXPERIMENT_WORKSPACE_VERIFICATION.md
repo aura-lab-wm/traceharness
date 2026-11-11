@@ -1,5 +1,7 @@
 # Experiment workspace verification — 2026-11-11
 
+Later runner fixes and new execution cohorts are reported in [Execution verification](EXECUTION_PERFORMANCE.md). The outcomes below are the earlier immutable sample.
+
 ## Evidence boundaries
 
 A real member session and the production registry/runner were used headlessly. Candidate browser checks replaced only `/app` HTML with the exact build listed below; API responses, registered repository tasks, compiler manifests and job execution came from production. Tests and fixtures are distinguished from these checks. No performance improvement is claimed.

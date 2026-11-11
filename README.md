@@ -26,6 +26,8 @@ the grader, not the model, is broken (see `docs/STUDENT_GUIDE.md`, section 13).
 
 **Signed-in hosted workspace:** [edit full harness JSON, fork recorded runs and schedule harness × model × task sweeps](docs/EXPERIMENT_WORKSPACE.md). General matrices coexist with matched native prompt experiments; execution requires a compatible registered task and your OpenRouter key.
 
+**Execution verification:** [live results, accounting/partial-grading fixes and manual review checklist](docs/EXECUTION_PERFORMANCE.md).
+
 ## Run the dashboard
 
 Python 3.10 or newer is required (3.12 recommended). On macOS the built-in `python3` is 3.9 and
