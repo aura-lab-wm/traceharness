@@ -643,5 +643,16 @@ class TestPush(Env):
             self.assertEqual(main(["whoami"]), 0)
 
 
+
+class TestRunIdShape(unittest.TestCase):
+    """The CLI must refuse the run ids the worker and the database refuse."""
+
+    def test_dot_ids_refused_and_normal_ids_kept(self):
+        from traceharness.capture.push import RUN_ID_RE
+        for bad in (".", "..", "", "a/b", "x" * 121):
+            self.assertIsNone(RUN_ID_RE.match(bad), bad)
+        for good in ("imp-claude-code-a18239eaf80e", "...", ".hidden", "a.b@c_d-1"):
+            self.assertIsNotNone(RUN_ID_RE.match(good), good)
+
 if __name__ == "__main__":
     unittest.main()

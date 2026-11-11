@@ -28,7 +28,8 @@ from .redact import redact
 
 SOURCES = ("claude_code", "codex", "gemini_cli", "qwen_code", "cursor")
 MAX_BODY = 4 * 1024 * 1024
-RUN_ID_RE = re.compile(r"^[A-Za-z0-9_.@-]{1,120}$")
+# Same shape the worker and captured_runs_run_id_shape accept: "." and ".." are refused there too.
+RUN_ID_RE = re.compile(r"^(?!\.{1,2}$)[A-Za-z0-9_.@-]{1,120}$")
 GAP_S = 30 * 60.0
 RETRY_WAIT_S = 2.0
 
