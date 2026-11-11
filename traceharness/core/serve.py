@@ -209,7 +209,8 @@ class Handler(BaseHTTPRequestHandler):
 def export_static(results_dirs: list[str], out_path: str, preview_chars: int = 900) -> str:
     bundle = build_bundle(results_dirs, preview_chars=preview_chars)
     bundle["static"] = True
-    html = open(os.path.join(WEB_DIR, "index.html"), encoding="utf-8").read()
+    with open(os.path.join(WEB_DIR, "index.html"), encoding="utf-8") as stream:
+        html = stream.read()
     payload = json.dumps(bundle).replace("</", "<\\/")
     marker = "/*__BUNDLE__*/"
     assert marker in html, "index.html is missing the bundle marker"

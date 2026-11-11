@@ -1,0 +1,1507 @@
+{
+  "at": "2026-11-11T21:59:39.716877+00:00",
+  "member_url": "https://traceharness.dev/app#/rig/harnesses",
+  "source_commit": "81eb9e5c9188898d941986d414abed082681960e",
+  "changes": [
+    "Read case files and narrator keys only from browser storage; host Node storage is never used.",
+    "Resolve 22 lint warnings and make future warnings fail npm run lint.",
+    "Remove an unused trajectory component; keep current trajectory views intact.",
+    "Verify downloads in the DOM test without asking jsdom to navigate.",
+    "Rebuild and publish the exact member snapshot while retaining recorded data and all narration."
+  ],
+  "automated": {
+    "frontend": {
+      "files_passed": 65,
+      "tests_passed": 1090,
+      "warnings_or_errors_in_test_log": false
+    },
+    "worker": {
+      "passed": 198,
+      "skipped": 0
+    },
+    "runner": {
+      "ran": 311,
+      "passed": 302,
+      "skipped": 9,
+      "substitutes_for_live_execution": false
+    },
+    "dist": {
+      "passed": 2
+    },
+    "lint": {
+      "exit_code": 0,
+      "warnings": 0,
+      "deny_warnings": true
+    },
+    "storage_regressions": {
+      "failed_before": 2,
+      "passed_after": 2
+    }
+  },
+  "live": {
+    "native_editor": {
+      "complete": true,
+      "at": "2026-11-11T21:58:15.107548+00:00",
+      "baseline": false,
+      "candidate": false,
+      "checks": [
+        "Replacement edits remain a valid excluded draft; explicit opt-in alone adds the exact hashed profile to configuration; Run stays gated",
+        "One-row bulk Disable and individual Include work while excluded and preserve replacement text",
+        "320/390/768/1440/1920 layouts fit; mobile list/inspector navigation works",
+        "Excluded profile, remembered replacement and named prompt set survive tab reload"
+      ],
+      "published_html_sha256": "43229536af3b2c13e02d133e62fb98c930229843bd2efe4fdb55dccc0ec55be6",
+      "inventory_sha256": "9592e2f237bfed2ea7702f0a88499d342631d4893ca276186abf8b173361b4b7",
+      "block_id": "codex-prompts-templates-permissions-approval_policy-on_request_rule_request_permission:98e8a78ac869d64f",
+      "new_jobs": 0,
+      "page_errors": [],
+      "blocked_requests": []
+    },
+    "readiness": {
+      "complete": true,
+      "at": "2026-11-11T21:58:35.443845+00:00",
+      "candidate": false,
+      "ui_configurations": [
+        {
+          "harness": "Claude Code stand-in",
+          "runtime_id": "traceharness",
+          "model_id": "openai/gpt-4.1-mini",
+          "task_id": "requests-unicode-length",
+          "version": 1,
+          "ready": true,
+          "configuration_sha256": "dca0f1aa2cda4d1acde43e5517422f6fcf371111341b971b37b1d9282e7c8c9f"
+        },
+        {
+          "harness": "Codex stand-in",
+          "runtime_id": "traceharness",
+          "model_id": "openai/gpt-4.1-mini",
+          "task_id": "requests-unicode-length",
+          "version": 1,
+          "ready": true,
+          "configuration_sha256": "879760451d1b2ebc7fc31647c65f0118f2083ffe0a07b7a3df8ca1f51ddaf361"
+        },
+        {
+          "harness": "Qwen stand-in",
+          "runtime_id": "traceharness",
+          "model_id": "openai/gpt-4.1-mini",
+          "task_id": "requests-unicode-length",
+          "version": 1,
+          "ready": true,
+          "configuration_sha256": "42c1e5a41a698711e6bb0e53a4ebe89dd08dbb62b13aff982afe0b93968f46c7"
+        },
+        {
+          "harness": "Kimi stand-in",
+          "runtime_id": "traceharness",
+          "model_id": "openai/gpt-4.1-mini",
+          "task_id": "requests-unicode-length",
+          "version": 1,
+          "ready": true,
+          "configuration_sha256": "090214783dbd9aad667f605e7a7e4e9e04b63bacfad41c1cd07c713bba10e7d1"
+        },
+        {
+          "harness": "Antigravity stand-in",
+          "runtime_id": "traceharness",
+          "model_id": "openai/gpt-4.1-mini",
+          "task_id": "requests-unicode-length",
+          "version": 1,
+          "ready": true,
+          "configuration_sha256": "df7db7a0b87bdec26f1eedcdec788837f9d1038a6f3649d4a1d73dbe6fda39d0"
+        },
+        {
+          "harness": "Grok stand-in",
+          "runtime_id": "traceharness",
+          "model_id": "openai/gpt-4.1-mini",
+          "task_id": "requests-unicode-length",
+          "version": 1,
+          "ready": true,
+          "configuration_sha256": "49a03c59779e766a5ac9f7235945b0a089f2113e49f81e31ceaa57e051257351"
+        },
+        {
+          "harness": "Custom TraceHarness harness",
+          "runtime_id": "traceharness",
+          "model_id": "openai/gpt-4.1-mini",
+          "task_id": "requests-unicode-length",
+          "version": 1,
+          "ready": true,
+          "configuration_sha256": "e923d1f8a4cc8aa4ec97c06c552d7172b92ad2483a16392dc53fa44876666200"
+        },
+        {
+          "harness": "Claude Code",
+          "runtime_id": "native-claude-code",
+          "model_id": "anthropic/claude-haiku-4.5",
+          "task_id": "requests-unicode-length",
+          "version": 2,
+          "ready": true,
+          "configuration_sha256": "44251ca5c3d031b8ad6423043598cd60126a65a9763040040667b3b99a5c80dd"
+        },
+        {
+          "harness": "Codex CLI",
+          "runtime_id": "native-codex",
+          "model_id": "openai/gpt-5.1-codex-mini",
+          "task_id": "requests-unicode-length",
+          "version": 2,
+          "ready": true,
+          "configuration_sha256": "0593686b52a3718a0a16d3394861382768521320a59c6fb3e16182b65ced05c0"
+        }
+      ],
+      "server_reviews": [
+        {
+          "harness": "Claude Code stand-in",
+          "runtime_id": "traceharness",
+          "model_id": "openai/gpt-4.1-mini",
+          "task_id": "requests-jsondecode-pickle",
+          "expected_supported": true,
+          "server_accepted": true,
+          "manifest_sha256": "08ef2db3883a95c80bf6c21012111dfe9b6396650d8eaacf5bb1227e57541809",
+          "issues": [],
+          "passed": true
+        },
+        {
+          "harness": "Claude Code stand-in",
+          "runtime_id": "traceharness",
+          "model_id": "openai/gpt-4.1-mini",
+          "task_id": "requests-unicode-length",
+          "expected_supported": true,
+          "server_accepted": true,
+          "manifest_sha256": "a5cf74a8f736f539a377a2c2286526c5f984bebe02b18bcad6ba9fea875b28a6",
+          "issues": [],
+          "passed": true
+        },
+        {
+          "harness": "Claude Code stand-in",
+          "runtime_id": "traceharness",
+          "model_id": "openai/gpt-4.1-mini",
+          "task_id": "requests-leading-slashes",
+          "expected_supported": true,
+          "server_accepted": true,
+          "manifest_sha256": "a7baba74eb3e80158fbe1155d3a506bcef363cb8f454473c4b73ba95dbca220b",
+          "issues": [],
+          "passed": true
+        },
+        {
+          "harness": "Claude Code stand-in",
+          "runtime_id": "traceharness",
+          "model_id": "openai/gpt-4.1-mini",
+          "task_id": "requests-empty-netrc",
+          "expected_supported": true,
+          "server_accepted": true,
+          "manifest_sha256": "18950ff7a229fa7840eb8f5b976c2f0bbe6e53d9e8f774d5f240a1521b66c015",
+          "issues": [],
+          "passed": true
+        },
+        {
+          "harness": "Claude Code stand-in",
+          "runtime_id": "traceharness",
+          "model_id": "openai/gpt-4.1-mini",
+          "task_id": "requests-invalid-charset",
+          "expected_supported": true,
+          "server_accepted": true,
+          "manifest_sha256": "c60d1fee250a5d38c7f8414ec095fc737e87937cd9b1ec354d848ab672cc207b",
+          "issues": [],
+          "passed": true
+        },
+        {
+          "harness": "Claude Code stand-in",
+          "runtime_id": "traceharness",
+          "model_id": "openai/gpt-4.1-mini",
+          "task_id": "urllib3-partial-gzip-read",
+          "expected_supported": true,
+          "server_accepted": true,
+          "manifest_sha256": "bc710305e463b2d0acf7d86f7176b97abacf36c55b61b6c654039fa0411b823c",
+          "issues": [],
+          "passed": true
+        },
+        {
+          "harness": "Claude Code stand-in",
+          "runtime_id": "traceharness",
+          "model_id": "openai/gpt-4.1-mini",
+          "task_id": "urllib3-unseekable-rewind",
+          "expected_supported": true,
+          "server_accepted": true,
+          "manifest_sha256": "eb38af980eb1ba67efaf506f00fba32d56ddfcf03ca145b4056367346df5f424",
+          "issues": [],
+          "passed": true
+        },
+        {
+          "harness": "Claude Code stand-in",
+          "runtime_id": "traceharness",
+          "model_id": "openai/gpt-4.1-mini",
+          "task_id": "urllib3-invalid-fingerprint",
+          "expected_supported": true,
+          "server_accepted": true,
+          "manifest_sha256": "84b7351e005ff84d6b7b45c4ada4f7579b72bc48eb1fa4beee6f287ec1f3898e",
+          "issues": [],
+          "passed": true
+        },
+        {
+          "harness": "Codex stand-in",
+          "runtime_id": "traceharness",
+          "model_id": "openai/gpt-4.1-mini",
+          "task_id": "requests-jsondecode-pickle",
+          "expected_supported": true,
+          "server_accepted": true,
+          "manifest_sha256": "ca2167dbba157b6016620d5c43e129d6782a7c536ea9c109d3110edc77f4d9ea",
+          "issues": [],
+          "passed": true
+        },
+        {
+          "harness": "Codex stand-in",
+          "runtime_id": "traceharness",
+          "model_id": "openai/gpt-4.1-mini",
+          "task_id": "requests-unicode-length",
+          "expected_supported": true,
+          "server_accepted": true,
+          "manifest_sha256": "e161e584b800dc5f6f149fa055852a6d86890f338cb26e70cb9ed6bc850365a4",
+          "issues": [],
+          "passed": true
+        },
+        {
+          "harness": "Codex stand-in",
+          "runtime_id": "traceharness",
+          "model_id": "openai/gpt-4.1-mini",
+          "task_id": "requests-leading-slashes",
+          "expected_supported": true,
+          "server_accepted": true,
+          "manifest_sha256": "466e028cfac029f20f8cffb430ab3238722c672426ab8ee78a8df6d0bb06be7d",
+          "issues": [],
+          "passed": true
+        },
+        {
+          "harness": "Codex stand-in",
+          "runtime_id": "traceharness",
+          "model_id": "openai/gpt-4.1-mini",
+          "task_id": "requests-empty-netrc",
+          "expected_supported": true,
+          "server_accepted": true,
+          "manifest_sha256": "becfeda958583a0aa1d81e37898a84808e46c0cd26144efcdb9bbf578541a62b",
+          "issues": [],
+          "passed": true
+        },
+        {
+          "harness": "Codex stand-in",
+          "runtime_id": "traceharness",
+          "model_id": "openai/gpt-4.1-mini",
+          "task_id": "requests-invalid-charset",
+          "expected_supported": true,
+          "server_accepted": true,
+          "manifest_sha256": "f6feecd7cc3463376f1eca00efa77b7fc12083b223b17e2a124a76410baecd85",
+          "issues": [],
+          "passed": true
+        },
+        {
+          "harness": "Codex stand-in",
+          "runtime_id": "traceharness",
+          "model_id": "openai/gpt-4.1-mini",
+          "task_id": "urllib3-partial-gzip-read",
+          "expected_supported": true,
+          "server_accepted": true,
+          "manifest_sha256": "1fbbc8ca3f7bdc5ae0e267a10b2a07db94c6eec4016cbd5cd1b09ffc30fb1ca8",
+          "issues": [],
+          "passed": true
+        },
+        {
+          "harness": "Codex stand-in",
+          "runtime_id": "traceharness",
+          "model_id": "openai/gpt-4.1-mini",
+          "task_id": "urllib3-unseekable-rewind",
+          "expected_supported": true,
+          "server_accepted": true,
+          "manifest_sha256": "a932f0da83e6994b030a1bdfff76d6d45889896bd853207acb3aa03251afaf77",
+          "issues": [],
+          "passed": true
+        },
+        {
+          "harness": "Codex stand-in",
+          "runtime_id": "traceharness",
+          "model_id": "openai/gpt-4.1-mini",
+          "task_id": "urllib3-invalid-fingerprint",
+          "expected_supported": true,
+          "server_accepted": true,
+          "manifest_sha256": "f1a13f1fe76bb548f652805cf714965b12adc6557ad028e80546a591917f5900",
+          "issues": [],
+          "passed": true
+        },
+        {
+          "harness": "Qwen stand-in",
+          "runtime_id": "traceharness",
+          "model_id": "openai/gpt-4.1-mini",
+          "task_id": "requests-jsondecode-pickle",
+          "expected_supported": true,
+          "server_accepted": true,
+          "manifest_sha256": "89b728789c1427de999d318d1aca7c47636fdc9dbd8ee37d60a122bd9f81a466",
+          "issues": [],
+          "passed": true
+        },
+        {
+          "harness": "Qwen stand-in",
+          "runtime_id": "traceharness",
+          "model_id": "openai/gpt-4.1-mini",
+          "task_id": "requests-unicode-length",
+          "expected_supported": true,
+          "server_accepted": true,
+          "manifest_sha256": "ffb20803de1444e5eb3bf9c850c3ef337ed3f859354fece5e245a4976b957d91",
+          "issues": [],
+          "passed": true
+        },
+        {
+          "harness": "Qwen stand-in",
+          "runtime_id": "traceharness",
+          "model_id": "openai/gpt-4.1-mini",
+          "task_id": "requests-leading-slashes",
+          "expected_supported": true,
+          "server_accepted": true,
+          "manifest_sha256": "cab01a42acc8821ddedfd811ce092a645c5eaf654dfd72307093718d91a0c86a",
+          "issues": [],
+          "passed": true
+        },
+        {
+          "harness": "Qwen stand-in",
+          "runtime_id": "traceharness",
+          "model_id": "openai/gpt-4.1-mini",
+          "task_id": "requests-empty-netrc",
+          "expected_supported": true,
+          "server_accepted": true,
+          "manifest_sha256": "676537c20ab60e3eef82b82f0ebfe2908edf987996dd0ccfcebe0abe3fa38685",
+          "issues": [],
+          "passed": true
+        },
+        {
+          "harness": "Qwen stand-in",
+          "runtime_id": "traceharness",
+          "model_id": "openai/gpt-4.1-mini",
+          "task_id": "requests-invalid-charset",
+          "expected_supported": true,
+          "server_accepted": true,
+          "manifest_sha256": "9ee67967cd2ea2089598b07520426e1c0231810a4648aa3ad331e241e4878935",
+          "issues": [],
+          "passed": true
+        },
+        {
+          "harness": "Qwen stand-in",
+          "runtime_id": "traceharness",
+          "model_id": "openai/gpt-4.1-mini",
+          "task_id": "urllib3-partial-gzip-read",
+          "expected_supported": true,
+          "server_accepted": true,
+          "manifest_sha256": "bf6fc8637086ea14f710c72664f8e42f1a370154ba51ae5c04bf0c25503c1aff",
+          "issues": [],
+          "passed": true
+        },
+        {
+          "harness": "Qwen stand-in",
+          "runtime_id": "traceharness",
+          "model_id": "openai/gpt-4.1-mini",
+          "task_id": "urllib3-unseekable-rewind",
+          "expected_supported": true,
+          "server_accepted": true,
+          "manifest_sha256": "5acaaae7fcd54c6f40e095d8f9ab85363d153f8fe1430bd2729afdfb0fbc0f48",
+          "issues": [],
+          "passed": true
+        },
+        {
+          "harness": "Qwen stand-in",
+          "runtime_id": "traceharness",
+          "model_id": "openai/gpt-4.1-mini",
+          "task_id": "urllib3-invalid-fingerprint",
+          "expected_supported": true,
+          "server_accepted": true,
+          "manifest_sha256": "dc61a1d59b6a51d5888b1b85756596cc52649219f369f54ef5da4d81edc3c6b5",
+          "issues": [],
+          "passed": true
+        },
+        {
+          "harness": "Kimi stand-in",
+          "runtime_id": "traceharness",
+          "model_id": "openai/gpt-4.1-mini",
+          "task_id": "requests-jsondecode-pickle",
+          "expected_supported": true,
+          "server_accepted": true,
+          "manifest_sha256": "16dcbdb0c1e550384ca41e7576e8d24416a44a118332beab296981c6341d875b",
+          "issues": [],
+          "passed": true
+        },
+        {
+          "harness": "Kimi stand-in",
+          "runtime_id": "traceharness",
+          "model_id": "openai/gpt-4.1-mini",
+          "task_id": "requests-unicode-length",
+          "expected_supported": true,
+          "server_accepted": true,
+          "manifest_sha256": "d9153f0391a89d8f3b3834cab5389981aeafe80329b265994c7c019ef18d60b5",
+          "issues": [],
+          "passed": true
+        },
+        {
+          "harness": "Kimi stand-in",
+          "runtime_id": "traceharness",
+          "model_id": "openai/gpt-4.1-mini",
+          "task_id": "requests-leading-slashes",
+          "expected_supported": true,
+          "server_accepted": true,
+          "manifest_sha256": "b99dd238e5fe4736803b43a6c83d685179a8e3ac586c1d0f6c8a3e8faf1381cb",
+          "issues": [],
+          "passed": true
+        },
+        {
+          "harness": "Kimi stand-in",
+          "runtime_id": "traceharness",
+          "model_id": "openai/gpt-4.1-mini",
+          "task_id": "requests-empty-netrc",
+          "expected_supported": true,
+          "server_accepted": true,
+          "manifest_sha256": "6d992c15ed896780be40d076e0e6256f375368e814e6f20c8a868a6e7c11bad5",
+          "issues": [],
+          "passed": true
+        },
+        {
+          "harness": "Kimi stand-in",
+          "runtime_id": "traceharness",
+          "model_id": "openai/gpt-4.1-mini",
+          "task_id": "requests-invalid-charset",
+          "expected_supported": true,
+          "server_accepted": true,
+          "manifest_sha256": "41a42d466709cd9f1f0fcfb37bbda1cb8b53189fc15e0c89de7484ef1e2f1e47",
+          "issues": [],
+          "passed": true
+        },
+        {
+          "harness": "Kimi stand-in",
+          "runtime_id": "traceharness",
+          "model_id": "openai/gpt-4.1-mini",
+          "task_id": "urllib3-partial-gzip-read",
+          "expected_supported": true,
+          "server_accepted": true,
+          "manifest_sha256": "5b872fd31e485e7a288d63c3db0835473ee212999a68b9753d2b9500ce463601",
+          "issues": [],
+          "passed": true
+        },
+        {
+          "harness": "Kimi stand-in",
+          "runtime_id": "traceharness",
+          "model_id": "openai/gpt-4.1-mini",
+          "task_id": "urllib3-unseekable-rewind",
+          "expected_supported": true,
+          "server_accepted": true,
+          "manifest_sha256": "fdac6ea5464eef4002b21bcc6e15682c17ebb0f292f2ab611455a921a55ee6a9",
+          "issues": [],
+          "passed": true
+        },
+        {
+          "harness": "Kimi stand-in",
+          "runtime_id": "traceharness",
+          "model_id": "openai/gpt-4.1-mini",
+          "task_id": "urllib3-invalid-fingerprint",
+          "expected_supported": true,
+          "server_accepted": true,
+          "manifest_sha256": "6de035e555365e912da9dcc8085fd763648afaebee7df42c9e9e5535b806552c",
+          "issues": [],
+          "passed": true
+        },
+        {
+          "harness": "Antigravity stand-in",
+          "runtime_id": "traceharness",
+          "model_id": "openai/gpt-4.1-mini",
+          "task_id": "requests-jsondecode-pickle",
+          "expected_supported": true,
+          "server_accepted": true,
+          "manifest_sha256": "14efcd479bca85964906371f38d96e26046647d93aa35b6733096a820fd4c8af",
+          "issues": [],
+          "passed": true
+        },
+        {
+          "harness": "Antigravity stand-in",
+          "runtime_id": "traceharness",
+          "model_id": "openai/gpt-4.1-mini",
+          "task_id": "requests-unicode-length",
+          "expected_supported": true,
+          "server_accepted": true,
+          "manifest_sha256": "fb4cf3acc96835a9ed44c4c28ec2ef2d62aac5c92016882dd00459717e4212c4",
+          "issues": [],
+          "passed": true
+        },
+        {
+          "harness": "Antigravity stand-in",
+          "runtime_id": "traceharness",
+          "model_id": "openai/gpt-4.1-mini",
+          "task_id": "requests-leading-slashes",
+          "expected_supported": true,
+          "server_accepted": true,
+          "manifest_sha256": "7943fbaf22fe3df7b30a36c576e479afd14e54335e8fb493285efdd7c45e21db",
+          "issues": [],
+          "passed": true
+        },
+        {
+          "harness": "Antigravity stand-in",
+          "runtime_id": "traceharness",
+          "model_id": "openai/gpt-4.1-mini",
+          "task_id": "requests-empty-netrc",
+          "expected_supported": true,
+          "server_accepted": true,
+          "manifest_sha256": "b0b18276d56c91eb19a814125a549653de016ba746c33abc5b6f3e81060bed88",
+          "issues": [],
+          "passed": true
+        },
+        {
+          "harness": "Antigravity stand-in",
+          "runtime_id": "traceharness",
+          "model_id": "openai/gpt-4.1-mini",
+          "task_id": "requests-invalid-charset",
+          "expected_supported": true,
+          "server_accepted": true,
+          "manifest_sha256": "0938e947d9137611e7b9ad188e6df81c2778d07ee60a997e4b0a60eaadb0c259",
+          "issues": [],
+          "passed": true
+        },
+        {
+          "harness": "Antigravity stand-in",
+          "runtime_id": "traceharness",
+          "model_id": "openai/gpt-4.1-mini",
+          "task_id": "urllib3-partial-gzip-read",
+          "expected_supported": true,
+          "server_accepted": true,
+          "manifest_sha256": "92fe3289de9f4b02d67bb272314e7d019c32fadec6c14f87ec22f4ffa4d89afd",
+          "issues": [],
+          "passed": true
+        },
+        {
+          "harness": "Antigravity stand-in",
+          "runtime_id": "traceharness",
+          "model_id": "openai/gpt-4.1-mini",
+          "task_id": "urllib3-unseekable-rewind",
+          "expected_supported": true,
+          "server_accepted": true,
+          "manifest_sha256": "42d1ec032d8a3bc59db3d726edd0aa51db0914030e4740adf710019cf01b5cd4",
+          "issues": [],
+          "passed": true
+        },
+        {
+          "harness": "Antigravity stand-in",
+          "runtime_id": "traceharness",
+          "model_id": "openai/gpt-4.1-mini",
+          "task_id": "urllib3-invalid-fingerprint",
+          "expected_supported": true,
+          "server_accepted": true,
+          "manifest_sha256": "3b46e7dd41f448163ee30698079abc9df001894f7de54b13e5336139ce4b7ca7",
+          "issues": [],
+          "passed": true
+        },
+        {
+          "harness": "Grok stand-in",
+          "runtime_id": "traceharness",
+          "model_id": "openai/gpt-4.1-mini",
+          "task_id": "requests-jsondecode-pickle",
+          "expected_supported": true,
+          "server_accepted": true,
+          "manifest_sha256": "63094469b0dc86b785270e4d6309861b1a67a9b9996339b4dcb336906318dc8a",
+          "issues": [],
+          "passed": true
+        },
+        {
+          "harness": "Grok stand-in",
+          "runtime_id": "traceharness",
+          "model_id": "openai/gpt-4.1-mini",
+          "task_id": "requests-unicode-length",
+          "expected_supported": true,
+          "server_accepted": true,
+          "manifest_sha256": "c0c2341a72e1b167ab1602b4f2f784e86cf5ebef67fd0f582709c5ffb17ec8c1",
+          "issues": [],
+          "passed": true
+        },
+        {
+          "harness": "Grok stand-in",
+          "runtime_id": "traceharness",
+          "model_id": "openai/gpt-4.1-mini",
+          "task_id": "requests-leading-slashes",
+          "expected_supported": true,
+          "server_accepted": true,
+          "manifest_sha256": "7b523a25242419bf79469ae1116da1bd49f0d9ec86cb8378965fde5e35a05c94",
+          "issues": [],
+          "passed": true
+        },
+        {
+          "harness": "Grok stand-in",
+          "runtime_id": "traceharness",
+          "model_id": "openai/gpt-4.1-mini",
+          "task_id": "requests-empty-netrc",
+          "expected_supported": true,
+          "server_accepted": true,
+          "manifest_sha256": "59e7acc98c38d0794b39547af675e403aac03830175a0e79c63c6ea28f57ef45",
+          "issues": [],
+          "passed": true
+        },
+        {
+          "harness": "Grok stand-in",
+          "runtime_id": "traceharness",
+          "model_id": "openai/gpt-4.1-mini",
+          "task_id": "requests-invalid-charset",
+          "expected_supported": true,
+          "server_accepted": true,
+          "manifest_sha256": "f3a5f76d6b4c3517191feb0a737a2f4d48583d6828be91f31a5539b4b59f5223",
+          "issues": [],
+          "passed": true
+        },
+        {
+          "harness": "Grok stand-in",
+          "runtime_id": "traceharness",
+          "model_id": "openai/gpt-4.1-mini",
+          "task_id": "urllib3-partial-gzip-read",
+          "expected_supported": true,
+          "server_accepted": true,
+          "manifest_sha256": "088e34c7dee040a2700a2760d84f9d3b316691f778302e31207b2c1bdf57f2ee",
+          "issues": [],
+          "passed": true
+        },
+        {
+          "harness": "Grok stand-in",
+          "runtime_id": "traceharness",
+          "model_id": "openai/gpt-4.1-mini",
+          "task_id": "urllib3-unseekable-rewind",
+          "expected_supported": true,
+          "server_accepted": true,
+          "manifest_sha256": "f0b0d993b4e9ca43f8726ced57d9d2cb1860bf303c853e04d65583851c9bb99a",
+          "issues": [],
+          "passed": true
+        },
+        {
+          "harness": "Grok stand-in",
+          "runtime_id": "traceharness",
+          "model_id": "openai/gpt-4.1-mini",
+          "task_id": "urllib3-invalid-fingerprint",
+          "expected_supported": true,
+          "server_accepted": true,
+          "manifest_sha256": "2f9f8aca8e94e00eb7ac3a3ae0cef232427ec581a5e87d3c86921e0f16a9a626",
+          "issues": [],
+          "passed": true
+        },
+        {
+          "harness": "Custom TraceHarness harness",
+          "runtime_id": "traceharness",
+          "model_id": "openai/gpt-4.1-mini",
+          "task_id": "requests-jsondecode-pickle",
+          "expected_supported": true,
+          "server_accepted": true,
+          "manifest_sha256": "c46f4b59145c6580a0845bbe5e49db518da270e585c531e1cd66fc6d825959e4",
+          "issues": [],
+          "passed": true
+        },
+        {
+          "harness": "Custom TraceHarness harness",
+          "runtime_id": "traceharness",
+          "model_id": "openai/gpt-4.1-mini",
+          "task_id": "requests-unicode-length",
+          "expected_supported": true,
+          "server_accepted": true,
+          "manifest_sha256": "9c8d53b0759ac9ccbf9ae87a44ce7089e95689340d815c62c4d27f1eb51f4ed3",
+          "issues": [],
+          "passed": true
+        },
+        {
+          "harness": "Custom TraceHarness harness",
+          "runtime_id": "traceharness",
+          "model_id": "openai/gpt-4.1-mini",
+          "task_id": "requests-leading-slashes",
+          "expected_supported": true,
+          "server_accepted": true,
+          "manifest_sha256": "eb93ca5ad2580d69839dc9b689caf4814119f775c94c39c1a1ec7a8a8bf03441",
+          "issues": [],
+          "passed": true
+        },
+        {
+          "harness": "Custom TraceHarness harness",
+          "runtime_id": "traceharness",
+          "model_id": "openai/gpt-4.1-mini",
+          "task_id": "requests-empty-netrc",
+          "expected_supported": true,
+          "server_accepted": true,
+          "manifest_sha256": "27e61d2ba113f21177e8c7504e8f4583e420416c52a75c497ad4706b37549154",
+          "issues": [],
+          "passed": true
+        },
+        {
+          "harness": "Custom TraceHarness harness",
+          "runtime_id": "traceharness",
+          "model_id": "openai/gpt-4.1-mini",
+          "task_id": "requests-invalid-charset",
+          "expected_supported": true,
+          "server_accepted": true,
+          "manifest_sha256": "472ffc9a7a48f12462b1c6d7e5c643461da6d10b22e35d7ce6af02b2eb152ebe",
+          "issues": [],
+          "passed": true
+        },
+        {
+          "harness": "Custom TraceHarness harness",
+          "runtime_id": "traceharness",
+          "model_id": "openai/gpt-4.1-mini",
+          "task_id": "urllib3-partial-gzip-read",
+          "expected_supported": true,
+          "server_accepted": true,
+          "manifest_sha256": "455080197276af3d5097a94f9a0ed876e5352978c50e05750d1d309d0f3dcd2a",
+          "issues": [],
+          "passed": true
+        },
+        {
+          "harness": "Custom TraceHarness harness",
+          "runtime_id": "traceharness",
+          "model_id": "openai/gpt-4.1-mini",
+          "task_id": "urllib3-unseekable-rewind",
+          "expected_supported": true,
+          "server_accepted": true,
+          "manifest_sha256": "ceb0ad9224faac09df60735b1123a49689a78b20e07fd19d0899788d38b1abd1",
+          "issues": [],
+          "passed": true
+        },
+        {
+          "harness": "Custom TraceHarness harness",
+          "runtime_id": "traceharness",
+          "model_id": "openai/gpt-4.1-mini",
+          "task_id": "urllib3-invalid-fingerprint",
+          "expected_supported": true,
+          "server_accepted": true,
+          "manifest_sha256": "b7f8319fc6c1e84a8f0f48f7e72a62b7ee2d976837bf29178c3597c3bef451ab",
+          "issues": [],
+          "passed": true
+        },
+        {
+          "harness": "Claude Code",
+          "runtime_id": "native-claude-code",
+          "model_id": "anthropic/claude-haiku-4.5",
+          "task_id": "requests-jsondecode-pickle",
+          "expected_supported": true,
+          "server_accepted": true,
+          "manifest_sha256": "95469f146bf835ee7ff75257f09e750589ce6c96b2f3440473e52db1f9416396",
+          "issues": [],
+          "passed": true
+        },
+        {
+          "harness": "Claude Code",
+          "runtime_id": "native-claude-code",
+          "model_id": "anthropic/claude-haiku-4.5",
+          "task_id": "requests-unicode-length",
+          "expected_supported": true,
+          "server_accepted": true,
+          "manifest_sha256": "6cfa19282b7f446ad67775f8d2dd27d79cde1d12e14ceca0417d41353d76b8c4",
+          "issues": [],
+          "passed": true
+        },
+        {
+          "harness": "Claude Code",
+          "runtime_id": "native-claude-code",
+          "model_id": "anthropic/claude-haiku-4.5",
+          "task_id": "requests-leading-slashes",
+          "expected_supported": true,
+          "server_accepted": true,
+          "manifest_sha256": "19148f11b612c38dfe3b7c61960b8b29d816970401f81dc6b5ce341fbaf9390e",
+          "issues": [],
+          "passed": true
+        },
+        {
+          "harness": "Claude Code",
+          "runtime_id": "native-claude-code",
+          "model_id": "anthropic/claude-haiku-4.5",
+          "task_id": "requests-empty-netrc",
+          "expected_supported": true,
+          "server_accepted": true,
+          "manifest_sha256": "06dfa9187275ed5888c3d32eab6c002b0aa60fdfca039c647fa970f2b6727b4d",
+          "issues": [],
+          "passed": true
+        },
+        {
+          "harness": "Claude Code",
+          "runtime_id": "native-claude-code",
+          "model_id": "anthropic/claude-haiku-4.5",
+          "task_id": "requests-invalid-charset",
+          "expected_supported": false,
+          "server_accepted": false,
+          "manifest_sha256": null,
+          "issues": [
+            "This task/runtime/model combination has no matching compatibility receipt for its pinned images and grader."
+          ],
+          "passed": true
+        },
+        {
+          "harness": "Claude Code",
+          "runtime_id": "native-claude-code",
+          "model_id": "anthropic/claude-haiku-4.5",
+          "task_id": "urllib3-partial-gzip-read",
+          "expected_supported": false,
+          "server_accepted": false,
+          "manifest_sha256": null,
+          "issues": [
+            "This task/runtime/model combination has no matching compatibility receipt for its pinned images and grader."
+          ],
+          "passed": true
+        },
+        {
+          "harness": "Claude Code",
+          "runtime_id": "native-claude-code",
+          "model_id": "anthropic/claude-haiku-4.5",
+          "task_id": "urllib3-unseekable-rewind",
+          "expected_supported": false,
+          "server_accepted": false,
+          "manifest_sha256": null,
+          "issues": [
+            "This task/runtime/model combination has no matching compatibility receipt for its pinned images and grader."
+          ],
+          "passed": true
+        },
+        {
+          "harness": "Claude Code",
+          "runtime_id": "native-claude-code",
+          "model_id": "anthropic/claude-haiku-4.5",
+          "task_id": "urllib3-invalid-fingerprint",
+          "expected_supported": false,
+          "server_accepted": false,
+          "manifest_sha256": null,
+          "issues": [
+            "This task/runtime/model combination has no matching compatibility receipt for its pinned images and grader."
+          ],
+          "passed": true
+        },
+        {
+          "harness": "Codex CLI",
+          "runtime_id": "native-codex",
+          "model_id": "openai/gpt-5.1-codex-mini",
+          "task_id": "requests-jsondecode-pickle",
+          "expected_supported": true,
+          "server_accepted": true,
+          "manifest_sha256": "ef45d5bb7284b0275692b01f127ca3d5f3d120247c59e112d65cbb7e02f404ed",
+          "issues": [],
+          "passed": true
+        },
+        {
+          "harness": "Codex CLI",
+          "runtime_id": "native-codex",
+          "model_id": "openai/gpt-5.1-codex-mini",
+          "task_id": "requests-unicode-length",
+          "expected_supported": true,
+          "server_accepted": true,
+          "manifest_sha256": "29bd56ac104fa5a1174589db447cb8e8e479b92fe02d35685ec0e91ffa657df5",
+          "issues": [],
+          "passed": true
+        },
+        {
+          "harness": "Codex CLI",
+          "runtime_id": "native-codex",
+          "model_id": "openai/gpt-5.1-codex-mini",
+          "task_id": "requests-leading-slashes",
+          "expected_supported": true,
+          "server_accepted": true,
+          "manifest_sha256": "6a97fc36ac56b60d1bfff46995101a9f1433d8941902101118b27ba3ee854e46",
+          "issues": [],
+          "passed": true
+        },
+        {
+          "harness": "Codex CLI",
+          "runtime_id": "native-codex",
+          "model_id": "openai/gpt-5.1-codex-mini",
+          "task_id": "requests-empty-netrc",
+          "expected_supported": true,
+          "server_accepted": true,
+          "manifest_sha256": "c724cbf371fdfb7c072942975bfef14a7875fc87b2143e6e0570ea15a5eddf8c",
+          "issues": [],
+          "passed": true
+        },
+        {
+          "harness": "Codex CLI",
+          "runtime_id": "native-codex",
+          "model_id": "openai/gpt-5.1-codex-mini",
+          "task_id": "requests-invalid-charset",
+          "expected_supported": true,
+          "server_accepted": true,
+          "manifest_sha256": "3830a71f8017ceed073cabacca6077d4d05dac01b5a50913a71c60a3b702ec5f",
+          "issues": [],
+          "passed": true
+        },
+        {
+          "harness": "Codex CLI",
+          "runtime_id": "native-codex",
+          "model_id": "openai/gpt-5.1-codex-mini",
+          "task_id": "urllib3-partial-gzip-read",
+          "expected_supported": true,
+          "server_accepted": true,
+          "manifest_sha256": "c7553f9ed5200f347a4eb24c7067c483c063c6d4acd3ac279a9559b79a954305",
+          "issues": [],
+          "passed": true
+        },
+        {
+          "harness": "Codex CLI",
+          "runtime_id": "native-codex",
+          "model_id": "openai/gpt-5.1-codex-mini",
+          "task_id": "urllib3-unseekable-rewind",
+          "expected_supported": true,
+          "server_accepted": true,
+          "manifest_sha256": "cd7d02d16554c50002cc6cc62ac80fda0c1eb2503a647d784eb11d1c51f289d6",
+          "issues": [],
+          "passed": true
+        },
+        {
+          "harness": "Codex CLI",
+          "runtime_id": "native-codex",
+          "model_id": "openai/gpt-5.1-codex-mini",
+          "task_id": "urllib3-invalid-fingerprint",
+          "expected_supported": false,
+          "server_accepted": false,
+          "manifest_sha256": null,
+          "issues": [
+            "This task/runtime/model combination has no matching compatibility receipt for its pinned images and grader."
+          ],
+          "passed": true
+        }
+      ],
+      "new_jobs": 0,
+      "published_html_sha256": "43229536af3b2c13e02d133e62fb98c930229843bd2efe4fdb55dccc0ec55be6",
+      "last_review": {
+        "harness": "Codex CLI",
+        "task_id": "urllib3-invalid-fingerprint",
+        "ok": false,
+        "issues": [
+          "This task/runtime/model combination has no matching compatibility receipt for its pinned images and grader."
+        ]
+      },
+      "changed_or_invalid_configuration_blocks_dispatch": true,
+      "credential_revoked": true,
+      "disconnect_blocks_dispatch": true,
+      "page_errors": [],
+      "blocked_requests": []
+    },
+    "saved_result": {
+      "complete": true,
+      "at": "2026-11-11T21:58:35.438403+00:00",
+      "job_id": "f7437f477858ef916a71bf9d5bedb7dac589209189480ff6",
+      "status": "succeeded",
+      "grade": "passed",
+      "usage": {
+        "requests": 10,
+        "input_tokens": 162113,
+        "output_tokens": 2988,
+        "cost_usd": 0.177053
+      },
+      "manifest_sha256": "dd1bf0de185b409c16109a2e7ef329bcd120040015c5e272a78e3a522dfd104c",
+      "download_sha256": "f8328f1cf515ea3fe57b81f36f76a02207742d3e0cd67f2db2ca597c36536f33",
+      "published_html_sha256": "43229536af3b2c13e02d133e62fb98c930229843bd2efe4fdb55dccc0ec55be6",
+      "new_jobs": 0,
+      "page_errors": [],
+      "blocked_requests": []
+    },
+    "anonymous_checks": [
+      {
+        "path": "/app",
+        "hostile_origin": false,
+        "status": 302,
+        "location": "/login",
+        "acao": false,
+        "pass": true
+      },
+      {
+        "path": "/app/shallow",
+        "hostile_origin": false,
+        "status": 302,
+        "location": "/login",
+        "acao": false,
+        "pass": true
+      },
+      {
+        "path": "/link",
+        "hostile_origin": false,
+        "status": 302,
+        "location": "/login",
+        "acao": false,
+        "pass": true
+      },
+      {
+        "path": "/api/onboarding",
+        "hostile_origin": false,
+        "status": 401,
+        "location": null,
+        "acao": false,
+        "pass": true
+      },
+      {
+        "path": "/api/onboarding",
+        "hostile_origin": true,
+        "status": 401,
+        "location": null,
+        "acao": false,
+        "pass": true
+      },
+      {
+        "path": "/api/shallow/harnesses",
+        "hostile_origin": false,
+        "status": 401,
+        "location": null,
+        "acao": false,
+        "pass": true
+      },
+      {
+        "path": "/api/shallow/harnesses",
+        "hostile_origin": true,
+        "status": 401,
+        "location": null,
+        "acao": false,
+        "pass": true
+      },
+      {
+        "path": "/api/shallow/jobs",
+        "hostile_origin": false,
+        "status": 401,
+        "location": null,
+        "acao": false,
+        "pass": true
+      },
+      {
+        "path": "/api/shallow/jobs",
+        "hostile_origin": true,
+        "status": 401,
+        "location": null,
+        "acao": false,
+        "pass": true
+      },
+      {
+        "path": "/api/runner/catalog",
+        "hostile_origin": false,
+        "status": 401,
+        "location": null,
+        "acao": false,
+        "pass": true
+      },
+      {
+        "path": "/api/runner/catalog",
+        "hostile_origin": true,
+        "status": 401,
+        "location": null,
+        "acao": false,
+        "pass": true
+      },
+      {
+        "path": "/api/runner/jobs",
+        "hostile_origin": false,
+        "status": 401,
+        "location": null,
+        "acao": false,
+        "pass": true
+      },
+      {
+        "path": "/api/runner/jobs",
+        "hostile_origin": true,
+        "status": 401,
+        "location": null,
+        "acao": false,
+        "pass": true
+      },
+      {
+        "path": "/api/runner/prompt-inventory/native-claude-code",
+        "hostile_origin": false,
+        "status": 401,
+        "location": null,
+        "acao": false,
+        "pass": true
+      },
+      {
+        "path": "/api/runner/prompt-inventory/native-claude-code",
+        "hostile_origin": true,
+        "status": 401,
+        "location": null,
+        "acao": false,
+        "pass": true
+      },
+      {
+        "path": "/api/runner/prompt-inventory/native-codex",
+        "hostile_origin": false,
+        "status": 401,
+        "location": null,
+        "acao": false,
+        "pass": true
+      },
+      {
+        "path": "/api/runner/prompt-inventory/native-codex",
+        "hostile_origin": true,
+        "status": 401,
+        "location": null,
+        "acao": false,
+        "pass": true
+      },
+      {
+        "path": "/api/runner/experiments",
+        "hostile_origin": false,
+        "status": 401,
+        "location": null,
+        "acao": false,
+        "pass": true
+      },
+      {
+        "path": "/api/runner/experiments",
+        "hostile_origin": true,
+        "status": 401,
+        "location": null,
+        "acao": false,
+        "pass": true
+      },
+      {
+        "path": "/api/runner/experiments/preflight",
+        "hostile_origin": false,
+        "status": 401,
+        "location": null,
+        "acao": false,
+        "pass": true
+      },
+      {
+        "path": "/api/runner/experiments/preflight",
+        "hostile_origin": true,
+        "status": 401,
+        "location": null,
+        "acao": false,
+        "pass": true
+      },
+      {
+        "path": "/api/runner/experiments/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "hostile_origin": false,
+        "status": 401,
+        "location": null,
+        "acao": false,
+        "pass": true
+      },
+      {
+        "path": "/api/runner/experiments/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "hostile_origin": true,
+        "status": 401,
+        "location": null,
+        "acao": false,
+        "pass": true
+      },
+      {
+        "path": "/api/runner/experiments/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/start",
+        "hostile_origin": false,
+        "status": 401,
+        "location": null,
+        "acao": false,
+        "pass": true
+      },
+      {
+        "path": "/api/runner/experiments/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/start",
+        "hostile_origin": true,
+        "status": 401,
+        "location": null,
+        "acao": false,
+        "pass": true
+      },
+      {
+        "path": "/api/runner/experiments/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/cancel",
+        "hostile_origin": false,
+        "status": 401,
+        "location": null,
+        "acao": false,
+        "pass": true
+      },
+      {
+        "path": "/api/runner/experiments/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/cancel",
+        "hostile_origin": true,
+        "status": 401,
+        "location": null,
+        "acao": false,
+        "pass": true
+      },
+      {
+        "method": "POST",
+        "path": "/api/onboarding",
+        "hostile_origin": false,
+        "status": 401,
+        "acao": false,
+        "pass": true
+      },
+      {
+        "method": "POST",
+        "path": "/api/onboarding",
+        "hostile_origin": true,
+        "status": 401,
+        "acao": false,
+        "pass": true
+      },
+      {
+        "method": "POST",
+        "path": "/api/runner/experiments",
+        "hostile_origin": false,
+        "status": 401,
+        "acao": false,
+        "pass": true
+      },
+      {
+        "method": "POST",
+        "path": "/api/runner/experiments",
+        "hostile_origin": true,
+        "status": 401,
+        "acao": false,
+        "pass": true
+      },
+      {
+        "method": "POST",
+        "path": "/api/runner/experiments/preflight",
+        "hostile_origin": false,
+        "status": 401,
+        "acao": false,
+        "pass": true
+      },
+      {
+        "method": "POST",
+        "path": "/api/runner/experiments/preflight",
+        "hostile_origin": true,
+        "status": 401,
+        "acao": false,
+        "pass": true
+      },
+      {
+        "method": "POST",
+        "path": "/api/runner/experiments/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/start",
+        "hostile_origin": false,
+        "status": 401,
+        "acao": false,
+        "pass": true
+      },
+      {
+        "method": "POST",
+        "path": "/api/runner/experiments/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/start",
+        "hostile_origin": true,
+        "status": 401,
+        "acao": false,
+        "pass": true
+      },
+      {
+        "method": "POST",
+        "path": "/api/runner/experiments/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/cancel",
+        "hostile_origin": false,
+        "status": 401,
+        "acao": false,
+        "pass": true
+      },
+      {
+        "method": "POST",
+        "path": "/api/runner/experiments/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/cancel",
+        "hostile_origin": true,
+        "status": 401,
+        "acao": false,
+        "pass": true
+      },
+      {
+        "method": "POST",
+        "path": "/api/runner/credentials",
+        "hostile_origin": false,
+        "status": 401,
+        "acao": false,
+        "pass": true
+      },
+      {
+        "method": "POST",
+        "path": "/api/runner/credentials",
+        "hostile_origin": true,
+        "status": 401,
+        "acao": false,
+        "pass": true
+      },
+      {
+        "method": "DELETE",
+        "path": "/api/runner/credentials/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "hostile_origin": false,
+        "status": 401,
+        "acao": false,
+        "pass": true
+      },
+      {
+        "method": "DELETE",
+        "path": "/api/runner/credentials/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "hostile_origin": true,
+        "status": 401,
+        "acao": false,
+        "pass": true
+      }
+    ],
+    "new_paid_execution": {
+      "complete": true,
+      "at": "2026-11-11T21:52:25.459019+00:00",
+      "maximum_new_jobs": 1,
+      "maximum_cost_usd": 0.5,
+      "automatic_paid_retries": 0,
+      "task_completion_verified": true,
+      "performance_improvement": "UNVERIFIED",
+      "configuration_sha256": "9868583323ec1deb7fec484ee491646b48bbd857848c18c1aaaab1e0248a1d51",
+      "job": {
+        "id": "f7437f477858ef916a71bf9d5bedb7dac589209189480ff6",
+        "status": "succeeded",
+        "grade": "passed",
+        "usage": {
+          "requests": 10,
+          "input_tokens": 162113,
+          "output_tokens": 2988,
+          "cost_usd": 0.177053
+        },
+        "issues": [],
+        "manifest_sha256": "dd1bf0de185b409c16109a2e7ef329bcd120040015c5e272a78e3a522dfd104c",
+        "created_at": 1794433951,
+        "updated_at": 1794434019,
+        "artifacts": [
+          {
+            "name": "manifest.json",
+            "bytes": 2791,
+            "sha256": "f8328f1cf515ea3fe57b81f36f76a02207742d3e0cd67f2db2ca597c36536f33"
+          },
+          {
+            "name": "grade.json",
+            "bytes": 21,
+            "sha256": "878982568e5e39420f9fc8fca5caaade78f526a402b42f08357919732d5a1cd5"
+          },
+          {
+            "name": "trace.jsonl",
+            "bytes": 235278,
+            "sha256": "e2fc21d665e407d8e3cbaf096911e956c457c484be40c16e0d48e11a2acec74e"
+          },
+          {
+            "name": "patch.diff",
+            "bytes": 399,
+            "sha256": "07914cde599045162da569b94503f04b0aa09317864fc57e42169799920b7019"
+          },
+          {
+            "name": "native-prompt-profile.json",
+            "bytes": 556,
+            "sha256": "d6f2d93a660427daa4e5954f54dfcb2362690f9d7a14450fd25cfe38aa07a677"
+          },
+          {
+            "name": "native-prompt-application.json",
+            "bytes": 397652,
+            "sha256": "0d9bdc9c4891a8176e6e09c32472f6330a6c16c7978364e689bd9480a0156bf7"
+          },
+          {
+            "name": "native-prompt-observations.json",
+            "bytes": 40617,
+            "sha256": "0d55cb0eb5c9510b28597a784555aa0271cb93d40990e606a36cc4f0a82667aa"
+          }
+        ]
+      },
+      "trusted_grade": {
+        "outcome": "passed"
+      },
+      "application": {
+        "readback_verified": true,
+        "changed_source_occurrences": 1865,
+        "inventory_sha256": "94399d069ff5af15ce644eb5906470e75673e7417ef75210d6983eb79b83fcfa",
+        "materializer_sha256": "ba6245da8b07901b6793898e70e2e974a1e641a2c3be0d357ba53d15101f4081"
+      },
+      "exact_new_job_set_verified": true,
+      "credential_revoked": true
+    },
+    "runner_audit": {
+      "total_retained_jobs": 52,
+      "active_jobs": 0,
+      "needs_attention_jobs": 0,
+      "active_experiments": 0,
+      "containers": 0,
+      "residual_mounts": 0,
+      "registry_sha256": "2d90f0f7a9710890c2aedad0e972ac6d1f1a52ecebec4848d195793370496d10",
+      "at": "2026-11-11T21:55:01.025844+00:00",
+      "complete": true
+    },
+    "fly": {
+      "version": 16,
+      "status": "complete",
+      "machines_started": 1,
+      "checks_passing": 1,
+      "image": "registry.fly.io/traceharness-runner@sha256:b336f41a0d10dfab76989443ed67ec11a203df103f5d284a6ba1e552e6ab8c89"
+    }
+  },
+  "deployment": {
+    "at": "2026-11-11T21:58:10.601282+00:00",
+    "exit_code": 0,
+    "key": "app.html.gz",
+    "namespace_id": "8a74dd2fba124b1a8d82e6eeff5ba3ae",
+    "source_commit": "81eb9e5c9188898d941986d414abed082681960e",
+    "input_file": "/Users/amastro/Documents/TraceHarness-release-green-2026-11-11/app-release-green.html.gz",
+    "input_sha256": "af95f8ece69391a39e8145c908e48833950d0a55942afb360effb859661bed91",
+    "input_bytes": 15295616,
+    "html_sha256": "43229536af3b2c13e02d133e62fb98c930229843bd2efe4fdb55dccc0ec55be6",
+    "worker_version_id": "5ff30c89-62aa-4c90-ba78-b37a24ef4bf4",
+    "worker_redeployed": false,
+    "config_deleted_on_exit": true,
+    "last_10_log_lines": [
+      "",
+      " \u26c5\ufe0f wrangler 4.90.1",
+      "\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500",
+      "Resource location: remote ",
+      "",
+      "Writing the contents of /Users/amastro/Documents/TraceHarness-release-green-2026-11-11/app-release-green.html.gz to the key \"app.html.gz\" on namespace id: \"8a74dd2fba124b1a8d82e6eeff5ba3ae\".",
+      ""
+    ]
+  },
+  "snapshot": {
+    "base_html_sha256": "5148e5521184bf96273611b321a05f7492d3a72bf21aeb856acdd8de2d93bbca",
+    "html": {
+      "path": "/Users/amastro/Documents/TraceHarness-release-green-2026-11-11/app-release-green.html",
+      "bytes": 21109586,
+      "sha256": "43229536af3b2c13e02d133e62fb98c930229843bd2efe4fdb55dccc0ec55be6"
+    },
+    "gzip": {
+      "path": "/Users/amastro/Documents/TraceHarness-release-green-2026-11-11/app-release-green.html.gz",
+      "bytes": 15295616,
+      "sha256": "af95f8ece69391a39e8145c908e48833950d0a55942afb360effb859661bed91"
+    },
+    "audio_chapters": 5,
+    "bundled_audio_hashes_verified": true,
+    "encoded_recorded_data_unchanged": true,
+    "encoded_recorded_data_sha256": "f15ee7595f1630cef32c32265fd6e0b1667dc6bd80549a032b2d43d284f9a5f3",
+    "datasets": [
+      "captured_claude_code",
+      "demo_mock",
+      "families_mock",
+      "live",
+      "llma4se_live",
+      "prerecorded_mock",
+      "prerecorded_mock_weak",
+      "real_swe_agent_500"
+    ],
+    "recorded_runs": 3453,
+    "replacements": [
+      {
+        "before": "/assets/index-BDEFAr-Y.js",
+        "after": "/assets/index-DT-Su2yb.js",
+        "sha256": "fd478a7335b6ac2e4aa05b4b3d8a37c2d46acaf0378b44654171810354d04de0"
+      },
+      {
+        "before": "/assets/index-BXp67ANa.css",
+        "after": "/assets/index-BXp67ANa.css",
+        "sha256": "6860c5b733f0ae775800cd53712df45cb1659532843e79cdca4e32fe7eb3db3c"
+      }
+    ],
+    "build_source": {
+      "sha256": "d1e27d98eb3b12a30de1250e2fb27e774fc654e4eafc894d5652e0db90261806",
+      "files": 103
+    }
+  },
+  "unverified": [
+    "Five native runtime/task/model combinations lack pinned compatibility receipts and remain blocked from execution. They were verified to be rejected, not proved runnable.",
+    "General performance improvement and generalization beyond the tested task/model/profile combinations.",
+    "Historical failed/ungraded executions and uncertain charges remain unchanged.",
+    "Complete native-instruction and conditional-path coverage; single-member live checks do not establish cross-account isolation."
+  ],
+  "non_failing_advisories": [
+    "Vite still reports the existing large single-file JavaScript chunk (about 1.94 MB, including inline narration). The warning limit was not raised or suppressed.",
+    "The local Python 3.14 environment emits a Starlette/httpx deprecation advisory. No dependency upgrade or warning suppression was used.",
+    "Nine environment-dependent runner tests were skipped locally; they are not counted as passed."
+  ],
+  "private_evidence_sha256": {
+    "frontend.log": "fe17a39062fc64d76101bfcc2262bde1b9e075cdfe4b2323d8a242bb83f77b05",
+    "runner.log": "33586e3960e3e5591f509d8a5e5c7d4037c2011278cd6dce4099cd7c12f4751a",
+    "worker.log": "d3486e67282d3000305531b25f74bc8a5932d383329e35cfd3ecfa8bd5a92946",
+    "lint.log": "693c9d581abe91614daded2882861ae2c5c4c8625c11f4b4073fc696fb93f66e",
+    "dist.log": "ada8287c158c47db545f6c9e762701c9fdb3de124ea9dbacac45d9e31b016b77",
+    "build.log": "79a86d72d370ada1b6cf007e80636dae84761ebe80acbac5036a74fb86595cd0",
+    "storage-red.log": "a016ca6736b468bbd3040eeb9a07354c465e90881766bc597bfb5b17ce9d59be",
+    "storage-green.log": "aefe83027c7be8d56d775fe7775a6c5860de02cf7eab86ee8e08b57011e49975",
+    "candidate-v2-proof.json": "9b6b845561ce82d27be84ddcd2f1facd3772395591ecca6cb77ca17a939680ed",
+    "candidate-v6-readiness-proof.json": "d4fd0a2a09f81e92af85755c5b8cbf1acda9df30b445df34ea6efbb9385b4768",
+    "live-proof.json": "1bdd1bfbb2a995d17dabf90c331a0bf3d4e88597f2235aa26c80e9bab03c2232",
+    "live-readiness-proof.json": "f833fbe762bbf04fcd25a2d8b3903ef3150858044a55114c5e672f04dd33a04c",
+    "live-result-proof.json": "2b6acae0182153723718d25d92b73ca2d3379e621eb80e4a9b2f4bf90f5d49d9",
+    "claude-registration.json": "eb5b8058f8ab7f438e630d2b8405a79dbe36ae1d518039688ce50553ba3fc1d9",
+    "claude-proof.json": "47cf25ab13610871e3bc847a96cbbccb2e35a5c5b3bd6affe5e63b77bb8f1fe0",
+    "anonymous-proof.json": "60d02d31dd94f5f7a5daf6f5a1a3a1603f0ead7fe7845862bcfa183c993aa3b0",
+    "anonymous-mutation-proof.json": "a977c3638e1566e42040a4bd3197c7fc3de921180689d4b160660470c570c4d7",
+    "final-runner-audit.json": "285f7532af04cbc4e54c68472811fb15ee459728f33329c278efea6adb5d6e59",
+    "kv-upload.json": "b8e7a54eb66fb78c25bf15c76e643c4e42842804a9f67dff4f631635d0737f5a"
+  }
+}

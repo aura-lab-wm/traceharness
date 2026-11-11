@@ -29,6 +29,7 @@ while the UI reads; a stale read at worst misses the newest row until the next m
 """
 from __future__ import annotations
 
+import atexit
 import hashlib
 import json
 import math
@@ -93,20 +94,28 @@ _CONN: dict[str, sqlite3.Connection] = {}
 def _connect(db_path: str) -> sqlite3.Connection:
     os.makedirs(os.path.dirname(db_path) or ".", exist_ok=True)
     cx = sqlite3.connect(db_path, timeout=5.0, check_same_thread=False)
-    cx.row_factory = sqlite3.Row
-    cx.execute("PRAGMA journal_mode=WAL")
-    cx.execute("PRAGMA synchronous=NORMAL")
-    cx.execute("PRAGMA busy_timeout=5000")
-    cx.executescript(_DDL)
-    v = cx.execute("SELECT v FROM meta WHERE k='schema'").fetchone()
-    if v is None:
-        cx.execute("INSERT OR REPLACE INTO meta(k, v) VALUES ('schema', ?)", (str(SCHEMA_VERSION),))
-        cx.commit()
-    elif int(v["v"]) != SCHEMA_VERSION:
-        cx.executescript("DROP TABLE IF EXISTS runs; DROP TABLE IF EXISTS sources;")
+    try:
+        cx.row_factory = sqlite3.Row
+        cx.execute("PRAGMA journal_mode=WAL")
+        cx.execute("PRAGMA synchronous=NORMAL")
+        cx.execute("PRAGMA busy_timeout=5000")
         cx.executescript(_DDL)
-        cx.execute("INSERT OR REPLACE INTO meta(k, v) VALUES ('schema', ?)", (str(SCHEMA_VERSION),))
-        cx.commit()
+        v = cx.execute("SELECT v FROM meta WHERE k='schema'").fetchone()
+        if v is None:
+            cx.execute("INSERT OR REPLACE INTO meta(k, v) VALUES ('schema', ?)", (str(SCHEMA_VERSION),))
+            cx.commit()
+        elif int(v["v"]) != SCHEMA_VERSION:
+            cx.executescript("DROP TABLE IF EXISTS runs; DROP TABLE IF EXISTS sources;")
+            cx.executescript(_DDL)
+            cx.execute("INSERT OR REPLACE INTO meta(k, v) VALUES ('schema', ?)", (str(SCHEMA_VERSION),))
+            cx.commit()
+    except BaseException:
+        # Recovery may retry or move to a sidecar; release this handle first.
+        try:
+            cx.close()
+        except sqlite3.Error:
+            pass
+        raise
     return cx
 
 
@@ -164,6 +173,11 @@ def close_all() -> None:
             except Exception:
                 pass
         _CONN.clear()
+
+
+# The derived index stays cached for the process lifetime. Close it before
+# interpreter teardown rather than leaving connections to the garbage collector.
+atexit.register(close_all)
 
 
 # --------------------------------------------------------------------------- ingest

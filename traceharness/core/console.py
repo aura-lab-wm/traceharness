@@ -121,11 +121,13 @@ def load_tasks(lab_root: str = LAB_ROOT) -> dict:
         meta_path = os.path.join(d, "task.json")
         if not os.path.exists(meta_path):
             continue
-        meta = json.load(open(meta_path))
+        with open(meta_path) as stream:
+            meta = json.load(stream)
         issue = ""
         ip = os.path.join(d, "issue.md")
         if os.path.exists(ip):
-            issue = open(ip, encoding="utf-8").read()
+            with open(ip, encoding="utf-8") as stream:
+                issue = stream.read()
         strong = os.path.isdir(os.path.join(d, "hidden_tests_strong"))
         out[meta["id"]] = {"id": meta["id"], "title": meta.get("title", ""), "probe": meta.get("probe", "none"),
                            "src_files": meta.get("src_files", []), "issue": _cut(issue, 1800), "has_strong": strong}
@@ -136,7 +138,8 @@ def load_harness_files(lab_root: str = LAB_ROOT) -> dict:
     out = {}
     for p in sorted(glob.glob(os.path.join(lab_root, "harnesses", "*.json"))):
         try:
-            h = json.load(open(p))
+            with open(p) as stream:
+                h = json.load(stream)
             out[h["id"]] = {**h, "_file": os.path.relpath(p, lab_root)}
         except Exception:
             pass
@@ -153,7 +156,8 @@ def running_runs(results_dir: str) -> list[dict]:
         if not os.path.exists(lp):
             continue
         try:
-            spans = [json.loads(l) for l in open(lp) if l.strip()]
+            with open(lp) as stream:
+                spans = [json.loads(l) for l in stream if l.strip()]
         except Exception:
             continue
         if not spans:
@@ -234,7 +238,9 @@ def load_judge(lab_root: str = LAB_ROOT) -> list[dict]:
     out = []
     for p in sorted(glob.glob(os.path.join(lab_root, "data", "judge", "*.json"))):
         try:
-            d = json.load(open(p)); d["_file"] = os.path.relpath(p, lab_root); out.append(d)
+            with open(p) as stream:
+                d = json.load(stream)
+            d["_file"] = os.path.relpath(p, lab_root); out.append(d)
         except Exception:
             pass
     return out
@@ -252,8 +258,14 @@ def run_detail(results_dir: str, run_id: str) -> dict:
     """Everything about one run, untruncated: spans, patch, messages count."""
     d = os.path.join(results_dir, run_id)
     spans = load_ledger(results_dir, run_id)
-    patch = open(os.path.join(d, "patch.diff"), encoding="utf-8", errors="replace").read() if os.path.exists(os.path.join(d, "patch.diff")) else ""
-    summary = json.load(open(os.path.join(d, "summary.json"))) if os.path.exists(os.path.join(d, "summary.json")) else {}
+    patch, summary = "", {}
+    patch_path, summary_path = os.path.join(d, "patch.diff"), os.path.join(d, "summary.json")
+    if os.path.exists(patch_path):
+        with open(patch_path, encoding="utf-8", errors="replace") as stream:
+            patch = stream.read()
+    if os.path.exists(summary_path):
+        with open(summary_path) as stream:
+            summary = json.load(stream)
     return {"run_id": run_id, "summary": summary, "spans": [compact_span(s, 4000) for s in spans], "patch": patch[:20000]}
 
 
@@ -265,5 +277,6 @@ if __name__ == "__main__":
     a = ap.parse_args()
     dirs = [p.strip() for p in a.results.split(",")] if a.results else default_results_dirs()
     b = build_bundle(dirs)
-    json.dump(b, open(a.out, "w"))
+    with open(a.out, "w") as stream:
+        json.dump(b, stream)
     print(f"{len(b['runs'])} runs, {len(b['harnesses'])} harnesses, {len(b['tasks'])} tasks -> {a.out} ({os.path.getsize(a.out) / 1e6:.1f} MB)")

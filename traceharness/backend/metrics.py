@@ -186,7 +186,8 @@ def leakage(name: str, rows: list[dict], harness: str) -> list[dict]:
             for r in R:
                 p = os.path.join(d, r["run_id"], "patch.diff")
                 if os.path.exists(p):
-                    sims.append(sim(added(open(p).read()), task["issue"]))
+                    with open(p) as stream:
+                        sims.append(sim(added(stream.read()), task["issue"]))
         # pass1_strong: the same task under the strengthened suite, via the SAME aggregate weak_tests
         # uses -- the judge step's per-task "hidden vs strengthened" bars read it from here.
         out.append({"task": tid, "probe": task.get("probe") if task else None, "pass1": tt[tid]["pass1"],
