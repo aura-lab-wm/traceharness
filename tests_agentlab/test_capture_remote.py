@@ -19,7 +19,7 @@ from unittest import mock
 LAB = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, LAB)
 
-from traceharness.capture import cursors, push, redact, remote          # noqa: E402
+from traceharness.capture import cursors, presence, push, redact, remote          # noqa: E402
 
 TOKEN = "thc_" + "A1b2C3d4" * 5           # 44 chars after the prefix is not required; >= 20 is
 FIXTURES = os.path.join(LAB, "tests_agentlab", "fixtures", "capture")
@@ -200,6 +200,40 @@ class TestRedact(unittest.TestCase):
         self.assertEqual(out["5"], "int key")
         self.assertIn("a", doc)                                   # the input is not mutated
         self.assertEqual(doc["token"], {"x": 1})
+
+    def test_long_trigger_run_is_linear(self):
+        import time
+        t = time.monotonic()
+        redact.redact_text("password" * 50000)
+        redact.redact_text("secret-" * 50000 + "=")
+        self.assertLess(time.monotonic() - t, 5.0)
+
+    def test_more_credential_shapes(self):
+        cases = {
+            'curl -H "Authorization: Bearer 8f3a9c2d1234567890abcdef"': 'curl -H "Authorization: [redacted:bearer]"',
+            "git remote add o https://alice:ghs8Kd92jsLq0Pz3@github.com/o/r.git":
+                "git remote add o https://[redacted:url-credentials]@github.com/o/r.git",
+            "postgres://app:S3cretPassw0rd@db:5432/prod": "postgres://[redacted:url-credentials]@db:5432/prod",
+            "sk_live_" + "a1" * 8: "[redacted:stripe]",
+            "hf_" + "a" * 30: "[redacted:huggingface]",
+            "npm_" + "b" * 30: "[redacted:npm]",
+            "refresh_token: 1//0gabcdefgh": "refresh_token: [redacted:secret]",
+            'password: "my long pass phrase"': 'password: "[redacted:secret]"',
+            "see http://host:8080/x or me@example.org": "see http://host:8080/x or me@example.org",
+        }
+        for src, want in cases.items():
+            with self.subTest(src=src[:30]):
+                self.assertEqual(redact.redact_text(src), want)
+
+    def test_sensitive_dict_keys_beyond_the_exact_set(self):
+        out = redact.redact({"DB_PASSWORD": "hunter2hunter2", "client_secret": "x", "refresh_token": "r",
+                             "X-Api-Key": "k", "max_tokens": 4096, "usage": {"tokens": {"in": 3}},
+                             "note": "fine"})
+        for k in ("DB_PASSWORD", "client_secret", "refresh_token", "X-Api-Key"):
+            self.assertEqual(out[k], "[redacted:secret-key]", k)
+        self.assertEqual(out["max_tokens"], 4096)
+        self.assertEqual(out["usage"], {"tokens": {"in": 3}})
+        self.assertEqual(out["note"], "fine")
 
     def test_forbidden_keys_match_the_live_link(self):
         from traceharness.backend.remote_link import FORBIDDEN
@@ -414,6 +448,19 @@ class TestPush(Env):
         rc, out, err = self.run_push()
         self.assertEqual(rc, 0)
         self.assertIn("1 too large", out)
+
+    def test_paused_capture_sends_nothing(self):
+        self.make_run("run-1")
+        presence.set_paused(self.runs_root, True)
+        rc, out, err = self.run_push()
+        self.assertEqual(rc, 0)
+        self.assertEqual(self.posts(), [])
+        self.assertIn("paused", out + err)
+        rc, _, _ = self.run_push("--session-file", os.path.join(self.allowed, "run-1.jsonl"))
+        self.assertEqual(self.posts(), [])
+        presence.set_paused(self.runs_root, False)
+        self.assertEqual(self.run_push()[0], 0)
+        self.assertEqual(len(self.posts()), 1)
 
     def test_allow_list_filter(self):
         outside = os.path.join(self.tmp, "elsewhere")

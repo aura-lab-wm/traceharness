@@ -23,7 +23,7 @@ import time
 from datetime import datetime
 from typing import Iterable, Optional
 
-from . import allowlist, cursors, remote
+from . import allowlist, cursors, presence, remote
 from .redact import redact
 
 SOURCES = ("claude_code", "codex", "gemini_cli", "qwen_code", "cursor")
@@ -281,6 +281,8 @@ def send(items: list[Item], skipped: list[tuple[str, str]], creds: Optional[dict
 
 
 def summarize(report: dict, dry_run: bool) -> str:
+    if report.get("paused"):
+        return "capture is paused; nothing was sent"
     if dry_run:
         return (f"dry run: {report['would_send']} run(s) would be sent ({report['bytes']} bytes), "
                 f"{report['too_large']} too large, {report['skipped']} skipped; nothing was sent")
@@ -294,6 +296,12 @@ def exit_code(report: dict) -> int:
 
 def push(runs_root: str, *, source: str = "", run: str = "", session_file: str = "", dry_run: bool = False,
          only: Optional[Iterable[str]] = None, log=lambda s: None) -> dict:
+    if presence.read_control(runs_root)["paused"]:
+        # `capture --pause` is the member's stop switch; the SessionEnd hook and a direct push obey it.
+        # (Signing out is the hard stop.) Nothing is read, captured or sent while paused.
+        log("skip   capture is paused (`traceharness capture --resume` to continue)")
+        return {"sent": 0, "unchanged": 0, "too_large": 0, "failed": 0, "skipped": 0,
+                "would_send": 0, "bytes": 0, "unauthorized": False, "paused": True}
     roots = allowlist.load_paths()
     if not roots:
         raise remote.CliError("nothing to send: the capture allow-list (~/.traceharness/capture.json) is empty")

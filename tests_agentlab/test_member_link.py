@@ -90,7 +90,7 @@ class TestMemberTarget(MemberLinkBase):
         with mock.patch.object(RL, "run_forever", return_value=0) as rf:
             rc, _, _ = run_link(["--member"])
         self.assertEqual(rc, 0)
-        rf.assert_called_once_with("wss://traceharness.dev/api/remote", TOKEN, accept_commands=False)
+        rf.assert_called_once_with("wss://traceharness.dev/api/remote", TOKEN, accept_commands=False, member=True)
 
     def test_tampered_credentials_file_is_not_signed_in(self):
         remote.write_private(remote.credentials_path(),
@@ -98,6 +98,42 @@ class TestMemberTarget(MemberLinkBase):
         url, msg = RL.member_link_target()
         self.assertIsNone(url)
         self.assertIn("not signed in", msg)
+
+
+class TestRunnerRefusesWithoutAcceptCommands(unittest.TestCase):
+    """A hostile or buggy hub that forwards `run` to a watch-only runner is refused by the runner."""
+
+    def frames(self, name, accept, member=False):
+        sent, started = [], []
+        d = RL.local_dispatch("/nonexistent", start=lambda a: started.append(a) or {"id": "j"},
+                              accept_commands=accept, member=member)
+        frame = {"v": 1, "kind": "command", "id": "c1", "payload": {"name": name, "args": {}}}
+        RL._runner_on_command(frame, d, sent.append, [], accept)
+        return sent, started
+
+    def test_run_refused_and_never_started_when_watch_only(self):
+        sent, started = self.frames("run", False)
+        self.assertEqual(started, [])
+        self.assertEqual(sent[-1]["kind"], "error")
+        self.assertIn("Not allowed.", sent[-1]["payload"]["error"])
+
+    def test_dispatch_alone_refuses_run_when_watch_only(self):
+        d = RL.local_dispatch("/nonexistent", start=lambda a: self.fail("started"), accept_commands=False)
+        with self.assertRaises(RL.RemoteError):
+            d("run", {})
+
+    def test_run_still_works_when_commands_are_accepted(self):
+        sent, started = self.frames("run", True)
+        self.assertEqual(len(started), 1)
+        self.assertEqual(sent[-1]["kind"], "result")
+
+    def test_member_mode_serves_no_run_directories(self):
+        for name in ("live", "tail"):
+            sent, _ = self.frames(name, False, member=True)
+            self.assertEqual(sent[-1]["kind"], "error", name)
+            self.assertIn("Not allowed.", sent[-1]["payload"]["error"])
+        sent, _ = self.frames("ping", False, member=True)
+        self.assertEqual(sent[-1]["kind"], "result")
 
 
 class TestMemberLoopbackHub(MemberLinkBase):

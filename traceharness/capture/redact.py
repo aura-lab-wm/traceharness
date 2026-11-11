@@ -39,23 +39,48 @@ _TOKEN_RULES = (
     ("slack", re.compile(r"xox[abprs]-[A-Za-z0-9-]{10,}")),
     ("traceharness", re.compile(r"thc_[A-Za-z0-9_-]{20,}")),
     ("jwt", re.compile(r"eyJ[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}")),
+    ("stripe", re.compile(r"[sr]k_(?:live|test)_[A-Za-z0-9]{10,}")),
+    ("huggingface", re.compile(r"hf_[A-Za-z0-9]{30,}")),
+    ("npm", re.compile(r"npm_[A-Za-z0-9]{30,}")),
+    ("bearer", re.compile(r"(?i)\bBearer\s+[A-Za-z0-9._~+/=-]{16,}")),
 )
+
+# `scheme://user:password@host`: only the userinfo is replaced, the host stays readable.
+_URL_USERINFO = re.compile(r"(?<=://)[^/\s:@]+:[^/\s@]+(?=@)")
+
+#: A dict key containing one of these (substring, case-insensitive) has its string value replaced.
+#: Numbers, booleans and None are kept so `max_tokens: 4096` and `input_tokens` survive; nested
+#: dicts and lists under such a key are still walked and redacted inside.
+_SENSITIVE_KEY = re.compile(
+    r"(?i)password|passwd|secret|token|api[_-]?key|authorization|credential|private[_-]?key")
 
 # `key = value`, `key: value`, `"key": "value"`, `KEY=value`. The key text and separator are kept;
 # only a value of eight or more characters is replaced. A value that is already a redaction marker
 # is left alone.
+# The suffix after the keyword is bounded ({0,40}) so a long run of a trigger word cannot make the
+# match backtrack quadratically. The value is a quoted string (spaces allowed, quotes kept) or a
+# bare run of eight or more characters.
 _KV = re.compile(
     r"""(?ix)
     (
-      (?:password|passwd|secret|api[_-]?key|access[_-]?token|auth[_-]?token)
-      [\w-]*
-      ["']?                  # closing quote of a JSON key
+      (?:password|passwd|secret|api[_-]?key|access[_-]?token|auth[_-]?token|refresh[_-]?token)
+      [\w-]{0,40}
+      \\?["']?              # closing quote of a JSON key (possibly escaped)
       \s*[:=]\s*
-      ["']?                  # opening quote of the value
+      (?:\\["'])?           # opening quote of a value inside an escaped JSON string
     )
     (?!\[redacted:)
-    ([^\s"',;]{8,})
+    (?:"(?P<dq>[^"\n]{8,})"|'(?P<sq>[^'\n]{8,})'|(?P<bare>[^\s"',;]{8,}))
     """)
+
+
+def _kv_sub(m: "re.Match") -> str:
+    mark = _MARK.format("secret")
+    if m.group("dq") is not None:
+        return m.group(1) + '"' + mark + '"'
+    if m.group("sq") is not None:
+        return m.group(1) + "'" + mark + "'"
+    return m.group(1) + mark
 
 
 def redact_text(text: str) -> str:
@@ -63,7 +88,8 @@ def redact_text(text: str) -> str:
         return text
     for kind, rx in _TOKEN_RULES:
         text = rx.sub(_MARK.format(kind), text)
-    return _KV.sub(lambda m: m.group(1) + _MARK.format("secret"), text)
+    text = _URL_USERINFO.sub(_MARK.format("url-credentials"), text)
+    return _KV.sub(_kv_sub, text)
 
 
 def redact(value):
@@ -78,6 +104,11 @@ def redact(value):
         out = {}
         for k, v in value.items():
             key = k if isinstance(k, str) else str(k)
-            out[key] = _MARK.format("forbidden-key") if key.lower() in FORBIDDEN_KEYS else redact(v)
+            if key.lower() in FORBIDDEN_KEYS:
+                out[key] = _MARK.format("forbidden-key")
+            elif isinstance(v, str) and _SENSITIVE_KEY.search(key):
+                out[key] = _MARK.format("secret-key")
+            else:
+                out[key] = redact(v)
         return out
     return value

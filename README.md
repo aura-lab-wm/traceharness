@@ -129,21 +129,27 @@ at `/app/capture` on the site, where you can open or delete any run.
 `--path DIR` adds a folder for one run. A missing or unreadable list allows nothing.
 
 **Redaction.** Before anything leaves your computer, API keys and tokens (Anthropic, OpenAI, OpenRouter,
-GitHub, AWS, Google, Slack, Supabase, TraceHarness), JWTs, private-key blocks and `password=`/`secret=`/`api_key=`
-style values are replaced by `[redacted:<kind>]`. Redaction is pattern-based, so read a run before you
-share it if it may hold something unusual. `traceharness capture push --dry-run` shows what would be sent
+GitHub, AWS, Google, Slack, Supabase, Stripe, Hugging Face, npm, TraceHarness), JWTs, `Bearer` tokens, the
+user:password part of URLs, private-key blocks, `password=`/`secret=`/`api_key=`/`refresh_token=` style
+values, and the string value of any JSON key whose name contains password, secret, token, api key,
+authorization or credential are replaced by `[redacted:<kind>]`. Redaction is pattern-based and cannot
+know every secret format (a password written as plain prose, or an unusual token shape, passes through),
+so read a run before you share it if it may hold something unusual. `traceharness capture push --dry-run` shows what would be sent
 without sending it. A run over 4 MiB is skipped and reported.
 
 **Live view (optional).** `traceharness link --member` opens an outbound connection with your sign-in so the
-site can show your own live sessions in your own room. It opens no port, it only lets the site watch,
-and it refuses `--accept-commands`.
+site watch your own room. It opens no port, it only lets the site watch, it refuses `--accept-commands`,
+and the runner itself refuses `run` and serves no run directory (`live`/`tail`) in this mode. Live view of
+captured sessions is not implemented yet: for now the stored copies on `/app/capture` are what you see.
 
 **How to stop.**
 
 ```bash
 traceharness logout            # revokes this computer's token and deletes it; sends nothing afterwards
-traceharness capture --pause   # the running watcher stops capturing (--resume undoes it)
+traceharness capture --pause   # the watcher and `capture push` (so the Claude Code hook) stop (--resume undoes it)
 ```
+
+The Claude Code hook is governed by the capture allow-list, your sign-in and `--pause`.
 
 You can also revoke a token from `/app/capture`, and delete uploaded runs there at any time.
 

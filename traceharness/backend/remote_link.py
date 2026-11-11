@@ -355,13 +355,22 @@ def start_run(args: dict, env=None, create=None):
     return scrub_obj(public, [key])
 
 
-def local_dispatch(runs_root: str, start=None, secrets=()):
+def local_dispatch(runs_root: str, start=None, secrets=(), accept_commands: bool = True,
+                   member: bool = False):
+    """``accept_commands=False`` builds a watch-only dispatch: MUTATE names are refused here, on the
+    runner, whatever the hub sends. ``member=True`` additionally refuses ``live`` and ``tail``: a
+    member link serves nothing from the lab's run directories (captured sessions are private and
+    live view of them is not implemented yet)."""
     starter = start if start is not None else start_run
 
     def dispatch(name, args):
         args = args or {}
         if name in CAPTURE_COMMANDS:
             raise RemoteError("Live capture starts on this machine, and only after you confirm it there.")
+        if name in MUTATE and not accept_commands:
+            raise RemoteError("Not allowed.")
+        if member and name in ("live", "tail"):
+            raise RemoteError("Not allowed.")
         if name == "catalog":
             from traceharness.core.blocks import catalog_public
             return {"presets": catalog_public()}
@@ -389,7 +398,7 @@ def local_dispatch(runs_root: str, start=None, secrets=()):
     return dispatch
 
 
-def _runner_on_command(frame: dict, dispatch, send, secrets) -> None:
+def _runner_on_command(frame: dict, dispatch, send, secrets, accept_commands: bool = True) -> None:
     if contains_forbidden(frame):
         send(_error(_fresh_id(), "Refused."))
         return
@@ -398,6 +407,9 @@ def _runner_on_command(frame: dict, dispatch, send, secrets) -> None:
     fid = _clean_id(frame.get("id"))
     if name in CAPTURE_COMMANDS:
         send(_error(fid, "Live capture starts on this machine, and only after you confirm it there."))
+        return
+    if name in MUTATE and accept_commands is not True:
+        send(_error(fid, "Not allowed."))
         return
     args = payload.get("args") if isinstance(payload.get("args"), dict) else {}
     try:
@@ -787,7 +799,7 @@ def dial_runner(url: str, token: str, accept_commands: bool, dispatch, secrets=(
                 if frame is None:
                     break
                 if isinstance(frame, dict) and frame.get("kind") == "command":
-                    _runner_on_command(frame, dispatch, link.send, secrets)
+                    _runner_on_command(frame, dispatch, link.send, secrets, accept_commands is True)
                 else:
                     link.inbox.put(frame)
         except Exception as exc:
@@ -892,7 +904,7 @@ def link_main(argv: list[str]) -> int:
             print(token, file=sys.stderr)
             return 1
         try:
-            return run_forever(url, token, accept_commands=False)
+            return run_forever(url, token, accept_commands=False, member=True)
         except RemoteError as exc:
             print(f"could not link: {scrub_text(str(exc), [token])} "
                   f"(is the sign-in still valid? try `traceharness whoami`)", file=sys.stderr)
@@ -910,13 +922,13 @@ def link_main(argv: list[str]) -> int:
     return run_forever(args.url, token, accept_commands=args.accept_commands)
 
 
-def run_forever(url: str, token: str, accept_commands: bool) -> int:
+def run_forever(url: str, token: str, accept_commands: bool, member: bool = False) -> int:
     from traceharness.backend.paths import RUNS_ROOT
     secrets = [token]
     key = os.environ.get("OPENROUTER_API_KEY") or ""
     if key:
         secrets.append(key)
-    dispatch = local_dispatch(RUNS_ROOT, secrets=secrets)
+    dispatch = local_dispatch(RUNS_ROOT, secrets=secrets, accept_commands=accept_commands, member=member)
     link = dial_runner(url, token, accept_commands, dispatch, secrets)
     try:
         while not link.stopped.wait(1):
