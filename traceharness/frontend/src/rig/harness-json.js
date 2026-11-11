@@ -23,7 +23,7 @@ export function prepareHarnessJSON(value) {
       const keys = Object.keys(item).filter((key) => item[key] !== undefined)
       output = keys.length ? '{\n' + keys.map((key) => {
         let child = item[key]
-        if (secretFields.has(key.toLowerCase().replace(/[^a-z0-9]/g, '')) && child != null) { child = '[REDACTED]'; redactions++ }
+        if (secretFields.has(key.toLowerCase().replace(/[^a-z0-9]/g, '')) && typeof child === 'string') { child = '[REDACTED]'; redactions++ }
         return inner + JSON.stringify(key) + ': ' + encode(child, depth + 1)
       }).join(',\n') + '\n' + pad + '}' : '{}'
     }

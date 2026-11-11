@@ -114,3 +114,11 @@ it('redacts generic token and key credential fields while retaining token-budget
  const file=JSON.parse(prepareHarnessJSON({token:'private-token',key:'private-key',max_tokens_per_call:123}).json)
  expect(file).toEqual({token:'[REDACTED]',key:'[REDACTED]',max_tokens_per_call:123})
 })
+
+it('preserves tool argument schemas and numeric settings named key or token while redacting credential strings', () => {
+  const value = { tools: [{ name: 'get_key', parameters: { properties: { key: { type: 'string', description: 'Repository key' }, token: { type: 'string' } } } }], future: { key: 2, token: { limit: 3 } }, private_key: 'private-credential' }
+  const file = JSON.parse(prepareHarnessJSON(value).json)
+  expect(file.tools).toEqual(value.tools)
+  expect(file.future).toEqual(value.future)
+  expect(file.private_key).toBe('[REDACTED]')
+})
