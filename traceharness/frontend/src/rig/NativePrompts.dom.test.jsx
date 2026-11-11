@@ -7,6 +7,7 @@ import { act, cleanup, fireEvent, render, screen, waitFor, within } from '@testi
 import { NativePrompts } from './NativePrompts'
 import { baselineProfile } from '../native-prompts-contract'
 import { nativeDraftForProfile } from './views/native-prompts-state'
+import { configurationFor } from './views/harness-composer-state'
 import { nativeInventoryFixture, nativeResponseFixture, nativeRuntimeFixture, testDigest } from '../../test/native-prompts-fixture'
 
 let latest
@@ -21,6 +22,73 @@ function Editor({ inventory = nativeInventoryFixture(), execution = true, initia
 const enable = () => fireEvent.click(screen.getByRole('checkbox', { name: 'Use this native prompt profile for the run' }))
 const select = (title) => fireEvent.click(screen.getByRole('checkbox', { name: 'Select prompt ' + title }))
 const counts = () => screen.getByLabelText('Prompt inclusion counts').textContent
+
+describe('draft editing independent of run application', () => {
+  it('keeps an unapplied preview while toggling run application', () => {
+    render(<Editor />)
+    fireEvent.change(screen.getByRole('textbox', { name: 'Replacement text' }), { target: { value: 'Still a preview' } })
+    enable()
+    expect(screen.getByRole('textbox', { name: 'Replacement text' }).value).toBe('Still a preview')
+    expect(latest).toMatchObject({ enabled: true, profile: { overrides: [] } })
+  })
+  it('cancels an in-flight replacement if the run-application choice changes', async () => {
+    const inventory = nativeInventoryFixture(), initial = { ...nativeDraftForProfile(baselineProfile(inventory)), enabled: false }
+    const digest = crypto.subtle.digest.bind(crypto.subtle); let finish
+    const spy = vi.spyOn(crypto.subtle, 'digest').mockImplementationOnce(() => new Promise(resolve => { finish = resolve }))
+    try {
+      render(<Editor inventory={inventory} initial={initial} />)
+      fireEvent.change(screen.getByRole('textbox', { name: 'Replacement text' }), { target: { value: 'Pending replacement' } })
+      fireEvent.click(screen.getByRole('button', { name: 'Apply replacement' }))
+      enable()
+      await act(async () => finish(await digest('SHA-256', new TextEncoder().encode('Pending replacement'))))
+      expect(latest).toMatchObject({ enabled: true, profile: { overrides: [] } })
+    } finally { spy.mockRestore() }
+  })
+  it('retains an unapplied replacement when only bulk selection changes', () => {
+    render(<Editor />)
+    fireEvent.change(screen.getByRole('textbox', { name: 'Replacement text' }), { target: { value: 'Unapplied preview text' } })
+    select('First fixture prompt')
+    expect(screen.getByRole('textbox', { name: 'Replacement text' }).value).toBe('Unapplied preview text')
+    expect(screen.getByText(/Unsaved replacement preview/)).toBeTruthy()
+    expect(latest).toBeNull()
+  })
+  it('edits a replacement while excluded and dispatches it only after explicit opt-in', async () => {
+    render(<Editor />)
+    const text = screen.getByRole('textbox', { name: 'Replacement text' })
+    expect(text.disabled).toBe(false)
+    fireEvent.change(text, { target: { value: 'Independent draft replacement' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Apply replacement' }))
+    await waitFor(() => expect(latest?.profile.overrides[0]?.replacement_sha256).toBe(testDigest('Independent draft replacement')))
+    expect(latest.enabled).toBe(false)
+    const config = () => configurationFor({ selection: 'native:native-claude-code', native_prompt_drafts: { 'native-claude-code': latest }, native_prompts: { 'native-claude-code': 'Separate overlay' }, limits: {}, model_id: '', task_id: '' }, {})
+    expect(config().version).toBe(1); expect(config()).not.toHaveProperty('native_prompt_profile')
+    enable(); expect(config()).toMatchObject({ version: 2, prompt: 'Separate overlay', native_prompt_profile: { overrides: [{ replacement_utf8: 'Independent draft replacement' }] } })
+    enable(); expect(config()).not.toHaveProperty('native_prompt_profile'); expect(latest.profile.overrides[0].replacement_utf8).toBe('Independent draft replacement')
+  })
+  it('creates valid sets and bulk edits without silently enabling a profile', () => {
+    render(<Editor />); select('First fixture prompt')
+    fireEvent.change(screen.getByLabelText('Prompt set name'), { target: { value: 'Draft set' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Save selection as set' }))
+    expect(latest).toMatchObject({ enabled: false, profile: { schema_version: 1 }, remembered: {}, sets: [{ name: 'Draft set', block_ids: ['first'] }] })
+    fireEvent.click(screen.getByRole('button', { name: 'Disable selected prompts' }))
+    expect(latest).toMatchObject({ enabled: false, profile: { overrides: [{ block_id: 'first', action: 'disable' }] } })
+  })
+  it('retains external execution locks while the run profile is off', () => {
+    render(<Editor disabled />)
+    expect(screen.getByRole('textbox', { name: 'Replacement text' }).disabled).toBe(true)
+    expect(screen.getByRole('button', { name: 'Disable prompt', exact: true }).disabled).toBe(true)
+    expect(screen.getByRole('checkbox', { name: 'Select prompt First fixture prompt' }).disabled).toBe(true)
+  })
+  it('shows a compact filename while preserving full Codex identity and provenance', () => {
+    const inventory = nativeInventoryFixture(); inventory.runtime_id = 'native-codex'
+    const title = 'on_request_rule_request_permission.md · prompts/templates/permissions/approval_policy/on_request_rule_request_permission.md'
+    inventory.blocks[0].title = title; render(<Editor inventory={inventory} />)
+    const inspector = within(screen.getByRole('region', { name: 'Prompt inspector' }))
+    expect(inspector.getByRole('heading', { level: 3 }).textContent).toBe('on_request_rule_request_permission.md')
+    expect(inspector.getByText(title)).toBeTruthy()
+    expect(screen.getByRole('checkbox', { name: 'Select prompt ' + title })).toBeTruthy()
+  })
+})
 
 it('discloses native Codex space padding and blocks over-capacity edits', () => {
   const inventory = nativeInventoryFixture(); inventory.runtime_id = 'native-codex'
