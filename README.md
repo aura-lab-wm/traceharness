@@ -113,6 +113,10 @@ claude plugin marketplace add aura-lab-wm/traceharness
 claude plugin install traceharness-capture@traceharness
 ```
 
+The plugin runs `traceharness capture push --source claude_code --session-file <transcript> --quiet` when a session
+ends (SessionEnd hook, 60 second limit). It exits 0 and prints nothing in every case, including when
+`traceharness` is not installed or you are not signed in.
+
 **What is recorded.** Your coding-agent sessions: the ordered list of actions (reads, edits, commands, test
 runs, model replies), a summary, and the final patch. After upload they appear under *Connect this computer*
 at `/app/capture` on the site, where you can open or delete any run.
