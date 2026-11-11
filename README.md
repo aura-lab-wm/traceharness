@@ -87,6 +87,62 @@ Both binds are `127.0.0.1`-only by default. For access from another machine on
 the LAN, set `TRACEHARNESS_ALLOWED_HOSTS` to the extra Host header(s) the backend
 should accept (defaults: `127.0.0.1`, `localhost`, `[::1]`).
 
+## Record your own sessions on traceharness.dev
+
+Sign in on [traceharness.dev](https://traceharness.dev), then connect the computer your coding agents run on.
+This works for Claude Code, Codex, Gemini CLI, Qwen Code and Cursor. It installs only the small command-line
+part (no web server, no FastAPI), and you can check each step before it does anything:
+
+```bash
+pipx install git+https://github.com/aura-lab-wm/traceharness
+traceharness login
+traceharness capture --watch --sync
+```
+
+`traceharness login` prints a short code and the address `https://traceharness.dev/device`. Open it in your
+browser while signed in, check the code matches, and press Approve. The command then saves a token in
+`~/.traceharness/credentials.json` (owner-only, mode 0600). No browser is opened for you, and the token is only
+ever sent in an `Authorization` header to the site you signed in to. `traceharness whoami` shows which
+account this computer uses.
+
+Claude Code shortcut (needs the install above). It sends each session when it ends and never blocks or fails a
+session:
+
+```bash
+claude plugin marketplace add aura-lab-wm/traceharness
+claude plugin install traceharness-capture@traceharness
+```
+
+**What is recorded.** Your coding-agent sessions: the ordered list of actions (reads, edits, commands, test
+runs, model replies), a summary, and the final patch. After upload they appear under *Connect this computer*
+at `/app/capture` on the site, where you can open or delete any run.
+
+**Recording starts on your computer, after you type yes.** `--watch` and `--backfill` ask
+`Type yes to start:` in the terminal. The website cannot start capture, and a linked page cannot either.
+
+**The allow-list.** Only sessions that belong to folders you allowed are ever read or sent. The list lives in
+`~/.traceharness/capture.json` and is edited from the Capture page of the local console (`traceharness serve`);
+`--path DIR` adds a folder for one run. A missing or unreadable list allows nothing.
+
+**Redaction.** Before anything leaves your computer, API keys and tokens (Anthropic, OpenAI, OpenRouter,
+GitHub, AWS, Google, Slack, Supabase, TraceHarness), JWTs, private-key blocks and `password=`/`secret=`/`api_key=`
+style values are replaced by `[redacted:<kind>]`. Redaction is pattern-based, so read a run before you
+share it if it may hold something unusual. `traceharness capture push --dry-run` shows what would be sent
+without sending it. A run over 4 MiB is skipped and reported.
+
+**Live view (optional).** `traceharness link --member` opens an outbound connection with your sign-in so the
+site can show your own live sessions in your own room. It opens no port, it only lets the site watch,
+and it refuses `--accept-commands`.
+
+**How to stop.**
+
+```bash
+traceharness logout            # revokes this computer's token and deletes it; sends nothing afterwards
+traceharness capture --pause   # the running watcher stops capturing (--resume undoes it)
+```
+
+You can also revoke a token from `/app/capture`, and delete uploaded runs there at any time.
+
 ## Local server security
 
 The local server binds to `127.0.0.1` by default and now enforces two checks in front of

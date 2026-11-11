@@ -845,13 +845,60 @@ def dial_web(url: str) -> _Link:
     return link
 
 
+def member_link_target() -> tuple:
+    """(wss url, capture token) from the saved sign-in, or (None, message) when not signed in.
+
+    The URL is derived from the URL saved at login: https becomes wss, and http on a loopback host
+    (a local dev site) becomes ws, which _open_tcp only dials on loopback.
+    """
+    from traceharness.capture.remote import load_credentials, LOGIN_HINT
+    creds = load_credentials()
+    if not creds:
+        return None, f"not signed in: {LOGIN_HINT} first"
+    parsed = urllib.parse.urlsplit(creds["url"])
+    scheme = "wss" if parsed.scheme == "https" else "ws"
+    url = urllib.parse.urlunsplit((scheme, parsed.netloc, parsed.path.rstrip("/") + "/api/remote", "", ""))
+    if scheme == "wss":
+        err = check_outgoing_url(url)
+        if err:
+            return None, err
+    return url, creds["token"]
+
+
 def link_main(argv: list[str]) -> int:
     import argparse
     import sys
-    parser = argparse.ArgumentParser(prog="traceharness link")
-    parser.add_argument("--url", required=True)
+    parser = argparse.ArgumentParser(
+        prog="traceharness link",
+        description="Dial out to a TraceHarness site so its pages can follow this machine. "
+                    "It does not open a port.",
+        epilog="--member uses the sign-in from `traceharness login` (a live view of your own sessions "
+               "in your own room); without it, --url and TRACEHARNESS_LINK_TOKEN link a lab runner.")
+    parser.add_argument("--url", default=None, help="wss URL of the site's /api/remote (not used with --member)")
+    parser.add_argument("--member", action="store_true",
+                        help="link with your saved sign-in (`traceharness login`) to your own room")
     parser.add_argument("--accept-commands", action="store_true")
     args = parser.parse_args(argv)
+    if args.member:
+        if args.accept_commands:
+            print("--accept-commands is not allowed with --member: a member link only lets the site watch.",
+                  file=sys.stderr)
+            return 2
+        if args.url:
+            print("--url is not used with --member: the site comes from your saved sign-in.", file=sys.stderr)
+            return 2
+        url, token = member_link_target()
+        if url is None:
+            print(token, file=sys.stderr)
+            return 1
+        try:
+            return run_forever(url, token, accept_commands=False)
+        except RemoteError as exc:
+            print(f"could not link: {scrub_text(str(exc), [token])} "
+                  f"(is the sign-in still valid? try `traceharness whoami`)", file=sys.stderr)
+            return 1
+    if not args.url:
+        parser.error("--url is required (or use --member after `traceharness login`)")
     token = os.environ.get("TRACEHARNESS_LINK_TOKEN") or ""
     if len(token) < 16:
         print("TRACEHARNESS_LINK_TOKEN is missing.", file=sys.stderr)
