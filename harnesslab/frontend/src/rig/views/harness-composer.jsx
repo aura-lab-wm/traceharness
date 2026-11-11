@@ -2,6 +2,7 @@ import { useEffect, useId, useMemo, useRef, useState } from 'react'
 import { api, IS_MEMBER } from '../../api'
 import { requireStored, encodeMemberJSON } from '../../member-api'
 import { runnerRequest, runnerCatalog, decodeRunnerArtifact, RUNNER_ARTIFACT_NAMES, UNAVAILABLE_RUNNER } from '../../runner-api'
+import { taskCompatibility } from '../../runner-compatibility'
 import { ByteMeter, NumericField, ToolChips } from '../harnessWorkspace'
 import { fieldIssues, numberIssue } from '../harnessFields'
 import { EvidenceOrigin } from '../shallowEvidence'
@@ -112,8 +113,8 @@ export function HarnessComposer({ args = [] }) {
   const fixedPrompt = card ? fixedDrafts[card.id]?.prompt ?? card.prompt : ''
   const configuration = configurationFor(state, { card, runtime, fixedPrompt })
   const configurationKey = jsonKey(configuration)
-  const currentConfiguration = useRef(configurationKey)
-  currentConfiguration.current = configurationKey
+  const currentConfiguration = useRef(null)
+  currentConfiguration.current = { key: configurationKey, catalog, revision: catalogRevision }
   const checkpointComparison = useMemo(() => {
     const entry = checkpoints.find((row) => row.id === comparedCheckpoint)
     if (!entry) return null
@@ -125,23 +126,28 @@ export function HarnessComposer({ args = [] }) {
   const tools = [...new Set(cards.flatMap((c) => c.tools || []))]
   const model = catalog.models.find((m) => m.id === state.model_id)
   const task = catalog.tasks.find((t) => t.id === state.task_id)
-  const models = catalog.models.filter((m) => !runtime?.available || !Array.isArray(runtime?.model_ids) || runtime.model_ids.includes(m.id))
-  const selectedModelAllowed = Array.isArray(runtime?.model_ids) && runtime.model_ids.includes(state.model_id)
+  const compatibility = taskCompatibility(task, runtime, state.model_id)
+  const availableModelIds = task?.model_ids_by_runtime ? compatibility.modelIds : runtime?.model_ids
+  const models = catalog.models.filter((m) => !runtime?.available || !Array.isArray(availableModelIds) || availableModelIds.includes(m.id))
+  const selectedRuntimeModelAllowed = Array.isArray(runtime?.model_ids) && runtime.model_ids.includes(state.model_id)
+  const selectedModelAllowed = !!task && !compatibility.reason && compatibility.modelIds.includes(state.model_id)
   const editLocked = saving || launching || importing || !!openingJob
   const jobActive = job && !terminal.has(job.status)
   const blocksIssues = native || fixed ? [] : fieldIssues(state.blocks)
   const readyIssues = [
+    ...(catalogLoading ? ['Checking current task and model compatibility.'] : []),
     ...(!catalog.execution_available || !catalog.runner.available ? [catalog.runner.message || 'No execution service is connected.'] : []),
     ...(!runtime?.available ? [runtime?.reason || 'This runtime is not available on the connected runner.'] : []),
-    ...(!model ? ['Select a model.'] : runtime?.available && !selectedModelAllowed ? ['The selected model is not verified for this runtime. Choose a supported model.'] : []),
+    ...(!model ? ['Select a model.'] : runtime?.available && !selectedRuntimeModelAllowed ? ['The selected model is not verified for this runtime. Choose a supported model.'] : []),
     ...(!task || !task.ready ? [task?.reason || 'Select a runnable task package. Recorded trajectories alone cannot be run.'] : []),
-    ...(task?.ready && Array.isArray(task.runtime_ids) && !task.runtime_ids.includes(configuration.runtime_id) ? ['This task is not registered for the selected runtime. Choose a supported task or harness.'] : []),
+    ...(task?.ready && runtime?.available && compatibility.reason ? [compatibility.reason] : []),
     ...(!prompt.trim() ? [native ? 'Enter instructions for this task.' : 'Enter a standing prompt.'] : []),
     ...blocksIssues,
     ...LIMIT_FIELDS.flatMap((field) => { const issue = numberIssue(configuration.limits[field.key], field); return issue ? [`${native && field.key === 'max_steps' ? 'Model request cap' : field.label}: ${issue}`] : [] }),
     ...(fixed && (!card || new TextEncoder().encode(prompt).length > card.cap_bytes) ? ['The fixed prompt is over its byte cap.'] : []),
   ]
-  const reviewed = preflight?.key === configurationKey && preflight.result?.ok === true && preflight.result.issues.length === 0
+  const currentReview = preflight?.key === configurationKey && preflight.catalog === catalog && preflight.revision === catalogRevision && !catalogLoading
+  const reviewed = currentReview && preflight.result?.ok === true && preflight.result.issues.length === 0
 
   useEffect(() => {
     const media = window.matchMedia?.('(max-width: 760px)')
@@ -194,7 +200,7 @@ export function HarnessComposer({ args = [] }) {
   }, [accountRevision])
   useEffect(() => {
     setPreflight(null); setChecking(false); preflightRequest.current?.abort(); retry.current = null
-  }, [configurationKey])
+  }, [configurationKey, catalog, catalogRevision])
   useEffect(() => {
     if (native || fixed || !IS_MEMBER || blocksIssues.length) { setPreview(null); setPreviewError(''); return }
     let live = true
@@ -387,17 +393,18 @@ export function HarnessComposer({ args = [] }) {
   }
   async function reviewRun() {
     if (editLocked || readyIssues.length || checking) return
-    const snapshot = configurationKey
+    const snapshot = currentConfiguration.current
+    const stillCurrent = () => currentConfiguration.current.key === snapshot.key && currentConfiguration.current.catalog === snapshot.catalog && currentConfiguration.current.revision === snapshot.revision
     const controller = new AbortController(); preflightRequest.current?.abort(); preflightRequest.current = controller
     setChecking(true); setError(''); setPreflight(null)
     try {
       const result = await runnerRequest('/preflight', { method: 'POST', body: { configuration }, signal: controller.signal })
-      if (active.current && currentConfiguration.current === snapshot && !controller.signal.aborted) {
+      if (active.current && stillCurrent() && !controller.signal.aborted) {
         if (typeof result.ok !== 'boolean' || !Array.isArray(result.issues) || result.issues.some((s) => typeof s !== 'string') || result.ok && !/^[a-f0-9]{64}$/.test(result.manifest_sha256)) throw new Error('The runner did not confirm a complete preflight.')
-        setPreflight({ key: snapshot, result })
+        setPreflight({ ...snapshot, result })
       }
-    } catch (failure) { if (active.current && currentConfiguration.current === snapshot && !controller.signal.aborted) setError(failure.message) }
-    finally { if (active.current && currentConfiguration.current === snapshot && preflightRequest.current === controller) setChecking(false) }
+    } catch (failure) { if (active.current && stillCurrent() && !controller.signal.aborted) setError(failure.message) }
+    finally { if (active.current && stillCurrent() && preflightRequest.current === controller) setChecking(false) }
   }
   async function run() {
     if (editLocked || !reviewed || readyIssues.length || !credential || expiryTime(credential.expires_at) <= Date.now() || launching || jobActive) return
@@ -559,13 +566,22 @@ export function HarnessComposer({ args = [] }) {
     ...library.map((r) => ({ value: 'saved:' + r.id, label: (r.prompt || '').replace(/\s+/g, ' ').slice(0, 72) || r.id, description: r.id, meta: `${r.tools?.length || 0} tools · ${r.max_steps} steps`, group: 'Saved configurations' })),
     ...cards.map((r) => ({ value: 'fixed:' + r.id, label: r.name + ' stand-in', description: 'TraceHarness preset · customize to edit its tools', meta: `${r.tools.length} tools · ${r.max_steps} steps`, group: 'Fixed starting points' })),
     ...runtimes.map((r) => ({ value: 'native:' + r.id, label: r.name, description: r.version ? `Native runtime · ${r.version}` : 'Native runtime · not connected', status: r.available ? 'Available' : 'Unavailable', group: 'Native agents' })),
-  ]
+  ].map((option) => {
+    if (!task) return option
+    const optionRuntime = catalog.runtimes.find((row) => row.id === (option.value.startsWith('native:') ? option.value.slice(7) : 'traceharness'))
+    return { ...option, status: taskCompatibility(task, optionRuntime, state.model_id).status }
+  })
   const modelOptions = models.map((m) => ({ value: m.id, label: m.name || m.id, description: `${m.id}${Number.isFinite(m.context_length) ? ' · ' + m.context_length.toLocaleString() + ' context' : ''}${Array.isArray(m.supported_parameters) && m.supported_parameters.includes('tools') ? ' · tools' : ''}`,
     meta: `${units(m.pricing?.prompt)} in / ${units(m.pricing?.completion)} out per 1M tokens`,
-    group: m.id.split('/')[0], status: runtime?.available && runtime.model_ids?.includes(m.id) ? 'Verified for runtime' : undefined }))
-  if (state.model_id && !modelOptions.some((m) => m.value === state.model_id)) modelOptions.unshift({ value: state.model_id, label: state.model_id, description: 'Saved selection is absent from this runtime’s model list', status: 'Unavailable' })
-  const taskOptions = catalog.tasks.map((t) => ({ value: t.id, label: t.title || t.id, description: t.repository || t.id,
-    meta: t.revision ? `Revision ${t.revision}` : 'Revision not verified', status: !t.ready ? 'Unavailable' : Array.isArray(t.runtime_ids) && !t.runtime_ids.includes(configuration.runtime_id) ? 'Different runtime' : 'Ready' }))
+    group: m.id.split('/')[0], status: !runtime?.available ? 'Draft only' : !task ? 'Choose a task' : taskCompatibility(task, runtime, m.id).reason ? 'Compatibility unreported' : 'Verified for task and runtime' }))
+  if (state.model_id && !modelOptions.some((m) => m.value === state.model_id)) modelOptions.unshift({ value: state.model_id, label: model?.name || state.model_id,
+    description: model ? compatibility.reason || 'The selected model is not verified for this runtime.' : 'Saved model is absent from the connected catalog', status: 'Unavailable for this selection', disabled: true })
+  const taskOptions = catalog.tasks.map((t) => {
+    const match = taskCompatibility(t, runtime, state.model_id)
+    return { value: t.id, label: t.title || t.id, description: t.repository || t.id,
+      meta: match.reason || (t.revision ? `Revision ${t.revision}` : 'Revision not verified'), status: match.status,
+      group: match.reason ? 'Requires another selection' : 'Compatible with this harness' }
+  }).sort((a, b) => Number(a.group === 'Requires another selection') - Number(b.group === 'Requires another selection'))
   if (state.task_id && !task) taskOptions.unshift({ value: state.task_id, label: state.task_id, description: 'Saved task is absent from the connected catalog', status: 'Unavailable' })
 
   return <div className="rg-dpad rg-harness rg-composer" data-el="harness-composer">
@@ -584,7 +600,7 @@ export function HarnessComposer({ args = [] }) {
     <div className="rg-composer-switch-policy"><label><input type="checkbox" checked={!!state.preserve_prompt} disabled={editLocked} onChange={(event) => setState((s) => ({ ...s, preserve_prompt: event.target.checked }))} />Keep prompt when switching harnesses</label><span>Each harness keeps its own draft. Tools and permissions stay with the selected engine.</span></div>
     </div>
     {configNotice && <div className="rg-note rg-composer-import-status" role="status"><p>{configNotice}</p>{undoConfiguration && <button className="rg-btn" disabled={editLocked} onClick={undoEditorChange}>Undo configuration change</button>}</div>}
-    {(model || task) && <details className="rg-composer-details"><summary>Selection details</summary><dl>{model && <><div><dt>Model</dt><dd>{model.id}</dd></div>{Number.isFinite(model.context_length) && <div><dt>Context window</dt><dd>{model.context_length.toLocaleString()} tokens</dd></div>}<div><dt>Runtime compatibility</dt><dd>{runtime?.available ? selectedModelAllowed ? 'Verified by the connected runtime' : 'Not verified for this runtime' : 'Not verified · connect a runtime before execution'}</dd></div></>}{task && <><div><dt>Repository</dt><dd>{task.repository || 'Not supplied'}</dd></div><div><dt>Revision</dt><dd>{task.revision || 'Not verified'}</dd></div>{(task.environment_digests?.[configuration.runtime_id] || task.environment_digest) && <div><dt>Environment</dt><dd>{task.environment_digests?.[configuration.runtime_id] || task.environment_digest}</dd></div>}{Array.isArray(task.runtime_ids) && <div><dt>Task runtimes</dt><dd>{task.runtime_ids.join(', ') || 'None registered'}</dd></div>}{task.reason && <div><dt>Task status</dt><dd>{task.reason}</dd></div>}</>}</dl></details>}
+    {(model || task) && <details className="rg-composer-details"><summary>Selection details</summary><dl>{model && <><div><dt>Model</dt><dd>{model.id}</dd></div>{Number.isFinite(model.context_length) && <div><dt>Context window</dt><dd>{model.context_length.toLocaleString()} tokens</dd></div>}<div><dt>Task/runtime compatibility</dt><dd>{selectedModelAllowed ? 'Verified for this task and runtime' : !task ? 'Choose a task to check this model' : compatibility.status}</dd></div></>}{task && <><div><dt>Repository</dt><dd>{task.repository || 'Not supplied'}</dd></div><div><dt>Revision</dt><dd>{task.revision || 'Not verified'}</dd></div>{(task.environment_digests?.[configuration.runtime_id] || task.environment_digest) && <div><dt>Environment</dt><dd>{task.environment_digests?.[configuration.runtime_id] || task.environment_digest}</dd></div>}{Array.isArray(task.runtime_ids) && <div><dt>Task runtimes</dt><dd>{task.runtime_ids.join(', ') || 'None registered'}</dd></div>}{task.reason && <div><dt>Task status</dt><dd>{task.reason}</dd></div>}</>}</dl></details>}
     {(storageError || accountError) && <div className="rg-note" role="alert">{storageError || accountError}{accountError && <><button className="rg-btn" onClick={() => setAccountRevision((n) => n + 1)}>Retry account data</button><a href="/login">Account</a></>}</div>}
     <div className="rg-composer-layout">
       <section className="rg-composer-editor" aria-label="Configuration editor">
@@ -614,13 +630,13 @@ export function HarnessComposer({ args = [] }) {
         <div><dt>Engine</dt><dd>{native ? runtime?.name || 'Native agent' : 'TraceHarness'}<small>{native ? 'Native runtime' : fixed ? `${card?.name || 'Selected'} stand-in` : 'Configurable engine'}</small></dd></div>
         <div><dt>Model</dt><dd>{state.model_id || 'Choose a model'}</dd></div><div><dt>Task</dt><dd>{task?.title || state.task_id || 'Choose a task'}{task?.revision && <small>{task.revision}</small>}</dd></div>
         <div><dt>Prompt</dt><dd>{new TextEncoder().encode(prompt).length.toLocaleString()} bytes · {configuration.prompt_mode}</dd></div>
-      </dl><fieldset className="rg-composer-limits" disabled={editLocked}><legend>Run limits</legend>{LIMIT_FIELDS.filter((field) => native || field.key !== 'max_steps').map((field) => <NumericField key={field.key} field={native && field.key === 'max_steps' ? { ...field, label: 'Model request cap' } : field} value={state.limits[field.key]} onChange={(value) => setState((s) => ({ ...s, limits: { ...s.limits, [field.key]: value } }))} />)}{native ? <p className="rg-small rg-mute">This cap counts model requests. Native tool actions are controlled by the runtime.</p> : <p className="rg-small rg-mute">{configuration.limits.max_steps} steps · set by this harness</p>}</fieldset><div className="rg-composer-readiness" aria-live="polite"><strong>{reviewed ? 'Configuration verified' : 'Before this can run'}</strong>{readyIssues.length ? <ul>{[...new Set(readyIssues)].map((issue) => <li key={issue}>{issue}</li>)}</ul> : !reviewed ? <p>Review the configuration with the runner before launching.</p> : <p>The server validated this exact configuration. Running may spend your OpenRouter credits.</p>}{!credential && credentialsAvailable && <p>Connect your OpenRouter key to run.</p>}{preflight?.key === configurationKey && preflight.result.issues.map((issue) => <p key={issue} role="alert">{issue}</p>)}</div>
+      </dl><fieldset className="rg-composer-limits" disabled={editLocked}><legend>Run limits</legend>{LIMIT_FIELDS.filter((field) => native || field.key !== 'max_steps').map((field) => <NumericField key={field.key} field={native && field.key === 'max_steps' ? { ...field, label: 'Model request cap' } : field} value={state.limits[field.key]} onChange={(value) => setState((s) => ({ ...s, limits: { ...s.limits, [field.key]: value } }))} />)}{native ? <p className="rg-small rg-mute">This cap counts model requests. Native tool actions are controlled by the runtime.</p> : <p className="rg-small rg-mute">{configuration.limits.max_steps} steps · set by this harness</p>}</fieldset><div className="rg-composer-readiness" aria-live="polite"><strong>{reviewed ? 'Configuration verified' : 'Before this can run'}</strong>{readyIssues.length ? <ul>{[...new Set(readyIssues)].map((issue) => <li key={issue}>{issue}</li>)}</ul> : !reviewed ? <p>Review the configuration with the runner before launching.</p> : <p>The server validated this exact configuration. Running may spend your OpenRouter credits.</p>}{!credential && credentialsAvailable && <p>Connect your OpenRouter key to run.</p>}{currentReview && preflight.result.issues.map((issue) => <p key={issue} role="alert">{issue}</p>)}</div>
       <div className="rg-composer-actions"><button className="rg-btn" onClick={reviewRun} disabled={editLocked || !!readyIssues.length || checking}>{checking ? 'Reviewing…' : 'Review run'}</button><button className="rg-btn pri" onClick={run} disabled={editLocked || !reviewed || !!readyIssues.length || !credential || !!jobActive}>{launching ? 'Starting…' : job && terminal.has(job.status) ? 'Run again' : 'Run'}</button>
 
 
       </div><p className="rg-small rg-mute">Selections stay in this account’s tab. Saving a harness does not run a model.</p>
 
-      {(catalogError || !catalog.runner.available) && <div className="rg-composer-service-note">{catalogError && <p role="alert">{catalogError}</p>}<button className="rg-btn" disabled={catalogLoading} onClick={() => setCatalogRevision((n) => n + 1)}>Refresh runner</button></div>}
+      <div className="rg-composer-service-note">{catalogError && <p role="alert">{catalogError}</p>}<button className="rg-btn" disabled={catalogLoading} onClick={() => setCatalogRevision((n) => n + 1)}>Refresh runner</button></div>
       </aside>
     </div>
     {showCheckpoints && <div id={instanceId + '-checkpoints'} className="rg-composer-checkpoints">
@@ -650,6 +666,7 @@ export function HarnessComposer({ args = [] }) {
         {job.manifest_sha256 && <p className="rg-small rg-mono">Configuration {job.manifest_sha256}</p>}{(job.issues || []).map((issue) => <p key={issue} role="alert">{issue}</p>)}{jobError && <p role="alert">{jobError}</p>}
         <div className="rg-row rg-wrap"><button className="rg-btn" disabled={launching || !!openingJob} onClick={() => refreshJob()}>Refresh status</button>{!terminal.has(job.status) && <button className="rg-btn" disabled={cancelling || job.cancellation_requested || !!openingJob} onClick={() => refreshJob(true)}>{cancelling ? 'Requesting cancellation…' : 'Cancel run'}</button>}</div>
         {job.usage && <><dl className="rg-composer-usage">{Object.entries(job.usage).filter(([, value]) => value != null).map(([name, value]) => <div key={name}><dt>{name.replaceAll('_', ' ')}</dt><dd>{name === 'cost_usd' ? '$' + value.toLocaleString(undefined, { maximumFractionDigits: 8 }) : value.toLocaleString()}</dd></div>)}</dl><p className="rg-small rg-mute">Only usage reported by the runner is shown. Missing token or cost totals are unconfirmed.</p></>}
+        {terminal.has(job.status) && job.usage?.cost_usd === undefined && <p className="rg-small" data-el="runner-cost-unknown">Cost unknown · the runner did not report a cost total.</p>}
         {job.artifacts?.length > 0 && <ul className="rg-composer-artifacts" aria-label="Run artifacts">{job.artifacts.map((artifact) => <li key={artifact.name}><div><strong>{artifact.name}</strong><span>{artifact.bytes.toLocaleString()} bytes · SHA-256 verified before download</span></div><button type="button" className="rg-btn" aria-label={'Download ' + artifact.name} disabled={!!downloadingArtifact} onClick={() => downloadArtifact(artifact)}>{downloadingArtifact === artifact.name ? 'Verifying…' : 'Download'}</button></li>)}</ul>}
       </div>
     </section>}

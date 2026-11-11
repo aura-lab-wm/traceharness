@@ -8,6 +8,7 @@ reference checks in an already trusted temporary source checkout.
 from __future__ import annotations
 import argparse
 import ast
+import copy
 import ctypes
 import hashlib
 import io
@@ -188,11 +189,177 @@ def validate_empty_netrc(baseline_raw, candidate_raw):
     return normalized
 
 
+def unique_node_path(root, expected):
+    """Locate a reviewed baseline node, never an agent-selected edit site."""
+    identity = ast_identity(expected)
+    paths = [path for path, node in node_paths(root) if ast_identity(node) == identity]
+    if len(paths) != 1:
+        raise ValueError('Reviewed task edit site is not unique.')
+    return paths[0]
+
+
+def replace_at_path(root, path, replacement):
+    if not path:
+        raise ValueError('Reviewed task cannot replace its whole source tree.')
+    parent = at_path(root, path[:-1])
+    if isinstance(path[-1], int):
+        parent[path[-1]] = replacement
+    else:
+        setattr(parent, path[-1], replacement)
+
+
+def validate_module_variants(baseline_raw, candidate_raw, variants):
+    """Compare with finite trusted AST edits; candidate nodes are never executed.
+
+    Only built-in validator functions supply variants. Task recipes cannot provide
+    source templates, transformation callbacks, or arbitrary replacement bodies.
+    """
+    baseline, _ = source_tree(baseline_raw)
+    candidate, normalized = source_tree(candidate_raw)
+    # TypeIgnore stores its line number as an AST field rather than a location
+    # attribute. Inserted repair lines may move a later unchanged annotation.
+    # Keep every annotation tag, but ignore these non-executable line positions.
+    for tree in (baseline, candidate):
+        for annotation in tree.type_ignores:
+            annotation.lineno = 0
+    candidate_id = ast_identity(candidate)
+    if candidate_id == ast_identity(baseline):
+        return normalized
+    for permitted in variants(baseline):
+        if candidate_id == ast_identity(permitted):
+            return normalized
+    raise EditContractError('Only the documented reviewed repair may change the module.')
+
+
+def validate_invalid_charset(baseline_raw, candidate_raw):
+    def variants(baseline):
+        for strip_name in ('items_to_strip', 'strip_chars'):
+            for punctuate in (False, True):
+                prepared = copy.deepcopy(baseline)
+                function = named_function(prepared, '_parse_content_type_header')
+                loops = [index for index, node in enumerate(function.body)
+                         if isinstance(node, ast.For) and isinstance(node.target, ast.Name)
+                         and node.target.id == 'param' and isinstance(node.iter, ast.Name)
+                         and node.iter.id == 'params']
+                if len(loops) != 1:
+                    raise ValueError('Reviewed parameter loop is not unique.')
+                for node in ast.walk(function):
+                    if isinstance(node, ast.Name) and node.id == 'items_to_strip':
+                        node.id = strip_name
+                if punctuate:
+                    document = function.body[0]
+                    if not (isinstance(document, ast.Expr) and isinstance(document.value, ast.Constant)
+                            and isinstance(document.value.value, str)):
+                        raise ValueError('Reviewed parameter parser docstring is missing.')
+                    document.value.value = document.value.value.replace('given header\n', 'given header.\n').replace(
+                        '         parameters\n', '         parameters.\n')
+                loop_index = loops[0]
+                for condition in ('param and "=" in param', '"=" in param', 'param and param.find("=") != -1'):
+                    changed = copy.deepcopy(prepared)
+                    loop = named_function(changed, '_parse_content_type_header').body[loop_index]
+                    guards = [node for node in ast.walk(loop) if isinstance(node, ast.If)
+                              and isinstance(node.test, ast.Name) and node.test.id == 'param']
+                    if len(guards) != 1:
+                        raise ValueError('Reviewed parameter guard is not unique.')
+                    guards[0].test = ast.parse(condition, mode='eval').body
+                    yield changed
+                for index in ('idx', 'index_of_equals'):
+                    for form in ('walrus', 'nested', 'guarded_find'):
+                        changed = copy.deepcopy(prepared)
+                        function = named_function(changed, '_parse_content_type_header')
+                        if form == 'walrus':
+                            source = (f'for param in params:\n    param = param.strip()\n'
+                                      f'    if param and ({index} := param.find("=")) != -1:\n'
+                                      f'        key = param[:{index}].strip({strip_name})\n'
+                                      f'        value = param[{index} + 1:].strip({strip_name})\n'
+                                      '        params_dict[key.lower()] = value\n')
+                        elif form == 'nested':
+                            source = (f'for param in params:\n    param = param.strip()\n    if param:\n'
+                                      f'        {index} = param.find("=")\n        if {index} != -1:\n'
+                                      f'            key = param[:{index}].strip({strip_name})\n'
+                                      f'            value = param[{index} + 1:].strip({strip_name})\n'
+                                      '            params_dict[key.lower()] = value\n')
+                        else:
+                            source = ('for param in params:\n    param = param.strip()\n'
+                                      '    if param and param.find("=") != -1:\n'
+                                      f'        {index} = param.find("=")\n'
+                                      f'        key = param[:{index}].strip({strip_name})\n'
+                                      f'        value = param[{index} + 1:].strip({strip_name})\n'
+                                      '        params_dict[key.lower()] = value\n')
+                        function.body[loop_index] = ast.parse(source).body[0]
+                        yield changed
+    return validate_module_variants(baseline_raw, candidate_raw, variants)
+
+
+def validate_partial_gzip_read(baseline_raw, candidate_raw):
+    def variants(baseline):
+        original = named_function(baseline, 'read', 'HTTPResponse')
+        path = unique_node_path(original, ast.parse('data = self._decode(data, decode_content, flush_decoder)').body[0])
+        if not isinstance(path[-1], int):
+            raise ValueError('Reviewed decoder call must be a statement.')
+        for condition in ('decode_content and len(self._decoded_buffer) > 0',
+                          'decode_content and self._decoded_buffer',
+                          'decode_content and len(self._decoded_buffer) != 0'):
+            for body in ('self._decoded_buffer.put(data)\n    data = self._decoded_buffer.get_all()',
+                         'data = self._decoded_buffer.get_all() + data'):
+                changed = copy.deepcopy(baseline)
+                function = named_function(changed, 'read', 'HTTPResponse')
+                statements = at_path(function, path[:-1])
+                statements.insert(path[-1] + 1, ast.parse('if ' + condition + ':\n    ' + body).body[0])
+                yield changed
+    return validate_module_variants(baseline_raw, candidate_raw, variants)
+
+
+def validate_unseekable_rewind(baseline_raw, candidate_raw):
+    def variants(baseline):
+        changed = copy.deepcopy(baseline)
+        function = named_function(changed, 'rewind_body')
+        condition = ast.parse('body_pos is _FAILEDTELL', mode='eval').body
+        path = unique_node_path(function, condition)
+        original_branch = at_path(function, path[:-1])
+        if not isinstance(original_branch, ast.If) or path[-1] != 'test':
+            raise ValueError('Reviewed rewind branch is missing.')
+        branch = ast.parse('if body_seek is None:\n    raise UnrewindableBodyError("body does not implement seek.")').body[0]
+        branch.orelse = original_branch.orelse
+        original_branch.orelse = [branch]
+        yield changed
+    return validate_module_variants(baseline_raw, candidate_raw, variants)
+
+
+def validate_invalid_fingerprint(baseline_raw, candidate_raw):
+    def variants(baseline):
+        original = named_function(baseline, 'assert_fingerprint')
+        path = unique_node_path(original, ast.parse('fingerprint_bytes = unhexlify(fingerprint.encode())').body[0])
+        import_node = ast.parse('from binascii import unhexlify').body[0]
+        import_path = unique_node_path(baseline, import_node)
+        if len(import_path) != 2 or import_path[0] != 'body' or not isinstance(import_path[1], int):
+            raise ValueError('Reviewed fingerprint import is missing.')
+        for name in ('e', 'error', 'exc'):
+            for message in (name, 'str(' + name + ')'):
+                for combined in (False, True):
+                    changed = copy.deepcopy(baseline)
+                    function = named_function(changed, 'assert_fingerprint')
+                    replacement = ast.parse(
+                        'try:\n    fingerprint_bytes = unhexlify(fingerprint.encode())\n'
+                        'except BinasciiError as ' + name + ':\n    raise SSLError(' + message + ') from ' + name).body[0]
+                    replace_at_path(function, path, replacement)
+                    if combined:
+                        changed.body[import_path[1]] = ast.parse('from binascii import Error as BinasciiError, unhexlify').body[0]
+                    else:
+                        changed.body.insert(import_path[1], ast.parse('from binascii import Error as BinasciiError').body[0])
+                    yield changed
+    return validate_module_variants(baseline_raw, candidate_raw, variants)
+
+
 CONTRACTS = {
     'requests-jsondecode-reduce-v1': ('src/requests/exceptions.py', validate_json_reduce),
     'requests-unicode-length-v1': ('src/requests/utils.py', validate_unicode_length),
     'requests-leading-slashes-v1': ('src/requests/adapters.py', validate_leading_slashes),
     'requests-empty-netrc-v1': ('src/requests/utils.py', validate_empty_netrc),
+    'requests-invalid-charset-v1': ('src/requests/utils.py', validate_invalid_charset),
+    'urllib3-partial-gzip-read-v1': ('src/urllib3/response.py', validate_partial_gzip_read),
+    'urllib3-unseekable-rewind-v1': ('src/urllib3/util/request.py', validate_unseekable_rewind),
+    'urllib3-invalid-fingerprint-v1': ('src/urllib3/util/ssl_.py', validate_invalid_fingerprint),
 }
 
 

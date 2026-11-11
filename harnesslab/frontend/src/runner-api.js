@@ -96,6 +96,20 @@ export function runnerCatalog(data) {
     || ['runtimes', 'models', 'tasks'].some((key) => new Set(data[key].map((r) => r.id)).size !== data[key].length)) {
     throw new Error('The runner catalog is incomplete. Execution remains unavailable.')
   }
+  const runtimeById = new Map(data.runtimes.map((row) => [row.id, row]))
+  const modelIds = new Set(data.models.map((row) => row.id))
+  for (const task of data.tasks) {
+    if (task.model_ids_by_runtime === undefined) continue
+    const pairs = task.model_ids_by_runtime
+    if (!pairs || typeof pairs !== 'object' || Array.isArray(pairs) || !Array.isArray(task.runtime_ids)
+      || Object.keys(pairs).length !== task.runtime_ids.length || Object.keys(pairs).some((id) => !task.runtime_ids.includes(id))
+      || task.runtime_ids.some((id) => !Object.hasOwn(pairs, id) || !Array.isArray(pairs[id]) || pairs[id].length > 2000
+        || new Set(pairs[id]).size !== pairs[id].length || pairs[id].some((model) => !text(model) || !modelIds.has(model)
+          || !runtimeById.get(id)?.available || !runtimeById.get(id)?.model_ids?.includes(model)))
+      || task.ready !== Object.values(pairs).some((ids) => ids.length > 0)) {
+      throw new Error('The runner catalog is incomplete. Execution remains unavailable.')
+    }
+  }
   return data
 }
 

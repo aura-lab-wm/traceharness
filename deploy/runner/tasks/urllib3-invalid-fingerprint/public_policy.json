@@ -1,0 +1,9 @@
+{
+  "policy_version": 1,
+  "scope": "This curated real upstream task only; other tasks have independent reviewed policies.",
+  "editable_file": "src/urllib3/util/ssl_.py",
+  "permitted_change": "Only add `from binascii import Error as BinasciiError` immediately before the existing unhexlify import, or combine it as `from binascii import Error as BinasciiError, unhexlify`. In assert_fingerprint, wrap only the existing fingerprint_bytes = unhexlify(fingerprint.encode()) assignment in try/except BinasciiError. Name the caught exception e, error or exc; raise SSLError with that exception or str(exception), explicitly chained `from` the same exception. Preserve the rest of the entire module AST. No broad exception handler, validation bypass, alternate import or additional call is permitted.",
+  "source_encoding": "UTF-8, optional UTF-8 BOM; accepted source normalized to UTF-8.",
+  "extra_files": "New workspace files are excluded from pristine grading reconstruction.",
+  "protected_files": "Every other existing file, including generated version metadata and public tests, must remain byte-identical. No unrelated imports, functions, decorators, defaults or executable changes."
+}

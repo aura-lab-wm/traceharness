@@ -1,0 +1,43 @@
+{
+  "id": "urllib3-partial-gzip-read",
+  "repository": "https://github.com/urllib3/urllib3",
+  "revision": "98a60f9c26a4d64cf18c7e004b9adda4303bc28c",
+  "archive_url": "https://codeload.github.com/urllib3/urllib3/tar.gz/98a60f9c26a4d64cf18c7e004b9adda4303bc28c",
+  "archive_sha256": "63a7ce0f835b8936566715951c8d5c826128ab294b09f3b000769aa2e9ec44ad",
+  "archive_prefix": "urllib3-98a60f9c26a4d64cf18c7e004b9adda4303bc28c",
+  "reference_revision": "54b6f7eb0784a3e1e76e763c359d058363195319",
+  "version": 1,
+  "title": "urllib3: preserve decoded bytes after a partial read",
+  "issue_url": "https://github.com/urllib3/urllib3/issues/3636",
+  "reference_source_url": "https://raw.githubusercontent.com/urllib3/urllib3/54b6f7eb0784a3e1e76e763c359d058363195319/src/urllib3/response.py",
+  "reference_source_sha256": "e54a78412b2451dcef4c8505c1de0dbe7efa0adb460ac75c8a9e31a66af9dfff",
+  "license": "MIT; original LICENSE.txt retained",
+  "visible_test_command": "PYTHONPATH=src python -m unittest discover -s public_tests -v",
+  "public_test_filename": "test_urllib3_partial_gzip_read.py",
+  "allowed_source_prefix": "src/urllib3/",
+  "hidden_checks": "checks.py",
+  "grading_timeout_seconds": 45,
+  "expected_checks": 4,
+  "edit_contract": {
+    "kind": "urllib3-partial-gzip-read-v1",
+    "path": "src/urllib3/response.py",
+    "baseline_sha256": "410fd0dbe9767b100391aad3fa68b6a51b012d20516fd274059af86294a7035d"
+  },
+  "provenance_details": {
+    "reference_revision": "54b6f7eb0784a3e1e76e763c359d058363195319",
+    "reference_source_url": "https://raw.githubusercontent.com/urllib3/urllib3/54b6f7eb0784a3e1e76e763c359d058363195319/src/urllib3/response.py",
+    "reference_source_sha256": "e54a78412b2451dcef4c8505c1de0dbe7efa0adb460ac75c8a9e31a66af9dfff",
+    "pull_request_url": "https://github.com/urllib3/urllib3/pull/4960",
+    "reference_application": "The exact decoded-buffer insertion from upstream fix 54b6f7eb0784a3e1e76e763c359d058363195319 is applied to the older affected revision linked in issue 3636. The full reference file is this documented backport, not the entire merged revision.",
+    "applied_reference_source_sha256": "df1af46fb00ac9c561b641d353667038a68fe97dabe7141962aaaab10a2c46d5",
+    "applied_reference_patch_sha256": "85fa8c23136761e1d37aa147fad6873972228a6ae0fa625eef54f8f4cc853a76"
+  },
+  "generated_source_files": [
+    {
+      "path": "src/urllib3/_version.py",
+      "content": "# TraceHarness reviewed build metadata for the pinned Git checkout.\n# This is an unreleased commit identifier, not an upstream release version.\n__version__ = \"0.0.0+traceharness.98a60f9c26a4d64cf18c7e004b9adda4303bc28c\"\n",
+      "sha256": "2dcaed69123d9811d431d9934b87fb7e45c91099831da47a881bc30dee93de6c",
+      "purpose": "Upstream hatch-vcs generates this import-required file during builds; Git archives omit it. This deterministic metadata identifies the exact baseline commit and makes no release-version claim."
+    }
+  ]
+}

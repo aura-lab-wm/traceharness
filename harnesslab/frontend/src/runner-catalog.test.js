@@ -61,3 +61,44 @@ describe('runtime-specific task environments', () => {
     expect(() => runnerCatalog(catalog)).toThrow('catalog is incomplete')
   })
 })
+
+describe('exact task/runtime/model maps', () => {
+  const mapped = () => {
+    const catalog = fixture()
+    catalog.tasks[0].model_ids_by_runtime = { traceharness: ['fixture/model'], 'native-codex': [] }
+    return catalog
+  }
+  it('preserves an exact partial matrix and accepts an explicitly unavailable empty matrix', () => {
+    const catalog = mapped()
+    expect(runnerCatalog(catalog).tasks[0].model_ids_by_runtime).toEqual({ traceharness: ['fixture/model'], 'native-codex': [] })
+    catalog.tasks[0].ready = false
+    catalog.tasks[0].model_ids_by_runtime.traceharness = []
+    expect(runnerCatalog(catalog)).toBe(catalog)
+  })
+  it.each([null, [], {}, 'invalid', { traceharness: ['fixture/model'] },
+    { traceharness: ['fixture/model'], 'native-codex': [], extra: [] },
+    { traceharness: 'fixture/model', 'native-codex': [] },
+    { traceharness: [null], 'native-codex': [] }, { traceharness: [{}], 'native-codex': [] },
+    { traceharness: ['fixture/model', 'fixture/model'], 'native-codex': [] },
+    { traceharness: ['unknown/model'], 'native-codex': [] },
+    { traceharness: [], 'native-codex': ['fixture/model'] }])('refuses incomplete or invented compatibility %j', (map) => {
+    const catalog = mapped(); catalog.tasks[0].model_ids_by_runtime = map
+    expect(() => runnerCatalog(catalog)).toThrow('catalog is incomplete')
+  })
+  it('rejects a large map even when every model is known and unique', () => {
+    const catalog = mapped()
+    const ids = Array.from({ length: 2001 }, (_, i) => 'fixture/model-' + i)
+    catalog.models = ids.map((id) => ({ id }))
+    catalog.runtimes[0].model_ids = ids
+    catalog.tasks[0].model_ids_by_runtime.traceharness = ids
+    expect(() => runnerCatalog(catalog)).toThrow('catalog is incomplete')
+  })
+  it.each(['task', 'runtime', 'empty', 'union'])('rejects contradictory readiness (%s)', (kind) => {
+    const catalog = mapped()
+    if (kind === 'task') catalog.tasks[0].ready = false
+    if (kind === 'runtime') catalog.runtimes[0].available = false
+    if (kind === 'empty') catalog.tasks[0].model_ids_by_runtime.traceharness = []
+    if (kind === 'union') catalog.runtimes[0].model_ids = []
+    expect(() => runnerCatalog(catalog)).toThrow('catalog is incomplete')
+  })
+})

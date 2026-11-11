@@ -84,6 +84,45 @@ def extract_source(raw, prefix, dest, excluded_symlinks=None):
         raise ValueError('Reviewed source exclusion is absent')
 
 
+def add_generated_source_files(recipe, dest):
+    """Add bounded, reviewed build metadata without running upstream build code."""
+    entries = recipe.get('generated_source_files', [])
+    if not isinstance(entries, list) or len(entries) > 8:
+        raise ValueError('Invalid generated source metadata')
+    records, seen = [], set()
+    prefix = recipe.get('allowed_source_prefix', '')
+    if entries and (not isinstance(prefix, str) or not prefix.endswith('/')
+                    or prefix.startswith('/') or '\\' in prefix
+                    or any(part in ('', '.', '..') for part in prefix[:-1].split('/'))):
+        raise ValueError('Invalid generated source prefix')
+    for entry in entries:
+        if not isinstance(entry, dict) or set(entry) != {'path', 'content', 'sha256', 'purpose'}:
+            raise ValueError('Invalid generated source metadata')
+        name, content, purpose = entry['path'], entry['content'], entry['purpose']
+        if (not isinstance(name, str) or not name or not prefix
+                or not name.startswith(prefix) or name.startswith('/')
+                or '\\' in name or any(part in ('', '.', '..') for part in name.split('/'))
+                or name in seen or not isinstance(content, str)
+                or not isinstance(purpose, str) or not 1 <= len(purpose) <= 1000):
+            raise ValueError('Invalid generated source path or contents')
+        raw = content.encode('utf-8')
+        if not 1 <= len(raw) <= 16384 or hashlib.sha256(raw).hexdigest() != entry['sha256']:
+            raise ValueError('Generated source digest/size mismatch')
+        target = dest.joinpath(*name.split('/'))
+        # The source was extracted without links, but verify this boundary even
+        # when invoked independently. Never overwrite an upstream file.
+        if any(dest.joinpath(*name.split('/')[:depth]).is_symlink()
+               for depth in range(len(name.split('/')) + 1)):
+            raise ValueError('Generated source path contains a symlink')
+        target.parent.mkdir(parents=True, exist_ok=True)
+        with target.open('xb') as output:
+            output.write(raw)
+        target.chmod(0o644)
+        seen.add(name)
+        records.append({key: entry[key] for key in ('path', 'sha256', 'purpose')})
+    return records
+
+
 def package(recipe_path, output, archive=None):
     recipe_path, output = Path(recipe_path).resolve(), Path(output).absolute()
     root = recipe_path.parent
@@ -98,6 +137,7 @@ def package(recipe_path, output, archive=None):
         stage = Path(temporary) / 'task'
         (stage / 'repo').mkdir(parents=True)
         extract_source(raw, recipe['archive_prefix'], stage / 'repo', recipe.get('excluded_source_symlinks'))
+        generated = add_generated_source_files(recipe, stage / 'repo')
         (stage / 'repo' / 'public_tests').mkdir(exist_ok=False)
         public_name = recipe.get('public_test_filename', 'test_json_pickle.py')
         if not isinstance(public_name, str) or not re.fullmatch(r'test_[A-Za-z0-9_]+\.py', public_name):
@@ -122,6 +162,8 @@ def package(recipe_path, output, archive=None):
             provenance['excluded_source_symlinks'] = recipe['excluded_source_symlinks']
         if 'provenance_details' in recipe:
             provenance['upstream_fix'] = recipe['provenance_details']
+        if generated:
+            provenance['generated_source_files'] = generated
         (stage / 'provenance.json').write_text(json.dumps(provenance, indent=2) + '\n')
         digest = tree_hash(stage)
         os.rename(stage, output)

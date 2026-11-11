@@ -1,0 +1,9 @@
+{
+  "policy_version": 1,
+  "scope": "This curated real upstream task only; other tasks have independent reviewed policies.",
+  "editable_file": "src/requests/utils.py",
+  "permitted_change": "Only _parse_content_type_header may change. Preserve its module, function signature, tokenization, content type, parameter dictionary and return. Permitted repairs: (1) keep the original loop and replace its outer `if param` guard with `if param and \"=\" in param`, `if \"=\" in param`, or `if param and param.find(\"=\") != -1`; or (2) strip each parameter and put the existing key/value slicing plus dictionary assignment inside a guard that requires both a nonempty parameter and find(\"=\") != -1, using either a walrus condition or nested if blocks. A third permitted loop form strips each parameter, uses `if param and param.find(\"=\") != -1:`, then assigns `index_of_equals = param.find(\"=\")` (or the same assignment to idx) before the original key/value slices and dictionary update. This exact form removes the dead `key, value = param, True` initialization and the redundant inner conditional; no other statements are added. The index variable may be idx or index_of_equals; the quote-stripping variable may be items_to_strip or strip_chars. Existing quote-stripping literal, key.lower(), slicing and dictionary update must remain. The two punctuation additions in the upstream function docstring are optional; no other docstring rewrites or executable changes are allowed.",
+  "source_encoding": "UTF-8, optional UTF-8 BOM; accepted source normalized to UTF-8.",
+  "extra_files": "New workspace files are excluded from pristine grading reconstruction.",
+  "protected_files": "Every other existing file, including generated version metadata and public tests, must remain byte-identical. No unrelated imports, functions, decorators, defaults or executable changes."
+}

@@ -1,0 +1,36 @@
+{
+  "id": "requests-invalid-charset",
+  "repository": "https://github.com/psf/requests",
+  "revision": "bc7dd0fc4d56e808bcdd85ac2d797b3107c89259",
+  "archive_url": "https://codeload.github.com/psf/requests/tar.gz/bc7dd0fc4d56e808bcdd85ac2d797b3107c89259",
+  "archive_sha256": "22101ff6c966a9522f4c36b1679cd05099bb70645768537bc11fda5ea0a53759",
+  "archive_prefix": "requests-bc7dd0fc4d56e808bcdd85ac2d797b3107c89259",
+  "reference_revision": "f0198e6dfc431a2293dc16e1b1e8fcddc910a7f3",
+  "version": 1,
+  "title": "Requests: ignore malformed Content-Type parameters",
+  "issue_url": "https://github.com/psf/requests/issues/6646",
+  "reference_source_url": "https://raw.githubusercontent.com/psf/requests/f0198e6dfc431a2293dc16e1b1e8fcddc910a7f3/src/requests/utils.py",
+  "reference_source_sha256": "f67cc0678da27abc9e3f3659d40758f89cb4310be5b7755ebcb0d7d73a4cf2b5",
+  "license": "Apache-2.0; original LICENSE and NOTICE retained",
+  "visible_test_command": "PYTHONPATH=src python -m unittest discover -s public_tests -v",
+  "public_test_filename": "test_requests_invalid_charset.py",
+  "allowed_source_prefix": "src/requests/",
+  "hidden_checks": "checks.py",
+  "grading_timeout_seconds": 45,
+  "expected_checks": 4,
+  "edit_contract": {
+    "kind": "requests-invalid-charset-v1",
+    "path": "src/requests/utils.py",
+    "baseline_sha256": "c433154e14f78de6d50ea7fe753825b8bbb3c9459468dee052f8b68edc2572dc"
+  },
+  "provenance_details": {
+    "reference_revision": "f0198e6dfc431a2293dc16e1b1e8fcddc910a7f3",
+    "reference_source_url": "https://raw.githubusercontent.com/psf/requests/f0198e6dfc431a2293dc16e1b1e8fcddc910a7f3/src/requests/utils.py",
+    "reference_source_sha256": "f67cc0678da27abc9e3f3659d40758f89cb4310be5b7755ebcb0d7d73a4cf2b5",
+    "pull_request_url": "https://github.com/psf/requests/pull/7309"
+  },
+  "excluded_source_symlinks": {
+    "tests/certs/mtls/client/ca": "../../expired/ca/",
+    "tests/certs/valid/ca": "../expired/ca"
+  }
+}

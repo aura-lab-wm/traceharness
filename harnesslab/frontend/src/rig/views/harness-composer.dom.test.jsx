@@ -21,7 +21,9 @@ const defaultCatalog = () => ({
     { id: 'native-codex', name: 'Codex', kind: 'native', available: true, version: 'fixture', prompt_mode: 'append', model_ids: ['fixture/model-a'] },
   ],
   models: [{ id: 'fixture/model-a', name: 'Model A' }, { id: 'fixture/model-b', name: 'Model B' }],
-  tasks: [{ id: 'fixture-task', title: 'Registered task fixture', repository: 'fixture/repository', revision: 'pinned-fixture', ready: true }],
+  tasks: [{ id: 'fixture-task', title: 'Registered task fixture', repository: 'fixture/repository', revision: 'pinned-fixture', ready: true,
+    runtime_ids: ['traceharness', 'native-claude-code', 'native-codex'],
+    model_ids_by_runtime: { traceharness: ['fixture/model-a', 'fixture/model-b'], 'native-claude-code': ['fixture/model-a'], 'native-codex': ['fixture/model-a'] } }],
   credentials_available: true, execution_available: true,
 })
 function compiled(body) {
@@ -112,6 +114,112 @@ function captureDownload() {
   }
 }
 const prompt = () => screen.getByRole('textbox', { name: 'Prompt', exact: true })
+
+function addPartialTask() {
+  catalog.tasks.push({ ...catalog.tasks[0], id: 'fixture-task-partial', title: 'Partial task fixture',
+    model_ids_by_runtime: { traceharness: ['fixture/model-b'], 'native-claude-code': [], 'native-codex': ['fixture/model-a'] } })
+}
+
+describe('exact compatibility in the member composer', () => {
+  it('filters models by task and preserves an incompatible draft until an explicit supported choice', async () => {
+    addPartialTask()
+    render(<Composer />); await ready()
+    const originalPrompt = prompt().value
+    choose('Task', 'Partial task fixture')
+    expect(screen.getByRole('combobox', { name: 'Model', exact: true }).value).toBe('Model A')
+    expect(prompt().value).toBe(originalPrompt)
+    expect(screen.getByText('The selected model is not verified for this task and runtime. Choose a supported model.')).toBeTruthy()
+    expect(screen.getByRole('button', { name: 'Review run' }).disabled).toBe(true)
+    fireEvent.click(screen.getByRole('combobox', { name: 'Model', exact: true }))
+    expect(screen.getByRole('option', { name: 'Model A', exact: true }).getAttribute('aria-disabled')).toBe('true')
+    expect(screen.getByRole('option', { name: 'Model B', exact: true }).getAttribute('aria-disabled')).not.toBe('true')
+    fireEvent.click(screen.getByRole('option', { name: 'Model B', exact: true }))
+    expect(screen.getByRole('button', { name: 'Review run' }).disabled).toBe(false)
+    fireEvent.click(screen.getByRole('button', { name: 'Review run' })); await screen.findByText('Configuration verified')
+    const request = calls.findLast((call) => call.url === '/api/runner/preflight')
+    expect(request.body.configuration).toMatchObject({ task_id: 'fixture-task-partial', model_id: 'fixture/model-b', runtime_id: 'traceharness' })
+    expect(calls.some((call) => call.url === '/api/runner/jobs' && call.method === 'POST')).toBe(false)
+  })
+
+  it('exposes new tasks with unverified Claude pairings without choosing a fallback', async () => {
+    addPartialTask()
+    render(<Composer />); await ready()
+    choose('Task', 'Partial task fixture')
+    switchHarness('native:native-claude-code', true)
+    expect(screen.getByRole('combobox', { name: 'Task', exact: true }).value).toBe('Partial task fixture')
+    expect(screen.getByRole('combobox', { name: 'Model', exact: true }).value).toBe('Model A')
+    expect(screen.getByText('This task has no verified model for the selected runtime. Choose another task or harness.')).toBeTruthy()
+    expect(screen.getByRole('button', { name: 'Review run' }).disabled).toBe(true)
+    expect(screen.getByRole('button', { name: 'Run', exact: true }).disabled).toBe(true)
+    fireEvent.click(screen.getByRole('combobox', { name: 'Task', exact: true }))
+    expect(screen.getByRole('option', { name: 'Partial task fixture', exact: true }).textContent).toContain('Not verified for this runtime')
+    fireEvent.keyDown(screen.getByRole('combobox', { name: 'Task', exact: true }), { key: 'Escape' })
+    switchHarness('native:native-codex', true)
+    expect(screen.getByRole('combobox', { name: 'Task', exact: true }).value).toBe('Partial task fixture')
+    expect(screen.getByRole('combobox', { name: 'Model', exact: true }).value).toBe('Model A')
+    expect(screen.getByRole('button', { name: 'Review run' }).disabled).toBe(false)
+    expect(calls.some((call) => call.url === '/api/runner/preflight')).toBe(false)
+  })
+
+  it('requires exact task maps even when a legacy runtime union lists the model', async () => {
+    delete catalog.tasks[0].model_ids_by_runtime
+    render(<Composer />); await catalogReady()
+    choose('Model', 'Model A'); choose('Task', 'Registered task fixture')
+    expect(screen.getByText('Task-specific model compatibility has not been reported. Refresh the runner before running.')).toBeTruthy()
+    expect(screen.getByRole('button', { name: 'Review run' }).disabled).toBe(true)
+    expect(calls.some((call) => call.url === '/api/runner/preflight')).toBe(false)
+  })
+
+  it('invalidates a reviewed run after refresh and keeps a removed model pairing visible', async () => {
+    render(<Composer />); await ready(); await connect()
+    fireEvent.click(screen.getByRole('button', { name: 'Review run' })); await screen.findByText('Configuration verified')
+    const originalPrompt = prompt().value
+    catalog = structuredClone(catalog)
+    catalog.tasks[0].model_ids_by_runtime.traceharness = ['fixture/model-b']
+    fireEvent.click(screen.getByRole('button', { name: 'Refresh runner' }))
+    expect(screen.getByRole('button', { name: 'Run', exact: true }).disabled).toBe(true)
+    await catalogReady()
+    expect(screen.queryByText('Configuration verified')).toBeNull()
+    expect(screen.getByRole('combobox', { name: 'Model', exact: true }).value).toBe('Model A')
+    expect(screen.getByRole('combobox', { name: 'Task', exact: true }).value).toBe('Registered task fixture')
+    expect(prompt().value).toBe(originalPrompt)
+    expect(screen.getByRole('button', { name: 'Review run' }).disabled).toBe(true)
+    choose('Model', 'Model B')
+    expect(screen.getByRole('button', { name: 'Run', exact: true }).disabled).toBe(true)
+    fireEvent.click(screen.getByRole('button', { name: 'Review run' })); await screen.findByText('Configuration verified')
+    expect(screen.getByRole('button', { name: 'Run', exact: true }).disabled).toBe(false)
+    expect(calls.filter((call) => call.url === '/api/runner/preflight')).toHaveLength(2)
+    expect(calls.some((call) => call.url === '/api/runner/jobs' && call.method === 'POST')).toBe(false)
+  })
+
+  it('retains a task removed during refresh as an unavailable draft and refuses the old review', async () => {
+    addPartialTask()
+    render(<Composer />); await ready(); await connect()
+    fireEvent.click(screen.getByRole('button', { name: 'Review run' })); await screen.findByText('Configuration verified')
+    catalog = structuredClone(catalog)
+    catalog.tasks = catalog.tasks.filter((task) => task.id !== 'fixture-task')
+    fireEvent.click(screen.getByRole('button', { name: 'Refresh runner' })); await catalogReady()
+    expect(screen.getByRole('combobox', { name: 'Task', exact: true }).value).toBe('fixture-task')
+    expect(screen.getByRole('combobox', { name: 'Model', exact: true }).value).toBe('Model A')
+    expect(screen.getByRole('button', { name: 'Review run' }).disabled).toBe(true)
+    expect(screen.getByRole('button', { name: 'Run', exact: true }).disabled).toBe(true)
+    expect(calls.some((call) => call.url === '/api/runner/jobs' && call.method === 'POST')).toBe(false)
+  })
+
+  it('rejects an in-flight old review even when refreshed IDs stay unchanged', async () => {
+    const pending = deferred()
+    handler = (call) => call.url === '/api/runner/preflight' ? pending.promise : undefined
+    render(<Composer />); await ready(); await connect()
+    fireEvent.click(screen.getByRole('button', { name: 'Review run' }))
+    catalog = structuredClone(catalog)
+    fireEvent.click(screen.getByRole('button', { name: 'Refresh runner' })); await catalogReady()
+    await act(async () => pending.resolve(json({ ok: true, issues: [], manifest_sha256: 'f'.repeat(64) })))
+    expect(screen.queryByText('Configuration verified')).toBeNull()
+    expect(screen.getByRole('button', { name: 'Run', exact: true }).disabled).toBe(true)
+    expect(screen.getByRole('button', { name: 'Review run' }).disabled).toBe(false)
+    expect(calls.some((call) => call.url === '/api/runner/jobs' && call.method === 'POST')).toBe(false)
+  })
+})
 
 describe('the unified member Harnesses composer', () => {
   it('shows a truthful disconnected state, six stand-ins and no credential input or fake tasks', async () => {
@@ -272,6 +380,7 @@ describe('the unified member Harnesses composer', () => {
 
   it('does not claim compatibility from a public model catalog alone', async () => {
     delete catalog.runtimes[0].model_ids
+    delete catalog.tasks[0].model_ids_by_runtime
     render(<Composer />)
     await catalogReady()
     choose('Model', 'Model A')
@@ -455,6 +564,7 @@ describe('the unified member Harnesses composer', () => {
 
   it('keeps incompatible tasks inspectable but blocks review until their registered runtime is selected', async () => {
     catalog.tasks[0].runtime_ids = ['native-codex']
+    catalog.tasks[0].model_ids_by_runtime = { 'native-codex': ['fixture/model-a'] }
     render(<Composer />); await catalogReady()
     choose('Model', 'Model A')
     choose('Task', 'Registered task fixture')
@@ -796,6 +906,22 @@ const historicalJob = (changes = {}) => ({ id: historicalId, status: 'succeeded'
   updated_at: 1794000050, artifacts: [], issues: [], usage: { requests: 2 }, ...changes })
 
 describe('member execution history and evidence', () => {
+  it.each([undefined, 0, 0.03])('distinguishes an absent cost from a reported cost after failure (%s)', async (cost) => {
+    const job = historicalJob({ status: 'failed', grade: 'ungraded', usage: { requests: 2, ...(cost === undefined ? {} : { cost_usd: cost }) } })
+    handler = (call) => call.url === '/api/runner/jobs' && call.method === 'GET' ? json({ jobs: [job] })
+      : call.url === '/api/runner/jobs/' + historicalId ? json({ job }) : undefined
+    render(<Composer />)
+    fireEvent.click(await screen.findByRole('button', { name: 'Open run ' + historicalId }))
+    const current = await screen.findByRole('region', { name: 'Current job' })
+    if (cost === undefined) {
+      expect(within(current).getByText('Cost unknown · the runner did not report a cost total.')).toBeTruthy()
+      expect(within(current).queryByText('$0', { exact: true })).toBeNull()
+    } else {
+      expect(within(current).queryByText('Cost unknown · the runner did not report a cost total.')).toBeNull()
+      expect(within(current).getByText('$' + cost, { exact: true })).toBeTruthy()
+    }
+  })
+
   it('recovers an unfinished server run after reload and opens prior results without changing the draft or launching', async () => {
     const prior = historicalJob()
     const pending = historicalJob({ id: activeId, status: 'running', grade: 'ungraded', created_at: 1794000100 })
@@ -904,6 +1030,7 @@ describe('member execution history and evidence', () => {
 
   it('shows the environment pinned for the selected engine', async () => {
     catalog.tasks[0].runtime_ids = ['traceharness', 'native-codex']
+    delete catalog.tasks[0].model_ids_by_runtime['native-claude-code']
     catalog.tasks[0].environment_digests = { traceharness: 'sha256:' + 'a'.repeat(64), 'native-codex': 'sha256:' + 'b'.repeat(64) }
     render(<Composer />); await ready()
     expect(screen.getByText('sha256:' + 'a'.repeat(64))).toBeTruthy()

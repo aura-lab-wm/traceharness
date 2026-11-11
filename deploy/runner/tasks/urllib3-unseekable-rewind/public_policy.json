@@ -1,0 +1,9 @@
+{
+  "policy_version": 1,
+  "scope": "This curated real upstream task only; other tasks have independent reviewed policies.",
+  "editable_file": "src/urllib3/util/request.py",
+  "permitted_change": "Only insert `elif body_seek is None:` with `raise UnrewindableBodyError(\"body does not implement seek.\")` in rewind_body, immediately after the existing _FAILEDTELL branch and before its final ValueError branch. Preserve the rest of the entire module AST. This curated policy permits the reviewed error classification, not adding buffering or changing stream capability.",
+  "source_encoding": "UTF-8, optional UTF-8 BOM; accepted source normalized to UTF-8.",
+  "extra_files": "New workspace files are excluded from pristine grading reconstruction.",
+  "protected_files": "Every other existing file, including generated version metadata and public tests, must remain byte-identical. No unrelated imports, functions, decorators, defaults or executable changes."
+}

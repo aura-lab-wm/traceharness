@@ -253,3 +253,40 @@ For tests, `create_app(Settings(...), registry=..., provider=..., executor=...,
 clock=...)` supports explicit dependency injection. Production imports create
 no server and select no fixture executor. Run the isolated suite with
 `python -m unittest discover -s tests_agentlab/runner_service -v`.
+
+## Build the offline grader separately
+
+Use `deploy/runner/grader.Dockerfile` with a reviewed build context containing
+`requirements.lock` and `grader/grade.py`. It pins the same Python base and
+hash-checked task dependencies while omitting Node, native agent CLIs, and the
+control service. Those tools belong in the runtime and control images; the
+grader needs only Python, the task dependencies, and its trusted wrapper.
+
+The executor still supplies the network-none gVisor sandbox, read-only task and
+workspace mounts, resource limits, and restricted writer capabilities. A smaller
+image does not replace those boundaries. Before assigning its new digest to a
+task, repeat baseline/reference/forgery, import-origin, privilege, and cleanup
+proofs inside that exact image. Existing tasks may retain their original grader
+digest and receipts while newly registered tasks use the new grader.
+
+## Provider failures and incomplete usage
+
+A successful HTTP status does not establish a usable model response. The
+control service checks buffered non-streaming JSON before forwarding it: error
+envelopes, invalid JSON, and chat responses without usable choice/message
+containers fail with a constant diagnostic. Valid response bytes and native SSE
+framing are preserved. Provider error text and embedded error codes do not
+become public messages or invented HTTP statuses.
+
+An uncertain transport result may already have been billed. The broker blocks
+further calls for that run and omits incomplete cost/token totals. The member
+workbench labels a missing final cost as unknown. A partial runtime summary is
+not a provider-confirmed total, and a failed attempt cannot create a compatibility
+receipt. See OpenRouter's [documented HTTP 200 error format](https://openrouter.ai/docs/api_reference/errors-and-debugging).
+
+For TraceHarness operator verification, `--observation-chars` accepts integers
+from 200 to 50,000 and defaults to 20,000. It controls the compiled observation
+budget, matching the member workbench setting. Native runtimes reject this
+override because their own clients manage observations. A passing run proves
+the recorded configuration; it does not establish that smaller observations
+or every other prompt and model setting will solve the task.

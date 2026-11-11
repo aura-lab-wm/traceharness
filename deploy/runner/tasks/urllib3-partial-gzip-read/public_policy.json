@@ -1,0 +1,9 @@
+{
+  "policy_version": 1,
+  "scope": "This curated real upstream task only; other tasks have independent reviewed policies.",
+  "editable_file": "src/urllib3/response.py",
+  "permitted_change": "Only add one guarded buffer drain immediately after `data = self._decode(data, decode_content, flush_decoder)` in HTTPResponse.read's `if amt is None` branch. The guard must be `decode_content and len(self._decoded_buffer) > 0`, `decode_content and len(self._decoded_buffer) != 0`, or `decode_content and self._decoded_buffer`. The body must either append data with self._decoded_buffer.put(data) then assign data = self._decoded_buffer.get_all(), or assign data = self._decoded_buffer.get_all() + data. Preserve the rest of the entire module AST, including existing caching and partial-read behavior.",
+  "source_encoding": "UTF-8, optional UTF-8 BOM; accepted source normalized to UTF-8.",
+  "extra_files": "New workspace files are excluded from pristine grading reconstruction.",
+  "protected_files": "Every other existing file, including generated version metadata and public tests, must remain byte-identical. No unrelated imports, functions, decorators, defaults or executable changes."
+}

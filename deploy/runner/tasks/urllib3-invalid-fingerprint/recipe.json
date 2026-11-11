@@ -1,0 +1,40 @@
+{
+  "id": "urllib3-invalid-fingerprint",
+  "repository": "https://github.com/urllib3/urllib3",
+  "revision": "9a97e7b945c1d0286ffdbb5b876714b72aba0370",
+  "archive_url": "https://codeload.github.com/urllib3/urllib3/tar.gz/9a97e7b945c1d0286ffdbb5b876714b72aba0370",
+  "archive_sha256": "8a3bb13c280447933b44016349151a5dd64317c40b5a3cd1b526a330d0bb6cab",
+  "archive_prefix": "urllib3-9a97e7b945c1d0286ffdbb5b876714b72aba0370",
+  "reference_revision": "10794eabe13e9141e180d528e1e8d79b535c0ee8",
+  "version": 1,
+  "title": "urllib3: normalize malformed TLS fingerprint errors",
+  "issue_url": "https://github.com/urllib3/urllib3/issues/5211",
+  "reference_source_url": "https://raw.githubusercontent.com/urllib3/urllib3/10794eabe13e9141e180d528e1e8d79b535c0ee8/src/urllib3/util/ssl_.py",
+  "reference_source_sha256": "72c779c13f6e2afa22149d75f98a5fab0cdc886193515d9dae62e12354fd61c4",
+  "license": "MIT; original LICENSE.txt retained",
+  "visible_test_command": "PYTHONPATH=src python -m unittest discover -s public_tests -v",
+  "public_test_filename": "test_urllib3_invalid_fingerprint.py",
+  "allowed_source_prefix": "src/urllib3/",
+  "hidden_checks": "checks.py",
+  "grading_timeout_seconds": 45,
+  "expected_checks": 4,
+  "edit_contract": {
+    "kind": "urllib3-invalid-fingerprint-v1",
+    "path": "src/urllib3/util/ssl_.py",
+    "baseline_sha256": "57688d26deaf5ed89c47c147fd273170bab2a8db838131796eafd746071b9fbe"
+  },
+  "provenance_details": {
+    "reference_revision": "10794eabe13e9141e180d528e1e8d79b535c0ee8",
+    "reference_source_url": "https://raw.githubusercontent.com/urllib3/urllib3/10794eabe13e9141e180d528e1e8d79b535c0ee8/src/urllib3/util/ssl_.py",
+    "reference_source_sha256": "72c779c13f6e2afa22149d75f98a5fab0cdc886193515d9dae62e12354fd61c4",
+    "pull_request_url": "https://github.com/urllib3/urllib3/pull/5212"
+  },
+  "generated_source_files": [
+    {
+      "path": "src/urllib3/_version.py",
+      "content": "# TraceHarness reviewed build metadata for the pinned Git checkout.\n# This is an unreleased commit identifier, not an upstream release version.\n__version__ = \"0.0.0+traceharness.9a97e7b945c1d0286ffdbb5b876714b72aba0370\"\n",
+      "sha256": "3313b57d245773be09b924880d8b2e0611e65c664074469df1a802b5041a2845",
+      "purpose": "Upstream hatch-vcs generates this import-required file during builds; Git archives omit it. This deterministic metadata identifies the exact baseline commit and makes no release-version claim."
+    }
+  ]
+}

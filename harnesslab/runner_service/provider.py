@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import httpx
+import json
 import time
 import multiprocessing
 import threading
@@ -62,6 +63,35 @@ class ProviderError(Exception):
 def provider_status(error):
     """Only adapter-authored ProviderError metadata may become a public diagnostic."""
     return _http_status(getattr(error, "status_code", None)) if isinstance(error, ProviderError) else None
+
+
+def _invalid_json_constant(_):
+    raise ValueError("Non-finite JSON number")
+
+
+def _validate_json_model_response(protocol, payload):
+    """HTTP 200 may contain a provider error, not a usable completion.
+
+    Inspect only the envelope; return the original bytes to preserve valid model
+    content. Never expose response messages/metadata or reinterpret error.code as
+    the observed HTTP status. Such a request may have been billed.
+    https://openrouter.ai/docs/api_reference/errors-and-debugging
+    """
+    try:
+        value = json.loads(payload.decode("utf-8"), parse_constant=_invalid_json_constant)
+    except (ValueError, UnicodeError, RecursionError):
+        raise ProviderError("Provider returned an invalid model response.") from None
+    if not isinstance(value, dict) or value.get("error") is not None:
+        raise ProviderError("Provider returned an invalid model response.")
+    if protocol == "chat/completions":
+        choices = value.get("choices")
+        if not isinstance(choices, list) or not choices:
+            raise ProviderError("Provider returned an invalid model response.")
+        for choice in choices:
+            if (not isinstance(choice, dict) or choice.get("error") is not None
+                    or choice.get("finish_reason") == "error" or not isinstance(choice.get("message"), dict)
+                    or choice["message"].get("error") is not None):
+                raise ProviderError("Provider returned an invalid model response.")
 
 
 class OpenRouter:
@@ -142,6 +172,9 @@ class OpenRouter:
                             raise ProviderError("Provider response exceeded the limit.")
                         chunks.append(chunk)
                     kind = "text/event-stream" if "text/event-stream" in response.headers.get("content-type", "") else "application/json"
-                    return kind, b"".join(chunks)
+                    payload = b"".join(chunks)
+                    if kind == "application/json":
+                        _validate_json_model_response(protocol, payload)
+                    return kind, payload
         except httpx.HTTPError:
             raise ProviderError("Provider model request could not be completed.") from None

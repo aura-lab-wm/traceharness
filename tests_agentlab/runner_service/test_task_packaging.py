@@ -45,6 +45,54 @@ def archive(name='source/file.py', content=b'x = 1\n', kind=None):
 
 
 class TaskPackagingTests(unittest.TestCase):
+    def generated_recipe(self):
+        content = '# Reviewed build metadata, not a released version.\n__version__ = "0.0.0+traceharness.abc123"\n'
+        return {'allowed_source_prefix': 'src/urllib3/', 'generated_source_files': [{
+            'path': 'src/urllib3/_version.py', 'content': content,
+            'sha256': hashlib.sha256(content.encode()).hexdigest(),
+            'purpose': 'Pinned commit version metadata omitted from upstream Git archives'}]}
+
+    def test_reviewed_build_metadata_is_hashed_and_never_overwrites_source(self):
+        recipe = self.generated_recipe()
+        with tempfile.TemporaryDirectory() as temporary:
+            target = Path(temporary)
+            records = package.add_generated_source_files(recipe, target)
+            entry = recipe['generated_source_files'][0]
+            self.assertEqual((target / entry['path']).read_bytes(), entry['content'].encode())
+            self.assertEqual(records, [{key: entry[key] for key in ('path', 'sha256', 'purpose')}])
+            with self.assertRaises(FileExistsError):
+                package.add_generated_source_files(recipe, target)
+
+    def test_generated_metadata_refuses_unsafe_paths_links_and_unreviewed_bytes(self):
+        for prefix in (None, [], 'src/urllib3', '../src/', '/src/'):
+            recipe = self.generated_recipe()
+            recipe['allowed_source_prefix'] = prefix
+            with self.subTest(prefix=prefix), tempfile.TemporaryDirectory() as temporary:
+                with self.assertRaisesRegex(ValueError, 'prefix'):
+                    package.add_generated_source_files(recipe, Path(temporary))
+        for bad_path in ('../outside', '/outside', 'src/urllib3/../outside',
+                         'src/urllib3//file', 'src/urllib3/./file', 'src/other/file', 'src/urllib3\\file'):
+            recipe = self.generated_recipe()
+            recipe['generated_source_files'][0]['path'] = bad_path
+            with self.subTest(path=bad_path), tempfile.TemporaryDirectory() as temporary:
+                with self.assertRaises(ValueError):
+                    package.add_generated_source_files(recipe, Path(temporary))
+        for change in ({'sha256': '0' * 64}, {'content': 'changed'}, {'content': 'x' * 16385}, {'purpose': ''}):
+            recipe = self.generated_recipe()
+            recipe['generated_source_files'][0].update(change)
+            with self.subTest(change=list(change)), tempfile.TemporaryDirectory() as temporary:
+                with self.assertRaises(ValueError):
+                    package.add_generated_source_files(recipe, Path(temporary))
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            (root / 'src').symlink_to(root / 'elsewhere')
+            with self.assertRaisesRegex(ValueError, 'symlink'):
+                package.add_generated_source_files(self.generated_recipe(), root)
+        recipe = self.generated_recipe()
+        recipe['generated_source_files'] *= 2
+        with tempfile.TemporaryDirectory() as temporary, self.assertRaises(ValueError):
+            package.add_generated_source_files(recipe, Path(temporary))
+
     def test_safe_source_extract(self):
         with tempfile.TemporaryDirectory() as temporary:
             target = Path(temporary)

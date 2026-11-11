@@ -67,7 +67,13 @@ def read_key(stream):
     return key
 
 
-def configuration(runtime_id, model_id, task_id, *, max_steps=None, max_cost_usd=None, wall_time_seconds=None):
+def configuration(runtime_id, model_id, task_id, *, max_steps=None, max_cost_usd=None, wall_time_seconds=None,
+                  observation_chars=None):
+    if observation_chars is not None:
+        if runtime_id != "traceharness":
+            raise VerificationRefused("Observation size is owned by the native runtime; overrides require TraceHarness.")
+        if type(observation_chars) is not int or not 200 <= observation_chars <= 50000:
+            raise VerificationRefused("TraceHarness observation size must be an integer from 200 to 50000 characters.")
     limits = {"max_steps": (32 if runtime_id == "native-claude-code" else 20) if max_steps is None else max_steps,
               "wall_time_seconds": 240 if wall_time_seconds is None else wall_time_seconds,
               "max_cost_usd": (2 if runtime_id == "native-claude-code" else 1) if max_cost_usd is None else max_cost_usd}
@@ -85,7 +91,7 @@ def configuration(runtime_id, model_id, task_id, *, max_steps=None, max_cost_usd
         {"type": "prompt", "text": prompt},
         {"type": "tools", "names": ["list_files", "read_file", "write_file", "edit_file", "run_tests", "bash", "submit"]},
         {"type": "policy", "mode": "strict"},
-        {"type": "context", "window": 0, "observation_chars": 20000},
+        {"type": "context", "window": 0, "observation_chars": 20000 if observation_chars is None else observation_chars},
         {"type": "stop", "max_steps": limits["max_steps"], "max_total_tokens": 200000},
         {"type": "sampling", "temperature": 0, "max_tokens_per_call": 4096},
         {"type": "listing", "include": True},
@@ -247,6 +253,7 @@ def main(argv=None):
     parser.add_argument('--max-steps', type=int, help='Maximum model requests, 1–64; default Claude 32, otherwise 20.')
     parser.add_argument('--max-cost-usd', type=float, help='Maximum model spend, $0.01–$5; default Claude $2, otherwise $1.')
     parser.add_argument('--wall-time-seconds', type=int, help='Maximum runtime, 30–600 seconds; default 240.')
+    parser.add_argument('--observation-chars', type=int, help='TraceHarness only: observation size, 200–50000 characters; default 20000. Native runtimes own their context.')
     parser.add_argument('--registry', type=Path, default=Path('/data/inventory/registry.json'))
     parser.add_argument('--state-dir', type=Path, default=Path('/data/verification/jobs'))
     args = parser.parse_args(argv)
@@ -275,7 +282,7 @@ def main(argv=None):
         executor = DockerExecutor(settings, registry)
         review = review_operator_run(registry, executor, args.runtime, args.model, task_id,
                                      max_steps=args.max_steps, max_cost_usd=args.max_cost_usd,
-                                     wall_time_seconds=args.wall_time_seconds)
+                                     wall_time_seconds=args.wall_time_seconds, observation_chars=args.observation_chars)
         provider = ObservedProvider()
         models = provider.models({args.model})
         model = next((row for row in models if row['id'] == args.model), None)
