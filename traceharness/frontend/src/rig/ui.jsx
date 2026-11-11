@@ -456,7 +456,7 @@ const toastStore = { msg: null, action: null, n: 0, l: new Set() }
  *  holds while hovered or focused. */
 export function toast(msg, action) {
   toastStore.msg = msg; toastStore.action = action && action.label && action.onClick ? action : null
-  toastStore.n++; for (const f of [...toastStore.l]) f()
+  toastStore.n++; const pending = [...toastStore.l]; for (const f of pending) f()
 }
 const subToast = (f) => { toastStore.l.add(f); return () => toastStore.l.delete(f) }
 /** Rendered once by RigApp. */

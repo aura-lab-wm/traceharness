@@ -464,7 +464,7 @@ function SweAgentImport({ spec, datasets }) {
   const name = out || auto
   const taken = has(name)
   const free = freeOf(name)
-  const known = [...new Set(datasets.filter((x) => /^real_swe_agent/.test(x.name)).flatMap((x) => x.models || []))].sort()
+  const known = [...new Set(datasets.filter((x) => String(x.name).startsWith('real_swe_agent')).flatMap((x) => x.models || []))].sort()
   const failed = s.status === 'error' || !!msg
   const go = async () => {
     setMsg('')
@@ -850,7 +850,7 @@ function RuleCheck({ spec }) {
   const num = (v) => (v === '' || v == null || !Number.isFinite(Number(v)) ? 0 : Number(v))
   const values = Object.fromEntries(names.map((n) => [n, num(env[n])]))
   const listed = oa.data && typeof oa.data === 'object' && oa.data.paths && typeof oa.data.paths === 'object' ? oa.data.paths : null
-  const route = listed ? Object.keys(listed).find((p) => /\/api\/sentinel\/plugins\/test_rule$/.test(p)) : null
+  const route = listed ? Object.keys(listed).find((p) => p.endsWith('/api/sentinel/plugins/test_rule')) : null
   const unread = oa.error ? errText(oa.error) : oa.data && !listed ? 'no OpenAPI document at /openapi.json' : null
   const run = async () => {
     try { const out = await api('/sentinel/plugins/test_rule', { method: 'POST', body: { id: r.id, when: r.when, env: values } }); setRes({ ok: true, out }) } catch (e) { setRes({ ok: false, out: errText(e) }) }

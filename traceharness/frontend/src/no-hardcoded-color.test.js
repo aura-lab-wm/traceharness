@@ -19,7 +19,6 @@ import { join, relative, sep } from 'node:path'
 const SRC = fileURLToPath(new URL('./', import.meta.url))
 const CSS_PATH = fileURLToPath(new URL('./index.css', import.meta.url))
 
-const HEX = /#[0-9a-fA-F]{3,8}\b/g
 const COLOR = /#[0-9a-fA-F]{3,8}\b|rgba?\([^)]*\)/g
 
 function lineOf(text, index) {

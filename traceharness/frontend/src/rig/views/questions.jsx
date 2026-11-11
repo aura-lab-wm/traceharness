@@ -78,7 +78,7 @@ export function QuestionStack({ dir, compact, model, harness }) {
 }
 
 /* ---------------------------------------------------------------- figures */
-function Figure({ fig, dir, answer }) {
+function Figure({ fig, dir }) {
   const { oracle } = useRig()
   switch (fig.kind) {
     case 'variance': {

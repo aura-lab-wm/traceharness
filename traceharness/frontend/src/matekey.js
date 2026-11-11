@@ -47,7 +47,7 @@ const del = (s, k) => { try { s.removeItem(k) } catch { /* storage blocked */ } 
  *  test, or a browser with site data blocked. */
 export function browserStores() {
   const pick = (name) => {
-    try { const s = globalThis[name]; s.getItem(KEY_SLOT); return s } catch { return NOSTORE }
+    try { const s = window[name]; s.getItem(KEY_SLOT); return s } catch { return NOSTORE }
   }
   return { session: pick('sessionStorage'), local: pick('localStorage') }
 }

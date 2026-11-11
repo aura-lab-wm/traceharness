@@ -55,7 +55,8 @@ function useMedia(query) {
     const m = mq(query); if (!m) return
     const f = () => setOn(m.matches)
     f()
-    m.addEventListener ? m.addEventListener('change', f) : m.addListener(f)
+    if (m.addEventListener) m.addEventListener('change', f)
+    else m.addListener(f)
     return () => (m.removeEventListener ? m.removeEventListener('change', f) : m.removeListener(f))
   }, [query])
   return on
@@ -923,7 +924,7 @@ function Palette({ close, datasets, condition, onKeys }) {
   const listRef = useRef(null)
   const res = useMemo(() => paletteSearch(items, q), [items, q])
   const cur = Math.min(sel, Math.max(0, res.length - 1))
-  useEffect(() => { input.current && input.current.focus() }, [])
+  useEffect(() => { input.current?.focus() }, [])
   useEffect(() => { const el = listRef.current && listRef.current.querySelector('[aria-selected="true"]'); if (el && el.scrollIntoView) el.scrollIntoView({ block: 'nearest' }) }, [cur])
   const run = (i, side) => { const r = res[i]; if (!r) return; close(); r.i.run(side) }
   const onKey = (e) => {

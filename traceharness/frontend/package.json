@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "lint": "oxlint src test vite.config.js public/design-directions/directions.js",
+    "lint": "oxlint --deny-warnings src test vite.config.js public/design-directions/directions.js",
     "preview": "vite preview",
     "test": "vitest run --maxWorkers=4"
   },

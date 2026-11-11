@@ -16,8 +16,8 @@ class FakeES {
     if (type === 'message' && this.onmessage) this.onmessage(ev)
     for (const fn of this.listeners[type] || []) fn(ev)
   }
-  open() { this.readyState = 1; this.onopen && this.onopen({}) }
-  fail(closed) { this.readyState = closed ? 2 : 0; this.onerror && this.onerror({}) }
+  open() { this.readyState = 1; this.onopen?.({}) }
+  fail(closed) { this.readyState = closed ? 2 : 0; this.onerror?.({}) }
 }
 
 function Probe({ dir, runId, enabled = true }) {

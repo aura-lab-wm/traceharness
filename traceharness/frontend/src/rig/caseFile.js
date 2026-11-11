@@ -29,15 +29,15 @@ let ok = true
 
 function read() {
   try {
-    const raw = globalThis.localStorage && globalThis.localStorage.getItem(KEY)
+    const raw = window.localStorage.getItem(KEY)
     const v = raw ? JSON.parse(raw) : []
     return Array.isArray(v) ? v.filter((x) => x && typeof x.id === 'string') : []
   } catch { return [] }
 }
 function write() {
-  try { globalThis.localStorage.setItem(KEY, JSON.stringify(items)); ok = true } catch { ok = false }
+  try { window.localStorage.setItem(KEY, JSON.stringify(items)); ok = true } catch { ok = false }
 }
-function set(next) { items = next; write(); for (const l of [...listeners]) l() }
+function set(next) { items = next; write(); const pending = [...listeners]; for (const l of pending) l() }
 
 export const storageOk = () => ok
 export const getItems = () => items
@@ -53,7 +53,7 @@ export function togglePin(item) { if (isPinned(item.id)) unpin(item.id); else pi
 export function setNote(id, note) { set(items.map((x) => (x.id === id ? { ...x, note } : x))) }
 export function clearCase() { set([]) }
 /** Tests: reload from storage (after localStorage was changed underneath). */
-export function reloadCase() { items = read(); for (const l of [...listeners]) l() }
+export function reloadCase() { items = read(); const pending = [...listeners]; for (const l of pending) l() }
 
 const subscribe = (l) => { listeners.add(l); return () => listeners.delete(l) }
 export function useCaseFile() { return useSyncExternalStore(subscribe, getItems, getItems) }

@@ -92,6 +92,13 @@ describe('where the narrator key lives', () => {
     expect(s.session.getItem(KEY_SLOT)).toBe(null)
     expect(readMate(s).keyPresent).toBe(false)
   })
+  it('never reads keys from host storage outside a browser', () => {
+    const original = Object.getOwnPropertyDescriptor(globalThis, 'localStorage')
+    let reads = 0
+    Object.defineProperty(globalThis, 'localStorage', { configurable: true, get() { reads++; throw new Error('Host storage is not browser storage') } })
+    try { expect(readMate(browserStores()).keyPresent).toBe(false); expect(reads).toBe(0) }
+    finally { if (original) Object.defineProperty(globalThis, 'localStorage', original); else delete globalThis.localStorage }
+  })
 })
 
 describe('the slug and the consent are stored on opposite lifetimes', () => {

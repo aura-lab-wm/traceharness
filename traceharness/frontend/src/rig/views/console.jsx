@@ -21,7 +21,7 @@ import { useEffect, useId, useMemo, useRef, useState } from 'react'
 import { makeSpec } from '../route'
 import { useApi, useSentinel, short, sfx, fmt } from '../data'
 import { Go, Icon, PinButton } from '../ui'
-import { replyNumbers, spanDesc, spanKind, finishOf, harnessOf, eventPin, TOOLCODE } from './trajectory'
+import { replyNumbers, spanDesc, finishOf, harnessOf, eventPin, TOOLCODE } from './trajectory'
 import './console.css'
 
 const { int } = fmt
@@ -271,7 +271,7 @@ export function RunConsole({ run, spans, replay, sel, onSel, verdictOf }) {
     const r = rows[Math.max(0, Math.min(N - 1, i))]
     if (!r) return
     setRp(null)
-    onSel && onSel(r.seq)
+    onSel?.(r.seq)
     if (focus) requestAnimationFrame(() => { const b = listRef.current && listRef.current.querySelector(`[data-seq="${r.seq}"] .rg-cx-rowb`); if (b) b.focus() })
   }
   const onKey = (e) => {

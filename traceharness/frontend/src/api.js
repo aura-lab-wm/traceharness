@@ -34,7 +34,7 @@ export async function api(path, opts = {}) {
   const r = await fetch('/api' + path, {
     ...opts,
     // merged, not replaced: a caller passing PRIVATE must not silently lose content-type
-    headers: { 'content-type': 'application/json', ...(opts.headers || {}) },
+    headers: { 'content-type': 'application/json', ...opts.headers },
     body: opts.body !== undefined ? JSON.stringify(opts.body) : undefined,
   })
   if (!r.ok) {

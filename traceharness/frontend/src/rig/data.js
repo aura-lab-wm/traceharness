@@ -33,7 +33,7 @@ import { api, IS_STATIC, PRIVATE } from '../api'
 const cache = new Map()          // key -> { status, data, error, promise }
 const listeners = new Set()
 let version = 0
-const emit = () => { version++; for (const l of [...listeners]) l() }
+const emit = () => { version++; const pending = [...listeners]; for (const l of pending) l() }
 const subscribe = (l) => { listeners.add(l); return () => listeners.delete(l) }
 const keyOf = (path, opts) => (opts && opts.private ? 'private:' : '') + path
 
@@ -48,7 +48,7 @@ const unreachable = (e) => e instanceof TypeError
 function markConnection(up) {
   if (up === online) return
   online = up
-  if (up) for (const [k, e] of [...cache.entries()]) if (e.status === 'error') cache.delete(k)
+  if (up) for (const [k, e] of cache.entries()) if (e.status === 'error') cache.delete(k)
   emit()
 }
 const settle = (error) => markConnection(!(error && unreachable(error)))
@@ -84,7 +84,7 @@ export function peek(path, opts) {
 
 /** Drop cached paths starting with `prefix` (all when omitted); mounted hooks refetch. */
 export function invalidate(prefix = '') {
-  for (const k of [...cache.keys()]) if (k.replace(/^private:/, '').startsWith(prefix)) cache.delete(k)
+  for (const k of cache.keys()) if (k.replace(/^private:/, '').startsWith(prefix)) cache.delete(k)
   emit()
 }
 

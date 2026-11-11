@@ -180,7 +180,7 @@ function LiveBuddyDock({ ctx = {} }) {
           <div className="rg-row rg-wrap rg-bud-send">
             <div className="rg-bud-picker" data-el="buddy-model-picker"><BuddyModelPicker value={settings.model} onChange={chooseModel} disabled={busy} /></div>
             <span className="rg-grow" />
-            {busy && <button type="button" className="rg-btn ghost" onClick={() => { abort.current && abort.current.abort(); setBusy(false) }}>Stop</button>}
+            {busy && <button type="button" className="rg-btn ghost" onClick={() => { abort.current?.abort(); setBusy(false) }}>Stop</button>}
             <Btn type="submit" className="pri" disabled={busy || !!askWhy} why={askWhy}>{busy ? 'Asking…' : 'Send question'}</Btn>
           </div>
           {error && <p className="rg-small rg-red" role="alert" style={{ marginTop: 6 }}>{error}</p>}

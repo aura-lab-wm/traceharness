@@ -61,7 +61,6 @@ export function spanKind(s) {
   return k === 'chat' ? 'chat' : k === 'execute_tool' ? 'tool' : k === 'edit' ? 'edit' : k === 'grade' ? 'grade' : k === 'boundary_event' ? 'bnd' : k === 'sentinel' ? 'sent' : 'agent'
 }
 const KIND_WORD = { chat: 'model call', tool: 'tool call', edit: 'edit', grade: 'grade', bnd: 'boundary event', sent: 'sentinel', agent: 'run marker' }
-const SCRUB_KINDS = ['chat', 'tool', 'edit', 'bnd', 'sent', 'grade', 'agent']
 /** seq -> 1-based reply number, for every chat span. */
 export function replyNumbers(spans) {
   const m = new Map(); let n = 0
@@ -301,59 +300,6 @@ function EventList({ run, spans, open, onToggle, label = 'Recorded events', el =
         {max && spans.length > max && <p className="rg-tiny rg-mute rg-traj-pad">{spans.length - max} more events in the run ledger.</p>}
       </div>
     </Panel>
-  )
-}
-
-/** Timeline scrubber: one block per span placed by recorded time; a slider steps through them. */
-function Scrubber({ spans, sel, onSel }) {
-  const nos = useMemo(() => replyNumbers(spans), [spans])
-  const geo = useMemo(() => {
-    const st = spans.map((s) => { const t = Date.parse(s.ts); return Number.isFinite(t) ? t - (s.duration_ms || 0) : NaN })
-    const en = spans.map((s) => Date.parse(s.ts))
-    const ok = st.every(Number.isFinite) && en.every(Number.isFinite)
-    const t0 = ok ? Math.min(...st) : 0, t1 = ok ? Math.max(...en) : spans.length
-    const W = Math.max(1, t1 - t0)
-    return spans.map((s, i) => ok
-      ? { x: ((st[i] - t0) / W) * 100, w: Math.max(0.7, ((s.duration_ms || 0) / W) * 100) }
-      : { x: (i / Math.max(1, spans.length)) * 100, w: Math.max(0.7, 100 / Math.max(1, spans.length) - 0.4) })
-      .concat([{ t0, t1, ok }])
-  }, [spans])
-  const meta = geo[geo.length - 1]
-  const idx = Math.max(0, spans.findIndex((s) => s.seq === +sel))
-  const present = useMemo(() => SCRUB_KINDS.filter((k) => spans.some((s) => spanKind(s) === k)), [spans])
-  if (!spans.length) return null
-  return (
-    <div className="rg-traj-scrub" data-el="timeline-scrubber">
-      {/* Two rows: the model's replies on top, what the harness did with them underneath, so the
-          waterfall reads as think → act → think even where tool calls are only milliseconds wide. */}
-      <div className="rg-traj-lane" role="group" aria-label="Ledger timeline">
-        <span className="rg-traj-lane-l m" aria-hidden="true">model</span>
-        <span className="rg-traj-lane-l h" aria-hidden="true">harness</span>
-        <div className="rg-traj-lane-in">
-          {spans.map((s, i) => {
-            const k = spanKind(s), w = Math.min(geo[i].w, 100 - geo[i].x)
-            const no = nos.get(s.seq)
-            return (
-              <button key={s.seq} type="button" className={cx('rg-traj-blk', k, k === 'chat' ? 'r1' : 'r2', isCutoff(s) && 'cut', +sel === s.seq && 'on')} style={{ left: `${geo[i].x.toFixed(2)}%`, width: `${w.toFixed(2)}%` }}
-                aria-label={`event ${s.seq}: ${spanDesc(s, no)}`} title={`#${s.seq} ${spanDesc(s, no)}`} onClick={() => onSel(s.seq)}>
-                {k === 'chat' && w >= 7 && no != null && <span className="t">reply {no}</span>}
-              </button>
-            )
-          })}
-        </div>
-      </div>
-      <input className="rg-traj-range" type="range" min={0} max={spans.length - 1} value={idx} aria-label="Scrub through events"
-        onChange={(e) => onSel(spans[+e.target.value].seq)} />
-      <div className="rg-row rg-mono rg-tiny rg-mute rg-traj-times">
-        <span>{meta.ok ? String(spans[0].ts).slice(11, 19) : 'order only'}</span>
-        <span>#{spans[idx].seq} · {KIND_WORD[spanKind(spans[idx])]}{meta.ok ? ` · ${((meta.t1 - meta.t0) / 1000).toFixed(1)} s total` : ''}</span>
-        <span>{meta.ok ? String(spans[spans.length - 1].ts).slice(11, 19) : ''}</span>
-      </div>
-      <div className="rg-traj-scrubkey" aria-hidden="true">
-        {present.map((k) => <span key={k}><span className={cx('rg-traj-ki', k)} />{KIND_WORD[k]}</span>)}
-        {spans.some(isCutoff) && <span><span className="rg-traj-ki cut" />cut off at the output limit</span>}
-      </div>
-    </div>
   )
 }
 
@@ -948,7 +894,7 @@ function RunDoc({ spec, args }) {
     </div>
   )
 }
-function RunActions({ args }) {
+function RunActions() {
   const { toggleDock, state } = useRig()
   return <button type="button" className={cx('rg-btn ghost', state && state.dock === 'log' && 'on')} onClick={() => toggleDock('log')} title="Event log of the focused run"><Icon name="log" size={13} /><span className="rg-hide-sm">Event log</span></button>
 }

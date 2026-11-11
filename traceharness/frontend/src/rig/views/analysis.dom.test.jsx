@@ -248,7 +248,6 @@ function shapes({ key = false, judge = { status: 'idle', stage: null, error: nul
   const f = data()
   const ov = f['/overview']
   const solo = [raw(BIG, 'swe', 's1', 0, true), raw(BIG, 'swe', 's1', 1, false), raw(BIG, 'swe', 's2', 0, false), raw(BIG, 'swe', 's2', 1, false), raw(SMALL, 'swe', 's1', 0, true), raw(SMALL, 'swe', 's2', 0, false)]
-  const duo = [raw('mock', 'permissive', 'd1', 0, false), raw('mock', 'permissive+sentinel', 'd1', 0, true)]
   const H7 = ['h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'h7']
   const wide = [...H7.map((h) => raw('mock-w', h, 'w1', 0, true)), raw('mock-x', 'h1', 'w1', 0, false)]
   const many = Array.from({ length: 45 }, (_, i) => raw('mock-m', 'baseline', `task${String(i).padStart(2, '0')}`, 0, i % 3 !== 0))

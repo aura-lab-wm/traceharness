@@ -143,6 +143,10 @@ describe('task investigator', () => {
   })
   it('notes save to the classic review key and mark reviewed; export review writes Markdown with the failure mode', async () => {
     const blobs = []
+    const download = vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(function () {
+      expect(this.download).toMatch(/\.md$/)
+      expect(this.href).toBe('blob:x')
+    })
     vi.stubGlobal('URL', Object.assign(Object.create(URL), { createObjectURL: vi.fn((b) => { blobs.push(b); return 'blob:x' }), revokeObjectURL: vi.fn() }))
     const { container } = renderRig('#/rig/task:mini:alpha-1:baseline:t2:1:notes', { data: data() })
     const notes = q(container, 'notes')
@@ -155,6 +159,7 @@ describe('task investigator', () => {
     expect(JSON.parse(localStorage.getItem(key)).status).toBe('reviewed')
     act(() => { fireEvent.click(within(notes).getByRole('button', { name: 'Export review' })) })
     expect(blobs).toHaveLength(1)
+    expect(download).toHaveBeenCalledOnce()
     const md = await blobs[0].text()
     expect(md).toContain('# TraceHarness investigation')
     expect(md).toContain('Failure mode (hidden suite): cut off · no patch')

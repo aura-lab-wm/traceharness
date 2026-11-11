@@ -2,7 +2,7 @@
 import { useEffect, useState } from 'react'
 import { api, IS_MEMBER } from '../../api'
 import { requireStored } from '../../member-api'
-import { blocksFromHarness, readDraft, writeDraft } from './shallow-drafts'
+import { readDraft, writeDraft } from './shallow-drafts'
 import { HarnessJson } from '../HarnessJson'
 import { ErrorState, Go, Loading } from '../ui'
 import { EvidenceOrigin, evidenceOrigin, withEvidenceOrigin } from '../shallowEvidence'
