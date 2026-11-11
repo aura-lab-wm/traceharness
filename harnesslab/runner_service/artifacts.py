@@ -6,7 +6,8 @@ import stat
 
 from .jobs import JobError
 
-ARTIFACT_NAMES = frozenset({"manifest.json", "grade.json", "trace.jsonl", "messages.json", "patch.diff", "summary.json"})
+ARTIFACT_NAMES = frozenset({"manifest.json", "grade.json", "trace.jsonl", "messages.json", "patch.diff", "summary.json",
+                            "native-prompt-profile.json", "native-prompt-application.json", "native-prompt-observations.json"})
 MAX_ARTIFACT_BYTES = 1024 * 1024
 
 

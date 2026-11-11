@@ -7,7 +7,7 @@ export const UNAVAILABLE_RUNNER = Object.freeze({
   runtimes: [], models: [], tasks: [], credentials_available: false, execution_available: false,
 })
 
-export const RUNNER_ARTIFACT_NAMES = new Set(['manifest.json', 'grade.json', 'trace.jsonl', 'messages.json', 'patch.diff', 'summary.json'])
+export const RUNNER_ARTIFACT_NAMES = new Set(['manifest.json', 'grade.json', 'trace.jsonl', 'messages.json', 'patch.diff', 'summary.json', 'native-prompt-profile.json', 'native-prompt-application.json', 'native-prompt-observations.json'])
 const ARTIFACT_MAX_BYTES = 1024 * 1024
 const IMAGE_ID = /^(?:[a-zA-Z0-9][a-zA-Z0-9./:_-]*@)?sha256:[a-f0-9]{64}$/
 const RUNTIME_IDS = new Set(['traceharness', 'native-claude-code', 'native-codex'])
@@ -18,6 +18,7 @@ const artifactRoute = (path) => {
 }
 
 const allowed = (path, method) => method === 'GET' && ['/catalog', '/jobs'].includes(path)
+  || method === 'GET' && /^\/prompt-inventory\/(native-claude-code|native-codex)$/.test(path)
   || method === 'GET' && /^\/jobs\/[A-Za-z0-9_-]{1,100}$/.test(path)
   || method === 'GET' && artifactRoute(path)
   || method === 'POST' && ['/preflight', '/credentials', '/jobs'].includes(path)
@@ -80,6 +81,11 @@ export function runnerCatalog(data) {
     || data.runtimes.some((r) => !text(r.name) || !['traceharness', 'native'].includes(r.kind) || typeof r.available !== 'boolean'
       || !['replace', 'append'].includes(r.prompt_mode) || !optionalText(r.reason)
       || !(optionalText(r.version) || r.available === false && r.version === null)
+      || r.native_prompts !== undefined && (!r.native_prompts || typeof r.native_prompts !== 'object' || Array.isArray(r.native_prompts)
+        || r.kind !== 'native' || typeof r.native_prompts.available !== 'boolean' || typeof r.native_prompts.execution_available !== 'boolean'
+        || !['embedded', 'overlay'].includes(r.native_prompts.mode) || !text(r.native_prompts.reason)
+        || r.native_prompts.available && !/^[a-f0-9]{64}$/.test(r.native_prompts.inventory_sha256)
+        || !r.native_prompts.available && r.native_prompts.execution_available)
       || r.model_ids !== undefined && (!Array.isArray(r.model_ids) || r.model_ids.some((id) => !text(id))))
     || data.models.some((m) => !optionalText(m.name)
       || m.context_length !== undefined && (!Number.isSafeInteger(m.context_length) || m.context_length <= 0)

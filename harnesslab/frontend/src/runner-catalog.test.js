@@ -2,6 +2,7 @@
 // Catalog validation fixtures only; no execution service or provider calls.
 import { describe, expect, it } from 'vitest'
 import { runnerCatalog } from './runner-api'
+import { nativeRuntimeFixture } from '../test/native-prompts-fixture'
 
 const fixture = () => ({
   version: 1, runner: { available: true, message: 'Fixture catalog' }, credentials_available: true, execution_available: true,
@@ -11,6 +12,19 @@ const fixture = () => ({
 })
 
 describe('task compatibility and model metadata validation', () => {
+  it('retains exact native inventory authoring capability without inferring execution support', () => {
+    const catalog = fixture()
+    catalog.runtimes.push(nativeRuntimeFixture(undefined, false))
+    expect(runnerCatalog(catalog).runtimes[1].native_prompts).toMatchObject({ available: true, execution_available: false, mode: 'embedded', inventory_sha256: 'c'.repeat(64) })
+  })
+
+  it.each([null, {}, { available: true }, { available: false, execution_available: true, mode: 'embedded', reason: '' },
+    { available: true, execution_available: true, mode: 'embedded', inventory_sha256: 'unpinned', reason: '' },
+    { available: true, execution_available: false, mode: 'assumed-native', inventory_sha256: 'c'.repeat(64), reason: '' }])('rejects incomplete native prompt capability %j', (native_prompts) => {
+    const catalog = fixture(); catalog.runtimes.push({ ...nativeRuntimeFixture(), native_prompts })
+    expect(() => runnerCatalog(catalog)).toThrow('catalog is incomplete')
+  })
+
   it('retains task runtime constraints and provenance without inferring compatibility', () => {
     const catalog = fixture()
     expect(runnerCatalog(catalog)).toBe(catalog)

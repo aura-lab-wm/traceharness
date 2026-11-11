@@ -3,6 +3,7 @@ import { api, IS_MEMBER } from '../../api'
 import { requireStored, encodeMemberJSON } from '../../member-api'
 import { runnerRequest, runnerCatalog, decodeRunnerArtifact, RUNNER_ARTIFACT_NAMES, UNAVAILABLE_RUNNER } from '../../runner-api'
 import { taskCompatibility } from '../../runner-compatibility'
+import { nativeInventoryResponse, nativeProfileIssue } from '../../native-prompts-contract'
 import { ByteMeter, NumericField, ToolChips } from '../harnessWorkspace'
 import { fieldIssues, numberIssue } from '../harnessFields'
 import { EvidenceOrigin } from '../shallowEvidence'
@@ -13,6 +14,8 @@ import { blocksFromHarness, writeDraft } from './shallow-drafts'
 import { applyConfiguration, configurationFor, configurationText, expiryTime, fixedComposerDrafts, forkAsCustom, guidanceFor, initialComposer, NATIVE_DRAFTS, parseConfiguration } from './harness-composer-state'
 import { HarnessPicker } from '../harnessPicker'
 import { ConfigurationLibrary } from '../configurationLibrary'
+import { NativePrompts } from '../NativePrompts'
+import { promptCounts } from './native-prompts-state'
 import { addCheckpoint, compareConfigurations, deleteCheckpoint, loadCheckpoints, persistCheckpoints, renameCheckpoint, restoreCheckpoint } from '../configuration-checkpoints'
 import './harness-composer.css'
 
@@ -53,6 +56,10 @@ export function HarnessComposer({ args = [] }) {
   const [catalogLoading, setCatalogLoading] = useState(true)
   const [catalogError, setCatalogError] = useState('')
   const [catalogRevision, setCatalogRevision] = useState(0)
+  const [nativeInventory, setNativeInventory] = useState(null)
+  const [nativeInventoryError, setNativeInventoryError] = useState('')
+  const [nativeInventoryLoading, setNativeInventoryLoading] = useState(false)
+  const [nativeInventoryRevision, setNativeInventoryRevision] = useState(0)
   const [storageErrors, setStorageErrors] = useState({})
   const storageError = [...new Set(Object.values(storageErrors).filter(Boolean))].join(' ')
   function setStorageError(message, source = 'fixed') { setStorageErrors((old) => ({ ...old, [source]: message })) }
@@ -110,11 +117,16 @@ export function HarnessComposer({ args = [] }) {
   const credentialsAvailable = catalog.runner.available && catalog.credentials_available
   const runtimes = nativeChoices.length ? nativeChoices : NATIVE_DRAFTS
   const runtime = native ? runtimes.find((r) => r.id === state.selection.slice(7)) : catalog.runtimes.find((r) => r.id === 'traceharness')
+  const nativeDraft = native ? state.native_prompt_drafts?.[state.selection.slice(7)] : null
+  const inventoryForRuntime = nativeInventory && nativeInventory.runtimeId === runtime?.id && nativeInventory.catalog === catalog && nativeInventory.revision === nativeInventoryRevision ? nativeInventory.response : null
+  const promptProfileIssue = nativeDraft?.enabled ? nativeProfileIssue(nativeDraft.profile, inventoryForRuntime?.inventory) : ''
+  const nativeCounts = inventoryForRuntime?.inventory && nativeDraft?.enabled && !promptProfileIssue
+    ? promptCounts(inventoryForRuntime.inventory.blocks, nativeDraft.profile.overrides, [], nativeDraft.profile.default_action) : null
   const fixedPrompt = card ? fixedDrafts[card.id]?.prompt ?? card.prompt : ''
   const configuration = configurationFor(state, { card, runtime, fixedPrompt })
   const configurationKey = jsonKey(configuration)
   const currentConfiguration = useRef(null)
-  currentConfiguration.current = { key: configurationKey, catalog, revision: catalogRevision }
+  currentConfiguration.current = { key: configurationKey, catalog, revision: catalogRevision, nativeInventoryRevision }
   const checkpointComparison = useMemo(() => {
     const entry = checkpoints.find((row) => row.id === comparedCheckpoint)
     if (!entry) return null
@@ -141,12 +153,15 @@ export function HarnessComposer({ args = [] }) {
     ...(!model ? ['Select a model.'] : runtime?.available && !selectedRuntimeModelAllowed ? ['The selected model is not verified for this runtime. Choose a supported model.'] : []),
     ...(!task || !task.ready ? [task?.reason || 'Select a runnable task package. Recorded trajectories alone cannot be run.'] : []),
     ...(task?.ready && runtime?.available && compatibility.reason ? [compatibility.reason] : []),
-    ...(!prompt.trim() ? [native ? 'Enter instructions for this task.' : 'Enter a standing prompt.'] : []),
+    ...(!prompt.trim() && configuration.version !== 2 ? [native ? 'Enter instructions for this task.' : 'Enter a standing prompt.'] : []),
+    ...(nativeDraft?.enabled && nativeInventoryLoading ? ['Checking the exact native prompt inventory.'] : []),
+    ...(promptProfileIssue ? [promptProfileIssue] : []),
+    ...(nativeDraft?.enabled && (!inventoryForRuntime?.execution_available || !runtime?.native_prompts?.execution_available) ? ['Native prompt application is not verified for this runtime. The profile draft cannot run yet.'] : []),
     ...blocksIssues,
     ...LIMIT_FIELDS.flatMap((field) => { const issue = numberIssue(configuration.limits[field.key], field); return issue ? [`${native && field.key === 'max_steps' ? 'Model request cap' : field.label}: ${issue}`] : [] }),
     ...(fixed && (!card || new TextEncoder().encode(prompt).length > card.cap_bytes) ? ['The fixed prompt is over its byte cap.'] : []),
   ]
-  const currentReview = preflight?.key === configurationKey && preflight.catalog === catalog && preflight.revision === catalogRevision && !catalogLoading
+  const currentReview = preflight?.key === configurationKey && preflight.catalog === catalog && preflight.revision === catalogRevision && preflight.nativeInventoryRevision === nativeInventoryRevision && !catalogLoading
   const reviewed = currentReview && preflight.result?.ok === true && preflight.result.issues.length === 0
 
   useEffect(() => {
@@ -183,6 +198,18 @@ export function HarnessComposer({ args = [] }) {
     return () => { live = false; controller.abort() }
   }, [catalogRevision])
   useEffect(() => {
+    if (!native || !runtime || catalogLoading) { setNativeInventory(null); setNativeInventoryLoading(false); return }
+    let live = true
+    const controller = new AbortController()
+    setNativeInventory(null); setNativeInventoryError('')
+    if (!runtime.native_prompts) { setNativeInventoryLoading(false); return }
+    setNativeInventoryLoading(true)
+    runnerRequest('/prompt-inventory/' + runtime.id, { signal: controller.signal }).then((data) => nativeInventoryResponse(data, runtime)).then((response) => {
+      if (live) setNativeInventory({ runtimeId: runtime.id, catalog, revision: nativeInventoryRevision, response })
+    }).catch((failure) => { if (live) setNativeInventoryError(failure.message) }).finally(() => { if (live) setNativeInventoryLoading(false) })
+    return () => { live = false; controller.abort() }
+  }, [native, runtime, catalog, catalogLoading, nativeInventoryRevision])
+  useEffect(() => {
     if (!IS_MEMBER) return
     let live = true
     const controller = new AbortController()
@@ -200,7 +227,7 @@ export function HarnessComposer({ args = [] }) {
   }, [accountRevision])
   useEffect(() => {
     setPreflight(null); setChecking(false); preflightRequest.current?.abort(); retry.current = null
-  }, [configurationKey, catalog, catalogRevision])
+  }, [configurationKey, catalog, catalogRevision, nativeInventoryRevision])
   useEffect(() => {
     if (native || fixed || !IS_MEMBER || blocksIssues.length) { setPreview(null); setPreviewError(''); return }
     let live = true
@@ -394,7 +421,7 @@ export function HarnessComposer({ args = [] }) {
   async function reviewRun() {
     if (editLocked || readyIssues.length || checking) return
     const snapshot = currentConfiguration.current
-    const stillCurrent = () => currentConfiguration.current.key === snapshot.key && currentConfiguration.current.catalog === snapshot.catalog && currentConfiguration.current.revision === snapshot.revision
+    const stillCurrent = () => currentConfiguration.current.key === snapshot.key && currentConfiguration.current.catalog === snapshot.catalog && currentConfiguration.current.revision === snapshot.revision && currentConfiguration.current.nativeInventoryRevision === snapshot.nativeInventoryRevision
     const controller = new AbortController(); preflightRequest.current?.abort(); preflightRequest.current = controller
     setChecking(true); setError(''); setPreflight(null)
     try {
@@ -609,11 +636,14 @@ export function HarnessComposer({ args = [] }) {
             {fixed && fixedDrafts[card?.id] && <button className="rg-btn" disabled={editLocked} onClick={discardFixedDraft}>Discard draft and reload saved prompt</button>}{fixed && <button className="rg-btn" disabled={editLocked || !card || !accountLoaded} onClick={customizeCurrent}>Customize tools and limits</button>}
             {!fixed && !native && <><button className="rg-btn" disabled={editLocked} aria-expanded={state.edit_mode === 'guided'} aria-controls={instanceId + '-guided'} onClick={() => showEditor('guided')}>Guide me</button><button className="rg-btn" disabled={editLocked} aria-expanded={state.edit_mode === 'advanced'} aria-controls={instanceId + '-advanced'} onClick={() => showEditor('advanced')}>Advanced settings</button></>}
           </div>
-          <label className="rg-fld"><span className="rg-composer-sr">Prompt</span><textarea ref={promptInput} className="rg-inp" aria-label="Prompt" value={prompt} rows={12} spellCheck={false} disabled={editLocked || fixed && (!card || !accountLoaded)} onChange={(e) => editPrompt(e.target.value)} placeholder={native ? 'Add the instructions this task needs. Native built-in instructions remain in place.' : 'Describe how the agent should inspect, edit and verify the repository.'} /></label>
+          <label className="rg-fld"><span className="rg-composer-sr">Prompt</span><textarea ref={promptInput} className="rg-inp" aria-label="Prompt" value={prompt} rows={12} spellCheck={false} disabled={editLocked || fixed && (!card || !accountLoaded)} onChange={(e) => editPrompt(e.target.value)} placeholder={native ? configuration.version === 2 ? 'Optional additional instructions, separate from the native prompt profile below.' : 'Add the instructions this task needs. Native built-in instructions remain in place.' : 'Describe how the agent should inspect, edit and verify the repository.'} /></label>
           {fixed && card ? <ByteMeter used={new TextEncoder().encode(prompt).length} cap={card.cap_bytes} name={card.name} /> : <span className="rg-small rg-mute rg-mono">{new TextEncoder().encode(prompt).length.toLocaleString()} UTF-8 bytes · {native ? 'runtime validates the prompt limit' : 'compiled with the harness'}</span>}
           {fixed && card && <><ToolChips tools={card.tools} /><p className="rg-small rg-mute">Tools, permissions and byte caps belong to this TraceHarness preset, not the vendor’s native runtime.</p>{(!prompt.includes('verify') || !prompt.includes('modify the tests') || new TextEncoder().encode(prompt).length > card.cap_bytes) && <p className="rg-harness-warning">This prompt exceeds the preset’s byte cap or omits its verification and test-edit safeguards. Saving clips to the byte cap; review the saved text.</p>}{fixedDrafts[card.id] && <p className="rg-small">Unsaved draft in this tab</p>}{card.memberUnconfirmed && <p role="alert">Account storage has not confirmed this prompt. Your draft is still pending.</p>}</>}
 
         </div></section>
+        {native && runtime && <NativePrompts key={runtime.id} runtime={runtime} response={inventoryForRuntime} loading={catalogLoading || nativeInventoryLoading} error={nativeInventoryError} draft={nativeDraft} disabled={editLocked}
+          onRefresh={() => { setNativeInventoryRevision((revision) => revision + 1); setCatalogRevision((revision) => revision + 1) }}
+          onChange={(draft) => setState((previous) => { const drafts = { ...previous.native_prompt_drafts }; if (draft) drafts[runtime.id] = draft; else delete drafts[runtime.id]; return { ...previous, native_prompt_drafts: drafts } })} />}
         {!native && !fixed && state.edit_mode === 'guided' && <section className="rg-composer-guide" id={instanceId + '-guided'} tabIndex={-1} aria-label="Guided harness setup"><div className="rg-composer-section-head"><h2>Guided setup</h2><span>Six choices, one configuration</span></div>{QUESTIONS.map((q) => <fieldset key={q.id} className="rg-harness-question" disabled={editLocked}><legend>{q.id === 'verify' ? 'Prompt verification template' : q.prompt}</legend><div className="rg-harness-options">{q.options.map(([value, label]) => <label key={value} className={`rg-harness-option${guidance.selections[q.id] === value ? ' selected' : ''}`}><input type="radio" name={instanceId + '-' + q.id} value={value} checked={guidance.selections[q.id] === value} onChange={() => changeAnswer(q.id, value)} /><span>{label}</span></label>)}</div>{guidance.custom.includes(q.id) && <p className="rg-small rg-mute">Custom setting. Choose an answer to replace only this setting.</p>}{guidance.resetDifferences.includes(q.id) && <p className="rg-small rg-mute">Reset value: {q.options.find(([value]) => value === state.answers[q.id])?.[1]}</p>}{q.id === 'verify' && <div className="rg-row rg-wrap"><p className="rg-small rg-mute">This choice sets the prompt template. Apply it explicitly to replace your current instructions.</p><button type="button" className="rg-btn" disabled={editLocked} onClick={() => resetToAnswers(true)}>Apply prompt template</button></div>}</fieldset>)}<p className="rg-small rg-mute">Guidance reflects your current configuration. Reset replaces the prompt and all seven blocks with the remembered wizard answers; Undo is available.</p><button className="rg-btn" disabled={editLocked} onClick={() => resetToAnswers()}>Reset to Wizard Answers</button></section>}
         {!native && !fixed && state.edit_mode === 'advanced' && <section className="rg-harness-blocks" id={instanceId + '-advanced'} tabIndex={-1} aria-label="Advanced harness settings"><div className="rg-composer-section-head"><h2>Advanced settings</h2><button className="rg-btn" disabled={editLocked} onClick={() => resetToAnswers()}>Reset to Wizard Answers</button></div><fieldset className="rg-composer-fields" disabled={editLocked}>{state.blocks.map((block, i) => block.type === 'prompt' ? null : <BlockCard key={block.type} block={block} index={i} count={state.blocks.length} tools={tools} onChange={editBlock} onMove={moveBlock} allowRemove={false} />)}</fieldset></section>}
         {native && <div className="rg-note"><p>Native runtime settings are controlled by its verified adapter. TraceHarness block settings are not applied to this agent.</p>{runtime?.reason && <p className="rg-small">{runtime.reason}</p>}</div>}
@@ -630,6 +660,7 @@ export function HarnessComposer({ args = [] }) {
         <div><dt>Engine</dt><dd>{native ? runtime?.name || 'Native agent' : 'TraceHarness'}<small>{native ? 'Native runtime' : fixed ? `${card?.name || 'Selected'} stand-in` : 'Configurable engine'}</small></dd></div>
         <div><dt>Model</dt><dd>{state.model_id || 'Choose a model'}</dd></div><div><dt>Task</dt><dd>{task?.title || state.task_id || 'Choose a task'}{task?.revision && <small>{task.revision}</small>}</dd></div>
         <div><dt>Prompt</dt><dd>{new TextEncoder().encode(prompt).length.toLocaleString()} bytes · {configuration.prompt_mode}</dd></div>
+        {nativeDraft?.enabled && <div><dt>Native profile</dt><dd>{nativeCounts ? `${nativeCounts.included} / ${nativeCounts.patchable} patchable included` : 'Exact inventory required'}<small>{nativeCounts ? `${nativeCounts.baseline} baseline · ${nativeCounts.replaced} replacement · ${nativeCounts.disabled} disabled` : 'Draft preserved; execution unavailable'}</small><small className="rg-mono">{nativeDraft.profile.inventory_sha256}</small></dd></div>}
       </dl><fieldset className="rg-composer-limits" disabled={editLocked}><legend>Run limits</legend>{LIMIT_FIELDS.filter((field) => native || field.key !== 'max_steps').map((field) => <NumericField key={field.key} field={native && field.key === 'max_steps' ? { ...field, label: 'Model request cap' } : field} value={state.limits[field.key]} onChange={(value) => setState((s) => ({ ...s, limits: { ...s.limits, [field.key]: value } }))} />)}{native ? <p className="rg-small rg-mute">This cap counts model requests. Native tool actions are controlled by the runtime.</p> : <p className="rg-small rg-mute">{configuration.limits.max_steps} steps · set by this harness</p>}</fieldset><div className="rg-composer-readiness" aria-live="polite"><strong>{reviewed ? 'Configuration verified' : 'Before this can run'}</strong>{readyIssues.length ? <ul>{[...new Set(readyIssues)].map((issue) => <li key={issue}>{issue}</li>)}</ul> : !reviewed ? <p>Review the configuration with the runner before launching.</p> : <p>The server validated this exact configuration. Running may spend your OpenRouter credits.</p>}{!credential && credentialsAvailable && <p>Connect your OpenRouter key to run.</p>}{currentReview && preflight.result.issues.map((issue) => <p key={issue} role="alert">{issue}</p>)}</div>
       <div className="rg-composer-actions"><button className="rg-btn" onClick={reviewRun} disabled={editLocked || !!readyIssues.length || checking}>{checking ? 'Reviewing…' : 'Review run'}</button><button className="rg-btn pri" onClick={run} disabled={editLocked || !reviewed || !!readyIssues.length || !credential || !!jobActive}>{launching ? 'Starting…' : job && terminal.has(job.status) ? 'Run again' : 'Run'}</button>
 

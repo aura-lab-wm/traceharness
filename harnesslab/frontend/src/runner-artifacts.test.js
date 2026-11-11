@@ -10,6 +10,12 @@ const fixture = () => {
 }
 
 describe('downloaded runner artifact integrity', () => {
+  it.each(['native-prompt-profile.json', 'native-prompt-application.json', 'native-prompt-observations.json'])('verifies native evidence artifact %s through the same digest gate', async (name) => {
+    const raw = Buffer.from(JSON.stringify({ fixture: true, statement: 'No live native proof is claimed.' }))
+    const expected = { name, bytes: raw.length, sha256: createHash('sha256').update(raw).digest('hex') }
+    expect(Buffer.from(await decodeRunnerArtifact({ ...expected, encoding: 'base64', content: raw.toString('base64') }, expected))).toEqual(raw)
+  })
+
   it('verifies the advertised digest and exact byte count before releasing bytes', async () => {
     const { raw, expected, data } = fixture()
     expect(Buffer.from(await decodeRunnerArtifact(data, expected))).toEqual(raw)
@@ -38,5 +44,9 @@ describe('downloaded runner artifact integrity', () => {
 
   it.each(['../secret', '%2e%2e%2fsecret', 'trace.html', 'patch.diff?source=other', 'patch.diff/extra'])('blocks unsupported artifact paths %s before fetching', async (name) => {
     await expect(runnerRequest('/jobs/' + 'a'.repeat(48) + '/artifacts/' + name)).rejects.toThrow('not supported')
+  })
+
+  it.each(['../native-claude-code', 'native-claude-code?source=other', 'traceharness', 'native-codex/extra'])('refuses unsupported inventory paths %s before fetching', async (runtime) => {
+    await expect(runnerRequest('/prompt-inventory/' + runtime)).rejects.toThrow('not supported')
   })
 })

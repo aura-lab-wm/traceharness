@@ -25,6 +25,8 @@ class ExecutionError(Exception):
 
 ARTIFACT_LIMIT = 1024 * 1024
 RUNTIME_ARTIFACTS = ("trace.jsonl", "messages.json", "patch.diff", "summary.json")
+NATIVE_ARTIFACTS = ("native-prompt-profile.json", "native-prompt-application.json", "native-prompt-observations.json")
+CLAUDE_BINARY_TARGET = "/usr/local/lib/node_modules/@anthropic-ai/claude-code/bin/claude.exe"
 
 
 def _redacted(raw: bytes) -> bytes:
@@ -61,7 +63,7 @@ def _redacted(raw: bytes) -> bytes:
     return text.encode("utf-8")
 
 
-def _read_artifact(path: Path) -> bytes:
+def _read_artifact(path: Path, *, redact=True) -> bytes:
     # Open nonblocking as well as no-follow: a malicious FIFO must not hang the
     # privileged control plane between a stat and open.
     fd = os.open(path, os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK)
@@ -72,7 +74,7 @@ def _read_artifact(path: Path) -> bytes:
         raw = stream.read(ARTIFACT_LIMIT + 1)
         if len(raw) > ARTIFACT_LIMIT:
             raise ValueError("Oversized artifact")
-    return _redacted(raw)
+    return _redacted(raw) if redact else raw
 
 
 def pinned_image_matches(reference, inspected):
@@ -232,8 +234,22 @@ class DockerExecutor:
                 continue
             except (OSError, ValueError, UnicodeError):
                 issues.append(name + " was not exported because it was not a regular UTF-8 file within the 1 MiB limit.")
+        # These receipts come from a control-plane-only directory. A task cannot
+        # forge them by placing a similarly named file in its writable /output.
+        if "native_prompt_profile" in manifest:
+            for name in NATIVE_ARTIFACTS:
+                try:
+                    values[name] = _read_artifact(directory / "native-evidence" / name, redact=False)
+                except FileNotFoundError:
+                    continue
+                except (OSError, ValueError, UnicodeError):
+                    issues.append(name + " could not be exported within the evidence limit.")
         for name, raw in values.items():
-            raw = _redacted(raw)
+            redacted = _redacted(raw)
+            if "native_prompt_profile" in manifest and (name == "manifest.json" or name in NATIVE_ARTIFACTS) and redacted != raw:
+                issues.append(name + " was withheld because redaction would change its reviewed identity.")
+                continue
+            raw = redacted
             if len(raw) > ARTIFACT_LIMIT:
                 issues.append(name + " exceeded the 1 MiB export limit.")
                 continue
@@ -242,6 +258,58 @@ class DockerExecutor:
                 stream.write(raw)
             artifacts.append({"name": name, "bytes": len(raw), "sha256": hashlib.sha256(raw).hexdigest()})
         return artifacts, issues
+
+    def prepare_native_prompts(self, manifest, directory):
+        """Revalidate admission and create one immutable job-local executable."""
+        if "native_prompt_profile" not in manifest:
+            return None, None
+        from .native_prompts import canonical_bytes, profile_sha256, NativePromptError
+        from .native_prompts_elf import materialize_native_binary
+        from .native_observations import NativePromptObserver
+        binary = None
+        try:
+            if manifest["runtime_id"] != "native-claude-code":
+                raise ValueError()
+            profile, admission = self.registry.native_prompt_profile(manifest["runtime_id"], manifest["native_prompt_profile"])
+            inventory = self.registry.native_prompt_inventories[manifest["runtime_id"]]
+            if (profile_sha256(profile) != manifest["native_prompt_profile_sha256"]
+                    or admission != manifest["native_prompt_admission"]
+                    or inventory["image_digest"] != manifest["image_digest"]
+                    or inventory["runtime_version"] != manifest["runtime_version"]):
+                raise ValueError()
+            reference = self.registry.runtimes[manifest["runtime_id"]]["native_prompt_binary"]
+            fd = os.open(reference["path"], os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK)
+            with os.fdopen(fd, "rb") as stream:
+                info = os.fstat(stream.fileno())
+                if not stat.S_ISREG(info.st_mode) or info.st_size > 512 * 1024 * 1024:
+                    raise ValueError()
+                pristine = stream.read(512 * 1024 * 1024 + 1)
+            if (len(pristine) > 512 * 1024 * 1024 or hashlib.sha256(pristine).hexdigest()
+                    != reference["sha256"] or reference["sha256"] != inventory["binary_sha256"]):
+                raise ValueError()
+            patched, evidence = materialize_native_binary(pristine, inventory, profile)
+            private = directory / "native-evidence"
+            private.mkdir(mode=0o700)
+            private.chmod(0o700)
+            evidence["admission_receipt_sha256"] = admission["receipt_sha256"]
+            for name, value in ((NATIVE_ARTIFACTS[0], profile), (NATIVE_ARTIFACTS[1], evidence)):
+                raw = canonical_bytes(value)
+                if len(raw) > ARTIFACT_LIMIT:
+                    raise ValueError()
+                fd = os.open(private / name, os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW, 0o600)
+                with os.fdopen(fd, "wb") as stream:
+                    stream.write(raw)
+            observer = NativePromptObserver(inventory, profile)
+            binary = directory / "input" / "native-claude"
+            fd = os.open(binary, os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW, 0o500)
+            with os.fdopen(fd, "wb") as stream:
+                stream.write(patched)
+            binary.chmod(0o555)
+            return (binary, CLAUDE_BINARY_TARGET, True), observer
+        except (OSError, ValueError, KeyError, TypeError, NativePromptError):
+            if binary is not None:
+                binary.unlink(missing_ok=True)
+            raise ExecutionError("Native prompt materialization did not match the reviewed inventory and mechanism.") from None
 
     def _execute_bounded(self, job_id, manifest, directory: Path, cancel, forward):
         task = self.registry.tasks[manifest["task_id"]]
@@ -270,13 +338,29 @@ class DockerExecutor:
         (inputs / "task.json").write_text(json.dumps({"visible_test_command": command}))
         for path in inputs.iterdir():
             path.chmod(0o444)
+        native_mount, observer = self.prepare_native_prompts(manifest, directory)
         name = "traceharness-" + job_id
         deadline = time.monotonic() + manifest["limits"]["wall_time_seconds"]
-        with UnixModelProxy(gateway / "runner.sock", forward):
-            args = self.container_args(name, manifest["image_digest"],
-                [(work, "/workspace", False), (inputs, "/input", True), (output, "/output", False), (gateway, "/gateway", True), (source / "repo", "/taskrepo", True)],
-                entrypoint="python") + ["-m", "harnesslab.runner_service.container_entrypoint"]
-            self._run(args, name, cancel, deadline)
+        mounts = [(work, "/workspace", False), (inputs, "/input", True), (output, "/output", False),
+                  (gateway, "/gateway", True), (source / "repo", "/taskrepo", True)]
+        if native_mount:
+            mounts.append(native_mount)
+        try:
+            with UnixModelProxy(gateway / "runner.sock", observer.wrap(forward) if observer else forward):
+                args = self.container_args(name, manifest["image_digest"], mounts,
+                    entrypoint="python") + ["-m", "harnesslab.runner_service.container_entrypoint"]
+                self._run(args, name, cancel, deadline)
+        finally:
+            try:
+                if observer:
+                    from .native_prompts import canonical_bytes
+                    path = directory / "native-evidence" / NATIVE_ARTIFACTS[2]
+                    fd = os.open(path, os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW, 0o600)
+                    with os.fdopen(fd, "wb") as stream:
+                        stream.write(canonical_bytes(observer.report()))
+            finally:
+                if native_mount:
+                    native_mount[0].unlink(missing_ok=True)
         if cancel.is_set():
             raise ExecutionError("Execution was cancelled.")
         # Grading is a separate offline process. The agent never sees hidden tests.

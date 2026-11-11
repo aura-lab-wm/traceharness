@@ -155,6 +155,13 @@ def create_app(settings: Settings | None = None, *, registry=None, provider=None
         status, models = await health()
         return registry.catalog(status, models)
 
+    @app.get("/api/runner/prompt-inventory/{runtime_id}")
+    async def prompt_inventory(runtime_id: str):
+        if runtime_id not in {"native-claude-code", "native-codex"}:
+            raise JobError("Native prompt inventory not found.", 404)
+        status, _ = await health()
+        return registry.native_prompt_inventory(runtime_id, status)
+
     async def review(configuration):
         status, models = await health()
         result = preflight(configuration, registry, status)

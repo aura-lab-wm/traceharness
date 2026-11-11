@@ -2,6 +2,8 @@ import { blocksFromHarness, readDraft, wizardAnswers, wizardBlocks } from './sha
 import { CARDS, QUESTIONS, blocksFromAnswers } from './shallow-data'
 import { encodeMemberJSON } from '../../member-api'
 import { fieldIssues, numberIssue } from '../harnessFields'
+import { checkedNativeProfile } from '../../native-prompts-contract'
+import { nativeDraftForProfile, safeNativeDraft } from './native-prompts-state'
 
 export const NATIVE_DRAFTS = [
   { id: 'native-claude-code', name: 'Claude Code', kind: 'native', available: false, prompt_mode: 'append', reason: 'A native runtime must be connected and verified.' },
@@ -45,11 +47,15 @@ export function initialComposer(args = []) {
   }))
   const nativePrompts = Object.fromEntries(NATIVE_DRAFTS.map(({ id }) => [id, typeof old.native_prompts?.[id] === 'string' ? old.native_prompts[id]
     : selection === 'native:' + id && typeof old.native_prompt === 'string' ? old.native_prompt : '']))
+  const nativePromptDrafts = Object.fromEntries(NATIVE_DRAFTS.flatMap(({ id }) => {
+    const draft = safeNativeDraft(old.native_prompt_drafts?.[id], id)
+    return draft ? [[id, draft]] : []
+  }))
   const limits = Object.fromEntries(Object.entries(DEFAULT_LIMITS).map(([key, fallback]) => [key,
     typeof old.limits?.[key] === 'number' && Number.isFinite(old.limits[key]) || old.limits?.[key] === '' ? old.limits[key] : fallback]))
   const answers = Object.fromEntries(QUESTIONS.map((q) => [q.id, q.options.some(([v]) => v === old.answers?.[q.id]) ? old.answers[q.id] : wizardAnswers()[q.id]]))
   return { selection, model_id: typeof old.model_id === 'string' ? old.model_id : '', task_id: typeof old.task_id === 'string' ? old.task_id : '', blocks,
-    native_prompts: nativePrompts, harness_drafts: harnessDrafts, answers, limits, preserve_prompt: old.preserve_prompt === true,
+    native_prompts: nativePrompts, native_prompt_drafts: nativePromptDrafts, harness_drafts: harnessDrafts, answers, limits, preserve_prompt: old.preserve_prompt === true,
     edit_mode: args[0] === 'guided' ? 'guided' : ['guided', 'advanced'].includes(old.edit_mode) ? old.edit_mode : 'prompt' }
 }
 
@@ -58,12 +64,14 @@ export function configurationFor(state, { card, runtime, fixedPrompt }) {
   const fixed = state.selection.startsWith('fixed:')
   const blocks = fixed && card ? blocksFromHarness({ ...card, prompt: fixedPrompt }) : state.blocks
   const prompt = native ? state.native_prompts[state.selection.slice(7)] || '' : fixed ? fixedPrompt || '' : blocks.find((b) => b.type === 'prompt')?.text || ''
+  const profileDraft = native ? state.native_prompt_drafts?.[state.selection.slice(7)] : null
   return {
-    version: 1, runtime_id: native ? state.selection.slice(7) : 'traceharness',
+    version: profileDraft?.enabled ? 2 : 1, runtime_id: native ? state.selection.slice(7) : 'traceharness',
     model_id: state.model_id, task_id: state.task_id, prompt,
     prompt_mode: native ? runtime?.prompt_mode || 'append' : 'replace',
     harness: native ? {} : { ...(fixed && card ? { id: card.id, lane: 'fixed', ...(typeof card.hash === 'string' ? { hash: card.hash } : {}) } : { lane: 'minimal' }), blocks },
     limits: { ...state.limits, max_steps: native ? state.limits.max_steps : blocks.find((b) => b.type === 'stop')?.max_steps },
+    ...(profileDraft?.enabled ? { native_prompt_profile: JSON.parse(JSON.stringify(profileDraft.profile)) } : {}),
   }
 }
 
@@ -123,7 +131,7 @@ const fail = (message) => { throw new Error(message) }
 // Check before copying or serializing: imports are configuration, never an
 // endpoint, credential, object prototype, or executable instruction to the UI.
 function checkData(value, depth = 0, budget = { nodes: 0 }) {
-  if (++budget.nodes > 1000 || depth > 8) fail('The configuration is too complex. Import a TraceHarness configuration export.')
+  if (++budget.nodes > 100000 || depth > 8) fail('The configuration is too complex. Import a TraceHarness configuration export.')
   if (typeof value === 'string') {
     if (/sk-or-v\d+-[A-Za-z0-9_-]{16,}/.test(value)) fail('Remove provider credentials before importing or exporting configuration.')
     for (let i = 0; i < value.length; i++) {
@@ -151,9 +159,13 @@ function checkData(value, depth = 0, budget = { nodes: 0 }) {
 
 function checkedConfiguration(value) {
   checkData(value)
-  if (!keysMatch(value, configurationKeys) || value.version !== 1) fail('Import a complete version 1 TraceHarness configuration export.')
+  if (!keysMatch(value, [...configurationKeys, ...(value?.version === 2 ? ['native_prompt_profile'] : [])]) || ![1, 2].includes(value.version)) fail('Import a complete version 1 or native version 2 TraceHarness configuration export.')
   const native = NATIVE_DRAFTS.some((runtime) => runtime.id === value.runtime_id)
   if (value.runtime_id !== 'traceharness' && !native) fail('This configuration names an unsupported runtime. Choose a supported harness first.')
+  if (value.version === 2) {
+    if (!native) fail('Native prompt profiles require a native runtime.')
+    checkedNativeProfile(value.native_prompt_profile, value.runtime_id)
+  }
   if (value.prompt_mode !== (native ? 'append' : 'replace')) fail('The prompt mode does not match this runtime.')
   if (typeof value.model_id !== 'string' || value.model_id !== '' && !/^[A-Za-z0-9][A-Za-z0-9/_.:@+-]{1,150}$/.test(value.model_id)) fail('Use a valid OpenRouter model ID, or leave the model unset.')
   if (typeof value.task_id !== 'string' || value.task_id !== '' && !/^[A-Za-z0-9][A-Za-z0-9_.-]{0,119}$/.test(value.task_id)) fail('Use a registered task ID, or leave the task unset.')
@@ -208,6 +220,9 @@ export function applyConfiguration(state, configuration) {
   if (native) {
     next.selection = 'native:' + value.runtime_id
     next.native_prompts[value.runtime_id] = value.prompt
+    next.native_prompt_drafts ||= {}
+    if (value.version === 2) next.native_prompt_drafts[value.runtime_id] = nativeDraftForProfile(value.native_prompt_profile, next.native_prompt_drafts[value.runtime_id])
+    else if (next.native_prompt_drafts[value.runtime_id]) next.native_prompt_drafts[value.runtime_id].enabled = false
     next.edit_mode = 'prompt'
   } else {
     next.selection = 'custom'

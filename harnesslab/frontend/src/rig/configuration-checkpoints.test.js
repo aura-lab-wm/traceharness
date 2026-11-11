@@ -4,6 +4,8 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { configurationFor, DEFAULT_LIMITS } from './views/harness-composer-state'
 import { blocksFromAnswers, CARDS, RECOMMENDED_ANSWERS } from './views/shallow-data'
 import { addCheckpoint, CHECKPOINT_LIMIT, CHECKPOINT_MAX_BYTES, compareConfigurations, deleteCheckpoint, loadCheckpoints, persistCheckpoints, renameCheckpoint, restoreCheckpoint } from './configuration-checkpoints'
+import { baselineProfile } from '../native-prompts-contract'
+import { nativeInventoryFixture, testDigest } from '../../test/native-prompts-fixture'
 
 const storageKey = 'traceharness.shallow.configuration-checkpoints'
 const id = (n) => 'cp_00000000-0000-4000-8000-' + String(n).padStart(12, '0')
@@ -18,6 +20,23 @@ const clone = (value) => JSON.parse(JSON.stringify(value))
 beforeEach(() => { sessionStorage.clear(); vi.restoreAllMocks(); vi.unstubAllGlobals(); delete window.__TRACEHARNESS_MEMBER__ })
 
 describe('bounded configuration checkpoints', () => {
+  it('persists and compares native profile identities, defaults and replacement hashes', () => {
+    const inventory = nativeInventoryFixture()
+    const before = { ...config(''), version: 2, runtime_id: 'native-claude-code', prompt_mode: 'append', harness: {}, native_prompt_profile: baselineProfile(inventory) }
+    const after = clone(before)
+    const replacement = 'Member-authored checkpoint treatment'
+    after.native_prompt_profile.default_action = 'disable'
+    after.native_prompt_profile.overrides = [{ block_id: 'first', baseline_sha256: inventory.blocks[0].baseline_sha256, action: 'replace', replacement_utf8: replacement, replacement_sha256: testDigest(replacement) }]
+    const rows = add([], 'Native treatment', after)
+    expect(persistCheckpoints(rows)).toBe('')
+    expect(restoreCheckpoint(loadCheckpoints().checkpoints, id(1))).toEqual(after)
+    const comparison = compareConfigurations(before, after)
+    expect(comparison.changes).toContainEqual({ key: 'native_profile_default', label: 'Default native prompt action', before: 'keep', after: 'disable' })
+    expect(comparison.changes).toContainEqual({ key: 'native_prompt:first', label: 'Native prompt: first', before: 'keep', after: 'Replace · SHA-256 ' + testDigest(replacement) })
+    expect(compareConfigurations(after, before).changes.some((row) => row.key === 'native_prompt:first' && row.after === 'keep')).toBe(true)
+    expect(sessionStorage.getItem(storageKey)).not.toContain('First exact baseline')
+  })
+
   it('captures the complete configuration independently and returns a fresh copy on restore', () => {
     const source = config(); source.harness.blocks.find((b) => b.type === 'policy').mode = 'permissive'
     source.limits.wall_time_seconds = 600; source.limits.max_cost_usd = 2.5

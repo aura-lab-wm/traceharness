@@ -1,0 +1,375 @@
+{
+  "release": "Native prompt editing",
+  "verified_at": "2026-11-11T06:07:55.934728+00:00",
+  "member_url": "https://traceharness.dev/app#/rig/harnesses",
+  "source_base_commit": "9712eb7ac37c209afb8d6b1c50979bc67303c954",
+  "agent_patcher_revision": "8d3c17099974c06f2cfb1547bb4744c05f845b56",
+  "snapshot": {
+    "html": {
+      "bytes": 20028650,
+      "sha256": "6e5ede52d399e5ff8cffa702bcdd0b24ad8b931bb642215b2f2df8e1b54a8254"
+    },
+    "gzip": {
+      "bytes": 14550707,
+      "sha256": "b70b8e8f579e2edbbc4244d1cdd06685317e271c9b379536645918d67ebf2ca4"
+    }
+  },
+  "preserved_corpus": {
+    "datasets": 8,
+    "recorded_runs": 3453,
+    "embedded_data_unchanged": true,
+    "embedded_payload_sha256": "ee76c30ac9dc8960edb2d22c5d27f4376911df1bc6cccec60a749e283949f686"
+  },
+  "inventory": {
+    "total_groups": 2682,
+    "patchable_groups": 1829,
+    "observed_only_groups": 853,
+    "patchable_source_occurrences": 1865,
+    "runtime_id": "native-claude-code",
+    "runtime_version": "2.1.322",
+    "binary_sha256": "bfb3703ad5380242328459bc62ada4bde8ae7ba57c6e1eeadb9c00e08874c478",
+    "image_digest": "sha256:78ecae96cd0fc1702f513787e0dee8ab8b8125e163e343d6826a625558e96988",
+    "inventory_sha256": "94399d069ff5af15ce644eb5906470e75673e7417ef75210d6983eb79b83fcfa",
+    "taxonomy_sha256": "6064ebcb6693a1dd7b3e50fbfbcc94ff959f7957ac184188fd91744900a429a3",
+    "materializer_sha256": "ba6245da8b07901b6793898e70e2e974a1e641a2c3be0d357ba53d15101f4081"
+  },
+  "published_ui": {
+    "complete": true,
+    "evidence_kind": "production-real-member-exact-export",
+    "checks": [
+      "real_operator_identity_and_in_memory_secure_session",
+      "real_baseline_one_two_all_profiles_and_undo",
+      "class_scope_and_member_named_set_use_real_explicit_ids",
+      "real_prompt_baseline_replacement_digest_diff_include_and_restore",
+      "keep_only_zero_and_one_and_full_inventory_membership_without_dom_truncation",
+      "observed_only_components_stay_uneditable_and_outside_all_off_counts",
+      "configuration_export_checkpoint_compare_restore_import_and_undo",
+      "reload_preserves_profile_full_corpus_and_desktop_mobile_navigation",
+      "codex_scope_honest_no_jobs_credentials_or_account_saves_and_clean_browser"
+    ],
+    "layouts": [
+      {
+        "width": 1440,
+        "height": 1100,
+        "overflow": false,
+        "mobile_back_verified": false
+      },
+      {
+        "width": 390,
+        "height": 844,
+        "overflow": false,
+        "mobile_back_verified": true
+      }
+    ],
+    "preflights": [
+      {
+        "variant": "none-edited",
+        "manifest_sha256": "6dfd3f1ea5894d8b50ab4e428fd18175e47d8ecd3759840535b13106f728b07c",
+        "profile_sha256": "16f799220a59fa340d0f2163b8b8dec93e3f78e18db145901dcb957e9a1312c1",
+        "default_action": "keep",
+        "override_count": 0,
+        "accepted": true
+      },
+      {
+        "variant": "one-disabled",
+        "manifest_sha256": "4582d24e1930d9945c78f4baa5eb44baa55ef61ee5f33f487bc7de86b44da28d",
+        "profile_sha256": "662bb5bfa48009669e8c0ca1b7de51c2471cdf480aa2f884ef8c90a5ece7df17",
+        "default_action": "keep",
+        "override_count": 1,
+        "accepted": true
+      },
+      {
+        "variant": "two-disabled",
+        "manifest_sha256": "bf0961a36f46ba2c8c781815dcb53bd576613e9496fc11a8b2cb17809b873d95",
+        "profile_sha256": "767b42ef4408e7d861ce95f3e1d38fc33915f8e0d4183d86282e61f99be8915f",
+        "default_action": "keep",
+        "override_count": 2,
+        "accepted": true
+      },
+      {
+        "variant": "none-included",
+        "manifest_sha256": "f7fe9b9e251597278eb5f11e260ddc9d2396480f75934d19c0909d7a6e5c3c21",
+        "profile_sha256": "d6f2d93a660427daa4e5954f54dfcb2362690f9d7a14450fd25cfe38aa07a677",
+        "default_action": "disable",
+        "override_count": 0,
+        "accepted": true
+      },
+      {
+        "variant": "one-replaced",
+        "manifest_sha256": "86fc63ac49060457e67ab0663112336ba152e9dd51c2739bac57d72f36eedd4c",
+        "profile_sha256": "44bfd237a629a0f0793c918476f28fd1c7c18a90b7d7d4408494cff3d6b2687e",
+        "default_action": "keep",
+        "override_count": 1,
+        "accepted": true
+      }
+    ],
+    "no_new_jobs": true,
+    "provider_credentials_connected": false,
+    "job_submissions": 0,
+    "account_saves": 0
+  },
+  "anonymous_gates": {
+    "complete": true,
+    "at": "2026-11-11T06:05:52.779035+00:00",
+    "user_agent": "traceharness-proof",
+    "max_redirs": 0,
+    "checks": [
+      {
+        "path": "/app",
+        "hostile_origin": false,
+        "status": 302,
+        "location": "/login",
+        "acao": false,
+        "pass": true
+      },
+      {
+        "path": "/app/shallow",
+        "hostile_origin": false,
+        "status": 302,
+        "location": "/login",
+        "acao": false,
+        "pass": true
+      },
+      {
+        "path": "/link",
+        "hostile_origin": false,
+        "status": 302,
+        "location": "/login",
+        "acao": false,
+        "pass": true
+      },
+      {
+        "path": "/api/shallow/harnesses",
+        "hostile_origin": false,
+        "status": 401,
+        "location": null,
+        "acao": false,
+        "pass": true
+      },
+      {
+        "path": "/api/shallow/harnesses",
+        "hostile_origin": true,
+        "status": 401,
+        "location": null,
+        "acao": false,
+        "pass": true
+      },
+      {
+        "path": "/api/shallow/jobs",
+        "hostile_origin": false,
+        "status": 401,
+        "location": null,
+        "acao": false,
+        "pass": true
+      },
+      {
+        "path": "/api/shallow/jobs",
+        "hostile_origin": true,
+        "status": 401,
+        "location": null,
+        "acao": false,
+        "pass": true
+      },
+      {
+        "path": "/api/runner/catalog",
+        "hostile_origin": false,
+        "status": 401,
+        "location": null,
+        "acao": false,
+        "pass": true
+      },
+      {
+        "path": "/api/runner/catalog",
+        "hostile_origin": true,
+        "status": 401,
+        "location": null,
+        "acao": false,
+        "pass": true
+      },
+      {
+        "path": "/api/runner/jobs",
+        "hostile_origin": false,
+        "status": 401,
+        "location": null,
+        "acao": false,
+        "pass": true
+      },
+      {
+        "path": "/api/runner/jobs",
+        "hostile_origin": true,
+        "status": 401,
+        "location": null,
+        "acao": false,
+        "pass": true
+      },
+      {
+        "path": "/api/runner/prompt-inventory/native-claude-code",
+        "hostile_origin": false,
+        "status": 401,
+        "location": null,
+        "acao": false,
+        "pass": true
+      },
+      {
+        "path": "/api/runner/prompt-inventory/native-claude-code",
+        "hostile_origin": true,
+        "status": 401,
+        "location": null,
+        "acao": false,
+        "pass": true
+      },
+      {
+        "path": "/api/runner/prompt-inventory/native-codex",
+        "hostile_origin": false,
+        "status": 401,
+        "location": null,
+        "acao": false,
+        "pass": true
+      },
+      {
+        "path": "/api/runner/prompt-inventory/native-codex",
+        "hostile_origin": true,
+        "status": 401,
+        "location": null,
+        "acao": false,
+        "pass": true
+      }
+    ]
+  },
+  "actual_native_cli": {
+    "actual_native_captures": 6,
+    "original_equals_v4_keep": true,
+    "original_equals_v4_replace_noop": true,
+    "replacement_marker_in_native_tool_description": true,
+    "single_disable_exactly_removes_selected_fragment": true,
+    "other_selected_fields_equal_for_single_edits": true,
+    "all_disable_originally_observed_static_blocks": 52,
+    "all_disable_remaining_observed_static_blocks": [],
+    "original_instruction_bytes": 91650,
+    "all_disable_instruction_bytes": 23082,
+    "provider_calls": 0,
+    "task_grade": "UNVERIFIED",
+    "all_native_instructions_covered": false,
+    "target_id": "tool-description-read-no-reread:763e721015b48a73",
+    "captures": {
+      "keep": "2fda3ec4f08ccc4ad5cd1442407fec8421b81c950a09d213ee57159a27bd930f",
+      "replace-noop": "7e5bb85bff41129429bf59e81879f2db66194d61c9c1f66f5a3d73d20596d9e3",
+      "replace-marker": "1f8d28137b12fd40497f25266faa5bb35b49e8de7f92b6de67a77fddc40ac657",
+      "single-disable": "6bb86149de062c063b88824588b37714f4ee317a9d9bf862bb9dc95740934fbb",
+      "all-disable": "f28079f47fa30e211eb8650abc51150497087551f3ac9343f5a927e749a902f5"
+    }
+  },
+  "live_provider_job": {
+    "status": "failed",
+    "grade": "ungraded",
+    "usage": {
+      "requests": 3,
+      "input_tokens": 98796,
+      "output_tokens": 474,
+      "cost_usd": 0.101166
+    },
+    "issues": [
+      "Runtime process did not complete successfully.",
+      "The remaining cost reservation cannot cover this request."
+    ],
+    "task_id": "requests-jsondecode-pickle",
+    "task_revision": "96b22fa18c00831656ee4b286bf1c9062459b00a",
+    "native_application_verified": true,
+    "native_replacement_observed": true,
+    "provider_requests": 3,
+    "observation_request_count": 4,
+    "hostile_origin_refused": true,
+    "task_passed": false,
+    "manifest_sha256": "a70e15da3f5446869375c2ae4f3fe305df05975e893cae2cef58f83de57ff43e"
+  },
+  "credential_cleanup": {
+    "initial_delete_succeeded": "UNVERIFIED",
+    "initial_report_completion_flag_was_incorrect": true,
+    "cleanup_method": "idle process restart",
+    "verified": true,
+    "before_active_jobs": 0,
+    "after_active_jobs": 0,
+    "restart_exit_code": 0,
+    "revocation_helper_corrected": true
+  },
+  "automated_tests": {
+    "frontend": {
+      "passed": 965,
+      "files": 51
+    },
+    "runner": {
+      "ran": 228,
+      "passed": 227,
+      "skipped": 1,
+      "skip": "Linux-only local test; native execution separately exercised on Linux"
+    },
+    "worker": {
+      "passed": 170
+    },
+    "dist_freshness": {
+      "passed": 2
+    }
+  },
+  "deployments": {
+    "worker": {
+      "exit_code": 0,
+      "version_id": "3cd05eb7-5844-44fd-bb96-7944e3987ca2",
+      "source_runner_sha256": "199eaf40b26cbbc1c6e3b4356d3a070f250d1db3d23f21e28fc2a1028f3bbf09",
+      "config_deleted_on_exit": true
+    },
+    "runner": {
+      "exit_code": 0,
+      "image": "registry.fly.io/traceharness-runner@sha256:bc991b89bc55f6ce31f197934b93e6fdf52f24457909ec728f1ed848889afeb2",
+      "registry_sha256": "d76aabb62951bc56b255a7b6512fa244c4f26d59ab9c39b666d1a1bef842ccc9",
+      "previous_image": "registry.fly.io/traceharness-runner@sha256:f0849999e46378920a673013dc7ab8c55fecb0225a476b1c7ce68dc7dc8c8bd3",
+      "previous_registry": "/data/inventory-eight-v2/registry.json"
+    },
+    "runner_health": {
+      "release_version": 11,
+      "release_status": "complete",
+      "machines_started": 1,
+      "machines_total": 1,
+      "checks_passing": 1,
+      "checks_total": 1
+    },
+    "kv": {
+      "exit_code": 0,
+      "gzip_sha256": "b70b8e8f579e2edbbc4244d1cdd06685317e271c9b379536645918d67ebf2ca4",
+      "html_sha256": "6e5ede52d399e5ff8cffa702bcdd0b24ad8b931bb642215b2f2df8e1b54a8254",
+      "worker_deployed": false,
+      "worker_version_unchanged": "3cd05eb7-5844-44fd-bb96-7944e3987ca2"
+    }
+  },
+  "runnable_tasks": {
+    "count": 8,
+    "task_hashes_verified": true,
+    "runtime_images_unchanged": true
+  },
+  "unverified": [
+    "Task completion for edited live profile",
+    "Performance or cost improvement",
+    "Complete native instruction coverage",
+    "Conditional execution coverage",
+    "Semantic ownership outside observed requests",
+    "Cross-account live isolation with a second real member"
+  ],
+  "not_implemented": [
+    "Native Codex embedded prompt editing",
+    "Paired experiment scheduler",
+    "Automated comparative results"
+  ],
+  "private_evidence_sha256": {
+    "artifact-v2.json": "c3abb0c156511fc0256d606b5f8af4a3f9f49d66940885ff622f246d1501dc52",
+    "candidate-native-ui-v4-v2-proof/proof.json": "43029ae1532eac94f07d4f2d321cb081e85604178018838bcfccab09f0498166",
+    "live-native-ui-v4-v2-proof/proof.json": "728d4897f9b62242e0a7aa2bd6ea42a7822aaf42f0009e48124564227ecb05e4",
+    "anonymous-proof.json": "52a20850c14e97d2a84aad54526a7019340974ad223931aedb2116dd053e1fd8",
+    "capture-comparison-v4.json": "fb11d1f5a4e82dac95a6c2c03e4ba6ae46bb8c4f396265bfbfab53864398a510",
+    "mechanism-receipt-v4.json": "8d6b7216d83be2ebc3a673ea4ee299af827133ffbcf5d17c60efd43fc2bebe59",
+    "member-execution-proof.json": "42318d45b47315f358cbf36e11c4eba53b137fa5259c3d229f84a304d894642d",
+    "member-execution-proof-cleanup-corrected.json": "e18edc6f28e83bec1ab341f6e01c7c036f1b5a4ca981522903ee4c7996cd678b",
+    "runner-credential-cleanup.json": "c4cb65aa3c32f85cf1a64634d124df6ab078ef329e623b33715143978751a3d7",
+    "worker-deployment.json": "3daf180cb76ae6e29c4f09d1a53dca35eb0bc8a2b859f6f144c38547095096c2",
+    "runner-deployment.json": "1380108b3bd591da46585e8bd470517d7a5e86bb853456893ca24929f1e46770",
+    "publication.json": "e0cf0baf625add43c9760c6abea84be600f58afad5cf9bb64eeeba39045871ea"
+  }
+}

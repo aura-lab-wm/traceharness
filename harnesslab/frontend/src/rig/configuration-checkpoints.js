@@ -138,6 +138,9 @@ function semanticFields(configuration) {
     ['harness', 'Harness', native ? 'Native runtime' : configuration.harness.lane === 'fixed' ? `Fixed preset: ${configuration.harness.id}` : 'Editable harness'],
     ['model', 'Model', configuration.model_id], ['task', 'Task', configuration.task_id],
     ['prompt_mode', 'Prompt mode', configuration.prompt_mode === 'append' ? 'Append to runtime instructions' : 'Replace standing prompt'],
+    ['native_profile', 'Native prompt inventory', configuration.version === 2 ? configuration.native_prompt_profile.inventory_sha256 : 'No native prompt profile'],
+    ['native_profile_default', 'Default native prompt action', configuration.version === 2 ? configuration.native_prompt_profile.default_action : 'Managed by runtime'],
+    ...['runtime_version', 'image_digest', 'binary_sha256', 'taxonomy_sha256', 'materializer_sha256'].map((key) => ['native_profile_' + key, 'Native profile ' + key.replaceAll('_', ' '), configuration.native_prompt_profile?.[key] ?? 'Not used']),
     ['tools', 'Tools', native ? null : [...blocks.tools.names].sort().join(', ') || 'No tools'],
     ['policy', 'Policy', native ? null : blocks.policy.mode],
     ['history', 'History', native ? null : blocks.context.window === 0 ? 'Full history' : `Last ${blocks.context.window} observations`],
@@ -183,5 +186,14 @@ export function compareConfigurations(before, after) {
     .map(([key, label, value]) => ({ key, label, before: display(previous.get(key)), after: display(value) }))
   const prompt = promptDiff(left.prompt, right.prompt)
   if (prompt.changed) changes.push({ key: 'prompt', label: 'Prompt', before: `${prompt.beforeLines} lines · ${prompt.beforeBytes} bytes`, after: `${prompt.afterLines} lines · ${prompt.afterBytes} bytes` })
+  const beforeProfile = left.native_prompt_profile, afterProfile = right.native_prompt_profile
+  const beforeOverrides = new Map((beforeProfile?.overrides || []).map((row) => [row.block_id, row]))
+  const afterOverrides = new Map((afterProfile?.overrides || []).map((row) => [row.block_id, row]))
+  const intervention = (row, profile) => !profile ? 'Profile not used' : !row ? profile.default_action
+    : row.action === 'replace' ? `Replace · SHA-256 ${row.replacement_sha256}` : row.action
+  for (const id of [...new Set([...beforeOverrides.keys(), ...afterOverrides.keys()])].sort()) {
+    const before = intervention(beforeOverrides.get(id), beforeProfile), after = intervention(afterOverrides.get(id), afterProfile)
+    if (before !== after) changes.push({ key: 'native_prompt:' + id, label: 'Native prompt: ' + id, before, after })
+  }
   return { changes, prompt }
 }

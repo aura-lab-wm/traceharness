@@ -1,9 +1,14 @@
 # Native prompt interventions and paired experiments
 
-**Status: design specification, not an implemented or deployed capability.**
-This document defines the proposed member workflow, data contracts and acceptance
-evidence. No native prompt inventory, prompt patching endpoint, experiment
-scheduler or paired result is created by this document.
+**Status: native Claude prompt editing is implemented; paired experiments remain a design.**
+The 2026-11-11 implementation adds a pinned native inventory, member editor,
+validated profiles, per-job executable materialization and request observations.
+See [Native prompt editing release and evidence](NATIVE_PROMPT_RELEASE.md) for
+what was deployed and verified. Native Codex embedded editing, the paired
+experiment scheduler and measured comparative results remain unimplemented.
+
+The sections below retain the broader design and its historical source baseline.
+They are not a claim that every proposed capability has shipped.
 
 The design is grounded in TraceHarness commit
 [`0e9f5fa62c5d8ed0f994a229778e3f302843c269`](https://github.com/aura-lab-wm/traceharness/tree/0e9f5fa62c5d8ed0f994a229778e3f302843c269)
@@ -26,7 +31,7 @@ Editing React source or agent-patcher does not update that snapshot.
 `python -m harnesslab` on `127.0.0.1:8742`. See
 [One harness workspace](UNIFIED_HARNESS_WORKSPACE.md) for the surface boundaries.
 
-## What exists and what is missing
+## Implementation at the design baseline
 
 | Selection | Current implementation | Proposed intervention scope |
 | --- | --- | --- |
@@ -36,7 +41,7 @@ Editing React source or agent-patcher does not update that snapshot.
 | Native Codex CLI | Pinned native executable; the member's text becomes `developer_instructions` in a generated job-local configuration | Initially inventory the supported instruction overlay only; embedded prompt control remains unavailable until separately implemented and verified |
 
 The frontend's [configuration builder](https://github.com/aura-lab-wm/traceharness/blob/0e9f5fa62c5d8ed0f994a229778e3f302843c269/harnesslab/frontend/src/rig/views/harness-composer-state.js#L56)
-currently emits an empty `harness` object for native runtimes. Its import parser
+at that design baseline emitted an empty `harness` object for native runtimes. Its import parser
 rejects native TraceHarness blocks. The
 [container adapter](https://github.com/aura-lab-wm/traceharness/blob/0e9f5fa62c5d8ed0f994a229778e3f302843c269/harnesslab/runner_service/container_entrypoint.py#L26)
 appends instructions and creates an isolated home; it does not run agent-patcher.
@@ -262,27 +267,31 @@ instruction, or the runner's isolation and authorization controls.
 
 ## Sparse immutable profiles
 
-Profiles describe changes relative to an immutable inventory. Omitted block IDs
-mean Keep baseline. Export canonical data with a content digest; editing produces
+Profiles describe changes relative to an immutable inventory. Omitted patchable
+IDs follow `default_action`; observed-only entries always remain Keep. Export
+canonical data with a content digest; editing produces
 a new profile revision and digest. A human-readable name is not an identity.
 Keep restored editor drafts and undo history outside the execution profile.
 
-The following is a **conceptual type contract**, not a supported API or a sample
-native inventory. `SHA256`, `BlockId` and `RuntimeId` denote validated values;
-they are not fabricated hashes or prompt contents.
+The following summarizes the implemented schema-1 profile. See the
+[validated contract](../harnesslab/runner_service/native_prompts.py) and
+[operational guide](../deploy/runner/NATIVE_PROMPTS.md) for exact field bounds and
+canonicalization. `SHA256`, `ImageDigest`, `BlockId` and `RuntimeId` denote
+validated values, not fabricated hashes or prompt contents.
 
 ```ts
 type NativePromptProfile = {
   schema_version: 1;
   runtime_id: RuntimeId;
   runtime_version: string;
-  base_image_sha256: SHA256;
-  executable_sha256: SHA256;
+  image_digest: ImageDigest;
+  binary_sha256: SHA256;
   inventory_sha256: SHA256;
   taxonomy_sha256: SHA256;
   materializer_sha256: SHA256;
+  default_action: "keep" | "disable";
   overrides: Array<
-    | { block_id: BlockId; baseline_sha256: SHA256; action: "disable" }
+    | { block_id: BlockId; baseline_sha256: SHA256; action: "keep" | "disable" }
     | { block_id: BlockId; baseline_sha256: SHA256; action: "replace";
         replacement_utf8: string; replacement_sha256: SHA256 }
   >;
@@ -293,13 +302,14 @@ Canonicalization rejects unknown or duplicate IDs, extra fields, invalid Unicode
 oversized content, hash mismatches and invalid template syntax. Ordering follows
 the inventory's defined assembly order, not table sort order. Keep-only and
 class actions resolve to explicit overrides before hashing; the service must not
-reevaluate a class name at launch. Restore-all yields an empty override list.
+reevaluate a class name at launch. Restore-all yields default Keep and an empty
+override list; all-off uses default Disable with an empty override list.
 
 Additional instructions are a separate, explicitly enabled/disabled overlay,
 pinned identically across comparison arms unless that overlay is the declared
-intervention. Today native preflight requires nonempty appended text. Until an
-explicit no-overlay mode is implemented and tested, label a baseline **Native
-baseline + fixed additional instructions**, not unqualified stock behavior.
+intervention. Version 2 permits an empty additional-instruction overlay; version
+1 retains its prior validation. Any nonempty overlay must be disclosed as
+**Native baseline + fixed additional instructions**, not unqualified stock behavior.
 
 A profile is reusable authoring data. An execution manifest additionally binds
 the exact model, task/revision/content, grader, limits, overlay, application
@@ -325,8 +335,9 @@ Before admitting the job, verify and record:
 
 1. Exact baseline image/executable, inventory and materializer hashes.
 2. Unique target matches and validated replacement/template syntax.
-3. Read-back bytes for each affected target and the resulting overlay/executable
-   digest, with only the intended prompt targets changed.
+3. Read-back bytes for each affected source target and the resulting
+   overlay/executable digest. At the source layer, only approved targets change;
+   separately record required executable layout and derived-cache changes.
 4. The actual launch configuration consuming that result; writing a file that
    the native runtime ignores is not application success.
 5. A version-specific observation strategy: matched emitted fragments or other
@@ -353,7 +364,7 @@ patchable blocks excluded, and explicit replacement profiles.
 | --- | --- | --- |
 | None edited | All patchable baseline content; empty override list | No prompt intervention; it does **not** mean no prompts |
 | No-op materialized | Same baseline content through the materializer | Tests the intervention machinery without changing content |
-| None included | Explicit Disable for every patchable block | Excludes that inventory's patchable scope; unpatchable and out-of-scope layers remain |
+| None included | Default Disable with no overrides | Excludes that inventory's patchable scope; unpatchable and out-of-scope layers remain |
 | Selected intervention | Resolved one/two-block, class, named-set, keep-only or replacement actions | Changes exactly the frozen target and occurrence set |
 
 An optional study can span **model × task × runtime × prompt variant × repeat**.
@@ -368,8 +379,9 @@ application mechanism, model and provider routing where controllable, exact task
 revision/content, grader, user/task input, additional instructions, supported
 sampling settings, request/token/time/cost limits, taxonomy and observation policy.
 Each arm pins its resulting overlay or executable digest. Different binaries must
-share the same baseline and have a verified prompt-only change; do not falsely
-claim identical executable hashes across a binary intervention.
+share the same baseline, verified source-layer target changes and identical
+documented structural/cache policy. Do not falsely claim identical executable
+hashes or a whole-executable prompt-only change across a binary intervention.
 
 For each task, run both arms for an explicit number of paired repetitions using
 fresh workspaces and sessions. Record a predeclared balanced or randomized arm

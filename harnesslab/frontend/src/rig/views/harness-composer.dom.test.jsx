@@ -4,6 +4,7 @@ import { createHash, webcrypto } from 'node:crypto'
 import { act, cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest'
 import { CARDS, RECOMMENDED_ID, VERIFY_NO, blocksFromAnswers } from './shallow-data'
+import { nativeInventoryFixture, nativeResponseFixture, nativeRuntimeFixture } from '../../../test/native-prompts-fixture'
 
 const scope = 'd'.repeat(24)
 const draftKey = (name) => `traceharness.shallow.member.${scope}.${name}`
@@ -114,6 +115,88 @@ function captureDownload() {
   }
 }
 const prompt = () => screen.getByRole('textbox', { name: 'Prompt', exact: true })
+
+describe('native prompt profiles in the member composer', () => {
+  function withInventory(execution = true) {
+    let inventory = nativeInventoryFixture()
+    catalog.runtimes[1] = nativeRuntimeFixture(inventory, execution)
+    handler = (call) => call.url === '/api/runner/prompt-inventory/native-claude-code' ? json(nativeResponseFixture(inventory, execution)) : undefined
+    return (next) => { inventory = next; catalog = { ...catalog, runtimes: catalog.runtimes.map((runtime) => runtime.id === 'native-claude-code' ? nativeRuntimeFixture(inventory, execution) : runtime) } }
+  }
+  async function nativeEditor() {
+    await ready(); switchHarness('native:native-claude-code')
+    await screen.findByRole('checkbox', { name: 'Use this native prompt profile for the run' })
+    fireEvent.click(screen.getByRole('checkbox', { name: 'Use this native prompt profile for the run' }))
+  }
+
+  it('reviews an explicit v2 baseline with no overlay and invalidates it after a single prompt edit', async () => {
+    withInventory(); render(<Composer />); await nativeEditor()
+    expect(prompt().value).toBe('')
+    fireEvent.click(screen.getByRole('button', { name: 'Review run' }))
+    await screen.findByText('Configuration verified')
+    const first = calls.findLast((call) => call.url === '/api/runner/preflight').body.configuration
+    expect(first).toMatchObject({ version: 2, prompt: '', native_prompt_profile: { default_action: 'keep', overrides: [] } })
+    await connect()
+    expect(screen.getByRole('button', { name: 'Run', exact: true }).disabled).toBe(false)
+    fireEvent.click(screen.getByRole('checkbox', { name: 'Select prompt First fixture prompt' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Disable selected prompts' }))
+    expect(screen.getByRole('button', { name: 'Run', exact: true }).disabled).toBe(true)
+    expect(screen.queryByText('Configuration verified')).toBeNull()
+    fireEvent.click(screen.getByRole('button', { name: 'Review run' }))
+    await screen.findByText('Configuration verified')
+    expect(calls.findLast((call) => call.url === '/api/runner/preflight').body.configuration.native_prompt_profile.overrides).toMatchObject([{ block_id: 'first', action: 'disable' }])
+    expect(first.native_prompt_profile.overrides).toEqual([])
+    expect(calls.filter((call) => call.url === '/api/runner/jobs' && call.method === 'POST')).toHaveLength(0)
+  })
+
+  it('blocks unverified profile execution while keeping the ordinary v1 instruction workflow separate', async () => {
+    withInventory(false); render(<Composer />); await nativeEditor()
+    expect(screen.getByRole('button', { name: 'Review run' }).disabled).toBe(true)
+    expect(screen.getByText('Native prompt execution is unverified.')).toBeTruthy()
+    fireEvent.click(screen.getByRole('checkbox', { name: 'Use this native prompt profile for the run' }))
+    fireEvent.change(prompt(), { target: { value: 'Ordinary additional instructions.' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Review run' }))
+    await screen.findByText('Configuration verified')
+    const configuration = calls.findLast((call) => call.url === '/api/runner/preflight').body.configuration
+    expect(configuration.version).toBe(1)
+    expect(configuration).not.toHaveProperty('native_prompt_profile')
+  })
+
+  it('preserves a stale profile after inventory refresh and refuses its previously reviewed run', async () => {
+    const changeInventory = withInventory(); render(<Composer />); await nativeEditor()
+    fireEvent.click(screen.getByRole('button', { name: 'Review run' })); await screen.findByText('Configuration verified')
+    const next = nativeInventoryFixture(); next.inventory_sha256 = 'f'.repeat(64); changeInventory(next)
+    fireEvent.click(screen.getByRole('button', { name: 'Refresh inventory' }))
+    await screen.findAllByText(/belongs to a different runtime or inventory revision/)
+    expect(screen.getByRole('button', { name: 'Review run' }).disabled).toBe(true)
+    expect(screen.queryByText('Configuration verified')).toBeNull()
+    expect(JSON.parse(sessionStorage.getItem(draftKey('composer'))).native_prompt_drafts['native-claude-code'].profile.inventory_sha256).toBe('c'.repeat(64))
+  })
+
+  it('exports, restores and checkpoints exact native profiles without copying baseline bodies', async () => {
+    withInventory(); render(<Composer />); await nativeEditor()
+    const download = captureDownload()
+    fireEvent.click(screen.getByRole('button', { name: 'Keep only selected prompts' }))
+    const noneIncluded = JSON.parse(await download())
+    expect(noneIncluded.native_prompt_profile).toMatchObject({ default_action: 'disable', overrides: [] })
+    expect(JSON.stringify(noneIncluded)).not.toContain('First exact baseline')
+    fireEvent.click(screen.getByRole('button', { name: 'Configuration checkpoints', exact: true }))
+    fireEvent.change(screen.getByRole('textbox', { name: 'Checkpoint name', exact: true }), { target: { value: 'Native none included' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Create checkpoint', exact: true }))
+    await screen.findByRole('heading', { name: 'Native none included', exact: true })
+    fireEvent.change(screen.getByLabelText('Action scope'), { target: { value: 'all' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Restore all patchable prompts' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Restore checkpoint Native none included', exact: true }))
+    await waitFor(() => expect(screen.getByLabelText('Prompt inclusion counts').textContent).toContain('0 / 3'))
+    expect(JSON.parse(await download())).toEqual(noneIncluded)
+    switchHarness('custom')
+    importFile(JSON.stringify(noneIncluded))
+    await waitFor(() => expect(screen.getByRole('checkbox', { name: 'Use this native prompt profile for the run' }).checked).toBe(true))
+    expect(JSON.parse(await download())).toEqual(noneIncluded)
+    expect(sessionStorage.getItem(draftKey('composer'))).not.toContain('First exact baseline')
+    expect(calls.filter((call) => call.url.startsWith('/api/runner/') && call.method !== 'GET')).toHaveLength(0)
+  })
+})
 
 function addPartialTask() {
   catalog.tasks.push({ ...catalog.tasks[0], id: 'fixture-task-partial', title: 'Partial task fixture',

@@ -2,6 +2,9 @@
 import { describe, expect, it, vi } from 'vitest'
 import { CARDS, RECOMMENDED_ANSWERS, blocksFromAnswers } from './shallow-data'
 import { CONFIGURATION_MAX_BYTES, DEFAULT_LIMITS, NATIVE_DRAFTS, applyConfiguration, configurationFor, configurationText, forkAsCustom, guidanceFor, initialComposer, parseConfiguration, safeBlocks } from './harness-composer-state'
+import { baselineProfile } from '../../native-prompts-contract'
+import { nativeDraftForProfile } from './native-prompts-state'
+import { nativeInventoryFixture, testDigest } from '../../../test/native-prompts-fixture'
 
 const state = (changes = {}) => ({
   selection: 'custom', model_id: 'openai/gpt-example', task_id: 'real-repository-task',
@@ -14,6 +17,40 @@ const clone = (value) => JSON.parse(JSON.stringify(value))
 const parse = (value) => parseConfiguration(JSON.stringify(value))
 
 describe('portable harness configurations', () => {
+  it('round-trips explicit version 2 native profiles with an empty overlay and immutable pins', () => {
+    const inventory = nativeInventoryFixture()
+    const profile = { ...baselineProfile(inventory), default_action: 'disable', overrides: [{ block_id: 'first', baseline_sha256: inventory.blocks[0].baseline_sha256, action: 'keep' }] }
+    const original = state({ selection: 'native:native-claude-code', native_prompts: { 'native-claude-code': '', 'native-codex': 'Other draft' }, native_prompt_drafts: { 'native-claude-code': nativeDraftForProfile(profile) } })
+    const configuration = configurationFor(original, {})
+    expect(configuration).toMatchObject({ version: 2, prompt: '', native_prompt_profile: profile, harness: {} })
+    const imported = applyConfiguration(state(), parseConfiguration(configurationText(configuration)))
+    expect(configurationFor(imported.state, {})).toEqual(configuration)
+    expect(configurationText(configuration)).not.toContain('First exact baseline')
+    original.native_prompt_drafts['native-claude-code'].profile.overrides[0].action = 'disable'
+    expect(configuration.native_prompt_profile.overrides[0].action).toBe('keep')
+  })
+
+  it('retains native profile drafts when switching to version 1 without applying them implicitly', () => {
+    const profile = baselineProfile(nativeInventoryFixture())
+    const original = state({ selection: 'native:native-claude-code', native_prompt_drafts: { 'native-claude-code': nativeDraftForProfile(profile) } })
+    const v1 = { ...configurationFor(original, {}), version: 1 }
+    delete v1.native_prompt_profile
+    const imported = applyConfiguration(original, v1)
+    expect(imported.state.native_prompt_drafts['native-claude-code']).toMatchObject({ enabled: false, profile })
+    expect(configurationFor(imported.state, {})).toEqual(v1)
+    expect(original.native_prompt_drafts['native-claude-code'].enabled).toBe(true)
+  })
+
+  it('rejects native profiles in TraceHarness, changed runtimes, extra actions and credential-bearing replacements', () => {
+    const inventory = nativeInventoryFixture(), profile = baselineProfile(inventory)
+    const configuration = configurationFor(state({ selection: 'native:native-claude-code', native_prompt_drafts: { 'native-claude-code': nativeDraftForProfile(profile) } }), {})
+    expect(() => parse({ ...configuration, runtime_id: 'traceharness' })).toThrow('require a native runtime')
+    expect(() => parse({ ...configuration, runtime_id: 'native-codex' })).toThrow('different runtime')
+    expect(() => parse({ ...configuration, native_prompt_profile: { ...profile, overrides: [{ block_id: 'first', baseline_sha256: inventory.blocks[0].baseline_sha256, action: 'execute' }] } })).toThrow('intervention')
+    const replacement = 'sk-or-v1-abcdefghijklmnop12345678'
+    expect(() => parse({ ...configuration, native_prompt_profile: { ...profile, overrides: [{ block_id: 'first', baseline_sha256: inventory.blocks[0].baseline_sha256, action: 'replace', replacement_utf8: replacement, replacement_sha256: testDigest(replacement) }] } })).toThrow('credentials')
+  })
+
   it('round-trips custom configuration, Unicode, exact numeric settings and block order', () => {
     const original = state()
     original.blocks[0].text = 'Investigate the réel repository. 日本語 🧪\nReturn evidence.'

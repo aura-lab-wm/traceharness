@@ -2,16 +2,21 @@
 from __future__ import annotations
 
 import hashlib
+import copy
 import json
 from pathlib import Path
 import re
 
-from .configuration import RUNTIME_NAMES, has_secret
+from .configuration import RUNTIME_NAMES, has_secret, canonical
 
 IMAGE = re.compile(r"^(?:[a-zA-Z0-9][a-zA-Z0-9./:_-]*@)?sha256:[a-f0-9]{64}$")
 ID = re.compile(r"^[a-zA-Z0-9][a-zA-Z0-9_.-]{0,119}$")
 COMPATIBILITY_FIELDS = ("runtime_id", "runtime_version", "image_digest", "model_id", "task_id",
                         "task_revision", "task_content_sha256", "grader_image_digest")
+NATIVE_PROMPT_FIELDS = ("runtime_id", "runtime_version", "image_digest", "binary_sha256", "inventory_sha256",
+                        "taxonomy_sha256", "materializer_sha256")
+NATIVE_PROMPT_CHECKS = ("application_verified", "baseline_verified", "noop_verified", "changed_verified")
+NATIVE_PROMPT_ADAPTERS = frozenset({"native-claude-code"})
 
 
 def compatibility_identity(runtime: dict, task: dict, model_id: str) -> tuple:
@@ -55,6 +60,7 @@ class Registry:
             raise ValueError("Invalid runner inventory")
         self.runtimes, self.tasks, self.models = {}, {}, {}
         self._compatibility = set()
+        self.native_prompt_inventories, self._native_prompt_admissions = {}, {}
         for model in data.get("models", []):
             mid = model.get("id")
             if not isinstance(mid, str) or not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9/_.:@+-]{1,150}", mid) or mid.startswith("mock") or mid in self.models:
@@ -134,6 +140,104 @@ class Registry:
                 self._compatibility.add(compatibility_identity(row, task, mid))
                 if mid not in row["model_ids"]:
                     row["model_ids"].append(mid)
+        for rid, row in self.runtimes.items():
+            reference = row.get("native_prompt_inventory")
+            receipts = row.get("native_prompt_receipts", [])
+            if not isinstance(receipts, list) or len(receipts) > 32:
+                raise ValueError("Invalid native prompt receipts")
+            if reference is None:
+                if receipts:
+                    raise ValueError("Native prompt receipt requires its exact inventory")
+                continue
+            if row["kind"] != "native":
+                raise ValueError("Native prompt inventory requires a native runtime")
+            from .native_prompts import validate_inventory, public_inventory, materializer_sha256, taxonomy_sha256
+            inventory = validate_inventory(self._pinned_json(reference, 16 * 1024 * 1024), require_private=True)
+            if any(inventory.get(key) != value for key, value in {"runtime_id": rid, "runtime_version": row["version"], "image_digest": row["image_digest"]}.items()):
+                raise ValueError("Native prompt inventory does not bind this runtime")
+            if inventory["materializer_sha256"] != materializer_sha256():
+                raise ValueError("Native prompt materializer changed")
+            if inventory["taxonomy_sha256"] != taxonomy_sha256():
+                raise ValueError("Native prompt taxonomy changed")
+            binary = row.get("native_prompt_binary")
+            if (not isinstance(binary, dict) or set(binary) != {"path", "sha256"}
+                    or binary.get("sha256") != inventory["binary_sha256"]):
+                raise ValueError("Native prompt binary must bind the exact inventory")
+            binary_path = self.private_path(binary["path"])
+            if not binary_path.is_file() or not 0 < binary_path.stat().st_size <= 512 * 1024 * 1024:
+                raise ValueError("Native prompt binary must be a bounded regular file")
+            binary_hash = hashlib.sha256()
+            with binary_path.open("rb") as stream:
+                for chunk in iter(lambda: stream.read(1024 * 1024), b""):
+                    binary_hash.update(chunk)
+            if binary_hash.hexdigest() != binary["sha256"]:
+                raise ValueError("Native prompt binary changed")
+            row["native_prompt_binary"] = {"path": str(binary_path), "sha256": binary["sha256"]}
+            if len(canonical(public_inventory(inventory))) > 4 * 1024 * 1024 - 4096:
+                raise ValueError("Native prompt inventory exceeds the member response limit")
+            self.native_prompt_inventories[rid] = copy.deepcopy(inventory)
+            for receipt in receipts:
+                if rid not in NATIVE_PROMPT_ADAPTERS:
+                    raise ValueError("Native prompt runtime has no installed application adapter")
+                proof = self._pinned_json(receipt, 64 * 1024)
+                required = {"schema_version", "status", "verified_at", "run_id", *NATIVE_PROMPT_FIELDS, *NATIVE_PROMPT_CHECKS}
+                if (set(proof) != required or type(proof.get("schema_version")) is not int or proof["schema_version"] != 1
+                        or proof.get("status") != "operationally_verified"
+                        or any(proof.get(key) != inventory.get(key) for key in NATIVE_PROMPT_FIELDS)
+                        or any(proof.get(key) is not True for key in NATIVE_PROMPT_CHECKS)
+                        or any(not isinstance(proof.get(key), str) or not proof[key] or len(proof[key]) > 200 for key in ("verified_at", "run_id"))):
+                    raise ValueError("Native prompt application receipt does not bind this inventory")
+                if rid in self._native_prompt_admissions:
+                    raise ValueError("Duplicate native prompt application receipt")
+                self._native_prompt_admissions[rid] = {"schema_version": 1, "receipt_sha256": receipt["sha256"],
+                    "cohort": "verified_base_runtime_model_task", **{key: proof[key] for key in NATIVE_PROMPT_FIELDS}}
+
+    def _pinned_json(self, reference, maximum):
+        if (not isinstance(reference, dict) or set(reference) != {"path", "sha256"}
+                or not isinstance(reference.get("sha256"), str) or not re.fullmatch(r"[a-f0-9]{64}", reference["sha256"])):
+            raise ValueError("Invalid pinned native prompt reference")
+        path = self.private_path(reference["path"])
+        if not path.is_file() or path.stat().st_size > maximum:
+            raise ValueError("Invalid pinned native prompt file")
+        raw = path.read_bytes()
+        if len(raw) > maximum or hashlib.sha256(raw).hexdigest() != reference["sha256"]:
+            raise ValueError("Pinned native prompt file changed")
+        result = json.loads(raw)
+        if not isinstance(result, dict) or has_secret(result):
+            raise ValueError("Invalid pinned native prompt object")
+        return result
+
+    def native_prompt_profile(self, runtime_id, profile):
+        from .native_prompts import canonical_profile, materializer_sha256, taxonomy_sha256
+        inventory = self.native_prompt_inventories.get(runtime_id)
+        admission = self._native_prompt_admissions.get(runtime_id)
+        runtime = self.runtimes.get(runtime_id)
+        if (runtime_id not in NATIVE_PROMPT_ADAPTERS or not inventory or not admission or not runtime
+                or inventory["runtime_version"] != runtime["version"] or inventory["image_digest"] != runtime["image_digest"]):
+            raise ValueError("Native prompt application is unavailable")
+        if inventory["materializer_sha256"] != materializer_sha256() or inventory["taxonomy_sha256"] != taxonomy_sha256():
+            raise ValueError("Native prompt adapter or taxonomy changed")
+        # This receipt establishes the application mechanism, never the treatment's
+        # task grade. Existing exact base runtime/model/task compatibility still gates preflight.
+        return canonical_profile(profile, inventory), copy.deepcopy(admission)
+
+    def native_prompt_catalog(self, runtime_id, health):
+        inventory = self.native_prompt_inventories.get(runtime_id)
+        available = inventory is not None
+        executable = bool(available and runtime_id in NATIVE_PROMPT_ADAPTERS and runtime_id in self._native_prompt_admissions
+                          and health.get("available") and health.get("runtimes", {}).get(runtime_id))
+        return {"available": available, "execution_available": executable,
+                "mode": "embedded" if runtime_id == "native-claude-code" else "overlay",
+                "inventory_sha256": inventory["inventory_sha256"] if available else None,
+                "reason": "" if executable else "Native prompt application has no verified mechanism or ready base combination." if available else "Inventory unavailable for this runtime version."}
+
+    def native_prompt_inventory(self, runtime_id, health):
+        from .native_prompts import public_inventory
+        capability = self.native_prompt_catalog(runtime_id, health)
+        inventory = self.native_prompt_inventories.get(runtime_id)
+        return {"version": 1, "available": capability["available"], "reason": capability["reason"],
+                "execution_available": capability["execution_available"],
+                "inventory": public_inventory(copy.deepcopy(inventory)) if inventory is not None else None}
 
     @classmethod
     def load(cls, path: Path):
@@ -190,7 +294,8 @@ class Registry:
                              "available": available, "reason": "" if available else "No verified, isolated runtime is available.",
                              "version": row.get("version"), "image_digest": row.get("image_digest"),
                              "prompt_mode": "replace" if rid == "traceharness" else "append", "supports_advanced": rid == "traceharness",
-                             "model_ids": ready_models})
+                             "model_ids": ready_models,
+                             **({"native_prompts": self.native_prompt_catalog(rid, health)} if rid != "traceharness" else {})})
         tasks = [{**{k: task[k] for k in ("id", "title", "repository", "revision", "environment_digest")},
                   "runtime_ids": list(task["runtime_ids"]), "environment_digests": dict(task["environment_digests"]),
                   "model_ids_by_runtime": combinations[tid], "ready": any(combinations[tid].values()),

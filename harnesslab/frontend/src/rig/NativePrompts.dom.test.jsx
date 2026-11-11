@@ -1,0 +1,183 @@
+// @vitest-environment jsdom
+// Fixture authoring tests only: no real session, native extraction or paid request.
+import { useState } from 'react'
+import { webcrypto } from 'node:crypto'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { act, cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
+import { NativePrompts } from './NativePrompts'
+import { baselineProfile } from '../native-prompts-contract'
+import { nativeDraftForProfile } from './views/native-prompts-state'
+import { nativeInventoryFixture, nativeResponseFixture, nativeRuntimeFixture, testDigest } from '../../test/native-prompts-fixture'
+
+let latest
+beforeEach(() => { latest = null; vi.stubGlobal('crypto', webcrypto) })
+afterEach(() => { cleanup(); vi.unstubAllGlobals() })
+
+function Editor({ inventory = nativeInventoryFixture(), execution = true, initial = null, ...props }) {
+  const [draft, setDraft] = useState(initial)
+  latest = draft
+  return <NativePrompts runtime={nativeRuntimeFixture(inventory, execution)} response={nativeResponseFixture(inventory, execution)} draft={draft} onChange={setDraft} onRefresh={() => {}} {...props} />
+}
+const enable = () => fireEvent.click(screen.getByRole('checkbox', { name: 'Use this native prompt profile for the run' }))
+const select = (title) => fireEvent.click(screen.getByRole('checkbox', { name: 'Select prompt ' + title }))
+const counts = () => screen.getByLabelText('Prompt inclusion counts').textContent
+
+describe('native prompt inventory authoring', () => {
+  it('shows unavailable honestly, with no invented zero counts or native controls', () => {
+    render(<NativePrompts runtime={{ id: 'native-codex', name: 'Codex' }} response={{ version: 1, available: false, execution_available: false, inventory: null, reason: 'No native inventory is registered.' }} onRefresh={() => {}} onChange={() => {}} />)
+    expect(screen.getByText('Inventory unavailable for this runtime version')).toBeTruthy()
+    expect(screen.getByText(/Codex instruction overlays are separate/)).toBeTruthy()
+    expect(screen.queryByLabelText('Prompt inclusion counts')).toBeNull()
+    expect(screen.queryByRole('checkbox', { name: 'Use this native prompt profile for the run' })).toBeNull()
+  })
+
+  it('allows deliberate authoring without calling unverified application support executable', () => {
+    render(<Editor execution={false} />)
+    expect(screen.getByText('Native prompt execution is unverified.')).toBeTruthy()
+    enable()
+    select('First fixture prompt'); select('Second fixture prompt')
+    fireEvent.click(screen.getByRole('button', { name: 'Disable selected prompts' }))
+    expect(latest.profile.default_action).toBe('keep')
+    expect(latest.profile.overrides.map((entry) => entry.block_id)).toEqual(['first', 'second'])
+    expect(counts()).toContain('1 / 3')
+    expect(screen.getByRole('checkbox', { name: 'Select prompt Observed fixture component' }).disabled).toBe(true)
+    fireEvent.click(screen.getByRole('button', { name: 'Undo prompt change' }))
+    expect(latest.profile.overrides).toEqual([])
+    expect(counts()).toContain('3 / 3')
+  })
+
+  it('distinguishes none edited from none included and uses compressed all-disabled profiles', () => {
+    render(<Editor />); enable()
+    expect(latest.profile).toMatchObject({ default_action: 'keep', overrides: [] })
+    fireEvent.click(screen.getByRole('button', { name: 'Keep only selected prompts' }))
+    expect(latest.profile).toMatchObject({ default_action: 'disable', overrides: [] })
+    expect(counts()).toContain('0 / 3')
+    expect(counts()).toContain('1Observed-only components')
+    fireEvent.change(screen.getByLabelText('Action scope'), { target: { value: 'all' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Restore all patchable prompts' }))
+    expect(latest.profile).toMatchObject({ default_action: 'keep', overrides: [] })
+    expect(counts()).toContain('3 / 3')
+  })
+
+  it('keeps filtered and all scopes explicit while named sets retain exact IDs across classes', () => {
+    render(<Editor />); enable()
+    select('First fixture prompt'); select('Template fixture prompt')
+    fireEvent.change(screen.getByLabelText('Prompt set name'), { target: { value: 'Performance' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Save selection as set' }))
+    expect(latest.sets).toEqual([{ name: 'Performance', block_ids: ['first', 'third'] }])
+    expect(screen.getByRole('option', { name: 'Performance · my set' })).toBeTruthy()
+    expect(screen.queryByRole('option', { name: 'Performance', exact: true })).toBeNull()
+    fireEvent.change(screen.getByLabelText('Class or prompt set'), { target: { value: 'class:Testing' } })
+    fireEvent.change(screen.getByLabelText('Action scope'), { target: { value: 'filtered' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Disable filtered prompts' }))
+    expect(latest.profile.overrides.map((row) => row.block_id)).toEqual(['first', 'second'])
+    fireEvent.change(screen.getByLabelText('Action scope'), { target: { value: 'all' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Disable all patchable prompts' }))
+    expect(latest.profile).toMatchObject({ default_action: 'disable', overrides: [] })
+  })
+
+  it('hashes exact replacement text and retains it through Disable/Include but not Restore', async () => {
+    render(<Editor />); enable()
+    const replacement = 'Member replacement λ🙂\n<img src=x onerror=unsafe()>'
+    fireEvent.change(screen.getByRole('textbox', { name: 'Replacement text' }), { target: { value: replacement } })
+    fireEvent.click(screen.getByRole('button', { name: 'Apply replacement' }))
+    await waitFor(() => expect(latest.profile.overrides[0]?.replacement_sha256).toBe(testDigest(replacement)))
+    fireEvent.click(screen.getByRole('button', { name: 'Disable prompt', exact: true }))
+    expect(latest.profile.overrides[0].action).toBe('disable')
+    expect(latest.remembered.first.replacement_utf8).toBe(replacement)
+    fireEvent.click(screen.getByRole('button', { name: 'Include prompt', exact: true }))
+    expect(latest.profile.overrides[0].replacement_utf8).toBe(replacement)
+    expect(screen.getByLabelText('Prompt diff').querySelector('img')).toBeNull()
+    fireEvent.click(screen.getByRole('button', { name: 'Restore baseline', exact: true }))
+    expect(latest.profile.overrides).toEqual([])
+    expect(latest.remembered).toEqual({})
+    expect(JSON.stringify(latest)).not.toContain('First exact baseline')
+  })
+
+  it('unlocks the inspector and refuses a stale digest after Undo changes the profile', async () => {
+    let resolvePending
+    const pending = new Promise((resolve) => { resolvePending = resolve })
+    let digestCalls = 0
+    vi.stubGlobal('crypto', { subtle: { digest: (...args) => ++digestCalls === 2 ? pending : webcrypto.subtle.digest(...args) } })
+    render(<Editor />); enable()
+    fireEvent.change(screen.getByRole('textbox', { name: 'Replacement text' }), { target: { value: 'First applied replacement' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Apply replacement' }))
+    await waitFor(() => expect(latest.profile.overrides[0]?.replacement_utf8).toBe('First applied replacement'))
+    fireEvent.change(screen.getByRole('textbox', { name: 'Replacement text' }), { target: { value: 'Pending second replacement' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Apply replacement' }))
+    expect(screen.getByRole('button', { name: 'Checking replacement…' }).disabled).toBe(true)
+    fireEvent.click(screen.getByRole('button', { name: 'Undo prompt change' }))
+    expect(latest.profile.overrides).toEqual([])
+    expect(screen.getByRole('button', { name: 'Apply replacement' }).disabled).toBe(false)
+    const digest = await webcrypto.subtle.digest('SHA-256', new TextEncoder().encode('Pending second replacement'))
+    await act(async () => { resolvePending(digest); await pending })
+    expect(latest.profile.overrides).toEqual([])
+    fireEvent.change(screen.getByRole('textbox', { name: 'Replacement text' }), { target: { value: 'Fresh replacement after undo' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Apply replacement' }))
+    await waitFor(() => expect(latest.profile.overrides[0]?.replacement_utf8).toBe('Fresh replacement after undo'))
+  })
+
+  it('requires preserved placeholders and displays observed-only bodies without editing controls', () => {
+    render(<Editor />); enable()
+    fireEvent.click(screen.getByRole('button', { name: /Template fixture promptPlanningBaseline/ }))
+    fireEvent.change(screen.getByRole('textbox', { name: 'Replacement text' }), { target: { value: 'Omitted expressions' } })
+    expect(screen.getByRole('button', { name: 'Apply replacement' }).disabled).toBe(true)
+    expect(screen.getByText(/Preserve every required native placeholder/)).toBeTruthy()
+    fireEvent.click(screen.getByRole('button', { name: /Observed fixture componentPlanningObserved only/ }))
+    expect(screen.queryByRole('textbox', { name: 'Replacement text' })).toBeNull()
+    expect(screen.getByText(/no verified mutation mechanism/)).toBeTruthy()
+  })
+
+  it('focuses the prompt list only after Back makes it visible without stealing focus on other edits', () => {
+    render(<Editor />)
+    const list = screen.getByLabelText('Prompt list')
+    const workspace = list.closest('.rg-native-workspace')
+    const visibleAtFocus = []
+    const focus = vi.spyOn(list, 'focus').mockImplementation(() => {
+      // jsdom permits focusing display:none elements. Check the committed
+      // visibility class at the actual focus call to catch the browser race.
+      visibleAtFocus.push(!workspace.classList.contains('is-inspecting'))
+      HTMLElement.prototype.focus.call(list)
+    })
+    try {
+      enable()
+      fireEvent.click(screen.getByRole('button', { name: /Template fixture promptPlanningBaseline/ }))
+      expect(workspace.classList.contains('is-inspecting')).toBe(true)
+      fireEvent.change(screen.getByRole('textbox', { name: 'Replacement text' }), { target: { value: 'Draft edit' } })
+      expect(focus).not.toHaveBeenCalled()
+      fireEvent.click(screen.getByRole('button', { name: 'Back to prompt list' }))
+      expect(visibleAtFocus).toEqual([true])
+      expect(document.activeElement).toBe(list)
+      fireEvent.change(screen.getByRole('searchbox', { name: 'Find a prompt' }), { target: { value: 'First' } })
+      expect(focus).toHaveBeenCalledTimes(1)
+    } finally { focus.mockRestore() }
+  })
+
+  it('retains stale drafts and requires an explicit new inventory profile rather than migrating IDs', () => {
+    const inventory = nativeInventoryFixture()
+    const original = nativeDraftForProfile({ ...baselineProfile(inventory), inventory_sha256: 'f'.repeat(64), default_action: 'disable' })
+    render(<Editor inventory={inventory} initial={original} />)
+    expect(screen.getByText(/belongs to a different runtime or inventory revision/)).toBeTruthy()
+    expect(screen.getByRole('button', { name: 'Keep only selected prompts' }).disabled).toBe(true)
+    expect(screen.queryByLabelText('Prompt inclusion counts')).toBeNull()
+    expect(latest.profile.inventory_sha256).toBe('f'.repeat(64))
+    fireEvent.click(screen.getByRole('button', { name: 'Start profile for current inventory' }))
+    expect(latest.profile.inventory_sha256).toBe(inventory.inventory_sha256)
+    fireEvent.click(screen.getByRole('button', { name: 'Undo prompt change' }))
+    expect(latest.profile).toEqual(original.profile)
+  })
+
+  it('pages large genuine-shaped inventories without truncating bulk membership', () => {
+    const inventory = nativeInventoryFixture()
+    inventory.blocks = Array.from({ length: 2000 }, (_, index) => ({ ...inventory.blocks[0], id: 'fixture-' + index, title: 'Fixture prompt ' + index }))
+    render(<Editor inventory={inventory} />); enable()
+    expect(within(screen.getByLabelText('Prompt list')).getAllByRole('checkbox')).toHaveLength(80)
+    fireEvent.click(screen.getByRole('button', { name: 'Select filtered' }))
+    expect(counts()).toContain('2000Rows selected for an edit')
+    fireEvent.click(screen.getByRole('button', { name: 'Disable selected prompts' }))
+    expect(latest.profile).toMatchObject({ default_action: 'disable', overrides: [] })
+    expect(screen.getByText('Page 1 / 25')).toBeTruthy()
+    fireEvent.click(screen.getByRole('button', { name: 'Next prompts' }))
+    expect(screen.getByText('Page 2 / 25')).toBeTruthy()
+  })
+})

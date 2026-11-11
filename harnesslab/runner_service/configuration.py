@@ -40,7 +40,8 @@ def preflight(configuration, registry, health: dict) -> dict:
     if invalid:
         return {"ok": False, "issues": ["Configuration must be an object without credentials."]}
     expected = {"version", "runtime_id", "model_id", "task_id", "prompt", "prompt_mode", "harness", "limits"}
-    if set(configuration) != expected or configuration.get("version") != 1:
+    version = configuration.get("version")
+    if type(version) is not int or version not in {1, 2} or set(configuration) != (expected if version == 1 else expected | {"native_prompt_profile"}):
         return {"ok": False, "issues": ["Unsupported or incomplete run configuration."]}
     runtime = registry.runtimes.get(configuration.get("runtime_id")) if isinstance(configuration.get("runtime_id"), str) else None
     task = registry.tasks.get(configuration.get("task_id")) if isinstance(configuration.get("task_id"), str) else None
@@ -60,7 +61,7 @@ def preflight(configuration, registry, health: dict) -> dict:
     if runtime and task and runtime["id"] not in task.get("runtime_ids", []):
         issues.append("The task environment is not registered for this runtime.")
     prompt = configuration.get("prompt")
-    if not isinstance(prompt, str) or not prompt.strip() or len(prompt.encode()) > 250000:
+    if not isinstance(prompt, str) or (version == 1 and not prompt.strip()) or len(prompt.encode()) > 250000:
         issues.append("Enter a prompt of at most 250000 UTF-8 bytes.")
     if runtime and configuration.get("prompt_mode") != runtime["prompt_mode"]:
         issues.append("The runtime does not support the selected prompt application mode.")
@@ -112,15 +113,36 @@ def preflight(configuration, registry, health: dict) -> dict:
                     compiled = {"id": result["harness"]["id"], "hash": result["hash"], "configuration": result["harness"], "blocks": blocks}
     elif runtime and isinstance(harness, dict) and harness:
         issues.append("Native runtimes do not accept TraceHarness compiler settings.")
+    native_profile = admission = None
+    if version == 2:
+        if not runtime or runtime["kind"] != "native":
+            issues.append("Native prompt profiles require a registered native runtime.")
+        else:
+            try:
+                native_profile, admission = registry.native_prompt_profile(runtime["id"], configuration["native_prompt_profile"])
+            except (ValueError, TypeError, KeyError, UnicodeError):
+                issues.append("The native prompt profile or its application receipt is unavailable, stale or invalid.")
     if not health.get("available"):
         issues.append("The private execution service is not ready.")
     if issues:
         return {"ok": False, "issues": list(dict.fromkeys(issues))}
-    manifest = {"version": 1, "runtime_id": runtime["id"], "runtime_version": runtime["version"],
+    manifest = {"version": version, "runtime_id": runtime["id"], "runtime_version": runtime["version"],
                 "image_digest": runtime["image_digest"], "model_id": model_id, "task_id": task["id"],
                 "task_revision": task["revision"], "environment_digest": task.get("environment_digests", {}).get(runtime["id"], task["environment_digest"]),
                 "grader_image_digest": task["grader_image_digest"],
                 "task_content_sha256": task["content_sha256"], "prompt": prompt,
                 "prompt_mode": runtime["prompt_mode"], "prompt_sha256": hashlib.sha256(prompt.encode()).hexdigest(),
                 "harness": compiled or {}, "limits": dict(limits)}
+    if version == 2:
+        from .native_prompts import profile_sha256
+        manifest.update(native_prompt_profile=native_profile, native_prompt_profile_sha256=profile_sha256(native_profile),
+                        native_prompt_admission=admission)
+        # Match persist_artifacts' exact serialization. A valid compact request must
+        # not produce a manifest too large to retain as an immutable job artifact.
+        artifact = json.dumps(manifest, ensure_ascii=False, sort_keys=True).encode("utf-8")
+        if len(artifact) > 1024 * 1024:
+            return {"ok": False, "issues": ["Native prompt profile and additional instructions exceed the manifest artifact limit."]}
+        from .execution import _redacted
+        if _redacted(artifact) != artifact:
+            return {"ok": False, "issues": ["Remove credential-shaped content from native prompt instructions before execution."]}
     return {"ok": True, "issues": [], "manifest": manifest, "manifest_sha256": digest(manifest)}
