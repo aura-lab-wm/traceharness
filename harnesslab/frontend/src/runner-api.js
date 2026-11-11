@@ -19,6 +19,8 @@ const artifactRoute = (path) => {
 
 const allowed = (path, method) => method === 'GET' && ['/catalog', '/jobs'].includes(path)
   || method === 'GET' && /^\/prompt-inventory\/(native-claude-code|native-codex)$/.test(path)
+  || method === 'GET' && (path === '/experiments' || /^\/experiments\/[a-f0-9]{48}$/.test(path))
+  || method === 'POST' && (['/experiments/preflight', '/experiments'].includes(path) || /^\/experiments\/[a-f0-9]{48}\/(start|cancel)$/.test(path))
   || method === 'GET' && /^\/jobs\/[A-Za-z0-9_-]{1,100}$/.test(path)
   || method === 'GET' && artifactRoute(path)
   || method === 'POST' && ['/preflight', '/credentials', '/jobs'].includes(path)

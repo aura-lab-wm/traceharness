@@ -1,14 +1,16 @@
 # Native prompt interventions and paired experiments
 
-**Status: native Claude prompt editing is implemented; paired experiments remain a design.**
-The 2026-11-11 implementation adds a pinned native inventory, member editor,
-validated profiles, per-job executable materialization and request observations.
-See [Native prompt editing release and evidence](NATIVE_PROMPT_RELEASE.md) for
-what was deployed and verified. Native Codex embedded editing, the paired
-experiment scheduler and measured comparative results remain unimplemented.
+**Status: native Claude and Codex prompt editing and paired scheduling are implemented.**
+The initial Claude release and its proof boundaries are recorded in
+[Native prompt editing release](NATIVE_PROMPT_RELEASE.md). The
+[Codex and paired-experiment follow-up](NATIVE_PAIRED_RELEASE.md) adds
+source-bound Codex assets, frozen balanced schedules, owner-bound execution,
+all-outcome summaries and reviewed output caps.
 
-The sections below retain the broader design and its historical source baseline.
-They are not a claim that every proposed capability has shipped.
+The broader design below retains its historical source baseline. Initial paired
+scheduling compares profiles within one native runtime/model/task cell;
+cross-model grids, multi-task scheduling and confirmatory performance inference
+remain future work. Implementation is not a claim of improved task performance.
 
 The design is grounded in TraceHarness commit
 [`0e9f5fa62c5d8ed0f994a229778e3f302843c269`](https://github.com/aura-lab-wm/traceharness/tree/0e9f5fa62c5d8ed0f994a229778e3f302843c269)

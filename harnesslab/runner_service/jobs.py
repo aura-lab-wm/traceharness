@@ -24,6 +24,7 @@ TERMINAL = {"succeeded", "failed", "cancelled", "needs_attention"}
 BROKER_REFUSALS = {message: message for message in (
     'A previous model request had an uncertain outcome; this job cannot retry it.',
     'Invalid output limit.',
+    'Invalid thinking budget.',
     'Invalid prompt cache identity.',
     'Job is no longer accepting model calls.',
     'Model does not match the reviewed run.',
@@ -36,6 +37,7 @@ BROKER_REFUSALS = {message: message for message in (
     'Provider-managed context operations are unsupported.',
     'Stored provider responses are unsupported.',
     'The remaining cost reservation cannot cover this request.',
+    'The thinking budget must be smaller than the enforced output limit.',
     'Unsupported provider request options.',
     'Unsupported response inclusion options.',
     'Verified model pricing is unavailable.',
@@ -335,6 +337,28 @@ class Jobs:
                 raise JobError("Job not found.", 404)
             return self.public(row)
 
+    def reconcile(self, owner, idempotency_key, manifest_sha256):
+        """Adopt an existing reviewed job without creating or changing a run.
+
+        A scheduler can recover a committed submission after a lost response or
+        credential rotation. Do not purge before this lookup: retention cleanup
+        must not turn a known execution into permission to issue it again.
+        Ordinary submit still binds its original credential fingerprint.
+        """
+        if (not isinstance(idempotency_key, str) or not re.fullmatch(r"[A-Za-z0-9_-]{16,128}", idempotency_key)
+                or not isinstance(manifest_sha256, str) or not re.fullmatch(r"[a-f0-9]{64}", manifest_sha256)):
+            raise JobError("Supply a reviewed job identity.")
+        with self.lock:
+            existing = self.idempotency.get((owner, idempotency_key))
+            if existing is None:
+                return None
+            row = self.rows.get(existing)
+            if row is None or row.get("owner") != owner:
+                raise JobError("Job identity requires operator reconciliation.", 409)
+            if row["job"].get("manifest_sha256") != manifest_sha256:
+                raise JobError("Idempotency key belongs to a different run.", 409)
+            return self.public(row)
+
     def submit(self, owner, manifest, credential_id, idempotency_key, model):
         if not isinstance(idempotency_key, str) or not re.fullmatch(r"[A-Za-z0-9_-]{16,128}", idempotency_key):
             raise JobError("Supply a fresh idempotency key.")
@@ -404,15 +428,17 @@ class Jobs:
         transport_failed = False
         transport_issue = None
         broker_issue = None
+        budget_issue = None
         deadline = self.clock() + manifest["limits"]["wall_time_seconds"]
 
         def with_diagnostics(issues):
             # Keep the first bounded diagnostic even when the adapter returns or
             # replaces terminal issues. Never copy provider exception text.
-            return [*issues, *(issue for issue in (transport_issue, broker_issue) if issue and issue not in issues)]
+            return [*issues, *(issue for issue in (transport_issue, broker_issue, budget_issue) if issue and issue not in issues)]
 
         def forward(protocol, body):
-            nonlocal reserved, transport_failed, transport_issue, broker_issue
+            nonlocal reserved, transport_failed, transport_issue, broker_issue, budget_issue
+            budget_refusal = None
             with broker_lock:
                 try:
                     if transport_failed:
@@ -455,9 +481,19 @@ class Jobs:
                     body = standard_request(body, protocol)
                     output_field = "max_output_tokens" if protocol == "responses" else "max_tokens"
                     requested = body.get(output_field, body.get("max_completion_tokens", 4096))
-                    if isinstance(requested, bool) or not isinstance(requested, int) or requested < 1:
+                    reviewed_output_cap = manifest["limits"].get("max_output_tokens", 8192)
+                    minimum_output_cap = 2049 if manifest["runtime_id"] == "native-claude-code" else 1
+                    if (isinstance(requested, bool) or not isinstance(requested, int) or requested < 1
+                            or type(reviewed_output_cap) is not int or not minimum_output_cap <= reviewed_output_cap <= 8192):
                         raise ProviderError("Invalid output limit.")
-                    maximum_output = min(requested, 8192)
+                    maximum_output = min(requested, reviewed_output_cap)
+                    thinking = body.get("thinking")
+                    if protocol == "messages" and isinstance(thinking, dict) and thinking.get("type") == "enabled":
+                        thinking_budget = thinking.get("budget_tokens")
+                        if type(thinking_budget) is not int or thinking_budget < 1:
+                            raise ProviderError("Invalid thinking budget.")
+                        if thinking_budget >= maximum_output:
+                            raise ProviderError("The thinking budget must be smaller than the enforced output limit.")
                     for field in ("max_tokens", "max_output_tokens", "max_completion_tokens"):
                         body.pop(field, None)
                     body[output_field] = maximum_output
@@ -479,7 +515,15 @@ class Jobs:
                         reserve = (len(canonical(body)) + 8192) * prices[0] + maximum_output * prices[1] + request_price
                     except (KeyError, InvalidOperation, ValueError, TypeError):
                         raise ProviderError("Verified model pricing is unavailable.") from None
-                    if reserved + reserve > Decimal(str(manifest["limits"]["max_cost_usd"])):
+                    cap = Decimal(str(manifest["limits"]["max_cost_usd"]))
+                    if reserved + reserve > cap:
+                        # These values are trusted arithmetic, never provider/error
+                        # text or model input. Committed reservations can exceed
+                        # reported usage when a prior charge cannot be settled.
+                        remaining = max(Decimal("0"), cap - reserved)
+                        budget_refusal = (f"Next request reservation: ${reserve:.6f}. "
+                                          f"Remaining reservation allowance: ${remaining:.6f} of the ${cap:.6f} run cap. "
+                                          "Reported usage may be lower than reserved charges.")
                         raise ProviderError("The remaining cost reservation cannot cover this request.")
                     reserved += reserve
                     with self.lock:
@@ -523,10 +567,11 @@ class Jobs:
                         # Never serialize arbitrary exception text. A closed map
                         # selects an authored literal, or a fixed generic refusal.
                         argument = error.args[0] if len(error.args) == 1 and type(error.args[0]) is str else None
-                        previous = broker_issue
+                        previous, previous_budget = broker_issue, budget_issue
                         broker_issue = BROKER_REFUSALS.get(argument, "Model request was refused before transport.")
+                        budget_issue = budget_refusal
                         with self.lock:
-                            row["job"]["issues"] = with_diagnostics([issue for issue in row["job"]["issues"] if issue != previous])
+                            row["job"]["issues"] = with_diagnostics([issue for issue in row["job"]["issues"] if issue not in (previous, previous_budget)])
                             self._save(row)
                     raise
 

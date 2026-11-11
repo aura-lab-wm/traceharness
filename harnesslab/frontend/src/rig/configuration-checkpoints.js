@@ -152,6 +152,7 @@ function semanticFields(configuration) {
     ['file_listing', 'File listing', native ? null : blocks.listing.include],
     ['wall_time_seconds', 'Time limit (seconds)', configuration.limits.wall_time_seconds],
     ['max_cost_usd', 'Model budget (USD)', configuration.limits.max_cost_usd],
+    ['max_output_tokens', 'Output token cap per request', configuration.limits.max_output_tokens ?? 8192],
   ]
 }
 

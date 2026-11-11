@@ -1,0 +1,161 @@
+{
+  "runtime_version": "0.167.1",
+  "source_commit": "0a94398fa60c4fac0e7659e4213a0a36e613dd46",
+  "groups": [
+    {
+      "id": "codex-prompts-templates-compact-prompt:ab0c334d4faca17e",
+      "sources": [
+        "codex-rs/prompts/templates/compact/prompt.md"
+      ],
+      "baseline_sha256": "ab0c334d4faca17e3afbb9b16967c1b2fdcc7242a9a0880af57949fa236d6d07"
+    },
+    {
+      "id": "codex-prompts-templates-compact-summary_prefix:e9b088e794a6bb90",
+      "sources": [
+        "codex-rs/prompts/templates/compact/summary_prefix.md"
+      ],
+      "baseline_sha256": "e9b088e794a6bb9082ac053fcc760bd818d7e720ee4bcdc72c6e480de7b7cb0e"
+    },
+    {
+      "id": "codex-prompts-templates-guardian-classifier_instructions:52485dcc1856e6d3",
+      "sources": [
+        "codex-rs/prompts/templates/guardian/classifier_instructions.md"
+      ],
+      "baseline_sha256": "52485dcc1856e6d33697b0bee0d57b7af5bcc0cd2f64be0dc6b3505d56549aef"
+    },
+    {
+      "id": "codex-prompts-templates-guardian-node_repl_policy:e5d12bc240464051",
+      "sources": [
+        "codex-rs/prompts/templates/guardian/node_repl_policy.md"
+      ],
+      "baseline_sha256": "e5d12bc2404640513aba2df9dcc5689d2f0280191fe3508c55570ea0764d13a0"
+    },
+    {
+      "id": "codex-prompts-templates-guardian-policy:e6b0cf0a2e1c4cab",
+      "sources": [
+        "codex-rs/prompts/templates/guardian/policy.md"
+      ],
+      "baseline_sha256": "e6b0cf0a2e1c4cabc0a37ac2a0bc424ddd7c89e85d049e32d281a8db6e8d3ce6"
+    },
+    {
+      "id": "codex-prompts-templates-guardian-policy_template:37441097e4e825e0",
+      "sources": [
+        "codex-rs/prompts/templates/guardian/policy_template.md"
+      ],
+      "baseline_sha256": "37441097e4e825e0b195c32c985817ea07da15bb5c20fa753d87b22e2fe47e73"
+    },
+    {
+      "id": "codex-prompts-templates-permissions-approval_policy-never:41c7931bac2391a2",
+      "sources": [
+        "codex-rs/prompts/templates/permissions/approval_policy/never.md"
+      ],
+      "baseline_sha256": "41c7931bac2391a24046362bd07615d5a3e73dca4672b911516fac99646be8c4"
+    },
+    {
+      "id": "codex-prompts-templates-permissions-approval_policy-on_request:85541a9738741407",
+      "sources": [
+        "codex-rs/prompts/templates/permissions/approval_policy/on_request.md"
+      ],
+      "baseline_sha256": "85541a9738741407642b3c39bbe3781fbf8bb42f628d50e562c87738ab192b3a"
+    },
+    {
+      "id": "codex-prompts-templates-permissions-approval_policy-on_request_rule_request_permission:98e8a78ac869d64f",
+      "sources": [
+        "codex-rs/prompts/templates/permissions/approval_policy/on_request_rule_request_permission.md"
+      ],
+      "baseline_sha256": "98e8a78ac869d64fb094fb1a12e20e327e46a159bf74022c588b84326bf6afba"
+    },
+    {
+      "id": "codex-prompts-templates-permissions-approval_policy-unless_trusted:fadec1a060a758b8",
+      "sources": [
+        "codex-rs/prompts/templates/permissions/approval_policy/unless_trusted.md"
+      ],
+      "baseline_sha256": "fadec1a060a758b805f227bc5715c7dd3d7d7e2015bd5020c386eca0f3293d10"
+    },
+    {
+      "id": "codex-prompts-templates-permissions-approved_prefixes:2d37f635b9800903",
+      "sources": [
+        "codex-rs/prompts/templates/permissions/approved_prefixes.md"
+      ],
+      "baseline_sha256": "2d37f635b9800903992a94062804e82ad10b9e7ee5c2d904b38c66c0717a217f"
+    },
+    {
+      "id": "codex-prompts-templates-permissions-sandbox_mode-danger_full_access:0d887cb1eaba21a6",
+      "sources": [
+        "codex-rs/prompts/templates/permissions/sandbox_mode/danger_full_access.md"
+      ],
+      "baseline_sha256": "0d887cb1eaba21a6cade67ab958a6ffee00f671c46f8cf29c83706e397942dbf"
+    },
+    {
+      "id": "codex-prompts-templates-permissions-sandbox_mode-read_only:509b39f88e6a4f5c",
+      "sources": [
+        "codex-rs/prompts/templates/permissions/sandbox_mode/read_only.md"
+      ],
+      "baseline_sha256": "509b39f88e6a4f5cb36485ea8b340680c03f27175ba20200b823ec07bc79668d"
+    },
+    {
+      "id": "codex-prompts-templates-permissions-sandbox_mode-workspace_write:763661195d613a48",
+      "sources": [
+        "codex-rs/prompts/templates/permissions/sandbox_mode/workspace_write.md"
+      ],
+      "baseline_sha256": "763661195d613a48173638af6227d480d70ab0a6898d3a81ff075155e82f7555"
+    },
+    {
+      "id": "codex-prompts-templates-persistent_mode:03ff9da48abb8542",
+      "sources": [
+        "codex-rs/prompts/templates/persistent_mode.md"
+      ],
+      "baseline_sha256": "03ff9da48abb85425514c42dad1b742312bc7e2d978d2941e9d2fd90560c2a27"
+    },
+    {
+      "id": "codex-prompts-templates-realtime-backend_prompt:94c279f8b40900e5",
+      "sources": [
+        "codex-rs/prompts/templates/realtime/backend_prompt.md"
+      ],
+      "baseline_sha256": "94c279f8b40900e5f2ace13db09bc096ccc99cc72ffb051a126f98df94c6997d"
+    },
+    {
+      "id": "codex-prompts-templates-realtime-realtime_end:95dbde1501871117",
+      "sources": [
+        "codex-rs/prompts/templates/realtime/realtime_end.md"
+      ],
+      "baseline_sha256": "95dbde1501871117f96d45f95cb501abbbc25464eab1ae5ed689e110e1849036"
+    },
+    {
+      "id": "codex-prompts-templates-realtime-realtime_start:424ebda35f115edf",
+      "sources": [
+        "codex-rs/prompts/templates/realtime/realtime_start.md"
+      ],
+      "baseline_sha256": "424ebda35f115edff812596b70d7bf56431e7917b7398ccb4abb270b67a50fc2"
+    },
+    {
+      "id": "codex-prompts-templates-review-exit_interrupted:034191c75f153388",
+      "sources": [
+        "codex-rs/prompts/templates/review/exit_interrupted.xml"
+      ],
+      "baseline_sha256": "034191c75f15338861ce0be2fcf28855833fc5f601b387cbc3c764032507dc86"
+    },
+    {
+      "id": "codex-prompts-templates-review-exit_success:87ce1bcbc0f1aee3",
+      "sources": [
+        "codex-rs/prompts/templates/review/exit_success.xml"
+      ],
+      "baseline_sha256": "87ce1bcbc0f1aee3fcba4fedd35775eccf4a640352b071ead206d0b4ff286559"
+    },
+    {
+      "id": "codex-prompts-templates-review-rubric:ec60e7f36a1d1c26",
+      "sources": [
+        "codex-rs/prompts/templates/review/rubric.md"
+      ],
+      "baseline_sha256": "ec60e7f36a1d1c2679ce095c0205ecc56f7dd8fb57707a13ef362072390f219f"
+    },
+    {
+      "id": "codex-protocol-src-prompts-base_instructions-default:ac8ae107a0d72fe3",
+      "sources": [
+        "codex-rs/protocol/src/prompts/base_instructions/default.md",
+        "codex-rs/models-manager/prompt.md"
+      ],
+      "baseline_sha256": "ac8ae107a0d72fe3476b430afb161ea4e67da2e446d778aefc44828160559807"
+    }
+  ]
+}

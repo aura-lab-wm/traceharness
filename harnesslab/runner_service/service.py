@@ -16,6 +16,7 @@ from .artifacts import read_artifact
 from .configuration import preflight
 from .credentials import CredentialVault, CredentialUnavailable
 from .execution import DockerExecutor
+from .experiments import Experiments, review_plan
 from .jobs import Jobs, JobError
 from .provider import OpenRouter, ProviderError
 from .registry import Registry
@@ -41,9 +42,15 @@ def create_app(settings: Settings | None = None, *, registry=None, provider=None
     def refresh():
         if clock() - readiness["at"] < 30:
             return readiness["health"], readiness["models"]
-        if not readiness_lock.acquire(blocking=False):
+        # Refresh runs in an ASGI worker thread (or the experiment worker).
+        # Concurrent cold readers share its fresh result instead of treating
+        # an in-flight check as proof that an otherwise healthy runner failed.
+        # Leave margin inside health()'s eight-second response deadline.
+        if not readiness_lock.acquire(timeout=7):
             return {"available": False, "runtimes": {}, "tasks": {}}, []
         try:
+            if clock() - readiness["at"] < 30:
+                return readiness["health"], readiness["models"]
             health = executor.health()
             models = provider.models(set(registry.models)) if health.get("available") else []
             active = {row["id"] for row in models if isinstance(row, dict) and isinstance(row.get("id"), str)}
@@ -69,14 +76,28 @@ def create_app(settings: Settings | None = None, *, registry=None, provider=None
         except asyncio.TimeoutError:
             return {"available": False, "runtimes": {}, "tasks": {}}, []
 
+    def review_current(configuration):
+        with jobs.lock:
+            blocked = jobs.blocked_reason or any(row["job"]["status"] == "needs_attention" for row in jobs.rows.values())
+        status, models = ({"available": False, "runtimes": {}, "tasks": {}}, []) if blocked else refresh()
+        result = preflight(configuration, registry, status)
+        model = next((row for row in models if row["id"] == configuration.get("model_id")), None)
+        if result["ok"] and model is None:
+            result = {"ok": False, "issues": ["The selected model is not currently available."]}
+        return result, model
+
+    experiments = Experiments(settings, jobs, vault, review_current, clock)
+
     @asynccontextmanager
     async def lifespan(_):
         yield
+        await asyncio.to_thread(experiments.close)
         await asyncio.to_thread(jobs.close)
 
     app = FastAPI(docs_url=None, redoc_url=None, openapi_url=None, lifespan=lifespan)
     app.state.jobs, app.state.vault, app.state.registry = jobs, vault, registry
     app.state.readiness = readiness
+    app.state.experiments = experiments
 
     @app.middleware("http")
     async def private_boundary(request: Request, call_next):
@@ -173,6 +194,54 @@ def create_app(settings: Settings | None = None, *, registry=None, provider=None
     async def check(request: Request):
         result, _ = await review(parse(request, {"configuration"})["configuration"])
         return result
+
+    async def review_experiment(plan):
+        status, models = await health()
+        def resolved(configuration):
+            result = preflight(configuration, registry, status)
+            model = next((row for row in models if row["id"] == configuration.get("model_id")), None)
+            if result["ok"] and model is None:
+                result = {"ok": False, "issues": ["The selected model is not currently available."]}
+            return result, model
+        return review_plan(plan, resolved)
+
+    @app.post("/api/runner/experiments/preflight")
+    async def check_experiment(request: Request):
+        return await review_experiment(parse(request, {"plan"})["plan"])
+
+    @app.post("/api/runner/experiments")
+    async def create_experiment(request: Request):
+        body = parse(request, {"plan", "plan_sha256", "idempotency_key"})
+        reviewed = await review_experiment(body["plan"])
+        if not reviewed["ok"] or body["plan_sha256"] != reviewed["plan_sha256"]:
+            raise JobError("The experiment plan changed or did not pass current review.", 409)
+        return {"experiment": experiments.create(request.state.owner, reviewed["plan"], reviewed["plan_sha256"], body["idempotency_key"])}
+
+    @app.get("/api/runner/experiments")
+    async def list_experiments(request: Request):
+        return {"experiments": experiments.list(request.state.owner)}
+
+    @app.get("/api/runner/experiments/{experiment_id}")
+    async def get_experiment(request: Request, experiment_id: str):
+        if not re.fullmatch(r"[a-f0-9]{48}", experiment_id):
+            raise JobError("Experiment not found.", 404)
+        return {"experiment": experiments.get(request.state.owner, experiment_id)}
+
+    @app.post("/api/runner/experiments/{experiment_id}/start")
+    async def start_experiment(request: Request, experiment_id: str):
+        if not re.fullmatch(r"[a-f0-9]{48}", experiment_id):
+            raise JobError("Experiment not found.", 404)
+        body = parse(request, {"credential_id", "plan_sha256"})
+        if not isinstance(body["credential_id"], str) or not HEX_ID.fullmatch(body["credential_id"]):
+            raise JobError("Credential is unavailable.", 401)
+        return {"experiment": experiments.start(request.state.owner, experiment_id, body["credential_id"], body["plan_sha256"])}
+
+    @app.post("/api/runner/experiments/{experiment_id}/cancel")
+    async def cancel_experiment(request: Request, experiment_id: str):
+        if not re.fullmatch(r"[a-f0-9]{48}", experiment_id):
+            raise JobError("Experiment not found.", 404)
+        parse(request, set())
+        return {"experiment": experiments.cancel(request.state.owner, experiment_id)}
 
     @app.post("/api/runner/credentials")
     async def credentials(request: Request):

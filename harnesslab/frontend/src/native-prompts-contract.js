@@ -62,6 +62,7 @@ export function nativeProfileIssue(profile, inventory) {
     if (override.action === 'replace') {
       const issue = replacementIssue(override.replacement_utf8, block.required_placeholders)
       if (issue) return issue
+      if (inventory.runtime_id === 'native-codex' && bytes(override.replacement_utf8) > bytes(block.baseline_utf8)) return 'The replacement exceeds this native fragment’s UTF-8 byte capacity.'
     }
   }
   return ''

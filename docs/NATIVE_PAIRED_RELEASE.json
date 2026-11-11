@@ -1,0 +1,819 @@
+{
+  "release": "Native Codex embedded editing and paired execution",
+  "verified_at": "2026-11-11T10:00:33.074471+00:00",
+  "source_base_commit": "e11823b46462983977e31f324c30cba6e0f9b918",
+  "member_url": "https://traceharness.dev/app#/rig/harnesses",
+  "delegation": {
+    "specification_agents": 2,
+    "implementation_agents": 3,
+    "staged_for_concurrency_limit": true
+  },
+  "snapshot": {
+    "html": {
+      "bytes": 20044515,
+      "sha256": "ccb2e7ddb24b45359c16cc425ff87d3cb6aee6a61de01cf4ea635240c20ebd69"
+    },
+    "gzip": {
+      "bytes": 14554434,
+      "sha256": "93512d28b26af2200e839c7506bef7b2abec69acda9d98afbea107e982d68c1e"
+    }
+  },
+  "corpus": {
+    "datasets": 8,
+    "recorded_runs": 3453,
+    "embedded_data_unchanged": true,
+    "embedded_payload_sha256": "ee76c30ac9dc8960edb2d22c5d27f4376911df1bc6cccec60a749e283949f686"
+  },
+  "native_codex": {
+    "version": "0.167.1",
+    "patchable_assets": 13,
+    "patchable_occurrences": 16,
+    "observed_only_templates": 9,
+    "inventory_sha256": "9592e2f237bfed2ea7702f0a88499d342631d4893ca276186abf8b173361b4b7",
+    "materializer_sha256": "8a1ee9f8fba86a80c057f7712d4aeddb02096ec17f3c22451ecaf5ded9c1c185",
+    "receipt_sha256": "c5c921098cbf0f4b5e66a6df43fd6af7a8ef158a5b059cbcd8cd9f51ab858e8b",
+    "actual_cli_comparison": {
+      "evidence_kind": "actual-pinned-Codex-offline-request-comparison",
+      "complete": true,
+      "actual_native_captures": 6,
+      "selected_fields": [
+        "model",
+        "input",
+        "tools"
+      ],
+      "normalization": {
+        "ignored_fields": {
+          "original": [
+            "/input/0/id",
+            "/input/1/id",
+            "/input/2/id",
+            "/input/3/id"
+          ],
+          "keep": [
+            "/input/0/id",
+            "/input/1/id",
+            "/input/2/id",
+            "/input/3/id"
+          ],
+          "replace-noop": [
+            "/input/0/id",
+            "/input/1/id",
+            "/input/2/id",
+            "/input/3/id"
+          ],
+          "replace-marker": [
+            "/input/0/id",
+            "/input/1/id",
+            "/input/2/id",
+            "/input/3/id"
+          ],
+          "single-disable": [
+            "/input/0/id",
+            "/input/1/id",
+            "/input/2/id",
+            "/input/3/id"
+          ],
+          "all-disable": [
+            "/input/0/id",
+            "/input/1/id",
+            "/input/2/id",
+            "/input/3/id"
+          ]
+        },
+        "rule": "Only top-level input message.id with validated msg_UUID shape; no content, model, tool or role differences ignored."
+      },
+      "original_equals_keep_after_message_id_normalization": true,
+      "original_equals_replace_noop_after_message_id_normalization": true,
+      "source_asset_bytes": 20903,
+      "emitted_original_developer_bytes": 17119,
+      "native_rendering": {
+        "rule": "Exact source-declared without_update_plan_instructions for unavailable checklist tool",
+        "source_file": "codex-rs/prompts/src/update_plan_instructions.rs",
+        "source_commit": "0a94398fa60c4fac0e7659e4213a0a36e613dd46",
+        "source_file_sha256": "9bd837cc7760dc670ba7454f251a2a039b3d5a5e2bc6e16b916c9d400393337b",
+        "emitted_equals_exact_source_rendering": true,
+        "whole_source_literal_observed": false
+      },
+      "marker_equals_actual_developer_request": true,
+      "disable_equals_exact_space_filled_native_slice": true,
+      "single_edit_only_selected_instruction_changed": true,
+      "all_disable_blanks_selected_base": true,
+      "other_directly_observed_static_patchable_ids": [
+        "codex-prompts-templates-permissions-approval_policy-never:41c7931bac2391a2"
+      ],
+      "other_observed_static_patchable_remaining_after_all_disable": [],
+      "developer_message_bytes": {
+        "original": 17119,
+        "keep": 17119,
+        "replace-noop": 17119,
+        "replace-marker": 20903,
+        "single-disable": 20903,
+        "all-disable": 20903
+      },
+      "provider_calls": 0,
+      "task_grade": "UNVERIFIED",
+      "performance_improvement": "UNVERIFIED",
+      "conditional_coverage_proved": false,
+      "all_native_instructions_covered": false,
+      "inventory_sha256": "9592e2f237bfed2ea7702f0a88499d342631d4893ca276186abf8b173361b4b7",
+      "materializer_sha256": "8a1ee9f8fba86a80c057f7712d4aeddb02096ec17f3c22451ecaf5ded9c1c185",
+      "capture_sha256": {
+        "original": "be6b95d434526dbab3636ee8250625a21e9d39692a52830d03b36bfc608b554d",
+        "keep": "a1f898c17c6de5bd2123ab651b429984769b024e27bf41309463fd24d23e47d7",
+        "replace-noop": "f04770c61c4ddb7572ae7c7bd01695c94a472cabc8865bbeb46c02a71f829c5b",
+        "replace-marker": "3f215d047fadfbaf8aa37e6378f484baaee24507e18d9c4fb1e089b4d0ff23e8",
+        "single-disable": "0c0da6adfc0cabddd68bdc8aae7c50b66ad9bb3cabeaa943fb348201ff21a309",
+        "all-disable": "7adfe1c5797d9295f124a1587c7c3b285cce06a26e630e4425040417e601370c"
+      },
+      "earlier_comparison": "codex-capture-comparison-v2.json preserved as failed comparison: it incorrectly assumed top-level instructions and did not normalize transport IDs."
+    },
+    "claude_hashed_modules_unchanged": true
+  },
+  "paired_experiment": {
+    "complete": true,
+    "evidence_kind": "production-real-member-two-arm-native-experiment",
+    "maximum_jobs": 2,
+    "aggregate_cap_usd": 0.24,
+    "performance_improvement": "UNVERIFIED: one task and one paired repetition",
+    "credential_revoked": true,
+    "freeze_replay_zero_jobs_verified": true,
+    "experiment_id": "55c9c0c9d44f59b7e4d2ea77b3ee0cd3515bc1dd663ea80f",
+    "plan_sha256": "b8474a7a4eacc483a73904cc77b6ffb3c04eeddd31deffc6deb43da3b2c2bcf0",
+    "task_id": "requests-unicode-length",
+    "task_revision": "f6707042d8b18d2a3737380bf58ff020872fb07b",
+    "status": "completed",
+    "summary": {
+      "finalized_trials": 2,
+      "pending_trials": 0,
+      "active_trials": 0,
+      "confirmed_cost_usd": 0.00913131,
+      "cost_unknown_trials": 1,
+      "comparisons": [
+        {
+          "graded_pairs": 0,
+          "control_only_pass": 0,
+          "variant_only_pass": 0,
+          "both_pass": 0,
+          "both_fail": 0,
+          "incomplete_pairs": 1,
+          "known_cost_pairs": 0,
+          "arm_id": "marked-permission-fragment",
+          "planned_pairs": 1
+        }
+      ]
+    },
+    "trials": [
+      {
+        "id": "367a7f166c3b65b86a85fdcc90df575a996391a325242856",
+        "repeat": 1,
+        "arm_id": "marked-permission-fragment",
+        "status": "failed",
+        "job_id": "5c77fe8d65349fba47d27177ec61779db346473c4a8803a5",
+        "manifest_sha256": "4adf27e72090ddc133cc76c848b5111b8741bb338f11e8790f68b697af8ce544",
+        "issues": [],
+        "job": {
+          "id": "5c77fe8d65349fba47d27177ec61779db346473c4a8803a5",
+          "status": "failed",
+          "created_at": 1794390356,
+          "updated_at": 1794390377,
+          "manifest_sha256": "4adf27e72090ddc133cc76c848b5111b8741bb338f11e8790f68b697af8ce544",
+          "issues": [
+            "Runtime process did not complete successfully.",
+            "Model transport outcome is uncertain."
+          ],
+          "artifacts": [
+            {
+              "name": "manifest.json",
+              "bytes": 2849,
+              "sha256": "498cd197cc4019dec865279eab85b35d13764e2f4c244c045680c140d1f32efb"
+            },
+            {
+              "name": "trace.jsonl",
+              "bytes": 954,
+              "sha256": "b59fe540e19bccc6b1cafd24b6282ca01ce8d250d8c9320fb03191e1f7b28cf0"
+            },
+            {
+              "name": "patch.diff",
+              "bytes": 0,
+              "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            },
+            {
+              "name": "native-prompt-profile.json",
+              "bytes": 891,
+              "sha256": "12c2bf757a0b010ca76a5d4e4d5f5ee1bab7b4423a255c23f67ff8c06912d6a5"
+            },
+            {
+              "name": "native-prompt-application.json",
+              "bytes": 1492,
+              "sha256": "78c881bf712ec9284acb1e7001e662c2bf874682f1e884e4170588f8583f90c2"
+            },
+            {
+              "name": "native-prompt-observations.json",
+              "bytes": 4265,
+              "sha256": "a506e7511c0075acd17dce12e7979b7a7b5ea427af3aee06a485731feb46ca97"
+            }
+          ],
+          "usage": {
+            "requests": 2
+          },
+          "cancellation_requested": false,
+          "grade": "ungraded"
+        },
+        "native_readback_verified": true,
+        "native_replacement_observed": true
+      },
+      {
+        "id": "dc3738e69ccfe73d1e4ef5e97b3c8e3ca08c5a32c5d599a3",
+        "repeat": 1,
+        "arm_id": "keep",
+        "status": "succeeded",
+        "job_id": "b3e237f1810f70b65bb7c2c3d77bca162efd8e7842a8ba34",
+        "manifest_sha256": "cb9433398fa4590b8c895fc060add25226a76e6c5c3b37318ed282a045392a4a",
+        "issues": [],
+        "job": {
+          "id": "b3e237f1810f70b65bb7c2c3d77bca162efd8e7842a8ba34",
+          "status": "succeeded",
+          "created_at": 1794390377,
+          "updated_at": 1794390427,
+          "manifest_sha256": "cb9433398fa4590b8c895fc060add25226a76e6c5c3b37318ed282a045392a4a",
+          "issues": [],
+          "artifacts": [
+            {
+              "name": "manifest.json",
+              "bytes": 2496,
+              "sha256": "3e6b316834fad2d67dee432e17f98ad79b8b731aaa0b0093b8c8bc4a091865a2"
+            },
+            {
+              "name": "grade.json",
+              "bytes": 21,
+              "sha256": "878982568e5e39420f9fc8fca5caaade78f526a402b42f08357919732d5a1cd5"
+            },
+            {
+              "name": "trace.jsonl",
+              "bytes": 43633,
+              "sha256": "4976f5bacc97b59f6ccf50f50e37b7d1a44d24eebae8691554a80937b0c33455"
+            },
+            {
+              "name": "patch.diff",
+              "bytes": 421,
+              "sha256": "02235a9b56e226e68f5abe120415d6759a8a67e380bac681bf876ccc8036981f"
+            },
+            {
+              "name": "native-prompt-profile.json",
+              "bytes": 547,
+              "sha256": "544c3097e1b13796a22b3b1fa17a4682c0649c1c07c603f938dc2006ca8708f3"
+            },
+            {
+              "name": "native-prompt-application.json",
+              "bytes": 1046,
+              "sha256": "a418214a96cacb948c63b827a24389dd1324024836fd454b5c1a2b4da9a7aca4"
+            },
+            {
+              "name": "native-prompt-observations.json",
+              "bytes": 15362,
+              "sha256": "cc256bced46e31e70029beab73491bc63d6cdad2af725fdff1cec0d6a8cc499b"
+            }
+          ],
+          "usage": {
+            "requests": 8,
+            "input_tokens": 75363,
+            "output_tokens": 1256,
+            "cost_usd": 0.00913131
+          },
+          "cancellation_requested": false,
+          "grade": "passed"
+        },
+        "native_readback_verified": true
+      }
+    ],
+    "plan_schedule": [
+      {
+        "id": "367a7f166c3b65b86a85fdcc90df575a996391a325242856",
+        "index": 0,
+        "repeat": 1,
+        "arm_id": "marked-permission-fragment",
+        "manifest_sha256": "4adf27e72090ddc133cc76c848b5111b8741bb338f11e8790f68b697af8ce544"
+      },
+      {
+        "id": "dc3738e69ccfe73d1e4ef5e97b3c8e3ca08c5a32c5d599a3",
+        "index": 1,
+        "repeat": 1,
+        "arm_id": "keep",
+        "manifest_sha256": "cb9433398fa4590b8c895fc060add25226a76e6c5c3b37318ed282a045392a4a"
+      }
+    ],
+    "exact_scheduled_job_set_verified": true,
+    "task_passes": 1,
+    "hostile_origin_refused": true,
+    "execution_evidence_complete": true
+  },
+  "retained_failed_verification": {
+    "budget_limited_claude": {
+      "evidence_kind": "production-real-member-API-native-profile",
+      "complete": true,
+      "execution_evidence_complete": true,
+      "credential_revoked": true,
+      "maximum_new_jobs": 1,
+      "maximum_spend_usd": 0.35,
+      "performance_comparison": "UNVERIFIED",
+      "cross_account_live_isolation": "UNVERIFIED",
+      "checks": [],
+      "comparison_with_prior_task": "UNVERIFIED: a different real task is selected; this is completion/application evidence only",
+      "job_id": "51bd7b9e086cc8d406c1f78a4a6658616cd1a8e1ead39361",
+      "status": "failed",
+      "grade": "ungraded",
+      "usage": {
+        "requests": 5,
+        "input_tokens": 169801,
+        "output_tokens": 696,
+        "cost_usd": 0.173281
+      },
+      "issues": [
+        "Runtime process did not complete successfully.",
+        "The remaining cost reservation cannot cover this request."
+      ],
+      "manifest_sha256": "865a57679441ffb69a927096294b798150a1e01a4289bc5eea63632af53ffa39",
+      "task_id": "requests-unicode-length",
+      "task_revision": "f6707042d8b18d2a3737380bf58ff020872fb07b",
+      "native_application_verified": true,
+      "native_replacement_observed": true,
+      "provider_requests": 5,
+      "artifacts": [
+        {
+          "name": "manifest.json",
+          "bytes": 2922,
+          "sha256": "210e47becf34d21706435ba8ccd4d529749eee1b6cb59b46dc37278f0211bd9d"
+        },
+        {
+          "name": "trace.jsonl",
+          "bytes": 56390,
+          "sha256": "c1bdead8799bf3150b1769cefd1fcab14c038ee09a49e551e911a477328130f9"
+        },
+        {
+          "name": "patch.diff",
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "name": "native-prompt-profile.json",
+          "bytes": 1023,
+          "sha256": "096dc04cc9c3785dc61258f306597a19130e8c52e1b3815ce2dbc5cf5c904aa6"
+        },
+        {
+          "name": "native-prompt-application.json",
+          "bytes": 2281,
+          "sha256": "8d6da83df66b2bb30c79de1b955a4a76646d311cef226b0315b84c8fae64d837"
+        },
+        {
+          "name": "native-prompt-observations.json",
+          "bytes": 62970,
+          "sha256": "b979ac5b5d34b0912d98ed25d163c0fed76c6d78513f71046079d580ebf40201"
+        }
+      ],
+      "observation_request_count": 6,
+      "hostile_origin_refused": true,
+      "task_passed": false
+    },
+    "gateway_failure": {
+      "complete": false,
+      "evidence_kind": "production-real-member-two-arm-native-experiment",
+      "maximum_jobs": 2,
+      "aggregate_cap_usd": 0.24,
+      "performance_improvement": "UNVERIFIED: one task and one paired repetition",
+      "credential_revoked": true,
+      "freeze_replay_zero_jobs_verified": true,
+      "experiment_id": "1c51aa5744b51038d01504cc35549dfa450919bd2bf88c00",
+      "plan_sha256": "47c2b42a49427fb878ebc354d7a55c837d2440c257748d705c6c6e266b361605",
+      "task_id": "requests-unicode-length",
+      "task_revision": "f6707042d8b18d2a3737380bf58ff020872fb07b",
+      "failure": {
+        "phase": "single schedule start",
+        "type": "HTTPFailure",
+        "status": 502
+      }
+    },
+    "gateway_remediation": {
+      "id": "1c51aa5744b51038d01504cc35549dfa450919bd2bf88c00",
+      "status": "cancelled",
+      "trials": [
+        {
+          "status": "failed",
+          "job_id": "82ca2d917150a079247f680c2e4f89f8d7ef612ff79b38f6",
+          "usage": {
+            "requests": 0
+          }
+        },
+        {
+          "status": "cancelled",
+          "job_id": null,
+          "usage": null
+        }
+      ],
+      "reason": "Gateway field-order failure before provider transport; retained separately from post-fix verification."
+    },
+    "incompatible_model_preflight": {
+      "complete": false,
+      "evidence_kind": "production-real-member-two-arm-native-experiment",
+      "maximum_jobs": 2,
+      "aggregate_cap_usd": 0.24,
+      "performance_improvement": "UNVERIFIED: one task and one paired repetition",
+      "credential_revoked": false,
+      "failure": {
+        "phase": "real inventory and task cohort",
+        "type": "AssertionError"
+      }
+    }
+  },
+  "published_ui": {
+    "complete": true,
+    "evidence_kind": "production-real-member-exact-export",
+    "checks": [
+      "real_operator_identity_and_in_memory_secure_session",
+      "real_baseline_one_two_all_profiles_and_undo",
+      "class_scope_and_member_named_set_use_real_explicit_ids",
+      "real_prompt_baseline_replacement_digest_diff_include_and_restore",
+      "keep_only_zero_and_one_and_full_inventory_membership_without_dom_truncation",
+      "observed_only_components_stay_uneditable_and_outside_all_off_counts",
+      "configuration_export_checkpoint_compare_restore_import_and_undo",
+      "reload_preserves_profile_full_corpus_and_desktop_mobile_navigation",
+      "codex_embedded_inventory_capacity_and_space_padding_scope",
+      "paired_captured_variants_frozen_review_budget_and_stale_review_invalidation",
+      "real_completed_results_diagnostics_unknown_cost_export_and_mobile",
+      "both_native_scopes_no_jobs_credentials_or_account_saves_and_clean_browser"
+    ],
+    "layouts": [
+      {
+        "width": 1440,
+        "height": 1100,
+        "overflow": false,
+        "mobile_back_verified": false
+      },
+      {
+        "width": 390,
+        "height": 844,
+        "overflow": false,
+        "mobile_back_verified": true
+      }
+    ],
+    "preflights": [
+      {
+        "variant": "none-edited",
+        "manifest_sha256": "d8e8896608ce12bc2efd40b54dcd12bb0c8abcc778d6402c91e897673ed4d5ab",
+        "profile_sha256": "16f799220a59fa340d0f2163b8b8dec93e3f78e18db145901dcb957e9a1312c1",
+        "default_action": "keep",
+        "override_count": 0,
+        "accepted": true
+      },
+      {
+        "variant": "one-disabled",
+        "manifest_sha256": "82395f7d6836e45e4c2110a4f7f302cd56f3d60b31a19fc620c4f8d732577d4b",
+        "profile_sha256": "662bb5bfa48009669e8c0ca1b7de51c2471cdf480aa2f884ef8c90a5ece7df17",
+        "default_action": "keep",
+        "override_count": 1,
+        "accepted": true
+      },
+      {
+        "variant": "two-disabled",
+        "manifest_sha256": "39c61535655c372366507a39f81931a3a581b0111707eff880a2d34e17083651",
+        "profile_sha256": "767b42ef4408e7d861ce95f3e1d38fc33915f8e0d4183d86282e61f99be8915f",
+        "default_action": "keep",
+        "override_count": 2,
+        "accepted": true
+      },
+      {
+        "variant": "none-included",
+        "manifest_sha256": "15c60728e0e5d1fa2a828ff30f8dd7fda26d146d2890b685c87f8af79ec4ccbc",
+        "profile_sha256": "d6f2d93a660427daa4e5954f54dfcb2362690f9d7a14450fd25cfe38aa07a677",
+        "default_action": "disable",
+        "override_count": 0,
+        "accepted": true
+      },
+      {
+        "variant": "one-replaced",
+        "manifest_sha256": "4481f7619ff54f39e6d9dc526347fb999685c131151df5884e6077e21190a135",
+        "profile_sha256": "44bfd237a629a0f0793c918476f28fd1c7c18a90b7d7d4408494cff3d6b2687e",
+        "default_action": "keep",
+        "override_count": 1,
+        "accepted": true
+      }
+    ],
+    "paired_plan": {
+      "plan_sha256": "35b0368cd0ebc51665f9d3ac6c5af9374ac61dabe10aac89103898c3075a997d",
+      "maximum_cost_usd": 0.24,
+      "trial_count": 2,
+      "native_runtime": "native-codex",
+      "pure_preflight_only": true
+    },
+    "paired_mobile_overflow": false,
+    "real_experiment_results": {
+      "experiment_id": "55c9c0c9d44f59b7e4d2ea77b3ee0cd3515bc1dd663ea80f",
+      "plan_sha256": "b8474a7a4eacc483a73904cc77b6ffb3c04eeddd31deffc6deb43da3b2c2bcf0",
+      "all_outcomes_visible": true,
+      "export_verified": true,
+      "baseline_grade": "passed",
+      "variant_grade": "ungraded",
+      "cost_unknown_trials": 1
+    },
+    "no_new_jobs": true,
+    "provider_credentials_connected": false,
+    "job_submissions": 0,
+    "account_saves": 0
+  },
+  "anonymous_gates": {
+    "complete": true,
+    "at": "2026-11-11T10:00:12.513386+00:00",
+    "user_agent": "traceharness-proof",
+    "max_redirs": 0,
+    "checks": [
+      {
+        "path": "/app",
+        "hostile_origin": false,
+        "status": 302,
+        "location": "/login",
+        "acao": false,
+        "pass": true
+      },
+      {
+        "path": "/app/shallow",
+        "hostile_origin": false,
+        "status": 302,
+        "location": "/login",
+        "acao": false,
+        "pass": true
+      },
+      {
+        "path": "/link",
+        "hostile_origin": false,
+        "status": 302,
+        "location": "/login",
+        "acao": false,
+        "pass": true
+      },
+      {
+        "path": "/api/shallow/harnesses",
+        "hostile_origin": false,
+        "status": 401,
+        "location": null,
+        "acao": false,
+        "pass": true
+      },
+      {
+        "path": "/api/shallow/harnesses",
+        "hostile_origin": true,
+        "status": 401,
+        "location": null,
+        "acao": false,
+        "pass": true
+      },
+      {
+        "path": "/api/shallow/jobs",
+        "hostile_origin": false,
+        "status": 401,
+        "location": null,
+        "acao": false,
+        "pass": true
+      },
+      {
+        "path": "/api/shallow/jobs",
+        "hostile_origin": true,
+        "status": 401,
+        "location": null,
+        "acao": false,
+        "pass": true
+      },
+      {
+        "path": "/api/runner/catalog",
+        "hostile_origin": false,
+        "status": 401,
+        "location": null,
+        "acao": false,
+        "pass": true
+      },
+      {
+        "path": "/api/runner/catalog",
+        "hostile_origin": true,
+        "status": 401,
+        "location": null,
+        "acao": false,
+        "pass": true
+      },
+      {
+        "path": "/api/runner/jobs",
+        "hostile_origin": false,
+        "status": 401,
+        "location": null,
+        "acao": false,
+        "pass": true
+      },
+      {
+        "path": "/api/runner/jobs",
+        "hostile_origin": true,
+        "status": 401,
+        "location": null,
+        "acao": false,
+        "pass": true
+      },
+      {
+        "path": "/api/runner/prompt-inventory/native-claude-code",
+        "hostile_origin": false,
+        "status": 401,
+        "location": null,
+        "acao": false,
+        "pass": true
+      },
+      {
+        "path": "/api/runner/prompt-inventory/native-claude-code",
+        "hostile_origin": true,
+        "status": 401,
+        "location": null,
+        "acao": false,
+        "pass": true
+      },
+      {
+        "path": "/api/runner/prompt-inventory/native-codex",
+        "hostile_origin": false,
+        "status": 401,
+        "location": null,
+        "acao": false,
+        "pass": true
+      },
+      {
+        "path": "/api/runner/prompt-inventory/native-codex",
+        "hostile_origin": true,
+        "status": 401,
+        "location": null,
+        "acao": false,
+        "pass": true
+      },
+      {
+        "path": "/api/runner/experiments",
+        "hostile_origin": false,
+        "status": 401,
+        "location": null,
+        "acao": false,
+        "pass": true
+      },
+      {
+        "path": "/api/runner/experiments",
+        "hostile_origin": true,
+        "status": 401,
+        "location": null,
+        "acao": false,
+        "pass": true
+      },
+      {
+        "path": "/api/runner/experiments/preflight",
+        "hostile_origin": false,
+        "status": 401,
+        "location": null,
+        "acao": false,
+        "pass": true
+      },
+      {
+        "path": "/api/runner/experiments/preflight",
+        "hostile_origin": true,
+        "status": 401,
+        "location": null,
+        "acao": false,
+        "pass": true
+      },
+      {
+        "path": "/api/runner/experiments/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "hostile_origin": false,
+        "status": 401,
+        "location": null,
+        "acao": false,
+        "pass": true
+      },
+      {
+        "path": "/api/runner/experiments/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "hostile_origin": true,
+        "status": 401,
+        "location": null,
+        "acao": false,
+        "pass": true
+      },
+      {
+        "path": "/api/runner/experiments/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/start",
+        "hostile_origin": false,
+        "status": 401,
+        "location": null,
+        "acao": false,
+        "pass": true
+      },
+      {
+        "path": "/api/runner/experiments/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/start",
+        "hostile_origin": true,
+        "status": 401,
+        "location": null,
+        "acao": false,
+        "pass": true
+      },
+      {
+        "path": "/api/runner/experiments/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/cancel",
+        "hostile_origin": false,
+        "status": 401,
+        "location": null,
+        "acao": false,
+        "pass": true
+      },
+      {
+        "path": "/api/runner/experiments/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/cancel",
+        "hostile_origin": true,
+        "status": 401,
+        "location": null,
+        "acao": false,
+        "pass": true
+      }
+    ]
+  },
+  "automated_tests": {
+    "frontend": {
+      "passed": 979,
+      "files": 53
+    },
+    "runner": {
+      "ran": 278,
+      "passed": 277,
+      "skipped": 1,
+      "skip": "Linux-only local test; actual native runtime captures and live execution are separate"
+    },
+    "worker": {
+      "passed": 177
+    },
+    "dist_freshness": {
+      "passed": 2
+    }
+  },
+  "deployments": {
+    "worker": {
+      "exit_code": 0,
+      "version_id": "20bf6a3b-f5b1-4248-819e-32408f978e0c",
+      "source_runner_sha256": "d9283970981e6148db739c5d66aaff8f18c41cd698708ec53f26a36e7878bbca",
+      "source_experiments_sha256": "4f863e471b235d581d1bb6fff067e73b7e34be3638d431195ee792c8d3d1974b",
+      "config_deleted_on_exit": true
+    },
+    "runner": {
+      "exit_code": 0,
+      "image": "registry.fly.io/traceharness-runner@sha256:f59388e1926fb8fa47ed471fb63f3cb75f32b4de6ce2ce10e71062df0b82904d",
+      "registry_sha256": "2d90f0f7a9710890c2aedad0e972ac6d1f1a52ecebec4848d195793370496d10",
+      "previous_image": "registry.fly.io/traceharness-runner@sha256:7cfccf82d690433ac594dd4f10ab8319f331cb148dd6d2091e461dc04c0a391b",
+      "previous_registry": "/data/inventory-eight-v2/registry-native-codex-paired-v1.json"
+    },
+    "runner_health": {
+      "release_version": 13,
+      "release_status": "complete",
+      "machines_started": 1,
+      "machines_total": 1,
+      "checks_passing": 1,
+      "checks_total": 1
+    },
+    "kv": {
+      "exit_code": 0,
+      "gzip_sha256": "93512d28b26af2200e839c7506bef7b2abec69acda9d98afbea107e982d68c1e",
+      "html_sha256": "ccb2e7ddb24b45359c16cc425ff87d3cb6aee6a61de01cf4ea635240c20ebd69",
+      "worker_version_unchanged": "20bf6a3b-f5b1-4248-819e-32408f978e0c"
+    }
+  },
+  "review_fixes": [
+    "Credential lease cleanup after confirmed refusal/cancellation",
+    "Paused worker resume and credential cleanup race",
+    "Requested experiment-ID and frozen-plan identity binding",
+    "Claude thinking budget and reviewed output cap compatibility",
+    "Job-summary JSON field-order comparison",
+    "Bounded readiness single-flight and fresh-only result sharing",
+    "Display retained job diagnostics in experiment results"
+  ],
+  "unverified": [
+    "Task completion for the edited native profile",
+    "Performance improvement",
+    "Unknown charge for the edited trial",
+    "All native instruction and conditional-path coverage",
+    "Live cross-account isolation with a second real member",
+    "Controlled provider routing, stable pricing or native model sampling"
+  ],
+  "private_evidence_sha256": {
+    "artifact-v3.json": "77846f3a32ea820e46e0b80ebd8f48c01b5773f25dea71d5e733e6497500f7cf",
+    "candidate-r3-verified-proof/proof.json": "f04c30b6990a7b4dce7e4037a961df17939b862cd82a9f96e9c0c33d6a6eedcd",
+    "live-r3-proof/proof.json": "07718a473421e4749b1affc8d634a38409c3251cfb98e584a88fe5aa4dc60b19",
+    "codex-implementation-handoff.json": "b827c88395f50ec2da6ad0f6429e713426b3097d3df66f4dd5786fc2c70ebc05",
+    "codex-capture-comparison-v2.json": "6ecd74dc80ba976bcfd4030a6464a8bb151d3b29850c715f0f6f2e19457076a4",
+    "codex-capture-comparison-v3.json": "bc1766df9dd12b1d71f70e873020fc7f8b4aaf4c34c73ff1aeb64e9c2d7607a8",
+    "codex-mechanism-receipt-v2.json": "c5c921098cbf0f4b5e66a6df43fd6af7a8ef158a5b059cbcd8cd9f51ab858e8b",
+    "member-task-completion-proof.json": "60618a89cc78c30b861e34b3737ff9b5c510214ed42057bd515e0caa3cdf0db6",
+    "paired-incompatible-model-preflight-proof.json": "1a1494f0e84e3dbe35b0ecc1d810bd789bc772a864e3d9ea64154162b9a6d29c",
+    "paired-live-proof.json": "001051a51062d8ead7bcaaf0c9f6d09e7a086aa0ff43d17c46a4e4db6bb96974",
+    "paired-start-response-diagnosis.json": "29c4ad172ba50ad94bdb72cd33d5896a225c2f9e2b1caf8f49eb7ccc348a704f",
+    "paired-gateway-remediation.json": "1dcca27896b02d9f5b8caf4ef927e26840498c71b589e5b8c05a18243c12800b",
+    "paired-r2-live-proof.json": "37a6f6b0ae7d338b3658d7672f3b15a856a30ab8e69ccccfc026a2c847480960",
+    "registry-install.json": "99099b4978db0fc0e19a038694a4cd00f436c1561f93f94d9ec8253f2762ccc7",
+    "runner-deployment.json": "f08c252a0d97c130001e14d7047770b5f0366ac41060697cf5bc097f4212b119",
+    "runner-r3-deployment.json": "6fde642a92af020fa9aeb1a43963f0a17f7edf4be4a0e173c792038f70d94282",
+    "worker-deployment.json": "4fb1506f6dae5b09234c08cefbfd57839e548e623938b03298234caf7e88e4a9",
+    "worker-r2/worker-deployment.json": "5dd7e814c1adcbf2a02ecc4fb8b823052cde98484226c0e5329f1c8099cd5b80",
+    "publication.json": "2d5581d8e5b593795c8dbb4e6c9352367e4b78da8084a6dd9b4c8ee86eaeb2ea",
+    "publication-r3.json": "f7a5ec4e13f2f15c51db34e83234cceecba362d3eb51d321b40b925c42f714af",
+    "anonymous-proof.json": "e0d779937dd94802783688396683efd6560b11136199be1358c2db75901cd11b",
+    "final-r3-idle-audit.json": "9fd73f4c2c7894ba028511b2daabfb8e06828677b3fa9220313b758a5fc27da2"
+  }
+}

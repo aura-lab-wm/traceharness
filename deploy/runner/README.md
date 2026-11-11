@@ -73,6 +73,27 @@ cost are included only when a valid terminal provider response actually supplies
 them. Streaming usage is read from terminal protocol records, not estimated from
 a displayed model price. Missing billing fields remain absent.
 
+A reservation refusal reports the next request's conservative reservation,
+remaining reservation allowance and reviewed run cap. That allowance is not the
+member's OpenRouter balance or necessarily the cap minus displayed usage:
+unsettled earlier charges remain reserved. A job can therefore stop below its
+reported spend cap. Raising a cap does not guarantee task completion; retain a
+failed attempt as an outcome instead of replacing it with an undisclosed retry.
+
+An optional reviewed `limits.max_output_tokens` sets a per-request output ceiling
+through 8,192 tokens. Claude Code requires at least 2,049 to preserve its fixed
+2,048-token thinking budget; other runtimes accept a minimum of 1. Omitting the
+field preserves the previous 8,192 ceiling and
+manifest shape. The broker applies the smaller of the native client's requested
+limit and this reviewed ceiling, then reserves that same enforced output maximum.
+This can reduce the output reservation while retaining the conservative input
+bound and cost cap. A small ceiling can truncate model output; it does not promise
+task completion or a performance improvement.
+The pinned native image retains its existing CLI launch environment. This output
+ceiling is enforced at the trusted broker before provider transport.
+Explicit enabled thinking whose budget meets or exceeds the enforced output
+ceiling is refused before transport; thinking is never silently disabled.
+
 ## Host requirements and failure handling
 
 Use a dedicated Linux execution VM or host with a separately installed `runsc`

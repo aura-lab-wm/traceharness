@@ -15,6 +15,7 @@ import { applyConfiguration, configurationFor, configurationText, expiryTime, fi
 import { HarnessPicker } from '../harnessPicker'
 import { ConfigurationLibrary } from '../configurationLibrary'
 import { NativePrompts } from '../NativePrompts'
+import { PairedExperiments } from '../PairedExperiments'
 import { promptCounts } from './native-prompts-state'
 import { addCheckpoint, compareConfigurations, deleteCheckpoint, loadCheckpoints, persistCheckpoints, renameCheckpoint, restoreCheckpoint } from '../configuration-checkpoints'
 import './harness-composer.css'
@@ -41,6 +42,7 @@ const LIMIT_FIELDS = [
   { key: 'max_steps', label: 'Step cap', min: 1, max: 200 },
   { key: 'wall_time_seconds', label: 'Time limit (seconds)', min: 30, max: 3600 },
   { key: 'max_cost_usd', label: 'Model budget (USD)', min: 0.01, max: 100, step: 'any' },
+  { key: 'max_output_tokens', label: 'Output token cap per request', min: 1, max: 8192 },
 ]
 
 export function HarnessComposer({ args = [] }) {
@@ -108,6 +110,7 @@ export function HarnessComposer({ args = [] }) {
   const preflightRequest = useRef(null)
   const retry = useRef(null)
   const submittedRunLeases = useRef(new Set())
+  const experimentLease = useRef(false)
   const jobRequest = useRef(0)
 
   const fixed = state.selection.startsWith('fixed:')
@@ -158,7 +161,7 @@ export function HarnessComposer({ args = [] }) {
     ...(promptProfileIssue ? [promptProfileIssue] : []),
     ...(nativeDraft?.enabled && (!inventoryForRuntime?.execution_available || !runtime?.native_prompts?.execution_available) ? ['Native prompt application is not verified for this runtime. The profile draft cannot run yet.'] : []),
     ...blocksIssues,
-    ...LIMIT_FIELDS.flatMap((field) => { const issue = numberIssue(configuration.limits[field.key], field); return issue ? [`${native && field.key === 'max_steps' ? 'Model request cap' : field.label}: ${issue}`] : [] }),
+    ...LIMIT_FIELDS.flatMap((original) => { const field = original.key === 'max_output_tokens' && configuration.runtime_id === 'native-claude-code' ? { ...original, min: 2049 } : original; const issue = numberIssue(configuration.limits[field.key], field); return issue ? [`${native && field.key === 'max_steps' ? 'Model request cap' : field.label}: ${issue}`] : [] }),
     ...(fixed && (!card || new TextEncoder().encode(prompt).length > card.cap_bytes) ? ['The fixed prompt is over its byte cap.'] : []),
   ]
   const currentReview = preflight?.key === configurationKey && preflight.catalog === catalog && preflight.revision === catalogRevision && preflight.nativeInventoryRevision === nativeInventoryRevision && !catalogLoading
@@ -282,7 +285,7 @@ export function HarnessComposer({ args = [] }) {
   }, [catalog.runner.available, catalogRevision, jobsRevision])
   useEffect(() => { artifactRequest.current?.abort(); setDownloadingArtifact('') }, [job?.id])
 
-  function hasPendingRun() { return submittedRunLeases.current.size > 0 }
+  function hasPendingRun() { return submittedRunLeases.current.size > 0 || experimentLease.current }
   function rememberJob(next) {
     if (terminal.has(next.status)) submittedRunLeases.current.delete(next.id)
     jobRef.current = next; setJob(next)
@@ -661,7 +664,7 @@ export function HarnessComposer({ args = [] }) {
         <div><dt>Model</dt><dd>{state.model_id || 'Choose a model'}</dd></div><div><dt>Task</dt><dd>{task?.title || state.task_id || 'Choose a task'}{task?.revision && <small>{task.revision}</small>}</dd></div>
         <div><dt>Prompt</dt><dd>{new TextEncoder().encode(prompt).length.toLocaleString()} bytes · {configuration.prompt_mode}</dd></div>
         {nativeDraft?.enabled && <div><dt>Native profile</dt><dd>{nativeCounts ? `${nativeCounts.included} / ${nativeCounts.patchable} patchable included` : 'Exact inventory required'}<small>{nativeCounts ? `${nativeCounts.baseline} baseline · ${nativeCounts.replaced} replacement · ${nativeCounts.disabled} disabled` : 'Draft preserved; execution unavailable'}</small><small className="rg-mono">{nativeDraft.profile.inventory_sha256}</small></dd></div>}
-      </dl><fieldset className="rg-composer-limits" disabled={editLocked}><legend>Run limits</legend>{LIMIT_FIELDS.filter((field) => native || field.key !== 'max_steps').map((field) => <NumericField key={field.key} field={native && field.key === 'max_steps' ? { ...field, label: 'Model request cap' } : field} value={state.limits[field.key]} onChange={(value) => setState((s) => ({ ...s, limits: { ...s.limits, [field.key]: value } }))} />)}{native ? <p className="rg-small rg-mute">This cap counts model requests. Native tool actions are controlled by the runtime.</p> : <p className="rg-small rg-mute">{configuration.limits.max_steps} steps · set by this harness</p>}</fieldset><div className="rg-composer-readiness" aria-live="polite"><strong>{reviewed ? 'Configuration verified' : 'Before this can run'}</strong>{readyIssues.length ? <ul>{[...new Set(readyIssues)].map((issue) => <li key={issue}>{issue}</li>)}</ul> : !reviewed ? <p>Review the configuration with the runner before launching.</p> : <p>The server validated this exact configuration. Running may spend your OpenRouter credits.</p>}{!credential && credentialsAvailable && <p>Connect your OpenRouter key to run.</p>}{currentReview && preflight.result.issues.map((issue) => <p key={issue} role="alert">{issue}</p>)}</div>
+      </dl><fieldset className="rg-composer-limits" disabled={editLocked}><legend>Run limits</legend>{LIMIT_FIELDS.filter((field) => native || field.key !== 'max_steps').map((field) => <NumericField key={field.key} field={native && field.key === 'max_steps' ? { ...field, label: 'Model request cap' } : field.key === 'max_output_tokens' && configuration.runtime_id === 'native-claude-code' ? { ...field, min: 2049 } : field} value={state.limits[field.key]} onChange={(value) => setState((s) => ({ ...s, limits: { ...s.limits, [field.key]: value } }))} />)}{native ? <p className="rg-small rg-mute">The request cap counts model calls; native tool actions are controlled by the runtime. The output cap clamps each provider request and its cost reservation. A low output cap can truncate a reply. Claude requires at least 2049 output tokens to retain its fixed 2048-token thinking budget.</p> : <p className="rg-small rg-mute">{configuration.limits.max_steps} steps · set by this harness</p>}</fieldset><div className="rg-composer-readiness" aria-live="polite"><strong>{reviewed ? 'Configuration verified' : 'Before this can run'}</strong>{readyIssues.length ? <ul>{[...new Set(readyIssues)].map((issue) => <li key={issue}>{issue}</li>)}</ul> : !reviewed ? <p>Review the configuration with the runner before launching.</p> : <p>The server validated this exact configuration. Running may spend your OpenRouter credits.</p>}{!credential && credentialsAvailable && <p>Connect your OpenRouter key to run.</p>}{currentReview && preflight.result.issues.map((issue) => <p key={issue} role="alert">{issue}</p>)}</div>
       <div className="rg-composer-actions"><button className="rg-btn" onClick={reviewRun} disabled={editLocked || !!readyIssues.length || checking}>{checking ? 'Reviewing…' : 'Review run'}</button><button className="rg-btn pri" onClick={run} disabled={editLocked || !reviewed || !!readyIssues.length || !credential || !!jobActive}>{launching ? 'Starting…' : job && terminal.has(job.status) ? 'Run again' : 'Run'}</button>
 
 
@@ -701,6 +704,7 @@ export function HarnessComposer({ args = [] }) {
         {job.artifacts?.length > 0 && <ul className="rg-composer-artifacts" aria-label="Run artifacts">{job.artifacts.map((artifact) => <li key={artifact.name}><div><strong>{artifact.name}</strong><span>{artifact.bytes.toLocaleString()} bytes · SHA-256 verified before download</span></div><button type="button" className="rg-btn" aria-label={'Download ' + artifact.name} disabled={!!downloadingArtifact} onClick={() => downloadArtifact(artifact)}>{downloadingArtifact === artifact.name ? 'Verifying…' : 'Download'}</button></li>)}</ul>}
       </div>
     </section>}
+    <PairedExperiments configuration={configuration} credential={credential} available={catalog.execution_available} disabled={editLocked || !!readyIssues.length} lease={experimentLease} />
     <footer className="rg-composer-footer"><Go spec="shallowApply" className="rg-tlink">Compare one prompt across the six TraceHarness shells</Go><span>Native runtimes and lab stand-ins are distinct engines.</span></footer>
   </div>
 }

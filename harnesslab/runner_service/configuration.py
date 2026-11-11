@@ -67,13 +67,19 @@ def preflight(configuration, registry, health: dict) -> dict:
         issues.append("The runtime does not support the selected prompt application mode.")
     limits = configuration.get("limits")
     bounds = {"max_steps": (1, 200, True), "wall_time_seconds": (30, 3600, True), "max_cost_usd": (0.01, 100, False)}
-    if not isinstance(limits, dict) or set(limits) != set(bounds):
+    if (not isinstance(limits, dict) or not set(bounds) <= set(limits)
+            or set(limits) - set(bounds) - {"max_output_tokens"}):
         issues.append("Set step, time and cost limits.")
     else:
         for key, (low, high, integer) in bounds.items():
             value = limits[key]
             if isinstance(value, bool) or not isinstance(value, (int, float)) or not math.isfinite(value) or not low <= value <= high or integer and int(value) != value:
                 issues.append(f"Invalid {key} limit.")
+        if "max_output_tokens" in limits and (type(limits["max_output_tokens"]) is not int or not 1 <= limits["max_output_tokens"] <= 8192):
+            issues.append("Invalid max_output_tokens limit.")
+        elif (runtime and runtime["id"] == "native-claude-code" and "max_output_tokens" in limits
+              and limits["max_output_tokens"] <= 2048):
+            issues.append("Claude Code needs an output limit of at least 2049 tokens to retain its 2048-token thinking budget.")
     harness = configuration.get("harness")
     if not isinstance(harness, dict) or set(harness) - {"id", "lane", "hash", "blocks"}:
         issues.append("Invalid harness configuration.")

@@ -5,10 +5,12 @@ does not assert that an inventory is deployed, that a member run has completed,
 or that an intervention improves task performance. Release evidence must record
 those outcomes separately.
 
-The supported binary adapter is for the inspected **Claude Code 2.1.322 Linux
+This guide covers the inspected **Claude Code 2.1.322 Linux
 x86_64 Bun executable**. Native Codex instruction overlays and TraceHarness
 standing prompts are different mechanisms. An absent native inventory remains
 unavailable; do not substitute a catalog or a stand-in harness.
+
+For the separate Codex fixed-span adapter, see [Codex native prompts](CODEX_NATIVE_PROMPTS.md).
 
 ## Scope and identities
 

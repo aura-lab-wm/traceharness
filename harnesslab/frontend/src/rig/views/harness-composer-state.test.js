@@ -257,3 +257,15 @@ describe('guided settings reflect the actual configuration', () => {
     expect(imported.answers.verify).toBe('no')
   })
 })
+
+it('round-trips an explicit output cap and preserves legacy configuration shape on parse', () => {
+  const state = initialComposer(); state.limits.max_output_tokens = 512
+  const value = configurationFor(state, {})
+  expect(parseConfiguration(JSON.stringify(value)).limits.max_output_tokens).toBe(512)
+  delete value.limits.max_output_tokens
+  expect(parseConfiguration(JSON.stringify(value)).limits).not.toHaveProperty('max_output_tokens')
+  for (const bad of [0, 8193, true, 1.5]) {
+    value.limits.max_output_tokens = bad
+    expect(() => parseConfiguration(JSON.stringify(value))).toThrow('Output token cap')
+  }
+})

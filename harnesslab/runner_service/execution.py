@@ -268,7 +268,13 @@ class DockerExecutor:
         from .native_observations import NativePromptObserver
         binary = None
         try:
-            if manifest["runtime_id"] != "native-claude-code":
+            if manifest["runtime_id"] == "native-codex":
+                from .native_prompts_codex import materialize_native_binary, public_inventory, BINARY_TARGET
+                target, binary_name = BINARY_TARGET, "native-codex"
+            elif manifest["runtime_id"] == "native-claude-code":
+                from .native_prompts import public_inventory
+                target, binary_name = CLAUDE_BINARY_TARGET, "native-claude"
+            else:
                 raise ValueError()
             profile, admission = self.registry.native_prompt_profile(manifest["runtime_id"], manifest["native_prompt_profile"])
             inventory = self.registry.native_prompt_inventories[manifest["runtime_id"]]
@@ -299,13 +305,13 @@ class DockerExecutor:
                 fd = os.open(private / name, os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW, 0o600)
                 with os.fdopen(fd, "wb") as stream:
                     stream.write(raw)
-            observer = NativePromptObserver(inventory, profile)
-            binary = directory / "input" / "native-claude"
+            observer = NativePromptObserver(public_inventory(inventory), profile)
+            binary = directory / "input" / binary_name
             fd = os.open(binary, os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW, 0o500)
             with os.fdopen(fd, "wb") as stream:
                 stream.write(patched)
             binary.chmod(0o555)
-            return (binary, CLAUDE_BINARY_TARGET, True), observer
+            return (binary, target, True), observer
         except (OSError, ValueError, KeyError, TypeError, NativePromptError):
             if binary is not None:
                 binary.unlink(missing_ok=True)

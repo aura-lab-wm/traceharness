@@ -2,6 +2,14 @@ import { describe, expect, it } from 'vitest'
 import { baselineProfile, checkedNativeProfile, nativeInventoryResponse, nativeProfileIssue, replacementIssue } from './native-prompts-contract'
 import { nativeInventoryFixture, nativeResponseFixture, nativeRuntimeFixture, testDigest } from '../test/native-prompts-fixture'
 
+it('refuses over-capacity Codex replacements using UTF-8 bytes', () => {
+  const inventory = nativeInventoryFixture(); inventory.runtime_id = 'native-codex'
+  const block = inventory.blocks[0]; const profile = baselineProfile(inventory)
+  const value = '🙂'.repeat(block.baseline_utf8.length)
+  profile.overrides = [{ block_id: block.id, baseline_sha256: block.baseline_sha256, action: 'replace', replacement_utf8: value, replacement_sha256: testDigest(value) }]
+  expect(nativeProfileIssue(profile, inventory)).toContain('capacity')
+})
+
 describe('native prompt contracts', () => {
   it('preserves exact version pins while separating inventory authoring from execution readiness', () => {
     const inventory = nativeInventoryFixture()

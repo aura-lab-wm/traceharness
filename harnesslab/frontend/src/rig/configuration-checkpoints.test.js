@@ -46,7 +46,7 @@ describe('bounded configuration checkpoints', () => {
     const restored = restoreCheckpoint(rows, id(1))
     expect(restored.model_id).toBe('provider/model')
     expect(restored.task_id).toBe('registered-task')
-    expect(restored.limits).toEqual({ max_steps: 12, wall_time_seconds: 600, max_cost_usd: 2.5 })
+    expect(restored.limits).toEqual({ max_steps: 12, wall_time_seconds: 600, max_cost_usd: 2.5, max_output_tokens: 8192 })
     expect(restored.harness.blocks.find((b) => b.type === 'tools').names).toContain('submit')
     restored.prompt = 'Changed after restore'
     expect(rows[0].configuration.prompt).not.toBe(restored.prompt)

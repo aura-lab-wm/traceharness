@@ -16,7 +16,15 @@ COMPATIBILITY_FIELDS = ("runtime_id", "runtime_version", "image_digest", "model_
 NATIVE_PROMPT_FIELDS = ("runtime_id", "runtime_version", "image_digest", "binary_sha256", "inventory_sha256",
                         "taxonomy_sha256", "materializer_sha256")
 NATIVE_PROMPT_CHECKS = ("application_verified", "baseline_verified", "noop_verified", "changed_verified")
-NATIVE_PROMPT_ADAPTERS = frozenset({"native-claude-code"})
+NATIVE_PROMPT_ADAPTERS = frozenset({"native-claude-code", "native-codex"})
+
+
+def native_prompt_adapter(runtime_id):
+    if runtime_id == "native-codex":
+        from . import native_prompts_codex
+        return native_prompts_codex
+    from . import native_prompts
+    return native_prompts
 
 
 def compatibility_identity(runtime: dict, task: dict, model_id: str) -> tuple:
@@ -151,11 +159,12 @@ class Registry:
                 continue
             if row["kind"] != "native":
                 raise ValueError("Native prompt inventory requires a native runtime")
-            from .native_prompts import validate_inventory, public_inventory, materializer_sha256, taxonomy_sha256
-            inventory = validate_inventory(self._pinned_json(reference, 16 * 1024 * 1024), require_private=True)
+            from .native_prompts import taxonomy_sha256
+            adapter = native_prompt_adapter(rid)
+            inventory = adapter.validate_inventory(self._pinned_json(reference, 16 * 1024 * 1024), require_private=True)
             if any(inventory.get(key) != value for key, value in {"runtime_id": rid, "runtime_version": row["version"], "image_digest": row["image_digest"]}.items()):
                 raise ValueError("Native prompt inventory does not bind this runtime")
-            if inventory["materializer_sha256"] != materializer_sha256():
+            if inventory["materializer_sha256"] != adapter.materializer_sha256():
                 raise ValueError("Native prompt materializer changed")
             if inventory["taxonomy_sha256"] != taxonomy_sha256():
                 raise ValueError("Native prompt taxonomy changed")
@@ -173,7 +182,7 @@ class Registry:
             if binary_hash.hexdigest() != binary["sha256"]:
                 raise ValueError("Native prompt binary changed")
             row["native_prompt_binary"] = {"path": str(binary_path), "sha256": binary["sha256"]}
-            if len(canonical(public_inventory(inventory))) > 4 * 1024 * 1024 - 4096:
+            if len(canonical(adapter.public_inventory(inventory))) > 4 * 1024 * 1024 - 4096:
                 raise ValueError("Native prompt inventory exceeds the member response limit")
             self.native_prompt_inventories[rid] = copy.deepcopy(inventory)
             for receipt in receipts:
@@ -208,36 +217,39 @@ class Registry:
         return result
 
     def native_prompt_profile(self, runtime_id, profile):
-        from .native_prompts import canonical_profile, materializer_sha256, taxonomy_sha256
+        from .native_prompts import taxonomy_sha256
+        adapter = native_prompt_adapter(runtime_id)
         inventory = self.native_prompt_inventories.get(runtime_id)
         admission = self._native_prompt_admissions.get(runtime_id)
         runtime = self.runtimes.get(runtime_id)
         if (runtime_id not in NATIVE_PROMPT_ADAPTERS or not inventory or not admission or not runtime
                 or inventory["runtime_version"] != runtime["version"] or inventory["image_digest"] != runtime["image_digest"]):
             raise ValueError("Native prompt application is unavailable")
-        if inventory["materializer_sha256"] != materializer_sha256() or inventory["taxonomy_sha256"] != taxonomy_sha256():
+        if inventory["materializer_sha256"] != adapter.materializer_sha256() or inventory["taxonomy_sha256"] != taxonomy_sha256():
             raise ValueError("Native prompt adapter or taxonomy changed")
         # This receipt establishes the application mechanism, never the treatment's
         # task grade. Existing exact base runtime/model/task compatibility still gates preflight.
-        return canonical_profile(profile, inventory), copy.deepcopy(admission)
+        return adapter.canonical_profile(profile, inventory), copy.deepcopy(admission)
 
     def native_prompt_catalog(self, runtime_id, health):
         inventory = self.native_prompt_inventories.get(runtime_id)
         available = inventory is not None
-        executable = bool(available and runtime_id in NATIVE_PROMPT_ADAPTERS and runtime_id in self._native_prompt_admissions
+        adapter = native_prompt_adapter(runtime_id)
+        coherent = bool(available and inventory.get("materializer_sha256") == adapter.materializer_sha256())
+        executable = bool(coherent and runtime_id in NATIVE_PROMPT_ADAPTERS and runtime_id in self._native_prompt_admissions
                           and health.get("available") and health.get("runtimes", {}).get(runtime_id))
         return {"available": available, "execution_available": executable,
-                "mode": "embedded" if runtime_id == "native-claude-code" else "overlay",
+                "mode": "embedded" if runtime_id == "native-claude-code" or available else "overlay",
                 "inventory_sha256": inventory["inventory_sha256"] if available else None,
                 "reason": "" if executable else "Native prompt application has no verified mechanism or ready base combination." if available else "Inventory unavailable for this runtime version."}
 
     def native_prompt_inventory(self, runtime_id, health):
-        from .native_prompts import public_inventory
+        adapter = native_prompt_adapter(runtime_id)
         capability = self.native_prompt_catalog(runtime_id, health)
         inventory = self.native_prompt_inventories.get(runtime_id)
         return {"version": 1, "available": capability["available"], "reason": capability["reason"],
                 "execution_available": capability["execution_available"],
-                "inventory": public_inventory(copy.deepcopy(inventory)) if inventory is not None else None}
+                "inventory": adapter.public_inventory(copy.deepcopy(inventory)) if inventory is not None else None}
 
     @classmethod
     def load(cls, path: Path):

@@ -22,6 +22,16 @@ const enable = () => fireEvent.click(screen.getByRole('checkbox', { name: 'Use t
 const select = (title) => fireEvent.click(screen.getByRole('checkbox', { name: 'Select prompt ' + title }))
 const counts = () => screen.getByLabelText('Prompt inclusion counts').textContent
 
+it('discloses native Codex space padding and blocks over-capacity edits', () => {
+  const inventory = nativeInventoryFixture(); inventory.runtime_id = 'native-codex'
+  render(<Editor inventory={inventory} />); enable()
+  expect(screen.getByText(/space padding preserves native slice lengths/)).toBeTruthy()
+  fireEvent.change(screen.getByRole('textbox', { name: 'Replacement text' }), { target: { value: '🙂'.repeat(30) } })
+  expect(screen.getByRole('button', { name: 'Apply replacement' }).disabled).toBe(true)
+  expect(screen.getByText(/exceeds this native fragment.*capacity/)).toBeTruthy()
+  expect(screen.queryByText(/including Keep all, load source with compiled bytecode caches cleared/)).toBeNull()
+})
+
 describe('native prompt inventory authoring', () => {
   it('shows unavailable honestly, with no invented zero counts or native controls', () => {
     render(<NativePrompts runtime={{ id: 'native-codex', name: 'Codex' }} response={{ version: 1, available: false, execution_available: false, inventory: null, reason: 'No native inventory is registered.' }} onRefresh={() => {}} onChange={() => {}} />)

@@ -9,7 +9,7 @@ export const NATIVE_DRAFTS = [
   { id: 'native-claude-code', name: 'Claude Code', kind: 'native', available: false, prompt_mode: 'append', reason: 'A native runtime must be connected and verified.' },
   { id: 'native-codex', name: 'Codex', kind: 'native', available: false, prompt_mode: 'append', reason: 'A native runtime must be connected and verified.' },
 ]
-export const DEFAULT_LIMITS = { max_steps: 12, wall_time_seconds: 900, max_cost_usd: 1 }
+export const DEFAULT_LIMITS = { max_steps: 12, wall_time_seconds: 900, max_cost_usd: 1, max_output_tokens: 8192 }
 const blockTypes = ['prompt', 'tools', 'policy', 'context', 'stop', 'sampling', 'listing']
 const fields = { prompt: ['text'], tools: ['names'], policy: ['mode'], context: ['window', 'observation_chars'], stop: ['max_steps', 'max_total_tokens'], sampling: ['temperature', 'max_tokens_per_call'], listing: ['include'] }
 
@@ -170,7 +170,11 @@ function checkedConfiguration(value) {
   if (typeof value.model_id !== 'string' || value.model_id !== '' && !/^[A-Za-z0-9][A-Za-z0-9/_.:@+-]{1,150}$/.test(value.model_id)) fail('Use a valid OpenRouter model ID, or leave the model unset.')
   if (typeof value.task_id !== 'string' || value.task_id !== '' && !/^[A-Za-z0-9][A-Za-z0-9_.-]{0,119}$/.test(value.task_id)) fail('Use a registered task ID, or leave the task unset.')
   if (typeof value.prompt !== 'string' || new TextEncoder().encode(value.prompt).length > 250000) fail('The prompt must be text of at most 250,000 UTF-8 bytes.')
-  if (!keysMatch(value.limits, limitFields.map((field) => field.key))) fail('Include step, time and model-budget limits only.')
+  if (!keysMatch(value.limits, limitFields.map((field) => field.key), ['max_output_tokens'])) fail('Include step, time, model-budget and optional output-token limits only.')
+  if (Object.hasOwn(value.limits, 'max_output_tokens')) {
+    const issue = numberIssue(value.limits.max_output_tokens, { label: 'Output token cap', min: value.runtime_id === 'native-claude-code' ? 2049 : 1, max: 8192 })
+    if (issue) fail('Output token cap: ' + issue)
+  }
   for (const field of limitFields) {
     const issue = numberIssue(value.limits[field.key], field)
     if (issue) fail(`${field.label}: ${issue}`)
@@ -215,7 +219,7 @@ export function applyConfiguration(state, configuration) {
   if (state.selection === 'custom' || state.selection.startsWith('saved:')) next.harness_drafts[state.selection] = safeBlocks(state.blocks)
   next.model_id = value.model_id
   next.task_id = value.task_id
-  next.limits = { ...value.limits }
+  next.limits = { ...value.limits, max_output_tokens: value.limits.max_output_tokens ?? 8192 }
   const native = value.runtime_id !== 'traceharness'
   if (native) {
     next.selection = 'native:' + value.runtime_id

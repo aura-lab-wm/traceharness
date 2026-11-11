@@ -114,7 +114,7 @@ class BrokerBoundaryTests(unittest.TestCase):
         self.assertIn('Unsupported provider request options.', observed[1])
         self.assertIn('The remaining cost reservation cannot cover this request.', observed[2])
         self.assertIn('The remaining cost reservation cannot cover this request.', job['issues'])
-        self.assertLessEqual(len(job['issues']), 2)
+        self.assertLessEqual(len(job['issues']), 3)
         self.assertNotIn(PRIVATE, (self.jobs.root / job['id'] / 'job.json').read_text())
 
     def test_unknown_pretransport_error_text_is_never_recorded(self):
@@ -140,6 +140,42 @@ class BrokerBoundaryTests(unittest.TestCase):
         self.assertEqual(job['status'], 'succeeded')
         self.assertEqual(job['usage'], {'requests': 5, 'input_tokens': 150, 'output_tokens': 35, 'cost_usd': 0.005})
         self.assertEqual(len(self.calls), 5)
+
+    def test_budget_refusal_explains_the_next_reservation_without_exposing_request_text(self):
+        self.responses = [messages(0.005)]
+        def behavior(forward):
+            forward('messages', {'model': 'fixture/model', 'messages': [], 'max_tokens': 20})
+            with self.assertRaises(ProviderError):
+                forward('messages', {'model': 'fixture/model', 'messages': [
+                    {'role': 'user', 'content': PRIVATE * 800}], 'max_tokens': 20})
+            raise ExecutionError('Runtime process did not complete successfully.')
+        self.behavior = behavior
+        job = self.submit(runtime='native-claude-code', budget=0.025)
+        self.assertEqual(job['status'], 'failed')
+        self.assertEqual(job['usage'], {'requests': 1, 'input_tokens': 30, 'output_tokens': 7, 'cost_usd': 0.005})
+        self.assertEqual(len(self.calls), 1, 'The unaffordable request must never reach transport')
+        explanation = next((issue for issue in job['issues'] if issue.startswith('Next request reservation:')), None)
+        self.assertIsNotNone(explanation, 'The member needs the reserved amount and remaining allowance')
+        self.assertIn('Remaining reservation allowance: $0.020000 of the $0.025000 run cap.', explanation)
+        self.assertIn('Reported usage may be lower than reserved charges.', explanation)
+        self.assertRegex(explanation, r'^Next request reservation: \$[0-9]+\.[0-9]{6}\. ')
+        self.assertNotIn(PRIVATE, json.dumps(job))
+
+    def test_unsettled_cost_diagnostic_uses_reserved_allowance_not_an_incomplete_spend_subtotal(self):
+        self.responses = [messages(None)]
+        def behavior(forward):
+            forward('messages', {'model': 'fixture/model', 'messages': [], 'max_tokens': 20})
+            with self.assertRaises(ProviderError):
+                forward('messages', {'model': 'fixture/model', 'messages': [
+                    {'role': 'user', 'content': PRIVATE * 800}], 'max_tokens': 20})
+            return {}
+        self.behavior = behavior
+        job = self.submit(runtime='native-claude-code', budget=0.025)
+        explanation = next((issue for issue in job['issues'] if issue.startswith('Next request reservation:')), '')
+        self.assertIn('Remaining reservation allowance:', explanation)
+        self.assertNotIn('Remaining reservation allowance: $0.025000', explanation)
+        self.assertNotIn('cost_usd', job['usage'])
+        self.assertEqual(len(self.calls), 1)
 
     def test_partial_or_missing_cost_retains_full_reservation(self):
         self.responses = [messages(0.001, complete=False)]

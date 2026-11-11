@@ -1,4 +1,8 @@
-# Native prompt editing: release and evidence
+# Native prompt editing: initial release and evidence
+
+This records the initial Claude release. The subsequent [Codex and paired
+experiment release](NATIVE_PAIRED_RELEASE.md) implements the capabilities listed
+as unfinished here; this earlier receipt remains unchanged as historical evidence.
 
 The member workspace at **[traceharness.dev/app#/rig/harnesses](https://traceharness.dev/app#/rig/harnesses)**
 now supports embedded prompt editing for the pinned **Claude Code 2.1.322**
