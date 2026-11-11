@@ -5,6 +5,7 @@ import { webcrypto } from 'node:crypto'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { act, cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import { ExperimentWorkspace } from './ExperimentWorkspace'
+import { createExperimentConnectionLease } from './experiment-connection-lease'
 import { baselineProfile } from '../native-prompts-contract'
 import { nativeInventoryFixture, nativeRuntimeFixture } from '../../test/native-prompts-fixture'
 import { configurationFor, DEFAULT_LIMITS } from './views/harness-composer-state'
@@ -393,7 +394,7 @@ describe('ExperimentWorkspace freeze/start idempotency, credentials, lease, canc
 
   it('retains lease on uncertain start without auto-retrying, reconciles 4xx start refusals, resumes paused runs, and cancels cleanly', async () => {
     const catalog = catalogFixture()
-    const lease = { current: false }
+    const lease = createExperimentConnectionLease()
     const plan = {
       version: 2,
       name: 'Matrix control flow',
@@ -421,6 +422,8 @@ describe('ExperimentWorkspace freeze/start idempotency, credentials, lease, canc
     await screen.findByLabelText('Matrix experiment results')
     fireEvent.click(screen.getByRole('button', { name: 'Start experiment' }))
     await screen.findByText('Start transport lost')
+    expect(lease.current).toBe(true)
+    lease.current = false // late history from the paired view
     expect(lease.current).toBe(true)
     expect(runnerRequest.mock.calls.filter(([path]) => path.endsWith('/start'))).toHaveLength(1)
     expect(runnerRequest.mock.calls.find(([path]) => path.endsWith('/start'))[1].body).toEqual({

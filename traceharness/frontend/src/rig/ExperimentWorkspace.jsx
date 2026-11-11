@@ -274,6 +274,7 @@ export function ExperimentWorkspace({
         const response = await runnerRequest(`/experiments/${targetId}`)
         if (!mountedRef.current || currentExperimentRef.current?.id !== targetId) return
         const checked = checkedMatrixExperiment(response?.experiment, targetId)
+        leaseRef.current?.confirm?.(checked)
         if (!experimentActive(checked) && uncertainStartRef.current === targetId) {
           uncertainStartRef.current = null
         setUncertainStart(null)
@@ -446,6 +447,7 @@ export function ExperimentWorkspace({
     try {
       const response = await runnerRequest(`/experiments/${experimentId}`)
       const checked = checkedMatrixExperiment(response?.experiment, experimentId)
+      leaseRef.current?.confirm?.(checked)
       if (!mountedRef.current) return
       if (!experimentActive(checked) && uncertainStartRef.current === experimentId) {
         uncertainStartRef.current = null
@@ -467,6 +469,7 @@ export function ExperimentWorkspace({
   const handleStartExperiment = async () => {
     if (busy || disabled || uncertainStartRef.current || leaseRef.current?.current || !credentialReady || !experiment || !['ready', 'paused'].includes(experiment.status)) return
     const targetId = experiment.id
+    leaseRef.current?.reserve?.(targetId)
     uncertainStartRef.current = targetId
     setUncertainStart(targetId)
     syncExperimentLease(leaseRef.current, uncertainStartRef.current, experiment, historyRef.current)
@@ -481,6 +484,7 @@ export function ExperimentWorkspace({
         },
       })
       const checked = checkedMatrixExperiment(response?.experiment, targetId)
+        leaseRef.current?.confirm?.(checked)
       uncertainStartRef.current = null
         setUncertainStart(null)
       if (!mountedRef.current) return
@@ -492,6 +496,7 @@ export function ExperimentWorkspace({
       syncExperimentLease(leaseRef.current, uncertainStartRef.current, checked, nextHistory)
     } catch (err) {
       if (err?.status >= 400 && err?.status < 500) {
+        leaseRef.current?.release?.(targetId)
         if (uncertainStartRef.current === targetId) { uncertainStartRef.current = null; setUncertainStart(null) }
         setUncertainStart(null)
         try {
@@ -525,6 +530,7 @@ export function ExperimentWorkspace({
         body: {},
       })
       const checked = checkedMatrixExperiment(response?.experiment, targetId)
+        leaseRef.current?.confirm?.(checked)
       if (!experimentActive(checked) && uncertainStartRef.current === targetId) {
         uncertainStartRef.current = null
         setUncertainStart(null)

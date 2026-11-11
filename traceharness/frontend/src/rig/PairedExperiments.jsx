@@ -45,7 +45,7 @@ export function PairedExperiments({ configuration, credential, available, disabl
     const timer = setTimeout(() => {
       runnerRequest('/experiments/' + experiment.id).then((data) => {
         const next = checkedExperiment(data.experiment, experiment.id)
-        if (live) { setExperiment(next); lease.current = experimentActive(next) || recent.some((row) => row.id !== next.id && experimentActive(row)); if (!experimentActive(next)) setRevision((value) => value + 1) }
+        if (live) { lease.confirm?.(next); setExperiment(next); lease.current = experimentActive(next) || recent.some((row) => row.id !== next.id && experimentActive(row)); if (!experimentActive(next)) setRevision((value) => value + 1) }
       }).catch((failure) => { if (live) setError(failure.message) })
     }, 2500)
     return () => { live = false; clearTimeout(timer) }
@@ -77,18 +77,20 @@ export function PairedExperiments({ configuration, credential, available, disabl
   function load(id) { action(async (request) => {
     const data = await runnerRequest('/experiments/' + id); const next = checkedExperiment(data.experiment, id)
     if (mounted.current && request === generation.current) {
+      lease.confirm?.(next)
       if (uncertainStart.current === id) uncertainStart.current = null
       lease.current = !!uncertainStart.current || experimentActive(next) || recent.some((row) => row.id !== id && experimentActive(row))
       setExperiment(next)
     }
   }) }
   function control(operation) { action(async (request) => {
-    if (operation === 'start') { uncertainStart.current = experiment.id; lease.current = true }
+    if (operation === 'start') { lease.reserve?.(experiment.id); uncertainStart.current = experiment.id; lease.current = true }
     const body = operation === 'start' ? { credential_id: credential.credential_id, plan_sha256: experiment.plan_sha256 } : {}
     try {
       const data = await runnerRequest('/experiments/' + experiment.id + '/' + operation, { method: 'POST', body })
       const next = checkedExperiment(data.experiment, experiment.id)
       if (mounted.current && request === generation.current) {
+        lease.confirm?.(next)
         uncertainStart.current = null
         lease.current = experimentActive(next) || recent.some((row) => row.id !== next.id && experimentActive(row))
         setExperiment(next); setRevision((value) => value + 1)
@@ -98,7 +100,7 @@ export function PairedExperiments({ configuration, credential, available, disabl
         try {
           const history = await runnerRequest('/experiments')
           if (Array.isArray(history.experiments) && mounted.current && request === generation.current) {
-            uncertainStart.current = null; lease.current = history.experiments.some(experimentActive); setRecent(history.experiments)
+            lease.release?.(experiment.id); uncertainStart.current = null; lease.current = history.experiments.some(experimentActive); setRecent(history.experiments)
           }
         } catch { /* An uncertain reconciliation retains the connection lease. */ }
       }

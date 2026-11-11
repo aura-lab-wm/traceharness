@@ -19,6 +19,7 @@ import { PairedExperiments } from '../PairedExperiments'
 import { HarnessJson } from '../HarnessJson'
 import { ConfigurationEditor } from '../ConfigurationEditor'
 import { ExperimentWorkspace } from '../ExperimentWorkspace'
+import { createExperimentConnectionLease } from '../experiment-connection-lease'
 import { safeRecordingSource, stagedRecordingFork } from '../RecordingFork'
 import { configurationFromManifest } from '../configuration-from-recording'
 import { prepareHarnessJSON } from '../harness-json'
@@ -121,7 +122,7 @@ export function HarnessComposer({ args = [] }) {
   const preflightRequest = useRef(null)
   const retry = useRef(null)
   const submittedRunLeases = useRef(new Set())
-  const experimentLease = useRef(false)
+  const [experimentLease] = useState(createExperimentConnectionLease)
   const jobRequest = useRef(0)
 
   const fixed = state.selection.startsWith('fixed:')
