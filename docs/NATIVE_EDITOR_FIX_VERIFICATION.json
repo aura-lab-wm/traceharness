@@ -1,0 +1,428 @@
+{
+  "at": "2026-11-11T20:45:57.584006+00:00",
+  "source_commit": "8d2ceb27598174c24d174369bf2f34f91ded1409",
+  "surface": "https://traceharness.dev/app#/rig/harnesses",
+  "baseline": {
+    "complete": true,
+    "at": "2026-11-11T20:38:21.888095+00:00",
+    "baseline": true,
+    "candidate": false,
+    "checks": [
+      "Reproduced excluded profile disabling replacement editing and selection"
+    ],
+    "inventory_sha256": "9592e2f237bfed2ea7702f0a88499d342631d4893ca276186abf8b173361b4b7",
+    "block_id": "codex-prompts-templates-permissions-approval_policy-on_request_rule_request_permission:98e8a78ac869d64f",
+    "new_jobs": 0,
+    "page_errors": [],
+    "blocked_requests": []
+  },
+  "candidate": {
+    "complete": true,
+    "at": "2026-11-11T20:42:30.634720+00:00",
+    "baseline": false,
+    "candidate": true,
+    "checks": [
+      "Replacement edits remain a valid excluded draft; explicit opt-in alone adds the exact hashed profile to configuration; Run stays gated",
+      "One-row bulk Disable and individual Include work while excluded and preserve replacement text",
+      "320/390/768/1440/1920 layouts fit; mobile list/inspector navigation works",
+      "Excluded profile, remembered replacement and named prompt set survive tab reload"
+    ],
+    "inventory_sha256": "9592e2f237bfed2ea7702f0a88499d342631d4893ca276186abf8b173361b4b7",
+    "block_id": "codex-prompts-templates-permissions-approval_policy-on_request_rule_request_permission:98e8a78ac869d64f",
+    "new_jobs": 0,
+    "page_errors": [],
+    "blocked_requests": []
+  },
+  "live": {
+    "complete": true,
+    "at": "2026-11-11T20:44:42.199900+00:00",
+    "baseline": false,
+    "candidate": false,
+    "checks": [
+      "Replacement edits remain a valid excluded draft; explicit opt-in alone adds the exact hashed profile to configuration; Run stays gated",
+      "One-row bulk Disable and individual Include work while excluded and preserve replacement text",
+      "320/390/768/1440/1920 layouts fit; mobile list/inspector navigation works",
+      "Excluded profile, remembered replacement and named prompt set survive tab reload"
+    ],
+    "published_html_sha256": "5148e5521184bf96273611b321a05f7492d3a72bf21aeb856acdd8de2d93bbca",
+    "inventory_sha256": "9592e2f237bfed2ea7702f0a88499d342631d4893ca276186abf8b173361b4b7",
+    "block_id": "codex-prompts-templates-permissions-approval_policy-on_request_rule_request_permission:98e8a78ac869d64f",
+    "new_jobs": 0,
+    "page_errors": [],
+    "blocked_requests": []
+  },
+  "local_tests": {
+    "frontend_passed": 1088,
+    "native_editor_tests_passed": 18,
+    "dist_source_consistency_passed": 2,
+    "lint": "Completed; existing unrelated warnings remain."
+  },
+  "snapshot": {
+    "html_sha256": "5148e5521184bf96273611b321a05f7492d3a72bf21aeb856acdd8de2d93bbca",
+    "gzip_sha256": "d0359e47a330dcb2cf887c099a5bfde22418c2ffae0da0d068737f2d46997202",
+    "gzip_bytes": 15295627,
+    "recorded_data_unchanged": true,
+    "recorded_runs": 3453,
+    "datasets": 8,
+    "bundled_narration_hashes_retained": true
+  },
+  "upload": {
+    "at": "2026-11-11T20:44:06.778179+00:00",
+    "exit_code": 0,
+    "key": "app.html.gz",
+    "namespace_id": "8a74dd2fba124b1a8d82e6eeff5ba3ae",
+    "source_commit": "8d2ceb27598174c24d174369bf2f34f91ded1409",
+    "input_file": "app-native-editor-fix-v3.html.gz",
+    "input_sha256": "d0359e47a330dcb2cf887c099a5bfde22418c2ffae0da0d068737f2d46997202",
+    "input_bytes": 15295627,
+    "html_sha256": "5148e5521184bf96273611b321a05f7492d3a72bf21aeb856acdd8de2d93bbca",
+    "worker_version_id": "5ff30c89-62aa-4c90-ba78-b37a24ef4bf4",
+    "worker_redeployed": false,
+    "config_deleted_on_exit": true,
+    "last_10_log_lines": [
+      "",
+      " ⛅️ wrangler 4.90.1",
+      "───────────────────",
+      "Resource location: remote ",
+      "",
+      "Writing the contents of /Users/amastro/Documents/TraceHarness-native-editor-fix-2026-11-11/app-native-editor-fix-v3.html.gz to the key \"app.html.gz\" on namespace id: \"8a74dd2fba124b1a8d82e6eeff5ba3ae\".",
+      ""
+    ]
+  },
+  "anonymous_checks": [
+    {
+      "path": "/app",
+      "hostile_origin": false,
+      "status": 302,
+      "location": "/login",
+      "acao": false,
+      "pass": true
+    },
+    {
+      "path": "/app/shallow",
+      "hostile_origin": false,
+      "status": 302,
+      "location": "/login",
+      "acao": false,
+      "pass": true
+    },
+    {
+      "path": "/link",
+      "hostile_origin": false,
+      "status": 302,
+      "location": "/login",
+      "acao": false,
+      "pass": true
+    },
+    {
+      "path": "/api/onboarding",
+      "hostile_origin": false,
+      "status": 401,
+      "location": null,
+      "acao": false,
+      "pass": true
+    },
+    {
+      "path": "/api/onboarding",
+      "hostile_origin": true,
+      "status": 401,
+      "location": null,
+      "acao": false,
+      "pass": true
+    },
+    {
+      "path": "/api/shallow/harnesses",
+      "hostile_origin": false,
+      "status": 401,
+      "location": null,
+      "acao": false,
+      "pass": true
+    },
+    {
+      "path": "/api/shallow/harnesses",
+      "hostile_origin": true,
+      "status": 401,
+      "location": null,
+      "acao": false,
+      "pass": true
+    },
+    {
+      "path": "/api/shallow/jobs",
+      "hostile_origin": false,
+      "status": 401,
+      "location": null,
+      "acao": false,
+      "pass": true
+    },
+    {
+      "path": "/api/shallow/jobs",
+      "hostile_origin": true,
+      "status": 401,
+      "location": null,
+      "acao": false,
+      "pass": true
+    },
+    {
+      "path": "/api/runner/catalog",
+      "hostile_origin": false,
+      "status": 401,
+      "location": null,
+      "acao": false,
+      "pass": true
+    },
+    {
+      "path": "/api/runner/catalog",
+      "hostile_origin": true,
+      "status": 401,
+      "location": null,
+      "acao": false,
+      "pass": true
+    },
+    {
+      "path": "/api/runner/jobs",
+      "hostile_origin": false,
+      "status": 401,
+      "location": null,
+      "acao": false,
+      "pass": true
+    },
+    {
+      "path": "/api/runner/jobs",
+      "hostile_origin": true,
+      "status": 401,
+      "location": null,
+      "acao": false,
+      "pass": true
+    },
+    {
+      "path": "/api/runner/prompt-inventory/native-claude-code",
+      "hostile_origin": false,
+      "status": 401,
+      "location": null,
+      "acao": false,
+      "pass": true
+    },
+    {
+      "path": "/api/runner/prompt-inventory/native-claude-code",
+      "hostile_origin": true,
+      "status": 401,
+      "location": null,
+      "acao": false,
+      "pass": true
+    },
+    {
+      "path": "/api/runner/prompt-inventory/native-codex",
+      "hostile_origin": false,
+      "status": 401,
+      "location": null,
+      "acao": false,
+      "pass": true
+    },
+    {
+      "path": "/api/runner/prompt-inventory/native-codex",
+      "hostile_origin": true,
+      "status": 401,
+      "location": null,
+      "acao": false,
+      "pass": true
+    },
+    {
+      "path": "/api/runner/experiments",
+      "hostile_origin": false,
+      "status": 401,
+      "location": null,
+      "acao": false,
+      "pass": true
+    },
+    {
+      "path": "/api/runner/experiments",
+      "hostile_origin": true,
+      "status": 401,
+      "location": null,
+      "acao": false,
+      "pass": true
+    },
+    {
+      "path": "/api/runner/experiments/preflight",
+      "hostile_origin": false,
+      "status": 401,
+      "location": null,
+      "acao": false,
+      "pass": true
+    },
+    {
+      "path": "/api/runner/experiments/preflight",
+      "hostile_origin": true,
+      "status": 401,
+      "location": null,
+      "acao": false,
+      "pass": true
+    },
+    {
+      "path": "/api/runner/experiments/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "hostile_origin": false,
+      "status": 401,
+      "location": null,
+      "acao": false,
+      "pass": true
+    },
+    {
+      "path": "/api/runner/experiments/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "hostile_origin": true,
+      "status": 401,
+      "location": null,
+      "acao": false,
+      "pass": true
+    },
+    {
+      "path": "/api/runner/experiments/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/start",
+      "hostile_origin": false,
+      "status": 401,
+      "location": null,
+      "acao": false,
+      "pass": true
+    },
+    {
+      "path": "/api/runner/experiments/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/start",
+      "hostile_origin": true,
+      "status": 401,
+      "location": null,
+      "acao": false,
+      "pass": true
+    },
+    {
+      "path": "/api/runner/experiments/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/cancel",
+      "hostile_origin": false,
+      "status": 401,
+      "location": null,
+      "acao": false,
+      "pass": true
+    },
+    {
+      "path": "/api/runner/experiments/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/cancel",
+      "hostile_origin": true,
+      "status": 401,
+      "location": null,
+      "acao": false,
+      "pass": true
+    },
+    {
+      "method": "POST",
+      "path": "/api/onboarding",
+      "hostile_origin": false,
+      "status": 401,
+      "acao": false,
+      "pass": true
+    },
+    {
+      "method": "POST",
+      "path": "/api/onboarding",
+      "hostile_origin": true,
+      "status": 401,
+      "acao": false,
+      "pass": true
+    },
+    {
+      "method": "POST",
+      "path": "/api/runner/experiments",
+      "hostile_origin": false,
+      "status": 401,
+      "acao": false,
+      "pass": true
+    },
+    {
+      "method": "POST",
+      "path": "/api/runner/experiments",
+      "hostile_origin": true,
+      "status": 401,
+      "acao": false,
+      "pass": true
+    },
+    {
+      "method": "POST",
+      "path": "/api/runner/experiments/preflight",
+      "hostile_origin": false,
+      "status": 401,
+      "acao": false,
+      "pass": true
+    },
+    {
+      "method": "POST",
+      "path": "/api/runner/experiments/preflight",
+      "hostile_origin": true,
+      "status": 401,
+      "acao": false,
+      "pass": true
+    },
+    {
+      "method": "POST",
+      "path": "/api/runner/experiments/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/start",
+      "hostile_origin": false,
+      "status": 401,
+      "acao": false,
+      "pass": true
+    },
+    {
+      "method": "POST",
+      "path": "/api/runner/experiments/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/start",
+      "hostile_origin": true,
+      "status": 401,
+      "acao": false,
+      "pass": true
+    },
+    {
+      "method": "POST",
+      "path": "/api/runner/experiments/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/cancel",
+      "hostile_origin": false,
+      "status": 401,
+      "acao": false,
+      "pass": true
+    },
+    {
+      "method": "POST",
+      "path": "/api/runner/experiments/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/cancel",
+      "hostile_origin": true,
+      "status": 401,
+      "acao": false,
+      "pass": true
+    },
+    {
+      "method": "POST",
+      "path": "/api/runner/credentials",
+      "hostile_origin": false,
+      "status": 401,
+      "acao": false,
+      "pass": true
+    },
+    {
+      "method": "POST",
+      "path": "/api/runner/credentials",
+      "hostile_origin": true,
+      "status": 401,
+      "acao": false,
+      "pass": true
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/runner/credentials/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "hostile_origin": false,
+      "status": 401,
+      "acao": false,
+      "pass": true
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/runner/credentials/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "hostile_origin": true,
+      "status": 401,
+      "acao": false,
+      "pass": true
+    }
+  ],
+  "remaining_unverified": [
+    "No paid native model execution was repeated for this UI correction.",
+    "No fresh PostgreSQL account save/reload was performed.",
+    "Only headless Chromium, not Safari/Firefox, was used for live layout proof.",
+    "Exhaustive input, async failure and cross-account permutations remain unverified live."
+  ]
+}
