@@ -118,7 +118,7 @@ def main(argv: list[str] | None = None) -> int:
         if (not args.watch or args.backfill or args.seed_cursors or args.sweep or args.prune_orphans
                 or args.pause or args.resume or args.nudge or args.print_launchd or args.print_menubar_agent
                 or args.apply or args.prune_deleted_sources or args.prune_ignore_unreadable):
-            print("--sync only combines with --watch", file=sys.stderr)
+            print("--sync only goes with --watch", file=sys.stderr)
             return 2
         if args.yes or not sys.stdin.isatty():
             print("Capture sync requires explicit consent at a terminal; --yes cannot authorize uploads.", file=sys.stderr)
@@ -246,6 +246,9 @@ def main(argv: list[str] | None = None) -> int:
         return 2
     if len(modes) > 1:
         print("choose one of --backfill, --watch, --seed-cursors, --sweep, --prune-orphans", file=sys.stderr)
+        return 2
+    if args.sync and not args.watch:
+        print("--sync only goes with --watch", file=sys.stderr)
         return 2
     if args.watch and args.interval <= 0:
         print("--interval must be positive", file=sys.stderr)

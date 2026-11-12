@@ -12,7 +12,7 @@ format and produce exactly the artefacts `traceharness.core.runner` produces:
     data/runs/<dir>/<run_id>/messages.json
     data/runs/<dir>/<run_id>/patch.diff
 
-so every page of the platform — outcome, harness lab, trajectories, sentinel, integrity —
+so every page of the platform — outcome, harnesses, trajectories, sentinel, integrity —
 works on an imported Claude Code session exactly as it does on a lab run.
 
 Adapters

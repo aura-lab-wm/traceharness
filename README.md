@@ -89,6 +89,73 @@ Both binds are `127.0.0.1`-only by default. For access from another machine on
 the LAN, set `TRACEHARNESS_ALLOWED_HOSTS` to the extra Host header(s) the backend
 should accept (defaults: `127.0.0.1`, `localhost`, `[::1]`).
 
+## Record your own sessions on traceharness.dev
+
+Sign in on [traceharness.dev](https://traceharness.dev), then connect the computer your coding agents run on.
+The local capture adapters support Claude Code, Codex, Gemini CLI, Qwen Code and Cursor. The Python
+package includes the CLI and local web application; these commands do not start a web server:
+
+```bash
+pipx install git+https://github.com/aura-lab-wm/traceharness
+traceharness login
+traceharness capture --watch --sync --path /path/to/chosen/session-directory
+```
+
+`traceharness login` prints a short code and the address `https://traceharness.dev/app/device`. Open it in your
+browser while signed in, check the code matches, and press Approve. The command then saves a token in
+`~/.traceharness/credentials.json` (owner-only, mode 0600). No browser is opened for you, and the token is only
+ever sent in an `Authorization` header to the site you signed in to. `traceharness whoami` shows which
+account this computer uses. See [capture sync setup and verification limits](docs/CAPTURE_SYNC.md).
+
+Claude Code shortcut (needs the install above). It attempts an upload when an allowed session ends:
+
+```bash
+claude plugin marketplace add aura-lab-wm/traceharness
+claude plugin install traceharness-capture@traceharness
+```
+
+The plugin runs `traceharness capture push --source claude_code --session-file <transcript> --quiet` when a session
+ends (SessionEnd hook, configured limit 60 seconds; its upload subprocess times out after 45 seconds).
+The hook exits 0 and prints nothing even when `traceharness` is not installed or you are not signed in.
+A failed upload is not automatically retried.
+
+**What is recorded.** Your coding-agent sessions: the ordered list of actions (reads, edits, commands, test
+runs, model replies), a summary, and the final patch. After upload they appear under *Connect this computer*
+at `/app/capture` on the site, where you can open or delete any run.
+
+**Watch sync requires consent on your computer.** `--watch --sync` requires a person to type `yes`
+at a terminal and refuses `--yes` and noninteractive input. The website and linked pages cannot start
+capture. The optional SessionEnd plugin uses the explicitly configured local allow-list and saved login.
+
+**The allow-list.** Only sessions that belong to folders you allowed are ever read or sent. The list lives in
+`~/.traceharness/capture.json` and is edited from the Capture page of the local console (`traceharness serve`);
+`--path DIR` adds a folder for one run. A missing or unreadable list allows nothing.
+
+**Redaction.** Before anything leaves your computer, API keys and tokens (Anthropic, OpenAI, OpenRouter,
+GitHub, AWS, Google, Slack, Supabase, Stripe, Hugging Face, npm, TraceHarness), JWTs, `Bearer` tokens, the
+user:password part of URLs, private-key blocks, `password=`/`secret=`/`api_key=`/`refresh_token=` style
+values, and the string value of any JSON key whose name contains password, secret, token, api key,
+authorization or credential are replaced by `[redacted:<kind>]`. Redaction is pattern-based and cannot
+know every secret format (a password written as plain prose, or an unusual token shape, passes through),
+so read a run before you share it if it may hold something unusual. `traceharness capture push --dry-run` shows what would be sent
+without sending it. A run over 4 MiB is skipped and reported.
+
+**Live view (optional).** `traceharness link --member` opens an outbound connection with your sign-in so the
+site watch your own room. It opens no port, it only lets the site watch, it refuses `--accept-commands`,
+and the runner itself refuses `run` and serves no run directory (`live`/`tail`) in this mode. Live view of
+captured sessions is not implemented yet: for now the stored copies on `/app/capture` are what you see.
+
+**How to stop.**
+
+```bash
+traceharness logout            # revokes this computer's token and deletes it; sends nothing afterwards
+traceharness capture --pause   # the watcher and `capture push` (so the Claude Code hook) stop (--resume undoes it)
+```
+
+The Claude Code hook is governed by the capture allow-list, your sign-in and `--pause`.
+
+You can also revoke a token from `/app/capture`, and delete uploaded runs there at any time.
+
 ## Local server security
 
 The local server binds to `127.0.0.1` by default and now enforces two checks in front of

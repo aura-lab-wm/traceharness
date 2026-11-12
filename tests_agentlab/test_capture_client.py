@@ -160,6 +160,103 @@ class TestCaptureClient(unittest.TestCase):
         self.client.upload({"run_id": "synthetic", "source": "claude_code", "summary": {}, "ledger": []})
         self.assertIn("synthetic", self.server.uploads)
 
+    def test_login_credentials_interoperate_with_push_and_member_link(self):
+        from traceharness.capture import remote
+        from traceharness.backend.remote_link import member_link_target
+        with mock.patch.dict(os.environ, {"TRACEHARNESS_HOME": str(self.home / "shared")}):
+            store = self.c.FileStore()
+            self.assertEqual(store.path, Path(remote.credentials_path()))
+            self.client.store = store
+            self.login()
+            self.assertEqual(remote.load_credentials(), {"url": "https://traceharness.dev", "token": TOKEN, "email": EMAIL})
+            self.assertEqual(member_link_target(), ("wss://traceharness.dev/api/remote", TOKEN))
+            self.assertFalse((self.home / "shared/capture-auth.json").exists())
+
+    def test_legacy_canonical_credentials_interoperate_with_strict_identity(self):
+        from traceharness.capture import remote
+        with mock.patch.dict(os.environ, {"TRACEHARNESS_HOME": str(self.home / "shared")}):
+            store = self.c.FileStore()
+            self.assertEqual(store.path, Path(remote.credentials_path()))
+            remote.save_credentials("https://traceharness.dev", TOKEN, "cached@example.test")
+            self.client.store = store
+            self.assertEqual(self.client.identity(), {"email": EMAIL, "user_id": USER})
+
+    def test_conflicting_origin_and_url_never_send_a_credential(self):
+        self.login()
+        doc = json.loads(self.store.path.read_text())
+        doc["url"] = "https://evil.example"
+        self.store.path.write_text(json.dumps(doc))
+        before = len(self.server.paths)
+        with self.assertRaises(self.c.CaptureError):
+            self.client.identity()
+        self.assertEqual(len(self.server.paths), before)
+
+    def test_verified_account_change_invalidates_push_checkpoint(self):
+        from traceharness.capture import remote, push
+        with mock.patch.dict(os.environ, {"TRACEHARNESS_HOME": str(self.home / "shared")}):
+            store = self.c.FileStore()
+            self.assertEqual(store.path, Path(remote.credentials_path()))
+            remote.save_credentials("https://traceharness.dev", TOKEN, "prior@example.test")
+            push.save_sync({"old-run": "already-uploaded-to-other-account"})
+            self.client.store = store
+            self.login()
+            self.assertEqual(push.load_sync(), {})
+            self.assertEqual(remote.load_credentials()["email"], EMAIL)
+
+    def test_sync_redacts_summary_ledger_and_patch_before_network_and_hashing(self):
+        from traceharness.capture import cursors
+        self.login()
+        sessions, runs = self.home / "sessions", self.home / "runs"
+        sessions.mkdir()
+        run_dir = runs / "captured" / "synthetic"
+        run_dir.mkdir(parents=True)
+        summary = {"run_id": "synthetic", "nested": {"password": "summary-private-value"}, "cost_usd": 1.25}
+        ledger = [{"run_id": "synthetic", "import_source": "claude_code", "span": "invoke_agent", "status": "start"},
+                  {"run_id": "synthetic", "text": "secret token " + TOKEN, "authorization": "ledger-private-value"}]
+        (run_dir / "summary.json").write_text(json.dumps(summary))
+        (run_dir / "ledger.jsonl").write_text("\n".join(json.dumps(row) for row in ledger))
+        (run_dir / "patch.diff").write_text("+api_key=patch-private-value\n")
+        cursors.save(cursors.path_for(str(runs)), {str((sessions / "synthetic.jsonl").resolve()): cursors.cur(runs=["synthetic"])})
+        sync = self.c.CaptureSync(self.client, [str(sessions)], str(runs))
+        sync({})
+        payload = self.server.uploads["synthetic"]
+        encoded = json.dumps(payload)
+        for secret in ("summary-private-value", "ledger-private-value", "patch-private-value", TOKEN):
+            self.assertNotIn(secret, encoded)
+        self.assertIn("[redacted:", encoded)
+        self.assertEqual(payload["summary"]["cost_usd"], 1.25)
+        (run_dir / "patch.diff").write_text("+api_key=another-private-value\n")
+        sync({})
+        self.assertEqual(self.server.paths.count("/api/capture/runs"), 1)
+
+    def test_legacy_consumers_refuse_conflicting_origin_and_url(self):
+        from traceharness.capture import remote
+        with mock.patch.dict(os.environ, {"TRACEHARNESS_HOME": str(self.home / "shared")}):
+            store = self.c.FileStore()
+            store.save(TOKEN, EMAIL)
+            doc = json.loads(store.path.read_text())
+            doc["url"] = "https://evil.example"
+            store.path.write_text(json.dumps(doc))
+            self.assertIsNone(remote.load_credentials())
+
+    def test_legacy_consumers_never_read_symlinked_credentials(self):
+        from traceharness.capture import remote
+        with mock.patch.dict(os.environ, {"TRACEHARNESS_HOME": str(self.home / "shared")}):
+            store = self.c.FileStore()
+            store.save(TOKEN, EMAIL)
+            target = self.home / "private.json"
+            store.path.rename(target)
+            store.path.symlink_to(target)
+            self.assertIsNone(remote.load_credentials())
+
+    def test_both_pass_callbacks_are_rejected_before_any_capture(self):
+        from traceharness.capture import sniffer
+        runs = self.home / "runs"
+        with self.assertRaises(ValueError):
+            sniffer.loop([], str(runs), gap_s=1800, interval_s=1, stop=lambda: True,
+                         on_pass=lambda _: None, after_pass=lambda _: None)
+        self.assertFalse(runs.exists())
+
     def test_device_expiry_stops_polling_without_storing_a_token(self):
         with self.assertRaisesRegex(self.c.CaptureError, "expired"):
             self.client.login()

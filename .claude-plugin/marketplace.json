@@ -1,0 +1,11 @@
+{
+  "name": "traceharness",
+  "owner": { "name": "aura-lab-wm" },
+  "plugins": [
+    {
+      "name": "traceharness-capture",
+      "source": "./integrations/claude-code",
+      "description": "Send each finished Claude Code session to your traceharness.dev account (needs `traceharness login`)."
+    }
+  ]
+}

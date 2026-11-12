@@ -42,12 +42,12 @@ Editing React source or agent-patcher does not update that snapshot.
 | Native Claude Code | Pinned native executable; the member's text is appended using `--append-system-prompt-file` | Inventory and patch only fragments proven addressable in that exact native build |
 | Native Codex CLI | Pinned native executable; the member's text becomes `developer_instructions` in a generated job-local configuration | Initially inventory the supported instruction overlay only; embedded prompt control remains unavailable until separately implemented and verified |
 
-The frontend's [configuration builder](https://github.com/aura-lab-wm/traceharness/blob/0e9f5fa62c5d8ed0f994a229778e3f302843c269/harnesslab/frontend/src/rig/views/harness-composer-state.js#L56)
+The frontend's [configuration builder](https://github.com/aura-lab-wm/traceharness/blob/9c18e81e350b5845c3124a9fefa66bc527683108/traceharness/frontend/src/rig/views/harness-composer-state.js#L62)
 at that design baseline emitted an empty `harness` object for native runtimes. Its import parser
 rejects native TraceHarness blocks. The
-[container adapter](https://github.com/aura-lab-wm/traceharness/blob/0e9f5fa62c5d8ed0f994a229778e3f302843c269/harnesslab/runner_service/container_entrypoint.py#L26)
+[container adapter](https://github.com/aura-lab-wm/traceharness/blob/9c18e81e350b5845c3124a9fefa66bc527683108/traceharness/runner_service/container_entrypoint.py#L26)
 appends instructions and creates an isolated home; it does not run agent-patcher.
-The [server configuration contract](https://github.com/aura-lab-wm/traceharness/blob/0e9f5fa62c5d8ed0f994a229778e3f302843c269/harnesslab/runner_service/configuration.py#L42)
+The [server configuration contract](https://github.com/aura-lab-wm/traceharness/blob/9c18e81e350b5845c3124a9fefa66bc527683108/traceharness/runner_service/configuration.py#L42)
 accepts a fixed version-1 field set. New profile fields need an explicit schema,
 Worker validation and server implementation; adding controls alone is insufficient.
 

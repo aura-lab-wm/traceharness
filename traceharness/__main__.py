@@ -26,9 +26,11 @@ def build_parser() -> argparse.ArgumentParser:
                "same canonical study-aggregate statistics as GET /api/results/<dir>/{oracle,"
                "comparisons,experiment} as JSON; `traceharness sources` lists the grids on disk, the import "
                "adapters, and the benchmarks that are not loaded; `traceharness serve` is this, the default. "
-               "`traceharness link --url wss://...` dials out to a signed-in console; it does not open a port. "
-               "`traceharness login` signs in for capture; `traceharness capture --watch --sync` uploads "
-               "consented sessions; `traceharness whoami` checks identity and `traceharness logout` revokes the token.",
+               "`traceharness login` signs in for capture; `traceharness whoami` checks identity and "
+               "`traceharness logout` revokes the token. `traceharness capture push` sends redacted "
+               "captured runs; `traceharness capture --watch --sync` uploads consented sessions. "
+               "`traceharness link --member` connects this account; `link --url wss://...` dials out "
+               "to a console. Neither opens a port.",
     )
     p.add_argument("--host", default=os.environ.get("TRACEHARNESS_HOST", "127.0.0.1"),
                    help="interface to bind (default 127.0.0.1; use 0.0.0.0 in a container)")
@@ -625,9 +627,6 @@ def main(argv: list[str] | None = None) -> int:
     if argv and argv[0] in {"login", "logout", "whoami"}:
         from traceharness.capture.client import auth_main
         return auth_main(argv[0], argv[1:])
-    if argv and argv[0] == "capture":
-        from traceharness.capture.__main__ import main as capture_main
-        return capture_main(argv[1:])
     if argv and argv[0] == "run":
         from traceharness.core import runner  # noqa: E402
         sys.argv = ["traceharness run"] + argv[1:]
@@ -648,6 +647,12 @@ def main(argv: list[str] | None = None) -> int:
         return patterns_cli(argv[1:])
     if argv and argv[0] == "sources":
         return sources_cli(argv[1:])
+    if argv and argv[0] == "capture":
+        if len(argv) > 1 and argv[1] == "push":
+            from traceharness.capture.push import push_main  # noqa: E402
+            return push_main(argv[2:])
+        from traceharness.capture.__main__ import main as capture_main  # noqa: E402
+        return capture_main(argv[1:])
     if argv and argv[0] == "link":
         from traceharness.backend.remote_link import link_main  # noqa: E402
         return link_main(argv[1:])

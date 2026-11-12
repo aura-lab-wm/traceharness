@@ -1,8 +1,10 @@
 # Capture sync client
 
 This checkout provides `traceharness login`, `whoami`, `logout`, and `capture --watch --sync`.
-These commands use only `https://traceharness.dev`. Installing the Python package does not
-install a Claude marketplace plugin; this repository does not provide one.
+These commands use only `https://traceharness.dev`. The repository also includes a Claude Code
+marketplace manifest and SessionEnd plugin under `integrations/claude-code/`. Installing the Python
+package does not install that plugin. Its hook uses `capture push` with the same saved credentials,
+local allow-list and pause control; it does not invoke the interactive watch-sync command.
 
 Install from the checked-out release revision with Python 3.10 or later:
 
@@ -32,8 +34,9 @@ local capture. It does not discover and authorize session stores on your behalf.
 
 A person must type `yes` at the terminal before sync starts. This consents to reading the chosen
 session paths and uploading their captured summaries, transcripts, tool output and patches,
-including runs already captured from those paths. Those records may contain private data or
-secrets. `--yes` and noninteractive input cannot bypass sync consent. This additional sync gate
+including runs already captured from those paths. Summary, ledger and patch values pass through
+the shared capture redactor before hashing or upload. Pattern-based redaction cannot identify
+every possible secret, so those records may still contain private data. `--yes` and noninteractive input cannot bypass sync consent. This additional sync gate
 does not change the existing local-only watcher or installed LaunchAgent behavior. Add
 `--no-archive` to disable the local gzip copies of captured source sessions.
 
@@ -43,8 +46,11 @@ previous upload as a replacement of that same run. A failed upload ends sync; it
 automatically. A rejected or oversized record is reported as a failure, never silently truncated.
 No command here starts a model or a paid harness run.
 
-Credentials are stored in `~/.traceharness/capture-auth.json`, bound to the exact origin, with file
-mode `0600` and directory mode `0700`. Writes use an atomic replacement. Tokens are never passed in
+Credentials are stored in `~/.traceharness/credentials.json`, bound to the exact origin, with file
+mode `0600` and directory mode `0700`. `TRACEHARNESS_HOME` can select another credential directory.
+The shared file includes the exact origin, compatible URL, token and server-verified email;
+existing URL-only credentials are accepted by watch sync only for the exact production origin.
+Writes use an atomic replacement. Signing into a different account invalidates the push checkpoint. Tokens are never passed in
 command arguments or printed. HTTPS requests have timeouts and refuse redirects. Sync stays bound
 to the server-verified account for that process, even if another process signs into a different
 account. Restart sync to change the destination account.

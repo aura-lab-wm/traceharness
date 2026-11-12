@@ -18,6 +18,9 @@ import time
 
 import httpx
 
+from . import remote
+from .redact import redact
+
 ORIGIN = "https://traceharness.dev"
 VERIFICATION_URI = ORIGIN + "/app/device"
 TOKEN = re.compile(r"thc_[A-Za-z0-9_-]{43}\Z")
@@ -39,9 +42,9 @@ def _token(value):
 class FileStore:
     """One origin-bound credential, atomically replaced with owner-only permissions."""
     def __init__(self, path=None):
-        self.path = Path(path) if path is not None else Path.home() / ".traceharness" / "capture-auth.json"
+        self.path = Path(path) if path is not None else Path(remote.credentials_path())
 
-    def load(self):
+    def _document(self):
         try:
             fd = os.open(self.path, os.O_RDONLY | os.O_NOFOLLOW)
             with os.fdopen(fd, "r", encoding="utf-8") as stream:
@@ -50,15 +53,20 @@ class FileStore:
                         or info.st_uid != os.getuid() or info.st_size > 4096):
                     raise CaptureError("Capture credential file is unsafe; it must be owner-only (0600).")
                 doc = json.load(stream)
-            if not isinstance(doc, dict) or doc.get("origin") != ORIGIN:
+            if (not isinstance(doc, dict) or doc.get("origin", doc.get("url")) != ORIGIN
+                    or ("url" in doc and doc["url"] != ORIGIN)):
                 raise CaptureError("Capture credentials belong to a different server.")
-            return _token(doc.get("token"))
+            _token(doc.get("token"))
+            return doc
         except FileNotFoundError:
             raise CaptureError("Not signed in. Run traceharness login first.") from None
         except (OSError, ValueError):
             raise CaptureError("Capture credentials could not be read safely.") from None
 
-    def save(self, token):
+    def load(self):
+        return self._document()["token"]
+
+    def save(self, token, email=""):
         token = _token(token)
         temporary = None
         try:
@@ -68,10 +76,18 @@ class FileStore:
                     or self.path.is_symlink()):
                 raise CaptureError("Capture credentials could not be saved safely.")
             self.path.parent.chmod(0o700)
+            try:
+                prior = self._document()
+            except CaptureError:
+                prior = {}
+            if prior.get("email") != email or prior.get("url", prior.get("origin")) != ORIGIN:
+                # Clear before replacing credentials: a crash must not leave another account's
+                # push checkpoint attached to a new login. Explicit paths remain self-contained.
+                (self.path.parent / "sync.json").unlink(missing_ok=True)
             fd, temporary = tempfile.mkstemp(prefix=".capture-auth-", dir=self.path.parent)
             with os.fdopen(fd, "w", encoding="utf-8") as stream:
                 os.fchmod(stream.fileno(), 0o600)
-                json.dump({"origin": ORIGIN, "token": token}, stream)
+                json.dump({"origin": ORIGIN, "url": ORIGIN, "token": token, "email": email}, stream)
                 stream.flush()
                 os.fsync(stream.fileno())
             os.replace(temporary, self.path)
@@ -185,7 +201,7 @@ class CaptureClient:
                 continue
             token = _token(result.get("token"))
             identity = self.identity(token)
-            self.store.save(token)
+            self.store.save(token, identity["email"])
             return identity
         raise CaptureError("Device code expired. Run traceharness login again.")
 
@@ -253,8 +269,8 @@ class CaptureSync:
                     if (not isinstance(summary, dict) or summary.get("run_id") != run_id
                             or source not in SOURCES or any(not isinstance(row, dict) or row.get("run_id") != run_id for row in ledger)):
                         raise ValueError()
-                    payload = {"run_id": run_id, "source": source, "summary": summary,
-                               "ledger": ledger, "patch": patch, "truncated": False}
+                    payload = {"run_id": run_id, "source": source, "summary": redact(summary),
+                               "ledger": redact(ledger), "patch": redact(patch), "truncated": False}
                     encoded = json.dumps(payload, ensure_ascii=False, allow_nan=False).encode("utf-8")
                 except (ValueError, UnicodeError, AttributeError, TypeError, IndexError):
                     raise CaptureError("A captured run has invalid data. Sync stopped.") from None

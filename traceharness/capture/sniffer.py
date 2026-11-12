@@ -344,7 +344,7 @@ FULL_SWEEP_S = 24 * 3600.0
 def loop(roots: list, runs_root: str, gap_s: float, interval_s: float,
          stop: Optional[Callable[[], bool]] = None, now: Optional[Callable[[], float]] = None,
          archive_root: Optional[str] = None, sleep=time.sleep,
-         full_sweep_s: float = FULL_SWEEP_S,
+         full_sweep_s: float = FULL_SWEEP_S, on_pass: Optional[Callable[[dict], None]] = None,
          after_pass: Optional[Callable[[dict], None]] = None) -> None:
     """Tick until `stop()` says otherwise, obeying the control file between passes.
 
@@ -356,6 +356,8 @@ def loop(roots: list, runs_root: str, gap_s: float, interval_s: float,
     of the loop ITSELF propagates, and is left on the page as `error`, never painted over as a clean
     stop.
     """
+    if on_pass is not None and after_pass is not None:
+        raise ValueError("choose one pass callback; combining observers can duplicate uploads")
     stop = stop or (lambda: False)
     now = now or time.time
     os.makedirs(os.path.join(runs_root, "captured"), exist_ok=True)
@@ -390,6 +392,11 @@ def loop(roots: list, runs_root: str, gap_s: float, interval_s: float,
                     done = (full and not (rep or {}).get("interrupted")
                             and (rep or {}).get("state") != "locked")
                     presence.write(runs_root, error="", **({"last_full_sweep_at": t} if done else {}))
+                    if on_pass is not None:
+                        try:
+                            on_pass(rep or {})             # optional legacy observer; never fatal
+                        except Exception:
+                            pass
                     if done:
                         _count_debris(runs_root, now)
                 except CaptureLocked:

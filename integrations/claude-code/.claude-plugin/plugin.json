@@ -1,0 +1,6 @@
+{
+  "name": "traceharness-capture",
+  "version": "0.1.0",
+  "description": "Uploads each finished Claude Code session to traceharness.dev when it ends. Never blocks or fails a session.",
+  "license": "MIT"
+}
