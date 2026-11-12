@@ -165,7 +165,7 @@ Writing the contents of /Users/amastro/Documents/TraceHarness-eight-sol-audit-20
 
 The first live retest reloaded production and passed direct pointer selection of Custom, stock Claude Code, native Codex and native Claude Code with both fully visible and roughly half-clipped rows in a scrolled upward-opening popup. Keyboard selection also passed. The primary repeat answer correctly reported insufficient evidence in its Overview question, analysis document and detailed answer, without a disagreement rate.
 
-It found a remaining related inconsistency: the separate Overview tile and task quick filter still displayed misleading zero mixed-outcome counts for the ungraded singleton. Those counters and the corresponding Outcomes, reading-guide and Student Lab statements were corrected in the additional follow-up below. Locator-positioned automation clicks still closed the popup without selecting; the reviewer could not reproduce that discrepancy using direct pointer input. That automation-specific discrepancy remains unresolved and is not hidden by the passing direct-pointer checks.
+It found a remaining related inconsistency: the separate Overview tile and task quick filter still displayed misleading zero mixed-outcome counts for the ungraded singleton. Those counters and the corresponding Outcomes, reading-guide and Student Lab statements were corrected in the additional follow-up below. Locator-positioned automation clicks still closed the popup without selecting; the reviewer could not reproduce that discrepancy using direct pointer input. At that stage the automation-specific discrepancy remained unresolved. The November 12 targeted investigation below supersedes its classification as a confirmed visible-row defect, while preserving the uncertainty about the earlier automation event sequence.
 
 ### Complete repeat-evidence coverage
 
@@ -208,6 +208,24 @@ Writing the contents of /Users/amastro/Documents/TraceHarness-eight-sol-audit-20
 ```
 
 The final actual Chrome check reloaded production and **passed** in 15 seconds. The summary and pass@1 tile both showed “1 recorded attempt · 1 recorded task · 1 repeat · 0 known hidden grades”; the pass estimate/interval were unavailable, the repeat comparison was unavailable, and “Run 1 unknown” remained visible. The recorded-task versus unlabeled-graded-task contradiction was resolved. No job or member-data mutation was performed.
+
+## November 12 picker diagnosis and corrected verification procedure
+
+The actual ChatGPT-in-Chrome review performed a targeted 2 minute 39 second investigation on production. It **retracted the earlier confirmed dropdown-defect classification**: no visible-row misselection reproduced. Unfiltered direct pointer selection passed for Custom, Claude Code stand-in, native Claude Code and Codex CLI. Filtered Custom, Claude Code stand-in and Codex CLI also passed. This pass used a 569 × 619 viewport, smaller than the earlier approximately 950 × 719 review.
+
+The clipping hazard was observed directly. The options list occupied `(34, 139, 501, 168)` viewport pixels. An offscreen Claude Code stand-in row still had a DOM rectangle `(38, 466, 493, 81)`; its nominal point `(138, 506)` hit the **Model input**, not the clipped option. After scrolling the list, the visible point `(138, 176)` hit and selected the intended option. A DOM rectangle alone is not evidence that a row is visible or clickable.
+
+Scrolling inside the menu changed its offset from 741 to 0, then from 0 to 330, while the surrounding document stayed at offset 180 and the menu remained open. Scrolling the surrounding document from 180 to 30 moved the control and resized the list while keeping the menu open. Previously measured row coordinates are invalid after that movement. **The precise event sequence behind the earlier failed automation clicks remains UNVERIFIED**; these observations do not prove that those earlier calls scrolled the document.
+
+The nine existing picker DOM regression tests passed again. No new application defect was established, no application code was changed, and no deployment was performed for this investigation. The earlier hover-scroll repair remains in place and is a separate, previously reproduced defect.
+
+For subsequent browser proofs:
+
+1. Open the unfiltered menu and scroll its own options list until the target row is visibly inside the clipping bounds.
+2. Reacquire the screenshot or element geometry after every scroll or resize. Never click an offscreen row's nominal rectangle or reuse stale coordinates.
+3. Confirm the intended option is under the pointer before clicking. When available, use read-only hit-testing in addition to visual inspection.
+4. Check both the selected label and resulting configuration; menu closure alone does not establish success.
+5. Exercise all four harness categories with unfiltered pointer selection, then search/filter and keyboard selection separately. Record automation-targeting failures separately from reproduced visible-row application failures.
 
 ## Explicit remaining limits
 

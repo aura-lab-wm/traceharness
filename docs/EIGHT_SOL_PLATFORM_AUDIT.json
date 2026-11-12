@@ -542,7 +542,8 @@
     "labels-final-anonymous.json": "edd3f1977d46367996d5289e380f2eff9a324b1aeaf58de050f7d4d0ec86cc37",
     "labels-final-wheel-parity.json": "cf0d69d1da2ac5ebc7b36c7865b243610acf5c33ec9ca2ba2e800bd0ebe6cb06",
     "labels-final-distribution.log": "ba4e42fde4b68335cc9d0fc50a61c7c3c5c5189e3a55f1f2d44fef6fadae7f34",
-    "chatgpt-label-retest.json": "631ebd3cccf6addf592f972304fc8f6da11b5f699c4dd62a8bacd81ca4279f91"
+    "chatgpt-label-retest.json": "631ebd3cccf6addf592f972304fc8f6da11b5f699c4dd62a8bacd81ca4279f91",
+    "picker-diagnosis.json": "eab948141baac1ca5aa687c61f9e2431a8ee5f7f01477ee7c6b3286e8c2e313a"
   },
   "privacy": "Evidence contents with credentials, private provider balances, prompts and recovery material are excluded; hashes identify local receipts only.",
   "initial_application_defects_fixed": 9,
@@ -1112,9 +1113,96 @@
     "final_focused_chrome_verification_complete": true,
     "account_admin_platform": "Designed, not implemented/deployed",
     "unresolved_observed_behavior": [
-      "Locator-positioned automation clicks close the picker without selecting; actual direct-pointer and keyboard checks passed"
+      "Exact cause of earlier automation click failures remains unverified; targeted visible-row selection passed and the confirmed dropdown-defect classification was retracted."
     ],
     "performance_improvement": "UNVERIFIED",
     "crowd_capacity": "UNVERIFIED"
+  },
+  "picker_diagnosis_followup": {
+    "observed_at": "2026-11-12T09:44:39.335374+00:00",
+    "surface": "Actual ChatGPT Work browser integration in signed-in production Chrome",
+    "duration_seconds": 159,
+    "classification": "Visible-row defect not reproduced; earlier confirmed-defect classification retracted",
+    "viewport_pixels": [
+      569,
+      619
+    ],
+    "unfiltered_direct_pointer_passes": [
+      "Custom TraceHarness harness",
+      "Claude Code stand-in",
+      "Claude Code native",
+      "Codex CLI"
+    ],
+    "filtered_direct_pointer_passes": [
+      "Custom TraceHarness harness",
+      "Claude Code stand-in",
+      "Codex CLI"
+    ],
+    "observed_geometry": {
+      "list_rect": [
+        34,
+        139,
+        501,
+        168
+      ],
+      "clipped_standin_rect": [
+        38,
+        466,
+        493,
+        81
+      ],
+      "clipped_standin_nominal_click": [
+        138,
+        506
+      ],
+      "element_at_nominal_click": "Model input",
+      "standin_visible_click_after_list_scroll": [
+        138,
+        176
+      ]
+    },
+    "scroll_checks": [
+      {
+        "action": "Scroll menu to Custom",
+        "list_offset_before": 741,
+        "list_offset_after": 0,
+        "document_offset_before": 180,
+        "document_offset_after": 180,
+        "menu_remained_open": true
+      },
+      {
+        "action": "Scroll menu to stand-in",
+        "list_offset_before": 0,
+        "list_offset_after": 330,
+        "document_offset_before": 180,
+        "document_offset_after": 180,
+        "menu_remained_open": true,
+        "selection_passed": true
+      },
+      {
+        "action": "Scroll document upward",
+        "document_offset_before": 180,
+        "document_offset_after": 30,
+        "control_y_before": 317,
+        "control_y_after": 467,
+        "list_height_before": 168,
+        "list_height_after": 318,
+        "menu_remained_open": true
+      }
+    ],
+    "limit": "Exact event sequence causing the prior automation clicks remains unverified, including whether automatic scrolling moved the document. Different viewport from earlier review.",
+    "local_picker_regression_tests": {
+      "passed": 9,
+      "failed": 0
+    },
+    "production_code_changed": false,
+    "deployment_performed": false,
+    "corrected_test_procedure": [
+      "Scroll the options list until the intended row is visibly inside its clipping bounds.",
+      "After any scroll/resize, reacquire current geometry or screenshot rather than reuse coordinates.",
+      "Confirm the intended option is under the pointer before clicking; a DOM rectangle alone does not establish visibility.",
+      "Verify both selected label and configuration changed.",
+      "Classify offscreen/stale-coordinate test failures separately from visible-row application failures."
+    ]
   }
 }
