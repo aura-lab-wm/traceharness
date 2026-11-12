@@ -1,0 +1,36 @@
+{
+  "source_commit": "231500658b37f7ecffd9d6c1718a621aa75aa487",
+  "pre_upload_live_selections": 22,
+  "post_upload_live_selections": 4,
+  "frontend_tests": 1125,
+  "frontend_files": 66,
+  "distribution_contracts": 4,
+  "gzip_sha256": "030b4c155efc42a00dad7a2555c081422f7594a44c5f30f7765d6d86ce2596f1",
+  "html_sha256": "f6fa97ed8781ad8ff13f5317842237dbdb553274813242bf299f5adecdc17b57",
+  "gzip_bytes": 16433030,
+  "wheel_sha256": "3a8d1523962090377e3fb4b3a7ee4a755f241c9f0478cf6fd0935f4767dc5fc9",
+  "wheel_checked_source_assets": 135,
+  "upload_exit_code": 0,
+  "worker_version": "4b0d1d11-83b1-42f4-844b-0256ace83c8e",
+  "worker_redeployed": false,
+  "live_http_fingerprint_match": true,
+  "post_upload_anonymous_checks_passed": 5,
+  "evidence_hashes": {
+    "live-chrome-selection-review.json": "2a9db86e95cc96639fec29613d0bb37f28636b2961ba7291c94cd8cb2bf1dbbf",
+    "fixed-fixture-evidence.jsonl": "f2944fcd810d59fb406af6731b59a52d2a14c3dfd315504bc8c12bd04ecb92c4",
+    "frontend-fixed-full.log": "f60e5e20076548f0595e4e0602b8fb31bbdbf6d241f16613d934cfd03f339477",
+    "picker-artifact.json": "ffcf7b15b4f3cc95de5f4974ad220c1b5c9f4094975aec87a79b7b1674c36d11",
+    "picker-stream-proof.json": "45e004b04eeffcb61d0f682e207bc72c336869fdb02c77ae1fbd86ef5d8dc75a",
+    "picker-wheel-parity.json": "9fb7b8eac8a43f278a816d9ff0162b836d3c8ccd604649357c17ab8731d7d481",
+    "picker-kv-upload.json": "68fdab1cd3e6727fcd98cf01e13370e468809540feaf8a71df66659559959512",
+    "picker-readback.json": "45a99f933b27a39ce1c5984acafffdca04776b503e0a681af4e4064cbd74bc63",
+    "post-upload-anonymous-gates.json": "a6b35f696f48444486a95e4ea9610e2189036fe14fe007ca37dbbb96e921fa7e",
+    "post-upload-chrome.json": "8719d28e82b272bc82411da2d0561a0b4af569cadf93217d07d0a8e0db57b08d"
+  },
+  "limits": [
+    "Historical failed automation event order unverified",
+    "Injected timing reproducers local only",
+    "No fresh model execution or performance improvement claim",
+    "Account/admin platform still design only"
+  ]
+}

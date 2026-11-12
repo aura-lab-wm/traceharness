@@ -49,3 +49,25 @@ The identical native-browser held-click replay passed: the saved group arrived d
 The timed container shrink replay also passed. After resize observation, the popup bottom was 542.78 inside the 550.78 container edge, leaving the intended eight-pixel margin. Scrolling the resized list and selecting Codex CLI returned `native:native-codex`. These are local native-browser proofs; cancellation and removed/disabled-option coverage are DOM regressions, not a physical touch-device proof.
 
 The repaired frontend passed **1,125 tests across 66 files**, lint, production build, and both source/distribution freshness checks. Six new picker regressions cover delayed updates, removed/disabled choices, touch cancellation, abandonment/cleanup, and container-only resize. The separate composer integration adds unfiltered category coverage. The build retains the existing large-chunk warning; no speed improvement is claimed.
+
+## Published artifact and final live proof
+
+Runtime/source commit **`231500658b37f7ecffd9d6c1718a621aa75aa487`** was pushed to public main. The exact KV artifact `app-picker-reviewed.html.gz` is **16,433,030 bytes**, SHA-256 `030b4c155efc42a00dad7a2555c081422f7594a44c5f30f7765d6d86ce2596f1`; its decompressed HTML SHA-256 is `f6fa97ed8781ad8ff13f5317842237dbdb553274813242bf299f5adecdc17b57`. Only the rebuilt application JavaScript was replaced. Bootstrap, CSS, the complete recorded-data payload and all five audio chapters retain their exact prior bytes.
+
+The actual local Worker renderer streamed this exact compressed file successfully and produced the precise expected member/capture injections. A wheel built from a clean tracked-source archive matched **135 source/assets**, contained only the current JavaScript asset, and passed both packaging contracts. Wheel SHA-256: `3a8d1523962090377e3fb4b3a7ee4a755f241c9f0478cf6fd0935f4767dc5fc9`. The first no-isolation packaging attempt lacked setuptools; a normal isolated build then passed. No application failure was hidden by that tooling retry.
+
+The single KV write exited **0**. **Worker version `4b0d1d11-83b1-42f4-844b-0256ace83c8e` was unchanged**, with no Worker redeployment, route change, SQL change or runner release. The temporary Wrangler configuration was deleted. All upload log lines are below (fewer than ten):
+
+```text
+
+ ⛅️ wrangler 4.90.1
+───────────────────
+Resource location: remote 
+
+Writing the contents of /Users/amastro/Documents/TraceHarness-picker-full-review-2026-11-12/app-picker-reviewed.html.gz to the key "app.html.gz" on namespace id: "8a74dd2fba124b1a8d82e6eeff5ba3ae".
+
+```
+
+A fresh real-member password session received HTTP 200 and exactly the new HTML fingerprint on its first post-upload readback. All five required anonymous gate checks passed again after upload.
+
+The post-upload Chrome session initially redirected to login after expiry; the existing authorized 1Password login restored access. The freshly loaded `/app` showed the complete 3,453-run, eight-dataset snapshot. Four additional live category checks passed with matching rendered configuration JSON: unfiltered pointer selection for native Codex and native Claude, keyboard Home/Enter for Custom, and filtered pointer selection for stock Claude. The route and active Harnesses document remained correct. No saved configuration or job was created. These four checks are distinct from the **22 pre-upload** checks above and from the synthetic-timing local browser reproducers.
