@@ -206,6 +206,23 @@ describe('native prompt inventory authoring', () => {
     expect(screen.getByText(/no verified mutation mechanism/)).toBeTruthy()
   })
 
+  it('moves focus into the mobile inspector after hiding the activated list', () => {
+    vi.stubGlobal('matchMedia', () => ({ matches: true }))
+    render(<Editor />)
+    const row = screen.getByRole('button', { name: /Template fixture promptPlanningBaseline/ })
+    row.focus()
+    fireEvent.click(row)
+    const inspector = screen.getByRole('region', { name: 'Prompt inspector' })
+    expect(inspector.closest('.rg-native-workspace').classList.contains('is-inspecting')).toBe(true)
+    expect(document.activeElement).toBe(inspector)
+    const replacement = screen.getByRole('textbox', { name: 'Replacement text' })
+    replacement.focus()
+    fireEvent.change(replacement, { target: { value: 'Preview {name}' } })
+    expect(document.activeElement).toBe(replacement)
+    fireEvent.click(screen.getByRole('button', { name: 'Back to prompt list' }))
+    expect(document.activeElement).toBe(screen.getByLabelText('Prompt list'))
+  })
+
   it('focuses the prompt list only after Back makes it visible without stealing focus on other edits', () => {
     render(<Editor />)
     const list = screen.getByLabelText('Prompt list')

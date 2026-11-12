@@ -42,10 +42,7 @@ from traceharness.core.harness import HarnessConfig, content_hash
 
 from .results_scope import list_results_dirs
 
-LAB = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-RUNS_ROOT = os.path.join(LAB, "data", "runs")
-HARNESS_DIR = os.path.join(LAB, "harnesses")
-TASK_DIR = os.path.join(LAB, "tasks")
+from .paths import HARNESS_DIR, RUNS_ROOT, TASK_DIR
 
 router = APIRouter(prefix="/api/harness")
 

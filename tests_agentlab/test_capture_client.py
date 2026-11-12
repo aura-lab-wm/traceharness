@@ -210,7 +210,7 @@ class TestCaptureClient(unittest.TestCase):
         sessions.mkdir()
         run_dir = runs / "captured" / "synthetic"
         run_dir.mkdir(parents=True)
-        summary = {"run_id": "synthetic", "nested": {"password": "summary-private-value"}, "cost_usd": 1.25}
+        summary = {"run_id": "synthetic", "nested": {"password": "summary-private-value", TOKEN: "credential used as a key"}, "cost_usd": 1.25}
         ledger = [{"run_id": "synthetic", "import_source": "claude_code", "span": "invoke_agent", "status": "start"},
                   {"run_id": "synthetic", "text": "secret token " + TOKEN, "authorization": "ledger-private-value"}]
         (run_dir / "summary.json").write_text(json.dumps(summary))
@@ -412,6 +412,22 @@ class TestCaptureClient(unittest.TestCase):
         private = self.home / "private.txt"
         private.write_text("not a captured patch")
         patch.symlink_to(private)
+        with self.assertRaises(self.c.CaptureError):
+            self.c.CaptureSync(self.client, [str(sessions)], str(runs))(report)
+        self.assertEqual(self.server.uploads, {})
+
+    def test_symlinked_captured_parent_is_never_uploaded(self):
+        from traceharness.capture import sniffer
+        self.login()
+        sessions = self.home / "sessions"
+        sessions.mkdir()
+        shutil.copyfile(ROOT / "tests_agentlab/fixtures/capture/cc_session.jsonl", sessions / "fixture.jsonl")
+        runs = self.home / "runs"
+        report = sniffer.tick([str(sessions)], str(runs), 1800, now=1.8e9)
+        captured = runs / "captured"
+        outside = self.home / "outside-captured"
+        captured.rename(outside)
+        captured.symlink_to(outside, target_is_directory=True)
         with self.assertRaises(self.c.CaptureError):
             self.c.CaptureSync(self.client, [str(sessions)], str(runs))(report)
         self.assertEqual(self.server.uploads, {})

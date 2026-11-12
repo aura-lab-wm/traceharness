@@ -201,6 +201,21 @@ class TestRedact(unittest.TestCase):
         self.assertIn("a", doc)                                   # the input is not mutated
         self.assertEqual(doc["token"], {"x": 1})
 
+    def test_secret_mapping_keys_redact_without_losing_colliding_values(self):
+        first, second = "thc_" + "A" * 43, "thc_" + "B" * 43
+        doc = {"nested": [({first: 1, second: 2, "[redacted:traceharness]": 3,
+                              "run_id": "unchanged"},)]}
+        result = redact.redact(doc)
+        encoded = json.dumps(result)
+        self.assertNotIn(first, encoded)
+        self.assertNotIn(second, encoded)
+        mapping = result["nested"][0][0]
+        self.assertEqual(len(mapping), 4)
+        self.assertEqual(mapping["run_id"], "unchanged")
+        self.assertEqual(mapping["[redacted:traceharness]"], 3)
+        self.assertEqual(sorted(value for value in mapping.values() if isinstance(value, int)), [1, 2, 3])
+        self.assertIn(first, doc["nested"][0][0])
+
     def test_long_trigger_run_is_linear(self):
         import time
         t = time.monotonic()
@@ -483,6 +498,26 @@ class TestPush(Env):
         rc, out, err = self.run_push()
         self.assertEqual(self.posts(), [])
         self.assertIn("allow-list", err)
+
+    def test_symlinked_patch_never_leaves_the_machine(self):
+        self.make_run("linked-patch")
+        patch = os.path.join(self.runs_root, "captured", "linked-patch", "patch.diff")
+        private = os.path.join(self.tmp, "private-local-file")
+        with open(private, "w") as stream:
+            stream.write("private fixture content outside captured run")
+        os.unlink(patch)
+        os.symlink(private, patch)
+        self.run_push()
+        self.assertEqual(self.posts(), [])
+
+    def test_symlinked_captured_parent_never_leaves_the_machine(self):
+        self.make_run("linked-parent")
+        captured = os.path.join(self.runs_root, "captured")
+        outside = os.path.join(self.tmp, "outside-captured")
+        os.rename(captured, outside)
+        os.symlink(outside, captured)
+        self.run_push()
+        self.assertEqual(self.posts(), [])
 
     def test_runs_without_a_known_source_file_are_not_sent(self):
         self.make_run("orphan", cursor=False)

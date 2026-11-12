@@ -83,11 +83,12 @@ describe('questions', () => {
     data['/overview'].results.push(sw(data['/overview'].results[1]))
     data['/results/swe/runs'] = sw(data['/results/mock_ctl/runs'])
     data['/outcomes/swe'] = sw(data['/outcomes/mock_ctl'])
-    data['/results/swe/report?harness=swe-agent'] = { card: { cell: { model: 'mock', harness: { id: 'swe-agent' }, runs: 2, repeats: 2, tasks: ['t1'] },
+    data['/results/swe/report?harness=swe-agent'] = { card: { cell: { model: 'mock', harness: { id: 'swe-agent' }, runs: 2, repeats: 2, repeat_range: [1, 2], tasks: ['t1'] },
       outcome: { pass1: 0.5, ci95: [0, 1], pass_at_k: {}, pass_pow_k: { 3: 0.1 }, pass1_strong: null } } }
     const { container, requests } = renderRig('#/rig/q:swe:report', { data })
     expect(container.querySelector('[data-el="answer"]').textContent).toContain('pass@1 50')
     expect(requests.filter((r) => r.url.includes('/report'))).toEqual([])
+    expect(container.textContent).toContain('1–2 attempts per observed task slot')
   })
   it('unknown question id is not found', () => {
     const { container } = renderRig('#/rig/q:mini:nope')

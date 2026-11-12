@@ -66,7 +66,7 @@ zip-safe = false
 "traceharness" = ["py.typed", "school-package.json"]
 # The Field template. It is a fragment rendered by backend/field.py, not a static asset,
 # so it lives in the package and must ship with the wheel.
-"traceharness.backend" = ["field.html"]
+"traceharness.backend" = ["field.html", "fonts.css"]
 "traceharness.data" = ["*.txt"]
 "traceharness.data.models" = ["*.json"]
 # The built UI. Absent until `npm run build` has been run in traceharness/frontend.

@@ -173,7 +173,7 @@ function Figure({ fig, dir }) {
       const ks = Object.keys(o.pass_at_k || {})
       return (<>
         <div className="rg-row" style={{ gap: 12, marginBottom: 8 }}><span className="rg-fig md">{pct(o.pass1)}</span><div className="rg-grow"><CiBar lo={o.ci95[0]} hi={o.ci95[1]} pt={o.pass1} /></div></div>
-        <p className="rg-small"><Tag tone={fig.pooled ? 'amb' : undefined} nc>{fig.scope}</Tag> <span className="rg-dim">n = {int(fig.card.cell.runs)} · {fig.card.cell.repeats} repeats · {fig.card.cell.tasks.length} tasks</span></p>
+        <p className="rg-small"><Tag tone={fig.pooled ? 'amb' : undefined} nc>{fig.scope}</Tag> <span className="rg-dim">n = {int(fig.card.cell.runs)} · {fig.card.cell.repeat_range ? [...new Set(fig.card.cell.repeat_range)].join('–') : fig.card.cell.repeats} attempts per observed task slot · {fig.card.cell.tasks.length} tasks</span></p>
         <table className="rg-tbl rg-q-metrics"><thead><tr><th>k</th><th className="rg-num">pass@k (any of k)</th><th className="rg-num">pass^k (all of k)</th></tr></thead>
           <tbody>{ks.map((k) => <tr key={k}><td className="rg-mono">{k}</td><td className="rg-num rg-mono">{pct(o.pass_at_k[k])}</td><td className="rg-num rg-mono">{pct(o.pass_pow_k[k])}</td></tr>)}</tbody></table>
         {(fig.card.missing || []).length > 0 && <><div className="rg-lbl" style={{ margin: '12px 0 6px' }}>What this card does not cover</div><ul className="rg-small rg-dim rg-q-list">{fig.card.missing.map((m, i) => <li key={i}>{m}</li>)}</ul></>}

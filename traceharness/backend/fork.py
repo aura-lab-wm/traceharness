@@ -25,8 +25,7 @@ from typing import Optional
 
 from fastapi import APIRouter, HTTPException
 
-LAB = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-RUNS_ROOT = os.path.join(LAB, "data", "runs")
+from .paths import RUNS_ROOT
 
 router = APIRouter(prefix="/api/fork")
 

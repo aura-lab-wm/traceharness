@@ -102,13 +102,20 @@ def redact(value):
         return [redact(v) for v in value]
     if isinstance(value, dict):
         out = {}
+        original_keys = {str(k) for k in value}
         for k, v in value.items():
             key = k if isinstance(k, str) else str(k)
+            safe_key = redact_text(key)
+            if safe_key != key:
+                base, suffix = safe_key, 1
+                while safe_key in original_keys or safe_key in out:
+                    safe_key = f"{base}#{suffix}"
+                    suffix += 1
             if key.lower() in FORBIDDEN_KEYS:
-                out[key] = _MARK.format("forbidden-key")
+                out[safe_key] = _MARK.format("forbidden-key")
             elif isinstance(v, str) and _SENSITIVE_KEY.search(key):
-                out[key] = _MARK.format("secret-key")
+                out[safe_key] = _MARK.format("secret-key")
             else:
-                out[key] = redact(v)
+                out[safe_key] = redact(v)
         return out
     return value

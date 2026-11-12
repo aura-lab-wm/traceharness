@@ -17,6 +17,7 @@ import os
 import re
 import shutil
 import socket
+import stat
 import sys
 import tempfile
 import time
@@ -37,22 +38,34 @@ GAP_S = 30 * 60.0
 
 def _read_run_dir(run_dir: str) -> Optional[dict]:
     """{"summary","ledger","patch"} from a writer output directory, or None if it is not one."""
+    parent = directory = None
     try:
-        with open(os.path.join(run_dir, "summary.json"), encoding="utf-8") as f:
-            summary = json.load(f)
-        ledger = []
-        with open(os.path.join(run_dir, "ledger.jsonl"), encoding="utf-8") as f:
-            for line in f:
-                if line.strip():
-                    ledger.append(json.loads(line))
-        patch = ""
+        parent = os.open(os.path.dirname(run_dir), os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW)
+        directory = os.open(os.path.basename(run_dir), os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW, dir_fd=parent)
+
+        def read(name):
+            fd = os.open(name, os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK, dir_fd=directory)
+            with os.fdopen(fd, "rb") as stream:
+                if not stat.S_ISREG(os.fstat(stream.fileno()).st_mode):
+                    raise ValueError("unsafe captured file")
+                data = stream.read(2 * MAX_BODY + 1)
+                if len(data) > 2 * MAX_BODY:
+                    raise ValueError("oversized captured file")
+                return data.decode("utf-8")
+
+        summary = json.loads(read("summary.json"))
+        ledger = [json.loads(line) for line in read("ledger.jsonl").splitlines() if line.strip()]
         try:
-            with open(os.path.join(run_dir, "patch.diff"), encoding="utf-8", errors="replace") as f:
-                patch = f.read()
-        except OSError:
-            pass
+            patch = read("patch.diff")
+        except FileNotFoundError:
+            patch = ""
     except (OSError, ValueError):
         return None
+    finally:
+        for fd in (directory, parent):
+            if fd is not None:
+                os.close(fd)
+
     if not isinstance(summary, dict) or not ledger:
         return None
     return {"summary": summary, "ledger": ledger, "patch": patch}

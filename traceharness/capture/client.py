@@ -220,9 +220,9 @@ class CaptureClient:
             raise CaptureError("Capture server did not confirm the uploaded run. Sync stopped.")
 
 
-def _read_bounded(path, budget):
+def _read_bounded(path, budget, *, dir_fd=None):
     try:
-        fd = os.open(path, os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK)
+        fd = os.open(path, os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK, dir_fd=dir_fd)
         with os.fdopen(fd, "rb") as stream:
             if not stat.S_ISREG(os.fstat(stream.fileno()).st_mode):
                 raise CaptureError("A captured run could not be read safely. Sync stopped.")
@@ -259,12 +259,13 @@ class CaptureSync:
                 raise CaptureError("A captured run has an invalid identity. Sync stopped.")
             with CaptureLock(self.runs_root):
                 directory = Path(self.runs_root) / "captured" / run_id
-                if directory.is_symlink():
-                    raise CaptureError("A captured run could not be read safely. Sync stopped.")
+                parent_fd = run_fd = None
                 try:
-                    summary = json.loads(_read_bounded(directory / "summary.json", 256 * 1024))
-                    ledger = [json.loads(line) for line in _read_bounded(directory / "ledger.jsonl", MAX_RUN_BYTES).splitlines() if line.strip()]
-                    patch = _read_bounded(directory / "patch.diff", MAX_RUN_BYTES).decode("utf-8")
+                    parent_fd = os.open(directory.parent, os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW)
+                    run_fd = os.open(run_id, os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW, dir_fd=parent_fd)
+                    summary = json.loads(_read_bounded("summary.json", 256 * 1024, dir_fd=run_fd))
+                    ledger = [json.loads(line) for line in _read_bounded("ledger.jsonl", MAX_RUN_BYTES, dir_fd=run_fd).splitlines() if line.strip()]
+                    patch = _read_bounded("patch.diff", MAX_RUN_BYTES, dir_fd=run_fd).decode("utf-8")
                     source = ledger[0].get("import_source") if ledger else None
                     if (not isinstance(summary, dict) or summary.get("run_id") != run_id
                             or source not in SOURCES or any(not isinstance(row, dict) or row.get("run_id") != run_id for row in ledger)):
@@ -272,8 +273,14 @@ class CaptureSync:
                     payload = {"run_id": run_id, "source": source, "summary": redact(summary),
                                "ledger": redact(ledger), "patch": redact(patch), "truncated": False}
                     encoded = json.dumps(payload, ensure_ascii=False, allow_nan=False).encode("utf-8")
+                except OSError:
+                    raise CaptureError("A captured run could not be read safely. Sync stopped.") from None
                 except (ValueError, UnicodeError, AttributeError, TypeError, IndexError):
                     raise CaptureError("A captured run has invalid data. Sync stopped.") from None
+                finally:
+                    for fd in (run_fd, parent_fd):
+                        if fd is not None:
+                            os.close(fd)
                 if len(encoded) > MAX_RUN_BYTES:
                     raise CaptureError("A captured run exceeds the upload size limit; it was not uploaded.")
             digest = hashlib.sha256(encoded).hexdigest()

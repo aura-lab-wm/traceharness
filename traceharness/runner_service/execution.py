@@ -198,6 +198,8 @@ class DockerExecutor:
         return args + [image]
 
     def _run(self, args, name, cancel, deadline):
+        if cancel.is_set() or time.monotonic() >= deadline:
+            raise ExecutionError("Execution was cancelled." if cancel.is_set() else "Execution reached its deadline.")
         # Container output is an untrusted artifact, not a service log.
         process = subprocess.Popen(args, stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
         try:
@@ -207,6 +209,10 @@ class DockerExecutor:
                     process.wait(timeout=15)
                     raise ExecutionError("Execution was cancelled." if cancel.is_set() else "Execution reached its deadline.")
                 time.sleep(0.1)
+            # Fast processes can finish between polls, including after their
+            # allowance expired. Completion alone does not extend that allowance.
+            if cancel.is_set() or time.monotonic() >= deadline:
+                raise ExecutionError("Execution was cancelled." if cancel.is_set() else "Execution reached its deadline.")
             if process.returncode:
                 raise ExecutionError("The trusted grader did not complete successfully." if name.endswith("-grade") else RUNTIME_FAILURE)
         finally:

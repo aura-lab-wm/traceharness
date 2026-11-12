@@ -12,6 +12,7 @@ come from `analysis.py` and the prose comes from here.
 """
 from __future__ import annotations
 import json, math, time
+from collections import Counter
 
 from .analysis import (task_table, aggregate, bootstrap_ci, flip_rate, boundary_rate,
                        tokens_per_solve, cost_of_pass, mean, exit_reasons, flag_of, cohens_kappa)
@@ -27,16 +28,33 @@ def build_card(rows: list[dict], traj: list, source: str = "") -> dict:
     """Structured card from index rows plus their Trajectories. Both must be the same cell."""
     if not rows:
         return {"error": "no runs"}
-    h = traj[0].spans[0]["harness"] if traj else {}
+    # A first ledger is evidence for its own run, never for an entire mixed cohort.
+    by_id = {t.run_id: t for t in traj}
+    configurations = {}
+    unknown_configs = 0
+    for row in rows:
+        t = by_id.get(row["run_id"])
+        config = t.spans[0].get("harness") if t and t.spans else None
+        if not isinstance(config, dict):
+            unknown_configs += 1
+            continue
+        key = json.dumps(config, sort_keys=True)
+        configurations.setdefault(key, {"config": config, "run_ids": []})["run_ids"].append(row["run_id"])
+    snapshots = list(configurations.values())
+    harness_ids = sorted({r["harness_id"] for r in rows})
+    h = snapshots[0]["config"] if len(snapshots) == 1 and not unknown_configs else {
+        "id": harness_ids[0] if len(harness_ids) == 1 else "pooled: " + ", ".join(harness_ids)}
     tt = task_table(rows)
     agg = aggregate(rows)
     strong = aggregate(rows, "strong_pass")
+    repeat_counts = Counter((r["model"], r["harness_id"], r["task_id"]) for r in rows)
+    repeat_range = [min(repeat_counts.values()), max(repeat_counts.values())]
     models = sorted({r["model"] for r in rows})
     providers = sorted({r["provider"] for r in rows})
     oracle = cohens_kappa([(r.get("hidden_pass"), r.get("strong_pass")) for r in rows])
     ci = bootstrap_ci([v["pass1"] for v in tt.values()])
     br = boundary_rate(rows)
-    has_sentinel = any(r.get("sentinel_interventions") for r in rows) or bool(h.get("sentinel", {}).get("enabled"))
+    has_sentinel = any(r.get("sentinel_interventions") for r in rows) or any(bool(snapshot["config"].get("sentinel", {}).get("enabled")) for snapshot in snapshots)
     # Both conduct rates below are predicates over execute_tool spans. A source that records tool
     # REQUESTS but never their execution (importers.common.UNMEASURED_FIELDS; Cursor) has none, so
     # ran_tests_after_last_edit() comes back False and read_before_write() comes back vacuously
@@ -50,7 +68,9 @@ def build_card(rows: list[dict], traj: list, source: str = "") -> dict:
                  "models": models, "pooled_models": len(models) > 1,
                  "provider": providers[0] if len(providers) == 1 else "pooled: " + ", ".join(providers),
                  "providers": providers, "harness": h,
-                 "tasks": sorted({r["task_id"] for r in rows}), "repeats": max(r["repeat_index"] for r in rows) + 1,
+                 "recorded_configurations": snapshots, "configuration_unknown_runs": unknown_configs,
+                 "tasks": sorted({r["task_id"] for r in rows}), "repeats": repeat_range[1],
+                 "repeat_range": repeat_range,
                  "runs": len(rows), "has_sentinel": has_sentinel,
                  "oracle": "recorded hidden_pass verdicts; their meaning is defined by the source dataset"},
         "outcome": {"pass1": agg.get("pass@1"), "ci95": list(ci),
@@ -92,6 +112,8 @@ def card_markdown(c: dict, source: str = "") -> str:
     src = source or c.get("source") or ""
     cell, o, k, cost = c["cell"], c["outcome"], c["conduct"], c["cost"]
     h = cell["harness"]
+    lo, hi = cell.get("repeat_range", [cell["repeats"], cell["repeats"]])
+    repeat_label = str(lo) if lo == hi else f"{lo}–{hi}"
     paired = c["integrity"].get("oracle")
     oracle_line = (f"- Oracle sensitivity on {paired['n_eligible']} paired grades: "
                    f"{paired['cells']['only_a_true']} hidden-only passes lost, "
@@ -104,12 +126,21 @@ def card_markdown(c: dict, source: str = "") -> str:
     md += ["", "## 1. The cell (what exactly was measured)", "", "| field | value |", "|---|---|",
            f"| model | `{cell['model']}` via `{cell['provider']}` |",
            f"| harness | `{h.get('id')}` — tools: {', '.join(h.get('tools', []))}; policy: {h.get('policy')}; "
-           f"max_steps: {h.get('max_steps')}; context_window: {h.get('context_window') or 'full'}; temperature: {h.get('temperature')} |"]
+           f"max_steps: {h.get('max_steps')}; context_window: {h.get('context_window', 'not recorded')}; temperature: {h.get('temperature')} |"]
+    snapshots = cell.get("recorded_configurations", [])
+    unknown = cell.get("configuration_unknown_runs", 0)
+    config_details = []
+    if len(snapshots) > 1 or unknown:
+        config_details += ["", f"{len(snapshots)} distinct recorded configurations; {unknown} runs with configuration not recorded. "
+               "No single configuration is established for this entire card.", ""]
+        for snapshot in snapshots:
+            config_details += [f"Recorded snapshot for runs: {', '.join(snapshot['run_ids'])}",
+                   "```json", json.dumps(snapshot["config"], indent=2, sort_keys=True), "```", ""]
     if cell.get("has_sentinel"):
         md.append(f"| sentinel | {json.dumps(h.get('sentinel'))} |")
-    md += [f"| system prompt | {len(h.get('system_prompt', ''))} chars; full text stored in the first span of every ledger |",
+    md += [f"| system prompt | {str(len(h['system_prompt'])) + ' chars' if isinstance(h.get('system_prompt'), str) else 'not established for entire cohort'}; inspect recorded configurations |",
            f"| tasks | {len(cell['tasks'])} ({', '.join(cell['tasks'])}) |",
-           f"| protocol | {cell['repeats']} repeats per task; oracle = {cell['oracle']} |",
+           f"| protocol | {repeat_label} recorded attempts per observed task slot within each model/harness; oracle = {cell['oracle']} |",
            f"| runs | {cell['runs']} |", "",
            "## 2. Outcome (as a distribution, not a number)", "", "| metric | value |", "|---|---|",
            f"| pass@1 (mean over tasks) | {_f(o['pass1'])}  95% task-bootstrap CI [{_f(o['ci95'][0])}, {_f(o['ci95'][1])}] |"]
@@ -145,6 +176,8 @@ def card_markdown(c: dict, source: str = "") -> str:
            oracle_line,
            "- The index and ledgers retain recorded facts. Missing grades, usage and conduct measurements remain unknown.", "",
            "## 6. What this card does not tell you", ""] + [f"- {m}" for m in c["missing"]] + [""]
+    if config_details:
+        md += ["", "## Recorded configuration provenance", ""] + config_details
     return "\n".join(md)
 
 

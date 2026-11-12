@@ -58,13 +58,14 @@ def cells(rows: list[dict]) -> list[dict]:
     out = []
     for (model, h), R in sorted(groups.items()):
         s = summarize(R, label=h)
-        n_rep = max(Counter(r["task_id"] for r in R).values())
+        repeat_counts = Counter(r["task_id"] for r in R)
+        n_rep = max(repeat_counts.values())
         ks = list(range(1, n_rep + 1))
         agg = aggregate(R, k_values=tuple(ks))
         tt = task_table(R, k_values=tuple(ks))
         ci = bootstrap_ci([v["pass1"] for v in tt.values()])
         strong = aggregate(R, "strong_pass")
-        s.update({"model": model, "harness": h, "repeats": n_rep,
+        s.update({"model": model, "harness": h, "repeats": n_rep, "repeat_range": [min(repeat_counts.values()), n_rep],
                   "n_graded": sum(r.get("hidden_pass") is not None for r in R),
                   "n_ungraded": sum(r.get("hidden_pass") is None for r in R),
                   "ci95": list(ci), "pass1_strong": strong.get("pass@1"),
