@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { cleanup, fireEvent, render, screen } from '@testing-library/react'
+import { act, cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { useState } from 'react'
 import { HarnessPicker } from './harnessPicker'
@@ -135,6 +135,111 @@ describe('searchable harness workspace picker', () => {
     fireEvent.keyDown(input, { key: 'End' })
     expect(reopenedList.scrollTop).toBe(50)
     expect(document.getElementById(input.getAttribute('aria-activedescendant')).getAttribute('aria-label')).toBe('Native Codex')
+  })
+  it('keeps a pressed row stationary through pointerup when choices arrive before click', () => {
+    const changed = vi.fn(); const { rerender } = render(<TestPicker onChange={changed} />)
+    fireEvent.click(screen.getByRole('combobox', { name: 'Harness' }))
+    const option = screen.getByRole('option', { name: 'Codex stand-in' })
+    fireEvent.pointerDown(option, { pointerId: 1, button: 0, pointerType: 'mouse', isPrimary: true })
+    expect(changed).not.toHaveBeenCalled()
+    const updated = [options[0], { value: 'saved:new', label: 'New saved harness', group: 'Saved' },
+      { ...options[1], description: 'A longer catalog description that would move lower rows' }, ...options.slice(2)]
+    rerender(<TestPicker onChange={changed} options={updated} />)
+    // Inserting the saved group here previously moved the pressed row before native hit testing.
+    expect(screen.queryByRole('option', { name: 'New saved harness' })).toBeNull()
+    expect(option.textContent).toContain('TraceHarness shell')
+    fireEvent.pointerUp(option, { pointerId: 1, pointerType: 'mouse' })
+    expect(screen.queryByRole('option', { name: 'New saved harness' })).toBeNull()
+    fireEvent.click(option)
+    expect(changed).toHaveBeenCalledExactlyOnceWith('fixed:codex')
+    expect(screen.getByRole('combobox', { name: 'Harness' }).value).toBe('Codex stand-in')
+    fireEvent.click(screen.getByRole('combobox', { name: 'Harness' }))
+    expect(screen.getByRole('option', { name: 'New saved harness' })).toBeTruthy()
+    expect(screen.getByRole('option', { name: 'Codex stand-in' }).textContent).toContain('A longer catalog description')
+  })
+  it.each(['disabled', 'removed'])('rejects a pressed choice that becomes %s before release', (change) => {
+    const changed = vi.fn(); const { rerender } = render(<TestPicker onChange={changed} />)
+    fireEvent.click(screen.getByRole('combobox', { name: 'Harness' }))
+    const option = screen.getByRole('option', { name: 'Native Codex' })
+    fireEvent.pointerDown(option, { pointerId: 2, button: 0, pointerType: 'touch', isPrimary: true })
+    const updated = change === 'removed' ? options.filter((row) => row.value !== 'native:codex')
+      : options.map((row) => row.value === 'native:codex' ? { ...row, disabled: true } : row)
+    rerender(<TestPicker onChange={changed} options={updated} />)
+    expect(screen.getByRole('option', { name: 'Native Codex' })).toBe(option)
+    fireEvent.pointerUp(option, { pointerId: 2, pointerType: 'touch' }); fireEvent.click(option)
+    expect(changed).not.toHaveBeenCalled()
+    expect(screen.getByRole('combobox', { name: 'Harness' }).getAttribute('aria-expanded')).toBe('true')
+    if (change === 'removed') expect(screen.queryByRole('option', { name: 'Native Codex' })).toBeNull()
+    else expect(screen.getByRole('option', { name: 'Native Codex' }).getAttribute('aria-disabled')).toBe('true')
+  })
+  it('releases delayed choices on touch cancellation without preventing scrolling or selecting', () => {
+    const changed = vi.fn(); const { rerender } = render(<TestPicker onChange={changed} />)
+    const input = screen.getByRole('combobox', { name: 'Harness' })
+    fireEvent.click(input)
+    const option = screen.getByRole('option', { name: 'Native Codex' })
+    const down = new PointerEvent('pointerdown', { bubbles: true, cancelable: true, pointerId: 3, button: 0, pointerType: 'touch', isPrimary: true })
+    fireEvent(option, down)
+    expect(down.defaultPrevented).toBe(false)
+    rerender(<TestPicker onChange={changed} options={[...options, { value: 'new', label: 'New choice' }]} />)
+    expect(screen.queryByRole('option', { name: 'New choice' })).toBeNull()
+    fireEvent.pointerCancel(option, { pointerId: 3, pointerType: 'touch' })
+    expect(screen.getByRole('option', { name: 'New choice' })).toBeTruthy()
+    expect(changed).not.toHaveBeenCalled()
+    fireEvent.keyDown(input, { key: 'End' }); fireEvent.keyDown(input, { key: 'Enter' })
+    expect(changed).toHaveBeenCalledExactlyOnceWith('new')
+  })
+  it('releases choices after an outside release, window blur, or dismissal without selecting', () => {
+    const changed = vi.fn(); const { rerender, unmount } = render(<TestPicker onChange={changed} />)
+    const input = screen.getByRole('combobox', { name: 'Harness' })
+    fireEvent.click(input)
+    fireEvent.pointerDown(screen.getByRole('option', { name: 'Native Codex' }), { pointerId: 4, button: 0, isPrimary: true })
+    rerender(<TestPicker onChange={changed} options={[...options, { value: 'new', label: 'New choice' }]} />)
+    fireEvent.pointerUp(document.body, { pointerId: 4 })
+    expect(screen.getByRole('option', { name: 'New choice' })).toBeTruthy()
+    fireEvent.pointerDown(screen.getByRole('option', { name: 'Native Codex' }), { pointerId: 5, button: 0, isPrimary: true })
+    rerender(<TestPicker onChange={changed} options={[...options, { value: 'latest', label: 'Latest choice' }]} />)
+    fireEvent.blur(window)
+    expect(screen.getByRole('option', { name: 'Latest choice' })).toBeTruthy()
+    fireEvent.pointerDown(screen.getByRole('option', { name: 'Native Codex' }), { pointerId: 6, button: 0, isPrimary: true })
+    rerender(<TestPicker onChange={changed} options={options} />)
+    fireEvent.keyDown(input, { key: 'Escape' }); fireEvent.click(input)
+    expect(screen.queryByRole('option', { name: 'Latest choice' })).toBeNull()
+    expect(changed).not.toHaveBeenCalled()
+    unmount()
+    fireEvent.pointerCancel(document.body, { pointerId: 6 })
+  })
+  it('repositions for a scrollport-only resize and disconnects observation on close', () => {
+    const observers = []
+    vi.stubGlobal('ResizeObserver', class {
+      constructor(callback) { this.callback = callback; this.targets = new Set(); this.disconnect = vi.fn(); observers.push(this) }
+      observe(target) { this.targets.add(target) }
+    })
+    vi.stubGlobal('innerHeight', 900)
+    let scrollportBottom = 700
+    const original = HTMLElement.prototype.getBoundingClientRect
+    vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockImplementation(function () {
+      if (this.dataset.testScrollport) return { top: 60, bottom: scrollportBottom, height: scrollportBottom - 60, left: 0, right: 400, width: 400 }
+      if (this.classList.contains('rg-harness-picker-control')) return { top: 280, bottom: 324, height: 44, left: 16, right: 384, width: 368 }
+      if (this.classList.contains('rg-harness-picker')) return { top: 256, bottom: 352, height: 96, left: 16, right: 384, width: 368 }
+      return original.call(this)
+    })
+    const { unmount } = render(<div data-test-scrollport="yes" style={{ overflowY: 'auto' }}><TestPicker /></div>)
+    const input = screen.getByRole('combobox', { name: 'Harness' })
+    fireEvent.click(input)
+    const panel = screen.getByRole('listbox').parentElement
+    expect(panel.dataset.placement).toBe('below'); expect(parseFloat(panel.style.maxHeight)).toBe(360)
+    scrollportBottom = 600
+    act(() => observers.forEach((observer) => observer.callback([])))
+    expect(parseFloat(panel.style.maxHeight)).toBe(260)
+    expect(input.getAttribute('aria-expanded')).toBe('true')
+    scrollportBottom = 700
+    act(() => observers.forEach((observer) => observer.callback([])))
+    expect(parseFloat(panel.style.maxHeight)).toBe(360)
+    const observed = observers.find((observer) => observer.targets.has(input.closest('[data-test-scrollport]')))
+    expect([...observed.targets].some((target) => panel.contains(target))).toBe(false)
+    fireEvent.keyDown(input, { key: 'Escape' })
+    expect(observed.disconnect).toHaveBeenCalledOnce()
+    unmount()
   })
   it('respects the workbench scrollport even when the browser has more room', () => {
     vi.stubGlobal('innerHeight', 900)

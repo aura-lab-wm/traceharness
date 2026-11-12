@@ -244,3 +244,8 @@ For subsequent browser proofs:
 7. Review the account/admin proposal separately. No new signup, MFA, suspension or owner-console behavior should be assumed to exist yet.
 
 [Structured results and hashes of private local evidence](EIGHT_SOL_PLATFORM_AUDIT.json). Credentials, provider balances, private prompts and recovery material are excluded.
+
+
+## November 12 completed picker follow-up
+
+The [full picker review](PICKER_FULL_REVIEW_2026_11_12.md) adds 22 successful production selections at the original viewport and two independently reproduced local timing defects: saved-library insertion during a held click and stale popup clipping after a container-only resize. Both have targeted repairs and native-browser replay evidence. This supersedes the earlier investigation's “no new application defect established” status, without assigning an unsupported cause to the historical automation failure.

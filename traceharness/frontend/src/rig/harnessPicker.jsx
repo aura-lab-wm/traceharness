@@ -1,4 +1,4 @@
-import { useEffect, useId, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useId, useLayoutEffect, useMemo, useRef, useState } from 'react'
 
 // A searchable single-choice control. Display text never replaces the caller's stable ID.
 export function HarnessPicker({ label, value, options = [], onChange, placeholder = 'Choose an option', searchPlaceholder, emptyMessage = 'No matching options', disabled = false, loading = false, hint, step }) {
@@ -8,6 +8,14 @@ export function HarnessPicker({ label, value, options = [], onChange, placeholde
   const control = useRef(null)
   const popup = useRef(null)
   const list = useRef(null)
+  const pointerGesture = useRef(null)
+  const [pointerOptions, setPointerOptions] = useState(null)
+  const releasePointer = useCallback(() => {
+    pointerGesture.current = null
+    setPointerOptions(null)
+  }, [])
+  // Catalog updates must not move a pressed row before the browser dispatches click.
+  const displayOptions = pointerOptions || options
   // Hover must not move a partially visible row away from the next click.
   // State also re-enables keyboard scrolling when the active ID stays the same.
   const [scrollActive, setScrollActive] = useState(true)
@@ -19,14 +27,14 @@ export function HarnessPicker({ label, value, options = [], onChange, placeholde
   const groups = useMemo(() => {
     const result = new Map()
     const term = query.trim().toLocaleLowerCase()
-    for (const option of options) {
+    for (const option of displayOptions) {
       if (term && ![option.label, option.value, option.description, option.meta, option.group].filter(Boolean).join(' ').toLocaleLowerCase().includes(term)) continue
       const group = option.group || ''
       if (!result.has(group)) result.set(group, [])
       result.get(group).push(option)
     }
     return [...result.entries()]
-  }, [options, query])
+  }, [displayOptions, query])
   const visible = groups.flatMap(([, rows]) => rows)
   const enabled = visible.filter((option) => !option.disabled)
   const active = enabled.find((option) => option.value === activeValue) || enabled[0]
@@ -40,6 +48,27 @@ export function HarnessPicker({ label, value, options = [], onChange, placeholde
     document.addEventListener('pointerdown', outside)
     return () => document.removeEventListener('pointerdown', outside)
   }, [shown])
+  useEffect(() => {
+    if (!shown) { releasePointer(); return }
+    const end = (event) => {
+      const gesture = pointerGesture.current
+      if (!gesture || event.pointerId !== gesture.pointerId) return
+      // Keep the snapshot through click, which follows pointerup. A release elsewhere
+      // cannot click the pressed row; touch scrolling instead produces pointercancel.
+      if (event.type === 'pointercancel' || !gesture.element.contains(event.target)) releasePointer()
+    }
+    document.addEventListener('pointerup', end)
+    document.addEventListener('pointercancel', end)
+    document.addEventListener('click', releasePointer)
+    window.addEventListener('blur', releasePointer)
+    return () => {
+      pointerGesture.current = null
+      document.removeEventListener('pointerup', end)
+      document.removeEventListener('pointercancel', end)
+      document.removeEventListener('click', releasePointer)
+      window.removeEventListener('blur', releasePointer)
+    }
+  }, [shown, releasePointer])
   useLayoutEffect(() => {
     if (!shown || !placement || activeIndex < 0 || !list.current || !scrollActive) return
     const option = document.getElementById(`${id}-option-${activeIndex}`)?.getBoundingClientRect()
@@ -75,11 +104,18 @@ export function HarnessPicker({ label, value, options = [], onChange, placeholde
       setPlacement((old) => old && Object.keys(next).every((key) => old[key] === next[key]) ? old : next)
     }
     update()
+    // Absolute popup dimensions depend on the anchor and its clipping ancestors,
+    // which can resize without a window resize or scroll. Never observe the popup
+    // itself: changing its maxHeight must not feed back into observation.
+    const resizeObserver = typeof ResizeObserver === 'function' ? new ResizeObserver(() => update()) : null
+    for (let element = root.current; element; element = element.parentElement) resizeObserver?.observe(element)
+    if (control.current) resizeObserver?.observe(control.current)
     window.addEventListener('resize', update)
     window.addEventListener('scroll', update, true)
     viewport?.addEventListener('resize', update)
     viewport?.addEventListener('scroll', update)
     return () => {
+      resizeObserver?.disconnect()
       window.removeEventListener('resize', update)
       window.removeEventListener('scroll', update, true)
       viewport?.removeEventListener('resize', update)
@@ -93,13 +129,15 @@ export function HarnessPicker({ label, value, options = [], onChange, placeholde
     setQuery(''); setActiveValue(value); setOpen(true)
   }
   function choose(option) {
-    if (!option || option.disabled || disabled) return
-    onChange(option.value)
+    const current = option && options.find((row) => row.value === option.value)
+    if (!current || option.disabled || current.disabled || disabled) return
+    onChange(current.value)
     setOpen(false); setQuery('')
     input.current?.focus()
   }
   function keydown(event) {
     if (event.nativeEvent?.isComposing) return
+    releasePointer()
     if (event.key === 'Escape' && shown) {
       event.preventDefault(); event.stopPropagation(); setOpen(false); setQuery(''); return
     }
@@ -149,7 +187,15 @@ export function HarnessPicker({ label, value, options = [], onChange, placeholde
             const details = [option.description && `${id}-description-${index}`, option.meta && `${id}-meta-${index}`, option.status && `${id}-status-${index}`].filter(Boolean).join(' ')
             return <div key={option.value} id={`${id}-option-${index}`} role="option" aria-label={option.label} aria-describedby={details || undefined} aria-selected={option.value === value} aria-disabled={option.disabled || undefined}
               className={`rg-harness-picker-option${active?.value === option.value ? ' is-active' : ''}${option.value === value ? ' is-selected' : ''}`}
-              onMouseDown={(event) => event.preventDefault()} onMouseMove={() => { if (!option.disabled) { setScrollActive(false); setActiveValue(option.value) } }} onClick={() => choose(option)}>
+              onPointerDown={(event) => {
+                if (event.button !== 0 || event.isPrimary === false || option.disabled || disabled) return
+                pointerGesture.current = { pointerId: event.pointerId, value: option.value, element: event.currentTarget }
+                setPointerOptions(displayOptions); setScrollActive(false)
+              }}
+              onMouseDown={(event) => event.preventDefault()} onMouseMove={() => { if (!option.disabled) { setScrollActive(false); setActiveValue(option.value) } }} onClick={() => {
+                if (!pointerGesture.current || pointerGesture.current.value === option.value) choose(option)
+                releasePointer()
+              }}>
               <span className="rg-harness-picker-option-copy"><strong>{option.label}</strong>{option.description && <span id={`${id}-description-${index}`}>{option.description}</span>}{option.meta && <small id={`${id}-meta-${index}`}>{option.meta}</small>}</span>
               <span className="rg-harness-picker-option-trailing">{option.status && <small id={`${id}-status-${index}`}>{option.status}</small>}{option.value === value && <span className="rg-harness-picker-check" aria-hidden="true">✓</span>}</span>
             </div>

@@ -97,7 +97,8 @@ function switchHarness(value, carry = false) {
     : value.startsWith('fixed:') ? CARDS.find((card) => card.id === value.slice(6)).name + ' stand-in'
       : value === 'native:native-claude-code' ? 'Claude Code' : 'Codex'
   choose('Harness', label)
-  expect(screen.queryByRole('group', { name: 'Change harness' })).toBeNull()
+  expect(screen.getByRole('combobox', { name: 'Harness', exact: true }).value).toBe(label)
+  expect(screen.queryByRole('listbox', { name: 'Harness options', exact: true })).toBeNull()
 }
 function importFile(contents, name = 'configuration.json') {
   const file = new File([contents], name, { type: 'application/json' })
@@ -305,6 +306,35 @@ describe('exact compatibility in the member composer', () => {
 })
 
 describe('the unified member Harnesses composer', () => {
+  it('applies unfiltered harness choices to the exported configuration', async () => {
+    const download = captureDownload()
+    render(<Composer />); await ready()
+    const input = screen.getByRole('combobox', { name: 'Harness', exact: true })
+    const choices = [
+      ['Claude Code stand-in', 'traceharness', { id: 'claude', lane: 'fixed' }],
+      ['Claude Code', 'native-claude-code', {}],
+      ['Codex', 'native-codex', {}],
+      ['Custom TraceHarness harness', 'traceharness', { lane: 'minimal' }],
+    ]
+    for (const [label, runtime, harness] of choices) {
+      fireEvent.click(input)
+      const list = screen.getByRole('listbox', { name: 'Harness options', exact: true })
+      expect(input.value).toBe('')
+      for (const [name] of choices) expect(within(list).getByRole('option', { name, exact: true })).toBeTruthy()
+      // Direct DOM activation covers unfiltered state wiring, not browser clipping or hit testing.
+      fireEvent.click(within(list).getByRole('option', { name: label, exact: true }))
+      expect(input.value).toBe(label)
+      expect(screen.queryByRole('listbox', { name: 'Harness options', exact: true })).toBeNull()
+      const configuration = JSON.parse(await download())
+      expect(configuration.runtime_id).toBe(runtime)
+      if (runtime === 'traceharness') expect(configuration.harness).toMatchObject(harness)
+      else expect(configuration.harness).toEqual({})
+      expect(configuration.model_id).toBe('fixture/model-a')
+      expect(configuration.task_id).toBe('fixture-task')
+    }
+    expect(calls.some((call) => call.url === '/api/runner/jobs' && call.method === 'POST')).toBe(false)
+  })
+
   it('shows a truthful disconnected state, six stand-ins and no credential input or fake tasks', async () => {
     catalog = { ...defaultCatalog(), runner: { available: false, message: 'No runner configured.' }, runtimes: [], models: [], tasks: [], credentials_available: false, execution_available: false }
     render(<Composer />)
