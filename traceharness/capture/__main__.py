@@ -51,6 +51,8 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--backfill", action="store_true", help="capture every allow-listed session once, then exit")
     p.add_argument("--watch", action="store_true",
                    help="stay up and capture what changed, every --interval seconds")
+    p.add_argument("--sync", action="store_true",
+                   help="with --watch: upload consented captured runs to traceharness.dev; requires login and terminal consent")
     p.add_argument("--seed-cursors", action="store_true",
                    help="adopt a corpus already captured by --backfill so --watch does not read it again; "
                         "stats sources, reads none")
@@ -110,6 +112,24 @@ def main(argv: list[str] | None = None) -> int:
         signal.signal(signal.SIGTERM, lambda *_: stopping.set())
     p = build_parser()
     args = p.parse_args(argv)
+
+    if args.sync:
+        # Refuse before importing backend paths (which can seed a lab), or reading any session.
+        if (not args.watch or args.backfill or args.seed_cursors or args.sweep or args.prune_orphans
+                or args.pause or args.resume or args.nudge or args.print_launchd or args.print_menubar_agent
+                or args.apply or args.prune_deleted_sources or args.prune_ignore_unreadable):
+            print("--sync only combines with --watch", file=sys.stderr)
+            return 2
+        if args.yes or not sys.stdin.isatty():
+            print("Capture sync requires explicit consent at a terminal; --yes cannot authorize uploads.", file=sys.stderr)
+            return 2
+        from .consent import confirm_live_capture
+        prompt = ("Capture sync reads the selected session paths and uploads their captured transcripts, "
+                  "tool output and patches (including already captured runs) to your account at "
+                  "https://traceharness.dev. These may contain private data or secrets. Type yes to start: ")
+        if not confirm_live_capture(assume_yes=False, isatty=True, ask=lambda _: input(prompt)):
+            print("Live capture did not start. Nothing was read.", file=sys.stderr)
+            return 2
 
     if args.watch and stopping is None:          # belt and braces: never run the loop without it
         import signal
@@ -289,7 +309,7 @@ def main(argv: list[str] | None = None) -> int:
         return 1 if report["errors"] else 0
 
     from .consent import confirm_live_capture
-    if not confirm_live_capture(assume_yes=args.yes, isatty=sys.stdin.isatty(), ask=input):
+    if not args.sync and not confirm_live_capture(assume_yes=args.yes, isatty=sys.stdin.isatty(), ask=input):
         print("Live capture did not start. Nothing was read.", file=sys.stderr)
         return 2
 
@@ -301,9 +321,21 @@ def main(argv: list[str] | None = None) -> int:
         # somebody requested. The handler installed at the top of main() sets a flag instead; the
         # loop checks it between short waits and exits through the same clean path as ctrl-c.
         print(f"watching {len(roots)} root(s) every {args.interval:g}s — ctrl-c to stop", file=sys.stderr)
+        from .client import CaptureClient, CaptureError, CaptureSync
+        client = None
         try:
+            after_pass = None
+            if args.sync:
+                client = CaptureClient()
+                identity = client.identity()
+                print(f"Sync account: {identity['email']} at https://traceharness.dev", file=sys.stderr)
+                after_pass = CaptureSync(client, roots, RUNS_ROOT)
+            options = {"after_pass": after_pass} if after_pass is not None else {}
             sniffer.loop(roots, RUNS_ROOT, gap_s=gap_s, interval_s=args.interval,
-                         archive_root=archive_root, stop=stopping.is_set)
+                         archive_root=archive_root, stop=stopping.is_set, **options)
+        except CaptureError as error:
+            print(str(error), file=sys.stderr)
+            return 1
         except CaptureLocked as e:
             # The lock's own words: "another capture writer holds ..." for contention, "cannot
             # lock ..." for a mount without locking. Always claiming a second watcher misled.
@@ -312,6 +344,9 @@ def main(argv: list[str] | None = None) -> int:
         except KeyboardInterrupt:
             print("stopped", file=sys.stderr)
             return 130
+        finally:
+            if client is not None:
+                client.close()
         return 0
 
     report = backfill.run(roots, RUNS_ROOT, gap_s=gap_s, archive_root=archive_root)

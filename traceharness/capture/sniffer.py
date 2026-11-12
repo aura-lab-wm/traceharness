@@ -344,7 +344,8 @@ FULL_SWEEP_S = 24 * 3600.0
 def loop(roots: list, runs_root: str, gap_s: float, interval_s: float,
          stop: Optional[Callable[[], bool]] = None, now: Optional[Callable[[], float]] = None,
          archive_root: Optional[str] = None, sleep=time.sleep,
-         full_sweep_s: float = FULL_SWEEP_S) -> None:
+         full_sweep_s: float = FULL_SWEEP_S,
+         after_pass: Optional[Callable[[dict], None]] = None) -> None:
     """Tick until `stop()` says otherwise, obeying the control file between passes.
 
     Holds the `sniffer` lock for its whole life so a second one cannot start. `stop`, `now` and
@@ -379,6 +380,7 @@ def loop(roots: list, runs_root: str, gap_s: float, interval_s: float,
                 t = now()
                 last_full = float(presence.read(runs_root).get("last_full_sweep_at") or 0.0)
                 full = full_sweep_s > 0 and (t - last_full) >= full_sweep_s
+                rep = None
                 try:
                     rep = tick(roots, runs_root, gap_s, now=t, archive_root=archive_root, full=full, stop=stop)
                     # A sweep stopped part-way did not read everything, so it does not count. Recording
@@ -394,6 +396,9 @@ def loop(roots: list, runs_root: str, gap_s: float, interval_s: float,
                     pass                                   # tick already said "locked"
                 except Exception as e:                     # recorded by tick(); survive it
                     presence.write(runs_root, state="error", error=_said(e))
+                # External sync failures end the loop; they must not enter the tick retry path.
+                if after_pass is not None and rep is not None and rep.get("state") != "locked":
+                    after_pass(rep)
                 presence.write(runs_root, next_tick_at=now() + interval_s, heartbeat_at=now())
                 _wait(runs_root, interval_s, last_nudge, sleep, stop)
             clean = True

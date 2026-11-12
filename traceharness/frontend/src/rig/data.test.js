@@ -41,6 +41,23 @@ describe('normalisation', () => {
     expect(runs[9].mode).toBe('ungraded')
     expect(isFailureMode('ungraded')).toBe(false); expect(isFailureMode('passed')).toBe(false); expect(isFailureMode('wrong_patch')).toBe(true)
   })
+  it('uses refreshed rows and verdicts when the outcomes response stays cached', () => {
+    const outcomes = { runs: { a: { mode: 'passed' }, b: { mode: 'ungraded' } } }
+    const previous = normRuns([{ run_id: 'a', hidden_pass: false }], 'refresh')
+    expect(joinOutcomes(previous, outcomes).map((r) => r.id)).toEqual(['a'])
+    const refreshed = normRuns([{ run_id: 'a', hidden_pass: true }, { run_id: 'b', hidden_pass: null }], 'refresh')
+    const joined = joinOutcomes(refreshed, outcomes)
+    expect(joined.map((r) => r.id)).toEqual(['a', 'b'])
+    expect(joined[0].hid).toBe(true)
+    expect(joined[1].mode).toBe('ungraded')
+    expect(joinOutcomes([refreshed[1]], outcomes).map((r) => r.id)).toEqual(['b'])
+    expect(joinOutcomes([], outcomes)).toEqual([])
+  })
+  it('updates outcome fields without replacing the current run verdict', () => {
+    const runs = normRuns([{ run_id: 'a', hidden_pass: true }], 'refresh')
+    expect(joinOutcomes(runs, { runs: { a: { mode: 'ungraded' } } })[0].mode).toBe('ungraded')
+    expect(joinOutcomes(runs, { runs: { a: { mode: 'passed', ledger: true } } })[0]).toMatchObject({ hid: true, mode: 'passed', hasLedger: true })
+  })
   it('labels mock controls and resolves conditions', () => {
     const ov = normOverview({ results: [{ name: 'a', models: ['mock', 'mock-b'], harnesses: ['x', 'baseline'] }, { name: 'b', models: ['z/m2', 'z/m1'], harnesses: ['x'] }] })
     expect(ov.results.map((r) => r.kind)).toEqual(['mock', 'recorded'])

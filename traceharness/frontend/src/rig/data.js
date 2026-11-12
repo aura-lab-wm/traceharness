@@ -237,10 +237,12 @@ export function normRun(r, ds) {
 export function normRuns(raw, ds) { return once(raw, 'runs:' + ds, () => (Array.isArray(raw) ? raw : []).map((r) => normRun(r, ds))) }
 export function joinOutcomes(runs, outcomes) {
   if (!outcomes || !outcomes.runs) return runs
-  return once(outcomes, 'join', () => runs.map((r) => {
+  // useRuns memoizes both inputs. An outcomes-only cache would retain old rows
+  // when a results-only refresh replaces the run index.
+  return runs.map((r) => {
     const o = outcomes.runs[r.id]
     return o ? { ...r, mode: o.mode ?? null, cutoffCalls: o.cutoff_calls ?? null, lastFinish: o.last_finish ?? null, hasLedger: o.ledger ?? null } : r
-  }))
+  })
 }
 
 /* ------------------------------------------------------------------ paths (one place) */

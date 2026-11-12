@@ -26,7 +26,9 @@ def build_parser() -> argparse.ArgumentParser:
                "same canonical study-aggregate statistics as GET /api/results/<dir>/{oracle,"
                "comparisons,experiment} as JSON; `traceharness sources` lists the grids on disk, the import "
                "adapters, and the benchmarks that are not loaded; `traceharness serve` is this, the default. "
-               "`traceharness link --url wss://...` dials out to a signed-in console; it does not open a port.",
+               "`traceharness link --url wss://...` dials out to a signed-in console; it does not open a port. "
+               "`traceharness login` signs in for capture; `traceharness capture --watch --sync` uploads "
+               "consented sessions; `traceharness whoami` checks identity and `traceharness logout` revokes the token.",
     )
     p.add_argument("--host", default=os.environ.get("TRACEHARNESS_HOST", "127.0.0.1"),
                    help="interface to bind (default 127.0.0.1; use 0.0.0.0 in a container)")
@@ -620,6 +622,12 @@ def main(argv: list[str] | None = None) -> int:
     # explicit form of the default. A bare invocation still serves, because the handout and the
     # lab deck both say `python3 -m traceharness --no-browser` and those must keep working.
     argv = list(sys.argv[1:] if argv is None else argv)
+    if argv and argv[0] in {"login", "logout", "whoami"}:
+        from traceharness.capture.client import auth_main
+        return auth_main(argv[0], argv[1:])
+    if argv and argv[0] == "capture":
+        from traceharness.capture.__main__ import main as capture_main
+        return capture_main(argv[1:])
     if argv and argv[0] == "run":
         from traceharness.core import runner  # noqa: E402
         sys.argv = ["traceharness run"] + argv[1:]
