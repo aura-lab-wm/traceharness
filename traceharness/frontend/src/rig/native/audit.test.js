@@ -111,14 +111,14 @@ describe('auditReplacement', () => {
     expect(rules(audit('Key XAKIAABCDEFGHIJKLMNOP is not that shape at all.'))).toEqual([])
     expect(rules(audit('Token xoxb-123456789012-abcdef is fabricated for this test.'))).toEqual(['leak.credential-shape'])
     expect(rules(audit('-----BEGIN RSA PRIVATE KEY----- fabricated header for this test'))).toEqual(['leak.credential-shape'])
-    expect(audit('Open /Users/sample-person/project/notes.txt before you start.')[0]).toMatchObject({ rule: 'leak.local-path', severity: 'warning', contract: false, data: { match: '/Users/sample-person/', count: 1 } })
+    expect(audit('Open /Users/someone/project/notes.txt before you start.')[0]).toMatchObject({ rule: 'leak.local-path', severity: 'warning', contract: false, data: { match: '/Users/someone/', count: 1 } })
     expect(audit('Open /home/sample/project and C:\\Users\\Sample Person\\Docs.txt')[0]).toMatchObject({ rule: 'leak.local-path', data: { match: '/home/sample/', count: 2 } })
     // A Windows path that happens to contain backslash-n also reads as a typed escape: a warning, never a block.
     expect(rules(audit('Open C:\\Users\\Sample Person\\notes.txt'))).toEqual(['escape.poisoning', 'leak.local-path'])
     expect(audit('Write to person@example.org when the sample fails.')[0]).toMatchObject({ rule: 'leak.email', data: { match: 'person@example.org' } })
     expect(rules(audit('The handle @sample and the ratio 3@4 are not addresses.'))).toEqual([])
-    const withEmail = { ...block('first'), baseline_utf8: 'Write to person@example.org about /Users/sample-person/ with\u200b care.' }
-    expect(rules(auditReplacement(withEmail, 'Now write to person@example.org about /Users/sample-person/ with\u200b more care.', 'native-claude-code'))).toEqual([])
+    const withEmail = { ...block('first'), baseline_utf8: 'Write to person@example.org about /Users/someone/ with\u200b care.' }
+    expect(rules(auditReplacement(withEmail, 'Now write to person@example.org about /Users/someone/ with\u200b more care.', 'native-claude-code'))).toEqual([])
     expect(audit('A dash typed as \\u2014 and a break typed as \\n here.')[0]).toMatchObject({ rule: 'escape.poisoning', data: { count: 2, baseline_count: 0, excessive: false } })
     const excessive = audit('Escapes: ' + '\\\\'.repeat(11) + ' in a fabricated line.')[0]
     expect(excessive.data).toEqual({ count: 11, baseline_count: 0, excessive: true })
