@@ -159,5 +159,7 @@
       "file": "browser/summary.json",
       "sha256": "84fc722d2155defb1674b0740e4f9ee9914e010eb6715a2196e01d38a59d9e41"
     }
-  ]
+  ],
+  "record_scope": "Historical repair-release verification, before production capture activation",
+  "current_capture_status_record": "CAPTURE_PRODUCTION_VERIFICATION.json"
 }

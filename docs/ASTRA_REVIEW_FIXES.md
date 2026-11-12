@@ -1,6 +1,6 @@
 # Astra review repairs — November 11, 2026
 
-All seven findings in the pinned Astra review have code repairs and regression coverage. **Production capture remains explicitly unavailable** until its service configuration and atomic storage RPC are provisioned and tested. This is not an all-green platform claim or a completed live capture-upload proof.
+All seven findings in the pinned Astra review have code repairs and regression coverage. **Update: production capture was subsequently enabled and verified with real member sessions.** See [the activation and live verification record](CAPTURE_PRODUCTION_VERIFICATION.md). The unavailable state and publication evidence below describe the earlier repair release, before that activation; they are retained as history. This is not an all-green platform claim.
 
 The public code is `03b249f6a2e243025d7aca0233a07afb255911f6`. The companion site's local commit is `32b8d991207da6bd96b9efffddde21e81d8fdafb`; that repository has no remote and was not pushed. The concurrently published capture push, member-link and plugin work was merged rather than overwritten. The strict client and those tools share one origin-bound credential store.
 
@@ -66,12 +66,12 @@ Writing the contents of /Users/amastro/Documents/TraceHarness-review-fixes-2026-
 ## Availability and manual review
 
 1. Open `/app/device` and `/app/capture` in a private window: both must send you to `/login`.
-2. Sign in and open `/app/capture`: the current production host must say capture uploads are unavailable and disable connection instructions. `/app/device` must render its own approval page with approval disabled, rather than the marketing page. Existing inventory may also report unavailable service configuration; no empty result is substituted for an error.
+2. Sign in and open `/app/capture`: production capture is now enabled. `/app/device` renders its approval page. Follow the current [manual checks and limitations](CAPTURE_PRODUCTION_VERIFICATION.md#manual-check). Before activation, these controls correctly remained disabled while service configuration was unavailable.
 3. Open `/app#/rig/harnesses`: the hosted harness/model/task workspace remains the member entry. Saving or reviewing a configuration must not start an execution.
 4. After storage/service setup is explicitly enabled and verified, follow [CAPTURE_SYNC.md](CAPTURE_SYNC.md). Choose session paths, verify the signed-in identity, and type consent at the terminal. Capture does not require or start a model run. Later-page inventory and deletion tests currently have local fixture coverage, not live populated-account coverage.
 
-The new `auth/capture-storage.sql` in the companion site repository is a separate function over the existing tables. It was tested only in temporary local PostgreSQL clusters, which were stopped. **No production SQL was applied and no existing SQL was reapplied.** Uploads and new device starts fail closed on hosts without compatible atomic storage. Readiness is not inferred from a committed SQL file.
+The new `auth/capture-storage.sql` in the companion site repository is a separate function over the existing tables. At this repair release it had been tested only in temporary local PostgreSQL clusters, which were stopped; no production SQL had yet been applied. The later activation applied only that function, with no existing SQL reapplied. Uploads and new device starts still fail closed on hosts without compatible atomic storage. Readiness is not inferred from a committed SQL file.
 
-Live capture-token issuance/upload/revocation, two-real-member isolation, valid email/OAuth/PKCE exchange, general performance improvement and arbitrary native prompt/model/task combinations remain **UNVERIFIED**. The earlier intermittent native UI guard failure also remains unresolved. Remote member linking still depends on infrastructure omitted by the standing deployment constraints; retaining its client command does not establish a working live room.
+Live capture-token issuance/upload/revocation and two-real-member isolation were subsequently verified; see the activation record. Valid email/OAuth/PKCE exchange, general performance improvement and arbitrary native prompt/model/task combinations remain **UNVERIFIED**. The earlier intermittent native UI guard failure also remains unresolved. Remote member linking still depends on infrastructure omitted by the standing deployment constraints; retaining its client command does not establish a working live room.
 
 [Structured outcomes, source/build pins, skip reasons and evidence hashes](ASTRA_REVIEW_FIXES.json).

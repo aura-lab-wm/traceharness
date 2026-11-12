@@ -74,3 +74,10 @@ The client does not establish that capture infrastructure is enabled on a deploy
 without the required service configuration or atomic storage endpoint can return HTTP 503; the
 client reports capture as unavailable and stops without retrying. Production provisioning,
 route deployment, storage schema and real account isolation require separate verification.
+
+Production capture was subsequently enabled and verified with two real ordinary members:
+device approval, HTTPS upload/replacement, direct RLS refusals, an actual fixture watcher/sync,
+headless pages, concurrent quota admission, pagination, deletion and revocation. See the
+[production activation record](CAPTURE_PRODUCTION_VERIFICATION.md) for the evidence and remaining
+live limits. Its transcripts were controlled verification fixtures; it does not establish that
+every source adapter or a person's private session store has been exercised live.
