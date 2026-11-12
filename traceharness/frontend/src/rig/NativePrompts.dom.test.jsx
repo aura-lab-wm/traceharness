@@ -22,6 +22,7 @@ function Editor({ inventory = nativeInventoryFixture(), execution = true, initia
 const enable = () => fireEvent.click(screen.getByRole('checkbox', { name: 'Use this native prompt profile for the run' }))
 const select = (title) => fireEvent.click(screen.getByRole('checkbox', { name: 'Select prompt ' + title }))
 const counts = () => screen.getByLabelText('Prompt inclusion counts').textContent
+const row = (title) => screen.getByRole('option', { name: new RegExp('^' + title + ',') })
 
 describe('draft editing independent of run application', () => {
   it('keeps an unapplied preview while toggling run application', () => {
@@ -130,7 +131,7 @@ describe('native prompt inventory authoring', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Keep only selected prompts' }))
     expect(latest.profile).toMatchObject({ default_action: 'disable', overrides: [] })
     expect(counts()).toContain('0 / 3')
-    expect(counts()).toContain('1Observed-only components')
+    expect(counts()).toContain('1 read-only')
     fireEvent.change(screen.getByLabelText('Action scope'), { target: { value: 'all' } })
     fireEvent.click(screen.getByRole('button', { name: 'Restore all patchable prompts' }))
     expect(latest.profile).toMatchObject({ default_action: 'keep', overrides: [] })
@@ -197,21 +198,21 @@ describe('native prompt inventory authoring', () => {
 
   it('requires preserved placeholders and displays observed-only bodies without editing controls', () => {
     render(<Editor />); enable()
-    fireEvent.click(screen.getByRole('button', { name: /Template fixture promptPlanningBaseline/ }))
+    fireEvent.click(row('Template fixture prompt'))
     fireEvent.change(screen.getByRole('textbox', { name: 'Replacement text' }), { target: { value: 'Omitted expressions' } })
     expect(screen.getByRole('button', { name: 'Apply replacement' }).disabled).toBe(true)
     expect(screen.getByText(/Preserve every required native placeholder/)).toBeTruthy()
-    fireEvent.click(screen.getByRole('button', { name: /Observed fixture componentPlanningObserved only/ }))
+    fireEvent.click(row('Observed fixture component'))
     expect(screen.queryByRole('textbox', { name: 'Replacement text' })).toBeNull()
     expect(screen.getByText(/no verified mutation mechanism/)).toBeTruthy()
   })
 
-  it('moves focus into the mobile inspector after hiding the activated list', () => {
-    vi.stubGlobal('matchMedia', () => ({ matches: true }))
+  // jsdom has no layout, so the list counts as hidden once a row opens: the narrow (T1) behaviour.
+  it('moves focus into the narrow inspector after hiding the activated list', () => {
     render(<Editor />)
-    const row = screen.getByRole('button', { name: /Template fixture promptPlanningBaseline/ })
-    row.focus()
-    fireEvent.click(row)
+    const option = row('Template fixture prompt')
+    screen.getByLabelText('Prompt list').focus()
+    fireEvent.click(option)
     const inspector = screen.getByRole('region', { name: 'Prompt inspector' })
     expect(inspector.closest('.rg-native-workspace').classList.contains('is-inspecting')).toBe(true)
     expect(document.activeElement).toBe(inspector)
@@ -236,7 +237,7 @@ describe('native prompt inventory authoring', () => {
     })
     try {
       enable()
-      fireEvent.click(screen.getByRole('button', { name: /Template fixture promptPlanningBaseline/ }))
+      fireEvent.click(row('Template fixture prompt'))
       expect(workspace.classList.contains('is-inspecting')).toBe(true)
       fireEvent.change(screen.getByRole('textbox', { name: 'Replacement text' }), { target: { value: 'Draft edit' } })
       expect(focus).not.toHaveBeenCalled()
@@ -262,17 +263,142 @@ describe('native prompt inventory authoring', () => {
     expect(latest.profile).toEqual(original.profile)
   })
 
-  it('pages large genuine-shaped inventories without truncating bulk membership', () => {
+  it('renders large genuine-shaped inventories progressively without truncating bulk membership', () => {
     const inventory = nativeInventoryFixture()
     inventory.blocks = Array.from({ length: 2000 }, (_, index) => ({ ...inventory.blocks[0], id: 'fixture-' + index, title: 'Fixture prompt ' + index }))
     render(<Editor inventory={inventory} />); enable()
-    expect(within(screen.getByLabelText('Prompt list')).getAllByRole('checkbox')).toHaveLength(80)
+    const list = () => screen.getByLabelText('Prompt list')
+    expect(within(list()).getAllByRole('checkbox')).toHaveLength(100)
+    expect(within(list()).getAllByRole('option')[0].getAttribute('aria-setsize')).toBe('2000')
     fireEvent.click(screen.getByRole('button', { name: 'Select filtered' }))
-    expect(counts()).toContain('2000Rows selected for an edit')
+    expect(counts()).toContain('2,000 selected')
     fireEvent.click(screen.getByRole('button', { name: 'Disable selected prompts' }))
     expect(latest.profile).toMatchObject({ default_action: 'disable', overrides: [] })
-    expect(screen.getByText('Page 1 / 25')).toBeTruthy()
-    fireEvent.click(screen.getByRole('button', { name: 'Next prompts' }))
-    expect(screen.getByText('Page 2 / 25')).toBeTruthy()
+    expect(screen.getByText('100 of 2,000 shown')).toBeTruthy()
+    fireEvent.click(screen.getByRole('button', { name: 'Show 100 more' }))
+    expect(within(list()).getAllByRole('checkbox')).toHaveLength(200)
+    expect(within(list()).getAllByRole('option')[199].getAttribute('aria-posinset')).toBe('200')
+  })
+})
+
+describe('workbench shell', () => {
+  it('keeps unapplied text per fragment across navigation and applies every edit in one step', async () => {
+    render(<Editor />); enable()
+    fireEvent.change(screen.getByRole('textbox', { name: 'Replacement text' }), { target: { value: 'Unapplied first edit' } })
+    fireEvent.click(row('Second fixture prompt'))
+    expect(screen.getByRole('textbox', { name: 'Replacement text' }).value).toBe('Second exact baseline')
+    expect(row('First fixture prompt').getAttribute('aria-label')).toContain('unapplied edit')
+    fireEvent.click(screen.getByRole('button', { name: 'Back to prompt list' }))
+    fireEvent.click(row('First fixture prompt'))
+    expect(screen.getByRole('textbox', { name: 'Replacement text' }).value).toBe('Unapplied first edit')
+    const bar = screen.getByRole('group', { name: 'Unapplied edits' })
+    fireEvent.click(within(bar).getByRole('button', { name: 'Apply 1 edit' }))
+    await waitFor(() => expect(latest.profile.overrides[0]?.replacement_utf8).toBe('Unapplied first edit'))
+    expect(screen.queryByRole('group', { name: 'Unapplied edits' })).toBeNull()
+  })
+
+  it('keeps view, filters, selection, inspected fragment and unapplied text when focus mode opens and closes', () => {
+    HTMLDialogElement.prototype.showModal = function () { this.setAttribute('open', '') }
+    HTMLDialogElement.prototype.close = function () { this.removeAttribute('open') }
+    render(<Editor />)
+    fireEvent.change(screen.getByRole('searchbox', { name: 'Find a prompt' }), { target: { value: 'fixture' } })
+    select('Second fixture prompt')
+    fireEvent.click(row('Template fixture prompt'))
+    fireEvent.change(screen.getByRole('textbox', { name: 'Replacement text' }), { target: { value: 'Focus ${TH_PROMPT_EXPR_0} kept ${TH_PROMPT_EXPR_1}' } })
+    const button = screen.getByRole('button', { name: 'Focus' })
+    button.focus()
+    fireEvent.click(button)
+    const dialog = screen.getByRole('dialog', { name: /Native prompt workbench/ })
+    expect(within(dialog).getByRole('searchbox', { name: 'Find a prompt' }).value).toBe('fixture')
+    expect(within(dialog).getByRole('checkbox', { name: 'Select prompt Second fixture prompt' }).checked).toBe(true)
+    expect(within(dialog).getByRole('textbox', { name: 'Replacement text' }).value).toBe('Focus ${TH_PROMPT_EXPR_0} kept ${TH_PROMPT_EXPR_1}')
+    fireEvent.keyDown(dialog, { key: 'Escape' })
+    expect(screen.queryByRole('dialog')).toBeNull()
+    expect(screen.getByRole('textbox', { name: 'Replacement text' }).value).toBe('Focus ${TH_PROMPT_EXPR_0} kept ${TH_PROMPT_EXPR_1}')
+    expect(document.activeElement).toBe(screen.getByRole('button', { name: 'Focus' }))
+  })
+
+  it('never shows a token figure without the estimate sign or word', () => {
+    render(<Editor />); enable()
+    const panel = screen.getByRole('region', { name: 'Native prompt inventory' })
+    const text = panel.textContent
+    for (const match of text.matchAll(/tokens/g)) {
+      const before = text.slice(Math.max(0, match.index - 60), match.index + 20)
+      // R4: every token figure is an estimate (≈) or a measurement from a run, and says which.
+      expect(before).toMatch(/≈|estimate|measured/)
+    }
+    expect(text).toContain('exact')
+  })
+
+  it('makes the "sums over fragments" caption reachable without hovering (review m7)', () => {
+    render(<Editor />); enable()
+    const toggle = screen.getByRole('button', { name: 'sums over fragments, not per request' })
+    const line = toggle.closest('p')
+    const caption = document.getElementById(line.getAttribute('aria-describedby'))
+    expect(caption.textContent).toContain('A single request contains only some of them')
+    expect(caption.className).toBe('sr-only')
+    fireEvent.click(toggle)
+    expect(toggle.getAttribute('aria-expanded')).toBe('true')
+    expect(caption.className).toContain('rg-native-footnote')
+  })
+
+  it('names every view in one select for narrow workbenches (review m8)', () => {
+    render(<Editor />); enable()
+    const pick = screen.getByRole('combobox', { name: 'Workbench view' })
+    expect([...pick.options].map((option) => option.value)).toEqual(['inventory', 'changes', 'audit', 'snapshots', 'pair'])
+    fireEvent.change(pick, { target: { value: 'audit' } })
+    expect(screen.getByRole('tab', { name: /^Audit/ }).getAttribute('aria-selected')).toBe('true')
+  })
+
+  it('offers export and an exact-match rebase for a stale profile, and reports what the rebase dropped', () => {
+    const inventory = nativeInventoryFixture()
+    const stale = nativeDraftForProfile({ ...baselineProfile(inventory), inventory_sha256: 'f'.repeat(64), overrides: [
+      { block_id: 'first', baseline_sha256: inventory.blocks[0].baseline_sha256, action: 'disable' },
+      { block_id: 'gone', baseline_sha256: 'a'.repeat(64), action: 'disable' }] })
+    render(<Editor inventory={inventory} initial={{ ...stale, enabled: false }} />)
+    expect(screen.getByRole('button', { name: 'Export this profile' })).toBeTruthy()
+    fireEvent.click(screen.getByRole('button', { name: 'Rebase onto current inventory' }))
+    expect(latest.profile.inventory_sha256).toBe(inventory.inventory_sha256)
+    expect(latest.profile.overrides).toEqual([{ block_id: 'first', baseline_sha256: inventory.blocks[0].baseline_sha256, action: 'disable' }])
+    const report = screen.getByRole('region', { name: 'Rebase report' }).textContent
+    expect(report).toContain('1 override carried over unchanged.')
+    expect(report).toContain('gone · disable · no such fragment in this inventory')
+  })
+
+  it('says when a rebase leaves fragments to the default "disable" (review m2)', () => {
+    const inventory = nativeInventoryFixture()
+    const stale = nativeDraftForProfile({ ...baselineProfile(inventory), inventory_sha256: 'f'.repeat(64), default_action: 'disable', overrides: [
+      { block_id: 'first', baseline_sha256: inventory.blocks[0].baseline_sha256, action: 'keep' }] })
+    render(<Editor inventory={inventory} initial={{ ...stale, enabled: false }} />)
+    fireEvent.click(screen.getByRole('button', { name: 'Rebase onto current inventory' }))
+    const patchable = inventory.blocks.filter((block) => block.capability === 'patchable').length
+    const report = screen.getByRole('region', { name: 'Rebase report' }).textContent
+    expect(report).toContain('The default action (disable) also disables ' + (patchable - 1) + ' patchable fragment')
+    expect(report).toContain('including any fragment that is new in this inventory')
+  })
+
+  it('says when a pasted search is longer than the query limits (review m3)', async () => {
+    render(<Editor />); enable()
+    fireEvent.change(screen.getByRole('searchbox', { name: 'Find a prompt' }), { target: { value: Array.from({ length: 80 }, (_, index) => 'w' + index).join(' ') } })
+    expect(await screen.findByText('Only the first 64 terms and 1,000 characters of the search are used.')).toBeTruthy()
+  })
+
+  it('shows loading, request failure with Retry, and the overlay-only state in words', () => {
+    const refresh = vi.fn()
+    const { rerender } = render(<NativePrompts runtime={nativeRuntimeFixture()} response={null} loading onRefresh={refresh} onChange={() => {}} />)
+    expect(screen.getByText('Reading the exact runtime inventory…')).toBeTruthy()
+    expect(screen.queryByLabelText('Prompt inclusion counts')).toBeNull()
+    rerender(<NativePrompts runtime={nativeRuntimeFixture()} response={null} error="The runner did not answer." onRefresh={refresh} onChange={() => {}} />)
+    expect(screen.getByRole('alert').textContent).toContain('The runner did not answer.')
+    fireEvent.click(screen.getByRole('button', { name: 'Retry' }))
+    expect(refresh).toHaveBeenCalledTimes(1)
+    rerender(<NativePrompts runtime={{ id: 'native-codex', name: 'Codex', native_prompts: { mode: 'overlay', reason: '' } }} response={{ version: 1, available: false, execution_available: false, inventory: null, reason: '' }} onRefresh={refresh} onChange={() => {}} />)
+    expect(screen.getByText('This runtime exposes an instruction overlay only. Embedded prompts cannot be edited here.')).toBeTruthy()
+  })
+
+  it('says why editing is paused while the host locks it', () => {
+    render(<Editor disabled />)
+    expect(screen.getByText(/Editing is paused while the composer saves, imports or starts a run/)).toBeTruthy()
+    expect(screen.getByRole('button', { name: 'Undo prompt change' }).disabled).toBe(true)
   })
 })

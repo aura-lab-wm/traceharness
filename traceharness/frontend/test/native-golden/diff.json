@@ -1,0 +1,1582 @@
+{
+ "function": "diff_text",
+ "cases": [
+  {
+   "name": "identical",
+   "args": [
+    "same text\n",
+    "same text\n"
+   ],
+   "expected": {
+    "changed": false,
+    "granularity": "word",
+    "before": {
+     "bytes": 10,
+     "lines": 2
+    },
+    "after": {
+     "bytes": 10,
+     "lines": 2
+    },
+    "ops": [
+     {
+      "op": "equal",
+      "text": "same text\n"
+     }
+    ],
+    "stats": {
+     "equal_bytes": 10,
+     "delete_bytes": 0,
+     "insert_bytes": 0
+    }
+   }
+  },
+  {
+   "name": "both empty",
+   "args": [
+    "",
+    ""
+   ],
+   "expected": {
+    "changed": false,
+    "granularity": "word",
+    "before": {
+     "bytes": 0,
+     "lines": 0
+    },
+    "after": {
+     "bytes": 0,
+     "lines": 0
+    },
+    "ops": [],
+    "stats": {
+     "equal_bytes": 0,
+     "delete_bytes": 0,
+     "insert_bytes": 0
+    }
+   }
+  },
+  {
+   "name": "one word changed",
+   "args": [
+    "a b c",
+    "a x c"
+   ],
+   "expected": {
+    "changed": true,
+    "granularity": "word",
+    "before": {
+     "bytes": 5,
+     "lines": 1
+    },
+    "after": {
+     "bytes": 5,
+     "lines": 1
+    },
+    "ops": [
+     {
+      "op": "equal",
+      "text": "a "
+     },
+     {
+      "op": "delete",
+      "text": "b"
+     },
+     {
+      "op": "insert",
+      "text": "x"
+     },
+     {
+      "op": "equal",
+      "text": " c"
+     }
+    ],
+    "stats": {
+     "equal_bytes": 4,
+     "delete_bytes": 1,
+     "insert_bytes": 1
+    }
+   }
+  },
+  {
+   "name": "the D4 example: one word in line 2 of 5 and one added line",
+   "args": [
+    "line one\nline two has a word\nline three\nline four\nline five\n",
+    "line one\nline two has a better word\nline three\nline four\nline five\nline six\n"
+   ],
+   "expected": {
+    "changed": true,
+    "granularity": "word",
+    "before": {
+     "bytes": 60,
+     "lines": 6
+    },
+    "after": {
+     "bytes": 76,
+     "lines": 7
+    },
+    "ops": [
+     {
+      "op": "equal",
+      "text": "line one\nline two has a "
+     },
+     {
+      "op": "insert",
+      "text": "better "
+     },
+     {
+      "op": "equal",
+      "text": "word\nline three\nline four\nline five\n"
+     },
+     {
+      "op": "insert",
+      "text": "line six\n"
+     }
+    ],
+    "stats": {
+     "equal_bytes": 60,
+     "delete_bytes": 0,
+     "insert_bytes": 16
+    }
+   }
+  },
+  {
+   "name": "inserted line",
+   "args": [
+    "first\nthird\n",
+    "first\nsecond\nthird\n"
+   ],
+   "expected": {
+    "changed": true,
+    "granularity": "word",
+    "before": {
+     "bytes": 12,
+     "lines": 3
+    },
+    "after": {
+     "bytes": 19,
+     "lines": 4
+    },
+    "ops": [
+     {
+      "op": "equal",
+      "text": "first\n"
+     },
+     {
+      "op": "insert",
+      "text": "second\n"
+     },
+     {
+      "op": "equal",
+      "text": "third\n"
+     }
+    ],
+    "stats": {
+     "equal_bytes": 12,
+     "delete_bytes": 0,
+     "insert_bytes": 7
+    }
+   }
+  },
+  {
+   "name": "deleted block",
+   "args": [
+    "keep\ndrop one\ndrop two\nkeep too\n",
+    "keep\nkeep too\n"
+   ],
+   "expected": {
+    "changed": true,
+    "granularity": "word",
+    "before": {
+     "bytes": 32,
+     "lines": 5
+    },
+    "after": {
+     "bytes": 14,
+     "lines": 3
+    },
+    "ops": [
+     {
+      "op": "equal",
+      "text": "keep\n"
+     },
+     {
+      "op": "delete",
+      "text": "drop one\ndrop two\n"
+     },
+     {
+      "op": "equal",
+      "text": "keep too\n"
+     }
+    ],
+    "stats": {
+     "equal_bytes": 14,
+     "delete_bytes": 18,
+     "insert_bytes": 0
+    }
+   }
+  },
+  {
+   "name": "empty to text",
+   "args": [
+    "",
+    "new text\n"
+   ],
+   "expected": {
+    "changed": true,
+    "granularity": "word",
+    "before": {
+     "bytes": 0,
+     "lines": 0
+    },
+    "after": {
+     "bytes": 9,
+     "lines": 2
+    },
+    "ops": [
+     {
+      "op": "insert",
+      "text": "new text\n"
+     }
+    ],
+    "stats": {
+     "equal_bytes": 0,
+     "delete_bytes": 0,
+     "insert_bytes": 9
+    }
+   }
+  },
+  {
+   "name": "text to empty",
+   "args": [
+    "old text\n",
+    ""
+   ],
+   "expected": {
+    "changed": true,
+    "granularity": "word",
+    "before": {
+     "bytes": 9,
+     "lines": 2
+    },
+    "after": {
+     "bytes": 0,
+     "lines": 0
+    },
+    "ops": [
+     {
+      "op": "delete",
+      "text": "old text\n"
+     }
+    ],
+    "stats": {
+     "equal_bytes": 0,
+     "delete_bytes": 9,
+     "insert_bytes": 0
+    }
+   }
+  },
+  {
+   "name": "Windows line ends",
+   "args": [
+    "alpha\r\nbeta\r\ngamma\r\n",
+    "alpha\r\nBETA\r\ngamma\r\n"
+   ],
+   "expected": {
+    "changed": true,
+    "granularity": "word",
+    "before": {
+     "bytes": 20,
+     "lines": 4
+    },
+    "after": {
+     "bytes": 20,
+     "lines": 4
+    },
+    "ops": [
+     {
+      "op": "equal",
+      "text": "alpha\r\n"
+     },
+     {
+      "op": "delete",
+      "text": "beta\r\n"
+     },
+     {
+      "op": "insert",
+      "text": "BETA\r\n"
+     },
+     {
+      "op": "equal",
+      "text": "gamma\r\n"
+     }
+    ],
+    "stats": {
+     "equal_bytes": 14,
+     "delete_bytes": 6,
+     "insert_bytes": 6
+    }
+   }
+  },
+  {
+   "name": "text without a final line feed",
+   "args": [
+    "one\ntwo",
+    "one\ntwo\nthree"
+   ],
+   "expected": {
+    "changed": true,
+    "granularity": "word",
+    "before": {
+     "bytes": 7,
+     "lines": 2
+    },
+    "after": {
+     "bytes": 13,
+     "lines": 3
+    },
+    "ops": [
+     {
+      "op": "equal",
+      "text": "one\ntwo"
+     },
+     {
+      "op": "insert",
+      "text": "\nthree"
+     }
+    ],
+    "stats": {
+     "equal_bytes": 7,
+     "delete_bytes": 0,
+     "insert_bytes": 6
+    }
+   }
+  },
+  {
+   "name": "final line feed added",
+   "args": [
+    "one\ntwo",
+    "one\ntwo\n"
+   ],
+   "expected": {
+    "changed": true,
+    "granularity": "word",
+    "before": {
+     "bytes": 7,
+     "lines": 2
+    },
+    "after": {
+     "bytes": 8,
+     "lines": 3
+    },
+    "ops": [
+     {
+      "op": "equal",
+      "text": "one\ntwo"
+     },
+     {
+      "op": "insert",
+      "text": "\n"
+     }
+    ],
+    "stats": {
+     "equal_bytes": 7,
+     "delete_bytes": 0,
+     "insert_bytes": 1
+    }
+   }
+  },
+  {
+   "name": "only whitespace in common stays whole",
+   "args": [
+    "abc def\n",
+    "xyz uvw\n"
+   ],
+   "expected": {
+    "changed": true,
+    "granularity": "word",
+    "before": {
+     "bytes": 8,
+     "lines": 2
+    },
+    "after": {
+     "bytes": 8,
+     "lines": 2
+    },
+    "ops": [
+     {
+      "op": "delete",
+      "text": "abc def\n"
+     },
+     {
+      "op": "insert",
+      "text": "xyz uvw\n"
+     }
+    ],
+    "stats": {
+     "equal_bytes": 0,
+     "delete_bytes": 8,
+     "insert_bytes": 8
+    }
+   }
+  },
+  {
+   "name": "non-ASCII words",
+   "args": [
+    "\u65e5\u672c\u8a9e \ud83d\ude42 caf\u00e9\n",
+    "\u65e5\u672c\u8a9e \ud83d\ude80 caf\u00e9\n"
+   ],
+   "expected": {
+    "changed": true,
+    "granularity": "word",
+    "before": {
+     "bytes": 21,
+     "lines": 2
+    },
+    "after": {
+     "bytes": 21,
+     "lines": 2
+    },
+    "ops": [
+     {
+      "op": "equal",
+      "text": "\u65e5\u672c\u8a9e "
+     },
+     {
+      "op": "delete",
+      "text": "\ud83d\ude42"
+     },
+     {
+      "op": "insert",
+      "text": "\ud83d\ude80"
+     },
+     {
+      "op": "equal",
+      "text": " caf\u00e9\n"
+     }
+    ],
+    "stats": {
+     "equal_bytes": 17,
+     "delete_bytes": 4,
+     "insert_bytes": 4
+    }
+   }
+  },
+  {
+   "name": "punctuation tokens",
+   "args": [
+    "a, b; c.",
+    "a: b; c!"
+   ],
+   "expected": {
+    "changed": true,
+    "granularity": "word",
+    "before": {
+     "bytes": 8,
+     "lines": 1
+    },
+    "after": {
+     "bytes": 8,
+     "lines": 1
+    },
+    "ops": [
+     {
+      "op": "equal",
+      "text": "a"
+     },
+     {
+      "op": "delete",
+      "text": ","
+     },
+     {
+      "op": "insert",
+      "text": ":"
+     },
+     {
+      "op": "equal",
+      "text": " b; c"
+     },
+     {
+      "op": "delete",
+      "text": "."
+     },
+     {
+      "op": "insert",
+      "text": "!"
+     }
+    ],
+    "stats": {
+     "equal_bytes": 6,
+     "delete_bytes": 2,
+     "insert_bytes": 2
+    }
+   }
+  },
+  {
+   "name": "tabs and spaces",
+   "args": [
+    "x\ty z\n",
+    "x  y\tz\n"
+   ],
+   "expected": {
+    "changed": true,
+    "granularity": "word",
+    "before": {
+     "bytes": 6,
+     "lines": 2
+    },
+    "after": {
+     "bytes": 7,
+     "lines": 2
+    },
+    "ops": [
+     {
+      "op": "equal",
+      "text": "x"
+     },
+     {
+      "op": "delete",
+      "text": "\t"
+     },
+     {
+      "op": "insert",
+      "text": "  "
+     },
+     {
+      "op": "equal",
+      "text": "y"
+     },
+     {
+      "op": "delete",
+      "text": " "
+     },
+     {
+      "op": "insert",
+      "text": "\t"
+     },
+     {
+      "op": "equal",
+      "text": "z\n"
+     }
+    ],
+    "stats": {
+     "equal_bytes": 4,
+     "delete_bytes": 2,
+     "insert_bytes": 3
+    }
+   }
+  },
+  {
+   "name": "several hunks",
+   "args": [
+    "a\nb\nc\nd\ne\nf\ng\n",
+    "a\nB\nc\nd\ne\nF\ng\n"
+   ],
+   "expected": {
+    "changed": true,
+    "granularity": "word",
+    "before": {
+     "bytes": 14,
+     "lines": 8
+    },
+    "after": {
+     "bytes": 14,
+     "lines": 8
+    },
+    "ops": [
+     {
+      "op": "equal",
+      "text": "a\n"
+     },
+     {
+      "op": "delete",
+      "text": "b\n"
+     },
+     {
+      "op": "insert",
+      "text": "B\n"
+     },
+     {
+      "op": "equal",
+      "text": "c\nd\ne\n"
+     },
+     {
+      "op": "delete",
+      "text": "f\n"
+     },
+     {
+      "op": "insert",
+      "text": "F\n"
+     },
+     {
+      "op": "equal",
+      "text": "g\n"
+     }
+    ],
+    "stats": {
+     "equal_bytes": 10,
+     "delete_bytes": 4,
+     "insert_bytes": 4
+    }
+   }
+  },
+  {
+   "name": "replace everything",
+   "args": [
+    "one two\n",
+    "three four\n"
+   ],
+   "expected": {
+    "changed": true,
+    "granularity": "word",
+    "before": {
+     "bytes": 8,
+     "lines": 2
+    },
+    "after": {
+     "bytes": 11,
+     "lines": 2
+    },
+    "ops": [
+     {
+      "op": "delete",
+      "text": "one two\n"
+     },
+     {
+      "op": "insert",
+      "text": "three four\n"
+     }
+    ],
+    "stats": {
+     "equal_bytes": 0,
+     "delete_bytes": 8,
+     "insert_bytes": 11
+    }
+   }
+  },
+  {
+   "name": "line cap: falls back to one delete and one insert",
+   "args": [
+    "a\nb\nc\nd\n",
+    "a\nx\ny\nd\n",
+    {
+     "line_cells": 3
+    }
+   ],
+   "expected": {
+    "changed": true,
+    "granularity": "none",
+    "before": {
+     "bytes": 8,
+     "lines": 5
+    },
+    "after": {
+     "bytes": 8,
+     "lines": 5
+    },
+    "ops": [
+     {
+      "op": "equal",
+      "text": "a\n"
+     },
+     {
+      "op": "delete",
+      "text": "b\nc\n"
+     },
+     {
+      "op": "insert",
+      "text": "x\ny\n"
+     },
+     {
+      "op": "equal",
+      "text": "d\n"
+     }
+    ],
+    "stats": {
+     "equal_bytes": 4,
+     "delete_bytes": 4,
+     "insert_bytes": 4
+    }
+   }
+  },
+  {
+   "name": "line cap exactly reached is not a fallback",
+   "args": [
+    "a\nb\nc\nd\n",
+    "a\nx\ny\nd\n",
+    {
+     "line_cells": 4
+    }
+   ],
+   "expected": {
+    "changed": true,
+    "granularity": "word",
+    "before": {
+     "bytes": 8,
+     "lines": 5
+    },
+    "after": {
+     "bytes": 8,
+     "lines": 5
+    },
+    "ops": [
+     {
+      "op": "equal",
+      "text": "a\n"
+     },
+     {
+      "op": "delete",
+      "text": "b\nc\n"
+     },
+     {
+      "op": "insert",
+      "text": "x\ny\n"
+     },
+     {
+      "op": "equal",
+      "text": "d\n"
+     }
+    ],
+    "stats": {
+     "equal_bytes": 4,
+     "delete_bytes": 4,
+     "insert_bytes": 4
+    }
+   }
+  },
+  {
+   "name": "word cap: the hunk stays at line level",
+   "args": [
+    "one two three\n",
+    "one two four\n",
+    {
+     "word_cells": 4
+    }
+   ],
+   "expected": {
+    "changed": true,
+    "granularity": "word",
+    "before": {
+     "bytes": 14,
+     "lines": 2
+    },
+    "after": {
+     "bytes": 13,
+     "lines": 2
+    },
+    "ops": [
+     {
+      "op": "equal",
+      "text": "one two "
+     },
+     {
+      "op": "delete",
+      "text": "three"
+     },
+     {
+      "op": "insert",
+      "text": "four"
+     },
+     {
+      "op": "equal",
+      "text": "\n"
+     }
+    ],
+    "stats": {
+     "equal_bytes": 9,
+     "delete_bytes": 5,
+     "insert_bytes": 4
+    }
+   }
+  },
+  {
+   "name": "word cap with room",
+   "args": [
+    "one two three\n",
+    "one two four\n",
+    {
+     "word_cells": 100
+    }
+   ],
+   "expected": {
+    "changed": true,
+    "granularity": "word",
+    "before": {
+     "bytes": 14,
+     "lines": 2
+    },
+    "after": {
+     "bytes": 13,
+     "lines": 2
+    },
+    "ops": [
+     {
+      "op": "equal",
+      "text": "one two "
+     },
+     {
+      "op": "delete",
+      "text": "three"
+     },
+     {
+      "op": "insert",
+      "text": "four"
+     },
+     {
+      "op": "equal",
+      "text": "\n"
+     }
+    ],
+    "stats": {
+     "equal_bytes": 9,
+     "delete_bytes": 5,
+     "insert_bytes": 4
+    }
+   }
+  },
+  {
+   "name": "profiles: same profile",
+   "args": [
+    {
+     "schema_version": 1,
+     "runtime_id": "native-claude-code",
+     "runtime_version": "0.0.0-golden",
+     "image_digest": "sha256:2d032a622cf94baf637a4488720865da983853e4a655fea4e45d0e80f0a9c640",
+     "binary_sha256": "25ba8ebec5f227618d8d58f475622669f4c45019d40259d1d292a823f4184c27",
+     "inventory_sha256": "44e7b67bbdc0842fecf8cfa158641e03998f7d0b34184bc297ede967ab24ce7a",
+     "taxonomy_sha256": "6064ebcb6693a1dd7b3e50fbfbcc94ff959f7957ac184188fd91744900a429a3",
+     "materializer_sha256": "ba6245da8b07901b6793898e70e2e974a1e641a2c3be0d357ba53d15101f4081",
+     "default_action": "keep",
+     "overrides": [
+      {
+       "block_id": "tool-bash-guide",
+       "baseline_sha256": "c5db5a79c94bb7a9835cbe2e3897337c52e3bb72b73edaedf1165a51246b057b",
+       "action": "replace",
+       "replacement_utf8": "Fabricated A.",
+       "replacement_sha256": "8a0ac92554ea2d2a74d7e43dd8de2bb8d5278007a93d85d7fcdfa0782f78ded2"
+      },
+      {
+       "block_id": "short",
+       "baseline_sha256": "213c22ed7234eb11116e1e88f314c73cb3a019b5c87fe224b6ce5665bd9ec50e",
+       "action": "disable"
+      }
+     ]
+    },
+    {
+     "schema_version": 1,
+     "runtime_id": "native-claude-code",
+     "runtime_version": "0.0.0-golden",
+     "image_digest": "sha256:2d032a622cf94baf637a4488720865da983853e4a655fea4e45d0e80f0a9c640",
+     "binary_sha256": "25ba8ebec5f227618d8d58f475622669f4c45019d40259d1d292a823f4184c27",
+     "inventory_sha256": "44e7b67bbdc0842fecf8cfa158641e03998f7d0b34184bc297ede967ab24ce7a",
+     "taxonomy_sha256": "6064ebcb6693a1dd7b3e50fbfbcc94ff959f7957ac184188fd91744900a429a3",
+     "materializer_sha256": "ba6245da8b07901b6793898e70e2e974a1e641a2c3be0d357ba53d15101f4081",
+     "default_action": "keep",
+     "overrides": [
+      {
+       "block_id": "tool-bash-guide",
+       "baseline_sha256": "c5db5a79c94bb7a9835cbe2e3897337c52e3bb72b73edaedf1165a51246b057b",
+       "action": "replace",
+       "replacement_utf8": "Fabricated A.",
+       "replacement_sha256": "8a0ac92554ea2d2a74d7e43dd8de2bb8d5278007a93d85d7fcdfa0782f78ded2"
+      },
+      {
+       "block_id": "short",
+       "baseline_sha256": "213c22ed7234eb11116e1e88f314c73cb3a019b5c87fe224b6ce5665bd9ec50e",
+       "action": "disable"
+      }
+     ]
+    },
+    "@inventory-claude"
+   ],
+   "function": "diff_profiles",
+   "expected": {
+    "rows": [],
+    "changed": 0,
+    "a_bytes": 1059,
+    "b_bytes": 1059,
+    "a_est_tokens": 269,
+    "b_est_tokens": 269
+   }
+  },
+  {
+   "name": "profiles: baseline against itself",
+   "args": [
+    {
+     "schema_version": 1,
+     "runtime_id": "native-claude-code",
+     "runtime_version": "0.0.0-golden",
+     "image_digest": "sha256:2d032a622cf94baf637a4488720865da983853e4a655fea4e45d0e80f0a9c640",
+     "binary_sha256": "25ba8ebec5f227618d8d58f475622669f4c45019d40259d1d292a823f4184c27",
+     "inventory_sha256": "44e7b67bbdc0842fecf8cfa158641e03998f7d0b34184bc297ede967ab24ce7a",
+     "taxonomy_sha256": "6064ebcb6693a1dd7b3e50fbfbcc94ff959f7957ac184188fd91744900a429a3",
+     "materializer_sha256": "ba6245da8b07901b6793898e70e2e974a1e641a2c3be0d357ba53d15101f4081",
+     "default_action": "keep",
+     "overrides": []
+    },
+    {
+     "schema_version": 1,
+     "runtime_id": "native-claude-code",
+     "runtime_version": "0.0.0-golden",
+     "image_digest": "sha256:2d032a622cf94baf637a4488720865da983853e4a655fea4e45d0e80f0a9c640",
+     "binary_sha256": "25ba8ebec5f227618d8d58f475622669f4c45019d40259d1d292a823f4184c27",
+     "inventory_sha256": "44e7b67bbdc0842fecf8cfa158641e03998f7d0b34184bc297ede967ab24ce7a",
+     "taxonomy_sha256": "6064ebcb6693a1dd7b3e50fbfbcc94ff959f7957ac184188fd91744900a429a3",
+     "materializer_sha256": "ba6245da8b07901b6793898e70e2e974a1e641a2c3be0d357ba53d15101f4081",
+     "default_action": "keep",
+     "overrides": []
+    },
+    "@inventory-claude"
+   ],
+   "function": "diff_profiles",
+   "expected": {
+    "rows": [],
+    "changed": 0,
+    "a_bytes": 1136,
+    "b_bytes": 1136,
+    "a_est_tokens": 289,
+    "b_est_tokens": 289
+   }
+  },
+  {
+   "name": "profiles: baseline against none included",
+   "args": [
+    {
+     "schema_version": 1,
+     "runtime_id": "native-claude-code",
+     "runtime_version": "0.0.0-golden",
+     "image_digest": "sha256:2d032a622cf94baf637a4488720865da983853e4a655fea4e45d0e80f0a9c640",
+     "binary_sha256": "25ba8ebec5f227618d8d58f475622669f4c45019d40259d1d292a823f4184c27",
+     "inventory_sha256": "44e7b67bbdc0842fecf8cfa158641e03998f7d0b34184bc297ede967ab24ce7a",
+     "taxonomy_sha256": "6064ebcb6693a1dd7b3e50fbfbcc94ff959f7957ac184188fd91744900a429a3",
+     "materializer_sha256": "ba6245da8b07901b6793898e70e2e974a1e641a2c3be0d357ba53d15101f4081",
+     "default_action": "keep",
+     "overrides": []
+    },
+    {
+     "schema_version": 1,
+     "runtime_id": "native-claude-code",
+     "runtime_version": "0.0.0-golden",
+     "image_digest": "sha256:2d032a622cf94baf637a4488720865da983853e4a655fea4e45d0e80f0a9c640",
+     "binary_sha256": "25ba8ebec5f227618d8d58f475622669f4c45019d40259d1d292a823f4184c27",
+     "inventory_sha256": "44e7b67bbdc0842fecf8cfa158641e03998f7d0b34184bc297ede967ab24ce7a",
+     "taxonomy_sha256": "6064ebcb6693a1dd7b3e50fbfbcc94ff959f7957ac184188fd91744900a429a3",
+     "materializer_sha256": "ba6245da8b07901b6793898e70e2e974a1e641a2c3be0d357ba53d15101f4081",
+     "default_action": "disable",
+     "overrides": []
+    },
+    "@inventory-claude"
+   ],
+   "function": "diff_profiles",
+   "expected": {
+    "rows": [
+     {
+      "block_id": "tool-bash-guide",
+      "title": "Shell tool guide",
+      "class_name": "Tool Descriptions",
+      "a": {
+       "action": "keep",
+       "bytes": 81,
+       "est_tokens": 21
+      },
+      "b": {
+       "action": "disable",
+       "bytes": 0,
+       "est_tokens": 0
+      },
+      "change": "action"
+     },
+     {
+      "block_id": "system-reminder-plan",
+      "title": "Plan reminder",
+      "class_name": "System Reminders",
+      "a": {
+       "action": "keep",
+       "bytes": 106,
+       "est_tokens": 27
+      },
+      "b": {
+       "action": "disable",
+       "bytes": 0,
+       "est_tokens": 0
+      },
+      "change": "action"
+     },
+     {
+      "block_id": "security-sandbox-note",
+      "title": "Sandbox note",
+      "class_name": "Security & Safety",
+      "a": {
+       "action": "keep",
+       "bytes": 91,
+       "est_tokens": 24
+      },
+      "b": {
+       "action": "disable",
+       "bytes": 0,
+       "est_tokens": 0
+      },
+      "change": "action"
+     },
+     {
+      "block_id": "response-style",
+      "title": "Response style",
+      "class_name": "Response Quality",
+      "a": {
+       "action": "keep",
+       "bytes": 132,
+       "est_tokens": 33
+      },
+      "b": {
+       "action": "disable",
+       "bytes": 0,
+       "est_tokens": 0
+      },
+      "change": "action"
+     },
+     {
+      "block_id": "general-hedge",
+      "title": "Assistant persona",
+      "class_name": "General Behavior",
+      "a": {
+       "action": "keep",
+       "bytes": 155,
+       "est_tokens": 40
+      },
+      "b": {
+       "action": "disable",
+       "bytes": 0,
+       "est_tokens": 0
+      },
+      "change": "action"
+     },
+     {
+      "block_id": "short",
+      "title": "Short literal",
+      "class_name": "General Behavior",
+      "a": {
+       "action": "keep",
+       "bytes": 9,
+       "est_tokens": 3
+      },
+      "b": {
+       "action": "disable",
+       "bytes": 0,
+       "est_tokens": 0
+      },
+      "change": "action"
+     },
+     {
+      "block_id": "unicode-mix",
+      "title": "Unicode sample \u65e5\u672c",
+      "class_name": "File & Code Ops",
+      "a": {
+       "action": "keep",
+       "bytes": 110,
+       "est_tokens": 24
+      },
+      "b": {
+       "action": "disable",
+       "bytes": 0,
+       "est_tokens": 0
+      },
+      "change": "action"
+     },
+     {
+      "block_id": "credential-prose",
+      "title": "Auth prose",
+      "class_name": "Environment & Platform",
+      "a": {
+       "action": "keep",
+       "bytes": 140,
+       "est_tokens": 36
+      },
+      "b": {
+       "action": "disable",
+       "bytes": 0,
+       "est_tokens": 0
+      },
+      "change": "action"
+     },
+     {
+      "block_id": "escapes-sample",
+      "title": "Escapes sample",
+      "class_name": "General Behavior",
+      "a": {
+       "action": "keep",
+       "bytes": 54,
+       "est_tokens": 14
+      },
+      "b": {
+       "action": "disable",
+       "bytes": 0,
+       "est_tokens": 0
+      },
+      "change": "action"
+     },
+     {
+      "block_id": "zebra-only",
+      "title": "Animal fact",
+      "class_name": "General Behavior",
+      "a": {
+       "action": "keep",
+       "bytes": 54,
+       "est_tokens": 14
+      },
+      "b": {
+       "action": "disable",
+       "bytes": 0,
+       "est_tokens": 0
+      },
+      "change": "action"
+     },
+     {
+      "block_id": "git-commit-guide",
+      "title": "Commit guide",
+      "class_name": "Git & VCS",
+      "a": {
+       "action": "keep",
+       "bytes": 143,
+       "est_tokens": 37
+      },
+      "b": {
+       "action": "disable",
+       "bytes": 0,
+       "est_tokens": 0
+      },
+      "change": "action"
+     },
+     {
+      "block_id": "permission-deny-list",
+      "title": "Permission list",
+      "class_name": "Security & Safety",
+      "a": {
+       "action": "keep",
+       "bytes": 61,
+       "est_tokens": 16
+      },
+      "b": {
+       "action": "disable",
+       "bytes": 0,
+       "est_tokens": 0
+      },
+      "change": "action"
+     }
+    ],
+    "changed": 12,
+    "a_bytes": 1136,
+    "b_bytes": 0,
+    "a_est_tokens": 289,
+    "b_est_tokens": 0
+   }
+  },
+  {
+   "name": "profiles: text and action changes",
+   "args": [
+    {
+     "schema_version": 1,
+     "runtime_id": "native-claude-code",
+     "runtime_version": "0.0.0-golden",
+     "image_digest": "sha256:2d032a622cf94baf637a4488720865da983853e4a655fea4e45d0e80f0a9c640",
+     "binary_sha256": "25ba8ebec5f227618d8d58f475622669f4c45019d40259d1d292a823f4184c27",
+     "inventory_sha256": "44e7b67bbdc0842fecf8cfa158641e03998f7d0b34184bc297ede967ab24ce7a",
+     "taxonomy_sha256": "6064ebcb6693a1dd7b3e50fbfbcc94ff959f7957ac184188fd91744900a429a3",
+     "materializer_sha256": "ba6245da8b07901b6793898e70e2e974a1e641a2c3be0d357ba53d15101f4081",
+     "default_action": "keep",
+     "overrides": [
+      {
+       "block_id": "tool-bash-guide",
+       "baseline_sha256": "c5db5a79c94bb7a9835cbe2e3897337c52e3bb72b73edaedf1165a51246b057b",
+       "action": "replace",
+       "replacement_utf8": "Fabricated A.",
+       "replacement_sha256": "8a0ac92554ea2d2a74d7e43dd8de2bb8d5278007a93d85d7fcdfa0782f78ded2"
+      },
+      {
+       "block_id": "short",
+       "baseline_sha256": "213c22ed7234eb11116e1e88f314c73cb3a019b5c87fe224b6ce5665bd9ec50e",
+       "action": "disable"
+      }
+     ]
+    },
+    {
+     "schema_version": 1,
+     "runtime_id": "native-claude-code",
+     "runtime_version": "0.0.0-golden",
+     "image_digest": "sha256:2d032a622cf94baf637a4488720865da983853e4a655fea4e45d0e80f0a9c640",
+     "binary_sha256": "25ba8ebec5f227618d8d58f475622669f4c45019d40259d1d292a823f4184c27",
+     "inventory_sha256": "44e7b67bbdc0842fecf8cfa158641e03998f7d0b34184bc297ede967ab24ce7a",
+     "taxonomy_sha256": "6064ebcb6693a1dd7b3e50fbfbcc94ff959f7957ac184188fd91744900a429a3",
+     "materializer_sha256": "ba6245da8b07901b6793898e70e2e974a1e641a2c3be0d357ba53d15101f4081",
+     "default_action": "keep",
+     "overrides": [
+      {
+       "block_id": "tool-bash-guide",
+       "baseline_sha256": "c5db5a79c94bb7a9835cbe2e3897337c52e3bb72b73edaedf1165a51246b057b",
+       "action": "replace",
+       "replacement_utf8": "Fabricated B.",
+       "replacement_sha256": "fb7f5534b855e09c08fcb91a3dc3e9956ea5cf15c49659afd99837f3cabc63bc"
+      },
+      {
+       "block_id": "short",
+       "baseline_sha256": "213c22ed7234eb11116e1e88f314c73cb3a019b5c87fe224b6ce5665bd9ec50e",
+       "action": "keep"
+      },
+      {
+       "block_id": "zebra-only",
+       "baseline_sha256": "2ce9d291f5392ccce812660963901c0f0d97b67cf0e9fcb371d02e8574afda87",
+       "action": "disable"
+      }
+     ]
+    },
+    "@inventory-claude"
+   ],
+   "function": "diff_profiles",
+   "expected": {
+    "rows": [
+     {
+      "block_id": "tool-bash-guide",
+      "title": "Shell tool guide",
+      "class_name": "Tool Descriptions",
+      "a": {
+       "action": "replace",
+       "bytes": 13,
+       "est_tokens": 4
+      },
+      "b": {
+       "action": "replace",
+       "bytes": 13,
+       "est_tokens": 4
+      },
+      "change": "text"
+     },
+     {
+      "block_id": "short",
+      "title": "Short literal",
+      "class_name": "General Behavior",
+      "a": {
+       "action": "disable",
+       "bytes": 0,
+       "est_tokens": 0
+      },
+      "b": {
+       "action": "keep",
+       "bytes": 9,
+       "est_tokens": 3
+      },
+      "change": "action"
+     },
+     {
+      "block_id": "zebra-only",
+      "title": "Animal fact",
+      "class_name": "General Behavior",
+      "a": {
+       "action": "keep",
+       "bytes": 54,
+       "est_tokens": 14
+      },
+      "b": {
+       "action": "disable",
+       "bytes": 0,
+       "est_tokens": 0
+      },
+      "change": "action"
+     }
+    ],
+    "changed": 3,
+    "a_bytes": 1059,
+    "b_bytes": 1014,
+    "a_est_tokens": 269,
+    "b_est_tokens": 258
+   }
+  },
+  {
+   "name": "profiles: replacement equal to the baseline is not a text change",
+   "args": [
+    {
+     "schema_version": 1,
+     "runtime_id": "native-claude-code",
+     "runtime_version": "0.0.0-golden",
+     "image_digest": "sha256:2d032a622cf94baf637a4488720865da983853e4a655fea4e45d0e80f0a9c640",
+     "binary_sha256": "25ba8ebec5f227618d8d58f475622669f4c45019d40259d1d292a823f4184c27",
+     "inventory_sha256": "44e7b67bbdc0842fecf8cfa158641e03998f7d0b34184bc297ede967ab24ce7a",
+     "taxonomy_sha256": "6064ebcb6693a1dd7b3e50fbfbcc94ff959f7957ac184188fd91744900a429a3",
+     "materializer_sha256": "ba6245da8b07901b6793898e70e2e974a1e641a2c3be0d357ba53d15101f4081",
+     "default_action": "keep",
+     "overrides": []
+    },
+    {
+     "schema_version": 1,
+     "runtime_id": "native-claude-code",
+     "runtime_version": "0.0.0-golden",
+     "image_digest": "sha256:2d032a622cf94baf637a4488720865da983853e4a655fea4e45d0e80f0a9c640",
+     "binary_sha256": "25ba8ebec5f227618d8d58f475622669f4c45019d40259d1d292a823f4184c27",
+     "inventory_sha256": "44e7b67bbdc0842fecf8cfa158641e03998f7d0b34184bc297ede967ab24ce7a",
+     "taxonomy_sha256": "6064ebcb6693a1dd7b3e50fbfbcc94ff959f7957ac184188fd91744900a429a3",
+     "materializer_sha256": "ba6245da8b07901b6793898e70e2e974a1e641a2c3be0d357ba53d15101f4081",
+     "default_action": "keep",
+     "overrides": [
+      {
+       "block_id": "short",
+       "baseline_sha256": "213c22ed7234eb11116e1e88f314c73cb3a019b5c87fe224b6ce5665bd9ec50e",
+       "action": "replace",
+       "replacement_utf8": "Be brief.",
+       "replacement_sha256": "213c22ed7234eb11116e1e88f314c73cb3a019b5c87fe224b6ce5665bd9ec50e"
+      }
+     ]
+    },
+    "@inventory-claude"
+   ],
+   "function": "diff_profiles",
+   "expected": {
+    "rows": [
+     {
+      "block_id": "short",
+      "title": "Short literal",
+      "class_name": "General Behavior",
+      "a": {
+       "action": "keep",
+       "bytes": 9,
+       "est_tokens": 3
+      },
+      "b": {
+       "action": "replace",
+       "bytes": 9,
+       "est_tokens": 3
+      },
+      "change": "action"
+     }
+    ],
+    "changed": 1,
+    "a_bytes": 1136,
+    "b_bytes": 1136,
+    "a_est_tokens": 289,
+    "b_est_tokens": 289
+   }
+  },
+  {
+   "name": "profiles: disable against a replacement",
+   "args": [
+    {
+     "schema_version": 1,
+     "runtime_id": "native-claude-code",
+     "runtime_version": "0.0.0-golden",
+     "image_digest": "sha256:2d032a622cf94baf637a4488720865da983853e4a655fea4e45d0e80f0a9c640",
+     "binary_sha256": "25ba8ebec5f227618d8d58f475622669f4c45019d40259d1d292a823f4184c27",
+     "inventory_sha256": "44e7b67bbdc0842fecf8cfa158641e03998f7d0b34184bc297ede967ab24ce7a",
+     "taxonomy_sha256": "6064ebcb6693a1dd7b3e50fbfbcc94ff959f7957ac184188fd91744900a429a3",
+     "materializer_sha256": "ba6245da8b07901b6793898e70e2e974a1e641a2c3be0d357ba53d15101f4081",
+     "default_action": "keep",
+     "overrides": [
+      {
+       "block_id": "unicode-mix",
+       "baseline_sha256": "d00da6c5a836c9df66e6b20ea37a93990bedea7ff26d8c203fd257d9b47523a8",
+       "action": "disable"
+      }
+     ]
+    },
+    {
+     "schema_version": 1,
+     "runtime_id": "native-claude-code",
+     "runtime_version": "0.0.0-golden",
+     "image_digest": "sha256:2d032a622cf94baf637a4488720865da983853e4a655fea4e45d0e80f0a9c640",
+     "binary_sha256": "25ba8ebec5f227618d8d58f475622669f4c45019d40259d1d292a823f4184c27",
+     "inventory_sha256": "44e7b67bbdc0842fecf8cfa158641e03998f7d0b34184bc297ede967ab24ce7a",
+     "taxonomy_sha256": "6064ebcb6693a1dd7b3e50fbfbcc94ff959f7957ac184188fd91744900a429a3",
+     "materializer_sha256": "ba6245da8b07901b6793898e70e2e974a1e641a2c3be0d357ba53d15101f4081",
+     "default_action": "keep",
+     "overrides": [
+      {
+       "block_id": "unicode-mix",
+       "baseline_sha256": "d00da6c5a836c9df66e6b20ea37a93990bedea7ff26d8c203fd257d9b47523a8",
+       "action": "replace",
+       "replacement_utf8": "\u65e5\u672c only",
+       "replacement_sha256": "7741f159828dee9794d475fc64b9ef74638ec10116780258d16f5aaaab1c840a"
+      }
+     ]
+    },
+    "@inventory-claude"
+   ],
+   "function": "diff_profiles",
+   "expected": {
+    "rows": [
+     {
+      "block_id": "unicode-mix",
+      "title": "Unicode sample \u65e5\u672c",
+      "class_name": "File & Code Ops",
+      "a": {
+       "action": "disable",
+       "bytes": 0,
+       "est_tokens": 0
+      },
+      "b": {
+       "action": "replace",
+       "bytes": 11,
+       "est_tokens": 2
+      },
+      "change": "action+text"
+     }
+    ],
+    "changed": 1,
+    "a_bytes": 1026,
+    "b_bytes": 1037,
+    "a_est_tokens": 265,
+    "b_est_tokens": 267
+   }
+  },
+  {
+   "name": "profiles: keep override equals default keep",
+   "args": [
+    {
+     "schema_version": 1,
+     "runtime_id": "native-claude-code",
+     "runtime_version": "0.0.0-golden",
+     "image_digest": "sha256:2d032a622cf94baf637a4488720865da983853e4a655fea4e45d0e80f0a9c640",
+     "binary_sha256": "25ba8ebec5f227618d8d58f475622669f4c45019d40259d1d292a823f4184c27",
+     "inventory_sha256": "44e7b67bbdc0842fecf8cfa158641e03998f7d0b34184bc297ede967ab24ce7a",
+     "taxonomy_sha256": "6064ebcb6693a1dd7b3e50fbfbcc94ff959f7957ac184188fd91744900a429a3",
+     "materializer_sha256": "ba6245da8b07901b6793898e70e2e974a1e641a2c3be0d357ba53d15101f4081",
+     "default_action": "keep",
+     "overrides": [
+      {
+       "block_id": "short",
+       "baseline_sha256": "213c22ed7234eb11116e1e88f314c73cb3a019b5c87fe224b6ce5665bd9ec50e",
+       "action": "keep"
+      }
+     ]
+    },
+    {
+     "schema_version": 1,
+     "runtime_id": "native-claude-code",
+     "runtime_version": "0.0.0-golden",
+     "image_digest": "sha256:2d032a622cf94baf637a4488720865da983853e4a655fea4e45d0e80f0a9c640",
+     "binary_sha256": "25ba8ebec5f227618d8d58f475622669f4c45019d40259d1d292a823f4184c27",
+     "inventory_sha256": "44e7b67bbdc0842fecf8cfa158641e03998f7d0b34184bc297ede967ab24ce7a",
+     "taxonomy_sha256": "6064ebcb6693a1dd7b3e50fbfbcc94ff959f7957ac184188fd91744900a429a3",
+     "materializer_sha256": "ba6245da8b07901b6793898e70e2e974a1e641a2c3be0d357ba53d15101f4081",
+     "default_action": "keep",
+     "overrides": []
+    },
+    "@inventory-claude"
+   ],
+   "function": "diff_profiles",
+   "expected": {
+    "rows": [],
+    "changed": 0,
+    "a_bytes": 1136,
+    "b_bytes": 1136,
+    "a_est_tokens": 289,
+    "b_est_tokens": 289
+   }
+  },
+  {
+   "name": "profiles: observed-only overrides are ignored",
+   "args": [
+    {
+     "schema_version": 1,
+     "runtime_id": "native-claude-code",
+     "runtime_version": "0.0.0-golden",
+     "image_digest": "sha256:2d032a622cf94baf637a4488720865da983853e4a655fea4e45d0e80f0a9c640",
+     "binary_sha256": "25ba8ebec5f227618d8d58f475622669f4c45019d40259d1d292a823f4184c27",
+     "inventory_sha256": "44e7b67bbdc0842fecf8cfa158641e03998f7d0b34184bc297ede967ab24ce7a",
+     "taxonomy_sha256": "6064ebcb6693a1dd7b3e50fbfbcc94ff959f7957ac184188fd91744900a429a3",
+     "materializer_sha256": "ba6245da8b07901b6793898e70e2e974a1e641a2c3be0d357ba53d15101f4081",
+     "default_action": "keep",
+     "overrides": [
+      {
+       "block_id": "observed-dynamic",
+       "baseline_sha256": "051b5a1029b4b78cbfdc9d1fe6ade44d634c605f3ad3b88ed5d59a55c877d6f7",
+       "action": "keep"
+      }
+     ]
+    },
+    {
+     "schema_version": 1,
+     "runtime_id": "native-claude-code",
+     "runtime_version": "0.0.0-golden",
+     "image_digest": "sha256:2d032a622cf94baf637a4488720865da983853e4a655fea4e45d0e80f0a9c640",
+     "binary_sha256": "25ba8ebec5f227618d8d58f475622669f4c45019d40259d1d292a823f4184c27",
+     "inventory_sha256": "44e7b67bbdc0842fecf8cfa158641e03998f7d0b34184bc297ede967ab24ce7a",
+     "taxonomy_sha256": "6064ebcb6693a1dd7b3e50fbfbcc94ff959f7957ac184188fd91744900a429a3",
+     "materializer_sha256": "ba6245da8b07901b6793898e70e2e974a1e641a2c3be0d357ba53d15101f4081",
+     "default_action": "keep",
+     "overrides": []
+    },
+    "@inventory-claude"
+   ],
+   "function": "diff_profiles",
+   "expected": {
+    "rows": [],
+    "changed": 0,
+    "a_bytes": 1136,
+    "b_bytes": 1136,
+    "a_est_tokens": 289,
+    "b_est_tokens": 289
+   }
+  },
+  {
+   "name": "profiles: pins differ",
+   "args": [
+    {
+     "schema_version": 1,
+     "runtime_id": "native-claude-code",
+     "runtime_version": "0.0.0-golden",
+     "image_digest": "sha256:2d032a622cf94baf637a4488720865da983853e4a655fea4e45d0e80f0a9c640",
+     "binary_sha256": "25ba8ebec5f227618d8d58f475622669f4c45019d40259d1d292a823f4184c27",
+     "inventory_sha256": "44e7b67bbdc0842fecf8cfa158641e03998f7d0b34184bc297ede967ab24ce7a",
+     "taxonomy_sha256": "6064ebcb6693a1dd7b3e50fbfbcc94ff959f7957ac184188fd91744900a429a3",
+     "materializer_sha256": "ba6245da8b07901b6793898e70e2e974a1e641a2c3be0d357ba53d15101f4081",
+     "default_action": "keep",
+     "overrides": [
+      {
+       "block_id": "tool-bash-guide",
+       "baseline_sha256": "c5db5a79c94bb7a9835cbe2e3897337c52e3bb72b73edaedf1165a51246b057b",
+       "action": "replace",
+       "replacement_utf8": "Fabricated A.",
+       "replacement_sha256": "8a0ac92554ea2d2a74d7e43dd8de2bb8d5278007a93d85d7fcdfa0782f78ded2"
+      },
+      {
+       "block_id": "short",
+       "baseline_sha256": "213c22ed7234eb11116e1e88f314c73cb3a019b5c87fe224b6ce5665bd9ec50e",
+       "action": "disable"
+      }
+     ]
+    },
+    {
+     "schema_version": 1,
+     "runtime_id": "native-claude-code",
+     "runtime_version": "9.9.9",
+     "image_digest": "sha256:2d032a622cf94baf637a4488720865da983853e4a655fea4e45d0e80f0a9c640",
+     "binary_sha256": "25ba8ebec5f227618d8d58f475622669f4c45019d40259d1d292a823f4184c27",
+     "inventory_sha256": "44e7b67bbdc0842fecf8cfa158641e03998f7d0b34184bc297ede967ab24ce7a",
+     "taxonomy_sha256": "6064ebcb6693a1dd7b3e50fbfbcc94ff959f7957ac184188fd91744900a429a3",
+     "materializer_sha256": "ba6245da8b07901b6793898e70e2e974a1e641a2c3be0d357ba53d15101f4081",
+     "default_action": "keep",
+     "overrides": [
+      {
+       "block_id": "tool-bash-guide",
+       "baseline_sha256": "c5db5a79c94bb7a9835cbe2e3897337c52e3bb72b73edaedf1165a51246b057b",
+       "action": "replace",
+       "replacement_utf8": "Fabricated B.",
+       "replacement_sha256": "fb7f5534b855e09c08fcb91a3dc3e9956ea5cf15c49659afd99837f3cabc63bc"
+      },
+      {
+       "block_id": "short",
+       "baseline_sha256": "213c22ed7234eb11116e1e88f314c73cb3a019b5c87fe224b6ce5665bd9ec50e",
+       "action": "keep"
+      },
+      {
+       "block_id": "zebra-only",
+       "baseline_sha256": "2ce9d291f5392ccce812660963901c0f0d97b67cf0e9fcb371d02e8574afda87",
+       "action": "disable"
+      }
+     ]
+    },
+    "@inventory-claude"
+   ],
+   "function": "diff_profiles",
+   "expected": {
+    "error": "Compare profiles of one inventory. One of these belongs to a different runtime or inventory revision; rebase it first."
+   }
+  }
+ ]
+}

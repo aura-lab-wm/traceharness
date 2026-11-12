@@ -1,0 +1,1425 @@
+{
+ "function": "profile_from_agent_patcher_blocks",
+ "cases": [
+  {
+   "name": "to profile: bodies equal to the baseline keep",
+   "args": [
+    [
+     {
+      "id": "tool-bash-guide",
+      "body": "Fabricated guidance: run one shell command at a time and report its exit status.\n"
+     },
+     {
+      "id": "system-reminder-plan",
+      "body": "Fabricated reminder for ${TH_PROMPT_EXPR_0}: keep the plan short and confirm it with ${TH_PROMPT_EXPR_1}.\n"
+     },
+     {
+      "id": "security-sandbox-note",
+      "body": "Fabricated safety note: stay inside the working directory and refuse destructive commands.\n"
+     },
+     {
+      "id": "response-style",
+      "body": "IMPORTANT: Fabricated style rules follow.\nYou MUST NOT invent results.\n\n```\nIMPORTANT: inside a fence\n```\n\n\n\nKeep answers short.   \n"
+     },
+     {
+      "id": "general-hedge",
+      "body": "As a helpful AI assistant, you greet the user.\nFabricated persona line two.\n------------\nPlease note that as an AI you have limits.\nFinal fabricated line.\n"
+     },
+     {
+      "id": "observed-dynamic",
+      "body": "Fabricated observed text with {{name}} inside.\n"
+     },
+     {
+      "id": "unavailable-fragment",
+      "body": "Fabricated text that cannot be located.\n"
+     },
+     {
+      "id": "short",
+      "body": "Be brief."
+     },
+     {
+      "id": "unicode-mix",
+      "body": "Fabricated text: \u65e5\u672c\u8a9e\u306e\u8aac\u660e, emoji \ud83d\ude42, cafe\u0301 with a combining accent, and a line separator\u2028here.\n"
+     },
+     {
+      "id": "credential-prose",
+      "body": "Fabricated note about Bearer authentication headers and requests.exceptions.JSONDecodeError handling; contact docs@example.com for details.\n"
+     },
+     {
+      "id": "escapes-sample",
+      "body": "Fabricated escapes: \\n and \\u2014 appear written out.\n"
+     },
+     {
+      "id": "zebra-only",
+      "body": "Fabricated fact: the zebra appears only in this body.\n"
+     },
+     {
+      "id": "git-commit-guide",
+      "body": "Fabricated: write one commit per change.\nSecond line of the guide.\nThird line of the guide.\nFourth line of the guide.\nFifth line of the guide.\n"
+     },
+     {
+      "id": "permission-deny-list",
+      "body": "Fabricated permission rule: deny writes outside the project.\n"
+     }
+    ],
+    "@inventory-claude"
+   ],
+   "expected": {
+    "profile": {
+     "schema_version": 1,
+     "runtime_id": "native-claude-code",
+     "runtime_version": "0.0.0-golden",
+     "image_digest": "sha256:2d032a622cf94baf637a4488720865da983853e4a655fea4e45d0e80f0a9c640",
+     "binary_sha256": "25ba8ebec5f227618d8d58f475622669f4c45019d40259d1d292a823f4184c27",
+     "inventory_sha256": "44e7b67bbdc0842fecf8cfa158641e03998f7d0b34184bc297ede967ab24ce7a",
+     "taxonomy_sha256": "6064ebcb6693a1dd7b3e50fbfbcc94ff959f7957ac184188fd91744900a429a3",
+     "materializer_sha256": "ba6245da8b07901b6793898e70e2e974a1e641a2c3be0d357ba53d15101f4081",
+     "default_action": "keep",
+     "overrides": []
+    },
+    "report": {
+     "total": 14,
+     "keep": 14,
+     "disable": 0,
+     "replace": 0,
+     "skipped": []
+    }
+   }
+  },
+  {
+   "name": "to profile: empty and whitespace bodies disable",
+   "args": [
+    [
+     {
+      "id": "short",
+      "body": ""
+     },
+     {
+      "id": "zebra-only",
+      "body": " \n\t"
+     }
+    ],
+    "@inventory-claude"
+   ],
+   "expected": {
+    "profile": {
+     "schema_version": 1,
+     "runtime_id": "native-claude-code",
+     "runtime_version": "0.0.0-golden",
+     "image_digest": "sha256:2d032a622cf94baf637a4488720865da983853e4a655fea4e45d0e80f0a9c640",
+     "binary_sha256": "25ba8ebec5f227618d8d58f475622669f4c45019d40259d1d292a823f4184c27",
+     "inventory_sha256": "44e7b67bbdc0842fecf8cfa158641e03998f7d0b34184bc297ede967ab24ce7a",
+     "taxonomy_sha256": "6064ebcb6693a1dd7b3e50fbfbcc94ff959f7957ac184188fd91744900a429a3",
+     "materializer_sha256": "ba6245da8b07901b6793898e70e2e974a1e641a2c3be0d357ba53d15101f4081",
+     "default_action": "keep",
+     "overrides": [
+      {
+       "block_id": "short",
+       "baseline_sha256": "213c22ed7234eb11116e1e88f314c73cb3a019b5c87fe224b6ce5665bd9ec50e",
+       "action": "disable"
+      },
+      {
+       "block_id": "zebra-only",
+       "baseline_sha256": "2ce9d291f5392ccce812660963901c0f0d97b67cf0e9fcb371d02e8574afda87",
+       "action": "disable"
+      }
+     ]
+    },
+    "report": {
+     "total": 2,
+     "keep": 0,
+     "disable": 2,
+     "replace": 0,
+     "skipped": []
+    }
+   }
+  },
+  {
+   "name": "to profile: changed body replaces",
+   "args": [
+    [
+     {
+      "id": "tool-bash-guide",
+      "body": "Fabricated new guidance."
+     }
+    ],
+    "@inventory-claude"
+   ],
+   "expected": {
+    "profile": {
+     "schema_version": 1,
+     "runtime_id": "native-claude-code",
+     "runtime_version": "0.0.0-golden",
+     "image_digest": "sha256:2d032a622cf94baf637a4488720865da983853e4a655fea4e45d0e80f0a9c640",
+     "binary_sha256": "25ba8ebec5f227618d8d58f475622669f4c45019d40259d1d292a823f4184c27",
+     "inventory_sha256": "44e7b67bbdc0842fecf8cfa158641e03998f7d0b34184bc297ede967ab24ce7a",
+     "taxonomy_sha256": "6064ebcb6693a1dd7b3e50fbfbcc94ff959f7957ac184188fd91744900a429a3",
+     "materializer_sha256": "ba6245da8b07901b6793898e70e2e974a1e641a2c3be0d357ba53d15101f4081",
+     "default_action": "keep",
+     "overrides": [
+      {
+       "block_id": "tool-bash-guide",
+       "baseline_sha256": "c5db5a79c94bb7a9835cbe2e3897337c52e3bb72b73edaedf1165a51246b057b",
+       "action": "replace",
+       "replacement_utf8": "Fabricated new guidance.",
+       "replacement_sha256": "c8556407d8a9bfc241808dd983b6963518e0d481b1d7c8e72858cde942a76235"
+      }
+     ]
+    },
+    "report": {
+     "total": 1,
+     "keep": 0,
+     "disable": 0,
+     "replace": 1,
+     "skipped": []
+    }
+   }
+  },
+  {
+   "name": "to profile: unknown and duplicate ids",
+   "args": [
+    [
+     {
+      "id": "ghost",
+      "body": "x"
+     },
+     {
+      "id": "short",
+      "body": ""
+     },
+     {
+      "id": "short",
+      "body": "Be brief."
+     }
+    ],
+    "@inventory-claude"
+   ],
+   "expected": {
+    "profile": {
+     "schema_version": 1,
+     "runtime_id": "native-claude-code",
+     "runtime_version": "0.0.0-golden",
+     "image_digest": "sha256:2d032a622cf94baf637a4488720865da983853e4a655fea4e45d0e80f0a9c640",
+     "binary_sha256": "25ba8ebec5f227618d8d58f475622669f4c45019d40259d1d292a823f4184c27",
+     "inventory_sha256": "44e7b67bbdc0842fecf8cfa158641e03998f7d0b34184bc297ede967ab24ce7a",
+     "taxonomy_sha256": "6064ebcb6693a1dd7b3e50fbfbcc94ff959f7957ac184188fd91744900a429a3",
+     "materializer_sha256": "ba6245da8b07901b6793898e70e2e974a1e641a2c3be0d357ba53d15101f4081",
+     "default_action": "keep",
+     "overrides": [
+      {
+       "block_id": "short",
+       "baseline_sha256": "213c22ed7234eb11116e1e88f314c73cb3a019b5c87fe224b6ce5665bd9ec50e",
+       "action": "disable"
+      }
+     ]
+    },
+    "report": {
+     "total": 3,
+     "keep": 0,
+     "disable": 1,
+     "replace": 0,
+     "skipped": [
+      {
+       "id": "ghost",
+       "reason": "unknown-block"
+      },
+      {
+       "id": "short",
+       "reason": "duplicate-id"
+      }
+     ]
+    }
+   }
+  },
+  {
+   "name": "to profile: observed-only change is not patchable",
+   "args": [
+    [
+     {
+      "id": "observed-dynamic",
+      "body": "changed"
+     },
+     {
+      "id": "observed-dynamic-2",
+      "body": "x"
+     }
+    ],
+    "@inventory-claude"
+   ],
+   "expected": {
+    "profile": {
+     "schema_version": 1,
+     "runtime_id": "native-claude-code",
+     "runtime_version": "0.0.0-golden",
+     "image_digest": "sha256:2d032a622cf94baf637a4488720865da983853e4a655fea4e45d0e80f0a9c640",
+     "binary_sha256": "25ba8ebec5f227618d8d58f475622669f4c45019d40259d1d292a823f4184c27",
+     "inventory_sha256": "44e7b67bbdc0842fecf8cfa158641e03998f7d0b34184bc297ede967ab24ce7a",
+     "taxonomy_sha256": "6064ebcb6693a1dd7b3e50fbfbcc94ff959f7957ac184188fd91744900a429a3",
+     "materializer_sha256": "ba6245da8b07901b6793898e70e2e974a1e641a2c3be0d357ba53d15101f4081",
+     "default_action": "keep",
+     "overrides": []
+    },
+    "report": {
+     "total": 2,
+     "keep": 0,
+     "disable": 0,
+     "replace": 0,
+     "skipped": [
+      {
+       "id": "observed-dynamic",
+       "reason": "not-patchable"
+      },
+      {
+       "id": "observed-dynamic-2",
+       "reason": "unknown-block"
+      }
+     ]
+    }
+   }
+  },
+  {
+   "name": "to profile: templated block with named variables",
+   "args": [
+    [
+     {
+      "id": "system-reminder-plan",
+      "body": "Fabricated reminder for ${NAME}."
+     }
+    ],
+    "@inventory-claude"
+   ],
+   "expected": {
+    "profile": {
+     "schema_version": 1,
+     "runtime_id": "native-claude-code",
+     "runtime_version": "0.0.0-golden",
+     "image_digest": "sha256:2d032a622cf94baf637a4488720865da983853e4a655fea4e45d0e80f0a9c640",
+     "binary_sha256": "25ba8ebec5f227618d8d58f475622669f4c45019d40259d1d292a823f4184c27",
+     "inventory_sha256": "44e7b67bbdc0842fecf8cfa158641e03998f7d0b34184bc297ede967ab24ce7a",
+     "taxonomy_sha256": "6064ebcb6693a1dd7b3e50fbfbcc94ff959f7957ac184188fd91744900a429a3",
+     "materializer_sha256": "ba6245da8b07901b6793898e70e2e974a1e641a2c3be0d357ba53d15101f4081",
+     "default_action": "keep",
+     "overrides": []
+    },
+    "report": {
+     "total": 1,
+     "keep": 0,
+     "disable": 0,
+     "replace": 0,
+     "skipped": [
+      {
+       "id": "system-reminder-plan",
+       "reason": "placeholder-names-differ"
+      }
+     ]
+    }
+   }
+  },
+  {
+   "name": "to profile: templated block emptied disables",
+   "args": [
+    [
+     {
+      "id": "system-reminder-plan",
+      "body": ""
+     }
+    ],
+    "@inventory-claude"
+   ],
+   "expected": {
+    "profile": {
+     "schema_version": 1,
+     "runtime_id": "native-claude-code",
+     "runtime_version": "0.0.0-golden",
+     "image_digest": "sha256:2d032a622cf94baf637a4488720865da983853e4a655fea4e45d0e80f0a9c640",
+     "binary_sha256": "25ba8ebec5f227618d8d58f475622669f4c45019d40259d1d292a823f4184c27",
+     "inventory_sha256": "44e7b67bbdc0842fecf8cfa158641e03998f7d0b34184bc297ede967ab24ce7a",
+     "taxonomy_sha256": "6064ebcb6693a1dd7b3e50fbfbcc94ff959f7957ac184188fd91744900a429a3",
+     "materializer_sha256": "ba6245da8b07901b6793898e70e2e974a1e641a2c3be0d357ba53d15101f4081",
+     "default_action": "keep",
+     "overrides": [
+      {
+       "block_id": "system-reminder-plan",
+       "baseline_sha256": "5911fea64f55d714569aff07fa8a887a235adca26c869f4f492da7c88c004a73",
+       "action": "disable"
+      }
+     ]
+    },
+    "report": {
+     "total": 1,
+     "keep": 0,
+     "disable": 1,
+     "replace": 0,
+     "skipped": []
+    }
+   }
+  },
+  {
+   "name": "to profile: templated block unchanged keeps",
+   "args": [
+    [
+     {
+      "id": "system-reminder-plan",
+      "body": "Fabricated reminder for ${TH_PROMPT_EXPR_0}: keep the plan short and confirm it with ${TH_PROMPT_EXPR_1}.\n"
+     }
+    ],
+    "@inventory-claude"
+   ],
+   "expected": {
+    "profile": {
+     "schema_version": 1,
+     "runtime_id": "native-claude-code",
+     "runtime_version": "0.0.0-golden",
+     "image_digest": "sha256:2d032a622cf94baf637a4488720865da983853e4a655fea4e45d0e80f0a9c640",
+     "binary_sha256": "25ba8ebec5f227618d8d58f475622669f4c45019d40259d1d292a823f4184c27",
+     "inventory_sha256": "44e7b67bbdc0842fecf8cfa158641e03998f7d0b34184bc297ede967ab24ce7a",
+     "taxonomy_sha256": "6064ebcb6693a1dd7b3e50fbfbcc94ff959f7957ac184188fd91744900a429a3",
+     "materializer_sha256": "ba6245da8b07901b6793898e70e2e974a1e641a2c3be0d357ba53d15101f4081",
+     "default_action": "keep",
+     "overrides": []
+    },
+    "report": {
+     "total": 1,
+     "keep": 1,
+     "disable": 0,
+     "replace": 0,
+     "skipped": []
+    }
+   }
+  },
+  {
+   "name": "to profile: invalid replacements",
+   "args": [
+    [
+     {
+      "id": "tool-bash-guide",
+      "body": "nul \u0000"
+     },
+     {
+      "id": "short",
+      "body": "has ${TH_PROMPT_EXPR_0}"
+     },
+     {
+      "id": "zebra-only",
+      "body": "key sk-or-v1-0123456789abcdef0123"
+     }
+    ],
+    "@inventory-claude"
+   ],
+   "expected": {
+    "profile": {
+     "schema_version": 1,
+     "runtime_id": "native-claude-code",
+     "runtime_version": "0.0.0-golden",
+     "image_digest": "sha256:2d032a622cf94baf637a4488720865da983853e4a655fea4e45d0e80f0a9c640",
+     "binary_sha256": "25ba8ebec5f227618d8d58f475622669f4c45019d40259d1d292a823f4184c27",
+     "inventory_sha256": "44e7b67bbdc0842fecf8cfa158641e03998f7d0b34184bc297ede967ab24ce7a",
+     "taxonomy_sha256": "6064ebcb6693a1dd7b3e50fbfbcc94ff959f7957ac184188fd91744900a429a3",
+     "materializer_sha256": "ba6245da8b07901b6793898e70e2e974a1e641a2c3be0d357ba53d15101f4081",
+     "default_action": "keep",
+     "overrides": []
+    },
+    "report": {
+     "total": 3,
+     "keep": 0,
+     "disable": 0,
+     "replace": 0,
+     "skipped": [
+      {
+       "id": "tool-bash-guide",
+       "reason": "invalid-replacement"
+      },
+      {
+       "id": "short",
+       "reason": "invalid-replacement"
+      },
+      {
+       "id": "zebra-only",
+       "reason": "invalid-replacement"
+      }
+     ]
+    }
+   }
+  },
+  {
+   "name": "to profile: non-ASCII replacement",
+   "args": [
+    [
+     {
+      "id": "unicode-mix",
+      "body": "\u65e5\u672c\u8a9e \ud83d\ude42"
+     }
+    ],
+    "@inventory-claude"
+   ],
+   "expected": {
+    "profile": {
+     "schema_version": 1,
+     "runtime_id": "native-claude-code",
+     "runtime_version": "0.0.0-golden",
+     "image_digest": "sha256:2d032a622cf94baf637a4488720865da983853e4a655fea4e45d0e80f0a9c640",
+     "binary_sha256": "25ba8ebec5f227618d8d58f475622669f4c45019d40259d1d292a823f4184c27",
+     "inventory_sha256": "44e7b67bbdc0842fecf8cfa158641e03998f7d0b34184bc297ede967ab24ce7a",
+     "taxonomy_sha256": "6064ebcb6693a1dd7b3e50fbfbcc94ff959f7957ac184188fd91744900a429a3",
+     "materializer_sha256": "ba6245da8b07901b6793898e70e2e974a1e641a2c3be0d357ba53d15101f4081",
+     "default_action": "keep",
+     "overrides": [
+      {
+       "block_id": "unicode-mix",
+       "baseline_sha256": "d00da6c5a836c9df66e6b20ea37a93990bedea7ff26d8c203fd257d9b47523a8",
+       "action": "replace",
+       "replacement_utf8": "\u65e5\u672c\u8a9e \ud83d\ude42",
+       "replacement_sha256": "dc77b39d398d4566e7bbb539dcba35a4a985da4c5bf001f70f9e46016f5c1932"
+      }
+     ]
+    },
+    "report": {
+     "total": 1,
+     "keep": 0,
+     "disable": 0,
+     "replace": 1,
+     "skipped": []
+    }
+   }
+  },
+  {
+   "name": "to profile: empty dump",
+   "args": [
+    [],
+    "@inventory-claude"
+   ],
+   "expected": {
+    "profile": {
+     "schema_version": 1,
+     "runtime_id": "native-claude-code",
+     "runtime_version": "0.0.0-golden",
+     "image_digest": "sha256:2d032a622cf94baf637a4488720865da983853e4a655fea4e45d0e80f0a9c640",
+     "binary_sha256": "25ba8ebec5f227618d8d58f475622669f4c45019d40259d1d292a823f4184c27",
+     "inventory_sha256": "44e7b67bbdc0842fecf8cfa158641e03998f7d0b34184bc297ede967ab24ce7a",
+     "taxonomy_sha256": "6064ebcb6693a1dd7b3e50fbfbcc94ff959f7957ac184188fd91744900a429a3",
+     "materializer_sha256": "ba6245da8b07901b6793898e70e2e974a1e641a2c3be0d357ba53d15101f4081",
+     "default_action": "keep",
+     "overrides": []
+    },
+    "report": {
+     "total": 0,
+     "keep": 0,
+     "disable": 0,
+     "replace": 0,
+     "skipped": []
+    }
+   }
+  },
+  {
+   "name": "to profile: Codex over capacity",
+   "args": [
+    [
+     {
+      "id": "codex-short",
+      "body": "Longer than ten bytes."
+     },
+     {
+      "id": "codex-review",
+      "body": "Short."
+     }
+    ],
+    "@inventory-codex"
+   ],
+   "expected": {
+    "profile": {
+     "schema_version": 1,
+     "runtime_id": "native-codex",
+     "runtime_version": "0.167.1",
+     "image_digest": "sha256:716f940f0958cd4abdda846a256caa95e40a5a858709f72692a16a89f9d14c7f",
+     "binary_sha256": "18ee9689f82cda3a1af3da8b40e0b5477a56b83e9e4fa620554a2fd6c6112053",
+     "inventory_sha256": "4eca453646cf1f187f5872ccafdec818d4536b3452b5ea1d33dcb436ad78273d",
+     "taxonomy_sha256": "6064ebcb6693a1dd7b3e50fbfbcc94ff959f7957ac184188fd91744900a429a3",
+     "materializer_sha256": "8a1ee9f8fba86a80c057f7712d4aeddb02096ec17f3c22451ecaf5ded9c1c185",
+     "default_action": "keep",
+     "overrides": [
+      {
+       "block_id": "codex-review",
+       "baseline_sha256": "7f587ebb523bdfb535b38804a344d40b9991372fa7343e4f5fced81ce3bd4dfa",
+       "action": "replace",
+       "replacement_utf8": "Short.",
+       "replacement_sha256": "c9145e654bf3ea4822d6f2a3246ab4e18e28ad6c950bf80d7b1e4d81eb315f6a"
+      }
+     ]
+    },
+    "report": {
+     "total": 2,
+     "keep": 0,
+     "disable": 0,
+     "replace": 1,
+     "skipped": [
+      {
+       "id": "codex-short",
+       "reason": "over-capacity"
+      }
+     ]
+    }
+   }
+  },
+  {
+   "name": "to blocks: baseline",
+   "args": [
+    {
+     "schema_version": 1,
+     "runtime_id": "native-claude-code",
+     "runtime_version": "0.0.0-golden",
+     "image_digest": "sha256:2d032a622cf94baf637a4488720865da983853e4a655fea4e45d0e80f0a9c640",
+     "binary_sha256": "25ba8ebec5f227618d8d58f475622669f4c45019d40259d1d292a823f4184c27",
+     "inventory_sha256": "44e7b67bbdc0842fecf8cfa158641e03998f7d0b34184bc297ede967ab24ce7a",
+     "taxonomy_sha256": "6064ebcb6693a1dd7b3e50fbfbcc94ff959f7957ac184188fd91744900a429a3",
+     "materializer_sha256": "ba6245da8b07901b6793898e70e2e974a1e641a2c3be0d357ba53d15101f4081",
+     "default_action": "keep",
+     "overrides": []
+    },
+    "@inventory-claude"
+   ],
+   "function": "agent_patcher_blocks_from_profile",
+   "expected": {
+    "blocks": [
+     {
+      "id": "tool-bash-guide",
+      "body": "Fabricated guidance: run one shell command at a time and report its exit status.\n",
+      "source_path": ""
+     },
+     {
+      "id": "system-reminder-plan",
+      "body": "Fabricated reminder for ${TH_PROMPT_EXPR_0}: keep the plan short and confirm it with ${TH_PROMPT_EXPR_1}.\n",
+      "source_path": ""
+     },
+     {
+      "id": "security-sandbox-note",
+      "body": "Fabricated safety note: stay inside the working directory and refuse destructive commands.\n",
+      "source_path": ""
+     },
+     {
+      "id": "response-style",
+      "body": "IMPORTANT: Fabricated style rules follow.\nYou MUST NOT invent results.\n\n```\nIMPORTANT: inside a fence\n```\n\n\n\nKeep answers short.   \n",
+      "source_path": ""
+     },
+     {
+      "id": "general-hedge",
+      "body": "As a helpful AI assistant, you greet the user.\nFabricated persona line two.\n------------\nPlease note that as an AI you have limits.\nFinal fabricated line.\n",
+      "source_path": ""
+     },
+     {
+      "id": "observed-dynamic",
+      "body": "Fabricated observed text with {{name}} inside.\n",
+      "source_path": ""
+     },
+     {
+      "id": "unavailable-fragment",
+      "body": "Fabricated text that cannot be located.\n",
+      "source_path": ""
+     },
+     {
+      "id": "short",
+      "body": "Be brief.",
+      "source_path": ""
+     },
+     {
+      "id": "unicode-mix",
+      "body": "Fabricated text: \u65e5\u672c\u8a9e\u306e\u8aac\u660e, emoji \ud83d\ude42, cafe\u0301 with a combining accent, and a line separator\u2028here.\n",
+      "source_path": ""
+     },
+     {
+      "id": "credential-prose",
+      "body": "Fabricated note about Bearer authentication headers and requests.exceptions.JSONDecodeError handling; contact docs@example.com for details.\n",
+      "source_path": ""
+     },
+     {
+      "id": "escapes-sample",
+      "body": "Fabricated escapes: \\n and \\u2014 appear written out.\n",
+      "source_path": ""
+     },
+     {
+      "id": "zebra-only",
+      "body": "Fabricated fact: the zebra appears only in this body.\n",
+      "source_path": ""
+     },
+     {
+      "id": "git-commit-guide",
+      "body": "Fabricated: write one commit per change.\nSecond line of the guide.\nThird line of the guide.\nFourth line of the guide.\nFifth line of the guide.\n",
+      "source_path": ""
+     },
+     {
+      "id": "permission-deny-list",
+      "body": "Fabricated permission rule: deny writes outside the project.\n",
+      "source_path": ""
+     }
+    ],
+    "skipped": []
+   }
+  },
+  {
+   "name": "to blocks: none included",
+   "args": [
+    {
+     "schema_version": 1,
+     "runtime_id": "native-claude-code",
+     "runtime_version": "0.0.0-golden",
+     "image_digest": "sha256:2d032a622cf94baf637a4488720865da983853e4a655fea4e45d0e80f0a9c640",
+     "binary_sha256": "25ba8ebec5f227618d8d58f475622669f4c45019d40259d1d292a823f4184c27",
+     "inventory_sha256": "44e7b67bbdc0842fecf8cfa158641e03998f7d0b34184bc297ede967ab24ce7a",
+     "taxonomy_sha256": "6064ebcb6693a1dd7b3e50fbfbcc94ff959f7957ac184188fd91744900a429a3",
+     "materializer_sha256": "ba6245da8b07901b6793898e70e2e974a1e641a2c3be0d357ba53d15101f4081",
+     "default_action": "disable",
+     "overrides": []
+    },
+    "@inventory-claude"
+   ],
+   "function": "agent_patcher_blocks_from_profile",
+   "expected": {
+    "blocks": [
+     {
+      "id": "tool-bash-guide",
+      "body": "",
+      "source_path": ""
+     },
+     {
+      "id": "system-reminder-plan",
+      "body": "",
+      "source_path": ""
+     },
+     {
+      "id": "security-sandbox-note",
+      "body": "",
+      "source_path": ""
+     },
+     {
+      "id": "response-style",
+      "body": "",
+      "source_path": ""
+     },
+     {
+      "id": "general-hedge",
+      "body": "",
+      "source_path": ""
+     },
+     {
+      "id": "observed-dynamic",
+      "body": "Fabricated observed text with {{name}} inside.\n",
+      "source_path": ""
+     },
+     {
+      "id": "unavailable-fragment",
+      "body": "Fabricated text that cannot be located.\n",
+      "source_path": ""
+     },
+     {
+      "id": "short",
+      "body": "",
+      "source_path": ""
+     },
+     {
+      "id": "unicode-mix",
+      "body": "",
+      "source_path": ""
+     },
+     {
+      "id": "credential-prose",
+      "body": "",
+      "source_path": ""
+     },
+     {
+      "id": "escapes-sample",
+      "body": "",
+      "source_path": ""
+     },
+     {
+      "id": "zebra-only",
+      "body": "",
+      "source_path": ""
+     },
+     {
+      "id": "git-commit-guide",
+      "body": "",
+      "source_path": ""
+     },
+     {
+      "id": "permission-deny-list",
+      "body": "",
+      "source_path": ""
+     }
+    ],
+    "skipped": []
+   }
+  },
+  {
+   "name": "to blocks: mixed",
+   "args": [
+    {
+     "schema_version": 1,
+     "runtime_id": "native-claude-code",
+     "runtime_version": "0.0.0-golden",
+     "image_digest": "sha256:2d032a622cf94baf637a4488720865da983853e4a655fea4e45d0e80f0a9c640",
+     "binary_sha256": "25ba8ebec5f227618d8d58f475622669f4c45019d40259d1d292a823f4184c27",
+     "inventory_sha256": "44e7b67bbdc0842fecf8cfa158641e03998f7d0b34184bc297ede967ab24ce7a",
+     "taxonomy_sha256": "6064ebcb6693a1dd7b3e50fbfbcc94ff959f7957ac184188fd91744900a429a3",
+     "materializer_sha256": "ba6245da8b07901b6793898e70e2e974a1e641a2c3be0d357ba53d15101f4081",
+     "default_action": "keep",
+     "overrides": [
+      {
+       "block_id": "tool-bash-guide",
+       "baseline_sha256": "c5db5a79c94bb7a9835cbe2e3897337c52e3bb72b73edaedf1165a51246b057b",
+       "action": "replace",
+       "replacement_utf8": "Fabricated.",
+       "replacement_sha256": "bb688a5116da03d6e9987461246747769b56f229fb7bdc03423f95918d0e9244"
+      },
+      {
+       "block_id": "short",
+       "baseline_sha256": "213c22ed7234eb11116e1e88f314c73cb3a019b5c87fe224b6ce5665bd9ec50e",
+       "action": "disable"
+      }
+     ]
+    },
+    "@inventory-claude"
+   ],
+   "function": "agent_patcher_blocks_from_profile",
+   "expected": {
+    "blocks": [
+     {
+      "id": "tool-bash-guide",
+      "body": "Fabricated.",
+      "source_path": ""
+     },
+     {
+      "id": "system-reminder-plan",
+      "body": "Fabricated reminder for ${TH_PROMPT_EXPR_0}: keep the plan short and confirm it with ${TH_PROMPT_EXPR_1}.\n",
+      "source_path": ""
+     },
+     {
+      "id": "security-sandbox-note",
+      "body": "Fabricated safety note: stay inside the working directory and refuse destructive commands.\n",
+      "source_path": ""
+     },
+     {
+      "id": "response-style",
+      "body": "IMPORTANT: Fabricated style rules follow.\nYou MUST NOT invent results.\n\n```\nIMPORTANT: inside a fence\n```\n\n\n\nKeep answers short.   \n",
+      "source_path": ""
+     },
+     {
+      "id": "general-hedge",
+      "body": "As a helpful AI assistant, you greet the user.\nFabricated persona line two.\n------------\nPlease note that as an AI you have limits.\nFinal fabricated line.\n",
+      "source_path": ""
+     },
+     {
+      "id": "observed-dynamic",
+      "body": "Fabricated observed text with {{name}} inside.\n",
+      "source_path": ""
+     },
+     {
+      "id": "unavailable-fragment",
+      "body": "Fabricated text that cannot be located.\n",
+      "source_path": ""
+     },
+     {
+      "id": "short",
+      "body": "",
+      "source_path": ""
+     },
+     {
+      "id": "unicode-mix",
+      "body": "Fabricated text: \u65e5\u672c\u8a9e\u306e\u8aac\u660e, emoji \ud83d\ude42, cafe\u0301 with a combining accent, and a line separator\u2028here.\n",
+      "source_path": ""
+     },
+     {
+      "id": "credential-prose",
+      "body": "Fabricated note about Bearer authentication headers and requests.exceptions.JSONDecodeError handling; contact docs@example.com for details.\n",
+      "source_path": ""
+     },
+     {
+      "id": "escapes-sample",
+      "body": "Fabricated escapes: \\n and \\u2014 appear written out.\n",
+      "source_path": ""
+     },
+     {
+      "id": "zebra-only",
+      "body": "Fabricated fact: the zebra appears only in this body.\n",
+      "source_path": ""
+     },
+     {
+      "id": "git-commit-guide",
+      "body": "Fabricated: write one commit per change.\nSecond line of the guide.\nThird line of the guide.\nFourth line of the guide.\nFifth line of the guide.\n",
+      "source_path": ""
+     },
+     {
+      "id": "permission-deny-list",
+      "body": "Fabricated permission rule: deny writes outside the project.\n",
+      "source_path": ""
+     }
+    ],
+    "skipped": []
+   }
+  },
+  {
+   "name": "to blocks: templated replacement is skipped",
+   "args": [
+    {
+     "schema_version": 1,
+     "runtime_id": "native-claude-code",
+     "runtime_version": "0.0.0-golden",
+     "image_digest": "sha256:2d032a622cf94baf637a4488720865da983853e4a655fea4e45d0e80f0a9c640",
+     "binary_sha256": "25ba8ebec5f227618d8d58f475622669f4c45019d40259d1d292a823f4184c27",
+     "inventory_sha256": "44e7b67bbdc0842fecf8cfa158641e03998f7d0b34184bc297ede967ab24ce7a",
+     "taxonomy_sha256": "6064ebcb6693a1dd7b3e50fbfbcc94ff959f7957ac184188fd91744900a429a3",
+     "materializer_sha256": "ba6245da8b07901b6793898e70e2e974a1e641a2c3be0d357ba53d15101f4081",
+     "default_action": "keep",
+     "overrides": [
+      {
+       "block_id": "system-reminder-plan",
+       "baseline_sha256": "5911fea64f55d714569aff07fa8a887a235adca26c869f4f492da7c88c004a73",
+       "action": "replace",
+       "replacement_utf8": "New ${TH_PROMPT_EXPR_0} and ${TH_PROMPT_EXPR_1}.",
+       "replacement_sha256": "f03d83cf4a9fb05fd30118ebdaed432d617e0b320dfcff929c8ce9caed4544eb"
+      }
+     ]
+    },
+    "@inventory-claude"
+   ],
+   "function": "agent_patcher_blocks_from_profile",
+   "expected": {
+    "blocks": [
+     {
+      "id": "tool-bash-guide",
+      "body": "Fabricated guidance: run one shell command at a time and report its exit status.\n",
+      "source_path": ""
+     },
+     {
+      "id": "security-sandbox-note",
+      "body": "Fabricated safety note: stay inside the working directory and refuse destructive commands.\n",
+      "source_path": ""
+     },
+     {
+      "id": "response-style",
+      "body": "IMPORTANT: Fabricated style rules follow.\nYou MUST NOT invent results.\n\n```\nIMPORTANT: inside a fence\n```\n\n\n\nKeep answers short.   \n",
+      "source_path": ""
+     },
+     {
+      "id": "general-hedge",
+      "body": "As a helpful AI assistant, you greet the user.\nFabricated persona line two.\n------------\nPlease note that as an AI you have limits.\nFinal fabricated line.\n",
+      "source_path": ""
+     },
+     {
+      "id": "observed-dynamic",
+      "body": "Fabricated observed text with {{name}} inside.\n",
+      "source_path": ""
+     },
+     {
+      "id": "unavailable-fragment",
+      "body": "Fabricated text that cannot be located.\n",
+      "source_path": ""
+     },
+     {
+      "id": "short",
+      "body": "Be brief.",
+      "source_path": ""
+     },
+     {
+      "id": "unicode-mix",
+      "body": "Fabricated text: \u65e5\u672c\u8a9e\u306e\u8aac\u660e, emoji \ud83d\ude42, cafe\u0301 with a combining accent, and a line separator\u2028here.\n",
+      "source_path": ""
+     },
+     {
+      "id": "credential-prose",
+      "body": "Fabricated note about Bearer authentication headers and requests.exceptions.JSONDecodeError handling; contact docs@example.com for details.\n",
+      "source_path": ""
+     },
+     {
+      "id": "escapes-sample",
+      "body": "Fabricated escapes: \\n and \\u2014 appear written out.\n",
+      "source_path": ""
+     },
+     {
+      "id": "zebra-only",
+      "body": "Fabricated fact: the zebra appears only in this body.\n",
+      "source_path": ""
+     },
+     {
+      "id": "git-commit-guide",
+      "body": "Fabricated: write one commit per change.\nSecond line of the guide.\nThird line of the guide.\nFourth line of the guide.\nFifth line of the guide.\n",
+      "source_path": ""
+     },
+     {
+      "id": "permission-deny-list",
+      "body": "Fabricated permission rule: deny writes outside the project.\n",
+      "source_path": ""
+     }
+    ],
+    "skipped": [
+     {
+      "id": "system-reminder-plan",
+      "reason": "placeholder-names-differ"
+     }
+    ]
+   }
+  },
+  {
+   "name": "to blocks: templated replacement equal to the baseline is written",
+   "args": [
+    {
+     "schema_version": 1,
+     "runtime_id": "native-claude-code",
+     "runtime_version": "0.0.0-golden",
+     "image_digest": "sha256:2d032a622cf94baf637a4488720865da983853e4a655fea4e45d0e80f0a9c640",
+     "binary_sha256": "25ba8ebec5f227618d8d58f475622669f4c45019d40259d1d292a823f4184c27",
+     "inventory_sha256": "44e7b67bbdc0842fecf8cfa158641e03998f7d0b34184bc297ede967ab24ce7a",
+     "taxonomy_sha256": "6064ebcb6693a1dd7b3e50fbfbcc94ff959f7957ac184188fd91744900a429a3",
+     "materializer_sha256": "ba6245da8b07901b6793898e70e2e974a1e641a2c3be0d357ba53d15101f4081",
+     "default_action": "keep",
+     "overrides": [
+      {
+       "block_id": "system-reminder-plan",
+       "baseline_sha256": "5911fea64f55d714569aff07fa8a887a235adca26c869f4f492da7c88c004a73",
+       "action": "replace",
+       "replacement_utf8": "Fabricated reminder for ${TH_PROMPT_EXPR_0}: keep the plan short and confirm it with ${TH_PROMPT_EXPR_1}.\n",
+       "replacement_sha256": "5911fea64f55d714569aff07fa8a887a235adca26c869f4f492da7c88c004a73"
+      }
+     ]
+    },
+    "@inventory-claude"
+   ],
+   "function": "agent_patcher_blocks_from_profile",
+   "expected": {
+    "blocks": [
+     {
+      "id": "tool-bash-guide",
+      "body": "Fabricated guidance: run one shell command at a time and report its exit status.\n",
+      "source_path": ""
+     },
+     {
+      "id": "system-reminder-plan",
+      "body": "Fabricated reminder for ${TH_PROMPT_EXPR_0}: keep the plan short and confirm it with ${TH_PROMPT_EXPR_1}.\n",
+      "source_path": ""
+     },
+     {
+      "id": "security-sandbox-note",
+      "body": "Fabricated safety note: stay inside the working directory and refuse destructive commands.\n",
+      "source_path": ""
+     },
+     {
+      "id": "response-style",
+      "body": "IMPORTANT: Fabricated style rules follow.\nYou MUST NOT invent results.\n\n```\nIMPORTANT: inside a fence\n```\n\n\n\nKeep answers short.   \n",
+      "source_path": ""
+     },
+     {
+      "id": "general-hedge",
+      "body": "As a helpful AI assistant, you greet the user.\nFabricated persona line two.\n------------\nPlease note that as an AI you have limits.\nFinal fabricated line.\n",
+      "source_path": ""
+     },
+     {
+      "id": "observed-dynamic",
+      "body": "Fabricated observed text with {{name}} inside.\n",
+      "source_path": ""
+     },
+     {
+      "id": "unavailable-fragment",
+      "body": "Fabricated text that cannot be located.\n",
+      "source_path": ""
+     },
+     {
+      "id": "short",
+      "body": "Be brief.",
+      "source_path": ""
+     },
+     {
+      "id": "unicode-mix",
+      "body": "Fabricated text: \u65e5\u672c\u8a9e\u306e\u8aac\u660e, emoji \ud83d\ude42, cafe\u0301 with a combining accent, and a line separator\u2028here.\n",
+      "source_path": ""
+     },
+     {
+      "id": "credential-prose",
+      "body": "Fabricated note about Bearer authentication headers and requests.exceptions.JSONDecodeError handling; contact docs@example.com for details.\n",
+      "source_path": ""
+     },
+     {
+      "id": "escapes-sample",
+      "body": "Fabricated escapes: \\n and \\u2014 appear written out.\n",
+      "source_path": ""
+     },
+     {
+      "id": "zebra-only",
+      "body": "Fabricated fact: the zebra appears only in this body.\n",
+      "source_path": ""
+     },
+     {
+      "id": "git-commit-guide",
+      "body": "Fabricated: write one commit per change.\nSecond line of the guide.\nThird line of the guide.\nFourth line of the guide.\nFifth line of the guide.\n",
+      "source_path": ""
+     },
+     {
+      "id": "permission-deny-list",
+      "body": "Fabricated permission rule: deny writes outside the project.\n",
+      "source_path": ""
+     }
+    ],
+    "skipped": []
+   }
+  },
+  {
+   "name": "to blocks: templated disable is written",
+   "args": [
+    {
+     "schema_version": 1,
+     "runtime_id": "native-claude-code",
+     "runtime_version": "0.0.0-golden",
+     "image_digest": "sha256:2d032a622cf94baf637a4488720865da983853e4a655fea4e45d0e80f0a9c640",
+     "binary_sha256": "25ba8ebec5f227618d8d58f475622669f4c45019d40259d1d292a823f4184c27",
+     "inventory_sha256": "44e7b67bbdc0842fecf8cfa158641e03998f7d0b34184bc297ede967ab24ce7a",
+     "taxonomy_sha256": "6064ebcb6693a1dd7b3e50fbfbcc94ff959f7957ac184188fd91744900a429a3",
+     "materializer_sha256": "ba6245da8b07901b6793898e70e2e974a1e641a2c3be0d357ba53d15101f4081",
+     "default_action": "keep",
+     "overrides": [
+      {
+       "block_id": "system-reminder-plan",
+       "baseline_sha256": "5911fea64f55d714569aff07fa8a887a235adca26c869f4f492da7c88c004a73",
+       "action": "disable"
+      }
+     ]
+    },
+    "@inventory-claude"
+   ],
+   "function": "agent_patcher_blocks_from_profile",
+   "expected": {
+    "blocks": [
+     {
+      "id": "tool-bash-guide",
+      "body": "Fabricated guidance: run one shell command at a time and report its exit status.\n",
+      "source_path": ""
+     },
+     {
+      "id": "system-reminder-plan",
+      "body": "",
+      "source_path": ""
+     },
+     {
+      "id": "security-sandbox-note",
+      "body": "Fabricated safety note: stay inside the working directory and refuse destructive commands.\n",
+      "source_path": ""
+     },
+     {
+      "id": "response-style",
+      "body": "IMPORTANT: Fabricated style rules follow.\nYou MUST NOT invent results.\n\n```\nIMPORTANT: inside a fence\n```\n\n\n\nKeep answers short.   \n",
+      "source_path": ""
+     },
+     {
+      "id": "general-hedge",
+      "body": "As a helpful AI assistant, you greet the user.\nFabricated persona line two.\n------------\nPlease note that as an AI you have limits.\nFinal fabricated line.\n",
+      "source_path": ""
+     },
+     {
+      "id": "observed-dynamic",
+      "body": "Fabricated observed text with {{name}} inside.\n",
+      "source_path": ""
+     },
+     {
+      "id": "unavailable-fragment",
+      "body": "Fabricated text that cannot be located.\n",
+      "source_path": ""
+     },
+     {
+      "id": "short",
+      "body": "Be brief.",
+      "source_path": ""
+     },
+     {
+      "id": "unicode-mix",
+      "body": "Fabricated text: \u65e5\u672c\u8a9e\u306e\u8aac\u660e, emoji \ud83d\ude42, cafe\u0301 with a combining accent, and a line separator\u2028here.\n",
+      "source_path": ""
+     },
+     {
+      "id": "credential-prose",
+      "body": "Fabricated note about Bearer authentication headers and requests.exceptions.JSONDecodeError handling; contact docs@example.com for details.\n",
+      "source_path": ""
+     },
+     {
+      "id": "escapes-sample",
+      "body": "Fabricated escapes: \\n and \\u2014 appear written out.\n",
+      "source_path": ""
+     },
+     {
+      "id": "zebra-only",
+      "body": "Fabricated fact: the zebra appears only in this body.\n",
+      "source_path": ""
+     },
+     {
+      "id": "git-commit-guide",
+      "body": "Fabricated: write one commit per change.\nSecond line of the guide.\nThird line of the guide.\nFourth line of the guide.\nFifth line of the guide.\n",
+      "source_path": ""
+     },
+     {
+      "id": "permission-deny-list",
+      "body": "Fabricated permission rule: deny writes outside the project.\n",
+      "source_path": ""
+     }
+    ],
+    "skipped": []
+   }
+  },
+  {
+   "name": "to blocks: non-ASCII",
+   "args": [
+    {
+     "schema_version": 1,
+     "runtime_id": "native-claude-code",
+     "runtime_version": "0.0.0-golden",
+     "image_digest": "sha256:2d032a622cf94baf637a4488720865da983853e4a655fea4e45d0e80f0a9c640",
+     "binary_sha256": "25ba8ebec5f227618d8d58f475622669f4c45019d40259d1d292a823f4184c27",
+     "inventory_sha256": "44e7b67bbdc0842fecf8cfa158641e03998f7d0b34184bc297ede967ab24ce7a",
+     "taxonomy_sha256": "6064ebcb6693a1dd7b3e50fbfbcc94ff959f7957ac184188fd91744900a429a3",
+     "materializer_sha256": "ba6245da8b07901b6793898e70e2e974a1e641a2c3be0d357ba53d15101f4081",
+     "default_action": "keep",
+     "overrides": [
+      {
+       "block_id": "unicode-mix",
+       "baseline_sha256": "d00da6c5a836c9df66e6b20ea37a93990bedea7ff26d8c203fd257d9b47523a8",
+       "action": "replace",
+       "replacement_utf8": "\u65e5\u672c \ud83d\ude42",
+       "replacement_sha256": "d5bed3f52102ce6ce8a3870bda862bb976f481d976c415d4ad901ab71aed1b9f"
+      }
+     ]
+    },
+    "@inventory-claude"
+   ],
+   "function": "agent_patcher_blocks_from_profile",
+   "expected": {
+    "blocks": [
+     {
+      "id": "tool-bash-guide",
+      "body": "Fabricated guidance: run one shell command at a time and report its exit status.\n",
+      "source_path": ""
+     },
+     {
+      "id": "system-reminder-plan",
+      "body": "Fabricated reminder for ${TH_PROMPT_EXPR_0}: keep the plan short and confirm it with ${TH_PROMPT_EXPR_1}.\n",
+      "source_path": ""
+     },
+     {
+      "id": "security-sandbox-note",
+      "body": "Fabricated safety note: stay inside the working directory and refuse destructive commands.\n",
+      "source_path": ""
+     },
+     {
+      "id": "response-style",
+      "body": "IMPORTANT: Fabricated style rules follow.\nYou MUST NOT invent results.\n\n```\nIMPORTANT: inside a fence\n```\n\n\n\nKeep answers short.   \n",
+      "source_path": ""
+     },
+     {
+      "id": "general-hedge",
+      "body": "As a helpful AI assistant, you greet the user.\nFabricated persona line two.\n------------\nPlease note that as an AI you have limits.\nFinal fabricated line.\n",
+      "source_path": ""
+     },
+     {
+      "id": "observed-dynamic",
+      "body": "Fabricated observed text with {{name}} inside.\n",
+      "source_path": ""
+     },
+     {
+      "id": "unavailable-fragment",
+      "body": "Fabricated text that cannot be located.\n",
+      "source_path": ""
+     },
+     {
+      "id": "short",
+      "body": "Be brief.",
+      "source_path": ""
+     },
+     {
+      "id": "unicode-mix",
+      "body": "\u65e5\u672c \ud83d\ude42",
+      "source_path": ""
+     },
+     {
+      "id": "credential-prose",
+      "body": "Fabricated note about Bearer authentication headers and requests.exceptions.JSONDecodeError handling; contact docs@example.com for details.\n",
+      "source_path": ""
+     },
+     {
+      "id": "escapes-sample",
+      "body": "Fabricated escapes: \\n and \\u2014 appear written out.\n",
+      "source_path": ""
+     },
+     {
+      "id": "zebra-only",
+      "body": "Fabricated fact: the zebra appears only in this body.\n",
+      "source_path": ""
+     },
+     {
+      "id": "git-commit-guide",
+      "body": "Fabricated: write one commit per change.\nSecond line of the guide.\nThird line of the guide.\nFourth line of the guide.\nFifth line of the guide.\n",
+      "source_path": ""
+     },
+     {
+      "id": "permission-deny-list",
+      "body": "Fabricated permission rule: deny writes outside the project.\n",
+      "source_path": ""
+     }
+    ],
+    "skipped": []
+   }
+  },
+  {
+   "name": "to blocks: default disable with a keep",
+   "args": [
+    {
+     "schema_version": 1,
+     "runtime_id": "native-claude-code",
+     "runtime_version": "0.0.0-golden",
+     "image_digest": "sha256:2d032a622cf94baf637a4488720865da983853e4a655fea4e45d0e80f0a9c640",
+     "binary_sha256": "25ba8ebec5f227618d8d58f475622669f4c45019d40259d1d292a823f4184c27",
+     "inventory_sha256": "44e7b67bbdc0842fecf8cfa158641e03998f7d0b34184bc297ede967ab24ce7a",
+     "taxonomy_sha256": "6064ebcb6693a1dd7b3e50fbfbcc94ff959f7957ac184188fd91744900a429a3",
+     "materializer_sha256": "ba6245da8b07901b6793898e70e2e974a1e641a2c3be0d357ba53d15101f4081",
+     "default_action": "disable",
+     "overrides": [
+      {
+       "block_id": "tool-bash-guide",
+       "baseline_sha256": "c5db5a79c94bb7a9835cbe2e3897337c52e3bb72b73edaedf1165a51246b057b",
+       "action": "keep"
+      }
+     ]
+    },
+    "@inventory-claude"
+   ],
+   "function": "agent_patcher_blocks_from_profile",
+   "expected": {
+    "blocks": [
+     {
+      "id": "tool-bash-guide",
+      "body": "Fabricated guidance: run one shell command at a time and report its exit status.\n",
+      "source_path": ""
+     },
+     {
+      "id": "system-reminder-plan",
+      "body": "",
+      "source_path": ""
+     },
+     {
+      "id": "security-sandbox-note",
+      "body": "",
+      "source_path": ""
+     },
+     {
+      "id": "response-style",
+      "body": "",
+      "source_path": ""
+     },
+     {
+      "id": "general-hedge",
+      "body": "",
+      "source_path": ""
+     },
+     {
+      "id": "observed-dynamic",
+      "body": "Fabricated observed text with {{name}} inside.\n",
+      "source_path": ""
+     },
+     {
+      "id": "unavailable-fragment",
+      "body": "Fabricated text that cannot be located.\n",
+      "source_path": ""
+     },
+     {
+      "id": "short",
+      "body": "",
+      "source_path": ""
+     },
+     {
+      "id": "unicode-mix",
+      "body": "",
+      "source_path": ""
+     },
+     {
+      "id": "credential-prose",
+      "body": "",
+      "source_path": ""
+     },
+     {
+      "id": "escapes-sample",
+      "body": "",
+      "source_path": ""
+     },
+     {
+      "id": "zebra-only",
+      "body": "",
+      "source_path": ""
+     },
+     {
+      "id": "git-commit-guide",
+      "body": "",
+      "source_path": ""
+     },
+     {
+      "id": "permission-deny-list",
+      "body": "",
+      "source_path": ""
+     }
+    ],
+    "skipped": []
+   }
+  },
+  {
+   "name": "to blocks: Codex",
+   "args": [
+    {
+     "schema_version": 1,
+     "runtime_id": "native-codex",
+     "runtime_version": "0.167.1",
+     "image_digest": "sha256:716f940f0958cd4abdda846a256caa95e40a5a858709f72692a16a89f9d14c7f",
+     "binary_sha256": "18ee9689f82cda3a1af3da8b40e0b5477a56b83e9e4fa620554a2fd6c6112053",
+     "inventory_sha256": "4eca453646cf1f187f5872ccafdec818d4536b3452b5ea1d33dcb436ad78273d",
+     "taxonomy_sha256": "6064ebcb6693a1dd7b3e50fbfbcc94ff959f7957ac184188fd91744900a429a3",
+     "materializer_sha256": "8a1ee9f8fba86a80c057f7712d4aeddb02096ec17f3c22451ecaf5ded9c1c185",
+     "default_action": "keep",
+     "overrides": [
+      {
+       "block_id": "codex-short",
+       "baseline_sha256": "fa6eb19205792e9f5eedf1535af30a3bd9d94d49e92bedf94dd1261de32e17c8",
+       "action": "disable"
+      }
+     ]
+    },
+    "@inventory-codex"
+   ],
+   "function": "agent_patcher_blocks_from_profile",
+   "expected": {
+    "blocks": [
+     {
+      "id": "codex-base-instructions",
+      "body": "Fabricated Codex base instructions for golden tests.\n",
+      "source_path": ""
+     },
+     {
+      "id": "codex-review",
+      "body": "Fabricated review prompt with a few lines.\nLine two.\n",
+      "source_path": ""
+     },
+     {
+      "id": "codex-template",
+      "body": "Fabricated template {{ user }} text.\n",
+      "source_path": ""
+     },
+     {
+      "id": "codex-jinja",
+      "body": "Fabricated {% if flag %}conditional{% endif %} text.\n",
+      "source_path": ""
+     },
+     {
+      "id": "codex-short",
+      "body": "",
+      "source_path": ""
+     },
+     {
+      "id": "codex-unicode",
+      "body": "Fabricated: na\u00efve r\u00e9sum\u00e9 \u2713 accents.\n",
+      "source_path": ""
+     }
+    ],
+    "skipped": []
+   }
+  }
+ ]
+}

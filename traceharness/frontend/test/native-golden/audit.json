@@ -1,0 +1,3428 @@
+{
+ "function": "audit_profile",
+ "cases": [
+  {
+   "name": "replacement: valid replacement",
+   "args": [
+    {
+     "id": "tool-bash-guide",
+     "title": "Shell tool guide",
+     "class_name": "Tool Descriptions",
+     "class_source": "agent-patcher@8d3c17099974c06f2cfb1547bb4744c05f845b56:workbench.py:CLAUDE_NFR_CATEGORIES",
+     "source_layer": "fabricated-golden-fragment",
+     "capability": "patchable",
+     "baseline_sha256": "c5db5a79c94bb7a9835cbe2e3897337c52e3bb72b73edaedf1165a51246b057b",
+     "baseline_utf8": "Fabricated guidance: run one shell command at a time and report its exit status.\n",
+     "occurrence_count": 1,
+     "required_placeholders": []
+    },
+    "Fabricated guidance: run one command and report its status.",
+    "native-claude-code"
+   ],
+   "function": "audit_replacement",
+   "expected": []
+  },
+  {
+   "name": "replacement: not text",
+   "args": [
+    {
+     "id": "tool-bash-guide",
+     "title": "Shell tool guide",
+     "class_name": "Tool Descriptions",
+     "class_source": "agent-patcher@8d3c17099974c06f2cfb1547bb4744c05f845b56:workbench.py:CLAUDE_NFR_CATEGORIES",
+     "source_layer": "fabricated-golden-fragment",
+     "capability": "patchable",
+     "baseline_sha256": "c5db5a79c94bb7a9835cbe2e3897337c52e3bb72b73edaedf1165a51246b057b",
+     "baseline_utf8": "Fabricated guidance: run one shell command at a time and report its exit status.\n",
+     "occurrence_count": 1,
+     "required_placeholders": []
+    },
+    42,
+    "native-claude-code"
+   ],
+   "function": "audit_replacement",
+   "expected": [
+    {
+     "rule": "replacement.invalid-unicode",
+     "severity": "error",
+     "contract": true,
+     "scope": "block",
+     "block_id": "tool-bash-guide",
+     "message": "The replacement contains a NUL character or an unpaired surrogate. The runner accepts valid Unicode text only.",
+     "data": {}
+    }
+   ]
+  },
+  {
+   "name": "replacement: lone surrogate",
+   "args": [
+    {
+     "id": "tool-bash-guide",
+     "title": "Shell tool guide",
+     "class_name": "Tool Descriptions",
+     "class_source": "agent-patcher@8d3c17099974c06f2cfb1547bb4744c05f845b56:workbench.py:CLAUDE_NFR_CATEGORIES",
+     "source_layer": "fabricated-golden-fragment",
+     "capability": "patchable",
+     "baseline_sha256": "c5db5a79c94bb7a9835cbe2e3897337c52e3bb72b73edaedf1165a51246b057b",
+     "baseline_utf8": "Fabricated guidance: run one shell command at a time and report its exit status.\n",
+     "occurrence_count": 1,
+     "required_placeholders": []
+    },
+    "bad \udfff",
+    "native-claude-code"
+   ],
+   "function": "audit_replacement",
+   "expected": [
+    {
+     "rule": "replacement.invalid-unicode",
+     "severity": "error",
+     "contract": true,
+     "scope": "block",
+     "block_id": "tool-bash-guide",
+     "message": "The replacement contains a NUL character or an unpaired surrogate. The runner accepts valid Unicode text only.",
+     "data": {}
+    }
+   ]
+  },
+  {
+   "name": "replacement: NUL",
+   "args": [
+    {
+     "id": "tool-bash-guide",
+     "title": "Shell tool guide",
+     "class_name": "Tool Descriptions",
+     "class_source": "agent-patcher@8d3c17099974c06f2cfb1547bb4744c05f845b56:workbench.py:CLAUDE_NFR_CATEGORIES",
+     "source_layer": "fabricated-golden-fragment",
+     "capability": "patchable",
+     "baseline_sha256": "c5db5a79c94bb7a9835cbe2e3897337c52e3bb72b73edaedf1165a51246b057b",
+     "baseline_utf8": "Fabricated guidance: run one shell command at a time and report its exit status.\n",
+     "occurrence_count": 1,
+     "required_placeholders": []
+    },
+    "bad \u0000",
+    "native-claude-code"
+   ],
+   "function": "audit_replacement",
+   "expected": [
+    {
+     "rule": "replacement.invalid-unicode",
+     "severity": "error",
+     "contract": true,
+     "scope": "block",
+     "block_id": "tool-bash-guide",
+     "message": "The replacement contains a NUL character or an unpaired surrogate. The runner accepts valid Unicode text only.",
+     "data": {}
+    }
+   ]
+  },
+  {
+   "name": "replacement: empty",
+   "args": [
+    {
+     "id": "tool-bash-guide",
+     "title": "Shell tool guide",
+     "class_name": "Tool Descriptions",
+     "class_source": "agent-patcher@8d3c17099974c06f2cfb1547bb4744c05f845b56:workbench.py:CLAUDE_NFR_CATEGORIES",
+     "source_layer": "fabricated-golden-fragment",
+     "capability": "patchable",
+     "baseline_sha256": "c5db5a79c94bb7a9835cbe2e3897337c52e3bb72b73edaedf1165a51246b057b",
+     "baseline_utf8": "Fabricated guidance: run one shell command at a time and report its exit status.\n",
+     "occurrence_count": 1,
+     "required_placeholders": []
+    },
+    "",
+    "native-claude-code"
+   ],
+   "function": "audit_replacement",
+   "expected": [
+    {
+     "rule": "replacement.empty",
+     "severity": "error",
+     "contract": true,
+     "scope": "block",
+     "block_id": "tool-bash-guide",
+     "message": "An empty replacement is refused. Use Disable to withhold this fragment.",
+     "data": {}
+    }
+   ]
+  },
+  {
+   "name": "replacement: over 250,000 bytes",
+   "args": [
+    {
+     "id": "tool-bash-guide",
+     "title": "Shell tool guide",
+     "class_name": "Tool Descriptions",
+     "class_source": "agent-patcher@8d3c17099974c06f2cfb1547bb4744c05f845b56:workbench.py:CLAUDE_NFR_CATEGORIES",
+     "source_layer": "fabricated-golden-fragment",
+     "capability": "patchable",
+     "baseline_sha256": "c5db5a79c94bb7a9835cbe2e3897337c52e3bb72b73edaedf1165a51246b057b",
+     "baseline_utf8": "Fabricated guidance: run one shell command at a time and report its exit status.\n",
+     "occurrence_count": 1,
+     "required_placeholders": []
+    },
+    {
+     "@repeat": "q",
+     "times": 250001
+    },
+    "native-claude-code"
+   ],
+   "function": "audit_replacement",
+   "expected": [
+    {
+     "rule": "replacement.too-large",
+     "severity": "error",
+     "contract": true,
+     "scope": "block",
+     "block_id": "tool-bash-guide",
+     "message": "The replacement is 250001 UTF-8 bytes; the limit is 250000.",
+     "data": {
+      "bytes": 250001,
+      "max": 250000
+     }
+    }
+   ]
+  },
+  {
+   "name": "replacement: exactly 250,000 bytes",
+   "args": [
+    {
+     "id": "tool-bash-guide",
+     "title": "Shell tool guide",
+     "class_name": "Tool Descriptions",
+     "class_source": "agent-patcher@8d3c17099974c06f2cfb1547bb4744c05f845b56:workbench.py:CLAUDE_NFR_CATEGORIES",
+     "source_layer": "fabricated-golden-fragment",
+     "capability": "patchable",
+     "baseline_sha256": "c5db5a79c94bb7a9835cbe2e3897337c52e3bb72b73edaedf1165a51246b057b",
+     "baseline_utf8": "Fabricated guidance: run one shell command at a time and report its exit status.\n",
+     "occurrence_count": 1,
+     "required_placeholders": []
+    },
+    {
+     "@repeat": "q",
+     "times": 250000
+    },
+    "native-claude-code"
+   ],
+   "function": "audit_replacement",
+   "expected": []
+  },
+  {
+   "name": "replacement: placeholders kept",
+   "args": [
+    {
+     "id": "system-reminder-plan",
+     "title": "Plan reminder",
+     "class_name": "System Reminders",
+     "class_source": "agent-patcher@8d3c17099974c06f2cfb1547bb4744c05f845b56:workbench.py:CLAUDE_NFR_CATEGORIES",
+     "source_layer": "fabricated-golden-fragment",
+     "capability": "patchable",
+     "baseline_sha256": "5911fea64f55d714569aff07fa8a887a235adca26c869f4f492da7c88c004a73",
+     "baseline_utf8": "Fabricated reminder for ${TH_PROMPT_EXPR_0}: keep the plan short and confirm it with ${TH_PROMPT_EXPR_1}.\n",
+     "occurrence_count": 1,
+     "required_placeholders": [
+      "${TH_PROMPT_EXPR_0}",
+      "${TH_PROMPT_EXPR_1}"
+     ]
+    },
+    "Plan for ${TH_PROMPT_EXPR_0} with ${TH_PROMPT_EXPR_1}.",
+    "native-claude-code"
+   ],
+   "function": "audit_replacement",
+   "expected": [
+    {
+     "rule": "observer.templated",
+     "severity": "info",
+     "contract": false,
+     "scope": "block",
+     "block_id": "system-reminder-plan",
+     "message": "This fragment has native placeholders. The run observer skips templated fragments, so this change will have no literal-match evidence.",
+     "data": {}
+    }
+   ]
+  },
+  {
+   "name": "replacement: placeholder sequence differs",
+   "args": [
+    {
+     "id": "system-reminder-plan",
+     "title": "Plan reminder",
+     "class_name": "System Reminders",
+     "class_source": "agent-patcher@8d3c17099974c06f2cfb1547bb4744c05f845b56:workbench.py:CLAUDE_NFR_CATEGORIES",
+     "source_layer": "fabricated-golden-fragment",
+     "capability": "patchable",
+     "baseline_sha256": "5911fea64f55d714569aff07fa8a887a235adca26c869f4f492da7c88c004a73",
+     "baseline_utf8": "Fabricated reminder for ${TH_PROMPT_EXPR_0}: keep the plan short and confirm it with ${TH_PROMPT_EXPR_1}.\n",
+     "occurrence_count": 1,
+     "required_placeholders": [
+      "${TH_PROMPT_EXPR_0}",
+      "${TH_PROMPT_EXPR_1}"
+     ]
+    },
+    "Plan for ${TH_PROMPT_EXPR_1} with ${TH_PROMPT_EXPR_0}.",
+    "native-claude-code"
+   ],
+   "function": "audit_replacement",
+   "expected": [
+    {
+     "rule": "placeholder.sequence",
+     "severity": "error",
+     "contract": true,
+     "scope": "block",
+     "block_id": "system-reminder-plan",
+     "message": "Keep the 2 native placeholders of this fragment exactly once each, in the original order. Found 2.",
+     "data": {
+      "expected": 2,
+      "found": 2
+     }
+    },
+    {
+     "rule": "observer.templated",
+     "severity": "info",
+     "contract": false,
+     "scope": "block",
+     "block_id": "system-reminder-plan",
+     "message": "This fragment has native placeholders. The run observer skips templated fragments, so this change will have no literal-match evidence.",
+     "data": {}
+    }
+   ]
+  },
+  {
+   "name": "replacement: placeholder added to a literal",
+   "args": [
+    {
+     "id": "tool-bash-guide",
+     "title": "Shell tool guide",
+     "class_name": "Tool Descriptions",
+     "class_source": "agent-patcher@8d3c17099974c06f2cfb1547bb4744c05f845b56:workbench.py:CLAUDE_NFR_CATEGORIES",
+     "source_layer": "fabricated-golden-fragment",
+     "capability": "patchable",
+     "baseline_sha256": "c5db5a79c94bb7a9835cbe2e3897337c52e3bb72b73edaedf1165a51246b057b",
+     "baseline_utf8": "Fabricated guidance: run one shell command at a time and report its exit status.\n",
+     "occurrence_count": 1,
+     "required_placeholders": []
+    },
+    "Fabricated ${TH_PROMPT_EXPR_0} guidance.",
+    "native-claude-code"
+   ],
+   "function": "audit_replacement",
+   "expected": [
+    {
+     "rule": "placeholder.sequence",
+     "severity": "error",
+     "contract": true,
+     "scope": "block",
+     "block_id": "tool-bash-guide",
+     "message": "Keep the 0 native placeholders of this fragment exactly once each, in the original order. Found 1.",
+     "data": {
+      "expected": 0,
+      "found": 1
+     }
+    }
+   ]
+  },
+  {
+   "name": "replacement: stray placeholder",
+   "args": [
+    {
+     "id": "tool-bash-guide",
+     "title": "Shell tool guide",
+     "class_name": "Tool Descriptions",
+     "class_source": "agent-patcher@8d3c17099974c06f2cfb1547bb4744c05f845b56:workbench.py:CLAUDE_NFR_CATEGORIES",
+     "source_layer": "fabricated-golden-fragment",
+     "capability": "patchable",
+     "baseline_sha256": "c5db5a79c94bb7a9835cbe2e3897337c52e3bb72b73edaedf1165a51246b057b",
+     "baseline_utf8": "Fabricated guidance: run one shell command at a time and report its exit status.\n",
+     "occurrence_count": 1,
+     "required_placeholders": []
+    },
+    "Fabricated ${TH_PROMPT_EXPR guidance.",
+    "native-claude-code"
+   ],
+   "function": "audit_replacement",
+   "expected": [
+    {
+     "rule": "placeholder.stray",
+     "severity": "error",
+     "contract": true,
+     "scope": "block",
+     "block_id": "tool-bash-guide",
+     "message": "The text \"${TH_PROMPT_EXPR\" appears outside a complete native placeholder.",
+     "data": {}
+    }
+   ]
+  },
+  {
+   "name": "replacement: Bearer prose the runner refuses",
+   "args": [
+    {
+     "id": "tool-bash-guide",
+     "title": "Shell tool guide",
+     "class_name": "Tool Descriptions",
+     "class_source": "agent-patcher@8d3c17099974c06f2cfb1547bb4744c05f845b56:workbench.py:CLAUDE_NFR_CATEGORIES",
+     "source_layer": "fabricated-golden-fragment",
+     "capability": "patchable",
+     "baseline_sha256": "c5db5a79c94bb7a9835cbe2e3897337c52e3bb72b73edaedf1165a51246b057b",
+     "baseline_utf8": "Fabricated guidance: run one shell command at a time and report its exit status.\n",
+     "occurrence_count": 1,
+     "required_placeholders": []
+    },
+    "Fabricated: use Bearer authentication for the API.",
+    "native-claude-code"
+   ],
+   "function": "audit_replacement",
+   "expected": [
+    {
+     "rule": "leak.runner-redaction",
+     "severity": "error",
+     "contract": true,
+     "scope": "block",
+     "block_id": "tool-bash-guide",
+     "message": "The runner treats \"Bearer authentication\" as a Bearer credential and refuses the run. Reword it; the check reads the shape, not the meaning.",
+     "data": {
+      "pattern": "bearer",
+      "match": "Bearer authentication",
+      "count": 1
+     }
+    }
+   ]
+  },
+  {
+   "name": "replacement: Bearer prose with a long word",
+   "args": [
+    {
+     "id": "tool-bash-guide",
+     "title": "Shell tool guide",
+     "class_name": "Tool Descriptions",
+     "class_source": "agent-patcher@8d3c17099974c06f2cfb1547bb4744c05f845b56:workbench.py:CLAUDE_NFR_CATEGORIES",
+     "source_layer": "fabricated-golden-fragment",
+     "capability": "patchable",
+     "baseline_sha256": "c5db5a79c94bb7a9835cbe2e3897337c52e3bb72b73edaedf1165a51246b057b",
+     "baseline_utf8": "Fabricated guidance: run one shell command at a time and report its exit status.\n",
+     "occurrence_count": 1,
+     "required_placeholders": []
+    },
+    "Fabricated: send bearer abcdefghijklmnopqrstuvwxyz0123 next.",
+    "native-claude-code"
+   ],
+   "function": "audit_replacement",
+   "expected": [
+    {
+     "rule": "leak.runner-redaction",
+     "severity": "error",
+     "contract": true,
+     "scope": "block",
+     "block_id": "tool-bash-guide",
+     "message": "The runner treats \"bearer abcdef\u2026\" as a Bearer credential and refuses the run. Reword it; the check reads the shape, not the meaning.",
+     "data": {
+      "pattern": "bearer",
+      "match": "bearer abcdef\u2026",
+      "count": 1
+     }
+    }
+   ]
+  },
+  {
+   "name": "replacement: Bearer and long s: Python's case folding",
+   "args": [
+    {
+     "id": "tool-bash-guide",
+     "title": "Shell tool guide",
+     "class_name": "Tool Descriptions",
+     "class_source": "agent-patcher@8d3c17099974c06f2cfb1547bb4744c05f845b56:workbench.py:CLAUDE_NFR_CATEGORIES",
+     "source_layer": "fabricated-golden-fragment",
+     "capability": "patchable",
+     "baseline_sha256": "c5db5a79c94bb7a9835cbe2e3897337c52e3bb72b73edaedf1165a51246b057b",
+     "baseline_utf8": "Fabricated guidance: run one shell command at a time and report its exit status.\n",
+     "occurrence_count": 1,
+     "required_placeholders": []
+    },
+    "Fabricated Bearer \u017f\u017f\u017f\u017f\u017f\u017f\u017f\u017f text.",
+    "native-claude-code"
+   ],
+   "function": "audit_replacement",
+   "expected": [
+    {
+     "rule": "leak.runner-redaction",
+     "severity": "error",
+     "contract": true,
+     "scope": "block",
+     "block_id": "tool-bash-guide",
+     "message": "The runner treats \"Bearer \u017f\u017f\u017f\u017f\u017f\u017f\u017f\u017f\" as a Bearer credential and refuses the run. Reword it; the check reads the shape, not the meaning.",
+     "data": {
+      "pattern": "bearer",
+      "match": "Bearer \u017f\u017f\u017f\u017f\u017f\u017f\u017f\u017f",
+      "count": 1
+     }
+    }
+   ]
+  },
+  {
+   "name": "replacement: Bearer and dotted capital I",
+   "args": [
+    {
+     "id": "tool-bash-guide",
+     "title": "Shell tool guide",
+     "class_name": "Tool Descriptions",
+     "class_source": "agent-patcher@8d3c17099974c06f2cfb1547bb4744c05f845b56:workbench.py:CLAUDE_NFR_CATEGORIES",
+     "source_layer": "fabricated-golden-fragment",
+     "capability": "patchable",
+     "baseline_sha256": "c5db5a79c94bb7a9835cbe2e3897337c52e3bb72b73edaedf1165a51246b057b",
+     "baseline_utf8": "Fabricated guidance: run one shell command at a time and report its exit status.\n",
+     "occurrence_count": 1,
+     "required_placeholders": []
+    },
+    "Fabricated Bearer \u0130\u0130\u0130\u0130\u0130\u0130\u0130\u0130",
+    "native-claude-code"
+   ],
+   "function": "audit_replacement",
+   "expected": [
+    {
+     "rule": "leak.runner-redaction",
+     "severity": "error",
+     "contract": true,
+     "scope": "block",
+     "block_id": "tool-bash-guide",
+     "message": "The runner treats \"Bearer \u0130\u0130\u0130\u0130\u0130\u0130\u0130\u0130\" as a Bearer credential and refuses the run. Reword it; the check reads the shape, not the meaning.",
+     "data": {
+      "pattern": "bearer",
+      "match": "Bearer \u0130\u0130\u0130\u0130\u0130\u0130\u0130\u0130",
+      "count": 1
+     }
+    }
+   ]
+  },
+  {
+   "name": "replacement: Bearer and Kelvin sign",
+   "args": [
+    {
+     "id": "tool-bash-guide",
+     "title": "Shell tool guide",
+     "class_name": "Tool Descriptions",
+     "class_source": "agent-patcher@8d3c17099974c06f2cfb1547bb4744c05f845b56:workbench.py:CLAUDE_NFR_CATEGORIES",
+     "source_layer": "fabricated-golden-fragment",
+     "capability": "patchable",
+     "baseline_sha256": "c5db5a79c94bb7a9835cbe2e3897337c52e3bb72b73edaedf1165a51246b057b",
+     "baseline_utf8": "Fabricated guidance: run one shell command at a time and report its exit status.\n",
+     "occurrence_count": 1,
+     "required_placeholders": []
+    },
+    "Fabricated Bearer \u212a\u212a\u212a\u212a\u212a\u212a\u212a\u212a text.",
+    "native-claude-code"
+   ],
+   "function": "audit_replacement",
+   "expected": [
+    {
+     "rule": "leak.runner-redaction",
+     "severity": "error",
+     "contract": true,
+     "scope": "block",
+     "block_id": "tool-bash-guide",
+     "message": "The runner treats \"Bearer \u212a\u212a\u212a\u212a\u212a\u212a\u212a\u212a\" as a Bearer credential and refuses the run. Reword it; the check reads the shape, not the meaning.",
+     "data": {
+      "pattern": "bearer",
+      "match": "Bearer \u212a\u212a\u212a\u212a\u212a\u212a\u212a\u212a",
+      "count": 1
+     }
+    }
+   ]
+  },
+  {
+   "name": "replacement: bearer and dotless i after a no-break space",
+   "args": [
+    {
+     "id": "tool-bash-guide",
+     "title": "Shell tool guide",
+     "class_name": "Tool Descriptions",
+     "class_source": "agent-patcher@8d3c17099974c06f2cfb1547bb4744c05f845b56:workbench.py:CLAUDE_NFR_CATEGORIES",
+     "source_layer": "fabricated-golden-fragment",
+     "capability": "patchable",
+     "baseline_sha256": "c5db5a79c94bb7a9835cbe2e3897337c52e3bb72b73edaedf1165a51246b057b",
+     "baseline_utf8": "Fabricated guidance: run one shell command at a time and report its exit status.\n",
+     "occurrence_count": 1,
+     "required_placeholders": []
+    },
+    "Fabricated bearer\u00a0\u0131\u0131\u0131\u0131\u0131\u0131\u0131\u0131",
+    "native-claude-code"
+   ],
+   "function": "audit_replacement",
+   "expected": [
+    {
+     "rule": "leak.runner-redaction",
+     "severity": "error",
+     "contract": true,
+     "scope": "block",
+     "block_id": "tool-bash-guide",
+     "message": "The runner treats \"bearer\u00a0\u0131\u0131\u0131\u0131\u0131\u0131\u0131\u0131\" as a Bearer credential and refuses the run. Reword it; the check reads the shape, not the meaning.",
+     "data": {
+      "pattern": "bearer",
+      "match": "bearer\u00a0\u0131\u0131\u0131\u0131\u0131\u0131\u0131\u0131",
+      "count": 1
+     }
+    }
+   ]
+  },
+  {
+   "name": "replacement: Bearer and a long folded token is masked",
+   "args": [
+    {
+     "id": "tool-bash-guide",
+     "title": "Shell tool guide",
+     "class_name": "Tool Descriptions",
+     "class_source": "agent-patcher@8d3c17099974c06f2cfb1547bb4744c05f845b56:workbench.py:CLAUDE_NFR_CATEGORIES",
+     "source_layer": "fabricated-golden-fragment",
+     "capability": "patchable",
+     "baseline_sha256": "c5db5a79c94bb7a9835cbe2e3897337c52e3bb72b73edaedf1165a51246b057b",
+     "baseline_utf8": "Fabricated guidance: run one shell command at a time and report its exit status.\n",
+     "occurrence_count": 1,
+     "required_placeholders": []
+    },
+    "Fabricated Bearer \u017f\u017f\u017f\u017f\u017f\u017f\u017f\u017f\u017f\u017f\u017f\u017f\u017f\u017f\u017f\u017f\u017f\u017f\u017f\u017f text.",
+    "native-claude-code"
+   ],
+   "function": "audit_replacement",
+   "expected": [
+    {
+     "rule": "leak.runner-redaction",
+     "severity": "error",
+     "contract": true,
+     "scope": "block",
+     "block_id": "tool-bash-guide",
+     "message": "The runner treats \"Bearer \u017f\u017f\u017f\u017f\u017f\u017f\u2026\" as a Bearer credential and refuses the run. Reword it; the check reads the shape, not the meaning.",
+     "data": {
+      "pattern": "bearer",
+      "match": "Bearer \u017f\u017f\u017f\u017f\u017f\u017f\u2026",
+      "count": 1
+     }
+    }
+   ]
+  },
+  {
+   "name": "replacement: Bearer and seven folded letters is short",
+   "args": [
+    {
+     "id": "tool-bash-guide",
+     "title": "Shell tool guide",
+     "class_name": "Tool Descriptions",
+     "class_source": "agent-patcher@8d3c17099974c06f2cfb1547bb4744c05f845b56:workbench.py:CLAUDE_NFR_CATEGORIES",
+     "source_layer": "fabricated-golden-fragment",
+     "capability": "patchable",
+     "baseline_sha256": "c5db5a79c94bb7a9835cbe2e3897337c52e3bb72b73edaedf1165a51246b057b",
+     "baseline_utf8": "Fabricated guidance: run one shell command at a time and report its exit status.\n",
+     "occurrence_count": 1,
+     "required_placeholders": []
+    },
+    "Fabricated Bearer \u0131\u0131\u0131\u0131\u0131\u0131\u0131 text.",
+    "native-claude-code"
+   ],
+   "function": "audit_replacement",
+   "expected": []
+  },
+  {
+   "name": "replacement: Python path is not a JWT",
+   "args": [
+    {
+     "id": "tool-bash-guide",
+     "title": "Shell tool guide",
+     "class_name": "Tool Descriptions",
+     "class_source": "agent-patcher@8d3c17099974c06f2cfb1547bb4744c05f845b56:workbench.py:CLAUDE_NFR_CATEGORIES",
+     "source_layer": "fabricated-golden-fragment",
+     "capability": "patchable",
+     "baseline_sha256": "c5db5a79c94bb7a9835cbe2e3897337c52e3bb72b73edaedf1165a51246b057b",
+     "baseline_utf8": "Fabricated guidance: run one shell command at a time and report its exit status.\n",
+     "occurrence_count": 1,
+     "required_placeholders": []
+    },
+    "Fabricated: catch requests.exceptions.JSONDecodeError here.",
+    "native-claude-code"
+   ],
+   "function": "audit_replacement",
+   "expected": []
+  },
+  {
+   "name": "replacement: JWT-shaped token",
+   "args": [
+    {
+     "id": "tool-bash-guide",
+     "title": "Shell tool guide",
+     "class_name": "Tool Descriptions",
+     "class_source": "agent-patcher@8d3c17099974c06f2cfb1547bb4744c05f845b56:workbench.py:CLAUDE_NFR_CATEGORIES",
+     "source_layer": "fabricated-golden-fragment",
+     "capability": "patchable",
+     "baseline_sha256": "c5db5a79c94bb7a9835cbe2e3897337c52e3bb72b73edaedf1165a51246b057b",
+     "baseline_utf8": "Fabricated guidance: run one shell command at a time and report its exit status.\n",
+     "occurrence_count": 1,
+     "required_placeholders": []
+    },
+    "Fabricated token eyJhbGciOiJub25lIn0.eyJzdWIiOiJmYWJyaWNhdGVkIn0.ZmFicmljYXRlZC1zaWduYXR1cmUtYnl0ZXM here.",
+    "native-claude-code"
+   ],
+   "function": "audit_replacement",
+   "expected": [
+    {
+     "rule": "leak.runner-redaction",
+     "severity": "error",
+     "contract": true,
+     "scope": "block",
+     "block_id": "tool-bash-guide",
+     "message": "The runner treats \"eyJhbG\u2026\" as a JSON Web Token and refuses the run. Reword it; the check reads the shape, not the meaning.",
+     "data": {
+      "pattern": "jwt",
+      "match": "eyJhbG\u2026",
+      "count": 1
+     }
+    }
+   ]
+  },
+  {
+   "name": "replacement: sk- token",
+   "args": [
+    {
+     "id": "tool-bash-guide",
+     "title": "Shell tool guide",
+     "class_name": "Tool Descriptions",
+     "class_source": "agent-patcher@8d3c17099974c06f2cfb1547bb4744c05f845b56:workbench.py:CLAUDE_NFR_CATEGORIES",
+     "source_layer": "fabricated-golden-fragment",
+     "capability": "patchable",
+     "baseline_sha256": "c5db5a79c94bb7a9835cbe2e3897337c52e3bb72b73edaedf1165a51246b057b",
+     "baseline_utf8": "Fabricated guidance: run one shell command at a time and report its exit status.\n",
+     "occurrence_count": 1,
+     "required_placeholders": []
+    },
+    "Fabricated key sk-fabricated0123456789 inside.",
+    "native-claude-code"
+   ],
+   "function": "audit_replacement",
+   "expected": [
+    {
+     "rule": "leak.runner-redaction",
+     "severity": "error",
+     "contract": true,
+     "scope": "block",
+     "block_id": "tool-bash-guide",
+     "message": "The runner treats \"sk-fab\u2026\" as an \"sk-\" key and refuses the run. Reword it; the check reads the shape, not the meaning.",
+     "data": {
+      "pattern": "sk-token",
+      "match": "sk-fab\u2026",
+      "count": 1
+     }
+    }
+   ]
+  },
+  {
+   "name": "replacement: sk- word too short",
+   "args": [
+    {
+     "id": "tool-bash-guide",
+     "title": "Shell tool guide",
+     "class_name": "Tool Descriptions",
+     "class_source": "agent-patcher@8d3c17099974c06f2cfb1547bb4744c05f845b56:workbench.py:CLAUDE_NFR_CATEGORIES",
+     "source_layer": "fabricated-golden-fragment",
+     "capability": "patchable",
+     "baseline_sha256": "c5db5a79c94bb7a9835cbe2e3897337c52e3bb72b73edaedf1165a51246b057b",
+     "baseline_utf8": "Fabricated guidance: run one shell command at a time and report its exit status.\n",
+     "occurrence_count": 1,
+     "required_placeholders": []
+    },
+    "Fabricated sk-short text.",
+    "native-claude-code"
+   ],
+   "function": "audit_replacement",
+   "expected": []
+  },
+  {
+   "name": "replacement: provider key shape",
+   "args": [
+    {
+     "id": "tool-bash-guide",
+     "title": "Shell tool guide",
+     "class_name": "Tool Descriptions",
+     "class_source": "agent-patcher@8d3c17099974c06f2cfb1547bb4744c05f845b56:workbench.py:CLAUDE_NFR_CATEGORIES",
+     "source_layer": "fabricated-golden-fragment",
+     "capability": "patchable",
+     "baseline_sha256": "c5db5a79c94bb7a9835cbe2e3897337c52e3bb72b73edaedf1165a51246b057b",
+     "baseline_utf8": "Fabricated guidance: run one shell command at a time and report its exit status.\n",
+     "occurrence_count": 1,
+     "required_placeholders": []
+    },
+    "Fabricated sk-or-v1-0123456789abcdef0123 key.",
+    "native-claude-code"
+   ],
+   "function": "audit_replacement",
+   "expected": [
+    {
+     "rule": "leak.runner-redaction",
+     "severity": "error",
+     "contract": true,
+     "scope": "block",
+     "block_id": "tool-bash-guide",
+     "message": "The runner treats \"sk-or-\u2026\" as an \"sk-\" key and refuses the run. Reword it; the check reads the shape, not the meaning.",
+     "data": {
+      "pattern": "sk-token",
+      "match": "sk-or-\u2026",
+      "count": 1
+     }
+    }
+   ]
+  },
+  {
+   "name": "replacement: sk- glued to a word is not a gateway match",
+   "args": [
+    {
+     "id": "tool-bash-guide",
+     "title": "Shell tool guide",
+     "class_name": "Tool Descriptions",
+     "class_source": "agent-patcher@8d3c17099974c06f2cfb1547bb4744c05f845b56:workbench.py:CLAUDE_NFR_CATEGORIES",
+     "source_layer": "fabricated-golden-fragment",
+     "capability": "patchable",
+     "baseline_sha256": "c5db5a79c94bb7a9835cbe2e3897337c52e3bb72b73edaedf1165a51246b057b",
+     "baseline_utf8": "Fabricated guidance: run one shell command at a time and report its exit status.\n",
+     "occurrence_count": 1,
+     "required_placeholders": []
+    },
+    "Fabricated xsk-fabricated0123456789 text.",
+    "native-claude-code"
+   ],
+   "function": "audit_replacement",
+   "expected": []
+  },
+  {
+   "name": "replacement: provider key glued to a word: only the runner's provider pattern",
+   "args": [
+    {
+     "id": "tool-bash-guide",
+     "title": "Shell tool guide",
+     "class_name": "Tool Descriptions",
+     "class_source": "agent-patcher@8d3c17099974c06f2cfb1547bb4744c05f845b56:workbench.py:CLAUDE_NFR_CATEGORIES",
+     "source_layer": "fabricated-golden-fragment",
+     "capability": "patchable",
+     "baseline_sha256": "c5db5a79c94bb7a9835cbe2e3897337c52e3bb72b73edaedf1165a51246b057b",
+     "baseline_utf8": "Fabricated guidance: run one shell command at a time and report its exit status.\n",
+     "occurrence_count": 1,
+     "required_placeholders": []
+    },
+    "Fabricated xsk-or-v1-0123456789abcdef0123 text.",
+    "native-claude-code"
+   ],
+   "function": "audit_replacement",
+   "expected": [
+    {
+     "rule": "leak.gateway-credential",
+     "severity": "error",
+     "contract": true,
+     "scope": "block",
+     "block_id": "tool-bash-guide",
+     "message": "\"sk-or-\u2026\" has the shape of a provider key. The hosted service refuses the request.",
+     "data": {
+      "pattern": "runner-provider-key",
+      "match": "sk-or-\u2026",
+      "count": 1
+     }
+    }
+   ]
+  },
+  {
+   "name": "replacement: sk- after a non-ASCII letter: the gateway's ASCII boundary",
+   "args": [
+    {
+     "id": "tool-bash-guide",
+     "title": "Shell tool guide",
+     "class_name": "Tool Descriptions",
+     "class_source": "agent-patcher@8d3c17099974c06f2cfb1547bb4744c05f845b56:workbench.py:CLAUDE_NFR_CATEGORIES",
+     "source_layer": "fabricated-golden-fragment",
+     "capability": "patchable",
+     "baseline_sha256": "c5db5a79c94bb7a9835cbe2e3897337c52e3bb72b73edaedf1165a51246b057b",
+     "baseline_utf8": "Fabricated guidance: run one shell command at a time and report its exit status.\n",
+     "occurrence_count": 1,
+     "required_placeholders": []
+    },
+    "Fabricated \u00e9sk-fabricated0123456789 text.",
+    "native-claude-code"
+   ],
+   "function": "audit_replacement",
+   "expected": [
+    {
+     "rule": "leak.gateway-credential",
+     "severity": "error",
+     "contract": true,
+     "scope": "block",
+     "block_id": "tool-bash-guide",
+     "message": "\"sk-fab\u2026\" has the shape of a provider key. The hosted service refuses the request.",
+     "data": {
+      "pattern": "gateway-sk-token",
+      "match": "sk-fab\u2026",
+      "count": 1
+     }
+    }
+   ]
+  },
+  {
+   "name": "replacement: sk- after a line feed: escaped for the runner, raw for the gateway",
+   "args": [
+    {
+     "id": "tool-bash-guide",
+     "title": "Shell tool guide",
+     "class_name": "Tool Descriptions",
+     "class_source": "agent-patcher@8d3c17099974c06f2cfb1547bb4744c05f845b56:workbench.py:CLAUDE_NFR_CATEGORIES",
+     "source_layer": "fabricated-golden-fragment",
+     "capability": "patchable",
+     "baseline_sha256": "c5db5a79c94bb7a9835cbe2e3897337c52e3bb72b73edaedf1165a51246b057b",
+     "baseline_utf8": "Fabricated guidance: run one shell command at a time and report its exit status.\n",
+     "occurrence_count": 1,
+     "required_placeholders": []
+    },
+    "Fabricated\nsk-fabricated0123456789",
+    "native-claude-code"
+   ],
+   "function": "audit_replacement",
+   "expected": [
+    {
+     "rule": "leak.gateway-credential",
+     "severity": "error",
+     "contract": true,
+     "scope": "block",
+     "block_id": "tool-bash-guide",
+     "message": "\"sk-fab\u2026\" has the shape of a provider key. The hosted service refuses the request.",
+     "data": {
+      "pattern": "gateway-sk-token",
+      "match": "sk-fab\u2026",
+      "count": 1
+     }
+    }
+   ]
+  },
+  {
+   "name": "replacement: GitHub token shape",
+   "args": [
+    {
+     "id": "tool-bash-guide",
+     "title": "Shell tool guide",
+     "class_name": "Tool Descriptions",
+     "class_source": "agent-patcher@8d3c17099974c06f2cfb1547bb4744c05f845b56:workbench.py:CLAUDE_NFR_CATEGORIES",
+     "source_layer": "fabricated-golden-fragment",
+     "capability": "patchable",
+     "baseline_sha256": "c5db5a79c94bb7a9835cbe2e3897337c52e3bb72b73edaedf1165a51246b057b",
+     "baseline_utf8": "Fabricated guidance: run one shell command at a time and report its exit status.\n",
+     "occurrence_count": 1,
+     "required_placeholders": []
+    },
+    "Fabricated ghp_A1A1A1A1A1A1A1A1A1A1A1A1A1A1A1A1A1A1 text.",
+    "native-claude-code"
+   ],
+   "function": "audit_replacement",
+   "expected": [
+    {
+     "rule": "leak.credential-shape",
+     "severity": "warning",
+     "contract": false,
+     "scope": "block",
+     "block_id": "tool-bash-guide",
+     "message": "\"ghp_A1\u2026\" has the shape of a credential (github-token) and is not in the baseline text.",
+     "data": {
+      "pattern": "github-token",
+      "match": "ghp_A1\u2026",
+      "count": 1
+     }
+    }
+   ]
+  },
+  {
+   "name": "replacement: fine-grained GitHub token shape",
+   "args": [
+    {
+     "id": "tool-bash-guide",
+     "title": "Shell tool guide",
+     "class_name": "Tool Descriptions",
+     "class_source": "agent-patcher@8d3c17099974c06f2cfb1547bb4744c05f845b56:workbench.py:CLAUDE_NFR_CATEGORIES",
+     "source_layer": "fabricated-golden-fragment",
+     "capability": "patchable",
+     "baseline_sha256": "c5db5a79c94bb7a9835cbe2e3897337c52e3bb72b73edaedf1165a51246b057b",
+     "baseline_utf8": "Fabricated guidance: run one shell command at a time and report its exit status.\n",
+     "occurrence_count": 1,
+     "required_placeholders": []
+    },
+    "Fabricated github_pat_aaaaaaaaaaaaaaaaaaaaaa text.",
+    "native-claude-code"
+   ],
+   "function": "audit_replacement",
+   "expected": [
+    {
+     "rule": "leak.credential-shape",
+     "severity": "warning",
+     "contract": false,
+     "scope": "block",
+     "block_id": "tool-bash-guide",
+     "message": "\"github\u2026\" has the shape of a credential (github-fine-grained-token) and is not in the baseline text.",
+     "data": {
+      "pattern": "github-fine-grained-token",
+      "match": "github\u2026",
+      "count": 1
+     }
+    }
+   ]
+  },
+  {
+   "name": "replacement: AWS key id shape",
+   "args": [
+    {
+     "id": "tool-bash-guide",
+     "title": "Shell tool guide",
+     "class_name": "Tool Descriptions",
+     "class_source": "agent-patcher@8d3c17099974c06f2cfb1547bb4744c05f845b56:workbench.py:CLAUDE_NFR_CATEGORIES",
+     "source_layer": "fabricated-golden-fragment",
+     "capability": "patchable",
+     "baseline_sha256": "c5db5a79c94bb7a9835cbe2e3897337c52e3bb72b73edaedf1165a51246b057b",
+     "baseline_utf8": "Fabricated guidance: run one shell command at a time and report its exit status.\n",
+     "occurrence_count": 1,
+     "required_placeholders": []
+    },
+    "Fabricated AKIAABCDEFGHIJKLMNOP text.",
+    "native-claude-code"
+   ],
+   "function": "audit_replacement",
+   "expected": [
+    {
+     "rule": "leak.credential-shape",
+     "severity": "warning",
+     "contract": false,
+     "scope": "block",
+     "block_id": "tool-bash-guide",
+     "message": "\"AKIAAB\u2026\" has the shape of a credential (aws-access-key-id) and is not in the baseline text.",
+     "data": {
+      "pattern": "aws-access-key-id",
+      "match": "AKIAAB\u2026",
+      "count": 1
+     }
+    }
+   ]
+  },
+  {
+   "name": "replacement: Slack token shape",
+   "args": [
+    {
+     "id": "tool-bash-guide",
+     "title": "Shell tool guide",
+     "class_name": "Tool Descriptions",
+     "class_source": "agent-patcher@8d3c17099974c06f2cfb1547bb4744c05f845b56:workbench.py:CLAUDE_NFR_CATEGORIES",
+     "source_layer": "fabricated-golden-fragment",
+     "capability": "patchable",
+     "baseline_sha256": "c5db5a79c94bb7a9835cbe2e3897337c52e3bb72b73edaedf1165a51246b057b",
+     "baseline_utf8": "Fabricated guidance: run one shell command at a time and report its exit status.\n",
+     "occurrence_count": 1,
+     "required_placeholders": []
+    },
+    "Fabricated xoxb-0123456789-abc text.",
+    "native-claude-code"
+   ],
+   "function": "audit_replacement",
+   "expected": [
+    {
+     "rule": "leak.credential-shape",
+     "severity": "warning",
+     "contract": false,
+     "scope": "block",
+     "block_id": "tool-bash-guide",
+     "message": "\"xoxb-0\u2026\" has the shape of a credential (slack-token) and is not in the baseline text.",
+     "data": {
+      "pattern": "slack-token",
+      "match": "xoxb-0\u2026",
+      "count": 1
+     }
+    }
+   ]
+  },
+  {
+   "name": "replacement: private key header",
+   "args": [
+    {
+     "id": "tool-bash-guide",
+     "title": "Shell tool guide",
+     "class_name": "Tool Descriptions",
+     "class_source": "agent-patcher@8d3c17099974c06f2cfb1547bb4744c05f845b56:workbench.py:CLAUDE_NFR_CATEGORIES",
+     "source_layer": "fabricated-golden-fragment",
+     "capability": "patchable",
+     "baseline_sha256": "c5db5a79c94bb7a9835cbe2e3897337c52e3bb72b73edaedf1165a51246b057b",
+     "baseline_utf8": "Fabricated guidance: run one shell command at a time and report its exit status.\n",
+     "occurrence_count": 1,
+     "required_placeholders": []
+    },
+    "-----BEGIN FABRICATED PRIVATE KEY-----",
+    "native-claude-code"
+   ],
+   "function": "audit_replacement",
+   "expected": [
+    {
+     "rule": "leak.credential-shape",
+     "severity": "warning",
+     "contract": false,
+     "scope": "block",
+     "block_id": "tool-bash-guide",
+     "message": "\"-----B\u2026\" has the shape of a credential (private-key) and is not in the baseline text.",
+     "data": {
+      "pattern": "private-key",
+      "match": "-----B\u2026",
+      "count": 1
+     }
+    }
+   ]
+  },
+  {
+   "name": "replacement: macOS home path",
+   "args": [
+    {
+     "id": "tool-bash-guide",
+     "title": "Shell tool guide",
+     "class_name": "Tool Descriptions",
+     "class_source": "agent-patcher@8d3c17099974c06f2cfb1547bb4744c05f845b56:workbench.py:CLAUDE_NFR_CATEGORIES",
+     "source_layer": "fabricated-golden-fragment",
+     "capability": "patchable",
+     "baseline_sha256": "c5db5a79c94bb7a9835cbe2e3897337c52e3bb72b73edaedf1165a51246b057b",
+     "baseline_utf8": "Fabricated guidance: run one shell command at a time and report its exit status.\n",
+     "occurrence_count": 1,
+     "required_placeholders": []
+    },
+    "Fabricated: read /Users/someone/project/file.txt first.",
+    "native-claude-code"
+   ],
+   "function": "audit_replacement",
+   "expected": [
+    {
+     "rule": "leak.local-path",
+     "severity": "warning",
+     "contract": false,
+     "scope": "block",
+     "block_id": "tool-bash-guide",
+     "message": "\"/Users/someone/\" is a home-directory path that is not in the baseline text. It will be stored with the run.",
+     "data": {
+      "match": "/Users/someone/",
+      "count": 1
+     }
+    }
+   ]
+  },
+  {
+   "name": "replacement: Linux home path",
+   "args": [
+    {
+     "id": "tool-bash-guide",
+     "title": "Shell tool guide",
+     "class_name": "Tool Descriptions",
+     "class_source": "agent-patcher@8d3c17099974c06f2cfb1547bb4744c05f845b56:workbench.py:CLAUDE_NFR_CATEGORIES",
+     "source_layer": "fabricated-golden-fragment",
+     "capability": "patchable",
+     "baseline_sha256": "c5db5a79c94bb7a9835cbe2e3897337c52e3bb72b73edaedf1165a51246b057b",
+     "baseline_utf8": "Fabricated guidance: run one shell command at a time and report its exit status.\n",
+     "occurrence_count": 1,
+     "required_placeholders": []
+    },
+    "Fabricated: read /home/someone/notes now.",
+    "native-claude-code"
+   ],
+   "function": "audit_replacement",
+   "expected": [
+    {
+     "rule": "leak.local-path",
+     "severity": "warning",
+     "contract": false,
+     "scope": "block",
+     "block_id": "tool-bash-guide",
+     "message": "\"/home/someone/\" is a home-directory path that is not in the baseline text. It will be stored with the run.",
+     "data": {
+      "match": "/home/someone/",
+      "count": 1
+     }
+    }
+   ]
+  },
+  {
+   "name": "replacement: Windows home path",
+   "args": [
+    {
+     "id": "tool-bash-guide",
+     "title": "Shell tool guide",
+     "class_name": "Tool Descriptions",
+     "class_source": "agent-patcher@8d3c17099974c06f2cfb1547bb4744c05f845b56:workbench.py:CLAUDE_NFR_CATEGORIES",
+     "source_layer": "fabricated-golden-fragment",
+     "capability": "patchable",
+     "baseline_sha256": "c5db5a79c94bb7a9835cbe2e3897337c52e3bb72b73edaedf1165a51246b057b",
+     "baseline_utf8": "Fabricated guidance: run one shell command at a time and report its exit status.\n",
+     "occurrence_count": 1,
+     "required_placeholders": []
+    },
+    "Fabricated: read C:\\Users\\Some One\\file now.",
+    "native-claude-code"
+   ],
+   "function": "audit_replacement",
+   "expected": [
+    {
+     "rule": "leak.local-path",
+     "severity": "warning",
+     "contract": false,
+     "scope": "block",
+     "block_id": "tool-bash-guide",
+     "message": "\"C:\\Users\\Some One\\\" is a home-directory path that is not in the baseline text. It will be stored with the run.",
+     "data": {
+      "match": "C:\\Users\\Some One\\",
+      "count": 1
+     }
+    }
+   ]
+  },
+  {
+   "name": "replacement: e-mail address not in the baseline",
+   "args": [
+    {
+     "id": "tool-bash-guide",
+     "title": "Shell tool guide",
+     "class_name": "Tool Descriptions",
+     "class_source": "agent-patcher@8d3c17099974c06f2cfb1547bb4744c05f845b56:workbench.py:CLAUDE_NFR_CATEGORIES",
+     "source_layer": "fabricated-golden-fragment",
+     "capability": "patchable",
+     "baseline_sha256": "c5db5a79c94bb7a9835cbe2e3897337c52e3bb72b73edaedf1165a51246b057b",
+     "baseline_utf8": "Fabricated guidance: run one shell command at a time and report its exit status.\n",
+     "occurrence_count": 1,
+     "required_placeholders": []
+    },
+    "Fabricated: write to person@example.org today.",
+    "native-claude-code"
+   ],
+   "function": "audit_replacement",
+   "expected": [
+    {
+     "rule": "leak.email",
+     "severity": "warning",
+     "contract": false,
+     "scope": "block",
+     "block_id": "tool-bash-guide",
+     "message": "\"person@example.org\" is an e-mail address that is not in the baseline text. It will be stored with the run.",
+     "data": {
+      "match": "person@example.org",
+      "count": 1
+     }
+    }
+   ]
+  },
+  {
+   "name": "replacement: e-mail address already in the baseline",
+   "args": [
+    {
+     "id": "credential-prose",
+     "title": "Auth prose",
+     "class_name": "Environment & Platform",
+     "class_source": "agent-patcher@8d3c17099974c06f2cfb1547bb4744c05f845b56:workbench.py:CLAUDE_NFR_CATEGORIES",
+     "source_layer": "fabricated-golden-fragment",
+     "capability": "patchable",
+     "baseline_sha256": "6293d59414e9a5247a284f06bd5b229c7df4ac146349300fd02e33cc5729977f",
+     "baseline_utf8": "Fabricated note about Bearer authentication headers and requests.exceptions.JSONDecodeError handling; contact docs@example.com for details.\n",
+     "occurrence_count": 1,
+     "required_placeholders": []
+    },
+    "Fabricated: contact docs@example.com again.",
+    "native-claude-code"
+   ],
+   "function": "audit_replacement",
+   "expected": []
+  },
+  {
+   "name": "replacement: literal escapes",
+   "args": [
+    {
+     "id": "tool-bash-guide",
+     "title": "Shell tool guide",
+     "class_name": "Tool Descriptions",
+     "class_source": "agent-patcher@8d3c17099974c06f2cfb1547bb4744c05f845b56:workbench.py:CLAUDE_NFR_CATEGORIES",
+     "source_layer": "fabricated-golden-fragment",
+     "capability": "patchable",
+     "baseline_sha256": "c5db5a79c94bb7a9835cbe2e3897337c52e3bb72b73edaedf1165a51246b057b",
+     "baseline_utf8": "Fabricated guidance: run one shell command at a time and report its exit status.\n",
+     "occurrence_count": 1,
+     "required_placeholders": []
+    },
+    "Fabricated \\n escape \\u2014 here.",
+    "native-claude-code"
+   ],
+   "function": "audit_replacement",
+   "expected": [
+    {
+     "rule": "escape.poisoning",
+     "severity": "warning",
+     "contract": false,
+     "scope": "block",
+     "block_id": "tool-bash-guide",
+     "message": "Literal escape sequences: 2 written out (such as \\n or \\u2014 typed as characters); the baseline has 0. The runtime would show them as typed.",
+     "data": {
+      "count": 2,
+      "baseline_count": 0,
+      "excessive": false
+     }
+    }
+   ]
+  },
+  {
+   "name": "replacement: excessive literal escapes",
+   "args": [
+    {
+     "id": "tool-bash-guide",
+     "title": "Shell tool guide",
+     "class_name": "Tool Descriptions",
+     "class_source": "agent-patcher@8d3c17099974c06f2cfb1547bb4744c05f845b56:workbench.py:CLAUDE_NFR_CATEGORIES",
+     "source_layer": "fabricated-golden-fragment",
+     "capability": "patchable",
+     "baseline_sha256": "c5db5a79c94bb7a9835cbe2e3897337c52e3bb72b73edaedf1165a51246b057b",
+     "baseline_utf8": "Fabricated guidance: run one shell command at a time and report its exit status.\n",
+     "occurrence_count": 1,
+     "required_placeholders": []
+    },
+    "Fabricated\\n\\n\\n\\n\\n\\n\\n\\n\\n\\n\\n",
+    "native-claude-code"
+   ],
+   "function": "audit_replacement",
+   "expected": [
+    {
+     "rule": "escape.poisoning",
+     "severity": "warning",
+     "contract": false,
+     "scope": "block",
+     "block_id": "tool-bash-guide",
+     "message": "Excessive literal escaping: 11 written out (such as \\n or \\u2014 typed as characters); the baseline has 0. The runtime would show them as typed.",
+     "data": {
+      "count": 11,
+      "baseline_count": 0,
+      "excessive": true
+     }
+    }
+   ]
+  },
+  {
+   "name": "replacement: escapes no more than the baseline",
+   "args": [
+    {
+     "id": "escapes-sample",
+     "title": "Escapes sample",
+     "class_name": "General Behavior",
+     "class_source": "agent-patcher@8d3c17099974c06f2cfb1547bb4744c05f845b56:workbench.py:CLAUDE_NFR_CATEGORIES",
+     "source_layer": "fabricated-golden-fragment",
+     "capability": "patchable",
+     "baseline_sha256": "94e18873b9964d4d17b4df09af32075440f099df200461eeec07934da30feba4",
+     "baseline_utf8": "Fabricated escapes: \\n and \\u2014 appear written out.\n",
+     "occurrence_count": 1,
+     "required_placeholders": []
+    },
+    "Fabricated: \\n and \\u2014 stay.",
+    "native-claude-code"
+   ],
+   "function": "audit_replacement",
+   "expected": []
+  },
+  {
+   "name": "replacement: invisible characters",
+   "args": [
+    {
+     "id": "tool-bash-guide",
+     "title": "Shell tool guide",
+     "class_name": "Tool Descriptions",
+     "class_source": "agent-patcher@8d3c17099974c06f2cfb1547bb4744c05f845b56:workbench.py:CLAUDE_NFR_CATEGORIES",
+     "source_layer": "fabricated-golden-fragment",
+     "capability": "patchable",
+     "baseline_sha256": "c5db5a79c94bb7a9835cbe2e3897337c52e3bb72b73edaedf1165a51246b057b",
+     "baseline_utf8": "Fabricated guidance: run one shell command at a time and report its exit status.\n",
+     "occurrence_count": 1,
+     "required_placeholders": []
+    },
+    "Fabricated\u200b zero\u202e width\ufeff text\u0007.",
+    "native-claude-code"
+   ],
+   "function": "audit_replacement",
+   "expected": [
+    {
+     "rule": "unicode.invisible",
+     "severity": "warning",
+     "contract": false,
+     "scope": "block",
+     "block_id": "tool-bash-guide",
+     "message": "Invisible or control characters that are not in the baseline text: U+0007, U+200B, U+202E, U+FEFF.",
+     "data": {
+      "count": 4,
+      "code_points": "U+0007, U+200B, U+202E, U+FEFF"
+     }
+    }
+   ]
+  },
+  {
+   "name": "replacement: many invisible characters",
+   "args": [
+    {
+     "id": "tool-bash-guide",
+     "title": "Shell tool guide",
+     "class_name": "Tool Descriptions",
+     "class_source": "agent-patcher@8d3c17099974c06f2cfb1547bb4744c05f845b56:workbench.py:CLAUDE_NFR_CATEGORIES",
+     "source_layer": "fabricated-golden-fragment",
+     "capability": "patchable",
+     "baseline_sha256": "c5db5a79c94bb7a9835cbe2e3897337c52e3bb72b73edaedf1165a51246b057b",
+     "baseline_utf8": "Fabricated guidance: run one shell command at a time and report its exit status.\n",
+     "occurrence_count": 1,
+     "required_placeholders": []
+    },
+    "\u0001\u0002\u0003\u0004\u0005\u0006\u0007\b\u000b\fx",
+    "native-claude-code"
+   ],
+   "function": "audit_replacement",
+   "expected": [
+    {
+     "rule": "unicode.invisible",
+     "severity": "warning",
+     "contract": false,
+     "scope": "block",
+     "block_id": "tool-bash-guide",
+     "message": "Invisible or control characters that are not in the baseline text: U+0001, U+0002, U+0003, U+0004, U+0005, U+0006, U+0007, U+0008, \u2026.",
+     "data": {
+      "count": 10,
+      "code_points": "U+0001, U+0002, U+0003, U+0004, U+0005, U+0006, U+0007, U+0008"
+     }
+    },
+    {
+     "rule": "observer.short-literal",
+     "severity": "info",
+     "contract": false,
+     "scope": "block",
+     "block_id": "tool-bash-guide",
+     "message": "The run observer does not match literals under 16 bytes, so this change will have incomplete literal-match evidence.",
+     "data": {
+      "bytes": 11,
+      "baseline_bytes": 81
+     }
+    }
+   ]
+  },
+  {
+   "name": "replacement: whitespace only",
+   "args": [
+    {
+     "id": "tool-bash-guide",
+     "title": "Shell tool guide",
+     "class_name": "Tool Descriptions",
+     "class_source": "agent-patcher@8d3c17099974c06f2cfb1547bb4744c05f845b56:workbench.py:CLAUDE_NFR_CATEGORIES",
+     "source_layer": "fabricated-golden-fragment",
+     "capability": "patchable",
+     "baseline_sha256": "c5db5a79c94bb7a9835cbe2e3897337c52e3bb72b73edaedf1165a51246b057b",
+     "baseline_utf8": "Fabricated guidance: run one shell command at a time and report its exit status.\n",
+     "occurrence_count": 1,
+     "required_placeholders": []
+    },
+    " \n\t ",
+    "native-claude-code"
+   ],
+   "function": "audit_replacement",
+   "expected": [
+    {
+     "rule": "replacement.whitespace-only",
+     "severity": "warning",
+     "contract": false,
+     "scope": "block",
+     "block_id": "tool-bash-guide",
+     "message": "The replacement is only whitespace. Use Disable so that the record says the fragment was withheld.",
+     "data": {}
+    },
+    {
+     "rule": "observer.short-literal",
+     "severity": "info",
+     "contract": false,
+     "scope": "block",
+     "block_id": "tool-bash-guide",
+     "message": "The run observer does not match literals under 16 bytes, so this change will have incomplete literal-match evidence.",
+     "data": {
+      "bytes": 4,
+      "baseline_bytes": 81
+     }
+    }
+   ]
+  },
+  {
+   "name": "replacement: non-ASCII whitespace is not whitespace-only",
+   "args": [
+    {
+     "id": "tool-bash-guide",
+     "title": "Shell tool guide",
+     "class_name": "Tool Descriptions",
+     "class_source": "agent-patcher@8d3c17099974c06f2cfb1547bb4744c05f845b56:workbench.py:CLAUDE_NFR_CATEGORIES",
+     "source_layer": "fabricated-golden-fragment",
+     "capability": "patchable",
+     "baseline_sha256": "c5db5a79c94bb7a9835cbe2e3897337c52e3bb72b73edaedf1165a51246b057b",
+     "baseline_utf8": "Fabricated guidance: run one shell command at a time and report its exit status.\n",
+     "occurrence_count": 1,
+     "required_placeholders": []
+    },
+    "\u00a0\u3000",
+    "native-claude-code"
+   ],
+   "function": "audit_replacement",
+   "expected": [
+    {
+     "rule": "observer.short-literal",
+     "severity": "info",
+     "contract": false,
+     "scope": "block",
+     "block_id": "tool-bash-guide",
+     "message": "The run observer does not match literals under 16 bytes, so this change will have incomplete literal-match evidence.",
+     "data": {
+      "bytes": 5,
+      "baseline_bytes": 81
+     }
+    }
+   ]
+  },
+  {
+   "name": "replacement: no-op replacement",
+   "args": [
+    {
+     "id": "tool-bash-guide",
+     "title": "Shell tool guide",
+     "class_name": "Tool Descriptions",
+     "class_source": "agent-patcher@8d3c17099974c06f2cfb1547bb4744c05f845b56:workbench.py:CLAUDE_NFR_CATEGORIES",
+     "source_layer": "fabricated-golden-fragment",
+     "capability": "patchable",
+     "baseline_sha256": "c5db5a79c94bb7a9835cbe2e3897337c52e3bb72b73edaedf1165a51246b057b",
+     "baseline_utf8": "Fabricated guidance: run one shell command at a time and report its exit status.\n",
+     "occurrence_count": 1,
+     "required_placeholders": []
+    },
+    "Fabricated guidance: run one shell command at a time and report its exit status.\n",
+    "native-claude-code"
+   ],
+   "function": "audit_replacement",
+   "expected": [
+    {
+     "rule": "replacement.noop",
+     "severity": "info",
+     "contract": false,
+     "scope": "block",
+     "block_id": "tool-bash-guide",
+     "message": "The replacement equals the baseline. As a deliberate no-op control it still counts as a rewrite target.",
+     "data": {}
+    }
+   ]
+  },
+  {
+   "name": "replacement: short replacement",
+   "args": [
+    {
+     "id": "tool-bash-guide",
+     "title": "Shell tool guide",
+     "class_name": "Tool Descriptions",
+     "class_source": "agent-patcher@8d3c17099974c06f2cfb1547bb4744c05f845b56:workbench.py:CLAUDE_NFR_CATEGORIES",
+     "source_layer": "fabricated-golden-fragment",
+     "capability": "patchable",
+     "baseline_sha256": "c5db5a79c94bb7a9835cbe2e3897337c52e3bb72b73edaedf1165a51246b057b",
+     "baseline_utf8": "Fabricated guidance: run one shell command at a time and report its exit status.\n",
+     "occurrence_count": 1,
+     "required_placeholders": []
+    },
+    "Be terse.",
+    "native-claude-code"
+   ],
+   "function": "audit_replacement",
+   "expected": [
+    {
+     "rule": "observer.short-literal",
+     "severity": "info",
+     "contract": false,
+     "scope": "block",
+     "block_id": "tool-bash-guide",
+     "message": "The run observer does not match literals under 16 bytes, so this change will have incomplete literal-match evidence.",
+     "data": {
+      "bytes": 9,
+      "baseline_bytes": 81
+     }
+    }
+   ]
+  },
+  {
+   "name": "replacement: short baseline",
+   "args": [
+    {
+     "id": "short",
+     "title": "Short literal",
+     "class_name": "General Behavior",
+     "class_source": "agent-patcher@8d3c17099974c06f2cfb1547bb4744c05f845b56:workbench.py:CLAUDE_NFR_CATEGORIES",
+     "source_layer": "fabricated-golden-fragment",
+     "capability": "patchable",
+     "baseline_sha256": "213c22ed7234eb11116e1e88f314c73cb3a019b5c87fe224b6ce5665bd9ec50e",
+     "baseline_utf8": "Be brief.",
+     "occurrence_count": 1,
+     "required_placeholders": []
+    },
+    "Be brief, and say so in a longer sentence.",
+    "native-claude-code"
+   ],
+   "function": "audit_replacement",
+   "expected": [
+    {
+     "rule": "observer.short-literal",
+     "severity": "info",
+     "contract": false,
+     "scope": "block",
+     "block_id": "short",
+     "message": "The run observer does not match literals under 16 bytes, so this change will have incomplete literal-match evidence.",
+     "data": {
+      "bytes": 42,
+      "baseline_bytes": 9
+     }
+    }
+   ]
+  },
+  {
+   "name": "replacement: Codex replacement within capacity",
+   "args": [
+    {
+     "id": "codex-base-instructions",
+     "title": "base.md \u00b7 core/prompts/base.md",
+     "class_name": "File & Code Ops",
+     "class_source": "agent-patcher@8d3c17099974c06f2cfb1547bb4744c05f845b56:workbench.py:CLAUDE_NFR_CATEGORIES",
+     "source_layer": "fabricated-golden-fragment",
+     "capability": "patchable",
+     "baseline_sha256": "04b714360378a9022492a219659487658c02520f37174c08d287b37f62086689",
+     "baseline_utf8": "Fabricated Codex base instructions for golden tests.\n",
+     "occurrence_count": 1,
+     "required_placeholders": []
+    },
+    "Fabricated shorter instructions.",
+    "native-codex"
+   ],
+   "function": "audit_replacement",
+   "expected": []
+  },
+  {
+   "name": "replacement: Codex replacement over capacity",
+   "args": [
+    {
+     "id": "codex-short",
+     "title": "note.md \u00b7 core/prompts/note.md",
+     "class_name": "File & Code Ops",
+     "class_source": "agent-patcher@8d3c17099974c06f2cfb1547bb4744c05f845b56:workbench.py:CLAUDE_NFR_CATEGORIES",
+     "source_layer": "fabricated-golden-fragment",
+     "capability": "patchable",
+     "baseline_sha256": "fa6eb19205792e9f5eedf1535af30a3bd9d94d49e92bedf94dd1261de32e17c8",
+     "baseline_utf8": "Tiny note.",
+     "occurrence_count": 1,
+     "required_placeholders": []
+    },
+    "Longer than the ten byte span.",
+    "native-codex"
+   ],
+   "function": "audit_replacement",
+   "expected": [
+    {
+     "rule": "codex.over-capacity",
+     "severity": "error",
+     "contract": true,
+     "scope": "block",
+     "block_id": "codex-short",
+     "message": "The replacement is 30 UTF-8 bytes; this Codex fragment holds 10.",
+     "data": {
+      "bytes": 30,
+      "capacity": 10
+     }
+    },
+    {
+     "rule": "observer.short-literal",
+     "severity": "info",
+     "contract": false,
+     "scope": "block",
+     "block_id": "codex-short",
+     "message": "The run observer does not match literals under 16 bytes, so this change will have incomplete literal-match evidence.",
+     "data": {
+      "bytes": 30,
+      "baseline_bytes": 10
+     }
+    }
+   ]
+  },
+  {
+   "name": "replacement: non-ASCII replacement",
+   "args": [
+    {
+     "id": "unicode-mix",
+     "title": "Unicode sample \u65e5\u672c",
+     "class_name": "File & Code Ops",
+     "class_source": "agent-patcher@8d3c17099974c06f2cfb1547bb4744c05f845b56:workbench.py:CLAUDE_NFR_CATEGORIES",
+     "source_layer": "fabricated-golden-fragment",
+     "capability": "patchable",
+     "baseline_sha256": "d00da6c5a836c9df66e6b20ea37a93990bedea7ff26d8c203fd257d9b47523a8",
+     "baseline_utf8": "Fabricated text: \u65e5\u672c\u8a9e\u306e\u8aac\u660e, emoji \ud83d\ude42, cafe\u0301 with a combining accent, and a line separator\u2028here.\n",
+     "occurrence_count": 1,
+     "required_placeholders": []
+    },
+    "\u65e5\u672c\u8a9e \ud83d\ude42 caf\u00e9 fabricated text.",
+    "native-claude-code"
+   ],
+   "function": "audit_replacement",
+   "expected": []
+  },
+  {
+   "name": "profile: baseline is clean",
+   "args": [
+    {
+     "schema_version": 1,
+     "runtime_id": "native-claude-code",
+     "runtime_version": "0.0.0-golden",
+     "image_digest": "sha256:2d032a622cf94baf637a4488720865da983853e4a655fea4e45d0e80f0a9c640",
+     "binary_sha256": "25ba8ebec5f227618d8d58f475622669f4c45019d40259d1d292a823f4184c27",
+     "inventory_sha256": "44e7b67bbdc0842fecf8cfa158641e03998f7d0b34184bc297ede967ab24ce7a",
+     "taxonomy_sha256": "6064ebcb6693a1dd7b3e50fbfbcc94ff959f7957ac184188fd91744900a429a3",
+     "materializer_sha256": "ba6245da8b07901b6793898e70e2e974a1e641a2c3be0d357ba53d15101f4081",
+     "default_action": "keep",
+     "overrides": []
+    },
+    "@inventory-claude",
+    {}
+   ],
+   "function": "audit_profile",
+   "expected": {
+    "ok": true,
+    "counts": {
+     "error": 0,
+     "warning": 0,
+     "info": 0
+    },
+    "findings": []
+   }
+  },
+  {
+   "name": "profile: not an object",
+   "args": [
+    "not a profile",
+    "@inventory-claude",
+    {}
+   ],
+   "function": "audit_profile",
+   "expected": {
+    "ok": false,
+    "counts": {
+     "error": 1,
+     "warning": 0,
+     "info": 0
+    },
+    "findings": [
+     {
+      "rule": "profile.invalid-shape",
+      "severity": "error",
+      "contract": true,
+      "scope": "profile",
+      "block_id": null,
+      "message": "Invalid native prompt profile fields. The runner refuses a profile that is not an exact schema-1 object.",
+      "data": {
+       "reason": "Invalid native prompt profile fields"
+      }
+     }
+    ]
+   }
+  },
+  {
+   "name": "profile: unknown field",
+   "args": [
+    {
+     "schema_version": 1,
+     "runtime_id": "native-claude-code",
+     "runtime_version": "0.0.0-golden",
+     "image_digest": "sha256:2d032a622cf94baf637a4488720865da983853e4a655fea4e45d0e80f0a9c640",
+     "binary_sha256": "25ba8ebec5f227618d8d58f475622669f4c45019d40259d1d292a823f4184c27",
+     "inventory_sha256": "44e7b67bbdc0842fecf8cfa158641e03998f7d0b34184bc297ede967ab24ce7a",
+     "taxonomy_sha256": "6064ebcb6693a1dd7b3e50fbfbcc94ff959f7957ac184188fd91744900a429a3",
+     "materializer_sha256": "ba6245da8b07901b6793898e70e2e974a1e641a2c3be0d357ba53d15101f4081",
+     "default_action": "keep",
+     "overrides": [],
+     "extra": 1
+    },
+    "@inventory-claude",
+    {}
+   ],
+   "function": "audit_profile",
+   "expected": {
+    "ok": false,
+    "counts": {
+     "error": 1,
+     "warning": 0,
+     "info": 0
+    },
+    "findings": [
+     {
+      "rule": "profile.invalid-shape",
+      "severity": "error",
+      "contract": true,
+      "scope": "profile",
+      "block_id": null,
+      "message": "Invalid native prompt profile fields. The runner refuses a profile that is not an exact schema-1 object.",
+      "data": {
+       "reason": "Invalid native prompt profile fields"
+      }
+     }
+    ]
+   }
+  },
+  {
+   "name": "profile: unsupported schema",
+   "args": [
+    {
+     "schema_version": 3,
+     "runtime_id": "native-claude-code",
+     "runtime_version": "0.0.0-golden",
+     "image_digest": "sha256:2d032a622cf94baf637a4488720865da983853e4a655fea4e45d0e80f0a9c640",
+     "binary_sha256": "25ba8ebec5f227618d8d58f475622669f4c45019d40259d1d292a823f4184c27",
+     "inventory_sha256": "44e7b67bbdc0842fecf8cfa158641e03998f7d0b34184bc297ede967ab24ce7a",
+     "taxonomy_sha256": "6064ebcb6693a1dd7b3e50fbfbcc94ff959f7957ac184188fd91744900a429a3",
+     "materializer_sha256": "ba6245da8b07901b6793898e70e2e974a1e641a2c3be0d357ba53d15101f4081",
+     "default_action": "keep",
+     "overrides": []
+    },
+    "@inventory-claude",
+    {}
+   ],
+   "function": "audit_profile",
+   "expected": {
+    "ok": false,
+    "counts": {
+     "error": 1,
+     "warning": 0,
+     "info": 0
+    },
+    "findings": [
+     {
+      "rule": "profile.invalid-shape",
+      "severity": "error",
+      "contract": true,
+      "scope": "profile",
+      "block_id": null,
+      "message": "Unsupported native prompt profile schema. The runner refuses a profile that is not an exact schema-1 object.",
+      "data": {
+       "reason": "Unsupported native prompt profile schema"
+      }
+     }
+    ]
+   }
+  },
+  {
+   "name": "profile: invalid default action",
+   "args": [
+    {
+     "schema_version": 1,
+     "runtime_id": "native-claude-code",
+     "runtime_version": "0.0.0-golden",
+     "image_digest": "sha256:2d032a622cf94baf637a4488720865da983853e4a655fea4e45d0e80f0a9c640",
+     "binary_sha256": "25ba8ebec5f227618d8d58f475622669f4c45019d40259d1d292a823f4184c27",
+     "inventory_sha256": "44e7b67bbdc0842fecf8cfa158641e03998f7d0b34184bc297ede967ab24ce7a",
+     "taxonomy_sha256": "6064ebcb6693a1dd7b3e50fbfbcc94ff959f7957ac184188fd91744900a429a3",
+     "materializer_sha256": "ba6245da8b07901b6793898e70e2e974a1e641a2c3be0d357ba53d15101f4081",
+     "default_action": "maybe",
+     "overrides": []
+    },
+    "@inventory-claude",
+    {}
+   ],
+   "function": "audit_profile",
+   "expected": {
+    "ok": false,
+    "counts": {
+     "error": 1,
+     "warning": 0,
+     "info": 0
+    },
+    "findings": [
+     {
+      "rule": "profile.invalid-shape",
+      "severity": "error",
+      "contract": true,
+      "scope": "profile",
+      "block_id": null,
+      "message": "Invalid default native prompt action. The runner refuses a profile that is not an exact schema-1 object.",
+      "data": {
+       "reason": "Invalid default native prompt action"
+      }
+     }
+    ]
+   }
+  },
+  {
+   "name": "profile: overrides not a list",
+   "args": [
+    {
+     "schema_version": 1,
+     "runtime_id": "native-claude-code",
+     "runtime_version": "0.0.0-golden",
+     "image_digest": "sha256:2d032a622cf94baf637a4488720865da983853e4a655fea4e45d0e80f0a9c640",
+     "binary_sha256": "25ba8ebec5f227618d8d58f475622669f4c45019d40259d1d292a823f4184c27",
+     "inventory_sha256": "44e7b67bbdc0842fecf8cfa158641e03998f7d0b34184bc297ede967ab24ce7a",
+     "taxonomy_sha256": "6064ebcb6693a1dd7b3e50fbfbcc94ff959f7957ac184188fd91744900a429a3",
+     "materializer_sha256": "ba6245da8b07901b6793898e70e2e974a1e641a2c3be0d357ba53d15101f4081",
+     "default_action": "keep",
+     "overrides": null
+    },
+    "@inventory-claude",
+    {}
+   ],
+   "function": "audit_profile",
+   "expected": {
+    "ok": false,
+    "counts": {
+     "error": 1,
+     "warning": 0,
+     "info": 0
+    },
+    "findings": [
+     {
+      "rule": "profile.invalid-shape",
+      "severity": "error",
+      "contract": true,
+      "scope": "profile",
+      "block_id": null,
+      "message": "Too many native prompt overrides. The runner refuses a profile that is not an exact schema-1 object.",
+      "data": {
+       "reason": "Too many native prompt overrides"
+      }
+     }
+    ]
+   }
+  },
+  {
+   "name": "profile: override not an object",
+   "args": [
+    {
+     "schema_version": 1,
+     "runtime_id": "native-claude-code",
+     "runtime_version": "0.0.0-golden",
+     "image_digest": "sha256:2d032a622cf94baf637a4488720865da983853e4a655fea4e45d0e80f0a9c640",
+     "binary_sha256": "25ba8ebec5f227618d8d58f475622669f4c45019d40259d1d292a823f4184c27",
+     "inventory_sha256": "44e7b67bbdc0842fecf8cfa158641e03998f7d0b34184bc297ede967ab24ce7a",
+     "taxonomy_sha256": "6064ebcb6693a1dd7b3e50fbfbcc94ff959f7957ac184188fd91744900a429a3",
+     "materializer_sha256": "ba6245da8b07901b6793898e70e2e974a1e641a2c3be0d357ba53d15101f4081",
+     "default_action": "keep",
+     "overrides": [
+      []
+     ]
+    },
+    "@inventory-claude",
+    {}
+   ],
+   "function": "audit_profile",
+   "expected": {
+    "ok": false,
+    "counts": {
+     "error": 1,
+     "warning": 0,
+     "info": 0
+    },
+    "findings": [
+     {
+      "rule": "profile.invalid-shape",
+      "severity": "error",
+      "contract": true,
+      "scope": "profile",
+      "block_id": null,
+      "message": "Invalid native prompt override. The runner refuses a profile that is not an exact schema-1 object.",
+      "data": {
+       "reason": "Invalid native prompt override"
+      }
+     }
+    ]
+   }
+  },
+  {
+   "name": "profile: override fields",
+   "args": [
+    {
+     "schema_version": 1,
+     "runtime_id": "native-claude-code",
+     "runtime_version": "0.0.0-golden",
+     "image_digest": "sha256:2d032a622cf94baf637a4488720865da983853e4a655fea4e45d0e80f0a9c640",
+     "binary_sha256": "25ba8ebec5f227618d8d58f475622669f4c45019d40259d1d292a823f4184c27",
+     "inventory_sha256": "44e7b67bbdc0842fecf8cfa158641e03998f7d0b34184bc297ede967ab24ce7a",
+     "taxonomy_sha256": "6064ebcb6693a1dd7b3e50fbfbcc94ff959f7957ac184188fd91744900a429a3",
+     "materializer_sha256": "ba6245da8b07901b6793898e70e2e974a1e641a2c3be0d357ba53d15101f4081",
+     "default_action": "keep",
+     "overrides": [
+      {
+       "block_id": "short",
+       "action": "keep"
+      }
+     ]
+    },
+    "@inventory-claude",
+    {}
+   ],
+   "function": "audit_profile",
+   "expected": {
+    "ok": false,
+    "counts": {
+     "error": 1,
+     "warning": 0,
+     "info": 0
+    },
+    "findings": [
+     {
+      "rule": "profile.invalid-shape",
+      "severity": "error",
+      "contract": true,
+      "scope": "profile",
+      "block_id": null,
+      "message": "Invalid native prompt override fields. The runner refuses a profile that is not an exact schema-1 object.",
+      "data": {
+       "reason": "Invalid native prompt override fields"
+      }
+     }
+    ]
+   }
+  },
+  {
+   "name": "profile: override block id not text",
+   "args": [
+    {
+     "schema_version": 1,
+     "runtime_id": "native-claude-code",
+     "runtime_version": "0.0.0-golden",
+     "image_digest": "sha256:2d032a622cf94baf637a4488720865da983853e4a655fea4e45d0e80f0a9c640",
+     "binary_sha256": "25ba8ebec5f227618d8d58f475622669f4c45019d40259d1d292a823f4184c27",
+     "inventory_sha256": "44e7b67bbdc0842fecf8cfa158641e03998f7d0b34184bc297ede967ab24ce7a",
+     "taxonomy_sha256": "6064ebcb6693a1dd7b3e50fbfbcc94ff959f7957ac184188fd91744900a429a3",
+     "materializer_sha256": "ba6245da8b07901b6793898e70e2e974a1e641a2c3be0d357ba53d15101f4081",
+     "default_action": "keep",
+     "overrides": [
+      {
+       "block_id": 5,
+       "baseline_sha256": "213c22ed7234eb11116e1e88f314c73cb3a019b5c87fe224b6ce5665bd9ec50e",
+       "action": "keep"
+      }
+     ]
+    },
+    "@inventory-claude",
+    {}
+   ],
+   "function": "audit_profile",
+   "expected": {
+    "ok": false,
+    "counts": {
+     "error": 1,
+     "warning": 0,
+     "info": 0
+    },
+    "findings": [
+     {
+      "rule": "profile.invalid-shape",
+      "severity": "error",
+      "contract": true,
+      "scope": "profile",
+      "block_id": null,
+      "message": "Unknown or duplicate native prompt override. The runner refuses a profile that is not an exact schema-1 object.",
+      "data": {
+       "reason": "Unknown or duplicate native prompt override"
+      }
+     }
+    ]
+   }
+  },
+  {
+   "name": "profile: pins mismatch",
+   "args": [
+    {
+     "schema_version": 1,
+     "runtime_id": "native-claude-code",
+     "runtime_version": "1.2.3",
+     "image_digest": "sha256:2d032a622cf94baf637a4488720865da983853e4a655fea4e45d0e80f0a9c640",
+     "binary_sha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+     "inventory_sha256": "44e7b67bbdc0842fecf8cfa158641e03998f7d0b34184bc297ede967ab24ce7a",
+     "taxonomy_sha256": "6064ebcb6693a1dd7b3e50fbfbcc94ff959f7957ac184188fd91744900a429a3",
+     "materializer_sha256": "ba6245da8b07901b6793898e70e2e974a1e641a2c3be0d357ba53d15101f4081",
+     "default_action": "keep",
+     "overrides": []
+    },
+    "@inventory-claude",
+    {}
+   ],
+   "function": "audit_profile",
+   "expected": {
+    "ok": false,
+    "counts": {
+     "error": 1,
+     "warning": 0,
+     "info": 0
+    },
+    "findings": [
+     {
+      "rule": "pins.mismatch",
+      "severity": "error",
+      "contract": true,
+      "scope": "profile",
+      "block_id": null,
+      "message": "This profile belongs to a different runtime or inventory revision (runtime_version differs). The runner refuses it; rebase it onto this inventory or start a new profile.",
+      "data": {
+       "pin": "runtime_version",
+       "mismatched": 2
+      }
+     }
+    ]
+   }
+  },
+  {
+   "name": "profile: unknown block",
+   "args": [
+    {
+     "schema_version": 1,
+     "runtime_id": "native-claude-code",
+     "runtime_version": "0.0.0-golden",
+     "image_digest": "sha256:2d032a622cf94baf637a4488720865da983853e4a655fea4e45d0e80f0a9c640",
+     "binary_sha256": "25ba8ebec5f227618d8d58f475622669f4c45019d40259d1d292a823f4184c27",
+     "inventory_sha256": "44e7b67bbdc0842fecf8cfa158641e03998f7d0b34184bc297ede967ab24ce7a",
+     "taxonomy_sha256": "6064ebcb6693a1dd7b3e50fbfbcc94ff959f7957ac184188fd91744900a429a3",
+     "materializer_sha256": "ba6245da8b07901b6793898e70e2e974a1e641a2c3be0d357ba53d15101f4081",
+     "default_action": "keep",
+     "overrides": [
+      {
+       "block_id": "ghost-block",
+       "baseline_sha256": "213c22ed7234eb11116e1e88f314c73cb3a019b5c87fe224b6ce5665bd9ec50e",
+       "action": "keep"
+      }
+     ]
+    },
+    "@inventory-claude",
+    {}
+   ],
+   "function": "audit_profile",
+   "expected": {
+    "ok": false,
+    "counts": {
+     "error": 1,
+     "warning": 0,
+     "info": 0
+    },
+    "findings": [
+     {
+      "rule": "override.unknown-block",
+      "severity": "error",
+      "contract": true,
+      "scope": "block",
+      "block_id": "ghost-block",
+      "message": "No block \"ghost-block\" exists in this inventory.",
+      "data": {}
+     }
+    ]
+   }
+  },
+  {
+   "name": "profile: duplicate override",
+   "args": [
+    {
+     "schema_version": 1,
+     "runtime_id": "native-claude-code",
+     "runtime_version": "0.0.0-golden",
+     "image_digest": "sha256:2d032a622cf94baf637a4488720865da983853e4a655fea4e45d0e80f0a9c640",
+     "binary_sha256": "25ba8ebec5f227618d8d58f475622669f4c45019d40259d1d292a823f4184c27",
+     "inventory_sha256": "44e7b67bbdc0842fecf8cfa158641e03998f7d0b34184bc297ede967ab24ce7a",
+     "taxonomy_sha256": "6064ebcb6693a1dd7b3e50fbfbcc94ff959f7957ac184188fd91744900a429a3",
+     "materializer_sha256": "ba6245da8b07901b6793898e70e2e974a1e641a2c3be0d357ba53d15101f4081",
+     "default_action": "keep",
+     "overrides": [
+      {
+       "block_id": "short",
+       "baseline_sha256": "213c22ed7234eb11116e1e88f314c73cb3a019b5c87fe224b6ce5665bd9ec50e",
+       "action": "disable"
+      },
+      {
+       "block_id": "short",
+       "baseline_sha256": "213c22ed7234eb11116e1e88f314c73cb3a019b5c87fe224b6ce5665bd9ec50e",
+       "action": "disable"
+      }
+     ]
+    },
+    "@inventory-claude",
+    {}
+   ],
+   "function": "audit_profile",
+   "expected": {
+    "ok": false,
+    "counts": {
+     "error": 1,
+     "warning": 0,
+     "info": 1
+    },
+    "findings": [
+     {
+      "rule": "override.duplicate",
+      "severity": "error",
+      "contract": true,
+      "scope": "block",
+      "block_id": "short",
+      "message": "This block has more than one override. The runner accepts one per block.",
+      "data": {}
+     },
+     {
+      "rule": "observer.short-literal",
+      "severity": "info",
+      "contract": false,
+      "scope": "block",
+      "block_id": "short",
+      "message": "The run observer does not match literals under 16 bytes, so disabling this fragment will have no literal-match evidence.",
+      "data": {
+       "bytes": 0,
+       "baseline_bytes": 9
+      }
+     }
+    ]
+   }
+  },
+  {
+   "name": "profile: baseline changed",
+   "args": [
+    {
+     "schema_version": 1,
+     "runtime_id": "native-claude-code",
+     "runtime_version": "0.0.0-golden",
+     "image_digest": "sha256:2d032a622cf94baf637a4488720865da983853e4a655fea4e45d0e80f0a9c640",
+     "binary_sha256": "25ba8ebec5f227618d8d58f475622669f4c45019d40259d1d292a823f4184c27",
+     "inventory_sha256": "44e7b67bbdc0842fecf8cfa158641e03998f7d0b34184bc297ede967ab24ce7a",
+     "taxonomy_sha256": "6064ebcb6693a1dd7b3e50fbfbcc94ff959f7957ac184188fd91744900a429a3",
+     "materializer_sha256": "ba6245da8b07901b6793898e70e2e974a1e641a2c3be0d357ba53d15101f4081",
+     "default_action": "keep",
+     "overrides": [
+      {
+       "block_id": "tool-bash-guide",
+       "baseline_sha256": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+       "action": "disable"
+      }
+     ]
+    },
+    "@inventory-claude",
+    {}
+   ],
+   "function": "audit_profile",
+   "expected": {
+    "ok": false,
+    "counts": {
+     "error": 1,
+     "warning": 0,
+     "info": 0
+    },
+    "findings": [
+     {
+      "rule": "override.baseline-changed",
+      "severity": "error",
+      "contract": true,
+      "scope": "block",
+      "block_id": "tool-bash-guide",
+      "message": "This override was written for a different baseline text of the block.",
+      "data": {}
+     }
+    ]
+   }
+  },
+  {
+   "name": "profile: not patchable",
+   "args": [
+    {
+     "schema_version": 1,
+     "runtime_id": "native-claude-code",
+     "runtime_version": "0.0.0-golden",
+     "image_digest": "sha256:2d032a622cf94baf637a4488720865da983853e4a655fea4e45d0e80f0a9c640",
+     "binary_sha256": "25ba8ebec5f227618d8d58f475622669f4c45019d40259d1d292a823f4184c27",
+     "inventory_sha256": "44e7b67bbdc0842fecf8cfa158641e03998f7d0b34184bc297ede967ab24ce7a",
+     "taxonomy_sha256": "6064ebcb6693a1dd7b3e50fbfbcc94ff959f7957ac184188fd91744900a429a3",
+     "materializer_sha256": "ba6245da8b07901b6793898e70e2e974a1e641a2c3be0d357ba53d15101f4081",
+     "default_action": "keep",
+     "overrides": [
+      {
+       "block_id": "observed-dynamic",
+       "baseline_sha256": "051b5a1029b4b78cbfdc9d1fe6ade44d634c605f3ad3b88ed5d59a55c877d6f7",
+       "action": "disable"
+      },
+      {
+       "block_id": "unavailable-fragment",
+       "baseline_sha256": "e5f67235304253a532f9d320332a59008a26ffe56aa2f3ce9a80c97a98d3b105",
+       "action": "replace",
+       "replacement_utf8": "Fabricated.",
+       "replacement_sha256": "bb688a5116da03d6e9987461246747769b56f229fb7bdc03423f95918d0e9244"
+      }
+     ]
+    },
+    "@inventory-claude",
+    {}
+   ],
+   "function": "audit_profile",
+   "expected": {
+    "ok": false,
+    "counts": {
+     "error": 2,
+     "warning": 0,
+     "info": 0
+    },
+    "findings": [
+     {
+      "rule": "override.not-patchable",
+      "severity": "error",
+      "contract": true,
+      "scope": "block",
+      "block_id": "observed-dynamic",
+      "message": "This block is observed-only: it can be kept, not disabled or replaced.",
+      "data": {
+       "capability": "observed-only"
+      }
+     },
+     {
+      "rule": "override.not-patchable",
+      "severity": "error",
+      "contract": true,
+      "scope": "block",
+      "block_id": "unavailable-fragment",
+      "message": "This block is unavailable: it can be kept, not disabled or replaced.",
+      "data": {
+       "capability": "unavailable"
+      }
+     }
+    ]
+   }
+  },
+  {
+   "name": "profile: keep on observed-only is fine",
+   "args": [
+    {
+     "schema_version": 1,
+     "runtime_id": "native-claude-code",
+     "runtime_version": "0.0.0-golden",
+     "image_digest": "sha256:2d032a622cf94baf637a4488720865da983853e4a655fea4e45d0e80f0a9c640",
+     "binary_sha256": "25ba8ebec5f227618d8d58f475622669f4c45019d40259d1d292a823f4184c27",
+     "inventory_sha256": "44e7b67bbdc0842fecf8cfa158641e03998f7d0b34184bc297ede967ab24ce7a",
+     "taxonomy_sha256": "6064ebcb6693a1dd7b3e50fbfbcc94ff959f7957ac184188fd91744900a429a3",
+     "materializer_sha256": "ba6245da8b07901b6793898e70e2e974a1e641a2c3be0d357ba53d15101f4081",
+     "default_action": "keep",
+     "overrides": [
+      {
+       "block_id": "observed-dynamic",
+       "baseline_sha256": "051b5a1029b4b78cbfdc9d1fe6ade44d634c605f3ad3b88ed5d59a55c877d6f7",
+       "action": "keep"
+      }
+     ]
+    },
+    "@inventory-claude",
+    {}
+   ],
+   "function": "audit_profile",
+   "expected": {
+    "ok": true,
+    "counts": {
+     "error": 0,
+     "warning": 0,
+     "info": 0
+    },
+    "findings": []
+   }
+  },
+  {
+   "name": "profile: digest mismatch",
+   "args": [
+    {
+     "schema_version": 1,
+     "runtime_id": "native-claude-code",
+     "runtime_version": "0.0.0-golden",
+     "image_digest": "sha256:2d032a622cf94baf637a4488720865da983853e4a655fea4e45d0e80f0a9c640",
+     "binary_sha256": "25ba8ebec5f227618d8d58f475622669f4c45019d40259d1d292a823f4184c27",
+     "inventory_sha256": "44e7b67bbdc0842fecf8cfa158641e03998f7d0b34184bc297ede967ab24ce7a",
+     "taxonomy_sha256": "6064ebcb6693a1dd7b3e50fbfbcc94ff959f7957ac184188fd91744900a429a3",
+     "materializer_sha256": "ba6245da8b07901b6793898e70e2e974a1e641a2c3be0d357ba53d15101f4081",
+     "default_action": "keep",
+     "overrides": [
+      {
+       "block_id": "tool-bash-guide",
+       "baseline_sha256": "c5db5a79c94bb7a9835cbe2e3897337c52e3bb72b73edaedf1165a51246b057b",
+       "action": "replace",
+       "replacement_utf8": "Fabricated text.",
+       "replacement_sha256": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"
+      }
+     ]
+    },
+    "@inventory-claude",
+    {}
+   ],
+   "function": "audit_profile",
+   "expected": {
+    "ok": false,
+    "counts": {
+     "error": 1,
+     "warning": 0,
+     "info": 0
+    },
+    "findings": [
+     {
+      "rule": "override.digest-mismatch",
+      "severity": "error",
+      "contract": true,
+      "scope": "block",
+      "block_id": "tool-bash-guide",
+      "message": "The replacement text does not match its recorded SHA-256 digest. The text or the digest was changed after the edit.",
+      "data": {}
+     }
+    ]
+   }
+  },
+  {
+   "name": "profile: replacement findings carried",
+   "args": [
+    {
+     "schema_version": 1,
+     "runtime_id": "native-claude-code",
+     "runtime_version": "0.0.0-golden",
+     "image_digest": "sha256:2d032a622cf94baf637a4488720865da983853e4a655fea4e45d0e80f0a9c640",
+     "binary_sha256": "25ba8ebec5f227618d8d58f475622669f4c45019d40259d1d292a823f4184c27",
+     "inventory_sha256": "44e7b67bbdc0842fecf8cfa158641e03998f7d0b34184bc297ede967ab24ce7a",
+     "taxonomy_sha256": "6064ebcb6693a1dd7b3e50fbfbcc94ff959f7957ac184188fd91744900a429a3",
+     "materializer_sha256": "ba6245da8b07901b6793898e70e2e974a1e641a2c3be0d357ba53d15101f4081",
+     "default_action": "keep",
+     "overrides": [
+      {
+       "block_id": "tool-bash-guide",
+       "baseline_sha256": "c5db5a79c94bb7a9835cbe2e3897337c52e3bb72b73edaedf1165a51246b057b",
+       "action": "replace",
+       "replacement_utf8": "Use Bearer authentication now.",
+       "replacement_sha256": "fd71342d0029131a83a24ca90ffc80b6060b32a210988f92d3889ca7cdd82696"
+      },
+      {
+       "block_id": "system-reminder-plan",
+       "baseline_sha256": "5911fea64f55d714569aff07fa8a887a235adca26c869f4f492da7c88c004a73",
+       "action": "replace",
+       "replacement_utf8": "No placeholders here.",
+       "replacement_sha256": "4c769c659d1a78a7662c275f172da95684980ad9b53f0b8db61fffde381370f7"
+      }
+     ]
+    },
+    "@inventory-claude",
+    {}
+   ],
+   "function": "audit_profile",
+   "expected": {
+    "ok": false,
+    "counts": {
+     "error": 2,
+     "warning": 0,
+     "info": 1
+    },
+    "findings": [
+     {
+      "rule": "leak.runner-redaction",
+      "severity": "error",
+      "contract": true,
+      "scope": "block",
+      "block_id": "tool-bash-guide",
+      "message": "The runner treats \"Bearer authentication\" as a Bearer credential and refuses the run. Reword it; the check reads the shape, not the meaning.",
+      "data": {
+       "pattern": "bearer",
+       "match": "Bearer authentication",
+       "count": 1
+      }
+     },
+     {
+      "rule": "placeholder.sequence",
+      "severity": "error",
+      "contract": true,
+      "scope": "block",
+      "block_id": "system-reminder-plan",
+      "message": "Keep the 2 native placeholders of this fragment exactly once each, in the original order. Found 0.",
+      "data": {
+       "expected": 2,
+       "found": 0
+      }
+     },
+     {
+      "rule": "observer.templated",
+      "severity": "info",
+      "contract": false,
+      "scope": "block",
+      "block_id": "system-reminder-plan",
+      "message": "This fragment has native placeholders. The run observer skips templated fragments, so this change will have no literal-match evidence.",
+      "data": {}
+     }
+    ]
+   }
+  },
+  {
+   "name": "profile: templated disable gives an observer note",
+   "args": [
+    {
+     "schema_version": 1,
+     "runtime_id": "native-claude-code",
+     "runtime_version": "0.0.0-golden",
+     "image_digest": "sha256:2d032a622cf94baf637a4488720865da983853e4a655fea4e45d0e80f0a9c640",
+     "binary_sha256": "25ba8ebec5f227618d8d58f475622669f4c45019d40259d1d292a823f4184c27",
+     "inventory_sha256": "44e7b67bbdc0842fecf8cfa158641e03998f7d0b34184bc297ede967ab24ce7a",
+     "taxonomy_sha256": "6064ebcb6693a1dd7b3e50fbfbcc94ff959f7957ac184188fd91744900a429a3",
+     "materializer_sha256": "ba6245da8b07901b6793898e70e2e974a1e641a2c3be0d357ba53d15101f4081",
+     "default_action": "keep",
+     "overrides": [
+      {
+       "block_id": "system-reminder-plan",
+       "baseline_sha256": "5911fea64f55d714569aff07fa8a887a235adca26c869f4f492da7c88c004a73",
+       "action": "disable"
+      }
+     ]
+    },
+    "@inventory-claude",
+    {}
+   ],
+   "function": "audit_profile",
+   "expected": {
+    "ok": true,
+    "counts": {
+     "error": 0,
+     "warning": 0,
+     "info": 1
+    },
+    "findings": [
+     {
+      "rule": "observer.templated",
+      "severity": "info",
+      "contract": false,
+      "scope": "block",
+      "block_id": "system-reminder-plan",
+      "message": "This fragment has native placeholders. The run observer skips templated fragments, so disabling it will have no literal-match evidence.",
+      "data": {}
+     }
+    ]
+   }
+  },
+  {
+   "name": "profile: short disable gives an observer note",
+   "args": [
+    {
+     "schema_version": 1,
+     "runtime_id": "native-claude-code",
+     "runtime_version": "0.0.0-golden",
+     "image_digest": "sha256:2d032a622cf94baf637a4488720865da983853e4a655fea4e45d0e80f0a9c640",
+     "binary_sha256": "25ba8ebec5f227618d8d58f475622669f4c45019d40259d1d292a823f4184c27",
+     "inventory_sha256": "44e7b67bbdc0842fecf8cfa158641e03998f7d0b34184bc297ede967ab24ce7a",
+     "taxonomy_sha256": "6064ebcb6693a1dd7b3e50fbfbcc94ff959f7957ac184188fd91744900a429a3",
+     "materializer_sha256": "ba6245da8b07901b6793898e70e2e974a1e641a2c3be0d357ba53d15101f4081",
+     "default_action": "keep",
+     "overrides": [
+      {
+       "block_id": "short",
+       "baseline_sha256": "213c22ed7234eb11116e1e88f314c73cb3a019b5c87fe224b6ce5665bd9ec50e",
+       "action": "disable"
+      }
+     ]
+    },
+    "@inventory-claude",
+    {}
+   ],
+   "function": "audit_profile",
+   "expected": {
+    "ok": true,
+    "counts": {
+     "error": 0,
+     "warning": 0,
+     "info": 1
+    },
+    "findings": [
+     {
+      "rule": "observer.short-literal",
+      "severity": "info",
+      "contract": false,
+      "scope": "block",
+      "block_id": "short",
+      "message": "The run observer does not match literals under 16 bytes, so disabling this fragment will have no literal-match evidence.",
+      "data": {
+       "bytes": 0,
+       "baseline_bytes": 9
+      }
+     }
+    ]
+   }
+  },
+  {
+   "name": "profile: default disable gives observer notes and the security count",
+   "args": [
+    {
+     "schema_version": 1,
+     "runtime_id": "native-claude-code",
+     "runtime_version": "0.0.0-golden",
+     "image_digest": "sha256:2d032a622cf94baf637a4488720865da983853e4a655fea4e45d0e80f0a9c640",
+     "binary_sha256": "25ba8ebec5f227618d8d58f475622669f4c45019d40259d1d292a823f4184c27",
+     "inventory_sha256": "44e7b67bbdc0842fecf8cfa158641e03998f7d0b34184bc297ede967ab24ce7a",
+     "taxonomy_sha256": "6064ebcb6693a1dd7b3e50fbfbcc94ff959f7957ac184188fd91744900a429a3",
+     "materializer_sha256": "ba6245da8b07901b6793898e70e2e974a1e641a2c3be0d357ba53d15101f4081",
+     "default_action": "disable",
+     "overrides": []
+    },
+    "@inventory-claude",
+    {}
+   ],
+   "function": "audit_profile",
+   "expected": {
+    "ok": true,
+    "counts": {
+     "error": 0,
+     "warning": 0,
+     "info": 3
+    },
+    "findings": [
+     {
+      "rule": "class.security-disabled",
+      "severity": "info",
+      "contract": false,
+      "scope": "profile",
+      "block_id": null,
+      "message": "2 fragments labelled Security & Safety are disabled or replaced. The label is a keyword heuristic over block names; runner isolation is unchanged.",
+      "data": {
+       "count": 2
+      }
+     },
+     {
+      "rule": "observer.templated",
+      "severity": "info",
+      "contract": false,
+      "scope": "block",
+      "block_id": "system-reminder-plan",
+      "message": "This fragment has native placeholders. The run observer skips templated fragments, so disabling it will have no literal-match evidence.",
+      "data": {}
+     },
+     {
+      "rule": "observer.short-literal",
+      "severity": "info",
+      "contract": false,
+      "scope": "block",
+      "block_id": "short",
+      "message": "The run observer does not match literals under 16 bytes, so disabling this fragment will have no literal-match evidence.",
+      "data": {
+       "bytes": 0,
+       "baseline_bytes": 9
+      }
+     }
+    ]
+   }
+  },
+  {
+   "name": "profile: one security fragment replaced",
+   "args": [
+    {
+     "schema_version": 1,
+     "runtime_id": "native-claude-code",
+     "runtime_version": "0.0.0-golden",
+     "image_digest": "sha256:2d032a622cf94baf637a4488720865da983853e4a655fea4e45d0e80f0a9c640",
+     "binary_sha256": "25ba8ebec5f227618d8d58f475622669f4c45019d40259d1d292a823f4184c27",
+     "inventory_sha256": "44e7b67bbdc0842fecf8cfa158641e03998f7d0b34184bc297ede967ab24ce7a",
+     "taxonomy_sha256": "6064ebcb6693a1dd7b3e50fbfbcc94ff959f7957ac184188fd91744900a429a3",
+     "materializer_sha256": "ba6245da8b07901b6793898e70e2e974a1e641a2c3be0d357ba53d15101f4081",
+     "default_action": "keep",
+     "overrides": [
+      {
+       "block_id": "security-sandbox-note",
+       "baseline_sha256": "da29f4d417fb4114d86cf22df8e7b8b94933d8df6b415974fb64812073588596",
+       "action": "replace",
+       "replacement_utf8": "Fabricated safety note, shorter.",
+       "replacement_sha256": "f4ff2ca15402c65f749c45b5b0e3992498b51de390984d2e32c39b6d55f5418c"
+      }
+     ]
+    },
+    "@inventory-claude",
+    {}
+   ],
+   "function": "audit_profile",
+   "expected": {
+    "ok": true,
+    "counts": {
+     "error": 0,
+     "warning": 0,
+     "info": 1
+    },
+    "findings": [
+     {
+      "rule": "class.security-disabled",
+      "severity": "info",
+      "contract": false,
+      "scope": "profile",
+      "block_id": null,
+      "message": "1 fragment labelled Security & Safety is disabled or replaced. The label is a keyword heuristic over block names; runner isolation is unchanged.",
+      "data": {
+       "count": 1
+      }
+     }
+    ]
+   }
+  },
+  {
+   "name": "profile: two security fragments disabled",
+   "args": [
+    {
+     "schema_version": 1,
+     "runtime_id": "native-claude-code",
+     "runtime_version": "0.0.0-golden",
+     "image_digest": "sha256:2d032a622cf94baf637a4488720865da983853e4a655fea4e45d0e80f0a9c640",
+     "binary_sha256": "25ba8ebec5f227618d8d58f475622669f4c45019d40259d1d292a823f4184c27",
+     "inventory_sha256": "44e7b67bbdc0842fecf8cfa158641e03998f7d0b34184bc297ede967ab24ce7a",
+     "taxonomy_sha256": "6064ebcb6693a1dd7b3e50fbfbcc94ff959f7957ac184188fd91744900a429a3",
+     "materializer_sha256": "ba6245da8b07901b6793898e70e2e974a1e641a2c3be0d357ba53d15101f4081",
+     "default_action": "keep",
+     "overrides": [
+      {
+       "block_id": "security-sandbox-note",
+       "baseline_sha256": "da29f4d417fb4114d86cf22df8e7b8b94933d8df6b415974fb64812073588596",
+       "action": "disable"
+      },
+      {
+       "block_id": "permission-deny-list",
+       "baseline_sha256": "039c555594a44e8b16d8fa1ff05e52d243c3cf43cd0a41e79bcc0ae2baeeaedb",
+       "action": "disable"
+      }
+     ]
+    },
+    "@inventory-claude",
+    {}
+   ],
+   "function": "audit_profile",
+   "expected": {
+    "ok": true,
+    "counts": {
+     "error": 0,
+     "warning": 0,
+     "info": 1
+    },
+    "findings": [
+     {
+      "rule": "class.security-disabled",
+      "severity": "info",
+      "contract": false,
+      "scope": "profile",
+      "block_id": null,
+      "message": "2 fragments labelled Security & Safety are disabled or replaced. The label is a keyword heuristic over block names; runner isolation is unchanged.",
+      "data": {
+       "count": 2
+      }
+     }
+    ]
+   }
+  },
+  {
+   "name": "profile: too many overrides",
+   "args": [
+    "@profile-large-over",
+    "@inventory-large",
+    {}
+   ],
+   "function": "audit_profile",
+   "expected": {
+    "ok": false,
+    "counts": {
+     "error": 1,
+     "warning": 1,
+     "info": 0
+    },
+    "findings": [
+     {
+      "rule": "profile.too-many-overrides",
+      "severity": "error",
+      "contract": true,
+      "scope": "profile",
+      "block_id": null,
+      "message": "The profile has 4097 overrides; the runner accepts at most 4096.",
+      "data": {
+       "used": 4097,
+       "max": 4096,
+       "state": "over"
+      }
+     },
+     {
+      "rule": "plan.size-estimate",
+      "severity": "warning",
+      "contract": false,
+      "scope": "plan",
+      "block_id": null,
+      "message": "Estimate: a two-arm plan with this profile would freeze at about 1014490 bytes; the runner retains at most 786432 (768 KiB).",
+      "data": {
+       "used": 1014490,
+       "max": 786432,
+       "estimate": true
+      }
+     }
+    ]
+   }
+  },
+  {
+   "name": "profile: profile near 768 KiB",
+   "args": [
+    {
+     "schema_version": 1,
+     "runtime_id": "native-claude-code",
+     "runtime_version": "0.0.0-golden",
+     "image_digest": "sha256:2d032a622cf94baf637a4488720865da983853e4a655fea4e45d0e80f0a9c640",
+     "binary_sha256": "25ba8ebec5f227618d8d58f475622669f4c45019d40259d1d292a823f4184c27",
+     "inventory_sha256": "44e7b67bbdc0842fecf8cfa158641e03998f7d0b34184bc297ede967ab24ce7a",
+     "taxonomy_sha256": "6064ebcb6693a1dd7b3e50fbfbcc94ff959f7957ac184188fd91744900a429a3",
+     "materializer_sha256": "ba6245da8b07901b6793898e70e2e974a1e641a2c3be0d357ba53d15101f4081",
+     "default_action": "keep",
+     "overrides": [
+      {
+       "block_id": "tool-bash-guide",
+       "baseline_sha256": "c5db5a79c94bb7a9835cbe2e3897337c52e3bb72b73edaedf1165a51246b057b",
+       "action": "replace",
+       "replacement_utf8": {
+        "@repeat": "Fabricated filler. ",
+        "times": 8400
+       },
+       "replacement_sha256": "59a1d602854bf17ab40d217123a1ad41d3f858edb328e60401e5365239d0b632"
+      },
+      {
+       "block_id": "security-sandbox-note",
+       "baseline_sha256": "da29f4d417fb4114d86cf22df8e7b8b94933d8df6b415974fb64812073588596",
+       "action": "replace",
+       "replacement_utf8": {
+        "@repeat": "Fabricated filler. ",
+        "times": 8400
+       },
+       "replacement_sha256": "59a1d602854bf17ab40d217123a1ad41d3f858edb328e60401e5365239d0b632"
+      },
+      {
+       "block_id": "response-style",
+       "baseline_sha256": "dfdce2e37fd61eaecb69669b607c265d2dd9f8ab9c574eea221bb5e77620c6be",
+       "action": "replace",
+       "replacement_utf8": {
+        "@repeat": "Fabricated filler. ",
+        "times": 8400
+       },
+       "replacement_sha256": "59a1d602854bf17ab40d217123a1ad41d3f858edb328e60401e5365239d0b632"
+      },
+      {
+       "block_id": "general-hedge",
+       "baseline_sha256": "9e5dada3492558f4af8fff686a4bb57c2bcc6e83faa7b86f653206cff34ac914",
+       "action": "replace",
+       "replacement_utf8": {
+        "@repeat": "Fabricated filler. ",
+        "times": 8400
+       },
+       "replacement_sha256": "59a1d602854bf17ab40d217123a1ad41d3f858edb328e60401e5365239d0b632"
+      }
+     ]
+    },
+    "@inventory-claude",
+    {}
+   ],
+   "function": "audit_profile",
+   "expected": {
+    "ok": true,
+    "counts": {
+     "error": 0,
+     "warning": 2,
+     "info": 1
+    },
+    "findings": [
+     {
+      "rule": "plan.size-estimate",
+      "severity": "warning",
+      "contract": false,
+      "scope": "plan",
+      "block_id": null,
+      "message": "Estimate: a two-arm plan with this profile would freeze at about 1293576 bytes; the runner retains at most 786432 (768 KiB).",
+      "data": {
+       "used": 1293576,
+       "max": 786432,
+       "estimate": true
+      }
+     },
+     {
+      "rule": "profile.too-large",
+      "severity": "warning",
+      "contract": false,
+      "scope": "profile",
+      "block_id": null,
+      "message": "The canonical profile is 639940 of 786432 bytes (768 KiB).",
+      "data": {
+       "used": 639940,
+       "max": 786432,
+       "state": "near"
+      }
+     },
+     {
+      "rule": "class.security-disabled",
+      "severity": "info",
+      "contract": false,
+      "scope": "profile",
+      "block_id": null,
+      "message": "1 fragment labelled Security & Safety is disabled or replaced. The label is a keyword heuristic over block names; runner isolation is unchanged.",
+      "data": {
+       "count": 1
+      }
+     }
+    ]
+   }
+  },
+  {
+   "name": "profile: profile over 768 KiB",
+   "args": [
+    {
+     "schema_version": 1,
+     "runtime_id": "native-claude-code",
+     "runtime_version": "0.0.0-golden",
+     "image_digest": "sha256:2d032a622cf94baf637a4488720865da983853e4a655fea4e45d0e80f0a9c640",
+     "binary_sha256": "25ba8ebec5f227618d8d58f475622669f4c45019d40259d1d292a823f4184c27",
+     "inventory_sha256": "44e7b67bbdc0842fecf8cfa158641e03998f7d0b34184bc297ede967ab24ce7a",
+     "taxonomy_sha256": "6064ebcb6693a1dd7b3e50fbfbcc94ff959f7957ac184188fd91744900a429a3",
+     "materializer_sha256": "ba6245da8b07901b6793898e70e2e974a1e641a2c3be0d357ba53d15101f4081",
+     "default_action": "keep",
+     "overrides": [
+      {
+       "block_id": "tool-bash-guide",
+       "baseline_sha256": "c5db5a79c94bb7a9835cbe2e3897337c52e3bb72b73edaedf1165a51246b057b",
+       "action": "replace",
+       "replacement_utf8": {
+        "@repeat": "Fabricated filler. ",
+        "times": 9000
+       },
+       "replacement_sha256": "edba55fe31afde6012ace2415874634cc3a4d2e17e26a0d220c9002cab31718e"
+      },
+      {
+       "block_id": "security-sandbox-note",
+       "baseline_sha256": "da29f4d417fb4114d86cf22df8e7b8b94933d8df6b415974fb64812073588596",
+       "action": "replace",
+       "replacement_utf8": {
+        "@repeat": "Fabricated filler. ",
+        "times": 9000
+       },
+       "replacement_sha256": "edba55fe31afde6012ace2415874634cc3a4d2e17e26a0d220c9002cab31718e"
+      },
+      {
+       "block_id": "response-style",
+       "baseline_sha256": "dfdce2e37fd61eaecb69669b607c265d2dd9f8ab9c574eea221bb5e77620c6be",
+       "action": "replace",
+       "replacement_utf8": {
+        "@repeat": "Fabricated filler. ",
+        "times": 9000
+       },
+       "replacement_sha256": "edba55fe31afde6012ace2415874634cc3a4d2e17e26a0d220c9002cab31718e"
+      },
+      {
+       "block_id": "general-hedge",
+       "baseline_sha256": "9e5dada3492558f4af8fff686a4bb57c2bcc6e83faa7b86f653206cff34ac914",
+       "action": "replace",
+       "replacement_utf8": {
+        "@repeat": "Fabricated filler. ",
+        "times": 9000
+       },
+       "replacement_sha256": "edba55fe31afde6012ace2415874634cc3a4d2e17e26a0d220c9002cab31718e"
+      },
+      {
+       "block_id": "short",
+       "baseline_sha256": "213c22ed7234eb11116e1e88f314c73cb3a019b5c87fe224b6ce5665bd9ec50e",
+       "action": "replace",
+       "replacement_utf8": {
+        "@repeat": "Fabricated filler. ",
+        "times": 9000
+       },
+       "replacement_sha256": "edba55fe31afde6012ace2415874634cc3a4d2e17e26a0d220c9002cab31718e"
+      }
+     ]
+    },
+    "@inventory-claude",
+    {}
+   ],
+   "function": "audit_profile",
+   "expected": {
+    "ok": false,
+    "counts": {
+     "error": 1,
+     "warning": 1,
+     "info": 2
+    },
+    "findings": [
+     {
+      "rule": "profile.too-large",
+      "severity": "error",
+      "contract": true,
+      "scope": "profile",
+      "block_id": null,
+      "message": "The canonical profile is 856775 bytes; the runner accepts at most 786432 (768 KiB).",
+      "data": {
+       "used": 856775,
+       "max": 786432,
+       "state": "over"
+      }
+     },
+     {
+      "rule": "plan.size-estimate",
+      "severity": "warning",
+      "contract": false,
+      "scope": "plan",
+      "block_id": null,
+      "message": "Estimate: a two-arm plan with this profile would freeze at about 1727246 bytes; the runner retains at most 786432 (768 KiB).",
+      "data": {
+       "used": 1727246,
+       "max": 786432,
+       "estimate": true
+      }
+     },
+     {
+      "rule": "class.security-disabled",
+      "severity": "info",
+      "contract": false,
+      "scope": "profile",
+      "block_id": null,
+      "message": "1 fragment labelled Security & Safety is disabled or replaced. The label is a keyword heuristic over block names; runner isolation is unchanged.",
+      "data": {
+       "count": 1
+      }
+     },
+     {
+      "rule": "observer.short-literal",
+      "severity": "info",
+      "contract": false,
+      "scope": "block",
+      "block_id": "short",
+      "message": "The run observer does not match literals under 16 bytes, so this change will have incomplete literal-match evidence.",
+      "data": {
+       "bytes": 171000,
+       "baseline_bytes": 9
+      }
+     }
+    ]
+   }
+  },
+  {
+   "name": "profile: prompt with a runner-refused shape",
+   "args": [
+    {
+     "schema_version": 1,
+     "runtime_id": "native-claude-code",
+     "runtime_version": "0.0.0-golden",
+     "image_digest": "sha256:2d032a622cf94baf637a4488720865da983853e4a655fea4e45d0e80f0a9c640",
+     "binary_sha256": "25ba8ebec5f227618d8d58f475622669f4c45019d40259d1d292a823f4184c27",
+     "inventory_sha256": "44e7b67bbdc0842fecf8cfa158641e03998f7d0b34184bc297ede967ab24ce7a",
+     "taxonomy_sha256": "6064ebcb6693a1dd7b3e50fbfbcc94ff959f7957ac184188fd91744900a429a3",
+     "materializer_sha256": "ba6245da8b07901b6793898e70e2e974a1e641a2c3be0d357ba53d15101f4081",
+     "default_action": "keep",
+     "overrides": []
+    },
+    "@inventory-claude",
+    {
+     "prompt": "Fabricated: use Bearer authentication."
+    }
+   ],
+   "function": "audit_profile",
+   "expected": {
+    "ok": false,
+    "counts": {
+     "error": 1,
+     "warning": 0,
+     "info": 0
+    },
+    "findings": [
+     {
+      "rule": "leak.runner-redaction",
+      "severity": "error",
+      "contract": true,
+      "scope": "profile",
+      "block_id": null,
+      "message": "The additional instructions contain \"Bearer authentication.\", which the runner treats as a credential. It refuses the run.",
+      "data": {
+       "pattern": "bearer",
+       "match": "Bearer authentication.",
+       "count": 1,
+       "field": "prompt"
+      }
+     }
+    ]
+   }
+  },
+  {
+   "name": "profile: prompt with an sk- key",
+   "args": [
+    {
+     "schema_version": 1,
+     "runtime_id": "native-claude-code",
+     "runtime_version": "0.0.0-golden",
+     "image_digest": "sha256:2d032a622cf94baf637a4488720865da983853e4a655fea4e45d0e80f0a9c640",
+     "binary_sha256": "25ba8ebec5f227618d8d58f475622669f4c45019d40259d1d292a823f4184c27",
+     "inventory_sha256": "44e7b67bbdc0842fecf8cfa158641e03998f7d0b34184bc297ede967ab24ce7a",
+     "taxonomy_sha256": "6064ebcb6693a1dd7b3e50fbfbcc94ff959f7957ac184188fd91744900a429a3",
+     "materializer_sha256": "ba6245da8b07901b6793898e70e2e974a1e641a2c3be0d357ba53d15101f4081",
+     "default_action": "keep",
+     "overrides": []
+    },
+    "@inventory-claude",
+    {
+     "prompt": "Fabricated sk-fabricated0123456789 text."
+    }
+   ],
+   "function": "audit_profile",
+   "expected": {
+    "ok": false,
+    "counts": {
+     "error": 1,
+     "warning": 0,
+     "info": 0
+    },
+    "findings": [
+     {
+      "rule": "leak.runner-redaction",
+      "severity": "error",
+      "contract": true,
+      "scope": "profile",
+      "block_id": null,
+      "message": "The additional instructions contain \"sk-fab\u2026\", which the runner treats as a credential. It refuses the run.",
+      "data": {
+       "pattern": "sk-token",
+       "match": "sk-fab\u2026",
+       "count": 1,
+       "field": "prompt"
+      }
+     }
+    ]
+   }
+  },
+  {
+   "name": "profile: prompt with a provider key shape",
+   "args": [
+    {
+     "schema_version": 1,
+     "runtime_id": "native-claude-code",
+     "runtime_version": "0.0.0-golden",
+     "image_digest": "sha256:2d032a622cf94baf637a4488720865da983853e4a655fea4e45d0e80f0a9c640",
+     "binary_sha256": "25ba8ebec5f227618d8d58f475622669f4c45019d40259d1d292a823f4184c27",
+     "inventory_sha256": "44e7b67bbdc0842fecf8cfa158641e03998f7d0b34184bc297ede967ab24ce7a",
+     "taxonomy_sha256": "6064ebcb6693a1dd7b3e50fbfbcc94ff959f7957ac184188fd91744900a429a3",
+     "materializer_sha256": "ba6245da8b07901b6793898e70e2e974a1e641a2c3be0d357ba53d15101f4081",
+     "default_action": "keep",
+     "overrides": []
+    },
+    "@inventory-claude",
+    {
+     "prompt": "Fabricated sk-or-v2-0123456789abcdef0123."
+    }
+   ],
+   "function": "audit_profile",
+   "expected": {
+    "ok": false,
+    "counts": {
+     "error": 1,
+     "warning": 0,
+     "info": 0
+    },
+    "findings": [
+     {
+      "rule": "leak.runner-redaction",
+      "severity": "error",
+      "contract": true,
+      "scope": "profile",
+      "block_id": null,
+      "message": "The additional instructions contain \"sk-or-\u2026\", which the runner treats as a credential. It refuses the run.",
+      "data": {
+       "pattern": "sk-token",
+       "match": "sk-or-\u2026",
+       "count": 1,
+       "field": "prompt"
+      }
+     }
+    ]
+   }
+  },
+  {
+   "name": "profile: clean prompt",
+   "args": [
+    {
+     "schema_version": 1,
+     "runtime_id": "native-claude-code",
+     "runtime_version": "0.0.0-golden",
+     "image_digest": "sha256:2d032a622cf94baf637a4488720865da983853e4a655fea4e45d0e80f0a9c640",
+     "binary_sha256": "25ba8ebec5f227618d8d58f475622669f4c45019d40259d1d292a823f4184c27",
+     "inventory_sha256": "44e7b67bbdc0842fecf8cfa158641e03998f7d0b34184bc297ede967ab24ce7a",
+     "taxonomy_sha256": "6064ebcb6693a1dd7b3e50fbfbcc94ff959f7957ac184188fd91744900a429a3",
+     "materializer_sha256": "ba6245da8b07901b6793898e70e2e974a1e641a2c3be0d357ba53d15101f4081",
+     "default_action": "keep",
+     "overrides": []
+    },
+    "@inventory-claude",
+    {
+     "prompt": "Fabricated additional instructions."
+    }
+   ],
+   "function": "audit_profile",
+   "expected": {
+    "ok": true,
+    "counts": {
+     "error": 0,
+     "warning": 0,
+     "info": 0
+    },
+    "findings": []
+   }
+  },
+  {
+   "name": "profile: prompt with a gateway-only key shape",
+   "args": [
+    {
+     "schema_version": 1,
+     "runtime_id": "native-claude-code",
+     "runtime_version": "0.0.0-golden",
+     "image_digest": "sha256:2d032a622cf94baf637a4488720865da983853e4a655fea4e45d0e80f0a9c640",
+     "binary_sha256": "25ba8ebec5f227618d8d58f475622669f4c45019d40259d1d292a823f4184c27",
+     "inventory_sha256": "44e7b67bbdc0842fecf8cfa158641e03998f7d0b34184bc297ede967ab24ce7a",
+     "taxonomy_sha256": "6064ebcb6693a1dd7b3e50fbfbcc94ff959f7957ac184188fd91744900a429a3",
+     "materializer_sha256": "ba6245da8b07901b6793898e70e2e974a1e641a2c3be0d357ba53d15101f4081",
+     "default_action": "keep",
+     "overrides": []
+    },
+    "@inventory-claude",
+    {
+     "prompt": "Fabricated\nsk-fabricated0123456789"
+    }
+   ],
+   "function": "audit_profile",
+   "expected": {
+    "ok": false,
+    "counts": {
+     "error": 1,
+     "warning": 0,
+     "info": 0
+    },
+    "findings": [
+     {
+      "rule": "leak.gateway-credential",
+      "severity": "error",
+      "contract": true,
+      "scope": "profile",
+      "block_id": null,
+      "message": "The additional instructions contain \"sk-fab\u2026\", which has the shape of a provider key. The hosted service refuses the request.",
+      "data": {
+       "pattern": "gateway-sk-token",
+       "match": "sk-fab\u2026",
+       "count": 1,
+       "field": "prompt"
+      }
+     }
+    ]
+   }
+  },
+  {
+   "name": "profile: manifest estimate over 1 MiB",
+   "args": [
+    {
+     "schema_version": 1,
+     "runtime_id": "native-claude-code",
+     "runtime_version": "0.0.0-golden",
+     "image_digest": "sha256:2d032a622cf94baf637a4488720865da983853e4a655fea4e45d0e80f0a9c640",
+     "binary_sha256": "25ba8ebec5f227618d8d58f475622669f4c45019d40259d1d292a823f4184c27",
+     "inventory_sha256": "44e7b67bbdc0842fecf8cfa158641e03998f7d0b34184bc297ede967ab24ce7a",
+     "taxonomy_sha256": "6064ebcb6693a1dd7b3e50fbfbcc94ff959f7957ac184188fd91744900a429a3",
+     "materializer_sha256": "ba6245da8b07901b6793898e70e2e974a1e641a2c3be0d357ba53d15101f4081",
+     "default_action": "keep",
+     "overrides": [
+      {
+       "block_id": "tool-bash-guide",
+       "baseline_sha256": "c5db5a79c94bb7a9835cbe2e3897337c52e3bb72b73edaedf1165a51246b057b",
+       "action": "replace",
+       "replacement_utf8": {
+        "@repeat": "Fabricated filler. ",
+        "times": 8000
+       },
+       "replacement_sha256": "0fe31c9bef152c2722d198106f34e9a2725b58f9c6325789a4c850e4db37a60e"
+      },
+      {
+       "block_id": "security-sandbox-note",
+       "baseline_sha256": "da29f4d417fb4114d86cf22df8e7b8b94933d8df6b415974fb64812073588596",
+       "action": "replace",
+       "replacement_utf8": {
+        "@repeat": "Fabricated filler. ",
+        "times": 8000
+       },
+       "replacement_sha256": "0fe31c9bef152c2722d198106f34e9a2725b58f9c6325789a4c850e4db37a60e"
+      },
+      {
+       "block_id": "response-style",
+       "baseline_sha256": "dfdce2e37fd61eaecb69669b607c265d2dd9f8ab9c574eea221bb5e77620c6be",
+       "action": "replace",
+       "replacement_utf8": {
+        "@repeat": "Fabricated filler. ",
+        "times": 8000
+       },
+       "replacement_sha256": "0fe31c9bef152c2722d198106f34e9a2725b58f9c6325789a4c850e4db37a60e"
+      }
+     ]
+    },
+    "@inventory-claude",
+    {
+     "prompt": {
+      "@repeat": "Fabricated prompt. ",
+      "times": 33000
+     }
+    }
+   ],
+   "function": "audit_profile",
+   "expected": {
+    "ok": true,
+    "counts": {
+     "error": 0,
+     "warning": 2,
+     "info": 1
+    },
+    "findings": [
+     {
+      "rule": "manifest.size-estimate",
+      "severity": "warning",
+      "contract": false,
+      "scope": "profile",
+      "block_id": null,
+      "message": "Estimate: the run manifest would be about 1086347 bytes; the runner retains at most 1048576 (1 MiB).",
+      "data": {
+       "used": 1086347,
+       "max": 1048576,
+       "estimate": true
+      }
+     },
+     {
+      "rule": "plan.size-estimate",
+      "severity": "warning",
+      "contract": false,
+      "scope": "plan",
+      "block_id": null,
+      "message": "Estimate: a two-arm plan with this profile would freeze at about 3436290 bytes; the runner retains at most 786432 (768 KiB).",
+      "data": {
+       "used": 3436290,
+       "max": 786432,
+       "estimate": true
+      }
+     },
+     {
+      "rule": "class.security-disabled",
+      "severity": "info",
+      "contract": false,
+      "scope": "profile",
+      "block_id": null,
+      "message": "1 fragment labelled Security & Safety is disabled or replaced. The label is a keyword heuristic over block names; runner isolation is unchanged.",
+      "data": {
+       "count": 1
+      }
+     }
+    ]
+   }
+  },
+  {
+   "name": "profile: two-arm plan estimate over 768 KiB",
+   "args": [
+    {
+     "schema_version": 1,
+     "runtime_id": "native-claude-code",
+     "runtime_version": "0.0.0-golden",
+     "image_digest": "sha256:2d032a622cf94baf637a4488720865da983853e4a655fea4e45d0e80f0a9c640",
+     "binary_sha256": "25ba8ebec5f227618d8d58f475622669f4c45019d40259d1d292a823f4184c27",
+     "inventory_sha256": "44e7b67bbdc0842fecf8cfa158641e03998f7d0b34184bc297ede967ab24ce7a",
+     "taxonomy_sha256": "6064ebcb6693a1dd7b3e50fbfbcc94ff959f7957ac184188fd91744900a429a3",
+     "materializer_sha256": "ba6245da8b07901b6793898e70e2e974a1e641a2c3be0d357ba53d15101f4081",
+     "default_action": "keep",
+     "overrides": [
+      {
+       "block_id": "tool-bash-guide",
+       "baseline_sha256": "c5db5a79c94bb7a9835cbe2e3897337c52e3bb72b73edaedf1165a51246b057b",
+       "action": "replace",
+       "replacement_utf8": {
+        "@repeat": "Fabricated filler. ",
+        "times": 10000
+       },
+       "replacement_sha256": "99620acef82a7a7155af81a179f3f553955bc47d696e05d2cdfcb41fee9e85ed"
+      },
+      {
+       "block_id": "security-sandbox-note",
+       "baseline_sha256": "da29f4d417fb4114d86cf22df8e7b8b94933d8df6b415974fb64812073588596",
+       "action": "replace",
+       "replacement_utf8": {
+        "@repeat": "Fabricated filler. ",
+        "times": 10000
+       },
+       "replacement_sha256": "99620acef82a7a7155af81a179f3f553955bc47d696e05d2cdfcb41fee9e85ed"
+      }
+     ]
+    },
+    "@inventory-claude",
+    {}
+   ],
+   "function": "audit_profile",
+   "expected": {
+    "ok": true,
+    "counts": {
+     "error": 0,
+     "warning": 0,
+     "info": 1
+    },
+    "findings": [
+     {
+      "rule": "class.security-disabled",
+      "severity": "info",
+      "contract": false,
+      "scope": "profile",
+      "block_id": null,
+      "message": "1 fragment labelled Security & Safety is disabled or replaced. The label is a keyword heuristic over block names; runner isolation is unchanged.",
+      "data": {
+       "count": 1
+      }
+     }
+    ]
+   }
+  },
+  {
+   "name": "profile: Codex over capacity and disable",
+   "args": [
+    {
+     "schema_version": 1,
+     "runtime_id": "native-codex",
+     "runtime_version": "0.167.1",
+     "image_digest": "sha256:716f940f0958cd4abdda846a256caa95e40a5a858709f72692a16a89f9d14c7f",
+     "binary_sha256": "18ee9689f82cda3a1af3da8b40e0b5477a56b83e9e4fa620554a2fd6c6112053",
+     "inventory_sha256": "4eca453646cf1f187f5872ccafdec818d4536b3452b5ea1d33dcb436ad78273d",
+     "taxonomy_sha256": "6064ebcb6693a1dd7b3e50fbfbcc94ff959f7957ac184188fd91744900a429a3",
+     "materializer_sha256": "8a1ee9f8fba86a80c057f7712d4aeddb02096ec17f3c22451ecaf5ded9c1c185",
+     "default_action": "keep",
+     "overrides": [
+      {
+       "block_id": "codex-short",
+       "baseline_sha256": "fa6eb19205792e9f5eedf1535af30a3bd9d94d49e92bedf94dd1261de32e17c8",
+       "action": "replace",
+       "replacement_utf8": "Longer than ten bytes.",
+       "replacement_sha256": "27877f982d204dd26b91dae8c10e8e05f2177c9c8c99af2365f83376fafe6474"
+      },
+      {
+       "block_id": "codex-review",
+       "baseline_sha256": "7f587ebb523bdfb535b38804a344d40b9991372fa7343e4f5fced81ce3bd4dfa",
+       "action": "disable"
+      }
+     ]
+    },
+    "@inventory-codex",
+    {}
+   ],
+   "function": "audit_profile",
+   "expected": {
+    "ok": false,
+    "counts": {
+     "error": 1,
+     "warning": 0,
+     "info": 1
+    },
+    "findings": [
+     {
+      "rule": "codex.over-capacity",
+      "severity": "error",
+      "contract": true,
+      "scope": "block",
+      "block_id": "codex-short",
+      "message": "The replacement is 22 UTF-8 bytes; this Codex fragment holds 10.",
+      "data": {
+       "bytes": 22,
+       "capacity": 10
+      }
+     },
+     {
+      "rule": "observer.short-literal",
+      "severity": "info",
+      "contract": false,
+      "scope": "block",
+      "block_id": "codex-short",
+      "message": "The run observer does not match literals under 16 bytes, so this change will have incomplete literal-match evidence.",
+      "data": {
+       "bytes": 22,
+       "baseline_bytes": 10
+      }
+     }
+    ]
+   }
+  }
+ ]
+}

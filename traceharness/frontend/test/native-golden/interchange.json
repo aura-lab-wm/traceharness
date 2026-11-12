@@ -1,0 +1,1617 @@
+{
+ "function": "parse_profile_document",
+ "cases": [
+  {
+   "name": "bundle: minimal",
+   "args": [
+    {
+     "profile": {
+      "schema_version": 1,
+      "inventory_sha256": "44e7b67bbdc0842fecf8cfa158641e03998f7d0b34184bc297ede967ab24ce7a",
+      "taxonomy_sha256": "6064ebcb6693a1dd7b3e50fbfbcc94ff959f7957ac184188fd91744900a429a3",
+      "runtime_version": "0.0.0-golden",
+      "binary_sha256": "25ba8ebec5f227618d8d58f475622669f4c45019d40259d1d292a823f4184c27",
+      "runtime_id": "native-claude-code",
+      "image_digest": "sha256:2d032a622cf94baf637a4488720865da983853e4a655fea4e45d0e80f0a9c640",
+      "default_action": "keep",
+      "materializer_sha256": "ba6245da8b07901b6793898e70e2e974a1e641a2c3be0d357ba53d15101f4081",
+      "overrides": [
+       {
+        "block_id": "short",
+        "baseline_sha256": "213c22ed7234eb11116e1e88f314c73cb3a019b5c87fe224b6ce5665bd9ec50e",
+        "action": "disable"
+       },
+       {
+        "block_id": "unicode-mix",
+        "baseline_sha256": "d00da6c5a836c9df66e6b20ea37a93990bedea7ff26d8c203fd257d9b47523a8",
+        "action": "replace",
+        "replacement_utf8": "\u65e5\u672c \ud83d\ude42 \u2028 text",
+        "replacement_sha256": "3bde5eba0a65363e70c5e61f703adeaef9aeda312bdb3d02aaa4c9ec2cc7d4ba"
+       }
+      ]
+     },
+     "name": "Fabricated",
+     "now": "2026-11-12T10:00:00.000Z"
+    }
+   ],
+   "function": "make_bundle",
+   "expected": {
+    "kind": "traceharness.native-prompt-profile-bundle",
+    "bundle_version": 1,
+    "name": "Fabricated",
+    "note": "",
+    "created_at": "2026-11-12T10:00:00.000Z",
+    "tool": "traceharness-ui",
+    "profile_sha256": "3bcf783a2ef798a5f209a116af5a643a6d899237181d46e73d1f6802cb3df264",
+    "profile": {
+     "schema_version": 1,
+     "runtime_id": "native-claude-code",
+     "runtime_version": "0.0.0-golden",
+     "image_digest": "sha256:2d032a622cf94baf637a4488720865da983853e4a655fea4e45d0e80f0a9c640",
+     "binary_sha256": "25ba8ebec5f227618d8d58f475622669f4c45019d40259d1d292a823f4184c27",
+     "inventory_sha256": "44e7b67bbdc0842fecf8cfa158641e03998f7d0b34184bc297ede967ab24ce7a",
+     "taxonomy_sha256": "6064ebcb6693a1dd7b3e50fbfbcc94ff959f7957ac184188fd91744900a429a3",
+     "materializer_sha256": "ba6245da8b07901b6793898e70e2e974a1e641a2c3be0d357ba53d15101f4081",
+     "default_action": "keep",
+     "overrides": [
+      {
+       "block_id": "short",
+       "baseline_sha256": "213c22ed7234eb11116e1e88f314c73cb3a019b5c87fe224b6ce5665bd9ec50e",
+       "action": "disable"
+      },
+      {
+       "block_id": "unicode-mix",
+       "baseline_sha256": "d00da6c5a836c9df66e6b20ea37a93990bedea7ff26d8c203fd257d9b47523a8",
+       "action": "replace",
+       "replacement_utf8": "\u65e5\u672c \ud83d\ude42 \u2028 text",
+       "replacement_sha256": "3bde5eba0a65363e70c5e61f703adeaef9aeda312bdb3d02aaa4c9ec2cc7d4ba"
+      }
+     ]
+    },
+    "sets": []
+   }
+  },
+  {
+   "name": "bundle: all fields",
+   "args": [
+    {
+     "profile": {
+      "schema_version": 1,
+      "inventory_sha256": "44e7b67bbdc0842fecf8cfa158641e03998f7d0b34184bc297ede967ab24ce7a",
+      "taxonomy_sha256": "6064ebcb6693a1dd7b3e50fbfbcc94ff959f7957ac184188fd91744900a429a3",
+      "runtime_version": "0.0.0-golden",
+      "binary_sha256": "25ba8ebec5f227618d8d58f475622669f4c45019d40259d1d292a823f4184c27",
+      "runtime_id": "native-claude-code",
+      "image_digest": "sha256:2d032a622cf94baf637a4488720865da983853e4a655fea4e45d0e80f0a9c640",
+      "default_action": "keep",
+      "materializer_sha256": "ba6245da8b07901b6793898e70e2e974a1e641a2c3be0d357ba53d15101f4081",
+      "overrides": [
+       {
+        "block_id": "short",
+        "baseline_sha256": "213c22ed7234eb11116e1e88f314c73cb3a019b5c87fe224b6ce5665bd9ec50e",
+        "action": "disable"
+       },
+       {
+        "block_id": "unicode-mix",
+        "baseline_sha256": "d00da6c5a836c9df66e6b20ea37a93990bedea7ff26d8c203fd257d9b47523a8",
+        "action": "replace",
+        "replacement_utf8": "\u65e5\u672c \ud83d\ude42 \u2028 text",
+        "replacement_sha256": "3bde5eba0a65363e70c5e61f703adeaef9aeda312bdb3d02aaa4c9ec2cc7d4ba"
+       }
+      ]
+     },
+     "name": "  Fabricated padded  ",
+     "note": "Fabricated.",
+     "tool": "agent-patcher",
+     "sets": [
+      {
+       "name": "Set",
+       "block_ids": [
+        "short"
+       ]
+      }
+     ],
+     "now": "2026-01-02T03:04:05.678Z"
+    }
+   ],
+   "function": "make_bundle",
+   "expected": {
+    "kind": "traceharness.native-prompt-profile-bundle",
+    "bundle_version": 1,
+    "name": "Fabricated padded",
+    "note": "Fabricated.",
+    "created_at": "2026-01-02T03:04:05.678Z",
+    "tool": "agent-patcher",
+    "profile_sha256": "3bcf783a2ef798a5f209a116af5a643a6d899237181d46e73d1f6802cb3df264",
+    "profile": {
+     "schema_version": 1,
+     "runtime_id": "native-claude-code",
+     "runtime_version": "0.0.0-golden",
+     "image_digest": "sha256:2d032a622cf94baf637a4488720865da983853e4a655fea4e45d0e80f0a9c640",
+     "binary_sha256": "25ba8ebec5f227618d8d58f475622669f4c45019d40259d1d292a823f4184c27",
+     "inventory_sha256": "44e7b67bbdc0842fecf8cfa158641e03998f7d0b34184bc297ede967ab24ce7a",
+     "taxonomy_sha256": "6064ebcb6693a1dd7b3e50fbfbcc94ff959f7957ac184188fd91744900a429a3",
+     "materializer_sha256": "ba6245da8b07901b6793898e70e2e974a1e641a2c3be0d357ba53d15101f4081",
+     "default_action": "keep",
+     "overrides": [
+      {
+       "block_id": "short",
+       "baseline_sha256": "213c22ed7234eb11116e1e88f314c73cb3a019b5c87fe224b6ce5665bd9ec50e",
+       "action": "disable"
+      },
+      {
+       "block_id": "unicode-mix",
+       "baseline_sha256": "d00da6c5a836c9df66e6b20ea37a93990bedea7ff26d8c203fd257d9b47523a8",
+       "action": "replace",
+       "replacement_utf8": "\u65e5\u672c \ud83d\ude42 \u2028 text",
+       "replacement_sha256": "3bde5eba0a65363e70c5e61f703adeaef9aeda312bdb3d02aaa4c9ec2cc7d4ba"
+      }
+     ]
+    },
+    "sets": [
+     {
+      "name": "Set",
+      "block_ids": [
+       "short"
+      ]
+     }
+    ]
+   }
+  },
+  {
+   "name": "bundle: non-ASCII name",
+   "args": [
+    {
+     "profile": {
+      "schema_version": 1,
+      "inventory_sha256": "44e7b67bbdc0842fecf8cfa158641e03998f7d0b34184bc297ede967ab24ce7a",
+      "taxonomy_sha256": "6064ebcb6693a1dd7b3e50fbfbcc94ff959f7957ac184188fd91744900a429a3",
+      "runtime_version": "0.0.0-golden",
+      "binary_sha256": "25ba8ebec5f227618d8d58f475622669f4c45019d40259d1d292a823f4184c27",
+      "runtime_id": "native-claude-code",
+      "image_digest": "sha256:2d032a622cf94baf637a4488720865da983853e4a655fea4e45d0e80f0a9c640",
+      "default_action": "keep",
+      "materializer_sha256": "ba6245da8b07901b6793898e70e2e974a1e641a2c3be0d357ba53d15101f4081",
+      "overrides": [
+       {
+        "block_id": "short",
+        "baseline_sha256": "213c22ed7234eb11116e1e88f314c73cb3a019b5c87fe224b6ce5665bd9ec50e",
+        "action": "disable"
+       },
+       {
+        "block_id": "unicode-mix",
+        "baseline_sha256": "d00da6c5a836c9df66e6b20ea37a93990bedea7ff26d8c203fd257d9b47523a8",
+        "action": "replace",
+        "replacement_utf8": "\u65e5\u672c \ud83d\ude42 \u2028 text",
+        "replacement_sha256": "3bde5eba0a65363e70c5e61f703adeaef9aeda312bdb3d02aaa4c9ec2cc7d4ba"
+       }
+      ]
+     },
+     "name": "\u65e5\u672c \ud83d\ude42",
+     "now": "2026-11-12T10:00:00.000Z"
+    }
+   ],
+   "function": "make_bundle",
+   "expected": {
+    "kind": "traceharness.native-prompt-profile-bundle",
+    "bundle_version": 1,
+    "name": "\u65e5\u672c \ud83d\ude42",
+    "note": "",
+    "created_at": "2026-11-12T10:00:00.000Z",
+    "tool": "traceharness-ui",
+    "profile_sha256": "3bcf783a2ef798a5f209a116af5a643a6d899237181d46e73d1f6802cb3df264",
+    "profile": {
+     "schema_version": 1,
+     "runtime_id": "native-claude-code",
+     "runtime_version": "0.0.0-golden",
+     "image_digest": "sha256:2d032a622cf94baf637a4488720865da983853e4a655fea4e45d0e80f0a9c640",
+     "binary_sha256": "25ba8ebec5f227618d8d58f475622669f4c45019d40259d1d292a823f4184c27",
+     "inventory_sha256": "44e7b67bbdc0842fecf8cfa158641e03998f7d0b34184bc297ede967ab24ce7a",
+     "taxonomy_sha256": "6064ebcb6693a1dd7b3e50fbfbcc94ff959f7957ac184188fd91744900a429a3",
+     "materializer_sha256": "ba6245da8b07901b6793898e70e2e974a1e641a2c3be0d357ba53d15101f4081",
+     "default_action": "keep",
+     "overrides": [
+      {
+       "block_id": "short",
+       "baseline_sha256": "213c22ed7234eb11116e1e88f314c73cb3a019b5c87fe224b6ce5665bd9ec50e",
+       "action": "disable"
+      },
+      {
+       "block_id": "unicode-mix",
+       "baseline_sha256": "d00da6c5a836c9df66e6b20ea37a93990bedea7ff26d8c203fd257d9b47523a8",
+       "action": "replace",
+       "replacement_utf8": "\u65e5\u672c \ud83d\ude42 \u2028 text",
+       "replacement_sha256": "3bde5eba0a65363e70c5e61f703adeaef9aeda312bdb3d02aaa4c9ec2cc7d4ba"
+      }
+     ]
+    },
+    "sets": []
+   }
+  },
+  {
+   "name": "bundle: empty name",
+   "args": [
+    {
+     "profile": {
+      "schema_version": 1,
+      "inventory_sha256": "44e7b67bbdc0842fecf8cfa158641e03998f7d0b34184bc297ede967ab24ce7a",
+      "taxonomy_sha256": "6064ebcb6693a1dd7b3e50fbfbcc94ff959f7957ac184188fd91744900a429a3",
+      "runtime_version": "0.0.0-golden",
+      "binary_sha256": "25ba8ebec5f227618d8d58f475622669f4c45019d40259d1d292a823f4184c27",
+      "runtime_id": "native-claude-code",
+      "image_digest": "sha256:2d032a622cf94baf637a4488720865da983853e4a655fea4e45d0e80f0a9c640",
+      "default_action": "keep",
+      "materializer_sha256": "ba6245da8b07901b6793898e70e2e974a1e641a2c3be0d357ba53d15101f4081",
+      "overrides": [
+       {
+        "block_id": "short",
+        "baseline_sha256": "213c22ed7234eb11116e1e88f314c73cb3a019b5c87fe224b6ce5665bd9ec50e",
+        "action": "disable"
+       },
+       {
+        "block_id": "unicode-mix",
+        "baseline_sha256": "d00da6c5a836c9df66e6b20ea37a93990bedea7ff26d8c203fd257d9b47523a8",
+        "action": "replace",
+        "replacement_utf8": "\u65e5\u672c \ud83d\ude42 \u2028 text",
+        "replacement_sha256": "3bde5eba0a65363e70c5e61f703adeaef9aeda312bdb3d02aaa4c9ec2cc7d4ba"
+       }
+      ]
+     },
+     "name": "   ",
+     "now": "2026-11-12T10:00:00.000Z"
+    }
+   ],
+   "function": "make_bundle",
+   "expected": {
+    "error": "Use a profile name from 1 to 80 visible characters, without leading or trailing spaces."
+   }
+  },
+  {
+   "name": "bundle: name with a credential",
+   "args": [
+    {
+     "profile": {
+      "schema_version": 1,
+      "inventory_sha256": "44e7b67bbdc0842fecf8cfa158641e03998f7d0b34184bc297ede967ab24ce7a",
+      "taxonomy_sha256": "6064ebcb6693a1dd7b3e50fbfbcc94ff959f7957ac184188fd91744900a429a3",
+      "runtime_version": "0.0.0-golden",
+      "binary_sha256": "25ba8ebec5f227618d8d58f475622669f4c45019d40259d1d292a823f4184c27",
+      "runtime_id": "native-claude-code",
+      "image_digest": "sha256:2d032a622cf94baf637a4488720865da983853e4a655fea4e45d0e80f0a9c640",
+      "default_action": "keep",
+      "materializer_sha256": "ba6245da8b07901b6793898e70e2e974a1e641a2c3be0d357ba53d15101f4081",
+      "overrides": [
+       {
+        "block_id": "short",
+        "baseline_sha256": "213c22ed7234eb11116e1e88f314c73cb3a019b5c87fe224b6ce5665bd9ec50e",
+        "action": "disable"
+       },
+       {
+        "block_id": "unicode-mix",
+        "baseline_sha256": "d00da6c5a836c9df66e6b20ea37a93990bedea7ff26d8c203fd257d9b47523a8",
+        "action": "replace",
+        "replacement_utf8": "\u65e5\u672c \ud83d\ude42 \u2028 text",
+        "replacement_sha256": "3bde5eba0a65363e70c5e61f703adeaef9aeda312bdb3d02aaa4c9ec2cc7d4ba"
+       }
+      ]
+     },
+     "name": "key sk-fabricated0123456789",
+     "now": "2026-11-12T10:00:00.000Z"
+    }
+   ],
+   "function": "make_bundle",
+   "expected": {
+    "error": "Remove provider credentials from the profile name."
+   }
+  },
+  {
+   "name": "bundle: name too long",
+   "args": [
+    {
+     "profile": {
+      "schema_version": 1,
+      "inventory_sha256": "44e7b67bbdc0842fecf8cfa158641e03998f7d0b34184bc297ede967ab24ce7a",
+      "taxonomy_sha256": "6064ebcb6693a1dd7b3e50fbfbcc94ff959f7957ac184188fd91744900a429a3",
+      "runtime_version": "0.0.0-golden",
+      "binary_sha256": "25ba8ebec5f227618d8d58f475622669f4c45019d40259d1d292a823f4184c27",
+      "runtime_id": "native-claude-code",
+      "image_digest": "sha256:2d032a622cf94baf637a4488720865da983853e4a655fea4e45d0e80f0a9c640",
+      "default_action": "keep",
+      "materializer_sha256": "ba6245da8b07901b6793898e70e2e974a1e641a2c3be0d357ba53d15101f4081",
+      "overrides": [
+       {
+        "block_id": "short",
+        "baseline_sha256": "213c22ed7234eb11116e1e88f314c73cb3a019b5c87fe224b6ce5665bd9ec50e",
+        "action": "disable"
+       },
+       {
+        "block_id": "unicode-mix",
+        "baseline_sha256": "d00da6c5a836c9df66e6b20ea37a93990bedea7ff26d8c203fd257d9b47523a8",
+        "action": "replace",
+        "replacement_utf8": "\u65e5\u672c \ud83d\ude42 \u2028 text",
+        "replacement_sha256": "3bde5eba0a65363e70c5e61f703adeaef9aeda312bdb3d02aaa4c9ec2cc7d4ba"
+       }
+      ]
+     },
+     "name": "nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn",
+     "now": "2026-11-12T10:00:00.000Z"
+    }
+   ],
+   "function": "make_bundle",
+   "expected": {
+    "error": "Use a profile name from 1 to 80 visible characters, without leading or trailing spaces."
+   }
+  },
+  {
+   "name": "bundle: note with a control character",
+   "args": [
+    {
+     "profile": {
+      "schema_version": 1,
+      "inventory_sha256": "44e7b67bbdc0842fecf8cfa158641e03998f7d0b34184bc297ede967ab24ce7a",
+      "taxonomy_sha256": "6064ebcb6693a1dd7b3e50fbfbcc94ff959f7957ac184188fd91744900a429a3",
+      "runtime_version": "0.0.0-golden",
+      "binary_sha256": "25ba8ebec5f227618d8d58f475622669f4c45019d40259d1d292a823f4184c27",
+      "runtime_id": "native-claude-code",
+      "image_digest": "sha256:2d032a622cf94baf637a4488720865da983853e4a655fea4e45d0e80f0a9c640",
+      "default_action": "keep",
+      "materializer_sha256": "ba6245da8b07901b6793898e70e2e974a1e641a2c3be0d357ba53d15101f4081",
+      "overrides": [
+       {
+        "block_id": "short",
+        "baseline_sha256": "213c22ed7234eb11116e1e88f314c73cb3a019b5c87fe224b6ce5665bd9ec50e",
+        "action": "disable"
+       },
+       {
+        "block_id": "unicode-mix",
+        "baseline_sha256": "d00da6c5a836c9df66e6b20ea37a93990bedea7ff26d8c203fd257d9b47523a8",
+        "action": "replace",
+        "replacement_utf8": "\u65e5\u672c \ud83d\ude42 \u2028 text",
+        "replacement_sha256": "3bde5eba0a65363e70c5e61f703adeaef9aeda312bdb3d02aaa4c9ec2cc7d4ba"
+       }
+      ]
+     },
+     "name": "Fabricated",
+     "note": "bad\u0007",
+     "now": "2026-11-12T10:00:00.000Z"
+    }
+   ],
+   "function": "make_bundle",
+   "expected": {
+    "error": "Keep the note within 500 characters, without control characters."
+   }
+  },
+  {
+   "name": "bundle: unknown tool",
+   "args": [
+    {
+     "profile": {
+      "schema_version": 1,
+      "inventory_sha256": "44e7b67bbdc0842fecf8cfa158641e03998f7d0b34184bc297ede967ab24ce7a",
+      "taxonomy_sha256": "6064ebcb6693a1dd7b3e50fbfbcc94ff959f7957ac184188fd91744900a429a3",
+      "runtime_version": "0.0.0-golden",
+      "binary_sha256": "25ba8ebec5f227618d8d58f475622669f4c45019d40259d1d292a823f4184c27",
+      "runtime_id": "native-claude-code",
+      "image_digest": "sha256:2d032a622cf94baf637a4488720865da983853e4a655fea4e45d0e80f0a9c640",
+      "default_action": "keep",
+      "materializer_sha256": "ba6245da8b07901b6793898e70e2e974a1e641a2c3be0d357ba53d15101f4081",
+      "overrides": [
+       {
+        "block_id": "short",
+        "baseline_sha256": "213c22ed7234eb11116e1e88f314c73cb3a019b5c87fe224b6ce5665bd9ec50e",
+        "action": "disable"
+       },
+       {
+        "block_id": "unicode-mix",
+        "baseline_sha256": "d00da6c5a836c9df66e6b20ea37a93990bedea7ff26d8c203fd257d9b47523a8",
+        "action": "replace",
+        "replacement_utf8": "\u65e5\u672c \ud83d\ude42 \u2028 text",
+        "replacement_sha256": "3bde5eba0a65363e70c5e61f703adeaef9aeda312bdb3d02aaa4c9ec2cc7d4ba"
+       }
+      ]
+     },
+     "name": "Fabricated",
+     "tool": "editor",
+     "now": "2026-11-12T10:00:00.000Z"
+    }
+   ],
+   "function": "make_bundle",
+   "expected": {
+    "error": "Name the tool that writes this bundle."
+   }
+  },
+  {
+   "name": "bundle: invalid profile",
+   "args": [
+    {
+     "profile": {
+      "schema_version": 1,
+      "inventory_sha256": "44e7b67bbdc0842fecf8cfa158641e03998f7d0b34184bc297ede967ab24ce7a",
+      "taxonomy_sha256": "6064ebcb6693a1dd7b3e50fbfbcc94ff959f7957ac184188fd91744900a429a3",
+      "runtime_version": "0.0.0-golden",
+      "binary_sha256": "25ba8ebec5f227618d8d58f475622669f4c45019d40259d1d292a823f4184c27",
+      "runtime_id": "native-claude-code",
+      "image_digest": "sha256:2d032a622cf94baf637a4488720865da983853e4a655fea4e45d0e80f0a9c640",
+      "default_action": "x",
+      "materializer_sha256": "ba6245da8b07901b6793898e70e2e974a1e641a2c3be0d357ba53d15101f4081",
+      "overrides": [
+       {
+        "block_id": "short",
+        "baseline_sha256": "213c22ed7234eb11116e1e88f314c73cb3a019b5c87fe224b6ce5665bd9ec50e",
+        "action": "disable"
+       },
+       {
+        "block_id": "unicode-mix",
+        "baseline_sha256": "d00da6c5a836c9df66e6b20ea37a93990bedea7ff26d8c203fd257d9b47523a8",
+        "action": "replace",
+        "replacement_utf8": "\u65e5\u672c \ud83d\ude42 \u2028 text",
+        "replacement_sha256": "3bde5eba0a65363e70c5e61f703adeaef9aeda312bdb3d02aaa4c9ec2cc7d4ba"
+       }
+      ]
+     },
+     "name": "Fabricated",
+     "now": "2026-11-12T10:00:00.000Z"
+    }
+   ],
+   "function": "make_bundle",
+   "expected": {
+    "error": "The native prompt profile is incomplete or names a different runtime."
+   }
+  },
+  {
+   "name": "bundle: replacement digest mismatch",
+   "args": [
+    {
+     "profile": {
+      "schema_version": 1,
+      "inventory_sha256": "44e7b67bbdc0842fecf8cfa158641e03998f7d0b34184bc297ede967ab24ce7a",
+      "taxonomy_sha256": "6064ebcb6693a1dd7b3e50fbfbcc94ff959f7957ac184188fd91744900a429a3",
+      "runtime_version": "0.0.0-golden",
+      "binary_sha256": "25ba8ebec5f227618d8d58f475622669f4c45019d40259d1d292a823f4184c27",
+      "runtime_id": "native-claude-code",
+      "image_digest": "sha256:2d032a622cf94baf637a4488720865da983853e4a655fea4e45d0e80f0a9c640",
+      "default_action": "keep",
+      "materializer_sha256": "ba6245da8b07901b6793898e70e2e974a1e641a2c3be0d357ba53d15101f4081",
+      "overrides": [
+       {
+        "block_id": "short",
+        "baseline_sha256": "213c22ed7234eb11116e1e88f314c73cb3a019b5c87fe224b6ce5665bd9ec50e",
+        "action": "disable",
+        "replacement_sha256": "2222222222222222222222222222222222222222222222222222222222222222"
+       }
+      ]
+     },
+     "name": "Fabricated",
+     "now": "2026-11-12T10:00:00.000Z"
+    }
+   ],
+   "function": "make_bundle",
+   "expected": {
+    "error": "The native prompt profile has an invalid or duplicate prompt intervention."
+   }
+  },
+  {
+   "name": "bundle: duplicate set names",
+   "args": [
+    {
+     "profile": {
+      "schema_version": 1,
+      "inventory_sha256": "44e7b67bbdc0842fecf8cfa158641e03998f7d0b34184bc297ede967ab24ce7a",
+      "taxonomy_sha256": "6064ebcb6693a1dd7b3e50fbfbcc94ff959f7957ac184188fd91744900a429a3",
+      "runtime_version": "0.0.0-golden",
+      "binary_sha256": "25ba8ebec5f227618d8d58f475622669f4c45019d40259d1d292a823f4184c27",
+      "runtime_id": "native-claude-code",
+      "image_digest": "sha256:2d032a622cf94baf637a4488720865da983853e4a655fea4e45d0e80f0a9c640",
+      "default_action": "keep",
+      "materializer_sha256": "ba6245da8b07901b6793898e70e2e974a1e641a2c3be0d357ba53d15101f4081",
+      "overrides": [
+       {
+        "block_id": "short",
+        "baseline_sha256": "213c22ed7234eb11116e1e88f314c73cb3a019b5c87fe224b6ce5665bd9ec50e",
+        "action": "disable"
+       },
+       {
+        "block_id": "unicode-mix",
+        "baseline_sha256": "d00da6c5a836c9df66e6b20ea37a93990bedea7ff26d8c203fd257d9b47523a8",
+        "action": "replace",
+        "replacement_utf8": "\u65e5\u672c \ud83d\ude42 \u2028 text",
+        "replacement_sha256": "3bde5eba0a65363e70c5e61f703adeaef9aeda312bdb3d02aaa4c9ec2cc7d4ba"
+       }
+      ]
+     },
+     "name": "Fabricated",
+     "sets": [
+      {
+       "name": "A",
+       "block_ids": []
+      },
+      {
+       "name": "A",
+       "block_ids": []
+      }
+     ],
+     "now": "2026-11-12T10:00:00.000Z"
+    }
+   ],
+   "function": "make_bundle",
+   "expected": {
+    "error": "The named prompt sets in this file are not valid."
+   }
+  },
+  {
+   "name": "parse: canonical profile",
+   "args": [
+    "{\"binary_sha256\":\"25ba8ebec5f227618d8d58f475622669f4c45019d40259d1d292a823f4184c27\",\"default_action\":\"keep\",\"image_digest\":\"sha256:2d032a622cf94baf637a4488720865da983853e4a655fea4e45d0e80f0a9c640\",\"inventory_sha256\":\"44e7b67bbdc0842fecf8cfa158641e03998f7d0b34184bc297ede967ab24ce7a\",\"materializer_sha256\":\"ba6245da8b07901b6793898e70e2e974a1e641a2c3be0d357ba53d15101f4081\",\"overrides\":[{\"action\":\"disable\",\"baseline_sha256\":\"213c22ed7234eb11116e1e88f314c73cb3a019b5c87fe224b6ce5665bd9ec50e\",\"block_id\":\"short\"},{\"action\":\"replace\",\"baseline_sha256\":\"d00da6c5a836c9df66e6b20ea37a93990bedea7ff26d8c203fd257d9b47523a8\",\"block_id\":\"unicode-mix\",\"replacement_sha256\":\"3bde5eba0a65363e70c5e61f703adeaef9aeda312bdb3d02aaa4c9ec2cc7d4ba\",\"replacement_utf8\":\"\u65e5\u672c \ud83d\ude42 \u2028 text\"}],\"runtime_id\":\"native-claude-code\",\"runtime_version\":\"0.0.0-golden\",\"schema_version\":1,\"taxonomy_sha256\":\"6064ebcb6693a1dd7b3e50fbfbcc94ff959f7957ac184188fd91744900a429a3\"}\n"
+   ],
+   "function": "parse_profile_document",
+   "expected": {
+    "kind": "profile",
+    "profile": {
+     "schema_version": 1,
+     "runtime_id": "native-claude-code",
+     "runtime_version": "0.0.0-golden",
+     "image_digest": "sha256:2d032a622cf94baf637a4488720865da983853e4a655fea4e45d0e80f0a9c640",
+     "binary_sha256": "25ba8ebec5f227618d8d58f475622669f4c45019d40259d1d292a823f4184c27",
+     "inventory_sha256": "44e7b67bbdc0842fecf8cfa158641e03998f7d0b34184bc297ede967ab24ce7a",
+     "taxonomy_sha256": "6064ebcb6693a1dd7b3e50fbfbcc94ff959f7957ac184188fd91744900a429a3",
+     "materializer_sha256": "ba6245da8b07901b6793898e70e2e974a1e641a2c3be0d357ba53d15101f4081",
+     "default_action": "keep",
+     "overrides": [
+      {
+       "block_id": "short",
+       "baseline_sha256": "213c22ed7234eb11116e1e88f314c73cb3a019b5c87fe224b6ce5665bd9ec50e",
+       "action": "disable"
+      },
+      {
+       "block_id": "unicode-mix",
+       "baseline_sha256": "d00da6c5a836c9df66e6b20ea37a93990bedea7ff26d8c203fd257d9b47523a8",
+       "action": "replace",
+       "replacement_utf8": "\u65e5\u672c \ud83d\ude42 \u2028 text",
+       "replacement_sha256": "3bde5eba0a65363e70c5e61f703adeaef9aeda312bdb3d02aaa4c9ec2cc7d4ba"
+      }
+     ]
+    },
+    "blocks": null,
+    "name": "",
+    "note": "",
+    "sets": []
+   }
+  },
+  {
+   "name": "parse: profile with keys in another order",
+   "args": [
+    "{\"overrides\": [{\"block_id\": \"short\", \"baseline_sha256\": \"213c22ed7234eb11116e1e88f314c73cb3a019b5c87fe224b6ce5665bd9ec50e\", \"action\": \"disable\"}, {\"block_id\": \"unicode-mix\", \"baseline_sha256\": \"d00da6c5a836c9df66e6b20ea37a93990bedea7ff26d8c203fd257d9b47523a8\", \"action\": \"replace\", \"replacement_utf8\": \"\u65e5\u672c \ud83d\ude42 \u2028 text\", \"replacement_sha256\": \"3bde5eba0a65363e70c5e61f703adeaef9aeda312bdb3d02aaa4c9ec2cc7d4ba\"}], \"materializer_sha256\": \"ba6245da8b07901b6793898e70e2e974a1e641a2c3be0d357ba53d15101f4081\", \"default_action\": \"keep\", \"image_digest\": \"sha256:2d032a622cf94baf637a4488720865da983853e4a655fea4e45d0e80f0a9c640\", \"runtime_id\": \"native-claude-code\", \"binary_sha256\": \"25ba8ebec5f227618d8d58f475622669f4c45019d40259d1d292a823f4184c27\", \"runtime_version\": \"0.0.0-golden\", \"taxonomy_sha256\": \"6064ebcb6693a1dd7b3e50fbfbcc94ff959f7957ac184188fd91744900a429a3\", \"inventory_sha256\": \"44e7b67bbdc0842fecf8cfa158641e03998f7d0b34184bc297ede967ab24ce7a\", \"schema_version\": 1}"
+   ],
+   "function": "parse_profile_document",
+   "expected": {
+    "kind": "profile",
+    "profile": {
+     "schema_version": 1,
+     "runtime_id": "native-claude-code",
+     "runtime_version": "0.0.0-golden",
+     "image_digest": "sha256:2d032a622cf94baf637a4488720865da983853e4a655fea4e45d0e80f0a9c640",
+     "binary_sha256": "25ba8ebec5f227618d8d58f475622669f4c45019d40259d1d292a823f4184c27",
+     "inventory_sha256": "44e7b67bbdc0842fecf8cfa158641e03998f7d0b34184bc297ede967ab24ce7a",
+     "taxonomy_sha256": "6064ebcb6693a1dd7b3e50fbfbcc94ff959f7957ac184188fd91744900a429a3",
+     "materializer_sha256": "ba6245da8b07901b6793898e70e2e974a1e641a2c3be0d357ba53d15101f4081",
+     "default_action": "keep",
+     "overrides": [
+      {
+       "block_id": "short",
+       "baseline_sha256": "213c22ed7234eb11116e1e88f314c73cb3a019b5c87fe224b6ce5665bd9ec50e",
+       "action": "disable"
+      },
+      {
+       "block_id": "unicode-mix",
+       "baseline_sha256": "d00da6c5a836c9df66e6b20ea37a93990bedea7ff26d8c203fd257d9b47523a8",
+       "action": "replace",
+       "replacement_utf8": "\u65e5\u672c \ud83d\ude42 \u2028 text",
+       "replacement_sha256": "3bde5eba0a65363e70c5e61f703adeaef9aeda312bdb3d02aaa4c9ec2cc7d4ba"
+      }
+     ]
+    },
+    "blocks": null,
+    "name": "",
+    "note": "",
+    "sets": []
+   }
+  },
+  {
+   "name": "parse: bundle",
+   "args": [
+    "{\n  \"kind\": \"traceharness.native-prompt-profile-bundle\",\n  \"bundle_version\": 1,\n  \"name\": \"Fabricated lean profile\",\n  \"note\": \"Fabricated note.\\nSecond line.\",\n  \"created_at\": \"2026-11-12T10:00:00.000Z\",\n  \"tool\": \"traceharness-cli\",\n  \"profile_sha256\": \"3bcf783a2ef798a5f209a116af5a643a6d899237181d46e73d1f6802cb3df264\",\n  \"profile\": {\n    \"schema_version\": 1,\n    \"runtime_id\": \"native-claude-code\",\n    \"runtime_version\": \"0.0.0-golden\",\n    \"image_digest\": \"sha256:2d032a622cf94baf637a4488720865da983853e4a655fea4e45d0e80f0a9c640\",\n    \"binary_sha256\": \"25ba8ebec5f227618d8d58f475622669f4c45019d40259d1d292a823f4184c27\",\n    \"inventory_sha256\": \"44e7b67bbdc0842fecf8cfa158641e03998f7d0b34184bc297ede967ab24ce7a\",\n    \"taxonomy_sha256\": \"6064ebcb6693a1dd7b3e50fbfbcc94ff959f7957ac184188fd91744900a429a3\",\n    \"materializer_sha256\": \"ba6245da8b07901b6793898e70e2e974a1e641a2c3be0d357ba53d15101f4081\",\n    \"default_action\": \"keep\",\n    \"overrides\": [\n      {\n        \"block_id\": \"short\",\n        \"baseline_sha256\": \"213c22ed7234eb11116e1e88f314c73cb3a019b5c87fe224b6ce5665bd9ec50e\",\n        \"action\": \"disable\"\n      },\n      {\n        \"block_id\": \"unicode-mix\",\n        \"baseline_sha256\": \"d00da6c5a836c9df66e6b20ea37a93990bedea7ff26d8c203fd257d9b47523a8\",\n        \"action\": \"replace\",\n        \"replacement_utf8\": \"\u65e5\u672c \ud83d\ude42 \u2028 text\",\n        \"replacement_sha256\": \"3bde5eba0a65363e70c5e61f703adeaef9aeda312bdb3d02aaa4c9ec2cc7d4ba\"\n      }\n    ]\n  },\n  \"sets\": [\n    {\n      \"name\": \"Fabricated set\",\n      \"block_ids\": [\n        \"short\",\n        \"zebra-only\"\n      ]\n    }\n  ]\n}\n"
+   ],
+   "function": "parse_profile_document",
+   "expected": {
+    "kind": "bundle",
+    "profile": {
+     "schema_version": 1,
+     "runtime_id": "native-claude-code",
+     "runtime_version": "0.0.0-golden",
+     "image_digest": "sha256:2d032a622cf94baf637a4488720865da983853e4a655fea4e45d0e80f0a9c640",
+     "binary_sha256": "25ba8ebec5f227618d8d58f475622669f4c45019d40259d1d292a823f4184c27",
+     "inventory_sha256": "44e7b67bbdc0842fecf8cfa158641e03998f7d0b34184bc297ede967ab24ce7a",
+     "taxonomy_sha256": "6064ebcb6693a1dd7b3e50fbfbcc94ff959f7957ac184188fd91744900a429a3",
+     "materializer_sha256": "ba6245da8b07901b6793898e70e2e974a1e641a2c3be0d357ba53d15101f4081",
+     "default_action": "keep",
+     "overrides": [
+      {
+       "block_id": "short",
+       "baseline_sha256": "213c22ed7234eb11116e1e88f314c73cb3a019b5c87fe224b6ce5665bd9ec50e",
+       "action": "disable"
+      },
+      {
+       "block_id": "unicode-mix",
+       "baseline_sha256": "d00da6c5a836c9df66e6b20ea37a93990bedea7ff26d8c203fd257d9b47523a8",
+       "action": "replace",
+       "replacement_utf8": "\u65e5\u672c \ud83d\ude42 \u2028 text",
+       "replacement_sha256": "3bde5eba0a65363e70c5e61f703adeaef9aeda312bdb3d02aaa4c9ec2cc7d4ba"
+      }
+     ]
+    },
+    "blocks": null,
+    "name": "Fabricated lean profile",
+    "note": "Fabricated note.\nSecond line.",
+    "sets": [
+     {
+      "name": "Fabricated set",
+      "block_ids": [
+       "short",
+       "zebra-only"
+      ]
+     }
+    ]
+   }
+  },
+  {
+   "name": "parse: configuration export",
+   "args": [
+    "{\n  \"version\": 2,\n  \"runtime_id\": \"native-claude-code\",\n  \"model_id\": \"fixture/model-a\",\n  \"task_id\": \"fixture-task\",\n  \"prompt\": \"\",\n  \"prompt_mode\": \"append\",\n  \"harness\": {},\n  \"limits\": {\n    \"max_steps\": 5\n  },\n  \"native_prompt_profile\": {\n    \"schema_version\": 1,\n    \"inventory_sha256\": \"44e7b67bbdc0842fecf8cfa158641e03998f7d0b34184bc297ede967ab24ce7a\",\n    \"taxonomy_sha256\": \"6064ebcb6693a1dd7b3e50fbfbcc94ff959f7957ac184188fd91744900a429a3\",\n    \"runtime_version\": \"0.0.0-golden\",\n    \"binary_sha256\": \"25ba8ebec5f227618d8d58f475622669f4c45019d40259d1d292a823f4184c27\",\n    \"runtime_id\": \"native-claude-code\",\n    \"image_digest\": \"sha256:2d032a622cf94baf637a4488720865da983853e4a655fea4e45d0e80f0a9c640\",\n    \"default_action\": \"keep\",\n    \"materializer_sha256\": \"ba6245da8b07901b6793898e70e2e974a1e641a2c3be0d357ba53d15101f4081\",\n    \"overrides\": [\n      {\n        \"block_id\": \"short\",\n        \"baseline_sha256\": \"213c22ed7234eb11116e1e88f314c73cb3a019b5c87fe224b6ce5665bd9ec50e\",\n        \"action\": \"disable\"\n      },\n      {\n        \"block_id\": \"unicode-mix\",\n        \"baseline_sha256\": \"d00da6c5a836c9df66e6b20ea37a93990bedea7ff26d8c203fd257d9b47523a8\",\n        \"action\": \"replace\",\n        \"replacement_utf8\": \"\\u65e5\\u672c \\ud83d\\ude42 \\u2028 text\",\n        \"replacement_sha256\": \"3bde5eba0a65363e70c5e61f703adeaef9aeda312bdb3d02aaa4c9ec2cc7d4ba\"\n      }\n    ]\n  }\n}"
+   ],
+   "function": "parse_profile_document",
+   "expected": {
+    "kind": "configuration",
+    "profile": {
+     "schema_version": 1,
+     "runtime_id": "native-claude-code",
+     "runtime_version": "0.0.0-golden",
+     "image_digest": "sha256:2d032a622cf94baf637a4488720865da983853e4a655fea4e45d0e80f0a9c640",
+     "binary_sha256": "25ba8ebec5f227618d8d58f475622669f4c45019d40259d1d292a823f4184c27",
+     "inventory_sha256": "44e7b67bbdc0842fecf8cfa158641e03998f7d0b34184bc297ede967ab24ce7a",
+     "taxonomy_sha256": "6064ebcb6693a1dd7b3e50fbfbcc94ff959f7957ac184188fd91744900a429a3",
+     "materializer_sha256": "ba6245da8b07901b6793898e70e2e974a1e641a2c3be0d357ba53d15101f4081",
+     "default_action": "keep",
+     "overrides": [
+      {
+       "block_id": "short",
+       "baseline_sha256": "213c22ed7234eb11116e1e88f314c73cb3a019b5c87fe224b6ce5665bd9ec50e",
+       "action": "disable"
+      },
+      {
+       "block_id": "unicode-mix",
+       "baseline_sha256": "d00da6c5a836c9df66e6b20ea37a93990bedea7ff26d8c203fd257d9b47523a8",
+       "action": "replace",
+       "replacement_utf8": "\u65e5\u672c \ud83d\ude42 \u2028 text",
+       "replacement_sha256": "3bde5eba0a65363e70c5e61f703adeaef9aeda312bdb3d02aaa4c9ec2cc7d4ba"
+      }
+     ]
+    },
+    "blocks": null,
+    "name": "",
+    "note": "",
+    "sets": []
+   }
+  },
+  {
+   "name": "parse: agent-patcher block dump",
+   "args": [
+    "[{\"id\": \"short\", \"body\": \"Be brief.\", \"source_path\": \"/fabricated/path.md\"}, {\"id\": \"zebra-only\", \"body\": \"\"}]"
+   ],
+   "function": "parse_profile_document",
+   "expected": {
+    "kind": "agent-patcher-blocks",
+    "profile": null,
+    "blocks": [
+     {
+      "id": "short",
+      "body": "Be brief."
+     },
+     {
+      "id": "zebra-only",
+      "body": ""
+     }
+    ],
+    "name": "",
+    "note": "",
+    "sets": []
+   }
+  },
+  {
+   "name": "parse: not JSON",
+   "args": [
+    "{not json"
+   ],
+   "function": "parse_profile_document",
+   "expected": {
+    "error": "This file is not valid JSON."
+   }
+  },
+  {
+   "name": "parse: NaN is not JSON",
+   "args": [
+    "{\"schema_version\": NaN}"
+   ],
+   "function": "parse_profile_document",
+   "expected": {
+    "error": "This file is not valid JSON."
+   }
+  },
+  {
+   "name": "parse: not text",
+   "args": [
+    null
+   ],
+   "function": "parse_profile_document",
+   "expected": {
+    "error": "Choose a JSON file."
+   }
+  },
+  {
+   "name": "parse: over 1.5 MiB",
+   "args": [
+    {
+     "@repeat": " ",
+     "times": 1572865
+    }
+   ],
+   "function": "parse_profile_document",
+   "expected": {
+    "error": "This file is larger than 1.5 MiB. A profile file cannot be that large."
+   }
+  },
+  {
+   "name": "parse: nested too deeply",
+   "args": [
+    "[[[[[[[[[[[[[[]]]]]]]]]]]]]]"
+   ],
+   "function": "parse_profile_document",
+   "expected": {
+    "error": "This file is nested too deeply to be a profile file."
+   }
+  },
+  {
+   "name": "parse: prototype key",
+   "args": [
+    "{\"schema_version\": 1, \"__proto__\": {\"x\": 1}}"
+   ],
+   "function": "parse_profile_document",
+   "expected": {
+    "error": "This file contains a key that a profile file cannot have."
+   }
+  },
+  {
+   "name": "parse: constructor key in a dump",
+   "args": [
+    "[{\"id\": \"a\", \"body\": \"b\", \"constructor\": 1}]"
+   ],
+   "function": "parse_profile_document",
+   "expected": {
+    "error": "This file contains a key that a profile file cannot have."
+   }
+  },
+  {
+   "name": "parse: a number",
+   "args": [
+    "42"
+   ],
+   "function": "parse_profile_document",
+   "expected": {
+    "error": "This file is not a native prompt profile, bundle, configuration export or agent-patcher block dump."
+   }
+  },
+  {
+   "name": "parse: an object of another kind",
+   "args": [
+    "{\"hello\": \"world\"}"
+   ],
+   "function": "parse_profile_document",
+   "expected": {
+    "error": "This file is not a native prompt profile, bundle, configuration export or agent-patcher block dump."
+   }
+  },
+  {
+   "name": "parse: dump entry without a body",
+   "args": [
+    "[{\"id\": \"short\"}]"
+   ],
+   "function": "parse_profile_document",
+   "expected": {
+    "error": "This list is not an agent-patcher block dump: every entry needs a text id and a text body."
+   }
+  },
+  {
+   "name": "parse: dump entry with an extra key",
+   "args": [
+    "[{\"id\": \"short\", \"body\": \"x\", \"path\": \"y\"}]"
+   ],
+   "function": "parse_profile_document",
+   "expected": {
+    "error": "This list is not an agent-patcher block dump: every entry needs a text id and a text body."
+   }
+  },
+  {
+   "name": "parse: bundle with an unknown field",
+   "args": [
+    "{\"kind\": \"traceharness.native-prompt-profile-bundle\", \"bundle_version\": 1, \"name\": \"Fabricated lean profile\", \"note\": \"Fabricated note.\\nSecond line.\", \"created_at\": \"2026-11-12T10:00:00.000Z\", \"tool\": \"traceharness-cli\", \"profile_sha256\": \"3bcf783a2ef798a5f209a116af5a643a6d899237181d46e73d1f6802cb3df264\", \"profile\": {\"schema_version\": 1, \"runtime_id\": \"native-claude-code\", \"runtime_version\": \"0.0.0-golden\", \"image_digest\": \"sha256:2d032a622cf94baf637a4488720865da983853e4a655fea4e45d0e80f0a9c640\", \"binary_sha256\": \"25ba8ebec5f227618d8d58f475622669f4c45019d40259d1d292a823f4184c27\", \"inventory_sha256\": \"44e7b67bbdc0842fecf8cfa158641e03998f7d0b34184bc297ede967ab24ce7a\", \"taxonomy_sha256\": \"6064ebcb6693a1dd7b3e50fbfbcc94ff959f7957ac184188fd91744900a429a3\", \"materializer_sha256\": \"ba6245da8b07901b6793898e70e2e974a1e641a2c3be0d357ba53d15101f4081\", \"default_action\": \"keep\", \"overrides\": [{\"block_id\": \"short\", \"baseline_sha256\": \"213c22ed7234eb11116e1e88f314c73cb3a019b5c87fe224b6ce5665bd9ec50e\", \"action\": \"disable\"}, {\"block_id\": \"unicode-mix\", \"baseline_sha256\": \"d00da6c5a836c9df66e6b20ea37a93990bedea7ff26d8c203fd257d9b47523a8\", \"action\": \"replace\", \"replacement_utf8\": \"\\u65e5\\u672c \\ud83d\\ude42 \\u2028 text\", \"replacement_sha256\": \"3bde5eba0a65363e70c5e61f703adeaef9aeda312bdb3d02aaa4c9ec2cc7d4ba\"}]}, \"sets\": [{\"name\": \"Fabricated set\", \"block_ids\": [\"short\", \"zebra-only\"]}], \"extra\": 1}"
+   ],
+   "function": "parse_profile_document",
+   "expected": {
+    "error": "This bundle has missing or unknown fields. A bundle has exactly: kind, bundle_version, name, note, created_at, tool, profile_sha256, profile, sets."
+   }
+  },
+  {
+   "name": "parse: bundle version 2",
+   "args": [
+    "{\"kind\": \"traceharness.native-prompt-profile-bundle\", \"bundle_version\": 2, \"name\": \"Fabricated lean profile\", \"note\": \"Fabricated note.\\nSecond line.\", \"created_at\": \"2026-11-12T10:00:00.000Z\", \"tool\": \"traceharness-cli\", \"profile_sha256\": \"3bcf783a2ef798a5f209a116af5a643a6d899237181d46e73d1f6802cb3df264\", \"profile\": {\"schema_version\": 1, \"runtime_id\": \"native-claude-code\", \"runtime_version\": \"0.0.0-golden\", \"image_digest\": \"sha256:2d032a622cf94baf637a4488720865da983853e4a655fea4e45d0e80f0a9c640\", \"binary_sha256\": \"25ba8ebec5f227618d8d58f475622669f4c45019d40259d1d292a823f4184c27\", \"inventory_sha256\": \"44e7b67bbdc0842fecf8cfa158641e03998f7d0b34184bc297ede967ab24ce7a\", \"taxonomy_sha256\": \"6064ebcb6693a1dd7b3e50fbfbcc94ff959f7957ac184188fd91744900a429a3\", \"materializer_sha256\": \"ba6245da8b07901b6793898e70e2e974a1e641a2c3be0d357ba53d15101f4081\", \"default_action\": \"keep\", \"overrides\": [{\"block_id\": \"short\", \"baseline_sha256\": \"213c22ed7234eb11116e1e88f314c73cb3a019b5c87fe224b6ce5665bd9ec50e\", \"action\": \"disable\"}, {\"block_id\": \"unicode-mix\", \"baseline_sha256\": \"d00da6c5a836c9df66e6b20ea37a93990bedea7ff26d8c203fd257d9b47523a8\", \"action\": \"replace\", \"replacement_utf8\": \"\\u65e5\\u672c \\ud83d\\ude42 \\u2028 text\", \"replacement_sha256\": \"3bde5eba0a65363e70c5e61f703adeaef9aeda312bdb3d02aaa4c9ec2cc7d4ba\"}]}, \"sets\": [{\"name\": \"Fabricated set\", \"block_ids\": [\"short\", \"zebra-only\"]}]}"
+   ],
+   "function": "parse_profile_document",
+   "expected": {
+    "error": "This bundle version is not supported. This workbench reads bundle version 1."
+   }
+  },
+  {
+   "name": "parse: bundle with a bad name",
+   "args": [
+    "{\"kind\": \"traceharness.native-prompt-profile-bundle\", \"bundle_version\": 1, \"name\": \" padded\", \"note\": \"Fabricated note.\\nSecond line.\", \"created_at\": \"2026-11-12T10:00:00.000Z\", \"tool\": \"traceharness-cli\", \"profile_sha256\": \"3bcf783a2ef798a5f209a116af5a643a6d899237181d46e73d1f6802cb3df264\", \"profile\": {\"schema_version\": 1, \"runtime_id\": \"native-claude-code\", \"runtime_version\": \"0.0.0-golden\", \"image_digest\": \"sha256:2d032a622cf94baf637a4488720865da983853e4a655fea4e45d0e80f0a9c640\", \"binary_sha256\": \"25ba8ebec5f227618d8d58f475622669f4c45019d40259d1d292a823f4184c27\", \"inventory_sha256\": \"44e7b67bbdc0842fecf8cfa158641e03998f7d0b34184bc297ede967ab24ce7a\", \"taxonomy_sha256\": \"6064ebcb6693a1dd7b3e50fbfbcc94ff959f7957ac184188fd91744900a429a3\", \"materializer_sha256\": \"ba6245da8b07901b6793898e70e2e974a1e641a2c3be0d357ba53d15101f4081\", \"default_action\": \"keep\", \"overrides\": [{\"block_id\": \"short\", \"baseline_sha256\": \"213c22ed7234eb11116e1e88f314c73cb3a019b5c87fe224b6ce5665bd9ec50e\", \"action\": \"disable\"}, {\"block_id\": \"unicode-mix\", \"baseline_sha256\": \"d00da6c5a836c9df66e6b20ea37a93990bedea7ff26d8c203fd257d9b47523a8\", \"action\": \"replace\", \"replacement_utf8\": \"\\u65e5\\u672c \\ud83d\\ude42 \\u2028 text\", \"replacement_sha256\": \"3bde5eba0a65363e70c5e61f703adeaef9aeda312bdb3d02aaa4c9ec2cc7d4ba\"}]}, \"sets\": [{\"name\": \"Fabricated set\", \"block_ids\": [\"short\", \"zebra-only\"]}]}"
+   ],
+   "function": "parse_profile_document",
+   "expected": {
+    "error": "Use a profile name from 1 to 80 visible characters, without leading or trailing spaces."
+   }
+  },
+  {
+   "name": "parse: bundle with a bad note",
+   "args": [
+    "{\"kind\": \"traceharness.native-prompt-profile-bundle\", \"bundle_version\": 1, \"name\": \"Fabricated lean profile\", \"note\": \"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\", \"created_at\": \"2026-11-12T10:00:00.000Z\", \"tool\": \"traceharness-cli\", \"profile_sha256\": \"3bcf783a2ef798a5f209a116af5a643a6d899237181d46e73d1f6802cb3df264\", \"profile\": {\"schema_version\": 1, \"runtime_id\": \"native-claude-code\", \"runtime_version\": \"0.0.0-golden\", \"image_digest\": \"sha256:2d032a622cf94baf637a4488720865da983853e4a655fea4e45d0e80f0a9c640\", \"binary_sha256\": \"25ba8ebec5f227618d8d58f475622669f4c45019d40259d1d292a823f4184c27\", \"inventory_sha256\": \"44e7b67bbdc0842fecf8cfa158641e03998f7d0b34184bc297ede967ab24ce7a\", \"taxonomy_sha256\": \"6064ebcb6693a1dd7b3e50fbfbcc94ff959f7957ac184188fd91744900a429a3\", \"materializer_sha256\": \"ba6245da8b07901b6793898e70e2e974a1e641a2c3be0d357ba53d15101f4081\", \"default_action\": \"keep\", \"overrides\": [{\"block_id\": \"short\", \"baseline_sha256\": \"213c22ed7234eb11116e1e88f314c73cb3a019b5c87fe224b6ce5665bd9ec50e\", \"action\": \"disable\"}, {\"block_id\": \"unicode-mix\", \"baseline_sha256\": \"d00da6c5a836c9df66e6b20ea37a93990bedea7ff26d8c203fd257d9b47523a8\", \"action\": \"replace\", \"replacement_utf8\": \"\\u65e5\\u672c \\ud83d\\ude42 \\u2028 text\", \"replacement_sha256\": \"3bde5eba0a65363e70c5e61f703adeaef9aeda312bdb3d02aaa4c9ec2cc7d4ba\"}]}, \"sets\": [{\"name\": \"Fabricated set\", \"block_ids\": [\"short\", \"zebra-only\"]}]}"
+   ],
+   "function": "parse_profile_document",
+   "expected": {
+    "error": "Keep the note within 500 characters, without control characters."
+   }
+  },
+  {
+   "name": "parse: bundle with an impossible time",
+   "args": [
+    "{\"kind\": \"traceharness.native-prompt-profile-bundle\", \"bundle_version\": 1, \"name\": \"Fabricated lean profile\", \"note\": \"Fabricated note.\\nSecond line.\", \"created_at\": \"2026-02-32T00:00:00Z\", \"tool\": \"traceharness-cli\", \"profile_sha256\": \"3bcf783a2ef798a5f209a116af5a643a6d899237181d46e73d1f6802cb3df264\", \"profile\": {\"schema_version\": 1, \"runtime_id\": \"native-claude-code\", \"runtime_version\": \"0.0.0-golden\", \"image_digest\": \"sha256:2d032a622cf94baf637a4488720865da983853e4a655fea4e45d0e80f0a9c640\", \"binary_sha256\": \"25ba8ebec5f227618d8d58f475622669f4c45019d40259d1d292a823f4184c27\", \"inventory_sha256\": \"44e7b67bbdc0842fecf8cfa158641e03998f7d0b34184bc297ede967ab24ce7a\", \"taxonomy_sha256\": \"6064ebcb6693a1dd7b3e50fbfbcc94ff959f7957ac184188fd91744900a429a3\", \"materializer_sha256\": \"ba6245da8b07901b6793898e70e2e974a1e641a2c3be0d357ba53d15101f4081\", \"default_action\": \"keep\", \"overrides\": [{\"block_id\": \"short\", \"baseline_sha256\": \"213c22ed7234eb11116e1e88f314c73cb3a019b5c87fe224b6ce5665bd9ec50e\", \"action\": \"disable\"}, {\"block_id\": \"unicode-mix\", \"baseline_sha256\": \"d00da6c5a836c9df66e6b20ea37a93990bedea7ff26d8c203fd257d9b47523a8\", \"action\": \"replace\", \"replacement_utf8\": \"\\u65e5\\u672c \\ud83d\\ude42 \\u2028 text\", \"replacement_sha256\": \"3bde5eba0a65363e70c5e61f703adeaef9aeda312bdb3d02aaa4c9ec2cc7d4ba\"}]}, \"sets\": [{\"name\": \"Fabricated set\", \"block_ids\": [\"short\", \"zebra-only\"]}]}"
+   ],
+   "function": "parse_profile_document",
+   "expected": {
+    "error": "This bundle has no valid creation time."
+   }
+  },
+  {
+   "name": "parse: bundle with hour 24",
+   "args": [
+    "{\"kind\": \"traceharness.native-prompt-profile-bundle\", \"bundle_version\": 1, \"name\": \"Fabricated lean profile\", \"note\": \"Fabricated note.\\nSecond line.\", \"created_at\": \"2026-02-28T24:00:00Z\", \"tool\": \"traceharness-cli\", \"profile_sha256\": \"3bcf783a2ef798a5f209a116af5a643a6d899237181d46e73d1f6802cb3df264\", \"profile\": {\"schema_version\": 1, \"runtime_id\": \"native-claude-code\", \"runtime_version\": \"0.0.0-golden\", \"image_digest\": \"sha256:2d032a622cf94baf637a4488720865da983853e4a655fea4e45d0e80f0a9c640\", \"binary_sha256\": \"25ba8ebec5f227618d8d58f475622669f4c45019d40259d1d292a823f4184c27\", \"inventory_sha256\": \"44e7b67bbdc0842fecf8cfa158641e03998f7d0b34184bc297ede967ab24ce7a\", \"taxonomy_sha256\": \"6064ebcb6693a1dd7b3e50fbfbcc94ff959f7957ac184188fd91744900a429a3\", \"materializer_sha256\": \"ba6245da8b07901b6793898e70e2e974a1e641a2c3be0d357ba53d15101f4081\", \"default_action\": \"keep\", \"overrides\": [{\"block_id\": \"short\", \"baseline_sha256\": \"213c22ed7234eb11116e1e88f314c73cb3a019b5c87fe224b6ce5665bd9ec50e\", \"action\": \"disable\"}, {\"block_id\": \"unicode-mix\", \"baseline_sha256\": \"d00da6c5a836c9df66e6b20ea37a93990bedea7ff26d8c203fd257d9b47523a8\", \"action\": \"replace\", \"replacement_utf8\": \"\\u65e5\\u672c \\ud83d\\ude42 \\u2028 text\", \"replacement_sha256\": \"3bde5eba0a65363e70c5e61f703adeaef9aeda312bdb3d02aaa4c9ec2cc7d4ba\"}]}, \"sets\": [{\"name\": \"Fabricated set\", \"block_ids\": [\"short\", \"zebra-only\"]}]}"
+   ],
+   "function": "parse_profile_document",
+   "expected": {
+    "kind": "bundle",
+    "profile": {
+     "schema_version": 1,
+     "runtime_id": "native-claude-code",
+     "runtime_version": "0.0.0-golden",
+     "image_digest": "sha256:2d032a622cf94baf637a4488720865da983853e4a655fea4e45d0e80f0a9c640",
+     "binary_sha256": "25ba8ebec5f227618d8d58f475622669f4c45019d40259d1d292a823f4184c27",
+     "inventory_sha256": "44e7b67bbdc0842fecf8cfa158641e03998f7d0b34184bc297ede967ab24ce7a",
+     "taxonomy_sha256": "6064ebcb6693a1dd7b3e50fbfbcc94ff959f7957ac184188fd91744900a429a3",
+     "materializer_sha256": "ba6245da8b07901b6793898e70e2e974a1e641a2c3be0d357ba53d15101f4081",
+     "default_action": "keep",
+     "overrides": [
+      {
+       "block_id": "short",
+       "baseline_sha256": "213c22ed7234eb11116e1e88f314c73cb3a019b5c87fe224b6ce5665bd9ec50e",
+       "action": "disable"
+      },
+      {
+       "block_id": "unicode-mix",
+       "baseline_sha256": "d00da6c5a836c9df66e6b20ea37a93990bedea7ff26d8c203fd257d9b47523a8",
+       "action": "replace",
+       "replacement_utf8": "\u65e5\u672c \ud83d\ude42 \u2028 text",
+       "replacement_sha256": "3bde5eba0a65363e70c5e61f703adeaef9aeda312bdb3d02aaa4c9ec2cc7d4ba"
+      }
+     ]
+    },
+    "blocks": null,
+    "name": "Fabricated lean profile",
+    "note": "Fabricated note.\nSecond line.",
+    "sets": [
+     {
+      "name": "Fabricated set",
+      "block_ids": [
+       "short",
+       "zebra-only"
+      ]
+     }
+    ]
+   }
+  },
+  {
+   "name": "parse: bundle with an unknown tool",
+   "args": [
+    "{\"kind\": \"traceharness.native-prompt-profile-bundle\", \"bundle_version\": 1, \"name\": \"Fabricated lean profile\", \"note\": \"Fabricated note.\\nSecond line.\", \"created_at\": \"2026-11-12T10:00:00.000Z\", \"tool\": \"other\", \"profile_sha256\": \"3bcf783a2ef798a5f209a116af5a643a6d899237181d46e73d1f6802cb3df264\", \"profile\": {\"schema_version\": 1, \"runtime_id\": \"native-claude-code\", \"runtime_version\": \"0.0.0-golden\", \"image_digest\": \"sha256:2d032a622cf94baf637a4488720865da983853e4a655fea4e45d0e80f0a9c640\", \"binary_sha256\": \"25ba8ebec5f227618d8d58f475622669f4c45019d40259d1d292a823f4184c27\", \"inventory_sha256\": \"44e7b67bbdc0842fecf8cfa158641e03998f7d0b34184bc297ede967ab24ce7a\", \"taxonomy_sha256\": \"6064ebcb6693a1dd7b3e50fbfbcc94ff959f7957ac184188fd91744900a429a3\", \"materializer_sha256\": \"ba6245da8b07901b6793898e70e2e974a1e641a2c3be0d357ba53d15101f4081\", \"default_action\": \"keep\", \"overrides\": [{\"block_id\": \"short\", \"baseline_sha256\": \"213c22ed7234eb11116e1e88f314c73cb3a019b5c87fe224b6ce5665bd9ec50e\", \"action\": \"disable\"}, {\"block_id\": \"unicode-mix\", \"baseline_sha256\": \"d00da6c5a836c9df66e6b20ea37a93990bedea7ff26d8c203fd257d9b47523a8\", \"action\": \"replace\", \"replacement_utf8\": \"\\u65e5\\u672c \\ud83d\\ude42 \\u2028 text\", \"replacement_sha256\": \"3bde5eba0a65363e70c5e61f703adeaef9aeda312bdb3d02aaa4c9ec2cc7d4ba\"}]}, \"sets\": [{\"name\": \"Fabricated set\", \"block_ids\": [\"short\", \"zebra-only\"]}]}"
+   ],
+   "function": "parse_profile_document",
+   "expected": {
+    "error": "This bundle does not name a known writing tool."
+   }
+  },
+  {
+   "name": "parse: bundle with a malformed digest",
+   "args": [
+    "{\"kind\": \"traceharness.native-prompt-profile-bundle\", \"bundle_version\": 1, \"name\": \"Fabricated lean profile\", \"note\": \"Fabricated note.\\nSecond line.\", \"created_at\": \"2026-11-12T10:00:00.000Z\", \"tool\": \"traceharness-cli\", \"profile_sha256\": \"ABC\", \"profile\": {\"schema_version\": 1, \"runtime_id\": \"native-claude-code\", \"runtime_version\": \"0.0.0-golden\", \"image_digest\": \"sha256:2d032a622cf94baf637a4488720865da983853e4a655fea4e45d0e80f0a9c640\", \"binary_sha256\": \"25ba8ebec5f227618d8d58f475622669f4c45019d40259d1d292a823f4184c27\", \"inventory_sha256\": \"44e7b67bbdc0842fecf8cfa158641e03998f7d0b34184bc297ede967ab24ce7a\", \"taxonomy_sha256\": \"6064ebcb6693a1dd7b3e50fbfbcc94ff959f7957ac184188fd91744900a429a3\", \"materializer_sha256\": \"ba6245da8b07901b6793898e70e2e974a1e641a2c3be0d357ba53d15101f4081\", \"default_action\": \"keep\", \"overrides\": [{\"block_id\": \"short\", \"baseline_sha256\": \"213c22ed7234eb11116e1e88f314c73cb3a019b5c87fe224b6ce5665bd9ec50e\", \"action\": \"disable\"}, {\"block_id\": \"unicode-mix\", \"baseline_sha256\": \"d00da6c5a836c9df66e6b20ea37a93990bedea7ff26d8c203fd257d9b47523a8\", \"action\": \"replace\", \"replacement_utf8\": \"\\u65e5\\u672c \\ud83d\\ude42 \\u2028 text\", \"replacement_sha256\": \"3bde5eba0a65363e70c5e61f703adeaef9aeda312bdb3d02aaa4c9ec2cc7d4ba\"}]}, \"sets\": [{\"name\": \"Fabricated set\", \"block_ids\": [\"short\", \"zebra-only\"]}]}"
+   ],
+   "function": "parse_profile_document",
+   "expected": {
+    "error": "This bundle has no valid profile digest."
+   }
+  },
+  {
+   "name": "parse: bundle whose digest does not match",
+   "args": [
+    "{\"kind\": \"traceharness.native-prompt-profile-bundle\", \"bundle_version\": 1, \"name\": \"Fabricated lean profile\", \"note\": \"Fabricated note.\\nSecond line.\", \"created_at\": \"2026-11-12T10:00:00.000Z\", \"tool\": \"traceharness-cli\", \"profile_sha256\": \"3333333333333333333333333333333333333333333333333333333333333333\", \"profile\": {\"schema_version\": 1, \"runtime_id\": \"native-claude-code\", \"runtime_version\": \"0.0.0-golden\", \"image_digest\": \"sha256:2d032a622cf94baf637a4488720865da983853e4a655fea4e45d0e80f0a9c640\", \"binary_sha256\": \"25ba8ebec5f227618d8d58f475622669f4c45019d40259d1d292a823f4184c27\", \"inventory_sha256\": \"44e7b67bbdc0842fecf8cfa158641e03998f7d0b34184bc297ede967ab24ce7a\", \"taxonomy_sha256\": \"6064ebcb6693a1dd7b3e50fbfbcc94ff959f7957ac184188fd91744900a429a3\", \"materializer_sha256\": \"ba6245da8b07901b6793898e70e2e974a1e641a2c3be0d357ba53d15101f4081\", \"default_action\": \"keep\", \"overrides\": [{\"block_id\": \"short\", \"baseline_sha256\": \"213c22ed7234eb11116e1e88f314c73cb3a019b5c87fe224b6ce5665bd9ec50e\", \"action\": \"disable\"}, {\"block_id\": \"unicode-mix\", \"baseline_sha256\": \"d00da6c5a836c9df66e6b20ea37a93990bedea7ff26d8c203fd257d9b47523a8\", \"action\": \"replace\", \"replacement_utf8\": \"\\u65e5\\u672c \\ud83d\\ude42 \\u2028 text\", \"replacement_sha256\": \"3bde5eba0a65363e70c5e61f703adeaef9aeda312bdb3d02aaa4c9ec2cc7d4ba\"}]}, \"sets\": [{\"name\": \"Fabricated set\", \"block_ids\": [\"short\", \"zebra-only\"]}]}"
+   ],
+   "function": "parse_profile_document",
+   "expected": {
+    "error": "This bundle\u2019s profile does not match its recorded digest. The file was changed after it was written."
+   }
+  },
+  {
+   "name": "parse: bundle with invalid sets",
+   "args": [
+    "{\"kind\": \"traceharness.native-prompt-profile-bundle\", \"bundle_version\": 1, \"name\": \"Fabricated lean profile\", \"note\": \"Fabricated note.\\nSecond line.\", \"created_at\": \"2026-11-12T10:00:00.000Z\", \"tool\": \"traceharness-cli\", \"profile_sha256\": \"3bcf783a2ef798a5f209a116af5a643a6d899237181d46e73d1f6802cb3df264\", \"profile\": {\"schema_version\": 1, \"runtime_id\": \"native-claude-code\", \"runtime_version\": \"0.0.0-golden\", \"image_digest\": \"sha256:2d032a622cf94baf637a4488720865da983853e4a655fea4e45d0e80f0a9c640\", \"binary_sha256\": \"25ba8ebec5f227618d8d58f475622669f4c45019d40259d1d292a823f4184c27\", \"inventory_sha256\": \"44e7b67bbdc0842fecf8cfa158641e03998f7d0b34184bc297ede967ab24ce7a\", \"taxonomy_sha256\": \"6064ebcb6693a1dd7b3e50fbfbcc94ff959f7957ac184188fd91744900a429a3\", \"materializer_sha256\": \"ba6245da8b07901b6793898e70e2e974a1e641a2c3be0d357ba53d15101f4081\", \"default_action\": \"keep\", \"overrides\": [{\"block_id\": \"short\", \"baseline_sha256\": \"213c22ed7234eb11116e1e88f314c73cb3a019b5c87fe224b6ce5665bd9ec50e\", \"action\": \"disable\"}, {\"block_id\": \"unicode-mix\", \"baseline_sha256\": \"d00da6c5a836c9df66e6b20ea37a93990bedea7ff26d8c203fd257d9b47523a8\", \"action\": \"replace\", \"replacement_utf8\": \"\\u65e5\\u672c \\ud83d\\ude42 \\u2028 text\", \"replacement_sha256\": \"3bde5eba0a65363e70c5e61f703adeaef9aeda312bdb3d02aaa4c9ec2cc7d4ba\"}]}, \"sets\": [{\"name\": \"\", \"block_ids\": []}]}"
+   ],
+   "function": "parse_profile_document",
+   "expected": {
+    "error": "The named prompt sets in this file are not valid."
+   }
+  },
+  {
+   "name": "parse: configuration without a profile",
+   "args": [
+    "{\"version\": 2, \"runtime_id\": \"native-claude-code\", \"model_id\": \"fixture/model-a\", \"task_id\": \"fixture-task\", \"prompt\": \"\", \"prompt_mode\": \"append\", \"harness\": {}, \"limits\": {\"max_steps\": 5}}"
+   ],
+   "function": "parse_profile_document",
+   "expected": {
+    "error": "This configuration has no native prompt profile. Export one from a run that uses a profile."
+   }
+  },
+  {
+   "name": "parse: configuration version 1",
+   "args": [
+    "{\"version\": 1, \"runtime_id\": \"native-claude-code\", \"model_id\": \"fixture/model-a\", \"task_id\": \"fixture-task\", \"prompt\": \"\", \"prompt_mode\": \"append\", \"harness\": {}, \"limits\": {\"max_steps\": 5}, \"native_prompt_profile\": {\"schema_version\": 1, \"inventory_sha256\": \"44e7b67bbdc0842fecf8cfa158641e03998f7d0b34184bc297ede967ab24ce7a\", \"taxonomy_sha256\": \"6064ebcb6693a1dd7b3e50fbfbcc94ff959f7957ac184188fd91744900a429a3\", \"runtime_version\": \"0.0.0-golden\", \"binary_sha256\": \"25ba8ebec5f227618d8d58f475622669f4c45019d40259d1d292a823f4184c27\", \"runtime_id\": \"native-claude-code\", \"image_digest\": \"sha256:2d032a622cf94baf637a4488720865da983853e4a655fea4e45d0e80f0a9c640\", \"default_action\": \"keep\", \"materializer_sha256\": \"ba6245da8b07901b6793898e70e2e974a1e641a2c3be0d357ba53d15101f4081\", \"overrides\": [{\"block_id\": \"short\", \"baseline_sha256\": \"213c22ed7234eb11116e1e88f314c73cb3a019b5c87fe224b6ce5665bd9ec50e\", \"action\": \"disable\"}, {\"block_id\": \"unicode-mix\", \"baseline_sha256\": \"d00da6c5a836c9df66e6b20ea37a93990bedea7ff26d8c203fd257d9b47523a8\", \"action\": \"replace\", \"replacement_utf8\": \"\\u65e5\\u672c \\ud83d\\ude42 \\u2028 text\", \"replacement_sha256\": \"3bde5eba0a65363e70c5e61f703adeaef9aeda312bdb3d02aaa4c9ec2cc7d4ba\"}]}}"
+   ],
+   "function": "parse_profile_document",
+   "expected": {
+    "error": "This configuration has no native prompt profile. Export one from a run that uses a profile."
+   }
+  },
+  {
+   "name": "parse: configuration naming another runtime",
+   "args": [
+    "{\"version\": 2, \"runtime_id\": \"native-codex\", \"model_id\": \"fixture/model-a\", \"task_id\": \"fixture-task\", \"prompt\": \"\", \"prompt_mode\": \"append\", \"harness\": {}, \"limits\": {\"max_steps\": 5}, \"native_prompt_profile\": {\"schema_version\": 1, \"inventory_sha256\": \"44e7b67bbdc0842fecf8cfa158641e03998f7d0b34184bc297ede967ab24ce7a\", \"taxonomy_sha256\": \"6064ebcb6693a1dd7b3e50fbfbcc94ff959f7957ac184188fd91744900a429a3\", \"runtime_version\": \"0.0.0-golden\", \"binary_sha256\": \"25ba8ebec5f227618d8d58f475622669f4c45019d40259d1d292a823f4184c27\", \"runtime_id\": \"native-claude-code\", \"image_digest\": \"sha256:2d032a622cf94baf637a4488720865da983853e4a655fea4e45d0e80f0a9c640\", \"default_action\": \"keep\", \"materializer_sha256\": \"ba6245da8b07901b6793898e70e2e974a1e641a2c3be0d357ba53d15101f4081\", \"overrides\": [{\"block_id\": \"short\", \"baseline_sha256\": \"213c22ed7234eb11116e1e88f314c73cb3a019b5c87fe224b6ce5665bd9ec50e\", \"action\": \"disable\"}, {\"block_id\": \"unicode-mix\", \"baseline_sha256\": \"d00da6c5a836c9df66e6b20ea37a93990bedea7ff26d8c203fd257d9b47523a8\", \"action\": \"replace\", \"replacement_utf8\": \"\\u65e5\\u672c \\ud83d\\ude42 \\u2028 text\", \"replacement_sha256\": \"3bde5eba0a65363e70c5e61f703adeaef9aeda312bdb3d02aaa4c9ec2cc7d4ba\"}]}}"
+   ],
+   "function": "parse_profile_document",
+   "expected": {
+    "error": "This configuration names a different runtime than its native prompt profile."
+   }
+  },
+  {
+   "name": "parse: schema_version written as 1.0",
+   "args": [
+    "{\"binary_sha256\":\"25ba8ebec5f227618d8d58f475622669f4c45019d40259d1d292a823f4184c27\",\"default_action\":\"keep\",\"image_digest\":\"sha256:2d032a622cf94baf637a4488720865da983853e4a655fea4e45d0e80f0a9c640\",\"inventory_sha256\":\"44e7b67bbdc0842fecf8cfa158641e03998f7d0b34184bc297ede967ab24ce7a\",\"materializer_sha256\":\"ba6245da8b07901b6793898e70e2e974a1e641a2c3be0d357ba53d15101f4081\",\"overrides\":[{\"action\":\"disable\",\"baseline_sha256\":\"213c22ed7234eb11116e1e88f314c73cb3a019b5c87fe224b6ce5665bd9ec50e\",\"block_id\":\"short\"},{\"action\":\"replace\",\"baseline_sha256\":\"d00da6c5a836c9df66e6b20ea37a93990bedea7ff26d8c203fd257d9b47523a8\",\"block_id\":\"unicode-mix\",\"replacement_sha256\":\"3bde5eba0a65363e70c5e61f703adeaef9aeda312bdb3d02aaa4c9ec2cc7d4ba\",\"replacement_utf8\":\"\u65e5\u672c \ud83d\ude42 \u2028 text\"}],\"runtime_id\":\"native-claude-code\",\"runtime_version\":\"0.0.0-golden\",\"schema_version\": 1.0,\"taxonomy_sha256\":\"6064ebcb6693a1dd7b3e50fbfbcc94ff959f7957ac184188fd91744900a429a3\"}\n"
+   ],
+   "function": "parse_profile_document",
+   "expected": {
+    "error": "This file writes schema_version with a fraction or an exponent. Write it as a whole number, for example 1."
+   }
+  },
+  {
+   "name": "parse: schema_version written as 1e0",
+   "args": [
+    "{\"schema_version\":1e0, \"inventory_sha256\": \"44e7b67bbdc0842fecf8cfa158641e03998f7d0b34184bc297ede967ab24ce7a\", \"taxonomy_sha256\": \"6064ebcb6693a1dd7b3e50fbfbcc94ff959f7957ac184188fd91744900a429a3\", \"runtime_version\": \"0.0.0-golden\", \"binary_sha256\": \"25ba8ebec5f227618d8d58f475622669f4c45019d40259d1d292a823f4184c27\", \"runtime_id\": \"native-claude-code\", \"image_digest\": \"sha256:2d032a622cf94baf637a4488720865da983853e4a655fea4e45d0e80f0a9c640\", \"default_action\": \"keep\", \"materializer_sha256\": \"ba6245da8b07901b6793898e70e2e974a1e641a2c3be0d357ba53d15101f4081\", \"overrides\": [{\"block_id\": \"short\", \"baseline_sha256\": \"213c22ed7234eb11116e1e88f314c73cb3a019b5c87fe224b6ce5665bd9ec50e\", \"action\": \"disable\"}, {\"block_id\": \"unicode-mix\", \"baseline_sha256\": \"d00da6c5a836c9df66e6b20ea37a93990bedea7ff26d8c203fd257d9b47523a8\", \"action\": \"replace\", \"replacement_utf8\": \"\\u65e5\\u672c \\ud83d\\ude42 \\u2028 text\", \"replacement_sha256\": \"3bde5eba0a65363e70c5e61f703adeaef9aeda312bdb3d02aaa4c9ec2cc7d4ba\"}]}"
+   ],
+   "function": "parse_profile_document",
+   "expected": {
+    "error": "This file writes schema_version with a fraction or an exponent. Write it as a whole number, for example 1."
+   }
+  },
+  {
+   "name": "parse: schema_version written as 1.0 inside a configuration",
+   "args": [
+    "{\"version\": 2, \"runtime_id\": \"native-claude-code\", \"model_id\": \"fixture/model-a\", \"task_id\": \"fixture-task\", \"prompt\": \"\", \"prompt_mode\": \"append\", \"harness\": {}, \"limits\": {\"max_steps\": 5}, \"native_prompt_profile\": {\"schema_version\": 1.0, \"inventory_sha256\": \"44e7b67bbdc0842fecf8cfa158641e03998f7d0b34184bc297ede967ab24ce7a\", \"taxonomy_sha256\": \"6064ebcb6693a1dd7b3e50fbfbcc94ff959f7957ac184188fd91744900a429a3\", \"runtime_version\": \"0.0.0-golden\", \"binary_sha256\": \"25ba8ebec5f227618d8d58f475622669f4c45019d40259d1d292a823f4184c27\", \"runtime_id\": \"native-claude-code\", \"image_digest\": \"sha256:2d032a622cf94baf637a4488720865da983853e4a655fea4e45d0e80f0a9c640\", \"default_action\": \"keep\", \"materializer_sha256\": \"ba6245da8b07901b6793898e70e2e974a1e641a2c3be0d357ba53d15101f4081\", \"overrides\": [{\"block_id\": \"short\", \"baseline_sha256\": \"213c22ed7234eb11116e1e88f314c73cb3a019b5c87fe224b6ce5665bd9ec50e\", \"action\": \"disable\"}, {\"block_id\": \"unicode-mix\", \"baseline_sha256\": \"d00da6c5a836c9df66e6b20ea37a93990bedea7ff26d8c203fd257d9b47523a8\", \"action\": \"replace\", \"replacement_utf8\": \"\\u65e5\\u672c \\ud83d\\ude42 \\u2028 text\", \"replacement_sha256\": \"3bde5eba0a65363e70c5e61f703adeaef9aeda312bdb3d02aaa4c9ec2cc7d4ba\"}]}}"
+   ],
+   "function": "parse_profile_document",
+   "expected": {
+    "error": "This file writes schema_version with a fraction or an exponent. Write it as a whole number, for example 1."
+   }
+  },
+  {
+   "name": "parse: bundle_version written as 1.0",
+   "args": [
+    "{\n  \"kind\": \"traceharness.native-prompt-profile-bundle\",\n  \"bundle_version\": 1.0,\n  \"name\": \"Fabricated lean profile\",\n  \"note\": \"Fabricated note.\\nSecond line.\",\n  \"created_at\": \"2026-11-12T10:00:00.000Z\",\n  \"tool\": \"traceharness-cli\",\n  \"profile_sha256\": \"3bcf783a2ef798a5f209a116af5a643a6d899237181d46e73d1f6802cb3df264\",\n  \"profile\": {\n    \"schema_version\": 1,\n    \"runtime_id\": \"native-claude-code\",\n    \"runtime_version\": \"0.0.0-golden\",\n    \"image_digest\": \"sha256:2d032a622cf94baf637a4488720865da983853e4a655fea4e45d0e80f0a9c640\",\n    \"binary_sha256\": \"25ba8ebec5f227618d8d58f475622669f4c45019d40259d1d292a823f4184c27\",\n    \"inventory_sha256\": \"44e7b67bbdc0842fecf8cfa158641e03998f7d0b34184bc297ede967ab24ce7a\",\n    \"taxonomy_sha256\": \"6064ebcb6693a1dd7b3e50fbfbcc94ff959f7957ac184188fd91744900a429a3\",\n    \"materializer_sha256\": \"ba6245da8b07901b6793898e70e2e974a1e641a2c3be0d357ba53d15101f4081\",\n    \"default_action\": \"keep\",\n    \"overrides\": [\n      {\n        \"block_id\": \"short\",\n        \"baseline_sha256\": \"213c22ed7234eb11116e1e88f314c73cb3a019b5c87fe224b6ce5665bd9ec50e\",\n        \"action\": \"disable\"\n      },\n      {\n        \"block_id\": \"unicode-mix\",\n        \"baseline_sha256\": \"d00da6c5a836c9df66e6b20ea37a93990bedea7ff26d8c203fd257d9b47523a8\",\n        \"action\": \"replace\",\n        \"replacement_utf8\": \"\u65e5\u672c \ud83d\ude42 \u2028 text\",\n        \"replacement_sha256\": \"3bde5eba0a65363e70c5e61f703adeaef9aeda312bdb3d02aaa4c9ec2cc7d4ba\"\n      }\n    ]\n  },\n  \"sets\": [\n    {\n      \"name\": \"Fabricated set\",\n      \"block_ids\": [\n        \"short\",\n        \"zebra-only\"\n      ]\n    }\n  ]\n}\n"
+   ],
+   "function": "parse_profile_document",
+   "expected": {
+    "error": "This file writes bundle_version with a fraction or an exponent. Write it as a whole number, for example 1."
+   }
+  },
+  {
+   "name": "parse: the key spelled inside a text value is not a key",
+   "args": [
+    "{\"schema_version\": 1, \"inventory_sha256\": \"44e7b67bbdc0842fecf8cfa158641e03998f7d0b34184bc297ede967ab24ce7a\", \"taxonomy_sha256\": \"6064ebcb6693a1dd7b3e50fbfbcc94ff959f7957ac184188fd91744900a429a3\", \"runtime_version\": \"0.0.0-golden\", \"binary_sha256\": \"25ba8ebec5f227618d8d58f475622669f4c45019d40259d1d292a823f4184c27\", \"runtime_id\": \"native-claude-code\", \"image_digest\": \"sha256:2d032a622cf94baf637a4488720865da983853e4a655fea4e45d0e80f0a9c640\", \"default_action\": \"keep\", \"materializer_sha256\": \"ba6245da8b07901b6793898e70e2e974a1e641a2c3be0d357ba53d15101f4081\", \"overrides\": [{\"block_id\": \"short\", \"baseline_sha256\": \"213c22ed7234eb11116e1e88f314c73cb3a019b5c87fe224b6ce5665bd9ec50e\", \"action\": \"replace\", \"replacement_utf8\": \"Fabricated \\\"schema_version\\\": 1.0 text.\", \"replacement_sha256\": \"121a353a985d637d48958fd40e18b33a02c5c49765ecd357efca2354476927fa\"}]}"
+   ],
+   "function": "parse_profile_document",
+   "expected": {
+    "kind": "profile",
+    "profile": {
+     "schema_version": 1,
+     "runtime_id": "native-claude-code",
+     "runtime_version": "0.0.0-golden",
+     "image_digest": "sha256:2d032a622cf94baf637a4488720865da983853e4a655fea4e45d0e80f0a9c640",
+     "binary_sha256": "25ba8ebec5f227618d8d58f475622669f4c45019d40259d1d292a823f4184c27",
+     "inventory_sha256": "44e7b67bbdc0842fecf8cfa158641e03998f7d0b34184bc297ede967ab24ce7a",
+     "taxonomy_sha256": "6064ebcb6693a1dd7b3e50fbfbcc94ff959f7957ac184188fd91744900a429a3",
+     "materializer_sha256": "ba6245da8b07901b6793898e70e2e974a1e641a2c3be0d357ba53d15101f4081",
+     "default_action": "keep",
+     "overrides": [
+      {
+       "block_id": "short",
+       "baseline_sha256": "213c22ed7234eb11116e1e88f314c73cb3a019b5c87fe224b6ce5665bd9ec50e",
+       "action": "replace",
+       "replacement_utf8": "Fabricated \"schema_version\": 1.0 text.",
+       "replacement_sha256": "121a353a985d637d48958fd40e18b33a02c5c49765ecd357efca2354476927fa"
+      }
+     ]
+    },
+    "blocks": null,
+    "name": "",
+    "note": "",
+    "sets": []
+   }
+  },
+  {
+   "name": "parse: an escaped key name is still the key",
+   "args": [
+    "{\"schema\\u005fversion\": 1.0, \"inventory_sha256\": \"44e7b67bbdc0842fecf8cfa158641e03998f7d0b34184bc297ede967ab24ce7a\", \"taxonomy_sha256\": \"6064ebcb6693a1dd7b3e50fbfbcc94ff959f7957ac184188fd91744900a429a3\", \"runtime_version\": \"0.0.0-golden\", \"binary_sha256\": \"25ba8ebec5f227618d8d58f475622669f4c45019d40259d1d292a823f4184c27\", \"runtime_id\": \"native-claude-code\", \"image_digest\": \"sha256:2d032a622cf94baf637a4488720865da983853e4a655fea4e45d0e80f0a9c640\", \"default_action\": \"keep\", \"materializer_sha256\": \"ba6245da8b07901b6793898e70e2e974a1e641a2c3be0d357ba53d15101f4081\", \"overrides\": [{\"block_id\": \"short\", \"baseline_sha256\": \"213c22ed7234eb11116e1e88f314c73cb3a019b5c87fe224b6ce5665bd9ec50e\", \"action\": \"disable\"}, {\"block_id\": \"unicode-mix\", \"baseline_sha256\": \"d00da6c5a836c9df66e6b20ea37a93990bedea7ff26d8c203fd257d9b47523a8\", \"action\": \"replace\", \"replacement_utf8\": \"\\u65e5\\u672c \\ud83d\\ude42 \\u2028 text\", \"replacement_sha256\": \"3bde5eba0a65363e70c5e61f703adeaef9aeda312bdb3d02aaa4c9ec2cc7d4ba\"}]}"
+   ],
+   "function": "parse_profile_document",
+   "expected": {
+    "error": "This file writes schema_version with a fraction or an exponent. Write it as a whole number, for example 1."
+   }
+  },
+  {
+   "name": "parse: a fraction on another key is not checked",
+   "args": [
+    "{\"version\": 2, \"runtime_id\": \"native-claude-code\", \"model_id\": \"fixture/model-a\", \"task_id\": \"fixture-task\", \"prompt\": \"\", \"prompt_mode\": \"append\", \"harness\": {}, \"limits\": {\"max_cost_usd\": 1.5}, \"native_prompt_profile\": {\"schema_version\": 1, \"inventory_sha256\": \"44e7b67bbdc0842fecf8cfa158641e03998f7d0b34184bc297ede967ab24ce7a\", \"taxonomy_sha256\": \"6064ebcb6693a1dd7b3e50fbfbcc94ff959f7957ac184188fd91744900a429a3\", \"runtime_version\": \"0.0.0-golden\", \"binary_sha256\": \"25ba8ebec5f227618d8d58f475622669f4c45019d40259d1d292a823f4184c27\", \"runtime_id\": \"native-claude-code\", \"image_digest\": \"sha256:2d032a622cf94baf637a4488720865da983853e4a655fea4e45d0e80f0a9c640\", \"default_action\": \"keep\", \"materializer_sha256\": \"ba6245da8b07901b6793898e70e2e974a1e641a2c3be0d357ba53d15101f4081\", \"overrides\": [{\"block_id\": \"short\", \"baseline_sha256\": \"213c22ed7234eb11116e1e88f314c73cb3a019b5c87fe224b6ce5665bd9ec50e\", \"action\": \"disable\"}, {\"block_id\": \"unicode-mix\", \"baseline_sha256\": \"d00da6c5a836c9df66e6b20ea37a93990bedea7ff26d8c203fd257d9b47523a8\", \"action\": \"replace\", \"replacement_utf8\": \"\\u65e5\\u672c \\ud83d\\ude42 \\u2028 text\", \"replacement_sha256\": \"3bde5eba0a65363e70c5e61f703adeaef9aeda312bdb3d02aaa4c9ec2cc7d4ba\"}]}}"
+   ],
+   "function": "parse_profile_document",
+   "expected": {
+    "kind": "configuration",
+    "profile": {
+     "schema_version": 1,
+     "runtime_id": "native-claude-code",
+     "runtime_version": "0.0.0-golden",
+     "image_digest": "sha256:2d032a622cf94baf637a4488720865da983853e4a655fea4e45d0e80f0a9c640",
+     "binary_sha256": "25ba8ebec5f227618d8d58f475622669f4c45019d40259d1d292a823f4184c27",
+     "inventory_sha256": "44e7b67bbdc0842fecf8cfa158641e03998f7d0b34184bc297ede967ab24ce7a",
+     "taxonomy_sha256": "6064ebcb6693a1dd7b3e50fbfbcc94ff959f7957ac184188fd91744900a429a3",
+     "materializer_sha256": "ba6245da8b07901b6793898e70e2e974a1e641a2c3be0d357ba53d15101f4081",
+     "default_action": "keep",
+     "overrides": [
+      {
+       "block_id": "short",
+       "baseline_sha256": "213c22ed7234eb11116e1e88f314c73cb3a019b5c87fe224b6ce5665bd9ec50e",
+       "action": "disable"
+      },
+      {
+       "block_id": "unicode-mix",
+       "baseline_sha256": "d00da6c5a836c9df66e6b20ea37a93990bedea7ff26d8c203fd257d9b47523a8",
+       "action": "replace",
+       "replacement_utf8": "\u65e5\u672c \ud83d\ude42 \u2028 text",
+       "replacement_sha256": "3bde5eba0a65363e70c5e61f703adeaef9aeda312bdb3d02aaa4c9ec2cc7d4ba"
+      }
+     ]
+    },
+    "blocks": null,
+    "name": "",
+    "note": "",
+    "sets": []
+   }
+  },
+  {
+   "name": "parse: profile with an invalid override",
+   "args": [
+    "{\"schema_version\": 1, \"inventory_sha256\": \"44e7b67bbdc0842fecf8cfa158641e03998f7d0b34184bc297ede967ab24ce7a\", \"taxonomy_sha256\": \"6064ebcb6693a1dd7b3e50fbfbcc94ff959f7957ac184188fd91744900a429a3\", \"runtime_version\": \"0.0.0-golden\", \"binary_sha256\": \"25ba8ebec5f227618d8d58f475622669f4c45019d40259d1d292a823f4184c27\", \"runtime_id\": \"native-claude-code\", \"image_digest\": \"sha256:2d032a622cf94baf637a4488720865da983853e4a655fea4e45d0e80f0a9c640\", \"default_action\": \"keep\", \"materializer_sha256\": \"ba6245da8b07901b6793898e70e2e974a1e641a2c3be0d357ba53d15101f4081\", \"overrides\": [{\"block_id\": \"short\", \"action\": \"disable\"}]}"
+   ],
+   "function": "parse_profile_document",
+   "expected": {
+    "error": "The native prompt profile has an invalid or duplicate prompt intervention."
+   }
+  },
+  {
+   "name": "parse: profile whose replacement digest does not match",
+   "args": [
+    "{\"schema_version\": 1, \"inventory_sha256\": \"44e7b67bbdc0842fecf8cfa158641e03998f7d0b34184bc297ede967ab24ce7a\", \"taxonomy_sha256\": \"6064ebcb6693a1dd7b3e50fbfbcc94ff959f7957ac184188fd91744900a429a3\", \"runtime_version\": \"0.0.0-golden\", \"binary_sha256\": \"25ba8ebec5f227618d8d58f475622669f4c45019d40259d1d292a823f4184c27\", \"runtime_id\": \"native-claude-code\", \"image_digest\": \"sha256:2d032a622cf94baf637a4488720865da983853e4a655fea4e45d0e80f0a9c640\", \"default_action\": \"keep\", \"materializer_sha256\": \"ba6245da8b07901b6793898e70e2e974a1e641a2c3be0d357ba53d15101f4081\", \"overrides\": [{\"block_id\": \"short\", \"baseline_sha256\": \"213c22ed7234eb11116e1e88f314c73cb3a019b5c87fe224b6ce5665bd9ec50e\", \"action\": \"disable\", \"replacement_sha256\": \"4444444444444444444444444444444444444444444444444444444444444444\"}, {\"block_id\": \"unicode-mix\", \"baseline_sha256\": \"d00da6c5a836c9df66e6b20ea37a93990bedea7ff26d8c203fd257d9b47523a8\", \"action\": \"replace\", \"replacement_utf8\": \"\\u65e5\\u672c \\ud83d\\ude42 \\u2028 text\", \"replacement_sha256\": \"3bde5eba0a65363e70c5e61f703adeaef9aeda312bdb3d02aaa4c9ec2cc7d4ba\"}]}"
+   ],
+   "function": "parse_profile_document",
+   "expected": {
+    "error": "The native prompt profile has an invalid or duplicate prompt intervention."
+   }
+  },
+  {
+   "name": "file name: profile",
+   "args": [
+    {
+     "schema_version": 1,
+     "inventory_sha256": "44e7b67bbdc0842fecf8cfa158641e03998f7d0b34184bc297ede967ab24ce7a",
+     "taxonomy_sha256": "6064ebcb6693a1dd7b3e50fbfbcc94ff959f7957ac184188fd91744900a429a3",
+     "runtime_version": "0.0.0-golden",
+     "binary_sha256": "25ba8ebec5f227618d8d58f475622669f4c45019d40259d1d292a823f4184c27",
+     "runtime_id": "native-claude-code",
+     "image_digest": "sha256:2d032a622cf94baf637a4488720865da983853e4a655fea4e45d0e80f0a9c640",
+     "default_action": "keep",
+     "materializer_sha256": "ba6245da8b07901b6793898e70e2e974a1e641a2c3be0d357ba53d15101f4081",
+     "overrides": [
+      {
+       "block_id": "short",
+       "baseline_sha256": "213c22ed7234eb11116e1e88f314c73cb3a019b5c87fe224b6ce5665bd9ec50e",
+       "action": "disable"
+      },
+      {
+       "block_id": "unicode-mix",
+       "baseline_sha256": "d00da6c5a836c9df66e6b20ea37a93990bedea7ff26d8c203fd257d9b47523a8",
+       "action": "replace",
+       "replacement_utf8": "\u65e5\u672c \ud83d\ude42 \u2028 text",
+       "replacement_sha256": "3bde5eba0a65363e70c5e61f703adeaef9aeda312bdb3d02aaa4c9ec2cc7d4ba"
+      }
+     ]
+    },
+    "3bcf783a2ef798a5f209a116af5a643a6d899237181d46e73d1f6802cb3df264"
+   ],
+   "function": "profile_file_name",
+   "expected": "native-prompt-profile-native-claude-code-3bcf783a2ef7.json"
+  },
+  {
+   "name": "file name: bundle",
+   "args": [
+    {
+     "schema_version": 1,
+     "inventory_sha256": "44e7b67bbdc0842fecf8cfa158641e03998f7d0b34184bc297ede967ab24ce7a",
+     "taxonomy_sha256": "6064ebcb6693a1dd7b3e50fbfbcc94ff959f7957ac184188fd91744900a429a3",
+     "runtime_version": "0.0.0-golden",
+     "binary_sha256": "25ba8ebec5f227618d8d58f475622669f4c45019d40259d1d292a823f4184c27",
+     "runtime_id": "native-claude-code",
+     "image_digest": "sha256:2d032a622cf94baf637a4488720865da983853e4a655fea4e45d0e80f0a9c640",
+     "default_action": "keep",
+     "materializer_sha256": "ba6245da8b07901b6793898e70e2e974a1e641a2c3be0d357ba53d15101f4081",
+     "overrides": [
+      {
+       "block_id": "short",
+       "baseline_sha256": "213c22ed7234eb11116e1e88f314c73cb3a019b5c87fe224b6ce5665bd9ec50e",
+       "action": "disable"
+      },
+      {
+       "block_id": "unicode-mix",
+       "baseline_sha256": "d00da6c5a836c9df66e6b20ea37a93990bedea7ff26d8c203fd257d9b47523a8",
+       "action": "replace",
+       "replacement_utf8": "\u65e5\u672c \ud83d\ude42 \u2028 text",
+       "replacement_sha256": "3bde5eba0a65363e70c5e61f703adeaef9aeda312bdb3d02aaa4c9ec2cc7d4ba"
+      }
+     ]
+    },
+    "3bcf783a2ef798a5f209a116af5a643a6d899237181d46e73d1f6802cb3df264",
+    "bundle"
+   ],
+   "function": "profile_file_name",
+   "expected": "native-prompt-profile-bundle-native-claude-code-3bcf783a2ef7.json"
+  },
+  {
+   "name": "file name: Codex",
+   "args": [
+    {
+     "schema_version": 1,
+     "runtime_id": "native-codex",
+     "runtime_version": "0.167.1",
+     "image_digest": "sha256:716f940f0958cd4abdda846a256caa95e40a5a858709f72692a16a89f9d14c7f",
+     "binary_sha256": "18ee9689f82cda3a1af3da8b40e0b5477a56b83e9e4fa620554a2fd6c6112053",
+     "inventory_sha256": "4eca453646cf1f187f5872ccafdec818d4536b3452b5ea1d33dcb436ad78273d",
+     "taxonomy_sha256": "6064ebcb6693a1dd7b3e50fbfbcc94ff959f7957ac184188fd91744900a429a3",
+     "materializer_sha256": "8a1ee9f8fba86a80c057f7712d4aeddb02096ec17f3c22451ecaf5ded9c1c185",
+     "default_action": "keep",
+     "overrides": []
+    },
+    "4b9944a8fd21a3fcb889e2c7b8a38e50cd8d9d8f68acaab2f621bfa80cfb4a34"
+   ],
+   "function": "profile_file_name",
+   "expected": "native-prompt-profile-native-codex-4b9944a8fd21.json"
+  },
+  {
+   "name": "file name: bad digest",
+   "args": [
+    {
+     "schema_version": 1,
+     "inventory_sha256": "44e7b67bbdc0842fecf8cfa158641e03998f7d0b34184bc297ede967ab24ce7a",
+     "taxonomy_sha256": "6064ebcb6693a1dd7b3e50fbfbcc94ff959f7957ac184188fd91744900a429a3",
+     "runtime_version": "0.0.0-golden",
+     "binary_sha256": "25ba8ebec5f227618d8d58f475622669f4c45019d40259d1d292a823f4184c27",
+     "runtime_id": "native-claude-code",
+     "image_digest": "sha256:2d032a622cf94baf637a4488720865da983853e4a655fea4e45d0e80f0a9c640",
+     "default_action": "keep",
+     "materializer_sha256": "ba6245da8b07901b6793898e70e2e974a1e641a2c3be0d357ba53d15101f4081",
+     "overrides": [
+      {
+       "block_id": "short",
+       "baseline_sha256": "213c22ed7234eb11116e1e88f314c73cb3a019b5c87fe224b6ce5665bd9ec50e",
+       "action": "disable"
+      },
+      {
+       "block_id": "unicode-mix",
+       "baseline_sha256": "d00da6c5a836c9df66e6b20ea37a93990bedea7ff26d8c203fd257d9b47523a8",
+       "action": "replace",
+       "replacement_utf8": "\u65e5\u672c \ud83d\ude42 \u2028 text",
+       "replacement_sha256": "3bde5eba0a65363e70c5e61f703adeaef9aeda312bdb3d02aaa4c9ec2cc7d4ba"
+      }
+     ]
+    },
+    "xyz"
+   ],
+   "function": "profile_file_name",
+   "expected": {
+    "error": "A profile file name needs a native runtime and a SHA-256 digest."
+   }
+  },
+  {
+   "name": "file name: unknown runtime",
+   "args": [
+    {
+     "schema_version": 1,
+     "inventory_sha256": "44e7b67bbdc0842fecf8cfa158641e03998f7d0b34184bc297ede967ab24ce7a",
+     "taxonomy_sha256": "6064ebcb6693a1dd7b3e50fbfbcc94ff959f7957ac184188fd91744900a429a3",
+     "runtime_version": "0.0.0-golden",
+     "binary_sha256": "25ba8ebec5f227618d8d58f475622669f4c45019d40259d1d292a823f4184c27",
+     "runtime_id": "traceharness",
+     "image_digest": "sha256:2d032a622cf94baf637a4488720865da983853e4a655fea4e45d0e80f0a9c640",
+     "default_action": "keep",
+     "materializer_sha256": "ba6245da8b07901b6793898e70e2e974a1e641a2c3be0d357ba53d15101f4081",
+     "overrides": [
+      {
+       "block_id": "short",
+       "baseline_sha256": "213c22ed7234eb11116e1e88f314c73cb3a019b5c87fe224b6ce5665bd9ec50e",
+       "action": "disable"
+      },
+      {
+       "block_id": "unicode-mix",
+       "baseline_sha256": "d00da6c5a836c9df66e6b20ea37a93990bedea7ff26d8c203fd257d9b47523a8",
+       "action": "replace",
+       "replacement_utf8": "\u65e5\u672c \ud83d\ude42 \u2028 text",
+       "replacement_sha256": "3bde5eba0a65363e70c5e61f703adeaef9aeda312bdb3d02aaa4c9ec2cc7d4ba"
+      }
+     ]
+    },
+    "3bcf783a2ef798a5f209a116af5a643a6d899237181d46e73d1f6802cb3df264"
+   ],
+   "function": "profile_file_name",
+   "expected": {
+    "error": "A profile file name needs a native runtime and a SHA-256 digest."
+   }
+  },
+  {
+   "name": "file name: Codex bundle",
+   "args": [
+    {
+     "schema_version": 1,
+     "runtime_id": "native-codex",
+     "runtime_version": "0.167.1",
+     "image_digest": "sha256:716f940f0958cd4abdda846a256caa95e40a5a858709f72692a16a89f9d14c7f",
+     "binary_sha256": "18ee9689f82cda3a1af3da8b40e0b5477a56b83e9e4fa620554a2fd6c6112053",
+     "inventory_sha256": "4eca453646cf1f187f5872ccafdec818d4536b3452b5ea1d33dcb436ad78273d",
+     "taxonomy_sha256": "6064ebcb6693a1dd7b3e50fbfbcc94ff959f7957ac184188fd91744900a429a3",
+     "materializer_sha256": "8a1ee9f8fba86a80c057f7712d4aeddb02096ec17f3c22451ecaf5ded9c1c185",
+     "default_action": "keep",
+     "overrides": []
+    },
+    "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "bundle"
+   ],
+   "function": "profile_file_name",
+   "expected": "native-prompt-profile-bundle-native-codex-aaaaaaaaaaaa.json"
+  },
+  {
+   "name": "file name: digest not text",
+   "args": [
+    {
+     "schema_version": 1,
+     "inventory_sha256": "44e7b67bbdc0842fecf8cfa158641e03998f7d0b34184bc297ede967ab24ce7a",
+     "taxonomy_sha256": "6064ebcb6693a1dd7b3e50fbfbcc94ff959f7957ac184188fd91744900a429a3",
+     "runtime_version": "0.0.0-golden",
+     "binary_sha256": "25ba8ebec5f227618d8d58f475622669f4c45019d40259d1d292a823f4184c27",
+     "runtime_id": "native-claude-code",
+     "image_digest": "sha256:2d032a622cf94baf637a4488720865da983853e4a655fea4e45d0e80f0a9c640",
+     "default_action": "keep",
+     "materializer_sha256": "ba6245da8b07901b6793898e70e2e974a1e641a2c3be0d357ba53d15101f4081",
+     "overrides": [
+      {
+       "block_id": "short",
+       "baseline_sha256": "213c22ed7234eb11116e1e88f314c73cb3a019b5c87fe224b6ce5665bd9ec50e",
+       "action": "disable"
+      },
+      {
+       "block_id": "unicode-mix",
+       "baseline_sha256": "d00da6c5a836c9df66e6b20ea37a93990bedea7ff26d8c203fd257d9b47523a8",
+       "action": "replace",
+       "replacement_utf8": "\u65e5\u672c \ud83d\ude42 \u2028 text",
+       "replacement_sha256": "3bde5eba0a65363e70c5e61f703adeaef9aeda312bdb3d02aaa4c9ec2cc7d4ba"
+      }
+     ]
+    },
+    12
+   ],
+   "function": "profile_file_name",
+   "expected": {
+    "error": "A profile file name needs a native runtime and a SHA-256 digest."
+   }
+  },
+  {
+   "name": "file name: profile not an object",
+   "args": [
+    "profile",
+    "3bcf783a2ef798a5f209a116af5a643a6d899237181d46e73d1f6802cb3df264"
+   ],
+   "function": "profile_file_name",
+   "expected": {
+    "error": "A profile file name needs a native runtime and a SHA-256 digest."
+   }
+  },
+  {
+   "name": "serialize: profile",
+   "args": [
+    {
+     "schema_version": 1,
+     "inventory_sha256": "44e7b67bbdc0842fecf8cfa158641e03998f7d0b34184bc297ede967ab24ce7a",
+     "taxonomy_sha256": "6064ebcb6693a1dd7b3e50fbfbcc94ff959f7957ac184188fd91744900a429a3",
+     "runtime_version": "0.0.0-golden",
+     "binary_sha256": "25ba8ebec5f227618d8d58f475622669f4c45019d40259d1d292a823f4184c27",
+     "runtime_id": "native-claude-code",
+     "image_digest": "sha256:2d032a622cf94baf637a4488720865da983853e4a655fea4e45d0e80f0a9c640",
+     "default_action": "keep",
+     "materializer_sha256": "ba6245da8b07901b6793898e70e2e974a1e641a2c3be0d357ba53d15101f4081",
+     "overrides": [
+      {
+       "block_id": "short",
+       "baseline_sha256": "213c22ed7234eb11116e1e88f314c73cb3a019b5c87fe224b6ce5665bd9ec50e",
+       "action": "disable"
+      },
+      {
+       "block_id": "unicode-mix",
+       "baseline_sha256": "d00da6c5a836c9df66e6b20ea37a93990bedea7ff26d8c203fd257d9b47523a8",
+       "action": "replace",
+       "replacement_utf8": "\u65e5\u672c \ud83d\ude42 \u2028 text",
+       "replacement_sha256": "3bde5eba0a65363e70c5e61f703adeaef9aeda312bdb3d02aaa4c9ec2cc7d4ba"
+      }
+     ]
+    }
+   ],
+   "function": "serialize_profile_file",
+   "expected": "{\"binary_sha256\":\"25ba8ebec5f227618d8d58f475622669f4c45019d40259d1d292a823f4184c27\",\"default_action\":\"keep\",\"image_digest\":\"sha256:2d032a622cf94baf637a4488720865da983853e4a655fea4e45d0e80f0a9c640\",\"inventory_sha256\":\"44e7b67bbdc0842fecf8cfa158641e03998f7d0b34184bc297ede967ab24ce7a\",\"materializer_sha256\":\"ba6245da8b07901b6793898e70e2e974a1e641a2c3be0d357ba53d15101f4081\",\"overrides\":[{\"action\":\"disable\",\"baseline_sha256\":\"213c22ed7234eb11116e1e88f314c73cb3a019b5c87fe224b6ce5665bd9ec50e\",\"block_id\":\"short\"},{\"action\":\"replace\",\"baseline_sha256\":\"d00da6c5a836c9df66e6b20ea37a93990bedea7ff26d8c203fd257d9b47523a8\",\"block_id\":\"unicode-mix\",\"replacement_sha256\":\"3bde5eba0a65363e70c5e61f703adeaef9aeda312bdb3d02aaa4c9ec2cc7d4ba\",\"replacement_utf8\":\"\u65e5\u672c \ud83d\ude42 \u2028 text\"}],\"runtime_id\":\"native-claude-code\",\"runtime_version\":\"0.0.0-golden\",\"schema_version\":1,\"taxonomy_sha256\":\"6064ebcb6693a1dd7b3e50fbfbcc94ff959f7957ac184188fd91744900a429a3\"}\n"
+  },
+  {
+   "name": "serialize: bundle",
+   "args": [
+    {
+     "kind": "traceharness.native-prompt-profile-bundle",
+     "bundle_version": 1,
+     "name": "Fabricated lean profile",
+     "note": "Fabricated note.\nSecond line.",
+     "created_at": "2026-11-12T10:00:00.000Z",
+     "tool": "traceharness-cli",
+     "profile_sha256": "3bcf783a2ef798a5f209a116af5a643a6d899237181d46e73d1f6802cb3df264",
+     "profile": {
+      "schema_version": 1,
+      "runtime_id": "native-claude-code",
+      "runtime_version": "0.0.0-golden",
+      "image_digest": "sha256:2d032a622cf94baf637a4488720865da983853e4a655fea4e45d0e80f0a9c640",
+      "binary_sha256": "25ba8ebec5f227618d8d58f475622669f4c45019d40259d1d292a823f4184c27",
+      "inventory_sha256": "44e7b67bbdc0842fecf8cfa158641e03998f7d0b34184bc297ede967ab24ce7a",
+      "taxonomy_sha256": "6064ebcb6693a1dd7b3e50fbfbcc94ff959f7957ac184188fd91744900a429a3",
+      "materializer_sha256": "ba6245da8b07901b6793898e70e2e974a1e641a2c3be0d357ba53d15101f4081",
+      "default_action": "keep",
+      "overrides": [
+       {
+        "block_id": "short",
+        "baseline_sha256": "213c22ed7234eb11116e1e88f314c73cb3a019b5c87fe224b6ce5665bd9ec50e",
+        "action": "disable"
+       },
+       {
+        "block_id": "unicode-mix",
+        "baseline_sha256": "d00da6c5a836c9df66e6b20ea37a93990bedea7ff26d8c203fd257d9b47523a8",
+        "action": "replace",
+        "replacement_utf8": "\u65e5\u672c \ud83d\ude42 \u2028 text",
+        "replacement_sha256": "3bde5eba0a65363e70c5e61f703adeaef9aeda312bdb3d02aaa4c9ec2cc7d4ba"
+       }
+      ]
+     },
+     "sets": [
+      {
+       "name": "Fabricated set",
+       "block_ids": [
+        "short",
+        "zebra-only"
+       ]
+      }
+     ]
+    }
+   ],
+   "function": "serialize_profile_file",
+   "expected": "{\n  \"kind\": \"traceharness.native-prompt-profile-bundle\",\n  \"bundle_version\": 1,\n  \"name\": \"Fabricated lean profile\",\n  \"note\": \"Fabricated note.\\nSecond line.\",\n  \"created_at\": \"2026-11-12T10:00:00.000Z\",\n  \"tool\": \"traceharness-cli\",\n  \"profile_sha256\": \"3bcf783a2ef798a5f209a116af5a643a6d899237181d46e73d1f6802cb3df264\",\n  \"profile\": {\n    \"schema_version\": 1,\n    \"runtime_id\": \"native-claude-code\",\n    \"runtime_version\": \"0.0.0-golden\",\n    \"image_digest\": \"sha256:2d032a622cf94baf637a4488720865da983853e4a655fea4e45d0e80f0a9c640\",\n    \"binary_sha256\": \"25ba8ebec5f227618d8d58f475622669f4c45019d40259d1d292a823f4184c27\",\n    \"inventory_sha256\": \"44e7b67bbdc0842fecf8cfa158641e03998f7d0b34184bc297ede967ab24ce7a\",\n    \"taxonomy_sha256\": \"6064ebcb6693a1dd7b3e50fbfbcc94ff959f7957ac184188fd91744900a429a3\",\n    \"materializer_sha256\": \"ba6245da8b07901b6793898e70e2e974a1e641a2c3be0d357ba53d15101f4081\",\n    \"default_action\": \"keep\",\n    \"overrides\": [\n      {\n        \"block_id\": \"short\",\n        \"baseline_sha256\": \"213c22ed7234eb11116e1e88f314c73cb3a019b5c87fe224b6ce5665bd9ec50e\",\n        \"action\": \"disable\"\n      },\n      {\n        \"block_id\": \"unicode-mix\",\n        \"baseline_sha256\": \"d00da6c5a836c9df66e6b20ea37a93990bedea7ff26d8c203fd257d9b47523a8\",\n        \"action\": \"replace\",\n        \"replacement_utf8\": \"\u65e5\u672c \ud83d\ude42 \u2028 text\",\n        \"replacement_sha256\": \"3bde5eba0a65363e70c5e61f703adeaef9aeda312bdb3d02aaa4c9ec2cc7d4ba\"\n      }\n    ]\n  },\n  \"sets\": [\n    {\n      \"name\": \"Fabricated set\",\n      \"block_ids\": [\n        \"short\",\n        \"zebra-only\"\n      ]\n    }\n  ]\n}\n"
+  },
+  {
+   "name": "serialize: baseline",
+   "args": [
+    {
+     "schema_version": 1,
+     "runtime_id": "native-claude-code",
+     "runtime_version": "0.0.0-golden",
+     "image_digest": "sha256:2d032a622cf94baf637a4488720865da983853e4a655fea4e45d0e80f0a9c640",
+     "binary_sha256": "25ba8ebec5f227618d8d58f475622669f4c45019d40259d1d292a823f4184c27",
+     "inventory_sha256": "44e7b67bbdc0842fecf8cfa158641e03998f7d0b34184bc297ede967ab24ce7a",
+     "taxonomy_sha256": "6064ebcb6693a1dd7b3e50fbfbcc94ff959f7957ac184188fd91744900a429a3",
+     "materializer_sha256": "ba6245da8b07901b6793898e70e2e974a1e641a2c3be0d357ba53d15101f4081",
+     "default_action": "keep",
+     "overrides": []
+    }
+   ],
+   "function": "serialize_profile_file",
+   "expected": "{\"binary_sha256\":\"25ba8ebec5f227618d8d58f475622669f4c45019d40259d1d292a823f4184c27\",\"default_action\":\"keep\",\"image_digest\":\"sha256:2d032a622cf94baf637a4488720865da983853e4a655fea4e45d0e80f0a9c640\",\"inventory_sha256\":\"44e7b67bbdc0842fecf8cfa158641e03998f7d0b34184bc297ede967ab24ce7a\",\"materializer_sha256\":\"ba6245da8b07901b6793898e70e2e974a1e641a2c3be0d357ba53d15101f4081\",\"overrides\":[],\"runtime_id\":\"native-claude-code\",\"runtime_version\":\"0.0.0-golden\",\"schema_version\":1,\"taxonomy_sha256\":\"6064ebcb6693a1dd7b3e50fbfbcc94ff959f7957ac184188fd91744900a429a3\"}\n"
+  },
+  {
+   "name": "serialize: none included",
+   "args": [
+    {
+     "schema_version": 1,
+     "runtime_id": "native-claude-code",
+     "runtime_version": "0.0.0-golden",
+     "image_digest": "sha256:2d032a622cf94baf637a4488720865da983853e4a655fea4e45d0e80f0a9c640",
+     "binary_sha256": "25ba8ebec5f227618d8d58f475622669f4c45019d40259d1d292a823f4184c27",
+     "inventory_sha256": "44e7b67bbdc0842fecf8cfa158641e03998f7d0b34184bc297ede967ab24ce7a",
+     "taxonomy_sha256": "6064ebcb6693a1dd7b3e50fbfbcc94ff959f7957ac184188fd91744900a429a3",
+     "materializer_sha256": "ba6245da8b07901b6793898e70e2e974a1e641a2c3be0d357ba53d15101f4081",
+     "default_action": "disable",
+     "overrides": []
+    }
+   ],
+   "function": "serialize_profile_file",
+   "expected": "{\"binary_sha256\":\"25ba8ebec5f227618d8d58f475622669f4c45019d40259d1d292a823f4184c27\",\"default_action\":\"disable\",\"image_digest\":\"sha256:2d032a622cf94baf637a4488720865da983853e4a655fea4e45d0e80f0a9c640\",\"inventory_sha256\":\"44e7b67bbdc0842fecf8cfa158641e03998f7d0b34184bc297ede967ab24ce7a\",\"materializer_sha256\":\"ba6245da8b07901b6793898e70e2e974a1e641a2c3be0d357ba53d15101f4081\",\"overrides\":[],\"runtime_id\":\"native-claude-code\",\"runtime_version\":\"0.0.0-golden\",\"schema_version\":1,\"taxonomy_sha256\":\"6064ebcb6693a1dd7b3e50fbfbcc94ff959f7957ac184188fd91744900a429a3\"}\n"
+  },
+  {
+   "name": "serialize: Codex baseline",
+   "args": [
+    {
+     "schema_version": 1,
+     "runtime_id": "native-codex",
+     "runtime_version": "0.167.1",
+     "image_digest": "sha256:716f940f0958cd4abdda846a256caa95e40a5a858709f72692a16a89f9d14c7f",
+     "binary_sha256": "18ee9689f82cda3a1af3da8b40e0b5477a56b83e9e4fa620554a2fd6c6112053",
+     "inventory_sha256": "4eca453646cf1f187f5872ccafdec818d4536b3452b5ea1d33dcb436ad78273d",
+     "taxonomy_sha256": "6064ebcb6693a1dd7b3e50fbfbcc94ff959f7957ac184188fd91744900a429a3",
+     "materializer_sha256": "8a1ee9f8fba86a80c057f7712d4aeddb02096ec17f3c22451ecaf5ded9c1c185",
+     "default_action": "keep",
+     "overrides": []
+    }
+   ],
+   "function": "serialize_profile_file",
+   "expected": "{\"binary_sha256\":\"18ee9689f82cda3a1af3da8b40e0b5477a56b83e9e4fa620554a2fd6c6112053\",\"default_action\":\"keep\",\"image_digest\":\"sha256:716f940f0958cd4abdda846a256caa95e40a5a858709f72692a16a89f9d14c7f\",\"inventory_sha256\":\"4eca453646cf1f187f5872ccafdec818d4536b3452b5ea1d33dcb436ad78273d\",\"materializer_sha256\":\"8a1ee9f8fba86a80c057f7712d4aeddb02096ec17f3c22451ecaf5ded9c1c185\",\"overrides\":[],\"runtime_id\":\"native-codex\",\"runtime_version\":\"0.167.1\",\"schema_version\":1,\"taxonomy_sha256\":\"6064ebcb6693a1dd7b3e50fbfbcc94ff959f7957ac184188fd91744900a429a3\"}\n"
+  },
+  {
+   "name": "serialize: keep overrides",
+   "args": [
+    {
+     "schema_version": 1,
+     "inventory_sha256": "44e7b67bbdc0842fecf8cfa158641e03998f7d0b34184bc297ede967ab24ce7a",
+     "taxonomy_sha256": "6064ebcb6693a1dd7b3e50fbfbcc94ff959f7957ac184188fd91744900a429a3",
+     "runtime_version": "0.0.0-golden",
+     "binary_sha256": "25ba8ebec5f227618d8d58f475622669f4c45019d40259d1d292a823f4184c27",
+     "runtime_id": "native-claude-code",
+     "image_digest": "sha256:2d032a622cf94baf637a4488720865da983853e4a655fea4e45d0e80f0a9c640",
+     "default_action": "keep",
+     "materializer_sha256": "ba6245da8b07901b6793898e70e2e974a1e641a2c3be0d357ba53d15101f4081",
+     "overrides": [
+      {
+       "block_id": "observed-dynamic",
+       "baseline_sha256": "051b5a1029b4b78cbfdc9d1fe6ade44d634c605f3ad3b88ed5d59a55c877d6f7",
+       "action": "keep"
+      },
+      {
+       "block_id": "short",
+       "baseline_sha256": "213c22ed7234eb11116e1e88f314c73cb3a019b5c87fe224b6ce5665bd9ec50e",
+       "action": "keep"
+      }
+     ]
+    }
+   ],
+   "function": "serialize_profile_file",
+   "expected": "{\"binary_sha256\":\"25ba8ebec5f227618d8d58f475622669f4c45019d40259d1d292a823f4184c27\",\"default_action\":\"keep\",\"image_digest\":\"sha256:2d032a622cf94baf637a4488720865da983853e4a655fea4e45d0e80f0a9c640\",\"inventory_sha256\":\"44e7b67bbdc0842fecf8cfa158641e03998f7d0b34184bc297ede967ab24ce7a\",\"materializer_sha256\":\"ba6245da8b07901b6793898e70e2e974a1e641a2c3be0d357ba53d15101f4081\",\"overrides\":[{\"action\":\"keep\",\"baseline_sha256\":\"051b5a1029b4b78cbfdc9d1fe6ade44d634c605f3ad3b88ed5d59a55c877d6f7\",\"block_id\":\"observed-dynamic\"},{\"action\":\"keep\",\"baseline_sha256\":\"213c22ed7234eb11116e1e88f314c73cb3a019b5c87fe224b6ce5665bd9ec50e\",\"block_id\":\"short\"}],\"runtime_id\":\"native-claude-code\",\"runtime_version\":\"0.0.0-golden\",\"schema_version\":1,\"taxonomy_sha256\":\"6064ebcb6693a1dd7b3e50fbfbcc94ff959f7957ac184188fd91744900a429a3\"}\n"
+  },
+  {
+   "name": "serialize: bundle without sets or note",
+   "args": [
+    {
+     "kind": "traceharness.native-prompt-profile-bundle",
+     "bundle_version": 1,
+     "name": "Fabricated baseline",
+     "note": "",
+     "created_at": "2026-11-12T10:00:00.000Z",
+     "tool": "traceharness-ui",
+     "profile_sha256": "9c20f2936d33c80b1ea4b3201b104eed936eacf5ccb9e8705c4ae1a2ec09a778",
+     "profile": {
+      "schema_version": 1,
+      "runtime_id": "native-claude-code",
+      "runtime_version": "0.0.0-golden",
+      "image_digest": "sha256:2d032a622cf94baf637a4488720865da983853e4a655fea4e45d0e80f0a9c640",
+      "binary_sha256": "25ba8ebec5f227618d8d58f475622669f4c45019d40259d1d292a823f4184c27",
+      "inventory_sha256": "44e7b67bbdc0842fecf8cfa158641e03998f7d0b34184bc297ede967ab24ce7a",
+      "taxonomy_sha256": "6064ebcb6693a1dd7b3e50fbfbcc94ff959f7957ac184188fd91744900a429a3",
+      "materializer_sha256": "ba6245da8b07901b6793898e70e2e974a1e641a2c3be0d357ba53d15101f4081",
+      "default_action": "keep",
+      "overrides": []
+     },
+     "sets": []
+    }
+   ],
+   "function": "serialize_profile_file",
+   "expected": "{\n  \"kind\": \"traceharness.native-prompt-profile-bundle\",\n  \"bundle_version\": 1,\n  \"name\": \"Fabricated baseline\",\n  \"note\": \"\",\n  \"created_at\": \"2026-11-12T10:00:00.000Z\",\n  \"tool\": \"traceharness-ui\",\n  \"profile_sha256\": \"9c20f2936d33c80b1ea4b3201b104eed936eacf5ccb9e8705c4ae1a2ec09a778\",\n  \"profile\": {\n    \"schema_version\": 1,\n    \"runtime_id\": \"native-claude-code\",\n    \"runtime_version\": \"0.0.0-golden\",\n    \"image_digest\": \"sha256:2d032a622cf94baf637a4488720865da983853e4a655fea4e45d0e80f0a9c640\",\n    \"binary_sha256\": \"25ba8ebec5f227618d8d58f475622669f4c45019d40259d1d292a823f4184c27\",\n    \"inventory_sha256\": \"44e7b67bbdc0842fecf8cfa158641e03998f7d0b34184bc297ede967ab24ce7a\",\n    \"taxonomy_sha256\": \"6064ebcb6693a1dd7b3e50fbfbcc94ff959f7957ac184188fd91744900a429a3\",\n    \"materializer_sha256\": \"ba6245da8b07901b6793898e70e2e974a1e641a2c3be0d357ba53d15101f4081\",\n    \"default_action\": \"keep\",\n    \"overrides\": []\n  },\n  \"sets\": []\n}\n"
+  },
+  {
+   "name": "serialize: bundle with a non-ASCII name",
+   "args": [
+    {
+     "kind": "traceharness.native-prompt-profile-bundle",
+     "bundle_version": 1,
+     "name": "\u65e5\u672c \ud83d\ude42 \u2028 profile",
+     "note": "",
+     "created_at": "2026-11-12T10:00:00.000Z",
+     "tool": "traceharness-ui",
+     "profile_sha256": "3bcf783a2ef798a5f209a116af5a643a6d899237181d46e73d1f6802cb3df264",
+     "profile": {
+      "schema_version": 1,
+      "runtime_id": "native-claude-code",
+      "runtime_version": "0.0.0-golden",
+      "image_digest": "sha256:2d032a622cf94baf637a4488720865da983853e4a655fea4e45d0e80f0a9c640",
+      "binary_sha256": "25ba8ebec5f227618d8d58f475622669f4c45019d40259d1d292a823f4184c27",
+      "inventory_sha256": "44e7b67bbdc0842fecf8cfa158641e03998f7d0b34184bc297ede967ab24ce7a",
+      "taxonomy_sha256": "6064ebcb6693a1dd7b3e50fbfbcc94ff959f7957ac184188fd91744900a429a3",
+      "materializer_sha256": "ba6245da8b07901b6793898e70e2e974a1e641a2c3be0d357ba53d15101f4081",
+      "default_action": "keep",
+      "overrides": [
+       {
+        "block_id": "short",
+        "baseline_sha256": "213c22ed7234eb11116e1e88f314c73cb3a019b5c87fe224b6ce5665bd9ec50e",
+        "action": "disable"
+       },
+       {
+        "block_id": "unicode-mix",
+        "baseline_sha256": "d00da6c5a836c9df66e6b20ea37a93990bedea7ff26d8c203fd257d9b47523a8",
+        "action": "replace",
+        "replacement_utf8": "\u65e5\u672c \ud83d\ude42 \u2028 text",
+        "replacement_sha256": "3bde5eba0a65363e70c5e61f703adeaef9aeda312bdb3d02aaa4c9ec2cc7d4ba"
+       }
+      ]
+     },
+     "sets": []
+    }
+   ],
+   "function": "serialize_profile_file",
+   "expected": "{\n  \"kind\": \"traceharness.native-prompt-profile-bundle\",\n  \"bundle_version\": 1,\n  \"name\": \"\u65e5\u672c \ud83d\ude42 \u2028 profile\",\n  \"note\": \"\",\n  \"created_at\": \"2026-11-12T10:00:00.000Z\",\n  \"tool\": \"traceharness-ui\",\n  \"profile_sha256\": \"3bcf783a2ef798a5f209a116af5a643a6d899237181d46e73d1f6802cb3df264\",\n  \"profile\": {\n    \"schema_version\": 1,\n    \"runtime_id\": \"native-claude-code\",\n    \"runtime_version\": \"0.0.0-golden\",\n    \"image_digest\": \"sha256:2d032a622cf94baf637a4488720865da983853e4a655fea4e45d0e80f0a9c640\",\n    \"binary_sha256\": \"25ba8ebec5f227618d8d58f475622669f4c45019d40259d1d292a823f4184c27\",\n    \"inventory_sha256\": \"44e7b67bbdc0842fecf8cfa158641e03998f7d0b34184bc297ede967ab24ce7a\",\n    \"taxonomy_sha256\": \"6064ebcb6693a1dd7b3e50fbfbcc94ff959f7957ac184188fd91744900a429a3\",\n    \"materializer_sha256\": \"ba6245da8b07901b6793898e70e2e974a1e641a2c3be0d357ba53d15101f4081\",\n    \"default_action\": \"keep\",\n    \"overrides\": [\n      {\n        \"block_id\": \"short\",\n        \"baseline_sha256\": \"213c22ed7234eb11116e1e88f314c73cb3a019b5c87fe224b6ce5665bd9ec50e\",\n        \"action\": \"disable\"\n      },\n      {\n        \"block_id\": \"unicode-mix\",\n        \"baseline_sha256\": \"d00da6c5a836c9df66e6b20ea37a93990bedea7ff26d8c203fd257d9b47523a8\",\n        \"action\": \"replace\",\n        \"replacement_utf8\": \"\u65e5\u672c \ud83d\ude42 \u2028 text\",\n        \"replacement_sha256\": \"3bde5eba0a65363e70c5e61f703adeaef9aeda312bdb3d02aaa4c9ec2cc7d4ba\"\n      }\n    ]\n  },\n  \"sets\": []\n}\n"
+  }
+ ]
+}

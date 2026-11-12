@@ -1,0 +1,154 @@
+{
+ "function": "canonical_json",
+ "cases": [
+  {
+   "name": "key order",
+   "args": [
+    {
+     "b": 1,
+     "a": 2,
+     "c": {
+      "z": 0,
+      "y": [
+       3,
+       2,
+       1
+      ]
+     }
+    }
+   ],
+   "expected": "{\"a\":2,\"b\":1,\"c\":{\"y\":[3,2,1],\"z\":0}}"
+  },
+  {
+   "name": "non-ASCII keys sort by code point",
+   "args": [
+    {
+     "\u00e9": 1,
+     "z": 2,
+     "\ud83d\ude42": 3,
+     "\uff21": 4,
+     "A": 5
+    }
+   ],
+   "expected": "{\"A\":5,\"z\":2,\"\u00e9\":1,\"\uff21\":4,\"\ud83d\ude42\":3}"
+  },
+  {
+   "name": "U+2028 and U+2029 kept as is",
+   "args": [
+    {
+     "text": "a\u2028b\u2029c"
+    }
+   ],
+   "expected": "{\"text\":\"a\u2028b\u2029c\"}"
+  },
+  {
+   "name": "control characters escaped",
+   "args": [
+    {
+     "text": "\u0000\u0001\b\t\n\u000b\f\r\u001f\u007f"
+    }
+   ],
+   "expected": "{\"text\":\"\\u0000\\u0001\\b\\t\\n\\u000b\\f\\r\\u001f\u007f\"}"
+  },
+  {
+   "name": "quotes and backslashes",
+   "args": [
+    {
+     "text": "say \"hi\" \\ there"
+    }
+   ],
+   "expected": "{\"text\":\"say \\\"hi\\\" \\\\ there\"}"
+  },
+  {
+   "name": "astral characters kept",
+   "args": [
+    [
+     "\ud83d\ude42",
+     "\ud800\udf48"
+    ]
+   ],
+   "expected": "[\"\ud83d\ude42\",\"\ud800\udf48\"]"
+  },
+  {
+   "name": "nested arrays",
+   "args": [
+    [
+     [],
+     [
+      []
+     ],
+     [
+      1,
+      [
+       2,
+       [
+        3
+       ]
+      ]
+     ],
+     {}
+    ]
+   ],
+   "expected": "[[],[[]],[1,[2,[3]]],{}]"
+  },
+  {
+   "name": "scalars",
+   "args": [
+    [
+     true,
+     false,
+     null,
+     0,
+     -12,
+     4096
+    ]
+   ],
+   "expected": "[true,false,null,0,-12,4096]"
+  },
+  {
+   "name": "empty object",
+   "args": [
+    {}
+   ],
+   "expected": "{}"
+  },
+  {
+   "name": "empty string",
+   "args": [
+    ""
+   ],
+   "expected": "\"\""
+  },
+  {
+   "name": "a whole profile",
+   "args": [
+    {
+     "schema_version": 1,
+     "runtime_id": "native-claude-code",
+     "runtime_version": "0.0.0-golden",
+     "image_digest": "sha256:2d032a622cf94baf637a4488720865da983853e4a655fea4e45d0e80f0a9c640",
+     "binary_sha256": "25ba8ebec5f227618d8d58f475622669f4c45019d40259d1d292a823f4184c27",
+     "inventory_sha256": "44e7b67bbdc0842fecf8cfa158641e03998f7d0b34184bc297ede967ab24ce7a",
+     "taxonomy_sha256": "6064ebcb6693a1dd7b3e50fbfbcc94ff959f7957ac184188fd91744900a429a3",
+     "materializer_sha256": "ba6245da8b07901b6793898e70e2e974a1e641a2c3be0d357ba53d15101f4081",
+     "default_action": "keep",
+     "overrides": [
+      {
+       "block_id": "short",
+       "baseline_sha256": "213c22ed7234eb11116e1e88f314c73cb3a019b5c87fe224b6ce5665bd9ec50e",
+       "action": "disable"
+      },
+      {
+       "block_id": "tool-bash-guide",
+       "baseline_sha256": "c5db5a79c94bb7a9835cbe2e3897337c52e3bb72b73edaedf1165a51246b057b",
+       "action": "replace",
+       "replacement_utf8": "Fabricated \u2028 replacement \ud83d\ude42",
+       "replacement_sha256": "5f234279f1c4dea9fb808760d25573b17f4f0f7c56675200c9cffacdcbad1d26"
+      }
+     ]
+    }
+   ],
+   "expected": "{\"binary_sha256\":\"25ba8ebec5f227618d8d58f475622669f4c45019d40259d1d292a823f4184c27\",\"default_action\":\"keep\",\"image_digest\":\"sha256:2d032a622cf94baf637a4488720865da983853e4a655fea4e45d0e80f0a9c640\",\"inventory_sha256\":\"44e7b67bbdc0842fecf8cfa158641e03998f7d0b34184bc297ede967ab24ce7a\",\"materializer_sha256\":\"ba6245da8b07901b6793898e70e2e974a1e641a2c3be0d357ba53d15101f4081\",\"overrides\":[{\"action\":\"disable\",\"baseline_sha256\":\"213c22ed7234eb11116e1e88f314c73cb3a019b5c87fe224b6ce5665bd9ec50e\",\"block_id\":\"short\"},{\"action\":\"replace\",\"baseline_sha256\":\"c5db5a79c94bb7a9835cbe2e3897337c52e3bb72b73edaedf1165a51246b057b\",\"block_id\":\"tool-bash-guide\",\"replacement_sha256\":\"5f234279f1c4dea9fb808760d25573b17f4f0f7c56675200c9cffacdcbad1d26\",\"replacement_utf8\":\"Fabricated \u2028 replacement \ud83d\ude42\"}],\"runtime_id\":\"native-claude-code\",\"runtime_version\":\"0.0.0-golden\",\"schema_version\":1,\"taxonomy_sha256\":\"6064ebcb6693a1dd7b3e50fbfbcc94ff959f7957ac184188fd91744900a429a3\"}"
+  }
+ ]
+}

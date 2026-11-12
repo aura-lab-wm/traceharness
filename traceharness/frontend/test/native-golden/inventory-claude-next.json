@@ -1,0 +1,183 @@
+{
+ "schema_version": 1,
+ "runtime_id": "native-claude-code",
+ "runtime_version": "0.0.1-golden",
+ "image_digest": "sha256:76e10d1196b4ca3a50f54ac225942a0e801dfa2e88d8ce63fb9317aaf45642d2",
+ "binary_sha256": "2ca60ca059ee4faf95cd6e6be8ae5204db87aeeddf9f2481fc45d5f76c90ff41",
+ "inventory_sha256": "174b7817536a4c69f702dfebad2d03b93d0568cc4651d6cc458055dafc34a445",
+ "taxonomy_sha256": "6064ebcb6693a1dd7b3e50fbfbcc94ff959f7957ac184188fd91744900a429a3",
+ "materializer_sha256": "ba6245da8b07901b6793898e70e2e974a1e641a2c3be0d357ba53d15101f4081",
+ "blocks": [
+  {
+   "id": "tool-bash-guide",
+   "title": "Shell tool guide",
+   "class_name": "Tool Descriptions",
+   "class_source": "agent-patcher@8d3c17099974c06f2cfb1547bb4744c05f845b56:workbench.py:CLAUDE_NFR_CATEGORIES",
+   "source_layer": "fabricated-golden-fragment",
+   "capability": "patchable",
+   "baseline_sha256": "e5b6a07411099ae4dda58ad82d05b8020c1c7ce1533dedbedede8237de110749",
+   "baseline_utf8": "Fabricated guidance, revised: run one shell command at a time.\n",
+   "occurrence_count": 1,
+   "required_placeholders": []
+  },
+  {
+   "id": "system-reminder-plan",
+   "title": "Plan reminder",
+   "class_name": "System Reminders",
+   "class_source": "agent-patcher@8d3c17099974c06f2cfb1547bb4744c05f845b56:workbench.py:CLAUDE_NFR_CATEGORIES",
+   "source_layer": "fabricated-golden-fragment",
+   "capability": "patchable",
+   "baseline_sha256": "5911fea64f55d714569aff07fa8a887a235adca26c869f4f492da7c88c004a73",
+   "baseline_utf8": "Fabricated reminder for ${TH_PROMPT_EXPR_0}: keep the plan short and confirm it with ${TH_PROMPT_EXPR_1}.\n",
+   "occurrence_count": 1,
+   "required_placeholders": [
+    "${TH_PROMPT_EXPR_0}",
+    "${TH_PROMPT_EXPR_1}"
+   ]
+  },
+  {
+   "id": "security-sandbox-note",
+   "title": "Sandbox note",
+   "class_name": "Security & Safety",
+   "class_source": "agent-patcher@8d3c17099974c06f2cfb1547bb4744c05f845b56:workbench.py:CLAUDE_NFR_CATEGORIES",
+   "source_layer": "fabricated-golden-fragment",
+   "capability": "patchable",
+   "baseline_sha256": "da29f4d417fb4114d86cf22df8e7b8b94933d8df6b415974fb64812073588596",
+   "baseline_utf8": "Fabricated safety note: stay inside the working directory and refuse destructive commands.\n",
+   "occurrence_count": 1,
+   "required_placeholders": []
+  },
+  {
+   "id": "response-style",
+   "title": "Response style",
+   "class_name": "Response Quality",
+   "class_source": "agent-patcher@8d3c17099974c06f2cfb1547bb4744c05f845b56:workbench.py:CLAUDE_NFR_CATEGORIES",
+   "source_layer": "fabricated-golden-fragment",
+   "capability": "patchable",
+   "baseline_sha256": "dfdce2e37fd61eaecb69669b607c265d2dd9f8ab9c574eea221bb5e77620c6be",
+   "baseline_utf8": "IMPORTANT: Fabricated style rules follow.\nYou MUST NOT invent results.\n\n```\nIMPORTANT: inside a fence\n```\n\n\n\nKeep answers short.   \n",
+   "occurrence_count": 1,
+   "required_placeholders": []
+  },
+  {
+   "id": "general-hedge",
+   "title": "Assistant persona",
+   "class_name": "General Behavior",
+   "class_source": "agent-patcher@8d3c17099974c06f2cfb1547bb4744c05f845b56:workbench.py:CLAUDE_NFR_CATEGORIES",
+   "source_layer": "fabricated-golden-fragment",
+   "capability": "patchable",
+   "baseline_sha256": "9e5dada3492558f4af8fff686a4bb57c2bcc6e83faa7b86f653206cff34ac914",
+   "baseline_utf8": "As a helpful AI assistant, you greet the user.\nFabricated persona line two.\n------------\nPlease note that as an AI you have limits.\nFinal fabricated line.\n",
+   "occurrence_count": 1,
+   "required_placeholders": []
+  },
+  {
+   "id": "observed-dynamic",
+   "title": "Observed template",
+   "class_name": "General Behavior",
+   "class_source": "agent-patcher@8d3c17099974c06f2cfb1547bb4744c05f845b56:workbench.py:CLAUDE_NFR_CATEGORIES",
+   "source_layer": "fabricated-golden-fragment",
+   "capability": "observed-only",
+   "baseline_sha256": "051b5a1029b4b78cbfdc9d1fe6ade44d634c605f3ad3b88ed5d59a55c877d6f7",
+   "baseline_utf8": "Fabricated observed text with {{name}} inside.\n",
+   "occurrence_count": 0,
+   "required_placeholders": []
+  },
+  {
+   "id": "unavailable-fragment",
+   "title": "Unavailable fragment",
+   "class_name": "General Behavior",
+   "class_source": "agent-patcher@8d3c17099974c06f2cfb1547bb4744c05f845b56:workbench.py:CLAUDE_NFR_CATEGORIES",
+   "source_layer": "fabricated-golden-fragment",
+   "capability": "unavailable",
+   "baseline_sha256": "e5f67235304253a532f9d320332a59008a26ffe56aa2f3ce9a80c97a98d3b105",
+   "baseline_utf8": "Fabricated text that cannot be located.\n",
+   "occurrence_count": 0,
+   "required_placeholders": []
+  },
+  {
+   "id": "unicode-mix",
+   "title": "Unicode sample \u65e5\u672c",
+   "class_name": "File & Code Ops",
+   "class_source": "agent-patcher@8d3c17099974c06f2cfb1547bb4744c05f845b56:workbench.py:CLAUDE_NFR_CATEGORIES",
+   "source_layer": "fabricated-golden-fragment",
+   "capability": "patchable",
+   "baseline_sha256": "d00da6c5a836c9df66e6b20ea37a93990bedea7ff26d8c203fd257d9b47523a8",
+   "baseline_utf8": "Fabricated text: \u65e5\u672c\u8a9e\u306e\u8aac\u660e, emoji \ud83d\ude42, cafe\u0301 with a combining accent, and a line separator\u2028here.\n",
+   "occurrence_count": 1,
+   "required_placeholders": []
+  },
+  {
+   "id": "credential-prose",
+   "title": "Auth prose",
+   "class_name": "Environment & Platform",
+   "class_source": "agent-patcher@8d3c17099974c06f2cfb1547bb4744c05f845b56:workbench.py:CLAUDE_NFR_CATEGORIES",
+   "source_layer": "fabricated-golden-fragment",
+   "capability": "patchable",
+   "baseline_sha256": "6293d59414e9a5247a284f06bd5b229c7df4ac146349300fd02e33cc5729977f",
+   "baseline_utf8": "Fabricated note about Bearer authentication headers and requests.exceptions.JSONDecodeError handling; contact docs@example.com for details.\n",
+   "occurrence_count": 1,
+   "required_placeholders": []
+  },
+  {
+   "id": "escapes-sample",
+   "title": "Escapes sample",
+   "class_name": "General Behavior",
+   "class_source": "agent-patcher@8d3c17099974c06f2cfb1547bb4744c05f845b56:workbench.py:CLAUDE_NFR_CATEGORIES",
+   "source_layer": "fabricated-golden-fragment",
+   "capability": "patchable",
+   "baseline_sha256": "94e18873b9964d4d17b4df09af32075440f099df200461eeec07934da30feba4",
+   "baseline_utf8": "Fabricated escapes: \\n and \\u2014 appear written out.\n",
+   "occurrence_count": 1,
+   "required_placeholders": []
+  },
+  {
+   "id": "zebra-only",
+   "title": "Animal fact",
+   "class_name": "General Behavior",
+   "class_source": "agent-patcher@8d3c17099974c06f2cfb1547bb4744c05f845b56:workbench.py:CLAUDE_NFR_CATEGORIES",
+   "source_layer": "fabricated-golden-fragment",
+   "capability": "observed-only",
+   "baseline_sha256": "2ce9d291f5392ccce812660963901c0f0d97b67cf0e9fcb371d02e8574afda87",
+   "baseline_utf8": "Fabricated fact: the zebra appears only in this body.\n",
+   "occurrence_count": 0,
+   "required_placeholders": []
+  },
+  {
+   "id": "git-commit-guide",
+   "title": "Commit guide",
+   "class_name": "Git & VCS",
+   "class_source": "agent-patcher@8d3c17099974c06f2cfb1547bb4744c05f845b56:workbench.py:CLAUDE_NFR_CATEGORIES",
+   "source_layer": "fabricated-golden-fragment",
+   "capability": "patchable",
+   "baseline_sha256": "b52acffead6afdd004e98f407b6e01be0ee3c1fb8ca7921989aebc6cf97a21d6",
+   "baseline_utf8": "Fabricated: write one commit per change.\nSecond line of the guide.\nThird line of the guide.\nFourth line of the guide.\nFifth line of the guide.\n",
+   "occurrence_count": 1,
+   "required_placeholders": []
+  },
+  {
+   "id": "permission-deny-list",
+   "title": "Permission list",
+   "class_name": "Security & Safety",
+   "class_source": "agent-patcher@8d3c17099974c06f2cfb1547bb4744c05f845b56:workbench.py:CLAUDE_NFR_CATEGORIES",
+   "source_layer": "fabricated-golden-fragment",
+   "capability": "patchable",
+   "baseline_sha256": "039c555594a44e8b16d8fa1ff05e52d243c3cf43cd0a41e79bcc0ae2baeeaedb",
+   "baseline_utf8": "Fabricated permission rule: deny writes outside the project.\n",
+   "occurrence_count": 1,
+   "required_placeholders": []
+  },
+  {
+   "id": "new-fragment",
+   "title": "New fragment",
+   "class_name": "General Behavior",
+   "class_source": "agent-patcher@8d3c17099974c06f2cfb1547bb4744c05f845b56:workbench.py:CLAUDE_NFR_CATEGORIES",
+   "source_layer": "fabricated-golden-fragment",
+   "capability": "patchable",
+   "baseline_sha256": "f792ec43c504998e29fc15872e645c264ac5f2155ef755d1015dfd203f29c7db",
+   "baseline_utf8": "Fabricated fragment that exists only in the next revision.\n",
+   "occurrence_count": 1,
+   "required_placeholders": []
+  }
+ ]
+}

@@ -1,8 +1,8 @@
 // @vitest-environment jsdom
 import { useState } from 'react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { cleanup, fireEvent, render, screen } from '@testing-library/react'
-import { ConfigurationEditor } from './ConfigurationEditor'
+import { act, cleanup, fireEvent, render, screen } from '@testing-library/react'
+import { ConfigurationEditor, PARSE_PAUSE_MS } from './ConfigurationEditor'
 import { CARDS } from './views/shallow-data'
 import { applyConfiguration, configurationFor, initialComposer } from './views/harness-composer-state'
 
@@ -124,5 +124,38 @@ describe('ConfigurationEditor adversarial regressions', () => {
     fireEvent.change(input, { target: { value: dirtyC1 } })
     unmount()
     expect(events.at(-1)).toBe(false)
+  })
+
+  it('refuses an over-1 MiB or prototype-polluting JSON after the pause, keeping the text and blocking Apply', () => {
+    vi.useFakeTimers()
+    try {
+      const onApply = vi.fn(), onPendingChange = vi.fn()
+      const { config } = draftConfig()
+      render(<ConfigurationEditor configuration={config} onApply={onApply} onPendingChange={onPendingChange} />)
+      const input = screen.getByLabelText('Configuration JSON')
+      const huge = input.value.replace('"version": 1,', '"version": 1,\n  "padding": "' + 'p'.repeat(1024 * 1024) + '",')
+      fireEvent.change(input, { target: { value: huge } })
+      expect(screen.getByRole('button', { name: 'Apply JSON' }).disabled).toBe(true)
+      expect(onPendingChange).toHaveBeenLastCalledWith(true)
+      act(() => { vi.advanceTimersByTime(PARSE_PAUSE_MS) })
+      expect(screen.getByRole('alert').textContent).toBe('Choose a JSON configuration file of at most 1 MiB.')
+      fireEvent.keyDown(input, { key: 'Enter', ctrlKey: true })
+      expect(onApply).not.toHaveBeenCalled()
+      const polluted = input.value.replace('"padding": "' + 'p'.repeat(1024 * 1024) + '",', '"__proto__": { "admin": true },')
+      fireEvent.change(input, { target: { value: polluted } })
+      expect(screen.getByRole('alert')).toBeTruthy()
+      expect(({}).admin).toBeUndefined()
+      expect(input.value).toBe(polluted)
+    } finally { vi.useRealTimers() }
+  })
+
+  it('renders markup in a long changed string as inert text in the word diff', () => {
+    const long = 'Plain instructions for the agent. '.repeat(8)
+    const { config } = draftConfig({ prompt: long })
+    const { container } = render(<ConfigurationEditor configuration={config} onApply={vi.fn()} />)
+    const input = screen.getByLabelText('Configuration JSON')
+    fireEvent.change(input, { target: { value: replacePrompt(input.value, long, long + '<img src=x onerror=alert(1)><script>alert(2)</script>') } })
+    expect(container.querySelector('.rg-json-editor-strdiff img, .rg-json-editor-strdiff script')).toBeNull()
+    expect(container.querySelector('.rg-json-editor-strdiff ins').textContent).toContain('<script>alert(2)</script>')
   })
 })

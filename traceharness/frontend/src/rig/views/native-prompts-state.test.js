@@ -1,7 +1,9 @@
 // Synthetic inventory for pure authoring tests only; not a native inventory receipt.
 import { describe, expect, it } from 'vitest'
 import { createHash } from 'node:crypto'
-import { changePromptActions, filterPrompts, namedPromptSet, promptCounts, promptDifference, promptGroupState } from './native-prompts-state'
+import { applyReplaceEdits, changePromptActions, filterPrompts, namedPromptSet, profileNameIssue, promptCounts, promptDifference, promptGroupState, safeNativeDraft } from './native-prompts-state'
+import { baselineProfile } from '../../native-prompts-contract'
+import { nativeInventoryFixture } from '../../../test/native-prompts-fixture'
 
 const blocks = [
   { id: 'one', title: 'First test block', class_name: 'Testing', capability: 'patchable', baseline_sha256: 'a'.repeat(64), baseline_utf8: 'First baseline' },
@@ -93,5 +95,66 @@ describe('native prompt authoring operations', () => {
     expect(diff.added[0]).toHaveLength(500)
     expect(diff.truncated).toBe(true)
     expect(after).toHaveLength(10000)
+  })
+})
+
+describe('replace edits in one step (macros, imports)', () => {
+  const blocksWithPlaceholders = [...blocks.slice(0, 3).map((block) => ({ ...block, required_placeholders: [] })),
+    { id: 'template', title: 'Template block', class_name: 'Planning', capability: 'patchable', baseline_sha256: 'e'.repeat(64), baseline_utf8: 'A ${TH_PROMPT_EXPR_0} b', required_placeholders: ['${TH_PROMPT_EXPR_0}'] },
+    blocks[3]]
+  const edit = (id, text) => ({ block_id: id, replacement_utf8: text, replacement_sha256: digest(text) })
+
+  it('applies every edit in inventory order and remembers each replacement', () => {
+    const start = change(empty(), ['two'], 'disable')
+    const result = applyReplaceEdits(blocksWithPlaceholders, start.overrides, start.remembered, [edit('template', 'New ${TH_PROMPT_EXPR_0}'), edit('one', 'One λ🙂')], start.default_action)
+    expect(result.default_action).toBe('keep')
+    expect(result.overrides.map((row) => [row.block_id, row.action])).toEqual([['one', 'replace'], ['two', 'disable'], ['template', 'replace']])
+    expect(Object.keys(result.remembered).sort()).toEqual(['one', 'template'])
+    expect(result.overrides[0]).toEqual({ block_id: 'one', baseline_sha256: 'a'.repeat(64), action: 'replace', replacement_utf8: 'One λ🙂', replacement_sha256: digest('One λ🙂') })
+    const none = applyReplaceEdits(blocksWithPlaceholders, [], {}, [edit('three', 'Three')], 'disable')
+    expect(none).toEqual({ default_action: 'disable', overrides: [{ block_id: 'three', baseline_sha256: 'c'.repeat(64), action: 'replace', replacement_utf8: 'Three', replacement_sha256: digest('Three') }],
+      remembered: { three: { block_id: 'three', baseline_sha256: 'c'.repeat(64), action: 'replace', replacement_utf8: 'Three', replacement_sha256: digest('Three') } } })
+  })
+
+  it('is atomic: one invalid edit refuses the whole step and changes nothing', () => {
+    const start = change(empty(), ['one'], 'replace', 'Kept text')
+    const frozen = JSON.stringify(start)
+    const cases = [
+      [[edit('one', 'fine'), edit('observed', 'no')], 'Only patchable'],
+      [[edit('missing', 'no')], 'Only patchable'],
+      [[edit('one', 'a'), edit('one', 'b')], 'once per step'],
+      [[edit('one', '')], 'Use Disable'],
+      [[edit('template', 'lost placeholder')], 'placeholder'],
+      [[edit('two', 'bad \u0000')], 'Unicode'],
+      [[{ block_id: 'two', replacement_utf8: 'text', replacement_sha256: 'short' }], 'SHA-256'],
+      [[{ block_id: 'two', replacement_utf8: 'text', replacement_sha256: digest('other text') }], 'does not match its SHA-256 digest'],
+      [[{ block_id: '__proto__', replacement_utf8: 'x', replacement_sha256: digest('x') }], 'Only patchable'],
+      [[null], 'Only patchable'],
+      [[], 'at least one'],
+    ]
+    for (const [edits, sentence] of cases) expect(() => applyReplaceEdits(blocksWithPlaceholders, start.overrides, start.remembered, edits, start.default_action)).toThrow(sentence)
+    expect(() => applyReplaceEdits(blocksWithPlaceholders, [{ block_id: 'one', baseline_sha256: 'f'.repeat(64), action: 'disable' }], {}, [edit('two', 'x')])).toThrow('different inventory')
+    expect(JSON.stringify(start)).toBe(frozen)
+  })
+})
+
+describe('profile names in a draft', () => {
+  it('accepts 1 to 80 visible characters and refuses padding, controls and credentials', () => {
+    for (const name of ['Lean tools', 'λ 🙂 profile', 'x'.repeat(80)]) expect(profileNameIssue(name)).toBe('')
+    for (const name of ['', ' ', ' padded', 'padded ', 'x'.repeat(81), 'tab\there', 'zero​width', 'line\nfeed', '\ud800', null, 3]) expect(profileNameIssue(name)).toContain('1 to 80')
+    expect(profileNameIssue('key sk-or-v1-abcdefghijklmnopqrstuv')).toContain('credentials')
+    expect(profileNameIssue('key sk-abcdefghijklmnop')).toContain('credentials')
+  })
+
+  it('keeps an optional valid name in a recovered draft and absent by default', () => {
+    const profile = baselineProfile(nativeInventoryFixture())
+    const draft = { enabled: true, profile, remembered: {}, sets: [] }
+    expect(safeNativeDraft(draft, 'native-claude-code')).toEqual(draft)
+    expect(Object.hasOwn(safeNativeDraft(draft, 'native-claude-code'), 'name')).toBe(false)
+    expect(safeNativeDraft({ ...draft, name: 'Lean tools' }, 'native-claude-code')).toEqual({ ...draft, name: 'Lean tools' })
+    for (const name of ['', ' padded', 'key sk-or-v1-abcdefghijklmnopqrstuv', 5]) expect(safeNativeDraft({ ...draft, name }, 'native-claude-code')).toBeNull()
+    expect(safeNativeDraft({ ...draft, extra: 1 }, 'native-claude-code')).toBeNull()
+    expect(safeNativeDraft(JSON.parse(JSON.stringify({ ...draft, name: 'x' }).replace('{', '{"__proto__":{"polluted":1},')), 'native-claude-code')).toBeNull()
+    expect(({}).polluted).toBeUndefined()
   })
 })

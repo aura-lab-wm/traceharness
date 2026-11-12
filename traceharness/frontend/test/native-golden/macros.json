@@ -1,0 +1,1700 @@
+{
+ "function": "apply_macro",
+ "cases": [
+  {
+   "name": "caps labels and shouted phrases",
+   "args": [
+    "IMPORTANT: Read this.\nYou MUST NOT guess. CRITICAL : stop.\nNEVER EVER: do that.",
+    "strip-caps"
+   ],
+   "function": "apply_macro",
+   "expected": "Read this.\nYou Do not guess. stop.\ndo that."
+  },
+  {
+   "name": "caps labels are case-insensitive",
+   "args": [
+    "note: lower case label.\nWarning:mixed case.",
+    "strip-caps"
+   ],
+   "function": "apply_macro",
+   "expected": "lower case label.\nmixed case."
+  },
+  {
+   "name": "shouted phrases are case-sensitive",
+   "args": [
+    "you must not lower case. ALWAYS REMEMBER TO check.",
+    "strip-caps"
+   ],
+   "function": "apply_macro",
+   "expected": "you must not lower case.  check."
+  },
+  {
+   "name": "caps inside a fenced block untouched",
+   "args": [
+    "IMPORTANT: outside.\n```\nIMPORTANT: inside\n```\nend",
+    "strip-caps"
+   ],
+   "function": "apply_macro",
+   "expected": "outside.\n```\nIMPORTANT: inside\n```\nend"
+  },
+  {
+   "name": "caps next to a placeholder untouched",
+   "args": [
+    "Use ${TH_PROMPT_EXPR_0}IMPORTANT: here and IMPORTANT: there.",
+    "strip-caps"
+   ],
+   "function": "apply_macro",
+   "expected": "Use ${TH_PROMPT_EXPR_0}here and there."
+  },
+  {
+   "name": "caps glued to a word stays",
+   "args": [
+    "XIMPORTANT: stays.",
+    "strip-caps"
+   ],
+   "function": "apply_macro",
+   "expected": "XIMPORTANT: stays."
+  },
+  {
+   "name": "caps leading and trailing whitespace preserved",
+   "args": [
+    "\n\n  IMPORTANT: padded text.  \n\n",
+    "strip-caps"
+   ],
+   "function": "apply_macro",
+   "expected": "\n\n  padded text.  \n\n"
+  },
+  {
+   "name": "caps nothing to change",
+   "args": [
+    "Plain fabricated text.\n\n\n\nwith blank lines.",
+    "strip-caps"
+   ],
+   "function": "apply_macro",
+   "expected": "Plain fabricated text.\n\n\n\nwith blank lines."
+  },
+  {
+   "name": "hedging lines removed",
+   "args": [
+    "As a helpful AI assistant, I help.\nKeep this.\n  please note that as an AI I am fabricated.\nEnd.",
+    "strip-hedging"
+   ],
+   "function": "apply_macro",
+   "expected": "Keep this.\nEnd."
+  },
+  {
+   "name": "hedging mid-line is kept",
+   "args": [
+    "Keep: As a helpful AI assistant mid-line.",
+    "strip-hedging"
+   ],
+   "function": "apply_macro",
+   "expected": "Keep: As a helpful AI assistant mid-line."
+  },
+  {
+   "name": "hedging every line removed",
+   "args": [
+    "As a helpful AI assistant only.\nMake sure to apologize always.",
+    "strip-hedging"
+   ],
+   "function": "apply_macro",
+   "expected": ""
+  },
+  {
+   "name": "hedging inside a fence untouched",
+   "args": [
+    "```\nAs a helpful AI assistant\n```",
+    "strip-hedging"
+   ],
+   "function": "apply_macro",
+   "expected": "```\nAs a helpful AI assistant\n```"
+  },
+  {
+   "name": "dividers and trailing spaces",
+   "args": [
+    "Title   \n------\nBody\t\n=======   \n***\n\n\n\nEnd  ",
+    "compact-whitespace"
+   ],
+   "function": "apply_macro",
+   "expected": "Title\nBody\n***\n\nEnd  "
+  },
+  {
+   "name": "divider that is not the whole line stays",
+   "args": [
+    "text ------ text\n------",
+    "compact-whitespace"
+   ],
+   "function": "apply_macro",
+   "expected": "text ------ text"
+  },
+  {
+   "name": "compact whitespace in a fence untouched",
+   "args": [
+    "```\na   \n\n\n\nb\n```",
+    "compact-whitespace"
+   ],
+   "function": "apply_macro",
+   "expected": "```\na   \n\n\n\nb\n```"
+  },
+  {
+   "name": "compact whitespace nothing to change",
+   "args": [
+    "Already compact.\n\nYes.",
+    "compact-whitespace"
+   ],
+   "function": "apply_macro",
+   "expected": "Already compact.\n\nYes."
+  },
+  {
+   "name": "whitespace-only text",
+   "args": [
+    "   \n\t",
+    "compact-whitespace"
+   ],
+   "function": "apply_macro",
+   "expected": "   \n\t"
+  },
+  {
+   "name": "empty text",
+   "args": [
+    "",
+    "strip-caps"
+   ],
+   "function": "apply_macro",
+   "expected": ""
+  },
+  {
+   "name": "non-ASCII text",
+   "args": [
+    "IMPORTANT: \u65e5\u672c\u8a9e \ud83d\ude42 caf\u00e9   \n\n\n\nend",
+    "strip-caps"
+   ],
+   "function": "apply_macro",
+   "expected": "\u65e5\u672c\u8a9e \ud83d\ude42 caf\u00e9   \n\nend"
+  },
+  {
+   "name": "unknown macro",
+   "args": [
+    "text",
+    "make-better"
+   ],
+   "function": "apply_macro",
+   "expected": {
+    "error": "Unknown macro: make-better"
+   }
+  },
+  {
+   "name": "dotless i does not fold to I",
+   "args": [
+    "\u0131MPORTANT: stays.",
+    "strip-caps"
+   ],
+   "function": "apply_macro",
+   "expected": "\u0131MPORTANT: stays."
+  },
+  {
+   "name": "generate: strip-caps over every block",
+   "args": [
+    "@inventory-claude",
+    {
+     "schema_version": 1,
+     "runtime_id": "native-claude-code",
+     "runtime_version": "0.0.0-golden",
+     "image_digest": "sha256:2d032a622cf94baf637a4488720865da983853e4a655fea4e45d0e80f0a9c640",
+     "binary_sha256": "25ba8ebec5f227618d8d58f475622669f4c45019d40259d1d292a823f4184c27",
+     "inventory_sha256": "44e7b67bbdc0842fecf8cfa158641e03998f7d0b34184bc297ede967ab24ce7a",
+     "taxonomy_sha256": "6064ebcb6693a1dd7b3e50fbfbcc94ff959f7957ac184188fd91744900a429a3",
+     "materializer_sha256": "ba6245da8b07901b6793898e70e2e974a1e641a2c3be0d357ba53d15101f4081",
+     "default_action": "keep",
+     "overrides": []
+    },
+    [
+     "tool-bash-guide",
+     "system-reminder-plan",
+     "security-sandbox-note",
+     "response-style",
+     "general-hedge",
+     "observed-dynamic",
+     "unavailable-fragment",
+     "short",
+     "unicode-mix",
+     "credential-prose",
+     "escapes-sample",
+     "zebra-only",
+     "git-commit-guide",
+     "permission-deny-list"
+    ],
+    [
+     "strip-caps"
+    ]
+   ],
+   "function": "generate_macro_edits",
+   "expected": {
+    "edits": [
+     {
+      "block_id": "security-sandbox-note",
+      "replacement_utf8": "Fabricated safety stay inside the working directory and refuse destructive commands.\n",
+      "before_bytes": 91,
+      "after_bytes": 85,
+      "before_tokens": 24,
+      "after_tokens": 22
+     },
+     {
+      "block_id": "response-style",
+      "replacement_utf8": "Fabricated style rules follow.\nYou Do not invent results.\n\n```\nIMPORTANT: inside a fence\n```\n\nKeep answers short.   \n",
+      "before_bytes": 132,
+      "after_bytes": 117,
+      "before_tokens": 33,
+      "after_tokens": 29
+     }
+    ],
+    "skipped": [
+     {
+      "block_id": "tool-bash-guide",
+      "reason": "unchanged"
+     },
+     {
+      "block_id": "system-reminder-plan",
+      "reason": "unchanged"
+     },
+     {
+      "block_id": "general-hedge",
+      "reason": "unchanged"
+     },
+     {
+      "block_id": "observed-dynamic",
+      "reason": "not-patchable"
+     },
+     {
+      "block_id": "unavailable-fragment",
+      "reason": "not-patchable"
+     },
+     {
+      "block_id": "short",
+      "reason": "unchanged"
+     },
+     {
+      "block_id": "unicode-mix",
+      "reason": "unchanged"
+     },
+     {
+      "block_id": "credential-prose",
+      "reason": "unchanged"
+     },
+     {
+      "block_id": "escapes-sample",
+      "reason": "unchanged"
+     },
+     {
+      "block_id": "zebra-only",
+      "reason": "unchanged"
+     },
+     {
+      "block_id": "git-commit-guide",
+      "reason": "unchanged"
+     },
+     {
+      "block_id": "permission-deny-list",
+      "reason": "unchanged"
+     }
+    ],
+    "projected": {
+     "profile_bytes": 1263,
+     "overrides": 2,
+     "fits": true
+    }
+   }
+  },
+  {
+   "name": "generate: all three macros over every block",
+   "args": [
+    "@inventory-claude",
+    {
+     "schema_version": 1,
+     "runtime_id": "native-claude-code",
+     "runtime_version": "0.0.0-golden",
+     "image_digest": "sha256:2d032a622cf94baf637a4488720865da983853e4a655fea4e45d0e80f0a9c640",
+     "binary_sha256": "25ba8ebec5f227618d8d58f475622669f4c45019d40259d1d292a823f4184c27",
+     "inventory_sha256": "44e7b67bbdc0842fecf8cfa158641e03998f7d0b34184bc297ede967ab24ce7a",
+     "taxonomy_sha256": "6064ebcb6693a1dd7b3e50fbfbcc94ff959f7957ac184188fd91744900a429a3",
+     "materializer_sha256": "ba6245da8b07901b6793898e70e2e974a1e641a2c3be0d357ba53d15101f4081",
+     "default_action": "keep",
+     "overrides": []
+    },
+    [
+     "tool-bash-guide",
+     "system-reminder-plan",
+     "security-sandbox-note",
+     "response-style",
+     "general-hedge",
+     "observed-dynamic",
+     "unavailable-fragment",
+     "short",
+     "unicode-mix",
+     "credential-prose",
+     "escapes-sample",
+     "zebra-only",
+     "git-commit-guide",
+     "permission-deny-list"
+    ],
+    [
+     "strip-caps",
+     "strip-hedging",
+     "compact-whitespace"
+    ]
+   ],
+   "function": "generate_macro_edits",
+   "expected": {
+    "edits": [
+     {
+      "block_id": "security-sandbox-note",
+      "replacement_utf8": "Fabricated safety stay inside the working directory and refuse destructive commands.\n",
+      "before_bytes": 91,
+      "after_bytes": 85,
+      "before_tokens": 24,
+      "after_tokens": 22
+     },
+     {
+      "block_id": "response-style",
+      "replacement_utf8": "Fabricated style rules follow.\nYou Do not invent results.\n\n```\nIMPORTANT: inside a fence\n```\n\nKeep answers short.   \n",
+      "before_bytes": 132,
+      "after_bytes": 117,
+      "before_tokens": 33,
+      "after_tokens": 29
+     },
+     {
+      "block_id": "general-hedge",
+      "replacement_utf8": "Fabricated persona line two.\nFinal fabricated line.\n",
+      "before_bytes": 155,
+      "after_bytes": 52,
+      "before_tokens": 40,
+      "after_tokens": 14
+     }
+    ],
+    "skipped": [
+     {
+      "block_id": "tool-bash-guide",
+      "reason": "unchanged"
+     },
+     {
+      "block_id": "system-reminder-plan",
+      "reason": "unchanged"
+     },
+     {
+      "block_id": "observed-dynamic",
+      "reason": "not-patchable"
+     },
+     {
+      "block_id": "unavailable-fragment",
+      "reason": "not-patchable"
+     },
+     {
+      "block_id": "short",
+      "reason": "unchanged"
+     },
+     {
+      "block_id": "unicode-mix",
+      "reason": "unchanged"
+     },
+     {
+      "block_id": "credential-prose",
+      "reason": "unchanged"
+     },
+     {
+      "block_id": "escapes-sample",
+      "reason": "unchanged"
+     },
+     {
+      "block_id": "zebra-only",
+      "reason": "unchanged"
+     },
+     {
+      "block_id": "git-commit-guide",
+      "reason": "unchanged"
+     },
+     {
+      "block_id": "permission-deny-list",
+      "reason": "unchanged"
+     }
+    ],
+    "projected": {
+     "profile_bytes": 1560,
+     "overrides": 3,
+     "fits": true
+    }
+   }
+  },
+  {
+   "name": "generate: disabled and missing blocks are skipped",
+   "args": [
+    "@inventory-claude",
+    {
+     "schema_version": 1,
+     "runtime_id": "native-claude-code",
+     "runtime_version": "0.0.0-golden",
+     "image_digest": "sha256:2d032a622cf94baf637a4488720865da983853e4a655fea4e45d0e80f0a9c640",
+     "binary_sha256": "25ba8ebec5f227618d8d58f475622669f4c45019d40259d1d292a823f4184c27",
+     "inventory_sha256": "44e7b67bbdc0842fecf8cfa158641e03998f7d0b34184bc297ede967ab24ce7a",
+     "taxonomy_sha256": "6064ebcb6693a1dd7b3e50fbfbcc94ff959f7957ac184188fd91744900a429a3",
+     "materializer_sha256": "ba6245da8b07901b6793898e70e2e974a1e641a2c3be0d357ba53d15101f4081",
+     "default_action": "keep",
+     "overrides": [
+      {
+       "block_id": "response-style",
+       "baseline_sha256": "dfdce2e37fd61eaecb69669b607c265d2dd9f8ab9c574eea221bb5e77620c6be",
+       "action": "disable"
+      }
+     ]
+    },
+    [
+     "response-style",
+     "observed-dynamic",
+     "ghost",
+     "short"
+    ],
+    [
+     "strip-caps"
+    ]
+   ],
+   "function": "generate_macro_edits",
+   "expected": {
+    "edits": [],
+    "skipped": [
+     {
+      "block_id": "response-style",
+      "reason": "disabled"
+     },
+     {
+      "block_id": "observed-dynamic",
+      "reason": "not-patchable"
+     },
+     {
+      "block_id": "ghost",
+      "reason": "not-patchable"
+     },
+     {
+      "block_id": "short",
+      "reason": "unchanged"
+     }
+    ],
+    "projected": {
+     "profile_bytes": 691,
+     "overrides": 1,
+     "fits": true
+    }
+   }
+  },
+  {
+   "name": "generate: replacement text is the input",
+   "args": [
+    "@inventory-claude",
+    {
+     "schema_version": 1,
+     "runtime_id": "native-claude-code",
+     "runtime_version": "0.0.0-golden",
+     "image_digest": "sha256:2d032a622cf94baf637a4488720865da983853e4a655fea4e45d0e80f0a9c640",
+     "binary_sha256": "25ba8ebec5f227618d8d58f475622669f4c45019d40259d1d292a823f4184c27",
+     "inventory_sha256": "44e7b67bbdc0842fecf8cfa158641e03998f7d0b34184bc297ede967ab24ce7a",
+     "taxonomy_sha256": "6064ebcb6693a1dd7b3e50fbfbcc94ff959f7957ac184188fd91744900a429a3",
+     "materializer_sha256": "ba6245da8b07901b6793898e70e2e974a1e641a2c3be0d357ba53d15101f4081",
+     "default_action": "keep",
+     "overrides": [
+      {
+       "block_id": "tool-bash-guide",
+       "baseline_sha256": "c5db5a79c94bb7a9835cbe2e3897337c52e3bb72b73edaedf1165a51246b057b",
+       "action": "replace",
+       "replacement_utf8": "IMPORTANT: fabricated replaced text.",
+       "replacement_sha256": "4a1d97dfd3b520d16d1832d06a6f89373d52ef848989992b9ddff003ecf90c17"
+      }
+     ]
+    },
+    [
+     "tool-bash-guide"
+    ],
+    [
+     "strip-caps"
+    ]
+   ],
+   "function": "generate_macro_edits",
+   "expected": {
+    "edits": [
+     {
+      "block_id": "tool-bash-guide",
+      "replacement_utf8": "fabricated replaced text.",
+      "before_bytes": 36,
+      "after_bytes": 25,
+      "before_tokens": 10,
+      "after_tokens": 7
+     }
+    ],
+    "skipped": [],
+    "projected": {
+     "profile_bytes": 827,
+     "overrides": 1,
+     "fits": true
+    }
+   }
+  },
+  {
+   "name": "generate: a macro that empties a block",
+   "args": [
+    "@inventory-claude",
+    {
+     "schema_version": 1,
+     "runtime_id": "native-claude-code",
+     "runtime_version": "0.0.0-golden",
+     "image_digest": "sha256:2d032a622cf94baf637a4488720865da983853e4a655fea4e45d0e80f0a9c640",
+     "binary_sha256": "25ba8ebec5f227618d8d58f475622669f4c45019d40259d1d292a823f4184c27",
+     "inventory_sha256": "44e7b67bbdc0842fecf8cfa158641e03998f7d0b34184bc297ede967ab24ce7a",
+     "taxonomy_sha256": "6064ebcb6693a1dd7b3e50fbfbcc94ff959f7957ac184188fd91744900a429a3",
+     "materializer_sha256": "ba6245da8b07901b6793898e70e2e974a1e641a2c3be0d357ba53d15101f4081",
+     "default_action": "keep",
+     "overrides": [
+      {
+       "block_id": "tool-bash-guide",
+       "baseline_sha256": "c5db5a79c94bb7a9835cbe2e3897337c52e3bb72b73edaedf1165a51246b057b",
+       "action": "replace",
+       "replacement_utf8": "As a helpful AI assistant only.",
+       "replacement_sha256": "fdacf04f364d31eb41faf970ed9d70069e87a7d05841fdfe02cbb8252a752942"
+      }
+     ]
+    },
+    [
+     "tool-bash-guide"
+    ],
+    [
+     "strip-hedging"
+    ]
+   ],
+   "function": "generate_macro_edits",
+   "expected": {
+    "edits": [],
+    "skipped": [
+     {
+      "block_id": "tool-bash-guide",
+      "reason": "empty-result"
+     }
+    ],
+    "projected": {
+     "profile_bytes": 833,
+     "overrides": 1,
+     "fits": true
+    }
+   }
+  },
+  {
+   "name": "generate: duplicate ids count once",
+   "args": [
+    "@inventory-claude",
+    {
+     "schema_version": 1,
+     "runtime_id": "native-claude-code",
+     "runtime_version": "0.0.0-golden",
+     "image_digest": "sha256:2d032a622cf94baf637a4488720865da983853e4a655fea4e45d0e80f0a9c640",
+     "binary_sha256": "25ba8ebec5f227618d8d58f475622669f4c45019d40259d1d292a823f4184c27",
+     "inventory_sha256": "44e7b67bbdc0842fecf8cfa158641e03998f7d0b34184bc297ede967ab24ce7a",
+     "taxonomy_sha256": "6064ebcb6693a1dd7b3e50fbfbcc94ff959f7957ac184188fd91744900a429a3",
+     "materializer_sha256": "ba6245da8b07901b6793898e70e2e974a1e641a2c3be0d357ba53d15101f4081",
+     "default_action": "keep",
+     "overrides": []
+    },
+    [
+     "response-style",
+     "response-style"
+    ],
+    [
+     "compact-whitespace"
+    ]
+   ],
+   "function": "generate_macro_edits",
+   "expected": {
+    "edits": [
+     {
+      "block_id": "response-style",
+      "replacement_utf8": "IMPORTANT: Fabricated style rules follow.\nYou MUST NOT invent results.\n\n```\nIMPORTANT: inside a fence\n```\n\nKeep answers short.   \n",
+      "before_bytes": 132,
+      "after_bytes": 130,
+      "before_tokens": 33,
+      "after_tokens": 33
+     }
+    ],
+    "skipped": [],
+    "projected": {
+     "profile_bytes": 939,
+     "overrides": 1,
+     "fits": true
+    }
+   }
+  },
+  {
+   "name": "generate: default disable skips everything",
+   "args": [
+    "@inventory-claude",
+    {
+     "schema_version": 1,
+     "runtime_id": "native-claude-code",
+     "runtime_version": "0.0.0-golden",
+     "image_digest": "sha256:2d032a622cf94baf637a4488720865da983853e4a655fea4e45d0e80f0a9c640",
+     "binary_sha256": "25ba8ebec5f227618d8d58f475622669f4c45019d40259d1d292a823f4184c27",
+     "inventory_sha256": "44e7b67bbdc0842fecf8cfa158641e03998f7d0b34184bc297ede967ab24ce7a",
+     "taxonomy_sha256": "6064ebcb6693a1dd7b3e50fbfbcc94ff959f7957ac184188fd91744900a429a3",
+     "materializer_sha256": "ba6245da8b07901b6793898e70e2e974a1e641a2c3be0d357ba53d15101f4081",
+     "default_action": "disable",
+     "overrides": []
+    },
+    [
+     "tool-bash-guide",
+     "system-reminder-plan",
+     "security-sandbox-note",
+     "response-style",
+     "general-hedge",
+     "observed-dynamic",
+     "unavailable-fragment",
+     "short",
+     "unicode-mix",
+     "credential-prose",
+     "escapes-sample",
+     "zebra-only",
+     "git-commit-guide",
+     "permission-deny-list"
+    ],
+    [
+     "strip-caps"
+    ]
+   ],
+   "function": "generate_macro_edits",
+   "expected": {
+    "edits": [],
+    "skipped": [
+     {
+      "block_id": "tool-bash-guide",
+      "reason": "disabled"
+     },
+     {
+      "block_id": "system-reminder-plan",
+      "reason": "disabled"
+     },
+     {
+      "block_id": "security-sandbox-note",
+      "reason": "disabled"
+     },
+     {
+      "block_id": "response-style",
+      "reason": "disabled"
+     },
+     {
+      "block_id": "general-hedge",
+      "reason": "disabled"
+     },
+     {
+      "block_id": "observed-dynamic",
+      "reason": "not-patchable"
+     },
+     {
+      "block_id": "unavailable-fragment",
+      "reason": "not-patchable"
+     },
+     {
+      "block_id": "short",
+      "reason": "disabled"
+     },
+     {
+      "block_id": "unicode-mix",
+      "reason": "disabled"
+     },
+     {
+      "block_id": "credential-prose",
+      "reason": "disabled"
+     },
+     {
+      "block_id": "escapes-sample",
+      "reason": "disabled"
+     },
+     {
+      "block_id": "zebra-only",
+      "reason": "disabled"
+     },
+     {
+      "block_id": "git-commit-guide",
+      "reason": "disabled"
+     },
+     {
+      "block_id": "permission-deny-list",
+      "reason": "disabled"
+     }
+    ],
+    "projected": {
+     "profile_bytes": 561,
+     "overrides": 0,
+     "fits": true
+    }
+   }
+  },
+  {
+   "name": "generate: unknown macro",
+   "args": [
+    "@inventory-claude",
+    {
+     "schema_version": 1,
+     "runtime_id": "native-claude-code",
+     "runtime_version": "0.0.0-golden",
+     "image_digest": "sha256:2d032a622cf94baf637a4488720865da983853e4a655fea4e45d0e80f0a9c640",
+     "binary_sha256": "25ba8ebec5f227618d8d58f475622669f4c45019d40259d1d292a823f4184c27",
+     "inventory_sha256": "44e7b67bbdc0842fecf8cfa158641e03998f7d0b34184bc297ede967ab24ce7a",
+     "taxonomy_sha256": "6064ebcb6693a1dd7b3e50fbfbcc94ff959f7957ac184188fd91744900a429a3",
+     "materializer_sha256": "ba6245da8b07901b6793898e70e2e974a1e641a2c3be0d357ba53d15101f4081",
+     "default_action": "keep",
+     "overrides": []
+    },
+    [
+     "tool-bash-guide",
+     "system-reminder-plan",
+     "security-sandbox-note",
+     "response-style",
+     "general-hedge",
+     "observed-dynamic",
+     "unavailable-fragment",
+     "short",
+     "unicode-mix",
+     "credential-prose",
+     "escapes-sample",
+     "zebra-only",
+     "git-commit-guide",
+     "permission-deny-list"
+    ],
+    [
+     "strip-caps",
+     "nope"
+    ]
+   ],
+   "function": "generate_macro_edits",
+   "expected": {
+    "error": "Unknown macro: nope"
+   }
+  },
+  {
+   "name": "generate: a result with a credential shape is invalid",
+   "args": [
+    "@inventory-claude",
+    {
+     "schema_version": 1,
+     "runtime_id": "native-claude-code",
+     "runtime_version": "0.0.0-golden",
+     "image_digest": "sha256:2d032a622cf94baf637a4488720865da983853e4a655fea4e45d0e80f0a9c640",
+     "binary_sha256": "25ba8ebec5f227618d8d58f475622669f4c45019d40259d1d292a823f4184c27",
+     "inventory_sha256": "44e7b67bbdc0842fecf8cfa158641e03998f7d0b34184bc297ede967ab24ce7a",
+     "taxonomy_sha256": "6064ebcb6693a1dd7b3e50fbfbcc94ff959f7957ac184188fd91744900a429a3",
+     "materializer_sha256": "ba6245da8b07901b6793898e70e2e974a1e641a2c3be0d357ba53d15101f4081",
+     "default_action": "keep",
+     "overrides": [
+      {
+       "block_id": "tool-bash-guide",
+       "baseline_sha256": "c5db5a79c94bb7a9835cbe2e3897337c52e3bb72b73edaedf1165a51246b057b",
+       "action": "replace",
+       "replacement_utf8": "IMPORTANT: sk-or-v1-0123456789abcdef0123",
+       "replacement_sha256": "23ca7bca8ea928cef2aa98dcaae483fa919dbf2024794eac05e3e58f60f902fe"
+      }
+     ]
+    },
+    [
+     "tool-bash-guide"
+    ],
+    [
+     "strip-caps"
+    ]
+   ],
+   "function": "generate_macro_edits",
+   "expected": {
+    "edits": [],
+    "skipped": [
+     {
+      "block_id": "tool-bash-guide",
+      "reason": "invalid-result"
+     }
+    ],
+    "projected": {
+     "profile_bytes": 842,
+     "overrides": 1,
+     "fits": true
+    }
+   }
+  },
+  {
+   "name": "generate: projection that fits beside large overrides",
+   "args": [
+    "@inventory-claude",
+    {
+     "schema_version": 1,
+     "runtime_id": "native-claude-code",
+     "runtime_version": "0.0.0-golden",
+     "image_digest": "sha256:2d032a622cf94baf637a4488720865da983853e4a655fea4e45d0e80f0a9c640",
+     "binary_sha256": "25ba8ebec5f227618d8d58f475622669f4c45019d40259d1d292a823f4184c27",
+     "inventory_sha256": "44e7b67bbdc0842fecf8cfa158641e03998f7d0b34184bc297ede967ab24ce7a",
+     "taxonomy_sha256": "6064ebcb6693a1dd7b3e50fbfbcc94ff959f7957ac184188fd91744900a429a3",
+     "materializer_sha256": "ba6245da8b07901b6793898e70e2e974a1e641a2c3be0d357ba53d15101f4081",
+     "default_action": "keep",
+     "overrides": [
+      {
+       "block_id": "security-sandbox-note",
+       "baseline_sha256": "da29f4d417fb4114d86cf22df8e7b8b94933d8df6b415974fb64812073588596",
+       "action": "replace",
+       "replacement_utf8": {
+        "@repeat": "Fabricated filler. ",
+        "times": 10000
+       },
+       "replacement_sha256": "99620acef82a7a7155af81a179f3f553955bc47d696e05d2cdfcb41fee9e85ed"
+      },
+      {
+       "block_id": "general-hedge",
+       "baseline_sha256": "9e5dada3492558f4af8fff686a4bb57c2bcc6e83faa7b86f653206cff34ac914",
+       "action": "replace",
+       "replacement_utf8": {
+        "@repeat": "Fabricated filler. ",
+        "times": 10000
+       },
+       "replacement_sha256": "99620acef82a7a7155af81a179f3f553955bc47d696e05d2cdfcb41fee9e85ed"
+      },
+      {
+       "block_id": "git-commit-guide",
+       "baseline_sha256": "b52acffead6afdd004e98f407b6e01be0ee3c1fb8ca7921989aebc6cf97a21d6",
+       "action": "replace",
+       "replacement_utf8": {
+        "@repeat": "Fabricated filler. ",
+        "times": 10000
+       },
+       "replacement_sha256": "99620acef82a7a7155af81a179f3f553955bc47d696e05d2cdfcb41fee9e85ed"
+      }
+     ]
+    },
+    [
+     "response-style"
+    ],
+    [
+     "strip-caps"
+    ]
+   ],
+   "function": "generate_macro_edits",
+   "expected": {
+    "edits": [
+     {
+      "block_id": "response-style",
+      "replacement_utf8": "Fabricated style rules follow.\nYou Do not invent results.\n\n```\nIMPORTANT: inside a fence\n```\n\nKeep answers short.   \n",
+      "before_bytes": 132,
+      "after_bytes": 117,
+      "before_tokens": 33,
+      "after_tokens": 29
+     }
+    ],
+    "skipped": [],
+    "projected": {
+     "profile_bytes": 571666,
+     "overrides": 4,
+     "fits": true
+    }
+   }
+  },
+  {
+   "name": "generate: projection that does not fit",
+   "args": [
+    "@inventory-claude",
+    {
+     "schema_version": 1,
+     "runtime_id": "native-claude-code",
+     "runtime_version": "0.0.0-golden",
+     "image_digest": "sha256:2d032a622cf94baf637a4488720865da983853e4a655fea4e45d0e80f0a9c640",
+     "binary_sha256": "25ba8ebec5f227618d8d58f475622669f4c45019d40259d1d292a823f4184c27",
+     "inventory_sha256": "44e7b67bbdc0842fecf8cfa158641e03998f7d0b34184bc297ede967ab24ce7a",
+     "taxonomy_sha256": "6064ebcb6693a1dd7b3e50fbfbcc94ff959f7957ac184188fd91744900a429a3",
+     "materializer_sha256": "ba6245da8b07901b6793898e70e2e974a1e641a2c3be0d357ba53d15101f4081",
+     "default_action": "keep",
+     "overrides": [
+      {
+       "block_id": "security-sandbox-note",
+       "baseline_sha256": "da29f4d417fb4114d86cf22df8e7b8b94933d8df6b415974fb64812073588596",
+       "action": "replace",
+       "replacement_utf8": {
+        "@repeat": "Fabricated filler. ",
+        "times": 12000
+       },
+       "replacement_sha256": "f41ab1d8b15b55e400dd554fd6728a5aeb8e77a81a1c2b4f42850370f75c791b"
+      },
+      {
+       "block_id": "general-hedge",
+       "baseline_sha256": "9e5dada3492558f4af8fff686a4bb57c2bcc6e83faa7b86f653206cff34ac914",
+       "action": "replace",
+       "replacement_utf8": {
+        "@repeat": "Fabricated filler. ",
+        "times": 12000
+       },
+       "replacement_sha256": "f41ab1d8b15b55e400dd554fd6728a5aeb8e77a81a1c2b4f42850370f75c791b"
+      },
+      {
+       "block_id": "git-commit-guide",
+       "baseline_sha256": "b52acffead6afdd004e98f407b6e01be0ee3c1fb8ca7921989aebc6cf97a21d6",
+       "action": "replace",
+       "replacement_utf8": {
+        "@repeat": "Fabricated filler. ",
+        "times": 12000
+       },
+       "replacement_sha256": "f41ab1d8b15b55e400dd554fd6728a5aeb8e77a81a1c2b4f42850370f75c791b"
+      },
+      {
+       "block_id": "permission-deny-list",
+       "baseline_sha256": "039c555594a44e8b16d8fa1ff05e52d243c3cf43cd0a41e79bcc0ae2baeeaedb",
+       "action": "replace",
+       "replacement_utf8": {
+        "@repeat": "Fabricated filler. ",
+        "times": 12000
+       },
+       "replacement_sha256": "f41ab1d8b15b55e400dd554fd6728a5aeb8e77a81a1c2b4f42850370f75c791b"
+      }
+     ]
+    },
+    [
+     "response-style",
+     "tool-bash-guide"
+    ],
+    [
+     "compact-whitespace",
+     "strip-caps"
+    ]
+   ],
+   "function": "generate_macro_edits",
+   "expected": {
+    "edits": [
+     {
+      "block_id": "response-style",
+      "replacement_utf8": "Fabricated style rules follow.\nYou Do not invent results.\n\n```\nIMPORTANT: inside a fence\n```\n\nKeep answers short.   \n",
+      "before_bytes": 132,
+      "after_bytes": 117,
+      "before_tokens": 33,
+      "after_tokens": 29
+     }
+    ],
+    "skipped": [
+     {
+      "block_id": "tool-bash-guide",
+      "reason": "unchanged"
+     }
+    ],
+    "projected": {
+     "profile_bytes": 913916,
+     "overrides": 5,
+     "fits": false
+    }
+   }
+  },
+  {
+   "name": "generate: Codex",
+   "args": [
+    "@inventory-codex",
+    {
+     "schema_version": 1,
+     "runtime_id": "native-codex",
+     "runtime_version": "0.167.1",
+     "image_digest": "sha256:716f940f0958cd4abdda846a256caa95e40a5a858709f72692a16a89f9d14c7f",
+     "binary_sha256": "18ee9689f82cda3a1af3da8b40e0b5477a56b83e9e4fa620554a2fd6c6112053",
+     "inventory_sha256": "4eca453646cf1f187f5872ccafdec818d4536b3452b5ea1d33dcb436ad78273d",
+     "taxonomy_sha256": "6064ebcb6693a1dd7b3e50fbfbcc94ff959f7957ac184188fd91744900a429a3",
+     "materializer_sha256": "8a1ee9f8fba86a80c057f7712d4aeddb02096ec17f3c22451ecaf5ded9c1c185",
+     "default_action": "keep",
+     "overrides": [
+      {
+       "block_id": "codex-review",
+       "baseline_sha256": "7f587ebb523bdfb535b38804a344d40b9991372fa7343e4f5fced81ce3bd4dfa",
+       "action": "replace",
+       "replacement_utf8": "IMPORTANT: Fabricated   ",
+       "replacement_sha256": "d53ce3d8bc683f886c12912d4609feea62dbbd37ef1d5000acf0bb7fccaf4cfe"
+      }
+     ]
+    },
+    [
+     "codex-base-instructions",
+     "codex-review",
+     "codex-template",
+     "codex-jinja",
+     "codex-short",
+     "codex-unicode"
+    ],
+    [
+     "strip-caps",
+     "compact-whitespace"
+    ]
+   ],
+   "function": "generate_macro_edits",
+   "expected": {
+    "edits": [
+     {
+      "block_id": "codex-review",
+      "replacement_utf8": "Fabricated   ",
+      "before_bytes": 24,
+      "after_bytes": 13,
+      "before_tokens": 6,
+      "after_tokens": 3
+     }
+    ],
+    "skipped": [
+     {
+      "block_id": "codex-base-instructions",
+      "reason": "unchanged"
+     },
+     {
+      "block_id": "codex-template",
+      "reason": "not-patchable"
+     },
+     {
+      "block_id": "codex-jinja",
+      "reason": "not-patchable"
+     },
+     {
+      "block_id": "codex-short",
+      "reason": "unchanged"
+     },
+     {
+      "block_id": "codex-unicode",
+      "reason": "unchanged"
+     }
+    ],
+    "projected": {
+     "profile_bytes": 801,
+     "overrides": 1,
+     "fits": true
+    }
+   }
+  },
+  {
+   "name": "fit: everything fits",
+   "args": [
+    "@inventory-claude",
+    {
+     "schema_version": 1,
+     "runtime_id": "native-claude-code",
+     "runtime_version": "0.0.0-golden",
+     "image_digest": "sha256:2d032a622cf94baf637a4488720865da983853e4a655fea4e45d0e80f0a9c640",
+     "binary_sha256": "25ba8ebec5f227618d8d58f475622669f4c45019d40259d1d292a823f4184c27",
+     "inventory_sha256": "44e7b67bbdc0842fecf8cfa158641e03998f7d0b34184bc297ede967ab24ce7a",
+     "taxonomy_sha256": "6064ebcb6693a1dd7b3e50fbfbcc94ff959f7957ac184188fd91744900a429a3",
+     "materializer_sha256": "ba6245da8b07901b6793898e70e2e974a1e641a2c3be0d357ba53d15101f4081",
+     "default_action": "keep",
+     "overrides": []
+    },
+    [
+     {
+      "block_id": "tool-bash-guide",
+      "replacement_utf8": "Short.",
+      "before_bytes": 80,
+      "after_bytes": 6,
+      "before_tokens": 0,
+      "after_tokens": 0
+     },
+     {
+      "block_id": "short",
+      "replacement_utf8": "Brief.",
+      "before_bytes": 9,
+      "after_bytes": 6,
+      "before_tokens": 0,
+      "after_tokens": 0
+     }
+    ]
+   ],
+   "function": "fit_macro_edits",
+   "expected": [
+    {
+     "block_id": "tool-bash-guide",
+     "replacement_utf8": "Short.",
+     "before_bytes": 80,
+     "after_bytes": 6,
+     "before_tokens": 0,
+     "after_tokens": 0
+    },
+    {
+     "block_id": "short",
+     "replacement_utf8": "Brief.",
+     "before_bytes": 9,
+     "after_bytes": 6,
+     "before_tokens": 0,
+     "after_tokens": 0
+    }
+   ]
+  },
+  {
+   "name": "fit: nothing to fit",
+   "args": [
+    "@inventory-claude",
+    {
+     "schema_version": 1,
+     "runtime_id": "native-claude-code",
+     "runtime_version": "0.0.0-golden",
+     "image_digest": "sha256:2d032a622cf94baf637a4488720865da983853e4a655fea4e45d0e80f0a9c640",
+     "binary_sha256": "25ba8ebec5f227618d8d58f475622669f4c45019d40259d1d292a823f4184c27",
+     "inventory_sha256": "44e7b67bbdc0842fecf8cfa158641e03998f7d0b34184bc297ede967ab24ce7a",
+     "taxonomy_sha256": "6064ebcb6693a1dd7b3e50fbfbcc94ff959f7957ac184188fd91744900a429a3",
+     "materializer_sha256": "ba6245da8b07901b6793898e70e2e974a1e641a2c3be0d357ba53d15101f4081",
+     "default_action": "keep",
+     "overrides": []
+    },
+    []
+   ],
+   "function": "fit_macro_edits",
+   "expected": []
+  },
+  {
+   "name": "fit: largest saving first under pressure",
+   "args": [
+    "@inventory-claude",
+    {
+     "schema_version": 1,
+     "runtime_id": "native-claude-code",
+     "runtime_version": "0.0.0-golden",
+     "image_digest": "sha256:2d032a622cf94baf637a4488720865da983853e4a655fea4e45d0e80f0a9c640",
+     "binary_sha256": "25ba8ebec5f227618d8d58f475622669f4c45019d40259d1d292a823f4184c27",
+     "inventory_sha256": "44e7b67bbdc0842fecf8cfa158641e03998f7d0b34184bc297ede967ab24ce7a",
+     "taxonomy_sha256": "6064ebcb6693a1dd7b3e50fbfbcc94ff959f7957ac184188fd91744900a429a3",
+     "materializer_sha256": "ba6245da8b07901b6793898e70e2e974a1e641a2c3be0d357ba53d15101f4081",
+     "default_action": "keep",
+     "overrides": [
+      {
+       "block_id": "security-sandbox-note",
+       "baseline_sha256": "da29f4d417fb4114d86cf22df8e7b8b94933d8df6b415974fb64812073588596",
+       "action": "replace",
+       "replacement_utf8": {
+        "@repeat": "Fabricated filler. ",
+        "times": 13000
+       },
+       "replacement_sha256": "48d26dbcaceb6353a4b70eb04e712e30fc96d73d2255b34ca796a64bb86c6a7c"
+      },
+      {
+       "block_id": "general-hedge",
+       "baseline_sha256": "9e5dada3492558f4af8fff686a4bb57c2bcc6e83faa7b86f653206cff34ac914",
+       "action": "replace",
+       "replacement_utf8": {
+        "@repeat": "Fabricated filler. ",
+        "times": 13000
+       },
+       "replacement_sha256": "48d26dbcaceb6353a4b70eb04e712e30fc96d73d2255b34ca796a64bb86c6a7c"
+      },
+      {
+       "block_id": "git-commit-guide",
+       "baseline_sha256": "b52acffead6afdd004e98f407b6e01be0ee3c1fb8ca7921989aebc6cf97a21d6",
+       "action": "replace",
+       "replacement_utf8": {
+        "@repeat": "Fabricated filler. ",
+        "times": 13000
+       },
+       "replacement_sha256": "48d26dbcaceb6353a4b70eb04e712e30fc96d73d2255b34ca796a64bb86c6a7c"
+      },
+      {
+       "block_id": "permission-deny-list",
+       "baseline_sha256": "039c555594a44e8b16d8fa1ff05e52d243c3cf43cd0a41e79bcc0ae2baeeaedb",
+       "action": "replace",
+       "replacement_utf8": {
+        "@repeat": "f",
+        "times": 43285
+       },
+       "replacement_sha256": "006e178baf0075145d86328776e59201920f1b12c1fd58eb64f07fc10892917c"
+      }
+     ]
+    },
+    [
+     {
+      "block_id": "tool-bash-guide",
+      "replacement_utf8": "tttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttt",
+      "before_bytes": 600,
+      "after_bytes": 300,
+      "before_tokens": 0,
+      "after_tokens": 0
+     },
+     {
+      "block_id": "response-style",
+      "replacement_utf8": "rrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrr",
+      "before_bytes": 300,
+      "after_bytes": 250,
+      "before_tokens": 0,
+      "after_tokens": 0
+     },
+     {
+      "block_id": "short",
+      "replacement_utf8": "ssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss",
+      "before_bytes": 130,
+      "after_bytes": 120,
+      "before_tokens": 0,
+      "after_tokens": 0
+     }
+    ]
+   ],
+   "function": "fit_macro_edits",
+   "expected": [
+    {
+     "block_id": "tool-bash-guide",
+     "replacement_utf8": "tttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttt",
+     "before_bytes": 600,
+     "after_bytes": 300,
+     "before_tokens": 0,
+     "after_tokens": 0
+    }
+   ]
+  },
+  {
+   "name": "fit: ties keep inventory order",
+   "args": [
+    "@inventory-claude",
+    {
+     "schema_version": 1,
+     "runtime_id": "native-claude-code",
+     "runtime_version": "0.0.0-golden",
+     "image_digest": "sha256:2d032a622cf94baf637a4488720865da983853e4a655fea4e45d0e80f0a9c640",
+     "binary_sha256": "25ba8ebec5f227618d8d58f475622669f4c45019d40259d1d292a823f4184c27",
+     "inventory_sha256": "44e7b67bbdc0842fecf8cfa158641e03998f7d0b34184bc297ede967ab24ce7a",
+     "taxonomy_sha256": "6064ebcb6693a1dd7b3e50fbfbcc94ff959f7957ac184188fd91744900a429a3",
+     "materializer_sha256": "ba6245da8b07901b6793898e70e2e974a1e641a2c3be0d357ba53d15101f4081",
+     "default_action": "keep",
+     "overrides": [
+      {
+       "block_id": "security-sandbox-note",
+       "baseline_sha256": "da29f4d417fb4114d86cf22df8e7b8b94933d8df6b415974fb64812073588596",
+       "action": "replace",
+       "replacement_utf8": {
+        "@repeat": "Fabricated filler. ",
+        "times": 13000
+       },
+       "replacement_sha256": "48d26dbcaceb6353a4b70eb04e712e30fc96d73d2255b34ca796a64bb86c6a7c"
+      },
+      {
+       "block_id": "general-hedge",
+       "baseline_sha256": "9e5dada3492558f4af8fff686a4bb57c2bcc6e83faa7b86f653206cff34ac914",
+       "action": "replace",
+       "replacement_utf8": {
+        "@repeat": "Fabricated filler. ",
+        "times": 13000
+       },
+       "replacement_sha256": "48d26dbcaceb6353a4b70eb04e712e30fc96d73d2255b34ca796a64bb86c6a7c"
+      },
+      {
+       "block_id": "git-commit-guide",
+       "baseline_sha256": "b52acffead6afdd004e98f407b6e01be0ee3c1fb8ca7921989aebc6cf97a21d6",
+       "action": "replace",
+       "replacement_utf8": {
+        "@repeat": "Fabricated filler. ",
+        "times": 13000
+       },
+       "replacement_sha256": "48d26dbcaceb6353a4b70eb04e712e30fc96d73d2255b34ca796a64bb86c6a7c"
+      },
+      {
+       "block_id": "permission-deny-list",
+       "baseline_sha256": "039c555594a44e8b16d8fa1ff05e52d243c3cf43cd0a41e79bcc0ae2baeeaedb",
+       "action": "replace",
+       "replacement_utf8": {
+        "@repeat": "f",
+        "times": 43285
+       },
+       "replacement_sha256": "006e178baf0075145d86328776e59201920f1b12c1fd58eb64f07fc10892917c"
+      }
+     ]
+    },
+    [
+     {
+      "block_id": "short",
+      "replacement_utf8": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+      "before_bytes": 290,
+      "after_bytes": 280,
+      "before_tokens": 0,
+      "after_tokens": 0
+     },
+     {
+      "block_id": "tool-bash-guide",
+      "replacement_utf8": "yyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy",
+      "before_bytes": 290,
+      "after_bytes": 280,
+      "before_tokens": 0,
+      "after_tokens": 0
+     }
+    ]
+   ],
+   "function": "fit_macro_edits",
+   "expected": [
+    {
+     "block_id": "tool-bash-guide",
+     "replacement_utf8": "yyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy",
+     "before_bytes": 290,
+     "after_bytes": 280,
+     "before_tokens": 0,
+     "after_tokens": 0
+    }
+   ]
+  },
+  {
+   "name": "fit: an edit that cannot fit is skipped",
+   "args": [
+    "@inventory-claude",
+    {
+     "schema_version": 1,
+     "runtime_id": "native-claude-code",
+     "runtime_version": "0.0.0-golden",
+     "image_digest": "sha256:2d032a622cf94baf637a4488720865da983853e4a655fea4e45d0e80f0a9c640",
+     "binary_sha256": "25ba8ebec5f227618d8d58f475622669f4c45019d40259d1d292a823f4184c27",
+     "inventory_sha256": "44e7b67bbdc0842fecf8cfa158641e03998f7d0b34184bc297ede967ab24ce7a",
+     "taxonomy_sha256": "6064ebcb6693a1dd7b3e50fbfbcc94ff959f7957ac184188fd91744900a429a3",
+     "materializer_sha256": "ba6245da8b07901b6793898e70e2e974a1e641a2c3be0d357ba53d15101f4081",
+     "default_action": "keep",
+     "overrides": [
+      {
+       "block_id": "security-sandbox-note",
+       "baseline_sha256": "da29f4d417fb4114d86cf22df8e7b8b94933d8df6b415974fb64812073588596",
+       "action": "replace",
+       "replacement_utf8": {
+        "@repeat": "Fabricated filler. ",
+        "times": 13000
+       },
+       "replacement_sha256": "48d26dbcaceb6353a4b70eb04e712e30fc96d73d2255b34ca796a64bb86c6a7c"
+      },
+      {
+       "block_id": "general-hedge",
+       "baseline_sha256": "9e5dada3492558f4af8fff686a4bb57c2bcc6e83faa7b86f653206cff34ac914",
+       "action": "replace",
+       "replacement_utf8": {
+        "@repeat": "Fabricated filler. ",
+        "times": 13000
+       },
+       "replacement_sha256": "48d26dbcaceb6353a4b70eb04e712e30fc96d73d2255b34ca796a64bb86c6a7c"
+      },
+      {
+       "block_id": "git-commit-guide",
+       "baseline_sha256": "b52acffead6afdd004e98f407b6e01be0ee3c1fb8ca7921989aebc6cf97a21d6",
+       "action": "replace",
+       "replacement_utf8": {
+        "@repeat": "Fabricated filler. ",
+        "times": 13000
+       },
+       "replacement_sha256": "48d26dbcaceb6353a4b70eb04e712e30fc96d73d2255b34ca796a64bb86c6a7c"
+      },
+      {
+       "block_id": "permission-deny-list",
+       "baseline_sha256": "039c555594a44e8b16d8fa1ff05e52d243c3cf43cd0a41e79bcc0ae2baeeaedb",
+       "action": "replace",
+       "replacement_utf8": {
+        "@repeat": "f",
+        "times": 43285
+       },
+       "replacement_sha256": "006e178baf0075145d86328776e59201920f1b12c1fd58eb64f07fc10892917c"
+      }
+     ]
+    },
+    [
+     {
+      "block_id": "tool-bash-guide",
+      "replacement_utf8": "zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz",
+      "before_bytes": 901,
+      "after_bytes": 900,
+      "before_tokens": 0,
+      "after_tokens": 0
+     },
+     {
+      "block_id": "short",
+      "replacement_utf8": "ok",
+      "before_bytes": 9,
+      "after_bytes": 2,
+      "before_tokens": 0,
+      "after_tokens": 0
+     }
+    ]
+   ],
+   "function": "fit_macro_edits",
+   "expected": [
+    {
+     "block_id": "short",
+     "replacement_utf8": "ok",
+     "before_bytes": 9,
+     "after_bytes": 2,
+     "before_tokens": 0,
+     "after_tokens": 0
+    }
+   ]
+  },
+  {
+   "name": "fit: replacing an existing override frees its bytes",
+   "args": [
+    "@inventory-claude",
+    {
+     "schema_version": 1,
+     "runtime_id": "native-claude-code",
+     "runtime_version": "0.0.0-golden",
+     "image_digest": "sha256:2d032a622cf94baf637a4488720865da983853e4a655fea4e45d0e80f0a9c640",
+     "binary_sha256": "25ba8ebec5f227618d8d58f475622669f4c45019d40259d1d292a823f4184c27",
+     "inventory_sha256": "44e7b67bbdc0842fecf8cfa158641e03998f7d0b34184bc297ede967ab24ce7a",
+     "taxonomy_sha256": "6064ebcb6693a1dd7b3e50fbfbcc94ff959f7957ac184188fd91744900a429a3",
+     "materializer_sha256": "ba6245da8b07901b6793898e70e2e974a1e641a2c3be0d357ba53d15101f4081",
+     "default_action": "keep",
+     "overrides": [
+      {
+       "block_id": "security-sandbox-note",
+       "baseline_sha256": "da29f4d417fb4114d86cf22df8e7b8b94933d8df6b415974fb64812073588596",
+       "action": "replace",
+       "replacement_utf8": {
+        "@repeat": "Fabricated filler. ",
+        "times": 13000
+       },
+       "replacement_sha256": "48d26dbcaceb6353a4b70eb04e712e30fc96d73d2255b34ca796a64bb86c6a7c"
+      },
+      {
+       "block_id": "general-hedge",
+       "baseline_sha256": "9e5dada3492558f4af8fff686a4bb57c2bcc6e83faa7b86f653206cff34ac914",
+       "action": "replace",
+       "replacement_utf8": {
+        "@repeat": "Fabricated filler. ",
+        "times": 13000
+       },
+       "replacement_sha256": "48d26dbcaceb6353a4b70eb04e712e30fc96d73d2255b34ca796a64bb86c6a7c"
+      },
+      {
+       "block_id": "git-commit-guide",
+       "baseline_sha256": "b52acffead6afdd004e98f407b6e01be0ee3c1fb8ca7921989aebc6cf97a21d6",
+       "action": "replace",
+       "replacement_utf8": {
+        "@repeat": "Fabricated filler. ",
+        "times": 13000
+       },
+       "replacement_sha256": "48d26dbcaceb6353a4b70eb04e712e30fc96d73d2255b34ca796a64bb86c6a7c"
+      },
+      {
+       "block_id": "permission-deny-list",
+       "baseline_sha256": "039c555594a44e8b16d8fa1ff05e52d243c3cf43cd0a41e79bcc0ae2baeeaedb",
+       "action": "replace",
+       "replacement_utf8": {
+        "@repeat": "f",
+        "times": 43285
+       },
+       "replacement_sha256": "006e178baf0075145d86328776e59201920f1b12c1fd58eb64f07fc10892917c"
+      }
+     ]
+    },
+    [
+     {
+      "block_id": "security-sandbox-note",
+      "replacement_utf8": "Fabricated, much shorter.",
+      "before_bytes": 247000,
+      "after_bytes": 25,
+      "before_tokens": 0,
+      "after_tokens": 0
+     },
+     {
+      "block_id": "short",
+      "replacement_utf8": "wwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwww",
+      "before_bytes": 9,
+      "after_bytes": 5000,
+      "before_tokens": 0,
+      "after_tokens": 0
+     }
+    ]
+   ],
+   "function": "fit_macro_edits",
+   "expected": [
+    {
+     "block_id": "security-sandbox-note",
+     "replacement_utf8": "Fabricated, much shorter.",
+     "before_bytes": 247000,
+     "after_bytes": 25,
+     "before_tokens": 0,
+     "after_tokens": 0
+    },
+    {
+     "block_id": "short",
+     "replacement_utf8": "wwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwww",
+     "before_bytes": 9,
+     "after_bytes": 5000,
+     "before_tokens": 0,
+     "after_tokens": 0
+    }
+   ]
+  },
+  {
+   "name": "fit: non-ASCII edit",
+   "args": [
+    "@inventory-claude",
+    {
+     "schema_version": 1,
+     "runtime_id": "native-claude-code",
+     "runtime_version": "0.0.0-golden",
+     "image_digest": "sha256:2d032a622cf94baf637a4488720865da983853e4a655fea4e45d0e80f0a9c640",
+     "binary_sha256": "25ba8ebec5f227618d8d58f475622669f4c45019d40259d1d292a823f4184c27",
+     "inventory_sha256": "44e7b67bbdc0842fecf8cfa158641e03998f7d0b34184bc297ede967ab24ce7a",
+     "taxonomy_sha256": "6064ebcb6693a1dd7b3e50fbfbcc94ff959f7957ac184188fd91744900a429a3",
+     "materializer_sha256": "ba6245da8b07901b6793898e70e2e974a1e641a2c3be0d357ba53d15101f4081",
+     "default_action": "keep",
+     "overrides": []
+    },
+    [
+     {
+      "block_id": "unicode-mix",
+      "replacement_utf8": "\u65e5\u672c \ud83d\ude42",
+      "before_bytes": 120,
+      "after_bytes": 11,
+      "before_tokens": 0,
+      "after_tokens": 0
+     }
+    ]
+   ],
+   "function": "fit_macro_edits",
+   "expected": [
+    {
+     "block_id": "unicode-mix",
+     "replacement_utf8": "\u65e5\u672c \ud83d\ude42",
+     "before_bytes": 120,
+     "after_bytes": 11,
+     "before_tokens": 0,
+     "after_tokens": 0
+    }
+   ]
+  },
+  {
+   "name": "fit: result returned in inventory order",
+   "args": [
+    "@inventory-claude",
+    {
+     "schema_version": 1,
+     "runtime_id": "native-claude-code",
+     "runtime_version": "0.0.0-golden",
+     "image_digest": "sha256:2d032a622cf94baf637a4488720865da983853e4a655fea4e45d0e80f0a9c640",
+     "binary_sha256": "25ba8ebec5f227618d8d58f475622669f4c45019d40259d1d292a823f4184c27",
+     "inventory_sha256": "44e7b67bbdc0842fecf8cfa158641e03998f7d0b34184bc297ede967ab24ce7a",
+     "taxonomy_sha256": "6064ebcb6693a1dd7b3e50fbfbcc94ff959f7957ac184188fd91744900a429a3",
+     "materializer_sha256": "ba6245da8b07901b6793898e70e2e974a1e641a2c3be0d357ba53d15101f4081",
+     "default_action": "keep",
+     "overrides": []
+    },
+    [
+     {
+      "block_id": "zebra-only",
+      "replacement_utf8": "Z.",
+      "before_bytes": 50,
+      "after_bytes": 2,
+      "before_tokens": 0,
+      "after_tokens": 0
+     },
+     {
+      "block_id": "tool-bash-guide",
+      "replacement_utf8": "T.",
+      "before_bytes": 80,
+      "after_bytes": 2,
+      "before_tokens": 0,
+      "after_tokens": 0
+     },
+     {
+      "block_id": "short",
+      "replacement_utf8": "S.",
+      "before_bytes": 9,
+      "after_bytes": 2,
+      "before_tokens": 0,
+      "after_tokens": 0
+     }
+    ]
+   ],
+   "function": "fit_macro_edits",
+   "expected": [
+    {
+     "block_id": "tool-bash-guide",
+     "replacement_utf8": "T.",
+     "before_bytes": 80,
+     "after_bytes": 2,
+     "before_tokens": 0,
+     "after_tokens": 0
+    },
+    {
+     "block_id": "short",
+     "replacement_utf8": "S.",
+     "before_bytes": 9,
+     "after_bytes": 2,
+     "before_tokens": 0,
+     "after_tokens": 0
+    },
+    {
+     "block_id": "zebra-only",
+     "replacement_utf8": "Z.",
+     "before_bytes": 50,
+     "after_bytes": 2,
+     "before_tokens": 0,
+     "after_tokens": 0
+    }
+   ]
+  },
+  {
+   "name": "fit: a small edit fits the remaining room",
+   "args": [
+    "@inventory-claude",
+    {
+     "schema_version": 1,
+     "runtime_id": "native-claude-code",
+     "runtime_version": "0.0.0-golden",
+     "image_digest": "sha256:2d032a622cf94baf637a4488720865da983853e4a655fea4e45d0e80f0a9c640",
+     "binary_sha256": "25ba8ebec5f227618d8d58f475622669f4c45019d40259d1d292a823f4184c27",
+     "inventory_sha256": "44e7b67bbdc0842fecf8cfa158641e03998f7d0b34184bc297ede967ab24ce7a",
+     "taxonomy_sha256": "6064ebcb6693a1dd7b3e50fbfbcc94ff959f7957ac184188fd91744900a429a3",
+     "materializer_sha256": "ba6245da8b07901b6793898e70e2e974a1e641a2c3be0d357ba53d15101f4081",
+     "default_action": "keep",
+     "overrides": [
+      {
+       "block_id": "security-sandbox-note",
+       "baseline_sha256": "da29f4d417fb4114d86cf22df8e7b8b94933d8df6b415974fb64812073588596",
+       "action": "replace",
+       "replacement_utf8": {
+        "@repeat": "Fabricated filler. ",
+        "times": 13000
+       },
+       "replacement_sha256": "48d26dbcaceb6353a4b70eb04e712e30fc96d73d2255b34ca796a64bb86c6a7c"
+      },
+      {
+       "block_id": "general-hedge",
+       "baseline_sha256": "9e5dada3492558f4af8fff686a4bb57c2bcc6e83faa7b86f653206cff34ac914",
+       "action": "replace",
+       "replacement_utf8": {
+        "@repeat": "Fabricated filler. ",
+        "times": 13000
+       },
+       "replacement_sha256": "48d26dbcaceb6353a4b70eb04e712e30fc96d73d2255b34ca796a64bb86c6a7c"
+      },
+      {
+       "block_id": "git-commit-guide",
+       "baseline_sha256": "b52acffead6afdd004e98f407b6e01be0ee3c1fb8ca7921989aebc6cf97a21d6",
+       "action": "replace",
+       "replacement_utf8": {
+        "@repeat": "Fabricated filler. ",
+        "times": 13000
+       },
+       "replacement_sha256": "48d26dbcaceb6353a4b70eb04e712e30fc96d73d2255b34ca796a64bb86c6a7c"
+      },
+      {
+       "block_id": "permission-deny-list",
+       "baseline_sha256": "039c555594a44e8b16d8fa1ff05e52d243c3cf43cd0a41e79bcc0ae2baeeaedb",
+       "action": "replace",
+       "replacement_utf8": {
+        "@repeat": "f",
+        "times": 43285
+       },
+       "replacement_sha256": "006e178baf0075145d86328776e59201920f1b12c1fd58eb64f07fc10892917c"
+      }
+     ]
+    },
+    [
+     {
+      "block_id": "short",
+      "replacement_utf8": "qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq",
+      "before_bytes": 9,
+      "after_bytes": 100,
+      "before_tokens": 0,
+      "after_tokens": 0
+     }
+    ]
+   ],
+   "function": "fit_macro_edits",
+   "expected": [
+    {
+     "block_id": "short",
+     "replacement_utf8": "qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq",
+     "before_bytes": 9,
+     "after_bytes": 100,
+     "before_tokens": 0,
+     "after_tokens": 0
+    }
+   ]
+  }
+ ]
+}
