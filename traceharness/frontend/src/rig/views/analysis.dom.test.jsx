@@ -604,6 +604,18 @@ describe('experiment hold', () => {
 })
 
 describe('mixed outcomes require repeat evidence', () => {
+  it('distinguishes recorded attempts from known hidden grades in the pass estimate', () => {
+    const fixture = data()
+    fixture['/results/mini/runs'] = [{ ...fixture['/results/mini/runs'][0], hidden_pass: null }]
+    Object.assign(fixture['/results/mini/metrics'].cells[0], { runs: 1, tasks: {}, 'pass@1': null, ci95: null })
+    const { container } = renderRig('#/rig/an:mini:outcomes:alpha-1:baseline', { data: fixture })
+    for (const target of ['outcomes-answer', 'outcomes-headline']) {
+      expect(el(container, target).textContent).toContain('1 recorded attempt')
+      expect(el(container, target).textContent).toContain('1 recorded task')
+      expect(el(container, target).textContent).toContain('0 known hidden grades')
+    }
+    expect(el(container, 'outcomes-headline').textContent).not.toContain('0 tasks')
+  })
   it.each([null, true])('marks singleton %j grades unavailable in task filters and outcomes', (grade) => {
     const fixture = data()
     fixture['/results/mini/runs'] = [{ ...fixture['/results/mini/runs'][0], hidden_pass: grade }]

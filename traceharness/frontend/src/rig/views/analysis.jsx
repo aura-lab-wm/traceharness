@@ -420,7 +420,7 @@ function Outcomes({ dir, c }) {
   const nT = d.rows.length
   const [lo, hi] = cell.ci95 || [null, null]
   const repeats = repeatEvidence(d.list, oracle)
-  const nCellTasks = Object.keys(cell.tasks || {}).length
+  const hiddenCoverage = tally(d.list, 'hidden')
   const curve = (cell.passk_curve || []).filter((p) => [1, 2, 3, 5, 8, 10].includes(p.k))
   const p1 = cell['pass@1']
   // Strengthened figures only where a run of this condition carries a strengthened grade;
@@ -429,12 +429,12 @@ function Outcomes({ dir, c }) {
   const sd = !hasStrong || cell.pass1_strong == null || p1 == null ? null : cell.pass1_strong - p1
   const cs = [dir, short(c.model), c.harness]
   const reps = repeatsText(d.list)
-  const nLine = `n = ${int(cell.runs)} · ${plural(nT, 'task')} × ${reps}`
+  const nLine = `${plural(d.list.length, 'recorded attempt')} · ${plural(nT, 'recorded task')} · ${reps} · ${plural(hiddenCoverage.known, 'known hidden grade')}`
   const figLabel = `pass@1 · ${short(c.model)} · ${c.harness} · ${dir}`
   const lead = <>pass@1 for <b className="rg-mono">{short(c.model)}</b> under <b className="rg-mono">{c.harness}</b> is <b>{pct(p1)}</b>, 95% CI {ciText(cell.ci95)}, on the hidden suite ({nLine}){repeats.rate != null ? <>; {repeats.mixed} of {repeats.eligible} eligible tasks flip between pass and fail under the {oracle} suite</> : <>; repeat comparison unavailable under the {oracle} suite</>}.</>
   return (<>
     <Head eyebrow="Step 2 · an estimate with an interval, on a stated oracle" title="Outcomes" el="outcomes-answer" lead={lead}
-      actions={<PinButton item={{ id: `figure:${dir}:outcomes:${c.model}:${c.harness}`, kind: 'figure', label: figLabel, value: `pass@1 ${pct(p1)} ${ciText(cell.ci95)} · n=${cell.runs} (hidden)`, spec: makeSpec('an', dir, 'outcomes', short(c.model), c.harness), dir, model: c.model, harness: c.harness }} />}
+      actions={<PinButton item={{ id: `figure:${dir}:outcomes:${c.model}:${c.harness}`, kind: 'figure', label: figLabel, value: `pass@1 ${pct(p1)} ${ciText(cell.ci95)} · ${nLine} (hidden)`, spec: makeSpec('an', dir, 'outcomes', short(c.model), c.harness), dir, model: c.model, harness: c.harness }} />}
       about={<>
         <p>pass@1, its interval and pass^k come from <span className="rg-mono">/metrics</span>, graded against the hidden suite. The flip rate and per-task strips follow the suite chosen in the sentence above, using only tasks with at least two known grades for the flip rate.</p>
         <p><b>pass^k</b> is the chance that k attempts in a row all pass — what a user experiences. <b>pass@k</b> is the chance that at least one of k passes — a leaderboard with retries. The flip rate is the share of tasks whose repeats disagree.</p>
@@ -448,7 +448,7 @@ function Outcomes({ dir, c }) {
         <span className="rg-fig">{p1 == null ? '—' : (p1 * 100).toFixed(1)}<span className="u">{p1 == null ? '' : '%'}</span></span>
         <CiBar lo={lo} hi={hi} pt={p1} />
         <span className="rg-mono rg-small">95% CI {ciText(cell.ci95)}{lo != null && hi != null && <> · <b className="rg-amb">{((hi - lo) * 100).toFixed(0)} points wide</b></>}</span>
-        <span className="rg-mono rg-small rg-mute">n={int(cell.runs)} · {plural(nCellTasks, 'task')} × {reps}</span></div>
+        <span className="rg-mono rg-small rg-mute">{nLine}</span></div>
       <div className="rg-stat" data-el="pass-k"><span className="rg-lbl">pass^3 · three in a row</span><span className="rg-fig md">{pct(cell['pass^3'])}</span>
         <span className="rg-small rg-dim">pass@3 <span className="rg-mono">{pct(cell['pass@3'])}</span> with retries</span></div>
       <div className="rg-stat" data-el="flip-rate"><span className="rg-lbl">flip rate · {oracle} suite</span><span className="rg-fig md">{repeats.rate == null ? 'Unavailable' : pct(repeats.rate, 0)}</span><span className="rg-small rg-dim">{repeats.rate != null ? `${repeats.mixed} of ${repeats.eligible} eligible tasks have mixed outcomes. ` : ''}{repeats.coverage}</span></div>
