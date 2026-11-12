@@ -1,0 +1,38 @@
+/* Rig · casefile.css — the Case file dock tab (views/casefile.jsx). Tokens only (UI contract v1).
+   Loaded after dock.css, whose older .rg-case-* rules this file supersedes; selectors carry two
+   classes so the panel rules at the end of rig.css (one class) do not undo them.
+
+   One pinned item is a three-column row that lines up on one control height:
+     [ select ]  [ kind · title          ]  [ unpin ]
+                 [ recorded value         ]
+                 [ note field, full width ]
+   The select and unpin targets are --rig-hit square (36px with a mouse, 44px on touch). */
+
+.rig .rg-case-bar{display:flex;flex-direction:column;align-items:stretch;flex-wrap:nowrap;gap:var(--rig-s2);padding:var(--rig-s3) var(--rig-s4);border-bottom:1px solid var(--rig-line)}
+.rig .rg-case-row{display:flex;align-items:center;flex-wrap:wrap;gap:var(--rig-s2);min-width:0}
+.rig .rg-case-count{font:var(--rig-fw-medium) var(--rig-fs-2xs)/var(--rig-lh-tight) var(--rig-mono);letter-spacing:var(--rig-track-caps);text-transform:uppercase;color:var(--rig-mute)}
+.rig .rg-case-hint{margin:0;font-size:var(--rig-fs-xs);line-height:var(--rig-lh-snug);color:var(--rig-mute)}
+
+.rig .rg-case-list{list-style:none;margin:0;padding:0}
+.rig .rg-case-list>.rg-case-it{display:grid;grid-template-columns:var(--rig-hit) minmax(0,1fr) var(--rig-hit);align-items:start;column-gap:var(--rig-s2);padding:var(--rig-s3) var(--rig-s2) var(--rig-s4) var(--rig-s2);border-bottom:1px solid var(--rig-line);transition:background-color var(--rig-dur-1) var(--rig-ease)}
+.rig .rg-case-list>.rg-case-it:hover{background:color-mix(in srgb,var(--rig-panel2) 50%,transparent)}
+.rig .rg-case-list>.rg-case-it:has(input[type=checkbox]:checked){background:var(--rig-sel-bg)}
+
+/* select: the whole cell is the target, the box stays drawn at 16px */
+.rig .rg-case-it .rg-case-pick{display:grid;place-items:center;width:var(--rig-hit);height:var(--rig-hit);cursor:pointer;border-radius:var(--rig-r-md)}
+.rig .rg-case-it span.rg-case-pick{cursor:default}
+.rig .rg-case-it .rg-case-pick input[type=checkbox]{width:16px;height:16px;margin:0;accent-color:var(--rig-sel);cursor:pointer}
+
+.rig .rg-case-main{min-width:0;display:flex;flex-direction:column;gap:var(--rig-s1)}
+.rig .rg-case-head{display:flex;align-items:center;flex-wrap:wrap;gap:var(--rig-s1) var(--rig-s2);min-height:var(--rig-hit);min-width:0}
+.rig .rg-case-head .rg-tag{flex:none}
+.rig .rg-case-head .rg-case-ttl{flex:1 1 10rem;min-width:0;font:var(--rig-fw-medium) var(--rig-fs-sm)/var(--rig-lh-snug) var(--rig-sans);color:var(--rig-text);text-align:left;white-space:normal;overflow-wrap:anywhere}
+.rig .rg-case-head button.rg-case-ttl{display:inline-flex;align-items:center;min-height:var(--rig-hit);cursor:pointer;text-decoration:underline;text-decoration-color:var(--rig-line3);text-underline-offset:3px;border-radius:var(--rig-r-xs)}
+.rig .rg-case-head button.rg-case-ttl:hover{color:var(--rig-sel-t);text-decoration-color:currentColor}
+.rig .rg-case-head button.rg-case-ttl:focus-visible{outline:var(--rig-focus-ring);outline-offset:var(--rig-focus-offset)}
+.rig .rg-case-val{font:var(--rig-fw-regular) var(--rig-fs-xs)/var(--rig-lh-snug) var(--rig-mono);color:var(--rig-dim);overflow-wrap:anywhere}
+.rig .rg-case-main>.rg-case-memo{width:100%;margin-top:var(--rig-s2)}
+
+/* unpin: a square icon button on the title's line */
+.rig .rg-case-it button.rg-case-x{width:var(--rig-hit);min-width:var(--rig-hit);padding:0;border-color:transparent;background:none;color:var(--rig-mute)}
+.rig .rg-case-it button.rg-case-x:hover{color:var(--rig-red-t);background:var(--rig-panel2)}

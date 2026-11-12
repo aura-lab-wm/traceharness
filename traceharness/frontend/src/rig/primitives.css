@@ -1,0 +1,210 @@
+/* ====================================================================================
+   Rig · primitives.css — responsive building blocks (UI contract v1). Components: primitives.jsx.
+   Loaded from primitives.jsx (re-exported by ui.jsx), so it sits BEFORE every view stylesheet
+   and before rig.css: a view rule of equal specificity wins over anything here.
+
+   RULES (checked by src/rig/primitives-css.test.js)
+   * Every value is a token from rig.css: var(--rig-*). No colour literal, no new font.
+   * Every class is `rg-*`, modifiers included (`rg-split-sm`, never a bare `sm`).
+   * Layout answers to the CONTAINER, never to the viewport: the queries below are unnamed, so
+     they read the nearest size container — .rg-doc (a pane), .rg-dock.side / .rg-dock-b (a
+     panel), .rg-modal-b (a dialog) or any element given .rg-cq. Outside a container nothing
+     collapses: wrap the content in .rg-cq.
+     Container breakpoints: 480 (compact) · 640 (narrow) · 900 (medium) · 1200 (wide).
+   * Per-element knobs are declared on the element itself (--rig-side, --rig-pad, --rig-col-min,
+     --rig-max-h, --rig-modal-w), so a nested primitive never inherits its parent's value.
+   ==================================================================================== */
+
+/* ---------------------------------------------------------------- containers */
+.rg-cq{container-type:inline-size;container-name:rgbox;min-width:0}
+.rg-dock-b{container-type:inline-size;container-name:rgdockb}
+
+/* ---------------------------------------------------------------- stack, cluster, auto grid */
+.rg-stack{display:flex;flex-direction:column;gap:var(--rig-s4);min-width:0}
+.rg-stack-xs{gap:var(--rig-s1)}.rg-stack-sm{gap:var(--rig-s2)}.rg-stack-md{gap:var(--rig-s3)}.rg-stack-lg{gap:var(--rig-s5)}.rg-stack-xl{gap:var(--rig-s6)}
+.rg-cluster{display:flex;flex-wrap:wrap;align-items:center;gap:var(--rig-s2);min-width:0}
+.rg-cluster-lg{gap:var(--rig-s3) var(--rig-s4)}
+.rg-cluster>*,.rg-stack>*{min-width:0}
+.rg-autogrid{--rig-col-min:16rem;display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,var(--rig-col-min)),1fr));gap:var(--rig-s4);min-width:0}
+.rg-autogrid>*{min-width:0}
+.rg-autogrid-fill{grid-template-columns:repeat(auto-fill,minmax(min(100%,var(--rig-col-min)),1fr))}
+
+/* ---------------------------------------------------------------- split: side + main, stacks when a pane would be too narrow
+   Default collapse at 900px of container; .rg-split-sm at 640, .rg-split-lg at 1200. */
+.rg-split{--rig-side:280px;display:grid;grid-template-columns:var(--rig-side) minmax(0,1fr);gap:var(--rig-s5);align-items:start;min-width:0}
+.rg-split>*{min-width:0}
+.rg-split.rg-split-end{grid-template-columns:minmax(0,1fr) var(--rig-side)}
+.rg-split.rg-split-even{grid-template-columns:repeat(2,minmax(0,1fr))}
+.rg-split.rg-split-flush{gap:0}
+@container (max-width:1200px){.rg-split.rg-split-lg{grid-template-columns:minmax(0,1fr)}}
+@container (max-width:900px){.rg-split:not(.rg-split-sm):not(.rg-split-lg){grid-template-columns:minmax(0,1fr)}}
+@container (max-width:640px){.rg-split.rg-split-sm,.rg-split.rg-split-lg{grid-template-columns:minmax(0,1fr)}.rg-split{gap:var(--rig-s4)}}
+
+/* ---------------------------------------------------------------- page header and section header
+   The title block has a 20rem basis: when the actions do not fit beside it they wrap under it,
+   they never squeeze it. */
+.rg-ph{display:flex;flex-wrap:wrap;align-items:flex-start;gap:var(--rig-s3) var(--rig-s5);margin:0 0 var(--rig-s5);min-width:0}
+.rg-ph-main{flex:1 1 20rem;min-width:0;display:flex;flex-direction:column;gap:var(--rig-s2)}
+/* the eyebrow's marker stays on its first line: the text wraps beside it, it never drops alone */
+.rg-ph-main>.rg-eyebrow{margin-bottom:0;max-width:100%;flex-wrap:nowrap;align-items:flex-start;overflow-wrap:anywhere}
+.rg-ph-main>.rg-eyebrow::before{margin-top:var(--rig-s0)}
+.rig .rg-ph-title{margin:0;font-size:var(--rig-fs-2xl);line-height:1.15;font-weight:var(--rig-fw-medium);letter-spacing:-.02em;overflow-wrap:anywhere;min-width:0}
+.rig .rg-ph-sec .rg-ph-title{font-size:var(--rig-fs-lg);line-height:var(--rig-lh-snug);letter-spacing:-.015em}
+.rg-ph-sec{margin-bottom:var(--rig-s3);align-items:center}
+.rg-ph-meta{display:flex;flex-wrap:wrap;align-items:center;gap:var(--rig-s1) var(--rig-s2);color:var(--rig-mute);font-size:var(--rig-fs-sm);line-height:var(--rig-lh-snug);min-width:0}
+.rig .rg-ph-lede{margin:0;color:var(--rig-dim);font-size:var(--rig-fs-md);line-height:var(--rig-lh-prose);max-width:var(--rig-measure)}
+.rg-ph-actions{display:flex;flex-wrap:wrap;align-items:center;gap:var(--rig-s2);min-width:0;max-width:100%;margin-left:auto}
+@container (max-width:640px){.rig .rg-ph-title{font-size:var(--rig-fs-xl)}.rig .rg-ph-sec .rg-ph-title{font-size:var(--rig-fs-lg)}.rg-ph-actions{margin-left:0}}
+
+/* ---------------------------------------------------------------- toolbar: wraps, then goes full width; never overflows */
+.rg-toolbar{display:flex;flex-wrap:wrap;align-items:center;gap:var(--rig-s2);min-width:0}
+.rg-toolbar>*{min-width:0;max-width:100%}
+.rg-toolbar-grow{flex:1 1 14rem}
+.rg-toolbar-end{display:flex;flex-wrap:wrap;align-items:center;gap:var(--rig-s2);margin-left:auto}
+.rg-toolbar-sep{align-self:stretch;width:1px;background:var(--rig-line2);margin:var(--rig-s1) var(--rig-s1)}
+.rg-toolbar-label{color:var(--rig-mute);font-size:var(--rig-fs-xs);white-space:nowrap}
+@container (max-width:480px){
+  .rg-toolbar>:is(.rg-selc,.rg-inp,.rg-search,.rg-toolbar-grow,select){flex:1 1 100%;width:100%}
+  .rg-toolbar.rg-toolbar-2up>:is(.rg-selc,select){flex:1 1 calc(50% - var(--rig-s2));width:auto}
+  .rg-toolbar-end{margin-left:0;flex:1 1 100%}
+  .rg-toolbar-sep{display:none}
+}
+
+/* ---------------------------------------------------------------- action bar + overflow menu
+   <ActionBar>: actions marked `more` leave the row below 640px of container and move into the
+   "More" menu, so a row of five buttons never wraps raggedly on a phone. */
+.rg-actbar{display:flex;flex-wrap:wrap;align-items:center;gap:var(--rig-s2);min-width:0;max-width:100%}
+/* two classes on purpose: .rg-btn and .rg-menu set display later in the cascade (rig.css, below) */
+.rg-actbar>.rg-actbar-more{display:none}
+@container (max-width:640px){.rg-actbar>.rg-actbar-2{display:none}.rg-actbar>.rg-actbar-more{display:inline-flex}}
+.rg-menu{position:relative;display:inline-flex;min-width:0}
+.rg-menu-caret{font-size:var(--rig-fs-2xs);color:var(--rig-mute)}
+.rg-menu-list{position:absolute;z-index:var(--rig-z-dropdown);top:calc(100% + var(--rig-s1));right:0;min-width:12rem;max-width:min(20rem,calc(100vw - 2 * var(--rig-s4)));max-height:min(60vh,24rem);overflow:auto;display:flex;flex-direction:column;gap:var(--rig-s0);padding:var(--rig-s1);background:var(--rig-panel);border:1px solid var(--rig-line2);border-radius:var(--rig-r-md);box-shadow:var(--rig-shadow)}
+.rg-menu-start>.rg-menu-list{right:auto;left:0}
+.rig .rg-menu-it{display:flex;align-items:center;gap:var(--rig-s2);min-height:var(--rig-h-ctl);padding:0 var(--rig-s3);border:0;border-radius:var(--rig-r-sm);background:none;color:var(--rig-text);font:var(--rig-fw-regular) var(--rig-fs-sm)/var(--rig-lh-tight) var(--rig-sans);text-align:left;text-decoration:none;white-space:nowrap}
+.rig .rg-menu-it:hover,.rig .rg-menu-it:focus-visible{background:var(--rig-panel2)}
+.rig .rg-menu-it:disabled{color:var(--rig-mute)}
+.rig .rg-menu-it.rg-danger{color:var(--rig-red-t)}
+
+/* ---------------------------------------------------------------- card: one bordered level, consistent padding
+   A card inside a card is .rg-card-sub (tint, no border): never draw a frame inside a frame. */
+.rg-card{--rig-pad:var(--rig-s5);display:flex;flex-direction:column;min-width:0;background:var(--rig-panel);border:1px solid var(--rig-line);border-radius:var(--rig-r-lg)}
+.rg-card-h{display:flex;flex-wrap:wrap;align-items:center;gap:var(--rig-s2) var(--rig-s3);min-height:calc(var(--rig-h-ctl) + 2 * var(--rig-s2));padding:var(--rig-s2) var(--rig-pad);border-bottom:1px solid var(--rig-line);min-width:0}
+.rig .rg-card-t{flex:1 1 10rem;min-width:0;margin:0;font-size:var(--rig-fs-md);line-height:var(--rig-lh-snug);font-weight:var(--rig-fw-medium);letter-spacing:0;overflow-wrap:anywhere}
+.rg-card-meta{color:var(--rig-mute);font-size:var(--rig-fs-xs);line-height:var(--rig-lh-snug)}
+.rg-card-acts{display:flex;flex-wrap:wrap;align-items:center;gap:var(--rig-s2);margin-left:auto;min-width:0}
+.rg-card-b{padding:var(--rig-pad);min-width:0}
+.rg-card-b.rg-flush{padding:0}
+.rg-card-f{display:flex;flex-wrap:wrap;align-items:center;gap:var(--rig-s2);padding:var(--rig-s3) var(--rig-pad);border-top:1px solid var(--rig-line);min-width:0}
+.rg-card-sub{background:var(--rig-panel2);border-radius:var(--rig-r-md);padding:var(--rig-s4);min-width:0}
+.rg-card>.rg-card-b>:last-child{margin-bottom:0}
+@container (max-width:640px){.rg-card{--rig-pad:var(--rig-s4)}.rg-card-sub{padding:var(--rig-s3)}}
+
+/* ---------------------------------------------------------------- states inside a panel, skeleton lines */
+.rg-pstate{display:flex;flex-direction:column;align-items:flex-start;gap:var(--rig-s2);padding:var(--rig-s5);color:var(--rig-dim);font-size:var(--rig-fs-sm);line-height:var(--rig-lh-body);min-width:0}
+.rg-pstate.rg-center{align-items:center;text-align:center}
+.rg-pstate-t{display:flex;align-items:center;gap:var(--rig-s2);color:var(--rig-text);font-size:var(--rig-fs-md);font-weight:var(--rig-fw-medium);overflow-wrap:anywhere}
+.rg-pstate-b{max-width:var(--rig-measure);overflow-wrap:anywhere}
+.rg-pstate-b>:last-child{margin-bottom:0}
+.rg-skel-stack{display:flex;flex-direction:column;gap:var(--rig-s2);min-width:0}
+.rg-skel-line{height:var(--rig-s3)}
+
+/* ---------------------------------------------------------------- horizontal scroller with edge fades
+   <ScrollX> sets data-start / data-end while more content lies that way. The mask fades the
+   content itself, so no colour is painted over it. */
+.rg-scrollx{position:relative;min-width:0;max-width:100%}
+.rg-scrollx-v{overflow-x:auto;overflow-y:hidden;scrollbar-width:none;overscroll-behavior-x:contain;min-width:0}
+.rg-scrollx-v::-webkit-scrollbar{display:none}
+.rg-scrollx[data-end]>.rg-scrollx-v{-webkit-mask-image:linear-gradient(to left,transparent,var(--rig-text) var(--rig-s6));mask-image:linear-gradient(to left,transparent,var(--rig-text) var(--rig-s6))}
+.rg-scrollx[data-start]>.rg-scrollx-v{-webkit-mask-image:linear-gradient(to right,transparent,var(--rig-text) var(--rig-s6));mask-image:linear-gradient(to right,transparent,var(--rig-text) var(--rig-s6))}
+.rg-scrollx[data-start][data-end]>.rg-scrollx-v{-webkit-mask-image:linear-gradient(to right,transparent,var(--rig-text) var(--rig-s6),var(--rig-text) calc(100% - var(--rig-s6)),transparent);mask-image:linear-gradient(to right,transparent,var(--rig-text) var(--rig-s6),var(--rig-text) calc(100% - var(--rig-s6)),transparent)}
+
+/* ---------------------------------------------------------------- wide tables: scroll inside, sticky header and first column
+   <TableScroll>. The scrollbar stays visible (a table has to say it scrolls); only the far edge
+   fades, because the first column is pinned to the near one. */
+.rg-tscroll{--rig-max-h:none}
+.rg-tscroll>.rg-scrollx-v{overflow:auto;scrollbar-width:thin;max-height:var(--rig-max-h)}
+.rg-tscroll>.rg-scrollx-v::-webkit-scrollbar{display:block;height:var(--rig-s2);width:var(--rig-s2)}
+.rg-tscroll>.rg-scrollx-v::-webkit-scrollbar-thumb{background:var(--rig-line3);border-radius:var(--rig-r-full)}
+.rg-tscroll[data-start]>.rg-scrollx-v,.rg-tscroll[data-start][data-end]>.rg-scrollx-v{-webkit-mask-image:none;mask-image:none}
+.rg-tscroll[data-end]>.rg-scrollx-v,.rg-tscroll[data-start][data-end]>.rg-scrollx-v{-webkit-mask-image:linear-gradient(to left,transparent,var(--rig-text) var(--rig-s5));mask-image:linear-gradient(to left,transparent,var(--rig-text) var(--rig-s5))}
+.rg-sticky-col :is(th,td):first-child{position:sticky;left:0;z-index:1;background:var(--rig-panel)}
+.rg-sticky-col thead :is(th,td):first-child{z-index:2;background:var(--rig-panel2)}
+.rg-tscroll[data-start].rg-sticky-col :is(th,td):first-child{box-shadow:inset -1px 0 0 var(--rig-line2)}
+.rg-sticky-col table{min-width:max-content}
+.rg-sticky-top{position:sticky;top:0;z-index:var(--rig-z-sticky);background:var(--rig-bg)}
+
+/* ---------------------------------------------------------------- tab strip: scrolls sideways inside <ScrollX> */
+.rg-tabs{display:flex;align-items:stretch;gap:var(--rig-s1);min-width:max-content;border-bottom:1px solid var(--rig-line)}
+.rig .rg-tabs-tab{display:inline-flex;align-items:center;gap:var(--rig-s2);min-height:var(--rig-h-ctl);padding:0 var(--rig-s3);margin-bottom:-1px;border:0;border-bottom:2px solid transparent;border-radius:var(--rig-r-sm) var(--rig-r-sm) 0 0;background:none;color:var(--rig-dim);font:var(--rig-fw-medium) var(--rig-fs-sm)/var(--rig-lh-tight) var(--rig-sans);white-space:nowrap}
+.rig .rg-tabs-tab:hover{color:var(--rig-text);background:var(--rig-panel2)}
+.rig .rg-tabs-tab[aria-selected="true"]{color:var(--rig-text);border-bottom-color:var(--rig-text)}
+.rg-tabs-n{font:var(--rig-fw-medium) var(--rig-fs-2xs)/1 var(--rig-mono);font-variant-numeric:tabular-nums;color:var(--rig-mute);background:var(--rig-panel3);padding:var(--rig-s0) var(--rig-s1);border-radius:var(--rig-r-xs)}
+
+/* ---------------------------------------------------------------- KPI tiles: hairlines between tiles at any wrap count
+   Tiles are flex items on a 1px gap over the line colour, so a last row of one stretches and
+   never leaves an empty framed cell. */
+.rg-kpis{--rig-col-min:11rem;display:flex;flex-wrap:wrap;gap:1px;background:var(--rig-line);border:1px solid var(--rig-line);border-radius:var(--rig-r-lg);overflow:hidden;min-width:0}
+.rg-kpi{flex:1 1 var(--rig-col-min);display:flex;flex-direction:column;gap:var(--rig-s2);padding:var(--rig-s4) var(--rig-s5);background:var(--rig-panel);min-width:0}
+.rg-kpi-v{font:var(--rig-fw-medium) var(--rig-fs-fig-md)/1 var(--rig-mono);font-variant-numeric:tabular-nums;letter-spacing:-.03em;color:var(--rig-text);overflow-wrap:anywhere}
+.rg-kpi.rg-lead .rg-kpi-v{font-size:var(--rig-fs-fig)}
+/* beside a lead figure the smaller ones sit on its baseline */
+.rg-kpis:has(>.rg-lead)>.rg-kpi:not(.rg-lead)>.rg-kpi-v{padding-top:calc(var(--rig-fs-fig) - var(--rig-fs-fig-md))}
+.rg-kpi-u{font-size:.5em;color:var(--rig-dim);margin-left:var(--rig-s0);letter-spacing:0}
+.rg-kpi-h{color:var(--rig-mute);font-size:var(--rig-fs-xs);line-height:var(--rig-lh-snug);overflow-wrap:anywhere}
+@container (max-width:480px){.rg-kpi{flex-basis:calc(50% - 1px);padding:var(--rig-s3) var(--rig-s4)}.rg-kpi.rg-lead{flex-basis:100%}.rg-kpi.rg-lead .rg-kpi-v{font-size:var(--rig-fs-fig-narrow)}.rg-kpis:has(>.rg-lead)>.rg-kpi:not(.rg-lead)>.rg-kpi-v{padding-top:0}}
+
+/* ---------------------------------------------------------------- text: truncate, clamp, break, identifiers */
+.rg-clamp-2,.rg-clamp-3{display:-webkit-box;-webkit-box-orient:vertical;overflow:hidden;overflow-wrap:anywhere}
+.rg-clamp-2{-webkit-line-clamp:2;line-clamp:2}
+.rg-clamp-3{-webkit-line-clamp:3;line-clamp:3}
+.rg-break{overflow-wrap:anywhere;min-width:0}
+.rg-nohyphen{hyphens:none;word-break:keep-all;overflow-wrap:normal}
+.rg-id{display:inline-block;max-width:100%;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;vertical-align:bottom;font-family:var(--rig-mono);font-variant-numeric:tabular-nums}
+.rg-id-cut::before{content:"…";color:var(--rig-mute)}
+
+/* ---------------------------------------------------------------- bounded scroll region, code and JSON */
+.rg-scroll{--rig-max-h:420px;max-height:var(--rig-max-h);overflow:auto;overscroll-behavior:contain;scrollbar-width:thin;min-width:0}
+.rg-codeblock{--rig-max-h:420px;margin:0;max-height:var(--rig-max-h);overflow:auto;overscroll-behavior:contain;scrollbar-width:thin;padding:var(--rig-s3) var(--rig-s4);background:var(--rig-panel2);border:1px solid var(--rig-line);border-radius:var(--rig-r-md);color:var(--rig-dim);font:var(--rig-fs-xs)/var(--rig-lh-code) var(--rig-mono);tab-size:2;white-space:pre-wrap;overflow-wrap:anywhere;min-width:0}
+.rg-codeblock.rg-nowrap{white-space:pre;overflow-wrap:normal}
+
+/* ---------------------------------------------------------------- charts: as wide as their box, never wider */
+.rg-chart{--rig-chart-h:240px;position:relative;width:100%;min-width:0;container-type:inline-size}
+.rg-chart>svg,.rg-chart>canvas{display:block;width:100%;max-width:100%;height:auto}
+.rg-chart.rg-chart-fixed{height:var(--rig-chart-h)}
+.rg-chart.rg-chart-fixed>svg,.rg-chart.rg-chart-fixed>canvas{height:100%}
+
+/* ---------------------------------------------------------------- forms: fields in as many columns as fit */
+.rg-form{--rig-col-min:16rem;display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,var(--rig-col-min)),1fr));gap:var(--rig-s4);align-items:start;min-width:0}
+.rg-field{display:flex;flex-direction:column;gap:var(--rig-s1);min-width:0}
+.rg-field-wide{grid-column:1/-1}
+.rg-field-l{color:var(--rig-dim);font:var(--rig-fw-medium) var(--rig-fs-xs)/var(--rig-lh-snug) var(--rig-sans)}
+.rg-field-h{color:var(--rig-mute);font-size:var(--rig-fs-xs);line-height:var(--rig-lh-snug)}
+.rg-field-e{color:var(--rig-red-t);font-size:var(--rig-fs-xs);line-height:var(--rig-lh-snug)}
+.rg-field>:is(.rg-inp,.rg-selc){width:100%}
+
+/* ---------------------------------------------------------------- modal and drawer
+   <Modal>: a native dialog, centred; pinned header and footer, the body scrolls. On a phone it is
+   the whole screen. .rg-drawer docks it to the right edge. */
+.rg-modal{--rig-modal-w:560px;margin:auto;padding:0;width:min(var(--rig-modal-w),calc(100vw - 2 * var(--rig-s4)));max-width:none;max-height:calc(100dvh - 2 * var(--rig-s4));flex-direction:column;overflow:hidden;color:var(--rig-text);background:var(--rig-panel);border:1px solid var(--rig-line2);border-radius:var(--rig-r-lg);box-shadow:var(--rig-shadow)}
+.rg-modal[open]{display:flex}
+.rg-modal::backdrop{background:var(--rig-scrim)}
+.rg-modal-h{display:flex;align-items:flex-start;gap:var(--rig-s3);padding:var(--rig-s4) var(--rig-s4) var(--rig-s4) var(--rig-s5);border-bottom:1px solid var(--rig-line);flex:none}
+.rig .rg-modal-t{flex:1;min-width:0;margin:0;padding-top:var(--rig-s1);font-size:var(--rig-fs-lg);line-height:var(--rig-lh-snug);font-weight:var(--rig-fw-medium);overflow-wrap:anywhere}
+.rg-modal-b{flex:1;min-height:0;overflow:auto;overscroll-behavior:contain;padding:var(--rig-s5);container-type:inline-size;container-name:rgmodal}
+.rg-modal-f{display:flex;flex-wrap:wrap;justify-content:flex-end;gap:var(--rig-s2);padding:var(--rig-s3) var(--rig-s5);border-top:1px solid var(--rig-line);flex:none}
+.rg-modal.rg-drawer{--rig-modal-w:440px;margin:0 0 0 auto;height:100dvh;max-height:none;width:min(var(--rig-modal-w),100vw);border-width:0 0 0 1px;border-radius:0}
+@media (max-width:760px){
+  .rg-modal,.rg-modal.rg-drawer{width:100vw;height:100dvh;max-height:none;margin:0;border:0;border-radius:0}
+  .rg-modal-h{padding:var(--rig-s3) var(--rig-s3) var(--rig-s3) var(--rig-s4)}
+  .rg-modal-b{padding:var(--rig-s4)}
+  .rg-modal-f{padding:var(--rig-s3) var(--rig-s4)}
+  .rg-modal-f>.rg-btn{flex:1 1 auto}
+}
+
+/* ---------------------------------------------------------------- show / hide by container width, stack a row */
+@container (max-width:480px){.rg-cq-hide-xs{display:none!important}.rg-col-xs{flex-direction:column;align-items:stretch}}
+@container (max-width:640px){.rg-cq-hide-sm{display:none!important}.rg-col-sm{flex-direction:column;align-items:stretch}}
+@container (max-width:900px){.rg-cq-hide-md{display:none!important}}
+@container (min-width:641px){.rg-cq-show-sm{display:none!important}}
+@container (min-width:901px){.rg-cq-show-md{display:none!important}}

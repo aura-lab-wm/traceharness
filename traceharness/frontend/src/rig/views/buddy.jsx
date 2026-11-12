@@ -13,6 +13,7 @@ import { useRig } from '../context'
 import { useRuns, useRunDetail, short, sfx, tally, verdict } from '../data'
 import { Tag, VerdictText, Icon, Btn } from '../ui'
 import './dock.css'
+import './buddy.css'
 import NavigationBuddy from '../NavigationBuddy'
 
 /** Build the classic client's `data` / `group` / `run` shapes for one pinned run. */
@@ -154,11 +155,11 @@ function LiveBuddyDock({ ctx = {} }) {
         )}
         {ctx.dir && !runId && <p className="rg-tiny rg-mute rg-bud-sel">No run in focus — open one to ask about a single attempt.</p>}
         {!settings.keyPresent ? (
-          <div className="rg-note red" data-el="buddy-key-state"><span className="rg-dot off" style={{ marginTop: 4 }} />
+          <div className="rg-note red" data-el="buddy-key-state"><span className="rg-dot off rg-bud-dot" />
             <div><b>Not connected.</b> Buddy needs an OpenRouter key saved in this browser. Nothing is sent and no answer is shown until one exists — never a canned one.
-              <div className="rg-row rg-wrap" style={{ marginTop: 8 }}><button type="button" className="rg-btn" onClick={() => openTab('settings')}>Set up OpenRouter →</button></div></div></div>
+              <div className="rg-row rg-wrap rg-bud-gap"><button type="button" className="rg-btn" onClick={() => openTab('settings')}>Set up OpenRouter →</button></div></div></div>
         ) : (
-          <div className="rg-note sky" data-el="buddy-key-state"><span className="rg-dot" style={{ marginTop: 4 }} /><div><b>Connected</b> · key {settings.keyHint || 'saved'} in this browser.</div></div>
+          <div className="rg-note sky" data-el="buddy-key-state"><span className="rg-dot rg-bud-dot" /><div><b>Connected</b> · key {settings.keyHint || 'saved'} in this browser.</div></div>
         )}
       </div>
       <div>
@@ -172,18 +173,18 @@ function LiveBuddyDock({ ctx = {} }) {
               </article>))}
           </div>
         )}
-        <div className="rg-bud-sugg" data-el="buddy-suggestions">{sugg.map((s) => <button type="button" key={s} onClick={() => setQuestion(s)}>{s}</button>)}</div>
-        <form data-el="buddy-input" style={{ marginTop: 8 }} onSubmit={send}>
+        <div className="rg-bud-sugg" data-el="buddy-suggestions">{sugg.map((s) => <button type="button" key={s} className="rg-bud-q" onClick={() => setQuestion(s)}>{s}</button>)}</div>
+        <form className="rg-bud-form" data-el="buddy-input" onSubmit={send}>
           <textarea className="rg-inp" rows={2} aria-label="Ask Buddy about the case file" placeholder="Ask about the pinned evidence…" maxLength={2000} value={question} disabled={busy}
             onChange={(e) => setQuestion(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) send(e) }} />
-          {settings.keyPresent && <label className="rg-row rg-small" style={{ margin: '6px 0', alignItems: 'flex-start' }}><input type="checkbox" checked={consent} disabled={busy} onChange={(e) => setConsent(e.target.checked)} /><span>Send this evidence and chat to OpenRouter and its model provider. Charges may apply.</span></label>}
+          {settings.keyPresent && <label className="rg-bud-consent"><input type="checkbox" checked={consent} disabled={busy} onChange={(e) => setConsent(e.target.checked)} /><span>Send this evidence and chat to OpenRouter and its model provider. Charges may apply.</span></label>}
           <div className="rg-row rg-wrap rg-bud-send">
             <div className="rg-bud-picker" data-el="buddy-model-picker"><BuddyModelPicker value={settings.model} onChange={chooseModel} disabled={busy} /></div>
             <span className="rg-grow" />
             {busy && <button type="button" className="rg-btn ghost" onClick={() => { abort.current?.abort(); setBusy(false) }}>Stop</button>}
             <Btn type="submit" className="pri" disabled={busy || !!askWhy} why={askWhy}>{busy ? 'Asking…' : 'Send question'}</Btn>
           </div>
-          {error && <p className="rg-small rg-red" role="alert" style={{ marginTop: 6 }}>{error}</p>}
+          {error && <p className="rg-small rg-red rg-bud-err" role="alert">{error}</p>}
         </form>
       </div>
       <div>
@@ -195,9 +196,9 @@ function LiveBuddyDock({ ctx = {} }) {
           <ul className="rg-bud-ev">{items.slice(0, 8).map((x) => <li key={x.id}><Tag>{x.kind}</Tag> <span className="rg-mono rg-tiny">{x.label}</span></li>)}{items.length > 8 && <li className="rg-tiny rg-mute">+ {items.length - 8} more</li>}</ul>
           {!items.length && <p className="rg-tiny rg-mute">The case file is empty: Buddy would see only the dataset in focus. Pin runs, events, cells or figures to give it evidence.</p>}
           <button type="button" className="rg-btn ghost" onClick={() => setDock('case')}><Icon name="case" size={13} /> Open case file</button>
-          {ev.evidence && <details className="rg-bud-preview"><summary className="rg-tiny">Preview the exact payload</summary><pre className="rg-pre">{redactBuddy(ev.evidence, settings.key)}</pre></details>}
+          {ev.evidence && <details className="rg-bud-preview"><summary>Preview the exact payload</summary><pre className="rg-pre">{redactBuddy(ev.evidence, settings.key)}</pre></details>}
         </div>
-        <p className="rg-tiny rg-mute" style={{ marginTop: 6 }} data-el="buddy-disclaimer">AI interpretation, not recorded fact. Buddy’s words are never written into the ledger, the case file or a report.</p>
+        <p className="rg-tiny rg-mute rg-bud-disc" data-el="buddy-disclaimer">AI interpretation, not recorded fact. Buddy’s words are never written into the ledger, the case file or a report.</p>
       </div>
     </div>
   )

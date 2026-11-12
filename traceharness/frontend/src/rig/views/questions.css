@@ -1,72 +1,126 @@
-/* views/questions.jsx — question stack, answer, figure, runs. Classes: rg-q-*. var(--rig-*) only. */
+/* views/questions.jsx — question stack, answer, figure, runs. Classes: rg-q-*. Tokens only (UI contract v1).
+   Layout answers to the pane (unnamed container queries), never to the window. */
+
+/* ---------------------------------------------------------------- the stack of nine questions
+   Three columns in a wide pane, two in a medium one, one in a narrow one. Nine is a multiple of
+   three, so the wide layout never leaves a lone card. */
 .rg-q-stack{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:0 var(--rig-s5)}
-.rg-q-stack.compact{grid-template-columns:repeat(3,minmax(0,1fr))}
-@container rgdoc (max-width:1100px){.rg-q-stack,.rg-q-stack.compact{grid-template-columns:repeat(2,minmax(0,1fr))}}
-@container rgdoc (max-width:640px){.rg-q-stack,.rg-q-stack.compact{grid-template-columns:minmax(0,1fr)}}
-@container rgdoc (min-width:1800px){.rg-q-stack,.rg-q-stack.compact{grid-template-columns:repeat(4,minmax(0,1fr))}}
-@container rgdoc (min-width:3000px){.rg-q-stack,.rg-q-stack.compact{grid-template-columns:repeat(6,minmax(0,1fr))}}
+@container (max-width:900px){.rg-q-stack{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@container (max-width:640px){.rg-q-stack{grid-template-columns:minmax(0,1fr)}}
 .rg-q-stack li{display:flex;min-width:0}
 /* Cards on one row share their three tracks (question · figure · sentence), so a question that wraps
-   to two lines no longer pushes its figure below its neighbours'. */
+   to two lines does not push its figure below its neighbours'. */
 @supports (grid-template-rows:subgrid){
-  .rg-q-stack li{display:grid;grid-row:span 3;grid-template-rows:subgrid;row-gap:8px}
+  .rg-q-stack li{display:grid;grid-row:span 3;grid-template-rows:subgrid;row-gap:var(--rig-s2)}
   .rg-q-stack li>.rg-q-card{grid-row:1 / -1;grid-template-rows:subgrid}
 }
-/* Fewer boxes: a question is a block under a hairline, not a card; hover lifts it slightly. */
-.rg-q-card{display:grid;grid-template-columns:22px minmax(0,1fr);grid-template-areas:"n qq" "n qv" "n qa";gap:8px 10px;align-content:start;width:100%;padding:var(--rig-s4) var(--rig-s2) var(--rig-s5);border:0;border-top:1px solid var(--rig-line);background:none;text-align:left;color:var(--rig-text);min-width:0;border-radius:0}
-.rg-q-card:hover{background:var(--rig-panel);box-shadow:inset 0 1px 0 var(--rig-sel)}
-.rg-q-card:focus-visible{outline:2px solid var(--rig-sel);outline-offset:1px}
-.rg-q-card.lead{box-shadow:inset 3px 0 0 var(--rig-sel)}
+/* a question is a block under a hairline, not a boxed card */
+.rg-q-card{display:grid;grid-template-columns:var(--rig-s5) minmax(0,1fr);grid-template-areas:"n qq" "n qv" "n qa";gap:var(--rig-s2) var(--rig-s2);align-content:start;width:100%;min-width:0;padding:var(--rig-s4) var(--rig-s3) var(--rig-s5) var(--rig-s2);border:0;border-top:1px solid var(--rig-line);border-radius:0;background:none;text-align:left;color:var(--rig-text);cursor:pointer}
+.rg-q-card:hover{background:var(--rig-panel)}
+.rg-q-card:hover .qq{text-decoration:underline;text-decoration-color:var(--rig-line3);text-underline-offset:3px}
+.rg-q-card:focus-visible{outline:var(--rig-focus-ring);outline-offset:calc(-1 * var(--rig-focus-offset))}
 .rg-q-card.na{border-top-style:dashed}
-.rg-q-card .n{grid-area:n;font:600 11px/1 var(--rig-sans);font-variant-numeric:tabular-nums;color:var(--rig-sel-t);padding-top:2px}
-.rg-q-card .qq{grid-area:qq;font:600 14.5px/1.4 var(--rig-sans)}
-.rg-q-card .qv{grid-area:qv;display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;min-width:0}
-.rg-q-card .qv b{font:500 22px/1 var(--rig-mono);color:var(--rig-sky-t);letter-spacing:-.03em}
-.rg-q-card .qv small{font:500 12px/1.3 var(--rig-sans);color:var(--rig-mute)}
-.rg-q-card .qa{grid-area:qa;font-size:13px;line-height:1.55;color:var(--rig-dim)}
+.rg-q-card .n{grid-area:n;padding-top:var(--rig-s0);font:var(--rig-fw-medium) var(--rig-fs-2xs)/var(--rig-lh-snug) var(--rig-mono);font-variant-numeric:tabular-nums;color:var(--rig-mute)}
+.rig .rg-q-card .qq{grid-area:qq;font:var(--rig-fw-medium) var(--rig-fs-md)/var(--rig-lh-snug) var(--rig-sans);overflow-wrap:anywhere}
+.rg-q-card .qv{grid-area:qv;display:flex;flex-wrap:wrap;align-items:baseline;gap:var(--rig-s1) var(--rig-s2);min-width:0}
+.rg-q-card .qv b{font:var(--rig-fw-medium) var(--rig-fs-xl)/1 var(--rig-mono);font-variant-numeric:tabular-nums;letter-spacing:-.03em;color:var(--rig-text)}
+.rg-q-card .qv small{font:var(--rig-fs-xs)/var(--rig-lh-snug) var(--rig-sans);color:var(--rig-mute)}
+.rg-q-card .qa{grid-area:qa;font-size:var(--rig-fs-sm);line-height:var(--rig-lh-body);color:var(--rig-dim);overflow-wrap:anywhere}
 .rg-q-card.na .qa{color:var(--rig-mute)}
-.rg-q-mark-t{background:none;color:var(--rig-text);font-weight:600;box-shadow:inset 0 -2px 0 var(--rig-sel)}
-.rg-q-ask{display:flex;align-items:flex-start;gap:12px;margin:var(--rig-s2) 0 var(--rig-s5)}
-.rg-q-ask .rg-q-mark{width:28px;height:28px;font-size:15px;flex:none}
-.rg-q-ask h1{font-size:22px;line-height:1.25}
-.rg-q-answer{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:var(--rig-s6);align-items:center;padding:var(--rig-s2) 0 var(--rig-s2) var(--rig-s5);border-left:3px solid var(--rig-sel);margin-bottom:var(--rig-s4);padding-right:var(--rig-s5)}
-.rg-q-answer .a{margin:0;font-size:17px;line-height:1.55;color:var(--rig-text);max-width:62ch}
-.rg-q-answer .big{text-align:right;min-width:0}
-.rg-q-answer .big .v{font:500 36px/1 var(--rig-mono);font-variant-numeric:tabular-nums;color:var(--rig-text);letter-spacing:-.03em}
-.rg-q-answer .big .l{font:500 11.5px/1.35 var(--rig-sans);color:var(--rig-mute);margin-top:6px;max-width:260px}
-@container rgdoc (max-width:640px){.rg-q-answer{grid-template-columns:minmax(0,1fr)}.rg-q-answer .big{text-align:left}}
-.rg-q-next{display:flex;align-items:center;gap:var(--rig-s4);flex-wrap:wrap;margin-top:var(--rig-s6)}
-.rg-q-next p{margin:0;flex:1;min-width:220px;max-width:72ch;color:var(--rig-dim)}
-.rg-q-next b{color:var(--rig-text);font-weight:600}
+.rg-q-skel{display:block;height:var(--rig-s3);width:70%}
+.rg-q-mark-t{background:none;color:var(--rig-text);font-weight:var(--rig-fw-semi);box-shadow:inset 0 -1px 0 var(--rig-line3)}
+
+/* ---------------------------------------------------------------- one answer: question, figure + sentence, note */
+.rg-q-ask{display:flex;align-items:flex-start;gap:var(--rig-s3);margin:var(--rig-s2) 0 var(--rig-s5)}
+.rg-q-ask .rg-q-mark{flex:none;width:var(--rig-h-sm);height:var(--rig-h-sm);margin-top:var(--rig-s0);font-size:var(--rig-fs-md)}
+.rig .rg-q-ask h1{margin:0;min-width:0;font-size:var(--rig-fs-2xl);line-height:var(--rig-lh-tight);overflow-wrap:anywhere}
+@container (max-width:640px){.rig .rg-q-ask h1{font-size:var(--rig-fs-xl)}.rg-q-ask .rg-q-mark{margin-top:0}}
+/* the figure leads, the sentence it quantifies sits right beside it (under it in a narrow pane) */
+.rg-q-answer{display:flex;flex-wrap:wrap;align-items:center;gap:var(--rig-s4) var(--rig-s6);margin-bottom:var(--rig-s4);padding:var(--rig-s2) 0 var(--rig-s2) var(--rig-s5);border-left:2px solid var(--rig-text)}
+.rg-q-answer .big{flex:0 1 auto;min-width:0;max-width:16rem}
+.rg-q-answer .big .v{font:var(--rig-fw-medium) var(--rig-fs-fig)/1 var(--rig-mono);font-variant-numeric:tabular-nums;letter-spacing:-.03em;color:var(--rig-text);overflow-wrap:anywhere}
+.rg-q-answer .big .l{margin-top:var(--rig-s2);font:var(--rig-fs-xs)/var(--rig-lh-snug) var(--rig-sans);color:var(--rig-mute)}
+.rig .rg-q-answer .a{flex:1 1 20rem;min-width:0;max-width:var(--rig-measure);margin:0;font-size:var(--rig-fs-lg);line-height:var(--rig-lh-prose);color:var(--rig-text)}
+@container (max-width:640px){.rg-q-answer{padding-left:var(--rig-s4)}.rg-q-answer .big .v{font-size:var(--rig-fs-fig-narrow)}.rig .rg-q-answer .a{flex-basis:100%}}
+.rig .rg-q-foot>.rg-pin{height:var(--rig-h-ctl);padding:0 var(--rig-s3)}
+.rg-q-foot{display:flex;flex-direction:column;align-items:flex-start;gap:var(--rig-s3);margin:0 0 var(--rig-s6)}
+.rig .rg-q-note{margin:0;max-width:var(--rig-measure);color:var(--rig-dim);font-size:var(--rig-fs-sm);line-height:var(--rig-lh-body)}
 #rg-q-figure:focus{outline:none}
-.rg-q-2x2{max-width:420px}
+
+/* ---------------------------------------------------------------- figure panel */
+.rg-q-bars{display:flex;flex-direction:column;gap:var(--rig-s1);min-width:0;max-width:48rem}
+/* bar labels get the room they need before they truncate; the value never wraps under itself */
+.rg-q-fig .rg-hb{grid-template-columns:minmax(8rem,12rem) minmax(4rem,1fr) 6rem;gap:var(--rig-s3)}
+.rg-q-fig .rg-hb .vl{white-space:nowrap}
+@container (max-width:480px){
+  .rg-q-fig .rg-hb{grid-template-columns:minmax(0,1fr) auto;grid-template-areas:"nm vl" "bt bt";row-gap:var(--rig-s1);padding-bottom:var(--rig-s1)}
+  .rg-q-fig .rg-hb .nm{grid-area:nm;white-space:normal}
+  .rg-q-fig .rg-hb .vl{grid-area:vl}
+  .rg-q-fig .rg-hb .bt{grid-area:bt}
+}
+.rg-q-cap{margin:var(--rig-s3) 0 0;max-width:var(--rig-measure)}
+.rg-q-sub{margin:var(--rig-s5) 0 var(--rig-s2)}
+.rg-q-sub.rg-q-first{margin-top:0}
+.rg-q-chipn{display:inline-flex;align-items:center;gap:var(--rig-s1)}
+.rg-q-tbl .rg-mono,.rg-q-tbl td:first-child{white-space:nowrap}
+.rg-tbl.rg-q-tbl{width:auto;min-width:min(100%,32rem)}
+.rg-q-tbl .rg-q-ci{min-width:12rem}
+.rg-q-narrow{max-width:36rem}
+.rg-q-2x2w{margin-top:var(--rig-s4)}
+.rg-q-2x2{max-width:26rem}
 .rg-q-2x2 th{position:static}
+.rg-q-2x2 caption{padding:0 0 var(--rig-s2);text-align:left}
 .rg-tbl.rg-q-metrics th{white-space:normal}
-.rg-q-strips{display:flex;flex-direction:column;gap:4px;margin-bottom:8px}
-.rg-q-strip{display:grid;grid-template-columns:minmax(110px,170px) minmax(0,1fr) 64px 56px;gap:10px;align-items:center;min-height:26px}
-.rg-q-rib{display:flex;gap:2px;flex-wrap:wrap}
-.rg-q-rib .c{display:inline-grid;place-items:center;width:20px;height:20px;font:600 11.5px/1 var(--rig-sans)}
+.rg-q-rep{display:flex;flex-wrap:wrap;align-items:center;gap:var(--rig-s2) var(--rig-s3);margin-bottom:var(--rig-s2)}
+.rg-q-repci{flex:1 1 12rem;min-width:0}
+.rg-q-leak{display:flex;align-items:center;gap:var(--rig-s2);min-width:0}
+.rg-q-leakb{flex:1 1 auto;min-width:0}
+.rg-q-probe{flex:none;min-width:0}
+@container (max-width:480px){.rg-q-leak{flex-wrap:wrap}.rg-q-leakb{flex-basis:100%}}
+.rg-q-list{margin:0;padding-left:0;list-style:none}
+.rg-q-strips{display:flex;flex-direction:column;gap:var(--rig-s1);margin-bottom:var(--rig-s2)}
+.rg-q-strip{display:grid;grid-template-columns:minmax(7rem,11rem) minmax(0,1fr) 4rem 4rem;gap:var(--rig-s3);align-items:center;min-height:var(--rig-h-sm)}
+.rg-q-rib{display:flex;flex-wrap:wrap;gap:var(--rig-s0)}
+.rg-q-rib .c{display:inline-grid;place-items:center;width:var(--rig-s5);height:var(--rig-s5);border-radius:var(--rig-r-xs);font:var(--rig-fw-semi) var(--rig-fs-2xs)/1 var(--rig-sans)}
 .rg-q-rib .c.p{background:var(--rig-sky-bg2);color:var(--rig-sky-t);box-shadow:inset 0 -2px 0 var(--rig-sky)}
 .rg-q-rib .c.f{background:var(--rig-red-bg);color:var(--rig-red-t);box-shadow:inset 0 -2px 0 var(--rig-red)}
 .rg-q-rib .c.u{border:1px dashed var(--rig-unk);color:var(--rig-unk)}
-@container rgdoc (max-width:640px){.rg-q-strip{grid-template-columns:minmax(0,1fr) auto;row-gap:4px}.rg-q-strip .rg-q-rib{grid-column:1/-1}}
-.rg-q-probe{flex:none;min-width:0}
-.rg-q-list{margin:0;padding-left:0;list-style:none}
+@container (max-width:640px){.rg-q-strip{grid-template-columns:minmax(0,1fr) auto auto;row-gap:var(--rig-s1)}.rg-q-strip .rg-q-rib{grid-column:1/-1;grid-row:2}}
 .rg-q-run dd.rg-row{flex-wrap:wrap}
-.rg-q-run .rg-fchip{height:auto;min-height:22px;padding-block:2px;white-space:normal;line-height:1.4}
-@container rgdoc (max-width:640px){
+.rg-q-run .rg-fchip{height:auto;min-height:var(--rig-h-xs);padding-block:var(--rig-s0);white-space:normal;line-height:var(--rig-lh-snug)}
+@container (max-width:640px){
   .rg-kv.rg-q-run{grid-template-columns:minmax(0,1fr);row-gap:var(--rig-s1)}
   .rg-q-run dd:not(:last-child){margin-bottom:var(--rig-s3)}
 }
-.rg-q-lesson{border:1px solid var(--rig-sel);background:var(--rig-sel-bg);padding:var(--rig-s4) var(--rig-s5);margin-bottom:var(--rig-s6);border-radius:14px}
-.rg-q-lesson ol{margin:8px 0 0;padding-left:18px;display:grid;gap:6px;font-size:12.5px}
-.rg-q-lesson b{display:inline-block;min-width:120px;color:var(--rig-text);font-weight:600;margin-right:6px}
-.rg-q-runsbar{width:min(240px,100%)}
-.rg-q-answer .big .l{max-width:320px}
-.rg-q-pinrow{margin:0 0 var(--rig-s6);gap:var(--rig-s3);align-items:flex-start}
-.rg-q-note{max-width:72ch;line-height:1.55;padding-top:3px}
-.rg-q-disc{margin-top:var(--rig-s6);max-width:72ch}
-.rg-q-pager{padding:var(--rig-s3) var(--rig-s5);border-top:1px solid var(--rig-line);gap:var(--rig-s2)}
+
+/* ---------------------------------------------------------------- Student Lab lesson */
+.rg-q-lesson{margin-bottom:var(--rig-s6);padding:var(--rig-s4) var(--rig-s5);border:1px solid var(--rig-sel);border-radius:var(--rig-r-lg);background:var(--rig-sel-bg)}
+.rg-q-lesson ol{margin:var(--rig-s2) 0 0;padding-left:var(--rig-s4);display:grid;gap:var(--rig-s2);font-size:var(--rig-fs-sm);line-height:var(--rig-lh-body)}
+.rg-q-lesson b{display:inline-block;min-width:8rem;margin-right:var(--rig-s2);color:var(--rig-text);font-weight:var(--rig-fw-semi)}
+@container (max-width:480px){.rg-q-lesson{padding:var(--rig-s3) var(--rig-s4)}.rg-q-lesson b{display:block;min-width:0;margin:0}}
+
+/* ---------------------------------------------------------------- "show me the runs", disclaimer */
+.rg-q-next{display:flex;flex-wrap:wrap;align-items:center;gap:var(--rig-s3) var(--rig-s4);margin-top:var(--rig-s6)}
+.rig .rg-q-next p{flex:1 1 20rem;min-width:0;max-width:var(--rig-measure);margin:0;color:var(--rig-dim)}
+.rg-q-next b{color:var(--rig-text);font-weight:var(--rig-fw-semi)}
+.rig p.rg-q-disc{margin:var(--rig-s6) 0 0;max-width:var(--rig-measure)}
+
+/* ---------------------------------------------------------------- runs behind an answer */
+.rg-q-runsbar{width:100%;max-width:20rem;margin-top:var(--rig-s3)}
+.rg-q-runs{display:flex;flex-direction:column;gap:var(--rig-s3);min-width:0}
+.rg-q-runspnl{border-radius:var(--rig-r-lg);overflow:hidden}
+.rg-q-runtbl :is(th,td){white-space:nowrap}
+.rg-q-runtbl :is(th,td):first-child{padding-left:var(--rig-s5)}
+.rg-q-runtbl .rg-q-v{width:var(--rig-s7)}
+.rg-q-runtbl .rg-q-pin{width:var(--rig-hit);text-align:right}
+.rg-q-runtbl .rg-q-dim{color:var(--rig-dim)}
+/* repeat index and tokens are the lowest-priority columns: they leave first, so "how it failed" stays in view */
+@container (max-width:1200px){.rg-q-runtbl .rg-q-lo{display:none}}
+@container (max-width:640px){.rg-q-runtbl :is(th,td):first-child{padding-left:var(--rig-s4)}}
+.rg-q-pager{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:var(--rig-s2) var(--rig-s4);padding:var(--rig-s3) var(--rig-s5);border-top:1px solid var(--rig-line)}
+.rg-q-runspnl>.rg-pstate{border-top:1px solid var(--rig-line)}
+.rg-q-runs+.rg-about{margin-top:var(--rig-s5)}
+
+/* ---------------------------------------------------------------- unanswered */
 .rg-q-else{gap:var(--rig-s2)}
 .rg-q-else:not(:has(.rg-btn)){display:none}
-[data-el~="question-runs"]+.rg-about{margin-top:var(--rig-s5)}

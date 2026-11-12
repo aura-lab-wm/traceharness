@@ -30,7 +30,7 @@
    there, which would read as a measured collapse.
    Classes: rg-an-* (analysis.css). Local helpers only; nothing here is shared.
    ==================================================================================== */
-import { useId, useMemo, useState } from 'react'
+import { useEffect, useId, useMemo, useRef, useState } from 'react'
 import { makeSpec } from '../route'
 import { api, IS_STATIC, IS_MEMBER } from '../../api'
 import {
@@ -44,6 +44,7 @@ import { oracleChanges, suiteLabel, tokenCoverage } from '../provenance'
 import {
   AskingSentence, Go, Panel, OutcomeBar, CiBar, Verdict, FailureChip, PinButton, Tag, Note, Seg, SearchBox,
   Loading, ErrorState, NotFound, Empty, NextSteps, Btn, ConfirmAction, About, CopyCmd, Kbd, MOD, failureModeOf, failureSummary,
+  ScrollX, TableScroll, Toolbar, Kpis, Kpi, Id, Skeleton, useSize,
 } from '../ui'
 import './analysis.css'
 import { configurationCohort, ConfigurationSummary, FamilyConfiguration } from '../FamilyConfigurations'
@@ -137,22 +138,31 @@ const scrollTo = (id) => (e) => {
   if (t && t.scrollIntoView) t.scrollIntoView({ behavior: 'smooth', block: 'start' })
 }
 /* ------------------------------------------------------------------ shell of every an: tab */
+/** The step strip. The sidebar lists the same steps when it is open (the shell hides this strip
+ *  then), so this is always a sideways strip: ScrollX fades the edge where more steps lie, and the
+ *  current step is scrolled into view without moving the document. */
 function AnNav({ dir, cur, c }) {
   const cs = [short(c.model), c.harness]
+  const ref = useRef(null)
+  useEffect(() => {
+    const view = ref.current && ref.current.querySelector('.rg-scrollx-v')
+    const on = view && view.querySelector('.rg-an-nb.on')
+    if (!on) return
+    const l = on.offsetLeft - view.offsetLeft, r = l + on.offsetWidth
+    if (l < view.scrollLeft) view.scrollLeft = l
+    else if (r > view.scrollLeft + view.clientWidth) view.scrollLeft = r - view.clientWidth
+  }, [cur])
   const btn = ([k, l, , n]) => {
     const spec = k === 'traj' ? makeSpec('tasks', dir, ...cs) : makeSpec('an', dir, k, ...cs)
     return (
-      <Go key={k} spec={spec} replace className={cx('rg-an-nb', k === cur && 'on')}>
+      <Go key={k} spec={spec} replace className={cx('rg-an-nb', k === cur && 'on')} current={k === cur}>
         <span className="rg-ell">{l}</span><span className="n">{n}</span>
       </Go>
     )
   }
   return (
-    <nav className="rg-an-nav" data-el="analysis-nav" aria-label="Analysis steps">
-      <div className="sh rg-lbl">Study steps</div>
-      {AN_VIEWS.slice(0, 4).map(btn)}
-      <div className="sh rg-lbl">More analysis</div>
-      {AN_VIEWS.slice(4).map(btn)}
+    <nav className="rg-an-nav" data-el="analysis-nav" aria-label="Analysis steps" ref={ref}>
+      <ScrollX className="rg-an-navx"><div className="rg-an-navl">{AN_VIEWS.map(btn)}</div></ScrollX>
     </nav>
   )
 }
@@ -218,9 +228,34 @@ function Sec({ title, meta, actions, el, children, className }) {
 }
 
 /* ------------------------------------------------------------------ 1 · family matrix */
-function Family({ spec, dir, row, c }) {
-  const { oracle, isMobile } = useRig()
+/** How many harness columns the family matrix shows per page, from the width the matrix really has
+ *  (a pane, a split or a phone), never the window. The model column keeps its ids whole up to 26
+ *  characters (IBM Plex Mono: 1ch = 0.6em = 7.8px at 13px) and a harness column keeps room for
+ *  "61 / 64 known". Width 0 (not measured yet, or no ResizeObserver) means desktop: six columns.
+ *  Returns { ps: columns per page, c0: model column width in ch }. */
+const FAM_MAX = 6
+function familyColumns(width, longest) {
+  const narrow = width > 0 && width <= 480, mid = width > 0 && width <= 640
+  const c0 = Math.max(8, Math.min(longest + 1, narrow ? 11 : mid ? 15 : 27))
+  if (!width) return { ps: FAM_MAX, c0 }
+  const c0px = c0 * 7.8 + (narrow ? 24 : 32)
+  const colMin = narrow ? 104 : 124
+  return { ps: Math.max(1, Math.min(FAM_MAX, Math.floor((width - c0px) / colMin))), c0 }
+}
+/** A harness id may break after an underscore (no_test_/tool), never inside a word. */
+const breakable = (id) => String(id).split('_').map((p, i) => (i ? <span key={i}>_<wbr />{p}</span> : p))
+/** The matrix mounts only once the run index is here, so its width is measured from the first paint. */
+function Family(props) {
+  const R = useRuns(props.dir)
+  if (R.error) return <ErrorState error={R.error} onRetry={R.reload} what={`The run index of ${props.dir}`} />
+  if (!R.data) return <Loading label={`Reading /api/results/${props.dir}/runs…`} />
+  return <FamilyDoc {...props} />
+}
+function FamilyDoc({ spec, dir, row, c }) {
+  const { oracle } = useRig()
   const R = useRuns(dir)
+  const mxRef = useRef(null)
+  const { width: mxW } = useSize(mxRef)
   const configurations = useHarnessVersions(dir)
   const configurationPanelId = useId()
   const [mf, setMf] = useTabState(spec, 'mf', 'all')
@@ -245,7 +280,7 @@ function Family({ spec, dir, row, c }) {
   if (R.error) return <ErrorState error={R.error} onRetry={R.reload} what={`The run index of ${dir}`} />
   if (!d) return <Loading label={`Reading /api/results/${dir}/runs…`} />
   const H = row.harnesses
-  const ps = isMobile ? 2 : 6
+  const { ps, c0 } = familyColumns(mxW, Math.max(0, ...row.models.map((m) => short(m).length)))
   const pages = Math.max(1, Math.ceil(H.length / ps))
   const pg = Math.max(0, Math.min(pg0, pages - 1))
   const cols = H.slice(pg * ps, pg * ps + ps)
@@ -293,46 +328,49 @@ function Family({ spec, dir, row, c }) {
         <p>A family is one model under one harness. Each cell counts its runs under the suite chosen in the sentence above: the rate is among <b>known</b> grades, and unknown grades are shown beside it, never folded into fail.</p>
         <p>Select a cell to open its trajectories; the pin keeps it in the case file. Column headers open the focused model under that harness.</p>
       </>} />
-    <p className="rg-small rg-mute">Observed rates describe each family’s own tasks and repeats. Task sets and sample sizes can differ; this matrix is not a controlled causal ranking.</p>
-    <div data-el="family-matrix">
-      <div className="rg-row rg-wrap rg-an-bar">
-        <label className="rg-fld">Model filter
-          <select className="rg-selc" value={mf} onChange={(e) => { setMf(e.target.value) }} aria-label="Model filter">
-            <option value="all">All models</option>
-            {row.models.map((m) => <option key={m} value={m}>{short(m)}</option>)}
-          </select>
-        </label>
-        <span className="rg-grow" />
+    <div data-el="family-matrix" className="rg-cq rg-an-fam" ref={mxRef}>
+      <Toolbar label="Family matrix view" className="rg-an-tbar">
+        <select className="rg-selc" value={mf} onChange={(e) => { setMf(e.target.value) }} aria-label="Model filter">
+          <option value="all">All models</option>
+          {row.models.map((m) => <option key={m} value={m}>{short(m)}</option>)}
+        </select>
         {pages > 1 ? (
-          <span className="rg-row rg-wrap rg-an-pg" data-el="family-pages">
-            <span className="rg-small rg-mute">harnesses {pg * ps + 1}–{pg * ps + cols.length} of {H.length}</span>
+          <span className="rg-an-pg" data-el="family-pages">
+            <span className="rg-toolbar-label">harnesses {pg * ps + 1}–{pg * ps + cols.length} of {H.length}</span>
             {pg > 0 && <button type="button" className="rg-btn" onClick={() => setPg(pg - 1)}>← Previous harnesses</button>}
             {pg < pages - 1 && <button type="button" className="rg-btn" onClick={() => setPg(pg + 1)}>More harnesses →</button>}
           </span>
-        ) : <span className="rg-small rg-mute" data-el="family-pages">all {plural(H.length, 'harness', 'harnesses')} shown</span>}
-      </div>
+        ) : <span className="rg-toolbar-label" data-el="family-pages">all {plural(H.length, 'harness', 'harnesses')} shown</span>}
+      </Toolbar>
       {d.ns.length > 1 && (
         <Note tone="amb" el="repeat-counts-differ"><span className="rg-amb" aria-hidden="true">▲</span><div><b>Repeat counts differ.</b> Trials per family range {d.ns[0]}–{d.ns[d.ns.length - 1]}
           {fewer.length ? <> ({fewer.map((m) => `${short(m)} has ${d.reps[m].join('–')} repeat${d.reps[m].join() === '1' ? '' : 's'} per task`).join('; ')})</> : null}, so intervals are wider where there are fewer.</div></Note>
       )}
-      <div className="rg-pnl rg-an-mxp"><div className="rg-tblwrap">
-        <table className="rg-an-mx rg-an-family-matrix">
+      <div className="rg-pnl rg-an-mxp"><TableScroll label="Family matrix, models by harness">
+        <table className="rg-an-mx rg-an-family-matrix" style={{ '--rig-an-c0': c0 }}>
+          <colgroup><col className="rg-an-c0" />{cols.map((h) => <col key={h} />)}</colgroup>
           <thead><tr><th>model × harness</th>{cols.map((h) => (
-            <th key={h} className={h === inspectedHarness ? 'rg-an-config-column' : ''}><Go spec={makeSpec('tasks', dir, short(c.model), h)} className="rg-an-colh" title={`Open ${short(c.model)} under ${h} (the focused model) in the trajectory explorer`}>{h}</Go>
-              <ConfigurationSummary cohort={configurationByHarness[h]} loading={configurations.loading} error={configurations.error} />
-              <button type="button" className="rg-an-config-inspect" aria-label={`Inspect ${h} configuration`} aria-pressed={h === inspectedHarness} aria-controls={configurationPanelId} onClick={() => {
-                setConfigurationHarness(h)
-                requestAnimationFrame(() => {
-                  const panel = document.getElementById(configurationPanelId)
-                  panel?.focus({ preventScroll: true }); panel?.scrollIntoView?.({ block: 'nearest' })
-                })
-              }}>Inspect configuration</button>
+            <th key={h} className={h === inspectedHarness ? 'rg-an-config-column' : ''}>
+              <div className="rg-an-fh">
+                <Go spec={makeSpec('tasks', dir, short(c.model), h)} className="rg-an-colh" title={`Open ${short(c.model)} under ${h} (the focused model) in the trajectory explorer`}>{breakable(h)}</Go>
+                {configurations.loading
+                  ? <Skeleton lines={2} label={`Reading the recorded settings of ${h}`} />
+                  : <ConfigurationSummary cohort={configurationByHarness[h]} loading={false} error={configurations.error} />}
+                <button type="button" className="rg-btn rg-an-config-inspect" aria-label={`Inspect ${h} configuration`} aria-pressed={h === inspectedHarness} aria-controls={configurationPanelId} onClick={() => {
+                  setConfigurationHarness(h)
+                  requestAnimationFrame(() => {
+                    const panel = document.getElementById(configurationPanelId)
+                    panel?.focus({ preventScroll: true }); panel?.scrollIntoView?.({ block: 'nearest' })
+                  })
+                }}>Inspect</button>
+              </div>
             </th>))}</tr></thead>
           <tbody>{models.map((m) => (
-            <tr key={m}><td className="rh"><span className="rg-mono">{short(m)}</span>{m.includes('/') && <div className="rg-tiny rg-mute">{m.split('/')[0]}</div>}</td>{cols.map((h) => td(m, h))}</tr>
+            <tr key={m}><td className="rh"><span className="rg-mono rg-an-mname">{short(m)}</span>{m.includes('/') && <div className="rg-tiny rg-mute">{m.split('/')[0]}</div>}</td>{cols.map((h) => td(m, h))}</tr>
           ))}</tbody>
         </table>
-      </div></div>
+      </TableScroll></div>
+      <p className="rg-small rg-mute rg-an-caveat">Observed rates describe each family’s own tasks and repeats. Task sets and sample sizes can differ; this matrix is not a controlled causal ranking.</p>
       <div className="rg-row rg-wrap rg-small rg-mute rg-an-foot">
         <span data-el="grade-basis">{models.length * H.length} families in the current filter · grade basis: <b className="rg-dim">{suiteLabel(R.data, oracle)}, among known grades</b>; unknown is shown, never folded into fail.</span>
         <Go spec={makeSpec('field', dir)} className="rg-tlink">Every run, every span →</Go>
@@ -443,20 +481,24 @@ function Outcomes({ dir, c }) {
     {oracle !== 'hidden' && (
       <Note tone="amb"><span className="rg-amb" aria-hidden="true">▲</span><div><b>The interval and pass^k are hidden-suite estimates.</b> Under the {oracle} suite this condition passes {d.o.p} of {d.o.known} known attempts ({pct(d.o.rate)}); the per-task strips use the {oracle} suite.</div></Note>
     )}
-    <div className="rg-stats rg-an-okpis">
-      <div className="rg-stat" data-el="outcomes-headline"><span className="rg-lbl">pass@1 · hidden suite</span>
-        <span className="rg-fig">{p1 == null ? '—' : (p1 * 100).toFixed(1)}<span className="u">{p1 == null ? '' : '%'}</span></span>
+    <Kpis label="Outcomes of this condition" className="rg-an-kpis">
+      <Kpi lead el="outcomes-headline" label="pass@1 · hidden suite" value={p1 == null ? null : (p1 * 100).toFixed(1)} unit="%">
         <CiBar lo={lo} hi={hi} pt={p1} />
         <span className="rg-mono rg-small">95% CI {ciText(cell.ci95)}{lo != null && hi != null && <> · <b className="rg-amb">{((hi - lo) * 100).toFixed(0)} points wide</b></>}</span>
-        <span className="rg-mono rg-small rg-mute">{nLine}</span></div>
-      <div className="rg-stat" data-el="pass-k"><span className="rg-lbl">pass^3 · three in a row</span><span className="rg-fig md">{pct(cell['pass^3'])}</span>
-        <span className="rg-small rg-dim">pass@3 <span className="rg-mono">{pct(cell['pass@3'])}</span> with retries</span></div>
-      <div className="rg-stat" data-el="flip-rate"><span className="rg-lbl">flip rate · {oracle} suite</span><span className="rg-fig md">{repeats.rate == null ? 'Unavailable' : pct(repeats.rate, 0)}</span><span className="rg-small rg-dim">{repeats.rate != null ? `${repeats.mixed} of ${repeats.eligible} eligible tasks have mixed outcomes. ` : ''}{repeats.coverage}</span></div>
-      <div className="rg-stat" data-el="strengthened-delta"><span className="rg-lbl">strengthened suite</span>
+        <span className="rg-mono rg-small rg-mute">{nLine}</span>
+      </Kpi>
+      <Kpi el="pass-k" label="pass^3 · three in a row" value={pct(cell['pass^3'])}>
+        <span className="rg-small rg-dim">pass@3 <span className="rg-mono">{pct(cell['pass@3'])}</span> with retries</span>
+      </Kpi>
+      <Kpi el="flip-rate" label={`flip rate · ${oracle} suite`} value={repeats.rate == null ? 'Unavailable' : pct(repeats.rate, 0)}>
+        <span className="rg-small rg-dim">{repeats.rate != null ? `${repeats.mixed} of ${repeats.eligible} eligible tasks have mixed outcomes. ` : ''}{repeats.coverage}</span>
+      </Kpi>
+      <Kpi el="strengthened-delta" label="strengthened suite" value={hasStrong ? pct(cell.pass1_strong) : null}>
         {hasStrong
-          ? <><span className="rg-fig md">{pct(cell.pass1_strong)}</span><span className={cx('rg-mono rg-small', sd < 0 ? 'rg-red' : 'rg-dim')}>Δ {pp(sd)} vs hidden</span></>
-          : <><span className="rg-fig md">—</span><span className="rg-small rg-dim">not graded: no run in this condition has a strengthened grade</span></>}</div>
-    </div>
+          ? <span className={cx('rg-mono rg-small', sd < 0 ? 'rg-red' : 'rg-dim')}>Δ {pp(sd)} vs hidden</span>
+          : <span className="rg-small rg-dim">not graded: no run in this condition has a strengthened grade</span>}
+      </Kpi>
+    </Kpis>
     <Sec title="Per task · repeats in order" meta={`${oracle} suite · ${repeats.rate == null ? 'repeat comparison unavailable' : `${repeats.mixed} of ${repeats.eligible} eligible tasks flip`}`} el="per-task-repeats">
       <div className="rg-pnl">
         <div className="rg-an-tlist">{d.rows.map((x) => {
@@ -572,15 +614,14 @@ function Delta({ spec, dir, row, c }) {
           ? <>{shapeLine(row)}. A Δ pairs a second harness against <span className="rg-mono">{base}</span> task by task, so this dataset cannot answer it; its {S.nm > 1 ? 'models' : 'runs'} can still be compared side by side.</>
           : <>No harness in {dir} has runs paired with <span className="rg-mono">{base}</span> on the same tasks, so no Δ can be estimated.</>}</Empty>
       ) : (<>
-        <div className="rg-row rg-wrap rg-an-bar">
-          <span className="rg-small rg-row rg-wrap rg-an-key"><b className="rg-mono" data-el="delta-count">{nSep} of {all.length} separate</b><span className="rg-mute"><span className="rg-acc">◆</span> separates</span><span className="rg-mute">○ covers 0</span><span className="rg-mute">| zero</span></span>
-          <span className="rg-grow" />
-          <PinButton item={{ id: `figure:${dir}:delta`, kind: 'figure', label: `Δ-matrix vs ${base} · ${dir}`, value: `${nSep} of ${all.length} contrasts separate`, spec: makeSpec('an', dir, 'delta'), dir }} /></div>
-        <div className="rg-pnl rg-an-mxp"><div className="rg-tblwrap">
+        <Toolbar label="Δ-matrix key" className="rg-an-tbar" end={<PinButton item={{ id: `figure:${dir}:delta`, kind: 'figure', label: `Δ-matrix vs ${base} · ${dir}`, value: `${nSep} of ${all.length} contrasts separate`, spec: makeSpec('an', dir, 'delta'), dir }} />}>
+          <span className="rg-small rg-an-key"><b className="rg-mono" data-el="delta-count">{nSep} of {all.length} separate</b><span className="rg-mute"><span className="rg-acc">◆</span> separates</span><span className="rg-mute">○ covers 0</span><span className="rg-mute">| zero</span></span>
+        </Toolbar>
+        <div className="rg-pnl rg-an-mxp"><TableScroll label={`Δ pass@1 against ${base}, by model and harness`}>
           <table className="rg-an-mx rg-an-dmx">
             <thead><tr><th>model · Δ vs {base}</th>{hs.map((h) => <th key={h}>{h}</th>)}</tr></thead>
             <tbody>{ms.map((m) => (
-              <tr key={m}><td className="rh"><span className="rg-mono">{short(m)}</span></td>{hs.map((h) => {
+              <tr key={m}><td className="rh"><span className="rg-mono rg-an-mname">{short(m)}</span></td>{hs.map((h) => {
                 const y = comp[m][h]
                 if (!y) return <td key={h}><div className="rg-an-mc empty"><span className="v2">not paired</span></div></td>
                 const sp = sepOf(y.ci95)
@@ -596,7 +637,7 @@ function Delta({ spec, dir, row, c }) {
                 )
               })}</tr>))}</tbody>
           </table>
-        </div></div>
+        </TableScroll></div>
         {x ? (
           <div className="rg-pnl rg-an-sel" data-el="delta-detail">
             <div className="rg-pnl-h"><span className="rg-lbl">{sm} · {sh} vs {base}</span><span className="meta">{x.n_tasks} tasks · paired by task
@@ -661,7 +702,7 @@ function LlmJudge({ canCompare }) {
       {J.error ? (
         <ErrorState error={J.error} onRetry={J.reload} what="/api/judge" />
       ) : figs.length ? (
-        <div className="rg-stats rg-an-jfigs">{figs.map(([k, v]) => <div key={k} className="rg-stat"><span className="rg-lbl">{k.replace(/_/g, ' ')}</span><span className="rg-fig sm">{fx(v, 2)}</span></div>)}</div>
+        <Kpis label="LLM judge report" className="rg-an-kpis">{figs.map(([k, v]) => <Kpi key={k} label={k.replace(/_/g, ' ')} value={fx(v, 2)} />)}</Kpis>
       ) : IS_STATIC ? (
         <Empty title="No judge report in this export." actions={[seeChecks]} el="empty-state read-only-export-state">
           {IS_MEMBER ? 'The judge runs in the local workbench at 127.0.0.1:8742.' : 'This is a static export, so the judge cannot run here.'} Start the local app to run it: <CopyCmd cmd={LIVE_CMD} />
@@ -742,28 +783,28 @@ function Judge({ dir, c }) {
       )}
     </Sec>
     <Sec title="Integrity flags" meta={I.data ? <Tag tone={flags.length ? 'red' : undefined}>{flags.length} open</Tag> : null} el="integrity-flags">
-      {I.error ? <ErrorState error={I.error} onRetry={I.reload} what={`/api/results/${dir}/integrity`} /> : !I.data ? <div className="rg-skel" style={{ height: 80 }} />
+      {I.error ? <ErrorState error={I.error} onRetry={I.reload} what={`/api/results/${dir}/integrity`} /> : !I.data ? <Skeleton lines={2} label="Reading the integrity flags" />
         : flags.length ? <div className="rg-col rg-an-flags">{flags.map((f) => <Note key={f.k} tone="red"><span className="rg-red" aria-hidden="true">×</span><div><div className="rg-lbl rg-an-fk">{f.k}</div>{f.body}</div></Note>)}</div>
           : <p className="rg-an-p">No contamination probe{both ? ', weak-test' : ''} or over-claiming flag in {dir}.</p>}
       {I.data && !both && <p className="rg-small rg-mute rg-an-mt">The weak-test check is skipped: it compares hidden passes with strengthened grades, and no run here has one.</p>}
     </Sec>
     {!I.error && <Sec title="Per task · hidden vs strengthened, with probes" meta={I.data ? `pass@1 · ${harness} harness · all models · ${plural(leak.length, 'task')}` : null} el="per-task-oracle leakage-evidence">
-      {!I.data ? <div className="rg-skel" style={{ height: 120 }} /> : !leak.length ? (
+      {!I.data ? <Skeleton lines={4} label="Reading the per-task grades" /> : !leak.length ? (
         <Empty title="No per-task grades for this harness." actions={[{ label: 'Every attempt in the explorer', spec: makeSpec('tasks', dir, short(c.model), c.harness), primary: true }, { label: 'Outcomes with CI', spec: makeSpec('an', dir, 'outcomes', short(c.model), c.harness) }]}>
           The integrity endpoint returned no per-task rows for <span className="rg-mono">{harness}</span>.
         </Empty>
       ) : (
-        <div className="rg-pnl"><div className="rg-tblwrap"><table className="rg-tbl rg-an-tbl rg-an-ptbl">
-          <thead><tr><th>task</th><th>probe</th><th>hidden</th><th>strengthened</th><th className="rg-num">Δ</th><th className="rg-num rg-hide-sm">patch↔issue</th><th className="rg-num rg-hide-md">steps</th><th className="rg-num rg-hide-md">tokens</th></tr></thead>
+        <div className="rg-pnl"><TableScroll label="Per-task hidden and strengthened pass rates, with probes"><table className="rg-tbl rg-an-tbl rg-an-ptbl">
+          <thead><tr><th>task</th><th>probe</th><th>hidden</th><th>strengthened</th><th className="rg-num">Δ</th><th className="rg-num rg-cq-hide-sm">patch↔issue</th><th className="rg-num rg-cq-hide-md">steps</th><th className="rg-num rg-cq-hide-md">tokens</th></tr></thead>
           <tbody>{leak.map((x) => {
             const dl = !both || x.pass1_strong == null || x.pass1 == null ? null : x.pass1_strong - x.pass1
             return (
-              <tr key={x.task}><td className="rg-mono rg-an-tcell" title={x.task}>{x.task}</td><td><ProbeTag probe={x.probe} /></td>
+              <tr key={x.task}><td className="rg-mono"><Id value={x.task} max={30} head={16} tail={8} /></td><td><ProbeTag probe={x.probe} /></td>
                 <td><RateBar v={x.pass1} /></td><td>{both ? <RateBar v={x.pass1_strong} tone="dim" /> : <span className="rg-small rg-mute">not graded</span>}</td>
                 <td className={cx('rg-num', dl != null && dl < -0.005 ? 'rg-red' : 'rg-mute')}>{pp(dl, 0)}</td>
-                <td className={cx('rg-num rg-hide-sm', x.patch_issue_similarity > 0.2 && 'rg-red')}>{pct(x.patch_issue_similarity, 0)}</td><td className="rg-num rg-hide-md">{fx(x.steps, 1)}</td><td className="rg-num rg-hide-md">{int(x.tokens)}</td></tr>
+                <td className={cx('rg-num rg-cq-hide-sm', x.patch_issue_similarity > 0.2 && 'rg-red')}>{pct(x.patch_issue_similarity, 0)}</td><td className="rg-num rg-cq-hide-md">{fx(x.steps, 1)}</td><td className="rg-num rg-cq-hide-md">{int(x.tokens)}</td></tr>
             )
-          })}</tbody></table></div></div>
+          })}</tbody></table></TableScroll></div>
       )}
     </Sec>}
     <LlmJudge canCompare={both} />
@@ -835,8 +876,8 @@ function Fit({ spec, dir, row, c }) {
         <p>A hold refits the same decomposition on the rows that match. This page does not start session capture. SWE-bench Verified and Terminal-Bench are not loaded.</p>
       </>} />
     {showHolds && (
-      <div className="rg-row rg-wrap rg-an-bar" data-el="hold-factors">
-        <Seg label="Inspect" options={[['harness', 'harness'], ['model', 'model']]} value={inspect} onChange={(v) => { setInspect(v); if (v === 'model') setHoldModel(''); else setHoldHarness('') }} />
+      <Toolbar label="Hold factors" twoUp className="rg-an-tbar" el="hold-factors">
+        <Seg label="Inspect"options={[['harness', 'harness'], ['model', 'model']]} value={inspect} onChange={(v) => { setInspect(v); if (v === 'model') setHoldModel(''); else setHoldHarness('') }} />
         {inspect !== 'model' && (
           <select className="rg-selc" aria-label="Hold model" value={holdModel} onChange={(e) => setHoldModel(e.target.value)}>
             <option value="">all models</option>
@@ -853,7 +894,7 @@ function Fit({ spec, dir, row, c }) {
           <option value="">all tasks</option>
           {holdLevels(columns, 'task_id').map((v) => <option key={v} value={v}>{v}</option>)}
         </select>
-      </div>
+      </Toolbar>
     )}
     <div data-el="two-factor-fit">
       {ungraded ? (
@@ -861,41 +902,40 @@ function Fit({ spec, dir, row, c }) {
       ) : !ok ? (
         <Empty title="No two-factor fit for this dataset." actions={ways}>{shapeLine(row)}, so a model × harness fit has nothing to split{reason ? <> (the fit reports {reason})</> : null}. A fit needs at least two balanced models and two balanced harnesses; the cell grid below still shows every observed cell with its interval.</Empty>
       ) : (<>
-        <div className="rg-stats rg-an-f3">
-          <div className="rg-stat"><span className="rg-lbl">dataset model spread</span><span className="rg-fig md">{(F.model.range * 100).toFixed(1)}<span className="u">pp</span></span><span className="rg-small rg-dim">share {pct(F.model.share)}</span></div>
-          <div className="rg-stat"><span className="rg-lbl">harness spread</span><span className="rg-fig md">{(F.harness.range * 100).toFixed(1)}<span className="u">pp</span></span><span className="rg-small rg-dim">share {pct(F.harness.share)}</span></div>
-          <div className="rg-stat"><span className="rg-lbl">interaction</span><span className="rg-fig md">{pct(F.interaction_share)}</span><span className="rg-small rg-dim">of total variance</span></div>
-        </div>
+        <Kpis label="Two-factor fit" className="rg-an-kpis">
+          <Kpi label="dataset model spread" value={(F.model.range * 100).toFixed(1)} unit="pp" hint={`share ${pct(F.model.share)}`} />
+          <Kpi label="harness spread" value={(F.harness.range * 100).toFixed(1)} unit="pp" hint={`share ${pct(F.harness.share)}`} />
+          <Kpi label="interaction" value={pct(F.interaction_share)} hint="of total variance" />
+        </Kpis>
         <Sec title="ANOVA · sums of squares" meta={`SS total ${fx(X.anova.ss_total, 1)}`}
           actions={<PinButton compact item={{ id: `figure:${dir}:fit`, kind: 'figure', label: `Two-factor fit · ${dir}`, value: `model ${pct(F.model.share)} · harness ${pct(F.harness.share)} · interaction ${pct(F.interaction_share)}`, spec: makeSpec('an', dir, 'fit'), dir }} />}>
-          <div className="rg-pnl"><div className="rg-tblwrap"><table className="rg-tbl rg-an-tbl"><thead><tr><th>term</th><th className="rg-num">SS</th><th className="rg-num">df</th><th className="rg-num">MS</th><th className="rg-num">F</th><th className="rg-num">share</th></tr></thead>
-            <tbody>{T.map((r) => <tr key={r.term}><td className="rg-mono">{r.term}</td><td className="rg-num">{fx(r.SS, 2)}</td><td className="rg-num">{r.df ?? '—'}</td><td className="rg-num">{fx(r.MS, 3)}</td><td className="rg-num">{r.F == null ? '—' : fx(r.F, 1)}</td><td className="rg-num">{pct(r.share)}</td></tr>)}</tbody></table></div></div>
+          <div className="rg-pnl rg-an-measure"><TableScroll label="ANOVA table"><table className="rg-tbl rg-an-tbl"><thead><tr><th>term</th><th className="rg-num">SS</th><th className="rg-num">df</th><th className="rg-num rg-cq-hide-sm">MS</th><th className="rg-num rg-cq-hide-sm">F</th><th className="rg-num">share</th></tr></thead>
+            <tbody>{T.map((r) => <tr key={r.term}><td className="rg-mono rg-nw">{r.term}</td><td className="rg-num">{fx(r.SS, 2)}</td><td className="rg-num">{r.df ?? '—'}</td><td className="rg-num rg-cq-hide-sm">{fx(r.MS, 3)}</td><td className="rg-num rg-cq-hide-sm">{r.F == null ? '—' : fx(r.F, 1)}</td><td className="rg-num">{pct(r.share)}</td></tr>)}</tbody></table></TableScroll></div>
         </Sec>
       </>)}
     </div>
     {!ungraded && <Sec title="Cell grid · pass@1 with 95% CI" meta={`${(X.cells || []).length} cells · hidden suite`} el="cell-grid-ci">
-      <div className="rg-pnl rg-an-mxp"><div className="rg-tblwrap"><table className="rg-an-mx"><thead><tr><th>{X.a_key || 'model'}</th>{B.map((h) => <th key={h}>{h}</th>)}</tr></thead>
-        <tbody>{A.map((m) => <tr key={m}><td className="rh"><span className="rg-mono">{short(m)}</span></td>{B.map((h) => {
+      <div className="rg-pnl rg-an-mxp"><TableScroll label="Cell grid, pass@1 with 95% CI"><table className="rg-an-mx rg-an-gmx"><thead><tr><th>{X.a_key || 'model'}</th>{B.map((h) => <th key={h}>{h}</th>)}</tr></thead>
+        <tbody>{A.map((m) => <tr key={m}><td className="rh"><span className="rg-mono rg-an-mname">{short(m)}</span></td>{B.map((h) => {
           const x = cellsOf(m, h)
           if (!x || !x.n) return <td key={h}><div className="rg-an-mc empty"><span className="v2">not run</span></div></td>
           return <td key={h}><Go spec={makeSpec('an', dir, 'outcomes', short(m), h)} className="rg-an-mc" title={`Outcomes for ${short(m)} under ${h}`}>
             <span className="v1">{pct(x.pass1)}</span><CiBar lo={x.ci95 && x.ci95[0]} hi={x.ci95 && x.ci95[1]} pt={x.pass1} />
             <span className="v2">[{x.ci95 ? (x.ci95[0] * 100).toFixed(0) : '—'}, {x.ci95 ? (x.ci95[1] * 100).toFixed(0) : '—'}] · n={x.n}</span></Go></td>
-        })}</tr>)}</tbody></table></div></div>
+        })}</tr>)}</tbody></table></TableScroll></div>
     </Sec>}
     {contrasts.length > 0 && (
       <Sec title={`Pairwise contrasts · within ${aWord}`} meta={`${plural(contrasts.length, 'contrast')} · ${nsep} exclude 0`} el="pairwise-contrasts">
-        <div className="rg-row rg-wrap rg-an-bar">
+        <Toolbar label="Filter contrasts" className="rg-an-tbar"
+          end={X.multiplicity && <span className="rg-small rg-mute rg-an-mult">{plural(X.multiplicity.n, 'test')} at 95%: ~{fx(X.multiplicity.expected_false, 2)} expected to exclude zero by chance alone.</span>}>
           <Seg label="Contrast filter" options={[['all', `all ${contrasts.length}`], ['sep', `separating ${nsep}`]]} value={only} onChange={setOnly} />
           {A.length > 1 && <select className="rg-selc" value={cm} onChange={(e) => setCm(e.target.value)} aria-label={aWord === 'model' ? 'Model' : aWord === 'harness' ? 'Harness' : aWord}><option value="all">{aWord === 'model' ? 'all models' : aWord === 'harness' ? 'all harnesses' : `all ${aWord}`}</option>{A.map((m) => <option key={m} value={m}>{short(m)}</option>)}</select>}
-          <span className="rg-grow" />
-          {X.multiplicity && <span className="rg-small rg-mute">{plural(X.multiplicity.n, 'test')} at 95%: ~{fx(X.multiplicity.expected_false, 2)} expected to exclude zero by chance alone.</span>}
-        </div>
-        <div className="rg-pnl"><div className="rg-tblwrap rg-an-cscroll"><table className="rg-tbl rg-an-tbl"><thead><tr><th>{aWord}</th><th>from → to</th><th className="rg-num">Δ</th><th className="rg-an-ciw">95% CI</th><th><span className="sr-only">separates</span></th></tr></thead>
+        </Toolbar>
+        <div className="rg-pnl rg-an-measure-lg"><TableScroll label="Pairwise contrasts" maxHeight="35rem"><table className="rg-tbl rg-an-tbl"><thead><tr><th>{aWord}</th><th>from → to</th><th className="rg-num">Δ</th><th className="rg-an-ciw">95% CI</th><th><span className="sr-only">separates</span></th></tr></thead>
           <tbody>{cons.map((x, i) => (
-            <tr key={i}><td className="rg-mono rg-small">{short(x.a)}</td><td className="rg-mono rg-small">{x.from} → {x.to}</td><td className={cx('rg-num', !x.covers_zero && 'rg-acc')}>{pp(x.delta)}</td>
+            <tr key={i}><td className="rg-mono rg-small rg-nw">{short(x.a)}</td><td className="rg-mono rg-small rg-nw">{x.from} → {x.to}</td><td className={cx('rg-num', !x.covers_zero && 'rg-acc')}>{pp(x.delta)}</td>
               <td><CiBar lo={x.ci95 && x.ci95[0]} hi={x.ci95 && x.ci95[1]} pt={x.delta} min={-mx} max={mx} zero={0} /><div className="rg-tiny rg-mute rg-mono">[{pp(x.ci95 && x.ci95[0])}, {pp(x.ci95 && x.ci95[1])}]</div></td>
-              <td>{x.covers_zero ? <span className="rg-small rg-mute">○ covers 0</span> : <span className="rg-small rg-acc">◆ separates</span>}</td></tr>))}</tbody></table></div></div>
+              <td className="rg-nw">{x.covers_zero ? <span className="rg-small rg-mute">○ covers 0</span> : <span className="rg-small rg-acc">◆ separates</span>}</td></tr>))}</tbody></table></TableScroll></div>
         {!cons.length && <Empty title="No contrast matches this filter." actions={[{ label: 'Show all contrasts', onClick: () => { setOnly('all'); setCm('all') }, primary: true }]}>None of the {contrasts.length} contrasts{cm !== 'all' ? ` for ${short(cm)}` : ''} excludes zero.</Empty>}
       </Sec>
     )}
@@ -958,18 +998,19 @@ function Report({ dir, row, c }) {
     : `pass@1 ${pct(oc.pass1)} ${ciText(oc.ci95)} over ${int(n)} ${h} runs — ${scope}.`
   return (
     <article data-el="report-card" className="rg-an-report">
-      <div className="rg-row rg-wrap rg-an-bar"><span className="rg-lbl">Report card · generated from disk · {card.generated_at || '—'}</span><span className="rg-grow" />
-        <PinButton item={{ id: `figure:${dir}:report:${h}:${c.model}`, kind: 'figure', label: `Report card · ${dir} · ${scope}`, value: `pass@1 ${pct(oc.pass1)} ${ciText(oc.ci95)} · n=${int(n)} · ${scope}`, spec: makeSpec('an', dir, 'report', short(c.model), c.harness), dir, harness: h }} />
+      <Toolbar label="Report card actions" className="rg-an-tbar rg-an-rbar" end={<>
         <Btn onClick={exportMd} disabled={!Rp.data.markdown} why="The report endpoint returned no Markdown for this card; export .json instead.">Export .md</Btn>
-        <button type="button" className="rg-btn" onClick={exportJson}>Export .json</button></div>
+        <button type="button" className="rg-btn" onClick={exportJson}>Export .json</button>
+        <PinButton item={{ id: `figure:${dir}:report:${h}:${c.model}`, kind: 'figure', label: `Report card · ${dir} · ${scope}`, value: `pass@1 ${pct(oc.pass1)} ${ciText(oc.ci95)} · n=${int(n)} · ${scope}`, spec: makeSpec('an', dir, 'report', short(c.model), c.harness), dir, harness: h }} />
+      </>}><span className="rg-lbl rg-an-rlbl">Report card · generated from disk · {card.generated_at || '—'}</span></Toolbar>
       <h1 className="rg-an-rh1">{headline}</h1>
-      <div className="rg-stats rg-an-r5">
-        <div className="rg-stat"><span className="rg-lbl">dataset runs</span><span className="rg-fig sm">{int(nRuns)}</span></div>
-        <div className="rg-stat"><span className="rg-lbl">dataset best cell</span><span className="rg-fig sm">{best ? pct(best.pass1) : '—'}</span>{best && <span className="rg-tiny rg-mute rg-mono">{short(best.a)} × {best.b} · n={best.n}</span>}</div>
-        <div className="rg-stat"><span className="rg-lbl">dataset model spread</span><span className="rg-fig sm">{F ? (F.model.range * 100).toFixed(1) + 'pp' : '—'}</span>{!F && <span className="rg-tiny rg-mute">no two-factor fit</span>}</div>
-        <div className="rg-stat"><span className="rg-lbl">dataset oracle net Δ</span><span className={cx('rg-fig sm', od < 0 && 'rg-red')}>{pp(od)}</span>{od == null && !hasStrongDs && <span className="rg-tiny rg-mute">no strengthened grades</span>}</div>
-        <div className="rg-stat"><span className="rg-lbl">dataset boundary events</span><span className="rg-fig sm">{int(bnd)}</span></div>
-      </div>
+      <Kpis label="Dataset context" className="rg-an-kpis">
+        <Kpi label="dataset runs" value={int(nRuns)} />
+        <Kpi label="dataset best cell" value={best ? pct(best.pass1) : null} hint={best ? <span className="rg-mono">{short(best.a)} × {best.b} · n={best.n}</span> : null} />
+        <Kpi label="dataset model spread" value={F ? (F.model.range * 100).toFixed(1) : null} unit="pp" hint={F ? null : 'no two-factor fit'} />
+        <Kpi label="dataset oracle net Δ" value={od == null ? null : pp(od)} hint={od == null && !hasStrongDs ? 'no strengthened grades' : null} />
+        <Kpi label="dataset boundary events" value={int(bnd)} />
+      </Kpis>
       <Sec title="Claims and caveats" el="report-claims">
         <div className="rg-col rg-an-claims">
           {F && <Note><div><div className="rg-lbl rg-an-fk">Claim · I</div>The {E.fit.leading_factor} is the larger variable here: the model carries {pct(F.model.share)} of the variance against the harness's {pct(F.harness.share)}, and its levels span {(F.model.range * 100).toFixed(1)}pp against {(F.harness.range * 100).toFixed(1)}pp.<div className="rg-tiny rg-mute rg-mono rg-an-mt">two-factor fit · {(E.cells || []).length} cells · tasks as blocks</div></div></Note>}
@@ -1169,7 +1210,7 @@ function Features({ spec, dir, c }) {
       <p>Features come from SWE-agent's command language (view, search, edit, run, submit); file paths are not recoverable from it, so read-before-write is not measured. For the bundled sample, exercise 7 prints the same numbers: <CopyCmd cmd={EX7_CMD} /></p>
     </>)}
     <Sec title="Failure attribution · Ochiai" meta={`${plural(att.length, 'feature')} · ${int(d.unresolved)} failed · ${int(d.resolved)} resolved`} el="feature-attribution">
-      <div className="rg-pnl"><div className="rg-tblwrap"><table className="rg-tbl rg-an-ft">
+      <div className="rg-pnl rg-an-measure-lg"><TableScroll label="Failure attribution by trajectory feature"><table className="rg-tbl rg-an-ft">
         <thead><tr><th>feature</th><th className="rg-num">Ochiai</th><th>in failed runs</th><th>in resolved runs</th><th>open a run</th></tr></thead>
         <tbody>{att.map((a) => {
           const xf = a.examples_fail || [], xp = a.examples_pass || []
@@ -1187,30 +1228,30 @@ function Features({ spec, dir, c }) {
             </tr>
           )
         })}</tbody>
-      </table></div></div>
+      </table></TableScroll></div>
     </Sec>
     <Sec title="Resolved vs unresolved" meta={`per run · ${int(d.resolved)} resolved, ${int(d.unresolved)} unresolved · card: all 80,036 runs`} el="resolved-vs-unresolved">
-      <div className="rg-pnl"><div className="rg-tblwrap"><table className="rg-tbl">
-        <thead><tr><th>metric</th><th className="rg-num">resolved</th><th className="rg-num">unresolved</th><th className="rg-num rg-hide-sm">dataset card</th></tr></thead>
+      <div className="rg-pnl rg-an-measure"><TableScroll label="Resolved against unresolved runs"><table className="rg-tbl">
+        <thead><tr><th>metric</th><th className="rg-num">resolved</th><th className="rg-num">unresolved</th><th className="rg-num rg-cq-hide-sm">dataset card</th></tr></thead>
         <tbody>{(d.table || []).map((t) => {
           const f = (v) => (t.kind === 'rate' ? pct(v) : fx(v, 1))
-          return <tr key={t.key}><td>{t.metric}</td><td className="rg-num">{f(t.resolved)}</td><td className="rg-num">{f(t.unresolved)}</td><td className="rg-num rg-hide-sm rg-mute">{t.card || '—'}</td></tr>
+          return <tr key={t.key}><td>{t.metric}</td><td className="rg-num">{f(t.resolved)}</td><td className="rg-num">{f(t.unresolved)}</td><td className="rg-num rg-cq-hide-sm rg-mute">{t.card || '—'}</td></tr>
         })}</tbody>
-      </table></div></div>
+      </table></TableScroll></div>
       {d.steps_ci_unresolved && d.steps_ci_unresolved[0] != null && <p className="rg-small rg-mute rg-an-ftnote">Unresolved runs: mean steps 95% CI [{fx(d.steps_ci_unresolved[0], 1)}, {fx(d.steps_ci_unresolved[1], 1)}] (bootstrap over runs). The card column is “resolved vs unresolved” over the full dataset.</p>}
     </Sec>
     <div className="rg-an-ftgrid">
       <Sec title="How runs ended" meta="SWE-agent exit status" el="exit-status">
-        <div className="rg-pnl"><div className="rg-tblwrap"><table className="rg-tbl">
+        <div className="rg-pnl"><TableScroll label="Exit status"><table className="rg-tbl">
           <thead><tr><th>exit status</th><th className="rg-num">runs</th><th>share</th></tr></thead>
           <tbody>{exits.map(([k, n]) => <tr key={k}><td className="rg-mono rg-small">{k || '—'}</td><td className="rg-num">{int(n)}</td><td><div className="rg-an-ftr"><Rate v={n / d.n} /><span className="rg-mono rg-small">{pct(n / d.n, 0)}</span></div></td></tr>)}</tbody>
-        </table></div></div>
+        </table></TableScroll></div>
       </Sec>
       <Sec title="Resolve rate by model" meta={plural(models.length, 'model')} el="features-by-model">
-        <div className="rg-pnl"><div className="rg-tblwrap"><table className="rg-tbl">
+        <div className="rg-pnl"><TableScroll label="Resolve rate by model"><table className="rg-tbl">
           <thead><tr><th>model</th><th className="rg-num">runs</th><th>resolved</th></tr></thead>
           <tbody>{models.map((m) => <tr key={m.model}><td className="rg-mono rg-small">{m.model}</td><td className="rg-num">{int(m.n)}</td><td><div className="rg-an-ftr"><Rate v={m.resolved} tone="sky" /><span className="rg-mono rg-small">{pct(m.resolved)}</span></div></td></tr>)}</tbody>
-        </table></div></div>
+        </table></TableScroll></div>
         <NextSteps actions={[{ label: 'Outcomes with CI per model', spec: makeSpec('an', dir, 'outcomes') }]} />
       </Sec>
     </div>
@@ -1263,31 +1304,31 @@ function ActionPatterns({ spec, dir, c, P }) {
   return (<>
     <Sec title="Action sequences" meta={meta} el="action-sequences">
       <div className="rg-row rg-wrap rg-an-alpha" aria-label="Action alphabet">{ALPHA.map(([k, l]) => <span key={k} className="rg-chip"><b className="rg-mono">{k}</b> {l}</span>)}</div>
-      <div className="rg-pnl"><div className="rg-tblwrap"><table className="rg-tbl">
-        <thead><tr><th>sequence</th><th className="rg-num">runs</th><th>pass rate</th><th className="rg-num rg-hide-sm">mean steps</th><th>example</th></tr></thead>
+      <div className="rg-pnl rg-an-measure-lg"><TableScroll label="Action sequences"><table className="rg-tbl">
+        <thead><tr><th>sequence</th><th className="rg-num">runs</th><th>pass rate</th><th className="rg-num rg-cq-hide-sm">mean steps</th><th>example</th></tr></thead>
         <tbody>{(pd.sequences || []).slice(0, 15).map((x) => (
           <tr key={x.sequence} data-el="sequence-row">
             <td>{seqCell(x.sequence)}</td><td className="rg-num">{int(x.n)}</td>
             <td><div className="rg-an-ftr"><Rate v={x.pass_rate} tone="sky" /><span className="rg-mono rg-small">{pct(x.pass_rate, 0)}</span>{x.ci95 && <span className="rg-tiny rg-mute rg-mono">[{pct(x.ci95[0], 0)}, {pct(x.ci95[1], 0)}]</span>}</div></td>
-            <td className="rg-num rg-hide-sm">{fx(x.mean_steps, 1)}</td>
+            <td className="rg-num rg-cq-hide-sm">{fx(x.mean_steps, 1)}</td>
             <td>{x.example ? <Go spec={makeSpec('run', x.example)} className="rg-tlink" title={x.example} label={`Open run ${x.example}`}>{x.example.slice(-6)}</Go> : '—'}</td>
           </tr>))}</tbody>
-      </table></div></div>
+      </table></TableScroll></div>
       {(pd.sequences || []).length > 15 && <p className="rg-small rg-mute rg-an-ftnote">The 15 most common of {(pd.sequences || []).length < 30 ? int((pd.sequences || []).length) : 'at least 30'} shapes.</p>}
     </Sec>
     <Sec title="Where the runs of a task diverge" meta="the first step where repeats of the same task part ways" el="divergence">
-      <div className="rg-pnl"><div className="rg-tblwrap"><table className="rg-tbl">
-        <thead><tr><th>task</th><th className="rg-num">runs</th><th>shared start</th><th className="rg-num">diverge at</th><th>next action</th><th className="rg-num rg-hide-sm">shapes</th><th>pass rate</th></tr></thead>
+      <div className="rg-pnl"><TableScroll label="Where the runs of a task diverge"><table className="rg-tbl">
+        <thead><tr><th>task</th><th className="rg-num">runs</th><th>shared start</th><th className="rg-num">diverge at</th><th>next action</th><th className="rg-num rg-cq-hide-sm">shapes</th><th>pass rate</th></tr></thead>
         <tbody>{(pd.divergence || []).map((x) => (
           <tr key={x.task} data-el="divergence-row">
             <td><Go spec={makeSpec('task', dir, short(c.model), c.harness, x.task)} className="rg-tlink">{x.task}</Go></td><td className="rg-num">{int(x.runs)}</td>
             <td>{seqCell(x.common_prefix)}</td><td className="rg-num">{x.diverge_at == null ? '—' : `step ${x.diverge_at + 1}`}</td>
             <td><div className="rg-row rg-wrap rg-an-ftx">{(x.branches || []).map(([a, n]) => (
               <span key={a} className="rg-chip" title={a === '·' ? 'the run had already ended' : ACTION_NAME[a]}><b className="rg-mono">{a === '·' ? 'end' : a}</b> ×{int(n)}</span>))}</div></td>
-            <td className="rg-num rg-hide-sm">{int(x.distinct_sequences)}</td>
+            <td className="rg-num rg-cq-hide-sm">{int(x.distinct_sequences)}</td>
             <td><div className="rg-an-ftr"><Rate v={x.pass_rate} tone="sky" /><span className="rg-mono rg-small">{pct(x.pass_rate, 0)}</span></div></td>
           </tr>))}</tbody>
-      </table></div></div>
+      </table></TableScroll></div>
     </Sec>
     <Sec title="Query the action string" meta="a regular expression over each run's actions, against the rest" el="action-query">
       {IS_STATIC ? <Note el="query-static"><div>Queries run on the live server. In the terminal: <CopyCmd cmd={`python -m traceharness patterns ${dir} --harness ${c.harness} --query '${q}'`} /></div></Note> : (<>
@@ -1298,21 +1339,21 @@ function ActionPatterns({ spec, dir, c, P }) {
         <div className="rg-row rg-wrap rg-an-ftx" data-el="query-presets">{PRESETS.map(([p, l]) => (
           <button key={p} type="button" className={cx('rg-chip', q === p && 'on')} aria-pressed={q === p} onClick={() => { setDraft(p); setQ(p) }}><span className="rg-mono">{p}</span> {l}</button>))}</div>
         {Q.error ? <ErrorState error={Q.error} onRetry={Q.reload} what={`/api/results/${dir}/query`} />
-          : !qd ? <div className="rg-skel rg-an-qsk" />
+          : !qd ? <div className="rg-an-qsk"><Skeleton height={96} label="Running the query" /></div>
             : qd.error ? <Note tone="red" el="query-error"><div>{qd.error}</div></Note>
               : (<div className="rg-col rg-an-qres" data-el="query-result">
-                <div className="rg-stats rg-an-r5">
-                  <div className="rg-stat"><span className="rg-lbl">matched</span><span className="rg-fig sm">{int(qd.matched)}</span><span className="rg-tiny rg-mute rg-mono">of {int(qd.total)} runs</span></div>
-                  <div className="rg-stat"><span className="rg-lbl">pass · matched</span><span className="rg-fig sm">{pct(qd.pass_in, 0)}</span></div>
-                  <div className="rg-stat"><span className="rg-lbl">pass · the rest</span><span className="rg-fig sm">{pct(qd.pass_out, 0)}</span></div>
-                  <div className="rg-stat"><span className="rg-lbl">ochiai</span><span className="rg-fig sm">{fx(qd.ochiai)}</span></div>
-                  <div className="rg-stat"><span className="rg-lbl">risk ratio</span><span className="rg-fig sm">{fx(qd.risk_ratio)}</span><span className="rg-tiny rg-mute">failure rate, matched ÷ rest</span></div>
-                </div>
+                <Kpis label="Query result" className="rg-an-kpis">
+                  <Kpi label="matched" value={int(qd.matched)} hint={`of ${int(qd.total)} runs`} />
+                  <Kpi label="pass · matched" value={pct(qd.pass_in, 0)} />
+                  <Kpi label="pass · the rest" value={pct(qd.pass_out, 0)} />
+                  <Kpi label="ochiai" value={fx(qd.ochiai)} />
+                  <Kpi label="risk ratio" value={fx(qd.risk_ratio)} hint="failure rate, matched ÷ rest" />
+                </Kpis>
                 {(qd.examples || []).length > 0 && <div className="rg-row rg-wrap rg-an-ftx"><span className="rg-small rg-mute">Matching runs:</span>{qd.examples.slice(0, 8).map((id) => <Go key={id} spec={makeSpec('run', id)} className="rg-chip" title={id} label={`Open matching run ${id}`}>{id.slice(-6)}</Go>)}</div>}
                 <About summary="The query as a regression test" el="query-unittest">
                   <p>Save it under <span className="rg-mono">trajectory_tests/</span>: it fails when more runs match than you allow. Or write it from the terminal:</p>
                   <CopyCmd cmd={cli} />
-                  <pre className="rg-code rg-an-code">{qd.unittest}</pre>
+                  <pre className="rg-codeblock rg-nowrap rg-an-code" tabIndex={0} aria-label="The query as a unittest">{qd.unittest}</pre>
                   <button type="button" className="rg-btn" onClick={() => copy(qd.unittest)}>Copy the test</button>
                 </About>
               </div>)}
@@ -1387,8 +1428,8 @@ function TaskExplorer({ spec, args }) {
       <RecordingProvenance runs={d.list} />
       <AskingSentence dir={dir} model={c.model} harness={c.harness} />
       <Head eyebrow="Trajectory explorer · task × attempts" title={`${plural(nT, 'task')}, ${int(d.list.length)} attempts`} el="tasks-answer" lead={lead}
-        actions={<div className="rg-row rg-wrap"><PinButton item={{ id: `cell:${dir}:${c.model}:${c.harness}`, kind: 'cell', label: `${short(c.model)} · ${c.harness} · ${dir}`, value: `${pct(tally(d.list, oracle).rate)} · ${tally(d.list, oracle).p}/${tally(d.list, oracle).known} known (${oracle})`, spec: makeSpec('ds', ...cs), dir, model: c.model, harness: c.harness }} />
-          <Go spec={makeSpec('an', dir, 'outcomes', ...cs.slice(1))} className="rg-btn">Outcomes with CI</Go></div>}
+        actions={<><Go spec={makeSpec('an', dir, 'outcomes', ...cs.slice(1))} className="rg-btn">Outcomes with CI</Go>
+          <PinButton item={{ id: `cell:${dir}:${c.model}:${c.harness}`, kind: 'cell', label: `${short(c.model)} · ${c.harness} · ${dir}`, value: `${pct(tally(d.list, oracle).rate)} · ${tally(d.list, oracle).p}/${tally(d.list, oracle).known} known (${oracle})`, spec: makeSpec('ds', ...cs), dir, model: c.model, harness: c.harness }} /></>}
         about={d.list.length ? <>
           <p>One row per task for <span className="rg-mono">{short(c.model)}</span> under <span className="rg-mono">{c.harness}</span>; each square is one attempt, graded by the {oracle} suite. An unknown grade (?) is never counted as a failure.</p>
           <p data-el="run-numbering-note">Run 01–{String(maxN).padStart(2, '0')} are this condition's attempts ordered by <span className="rg-mono">repeat_index</span>. Run numbers are scoped to the condition: “Run 03” under another model is a different recording.</p>
@@ -1400,16 +1441,16 @@ function TaskExplorer({ spec, args }) {
           { label: `Every run of ${dir}`, spec: makeSpec('field', dir) },
         ]}>{short(c.model)} was not run under {c.harness} in {dir}. The family matrix shows which combinations were.</Empty>
       ) : (<>
-        <div className="rg-row rg-wrap rg-an-bar rg-an-xbar">
-          <div data-el="task-quick-filters"><Seg label="Quick filter" options={[['all', `All ${nT}`], ['mixed', repeats.rate == null ? 'Mixed outcomes unavailable' : `Mixed outcomes ${nMixed}`], ['fail', `With failures ${nFail}`]]} value={qf} onChange={reset(setQf)} /></div>
-          <div className="rg-an-srch"><SearchBox value={q} onChange={reset(setQ)} placeholder="Search tasks" el="task-search" /></div>
-          <label data-el="task-filter-select"><span className="sr-only">Probe filter</span><select className="rg-selc" value={pf} onChange={(e) => reset(setPf)(e.target.value)} aria-label="Probe filter">
+        <Toolbar label="Filter tasks" className="rg-an-tbar rg-an-xbar">
+          <div data-el="task-quick-filters" className="rg-an-xq"><Seg label="Quick filter" options={[['all', `All ${nT}`], ['mixed', repeats.rate == null ? 'Mixed outcomes unavailable' : `Mixed outcomes ${nMixed}`], ['fail', `With failures ${nFail}`]]} value={qf} onChange={reset(setQf)} /></div>
+          <div className="rg-toolbar-grow rg-an-srch"><SearchBox value={q} onChange={reset(setQ)} placeholder="Search tasks" el="task-search" /></div>
+          <label data-el="task-filter-select" className="rg-an-xf"><span className="sr-only">Probe filter</span><select className="rg-selc" value={pf} onChange={(e) => reset(setPf)(e.target.value)} aria-label="Probe filter">
             <option value="all">all tasks</option><option value="probe">probe tasks only</option><option value="plain">no probe</option></select></label>
-          <label data-el="task-failure-filter"><span className="sr-only">Failure mode</span><select className="rg-selc" value={mf} onChange={(e) => reset(setMf)(e.target.value)} aria-label="Failure mode filter">
+          <label data-el="task-failure-filter" className="rg-an-xf"><span className="sr-only">Failure mode</span><select className="rg-selc" value={mf} onChange={(e) => reset(setMf)(e.target.value)} aria-label="Failure mode filter">
             <option value="all">any outcome</option>{modeOpts.map(([k, n]) => <option key={k} value={k}>fails: {k.replace(/_no_patch$/, ' · no patch').replace(/_/g, ' ')} ({n})</option>)}</select></label>
-          <label data-el="task-sort"><span className="sr-only">Sort</span><select className="rg-selc" value={so} onChange={(e) => setSo(e.target.value)} aria-label="Sort tasks">
+          <label data-el="task-sort" className="rg-an-xf"><span className="sr-only">Sort</span><select className="rg-selc" value={so} onChange={(e) => setSo(e.target.value)} aria-label="Sort tasks">
             <option value="priority">sort: priority</option><option value="name">sort: name</option><option value="fail">sort: most failures</option></select></label>
-        </div>
+        </Toolbar>
         <p className="rg-small rg-dim" data-el="repeat-coverage">{repeats.coverage}</p>
         <div className="rg-row rg-wrap rg-small rg-an-legend" data-el="task-legend">
           <span className="rg-row rg-an-lg"><Verdict v={true} /> pass</span><span className="rg-row rg-an-lg"><Verdict v={false} /> fail</span>
@@ -1422,7 +1463,7 @@ function TaskExplorer({ spec, args }) {
               const pr = probeOf(x.t)
               return (
                 <div key={x.t} className="rg-an-trow">
-                  <div className="t-name"><div className="rg-row rg-an-tn"><Go spec={makeSpec('task', ...cs, x.t)} className="rg-tlink"><b>{x.t}</b></Go>{x.mixed && <Tag tone="amb">mixed</Tag>}{pr && pr !== 'none' && <span className="rg-amb t-pm" title={`probe: ${pr}`}>◆</span>}</div>
+                  <div className="t-name"><div className="rg-row rg-an-tn"><Go spec={makeSpec('task', ...cs, x.t)} className="rg-tlink"><b>{breakable(x.t)}</b></Go>{x.mixed && <Tag tone="amb">mixed</Tag>}{pr && pr !== 'none' && <span className="rg-amb t-pm" title={`probe: ${pr}`}>◆</span>}</div>
                     {meta[x.t] && meta[x.t].title && <div className="rg-tiny rg-mute rg-ell">{meta[x.t].title}</div>}
                     <ModeChips list={x.l} oracle={oracle} dir={dir} /></div>
                   <div className="t-rib"><Ribbon list={x.l} oracle={oracle} specOf={(i) => makeSpec('task', ...cs, x.t, i)} />

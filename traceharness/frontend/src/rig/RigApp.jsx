@@ -28,7 +28,7 @@ import { AN_VIEWS } from './views/analysis.jsx'
 import GettingStarted from './GettingStarted'
 import { GUIDE_TOPICS, guideDestination } from './guidance'
 import { TaskSideNav } from './views/trajectory.jsx'
-import { Icon, Kbd, MOD, NotFound, EvidenceChain, Toaster, toast as showToast, Seg, NextSteps } from './ui'
+import { Icon, Kbd, MOD, NotFound, EvidenceChain, Toaster, toast as showToast, Seg, NextSteps, Menu, ScrollX, Modal } from './ui'
 
 const cx = (...a) => a.filter(Boolean).join(' ')
 import './rig.css'
@@ -157,10 +157,14 @@ export default function RigApp() {
   const [keysOpen, setKeysOpen] = useState(false)   // the ? shortcut sheet (not deep-linked)
   const [guideTarget, setGuideTarget] = useState(null)
   const [navOpen, setNavOpenState] = useState(readNav)
+  const navOpenRef = useRef(navOpen)
+  navOpenRef.current = navOpen
   const setNavOpen = useCallback((open) => { setNavOpenState(open); writeNav(open) }, [])
   const [dockW, setDockWState] = useState(readDockW)
   const setDockW = useCallback((w) => { const v = clampDock(w); setDockWState(v); try { localStorage.setItem(DOCKW_KEY, String(v)) } catch { /* this visit only */ } }, [])
   const isMobile = useMedia('(max-width: 760px)')
+  // 761–1099px: the opened sidebar lies over the document instead of taking 224px from it
+  const navOverlay = useMedia('(min-width: 761px) and (max-width: 1099px)')
   const prefersLight = useMedia('(prefers-color-scheme: light)')
   const ov = useOverview()
   const jobs = useJobs()
@@ -336,6 +340,7 @@ export default function RigApp() {
     return () => document.removeEventListener('fullscreenchange', on)
   }, [commit])
   const setTheme = useCallback((t) => { writeTheme(t); setThemePref(t); if (routeRef.current.theme) commit({ ...routeRef.current, theme: null }, true) }, [commit])
+  const cycleTheme = useCallback(() => setTheme(pref === 'dark' ? 'light' : pref === 'light' ? 'system' : 'dark'), [setTheme, pref])
 
   /* ---- condition */
   const datasets = ov.data ? ov.data.results : []
@@ -423,6 +428,7 @@ export default function RigApp() {
       }
       if (e.key === 'Escape') {
         if (pop) { setPop(null); return }
+        if (navOverlay && navOpenRef.current) { setNavOpen(false); return }
         if (s.sheet) { setSheet(null); return }
         if (s.dock) { setDock(null); return }
         if (s.max) setMax(false)
@@ -436,7 +442,7 @@ export default function RigApp() {
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
-  }, [setPalette, toggleDock, toggleSplit, toggleMax, setMax, closeTab, focusTab, setDock, setSheet, pop, keysOpen])
+  }, [setPalette, toggleDock, toggleSplit, toggleMax, setMax, closeTab, focusTab, setDock, setSheet, pop, keysOpen, navOverlay, setNavOpen])
 
   useEffect(() => {
     const t = tabInfo(curSpec).title
@@ -444,6 +450,14 @@ export default function RigApp() {
   })
 
   const nTabs = panes.reduce((a, p) => a + p.tabs.length, 0)
+  /* The status bar's connection item: the dot is always drawn; the words leave below 1280px of bar and
+     are repeated, with everything else the bar hides, in the status popover the item opens. */
+  const connection = IS_MEMBER
+    ? { dot: <span className="rg-dot" />, label: 'recorded snapshot · member harness saves · hosted runs', words: <span data-el="member-workspace-state" title={STATIC_DATA?.__meta__?.generated_at ? `Snapshot created ${STATIC_DATA.__meta__.generated_at}; saved harnesses and hosted runs are read from your account.` : 'Recorded data snapshot; saved harnesses and hosted runs are read from your account.'}>recorded snapshot · member harness saves · hosted runs</span> }
+    : IS_STATIC ? { dot: <span className="rg-dot off" />, label: 'read-only snapshot', words: <span data-el="read-only-export-state">read-only snapshot</span> }
+    : ov.error || !online ? { dot: <span className="rg-dot warn" />, label: 'backend unreachable · retrying', words: <span data-el="backend-down">backend unreachable · retrying</span> }
+    : ov.data ? { dot: <span className="rg-dot" />, label: 'local workspace · connected', words: 'local workspace · connected' } : { dot: <span className="rg-dot off" />, label: 'connecting…', words: 'connecting…' }
+  const jobsWords = `${jobs.data.running} ${jobs.data.running === 1 ? 'run' : 'runs'} in progress`
   const curInfo = tabInfo(curSpec)
   const railDir = fallbackDir
 
@@ -457,7 +471,7 @@ export default function RigApp() {
     <RigContext.Provider value={rig}>
       <div className={cx('rig', sideDock && 'has-side')} data-rig-theme={theme} data-rig-mobile={isMobile ? '1' : undefined} data-rig-max={route.max && !isMobile ? '1' : undefined} data-rig-nav={navOpen ? 'open' : 'closed'} style={{ '--rig-dock-w': `${dockW}px` }}>
         <a className="rg-skip" href="#rig-doc-main" data-el="skip-link" onClick={(e) => { e.preventDefault(); document.getElementById('rig-doc-main')?.focus() }}>Skip to document</a>
-        <header className="rg-tb">
+        <header className={cx('rg-tb', IS_MEMBER && 'rg-tb-member')}>
           <div className="rg-tb-l">
             <button type="button" className="rg-brand" data-el="brand" aria-label="TraceHarness home" onClick={() => openTab('home')}><BrandMark /><b>TraceHarness</b></button>
           </div>
@@ -465,16 +479,24 @@ export default function RigApp() {
           <button type="button" className="rg-cmd" aria-label="Open command palette" onClick={() => setPalette(true)}><Icon name="search" size={15} /><span className="rg-cmd-ph">Search datasets, runs, tasks and views…</span><span className="rg-cmd-k"><Kbd>{MOD}</Kbd><Kbd>K</Kbd></span></button>
           <div className="rg-tb-r">
             <GettingStarted onGuide={topic => showGuidance(topic, focusCtx)} />
-            {IS_MEMBER && <a className="rg-tbtn" href="/app/account" data-el="member-account">Account</a>}
+            {IS_MEMBER && <a className="rg-tbtn rg-tb-acct" href="/app/account" data-el="member-account">Account</a>}
             <button type="button" className={`rg-tbtn${route.dock === 'buddy' ? ' on' : ''}`} data-el="buddy-launcher" aria-label="Ask Buddy" aria-pressed={route.dock === 'buddy'} onClick={() => toggleDock('buddy')}><Icon name="buddy" size={16} /><span className="lbl-d">Ask Buddy</span></button>
             <span className="rg-tb-sep rg-hide-sm" aria-hidden="true" />
             <button type="button" className={`rg-tbtn ico rg-hide-sm${panes.length > 1 ? ' on' : ''}`} aria-label="Toggle split view" aria-pressed={panes.length > 1} title={`Split view (${MOD}+\\)`} onClick={toggleSplit}><Icon name="split" size={16} /></button>
             <button type="button" className={`rg-tbtn ico rg-hide-sm${route.max ? ' on' : ''}`} data-el="maximize" aria-label={route.max ? 'Restore layout' : 'Maximize document'} aria-pressed={!!route.max} title={route.max ? `Restore (${MOD}+Shift+Enter or Esc)` : `Maximize (${MOD}+Shift+Enter)`} onClick={toggleMax}><Icon name={route.max ? 'unmax' : 'max'} size={16} /></button>
-            <button type="button" className="rg-tbtn ico" aria-label={`Theme: ${pref}. Switch theme`} title={`Theme: ${pref}`} data-el="appearance" onClick={() => setTheme(pref === 'dark' ? 'light' : pref === 'light' ? 'system' : 'dark')}><Icon name={pref === 'system' ? 'sys' : theme === 'light' ? 'moon' : 'sun'} size={16} /></button>
+            <button type="button" className="rg-tbtn ico rg-tb-theme" aria-label={`Theme: ${pref}. Switch theme`} title={`Theme: ${pref}`} data-el="appearance" onClick={cycleTheme}><Icon name={pref === 'system' ? 'sys' : theme === 'light' ? 'moon' : 'sun'} size={16} /></button>
+            {/* phone (and a member's narrower window): what does not fit in the bar, in one menu */}
+            <Menu className="rg-tb-more" label={<Icon name="more" size={16} />} buttonLabel="More actions" buttonClassName="rg-tbtn ico" caret={false} items={[
+              { label: 'Voice tour', onClick: () => document.querySelector('.rg-tb .rg-tour-launcher')?.click() },
+              IS_MEMBER && { label: 'Account', href: '/app/account' },
+              { label: `Theme: ${pref} · switch`, onClick: cycleTheme },
+            ]} />
           </div>
         </header>
 
-        <nav className="rg-rail" aria-label="Activity">
+        {/* tablet: the opened sidebar overlays the document; choosing a destination closes it */}
+        {navOpen && navOverlay && <div className="rg-nav-scrim" aria-hidden="true" onClick={() => setNavOpen(false)} />}
+        <nav className="rg-rail" aria-label="Activity" onClick={navOverlay && navOpen ? (e) => { if (e.target.closest && e.target.closest('.rg-nav-it:not(.rg-nav-toggle), .rg-nav-sub-it, .rg-dsw-o')) setNavOpen(false) } : undefined}>
           {navOpen && <DatasetSwitch condition={condition} datasets={datasets} />}
           {RAIL_GROUPS.map((g) => (
             <div key={g} className="rg-nav-g" role="group" aria-label={g}>
@@ -506,33 +528,37 @@ export default function RigApp() {
         </nav>
 
         <main className="rg-work" id="rig-work">
-          {panes.map((p, pi) => <Pane key={pi} pi={pi} pane={p} focused={pi === focus} nPanes={panes.length} lab={lab} onSplit={toggleSplit} />)}
+          {panes.map((p, pi) => {
+            const o = panes.length > 1 ? panes[pi ? 0 : 1] : null
+            return <Pane key={pi} pi={pi} pane={p} focused={pi === focus} nPanes={panes.length} lab={lab} onSplit={toggleSplit}
+              other={o && o.tabs.length ? { pi: pi ? 0 : 1, active: o.active, title: tabInfo(o.tabs[o.active]).title } : null} />
+          })}
         </main>
 
+        {/* tablet and phone: the panel is a drawer or a sheet over the document; the scrim closes it */}
+        {route.dock && (isMobile || navOverlay) && <div className="rg-dock-scrim" aria-hidden="true" onClick={() => setDock(null)} />}
         {route.dock && <Dock dock={route.dock} side={sideDock} setDock={setDock} ctx={focusCtx} onBack={() => openTab('home')} caseCount={caseItems.length} width={dockW} setWidth={setDockW} />}
 
         {/* The status bar is the shell's one quiet strip: where you are on the left, the dock
             launchers on the right (a closed dock takes no row of its own). */}
         <footer className="rg-sb" aria-label="Status">
-          <span className="it" data-el="runtime-status">
-            {IS_MEMBER ? <><span className="rg-dot" /><span data-el="member-workspace-state" title={STATIC_DATA?.__meta__?.generated_at ? `Snapshot created ${STATIC_DATA.__meta__.generated_at}; saved harnesses and hosted runs are read from your account.` : 'Recorded data snapshot; saved harnesses and hosted runs are read from your account.'}>recorded snapshot · member harness saves · hosted runs</span></>
-              : IS_STATIC ? <><span className="rg-dot off" /><span data-el="read-only-export-state">read-only snapshot</span></>
-              : ov.error || !online ? <><span className="rg-dot warn" /><span data-el="backend-down">backend unreachable · retrying</span></>
-                : ov.data ? <><span className="rg-dot" />local workspace · connected</> : <><span className="rg-dot off" />connecting…</>}
-          </span>
-          {condition && <button type="button" className="it" title="Open this dataset" onClick={() => openTab(makeSpec('ds', condition.dir))}>ds <b>{condition.dir}</b></button>}
-          {condition && condition.model && <button type="button" className="it" data-pop="cond" aria-label="Change model and harness" aria-expanded={!!pop && pop.id === 'cond'} onClick={(e) => setPop(pop && pop.id === 'cond' ? null : { id: 'cond', left: e.currentTarget.getBoundingClientRect().left })}>{short(condition.model)} · {condition.harness} ▾</button>}
-          <button type="button" className="it" data-el="harness-oracle-picker" aria-label="Change test suite and harness" aria-expanded={!!pop && pop.id === 'oracle'} onClick={(e) => setPop(pop && pop.id === 'oracle' ? null : { id: 'oracle', left: e.currentTarget.getBoundingClientRect().left })}>oracle <b className={route.oracle === 'hidden' ? '' : 'alt'}>{route.oracle}</b> ▾</button>
-          {!IS_STATIC && jobs.data.running > 0 && <span className="it" title={`${jobs.data.active.length} job(s) active`}><span className="rg-dot" />{jobs.data.running} {jobs.data.running === 1 ? 'run' : 'runs'} in progress</span>}
+          <button type="button" className="it rg-sb-conn" data-el="runtime-status" data-pop="status" aria-haspopup="dialog" aria-expanded={!!pop && pop.id === 'status'} title="Workspace status"
+            onClick={(e) => setPop(pop && pop.id === 'status' ? null : { id: 'status', left: e.currentTarget.getBoundingClientRect().left })}>
+            {connection.dot}<span className="rg-sb-t rg-sb-ct">{connection.words}</span>
+          </button>
+          {condition && <button type="button" className="it rg-sb-p1" title={`Open ${condition.dir}`} onClick={() => openTab(makeSpec('ds', condition.dir))}>ds <b>{condition.dir}</b></button>}
+          {condition && condition.model && <button type="button" className="it rg-sb-p2" data-pop="cond" aria-label="Change model and harness" aria-expanded={!!pop && pop.id === 'cond'} onClick={(e) => setPop(pop && pop.id === 'cond' ? null : { id: 'cond', left: e.currentTarget.getBoundingClientRect().left })}><span className="rg-sb-t">{short(condition.model)} · {condition.harness}</span> ▾</button>}
+          <button type="button" className="it rg-sb-oracle" data-el="harness-oracle-picker" aria-label="Change test suite and harness" aria-expanded={!!pop && pop.id === 'oracle'} onClick={(e) => setPop(pop && pop.id === 'oracle' ? null : { id: 'oracle', left: e.currentTarget.getBoundingClientRect().left })}><span className="rg-sb-k">oracle</span> <b className={route.oracle === 'hidden' ? '' : 'alt'}>{route.oracle}</b> ▾</button>
+          {!IS_STATIC && jobs.data.running > 0 && <span className="it rg-sb-p4" title={`${jobs.data.active.length} job(s) active`}><span className="rg-dot" />{jobsWords}</span>}
           {build.stale && <button type="button" className="it rg-sb-update" data-el="update-ready" title="TraceHarness was rebuilt on the server. Reload to use it (your tabs are kept)." onClick={() => location.reload()}>New version ready · reload</button>}
-          {lab ? <button type="button" className="it lab-on" data-el="guided-indicator" onClick={() => openTab('guide')}>Guided analysis on</button>
-            : <button type="button" className="it" data-el="student-lab-toggle" title="Turn on the Student Lab reading guide" onClick={() => setLab(true)}>Student Lab off</button>}
+          {lab ? <button type="button" className="it lab-on rg-sb-p3" data-el="guided-indicator" onClick={() => openTab('guide')}>Guided analysis on</button>
+            : <button type="button" className="it rg-sb-p3" data-el="student-lab-toggle" title="Turn on the Student Lab reading guide" onClick={() => setLab(true)}>Student Lab off</button>}
           <span className="sp" />
-          {IS_MEMBER && <a className="it" href="/app/shallow" data-el="member-simple-editor">Simple harness editor</a>}
+          {IS_MEMBER && <a className="it rg-sb-p3" href="/app/shallow" data-el="member-simple-editor">Simple harness editor</a>}
           <DockLaunchers dock={route.dock} toggleDock={toggleDock} caseCount={caseItems.length} />
         </footer>
 
-        {pop && <StatusPop pop={pop} close={() => setPop(null)} condition={condition} rowOf={rowOf} />}
+        {pop && <StatusPop pop={pop} setPop={setPop} close={() => setPop(null)} condition={condition} rowOf={rowOf} connection={connection} jobsWords={!IS_STATIC && jobs.data.running > 0 ? jobsWords : null} stale={build.stale} />}
         {route.pal && <Palette close={() => setPalette(false)} datasets={datasets} condition={condition} onKeys={() => setKeysOpen(true)} />}
         {keysOpen && <KeySheet close={() => setKeysOpen(false)} />}
         {route.sheet === 'tabs' && <TabSheet panes={panes} focus={focus} close={() => setSheet(null)} rail={rail} />}
@@ -627,8 +653,14 @@ function DatasetSwitch({ condition, datasets }) {
 }
 
 /* ---------------------------------------------------------------- pane */
-function Pane({ pi, pane, focused, nPanes, lab, onSplit }) {
+function Pane({ pi, pane, focused, nPanes, lab, onSplit, other }) {
   const rig = useRig()
+  const strip = useRef(null)
+  // the active tab is kept in view when the strip scrolls
+  useEffect(() => {
+    const t = strip.current && strip.current.querySelector('.rg-tab.act')
+    if (t && typeof t.scrollIntoView === 'function') t.scrollIntoView({ block: 'nearest', inline: 'nearest' })
+  }, [pane.active, pane.tabs.length])
   const spec = pane.tabs[pane.active]
   const info = tabInfo(spec)
   const { def, args } = info
@@ -649,24 +681,36 @@ function Pane({ pi, pane, focused, nPanes, lab, onSplit }) {
      the page title); from the second tab on it carries the tabs. Page actions and the split button
      sit at its right end either way, so no page spends a second 36px row on chrome. */
   const showTabs = pane.tabs.length > 1 && !rig.isMobile
-  const acts = Actions ? <div className="acts"><Boundary spec={spec}><Actions spec={spec} args={args} chain={chain} pane={pi} /></Boundary></div> : null
+  const acts = Actions ? <div className="acts rg-pane-acts"><Boundary spec={spec}><Actions spec={spec} args={args} chain={chain} pane={pi} /></Boundary></div> : null
   const splitBtn = pi === nPanes - 1 ? <button type="button" className="rg-splitbtn rg-hide-sm" aria-label={nPanes > 1 ? 'Close split' : 'Split right'} title={`${nPanes > 1 ? 'Close split' : 'Split right'} (${MOD}+\\)`} onClick={onSplit}><Icon name="split" size={15} /></button> : null
+  /* under 960px of work area only the focused pane is drawn: this brings the other one forward */
+  const swapBtn = other ? <button type="button" className="rg-paneswap" data-el="pane-swap" aria-label={`Show the ${pi ? 'left' : 'right'} pane: ${other.title}`} title={`Show the ${pi ? 'left' : 'right'} pane: ${other.title}`} onClick={() => rig.focusTab(other.pi, other.active)}><Icon name="cmp" size={15} /></button> : null
+  const mid = crumbs.slice(0, -1)
   const trail = effChain && step
     ? <EvidenceChain dir={effChain.dir} qid={effChain.qid} step={step} runId={runId} seq={seq} />
     : (
       <nav className="rg-crumb" aria-label="Breadcrumb" data-el="breadcrumb">
-        <button type="button" onClick={() => rig.openTab('home')}>workspace</button>
-        {crumbs.map(([label, to], i) => (
-          <span key={i} className="rg-row" style={{ gap: 6 }}><span className="sep">›</span>
-            {i === crumbs.length - 1 || !to ? <span className={i === crumbs.length - 1 ? 'cur' : ''}>{label}</span> : <button type="button" onClick={() => rig.openTab(to)}>{label}</button>}
-          </span>
-        ))}
+        <span className="rg-crumb-i rg-crumb-ws"><button type="button" className="rg-crumb-l" onClick={() => rig.openTab('home')}>workspace</button></span>
+        {mid.length > 0 && (
+          <span className="rg-crumb-i rg-crumb-more"><span className="sep" aria-hidden="true">›</span>
+            <Menu label="…" buttonLabel="Show the path" buttonClassName="rg-crumb-l rg-crumb-mb" caret={false} align="start"
+              items={mid.map(([label, to]) => ({ label: String(label), spec: to || undefined, disabled: !to }))} /></span>
+        )}
+        {crumbs.map(([label, to], i) => {
+          const last = i === crumbs.length - 1
+          return (
+            <span key={i} className={cx('rg-crumb-i', !last && 'rg-crumb-mid')}><span className="sep" aria-hidden="true">›</span>
+              {last || !to ? <span className={cx('rg-crumb-l', last && 'cur')} title={typeof label === 'string' ? label : undefined}>{label}</span> : <button type="button" className="rg-crumb-l" title={typeof label === 'string' ? label : undefined} onClick={() => rig.openTab(to)}>{label}</button>}
+            </span>
+          )
+        })}
       </nav>
     )
   return (
     <div className={`rg-pane${focused ? ' focus' : ''}`} data-pane={pi} onFocusCapture={() => { if (!focused) rig.focusTab(pi, pane.active) }}>
       {showTabs ? (
-        <div className="rg-tabbar" role="tablist" aria-label={`Open documents${nPanes > 1 ? (pi ? ' (right pane)' : ' (left pane)') : ''}`}>
+        <div className="rg-tabbar">
+          <ScrollX className="rg-tabbar-s"><div className="rg-tabbar-l" role="tablist" aria-label={`Open documents${nPanes > 1 ? (pi ? ' (right pane)' : ' (left pane)') : ''}`} ref={strip}>
           {pane.tabs.map((t, i) => {
             const ti = tabInfo(t)
             return (
@@ -678,12 +722,13 @@ function Pane({ pi, pane, focused, nPanes, lab, onSplit }) {
               </div>
             )
           })}
-          <div className="tb-end">{acts}{splitBtn}</div>
+          </div></ScrollX>
+          <div className="tb-end">{acts}{swapBtn}{splitBtn}</div>
         </div>
       ) : (
         <div className="rg-doctb rg-panehead" onDoubleClick={(e) => { if (e.target === e.currentTarget) { rig.focusTab(pi, pane.active); rig.toggleMax() } }}>
           {trail}
-          <div className="tb-end">{acts}{splitBtn}</div>
+          <div className="tb-end">{acts}{swapBtn}{splitBtn}</div>
         </div>
       )}
       {showTabs && effChain && step && <div className="rg-doctb rg-chainrow">{trail}</div>}
@@ -756,30 +801,51 @@ function Dock({ dock, side, setDock, ctx, onBack, caseCount = 0, width, setWidth
   )
 }
 
-/* ---------------------------------------------------------------- status popovers */
-function StatusPop({ pop, close, condition, rowOf }) {
+/* ---------------------------------------------------------------- status popovers
+   Anchored to their status-bar item (clamped inside the window); a bottom sheet on a phone. The
+   workspace popover ('status') repeats everything the narrowed status bar hides. */
+function StatusPop({ pop, setPop, close, condition, rowOf, connection, jobsWords, stale }) {
   const rig = useRig()
   const row = condition ? rowOf(condition.dir) : null
   const ref = useRef(null)
-  useEffect(() => { const b = ref.current && ref.current.querySelector('button'); if (b) b.focus() }, [])
+  useEffect(() => { const b = ref.current && ref.current.querySelector('button, a[href]'); if (b) b.focus() }, [pop.id])
   const left = Math.max(8, Math.min(pop.left || 8, (typeof window !== 'undefined' ? window.innerWidth : 400) - 336))
+  const reopen = (id) => (e) => { const it = document.querySelector(`.rg-sb [data-pop="${id}"]`); setPop({ id, left: (it && it.offsetParent ? it : e.currentTarget).getBoundingClientRect().left }) }
+  const label = pop.id === 'oracle' ? 'Test suite and harness' : pop.id === 'status' ? 'Workspace status' : 'Model'
   return (
     <>
       <div className="rg-scrim clear" onClick={close} aria-hidden="true" />
-      <div className="rg-pop" role="dialog" aria-label={pop.id === 'oracle' ? 'Test suite and harness' : 'Model'} style={{ left, bottom: 34 }} ref={ref} onKeyDown={(e) => { if (e.key === 'Escape') { e.stopPropagation(); close() } }}>
+      <div className="rg-pop" role="dialog" aria-label={label} style={{ '--rig-pop-left': `${left}px` }} ref={ref} onKeyDown={(e) => { if (e.key === 'Escape') { e.stopPropagation(); close() } }}>
+        {pop.id === 'status' && <>
+          <div className="rg-pop-sec">
+            <span className="rg-lbl">Workspace</span>
+            <p className="rg-pop-st">{connection.dot}{connection.label}</p>
+            {jobsWords && <p className="rg-pop-p">{jobsWords}</p>}
+          </div>
+          <div className="rg-pop-sec rg-pop-list">
+            {condition && <button type="button" className="rg-pop-row" onClick={() => { close(); rig.openTab(makeSpec('ds', condition.dir)) }}><span>Dataset</span><b>{condition.dir}</b><Icon name="right" size={14} /></button>}
+            {condition && condition.model && <button type="button" className="rg-pop-row" onClick={reopen('cond')}><span>Model · harness</span><b>{short(condition.model)} · {condition.harness}</b><Icon name="chev" size={14} /></button>}
+            <button type="button" className="rg-pop-row" onClick={reopen('oracle')}><span>Test suite</span><b>{rig.oracle}</b><Icon name="chev" size={14} /></button>
+            <button type="button" className="rg-pop-row" onClick={() => { close(); if (rig.lab) rig.openTab('guide'); else rig.setLab(true) }}><span>Student Lab</span><b>{rig.lab ? 'on · open the guide' : 'off · turn on'}</b><Icon name="right" size={14} /></button>
+            {stale && <button type="button" className="rg-pop-row" onClick={() => location.reload()}><span>Update</span><b>New version ready · reload</b><Icon name="right" size={14} /></button>}
+            {IS_MEMBER && <a className="rg-pop-row" href="/app/shallow"><span>Editor</span><b>Simple harness editor</b><Icon name="ext" size={14} /></a>}
+          </div>
+        </>}
         {pop.id === 'oracle' && <>
-          <div className="rg-lbl" style={{ marginBottom: 8 }}>Test suite (oracle)</div>
-          <Seg options={SUITES} value={rig.oracle} onChange={(o) => { rig.setOracle(o) }} label="Test suite" />
-          <p className="rg-small rg-dim" style={{ marginTop: 8 }}>Grades every verdict glyph in the workbench. Unknown grades stay <span className="rg-vt u">? unknown</span>, never failure.</p>
-          {row && <><div className="rg-lbl" style={{ margin: '12px 0 8px' }}>Harness · {row.name}</div>
-            <div className="rg-row rg-wrap">{row.harnesses.map((h) => <button key={h} type="button" className={`rg-btn${h === condition.harness ? ' pri' : ''}`} onClick={() => rig.setCondition({ dir: row.name, harness: h })}>{h}</button>)}</div></>}
+          <div className="rg-pop-sec">
+            <span className="rg-lbl">Test suite (oracle)</span>
+            <Seg options={SUITES} value={rig.oracle} onChange={(o) => { rig.setOracle(o) }} label="Test suite" />
+            <p className="rg-pop-p">Grades every verdict glyph in the workbench. Unknown grades stay <span className="rg-vt u">? unknown</span>, never failure.</p>
+          </div>
+          {row && <div className="rg-pop-sec"><span className="rg-lbl">Harness · {row.name}</span>
+            <div className="rg-cluster">{row.harnesses.map((h) => <button key={h} type="button" className={`rg-btn${h === condition.harness ? ' pri' : ''}`} onClick={() => rig.setCondition({ dir: row.name, harness: h })}>{h}</button>)}</div></div>}
         </>}
         {pop.id === 'cond' && (row ? <>
-          <div className="rg-lbl" style={{ marginBottom: 8 }}>Model · {row.name}</div>
-          <div className="rg-col" style={{ gap: 4 }}>{row.models.map((m) => <button key={m} type="button" className={`rg-btn opt${m === condition.model ? ' pri' : ''}`} onClick={() => rig.setCondition({ dir: row.name, model: m })}>{m}</button>)}</div>
-          <div className="rg-lbl" style={{ margin: '12px 0 8px' }}>Harness</div>
-          <div className="rg-row rg-wrap">{row.harnesses.map((h) => <button key={h} type="button" className={`rg-btn${h === condition.harness ? ' pri' : ''}`} onClick={() => rig.setCondition({ dir: row.name, harness: h })}>{h}</button>)}</div>
-        </> : <><p className="rg-small rg-dim">A condition is a model and a harness inside one dataset. Open a dataset to choose one.</p><button type="button" className="rg-btn" onClick={() => { close(); rig.openTab('home') }}>Datasets</button></>)}
+          <div className="rg-pop-sec"><span className="rg-lbl">Model · {row.name}</span>
+            <div className="rg-stack rg-stack-xs">{row.models.map((m) => <button key={m} type="button" className={`rg-btn opt${m === condition.model ? ' pri' : ''}`} onClick={() => rig.setCondition({ dir: row.name, model: m })}>{m}</button>)}</div></div>
+          <div className="rg-pop-sec"><span className="rg-lbl">Harness</span>
+            <div className="rg-cluster">{row.harnesses.map((h) => <button key={h} type="button" className={`rg-btn${h === condition.harness ? ' pri' : ''}`} onClick={() => rig.setCondition({ dir: row.name, harness: h })}>{h}</button>)}</div></div>
+        </> : <div className="rg-pop-sec"><p className="rg-pop-p">A condition is a model and a harness inside one dataset. Open a dataset to choose one.</p><button type="button" className="rg-btn" onClick={() => { close(); rig.openTab('home') }}>Datasets</button></div>)}
       </div>
     </>
   )
@@ -808,24 +874,24 @@ function TabSheet({ panes, focus, close, rail }) {
   panes.forEach((p, pi) => p.tabs.forEach((t, i) => all.push([pi, i, t, pi === focus && i === p.active])))
   return (
     <>
-      <div className="rg-scrim" style={{ alignItems: 'flex-end', padding: 0 }} onClick={close} aria-hidden="true" />
+      <div className="rg-scrim rg-scrim-sheet" onClick={close} aria-hidden="true" />
       <div className="rg-sheet" role="dialog" aria-modal="true" aria-label="Open documents" ref={ref} tabIndex={-1} onKeyDown={onKeyDown}>
         <div className="grab" />
-        <div className="rg-row" style={{ padding: '0 16px 8px' }}><span className="rg-lbl">Open documents · {all.length}</span><span className="rg-grow" /><button type="button" className="rg-btn ghost" aria-label="Close" onClick={close}><Icon name="x" size={16} /></button></div>
+        <div className="rg-sheet-h"><span className="rg-lbl">Open documents · {all.length}</span><button type="button" className="rg-btn ghost" aria-label="Close" onClick={close}><Icon name="x" size={16} /></button></div>
         <div className="rg-sheet-b">
           {all.map(([pi, i, t, on]) => {
             const ti = tabInfo(t)
             return (
-              <div key={pi + ':' + t} className="rg-row" style={{ borderBottom: '1px solid var(--rig-line)' }}>
-                <button type="button" className={`it${on ? ' on' : ''}`} aria-current={on ? 'page' : undefined} style={{ border: 0 }} onClick={() => rig.focusTab(pi, i)}><span className="rg-tag">{ti.tag}</span><span className="rg-grow rg-ell rg-mono">{ti.title}</span></button>
+              <div key={pi + ':' + t} className="rg-sheet-row">
+                <button type="button" className={`it${on ? ' on' : ''}`} aria-current={on ? 'page' : undefined} onClick={() => rig.focusTab(pi, i)}><span className="rg-tag">{ti.tag}</span><span className="rg-grow rg-ell rg-mono">{ti.title}</span></button>
                 <button type="button" className="rg-btn ghost" aria-label={`Close ${ti.title}`} onClick={() => rig.closeTab(pi, i)}>×</button>
               </div>
             )
           })}
-          <div className="rg-lbl" style={{ padding: '16px 12px 6px' }}>Go to</div>
+          <div className="rg-lbl rg-sheet-gl">Go to</div>
           {[...rail.items, ...rail.bottom].map((r) => <button key={r.label} type="button" className="it" data-el={r.el} onClick={() => rig.openTab(r.spec)}><Icon name={r.icon} size={18} /><span>{r.label}</span></button>)}
           {IS_MEMBER && <a className="it" href="/app/shallow" data-el="mobile-simple-editor"><Icon name="ext" size={18} /><span>Open simple harness editor</span></a>}
-          <div className="rg-lbl" style={{ padding: '16px 12px 6px' }}>Panels</div>
+          <div className="rg-lbl rg-sheet-gl">Panels</div>
           {listDocks().map((d) => <button key={d.id} type="button" className="it" onClick={() => { close(); rig.setDock(d.id) }}><Icon name={d.icon || 'log'} size={18} /><span>{d.label}</span></button>)}
           <button type="button" className="it" onClick={() => rig.setPalette(true)}><Icon name="search" size={18} /><span>Command palette…</span></button>
         </div>
@@ -849,19 +915,14 @@ const KEYS = [
   ['This list', ['?']],
 ]
 function KeySheet({ close }) {
-  const ref = useRef(null)
-  useEffect(() => { if (ref.current) ref.current.focus() }, [])
   return (
-    <div className="rg-scrim" onMouseDown={(e) => { if (e.target === e.currentTarget) close() }}>
-      <div className="rg-pal rg-keys" role="dialog" aria-modal="true" aria-label="Keyboard shortcuts" ref={ref} tabIndex={-1} data-el="shortcuts">
-        <div className="rg-row rg-keys-h"><b>Keyboard shortcuts</b><span className="rg-grow" /><button type="button" className="rg-btn ghost" aria-label="Close shortcuts" onClick={close}>esc</button></div>
-        <dl className="rg-keys-l">
-          {KEYS.map(([what, keys]) => (
-            <div key={what} className="rg-row"><dt className="rg-grow">{what}</dt><dd>{keys.map((k, i) => <Kbd key={i}>{k}</Kbd>)}</dd></div>
-          ))}
-        </dl>
-      </div>
-    </div>
+    <Modal open onClose={close} title="Keyboard shortcuts" el="shortcuts" width="560px">
+      <dl className="rg-keys-l">
+        {KEYS.map(([what, keys]) => (
+          <div key={what}><dt>{what}</dt><dd>{keys.map((k, i) => <Kbd key={i}>{k}</Kbd>)}</dd></div>
+        ))}
+      </dl>
+    </Modal>
   )
 }
 

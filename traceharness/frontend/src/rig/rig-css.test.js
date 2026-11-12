@@ -178,7 +178,7 @@ describe('table headers and chips (traceharness.dev table.data thead th, .cx-chi
   const HEAD = '.rg-tbl th,.rg-an-mx thead th,.rg-an-trow.th>*'
   it('one rule sets the font of every table and grid header row, with the site values', () => {
     const body = rigCss.match(/\.rg-tbl th,\.rg-an-mx thead th,\.rg-an-trow\.th>\*\{([^}]*)\}/)[1]
-    for (const d of ['font:500 11.5px/1.3 var(--rig-mono)', 'letter-spacing:.04em', 'text-transform:uppercase', 'color:var(--rig-mute)', 'white-space:nowrap']) expect(body).toContain(d)
+    for (const d of ['font:var(--rig-fw-medium) var(--rig-fs-2xs)/var(--rig-lh-snug) var(--rig-mono)', 'letter-spacing:.04em', 'text-transform:uppercase', 'color:var(--rig-mute)', 'white-space:nowrap']) expect(body).toContain(d)
   })
   it('no other rule gives a header cell its own font', () => {
     const bad = []

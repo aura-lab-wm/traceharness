@@ -69,8 +69,12 @@ export function ConfigurationLibrary({ entries = [], busy = false, onCreate, onR
   return <section className="rg-configuration-library" aria-label="Configuration checkpoints" aria-busy={pending || undefined}>
     <div className="rg-checkpoint-heading"><div><h2>Configuration checkpoints</h2><p id={`${id}-scope`}>Keep named alternatives in this account’s tab. Export a checkpoint to keep a portable copy.</p></div><span className="rg-checkpoint-scope">This tab only</span></div>
     <form className="rg-checkpoint-create" onSubmit={submitName}>
-      <div className="rg-checkpoint-name-field"><label className="rg-fld" htmlFor={`${id}-name`}>Checkpoint name<input ref={nameInput} id={`${id}-name`} className="rg-inp" type="text" value={name} onChange={(event) => setName(event.target.value)} disabled={locked} autoComplete="off" aria-invalid={nameTooLong || undefined} aria-describedby={`${id}-scope ${id}-name-count`} placeholder="Name this configuration" /></label><span id={`${id}-name-count`} className={`rg-checkpoint-name-count${nameTooLong ? ' invalid' : ''}`} role={nameTooLong ? 'status' : undefined}>{nameLength} / {maxNameLength} Unicode characters{nameTooLong ? ' · Shorten this name to create a checkpoint.' : ''}</span></div>
-      <button type="submit" className="rg-btn" disabled={locked || !name.trim() || nameTooLong}>Create checkpoint</button>
+      <label className="rg-checkpoint-label" htmlFor={`${id}-name`}>Checkpoint name</label>
+      <div className="rg-checkpoint-control">
+        <input ref={nameInput} id={`${id}-name`} className="rg-inp" type="text" value={name} onChange={(event) => setName(event.target.value)} disabled={locked} autoComplete="off" aria-invalid={nameTooLong || undefined} aria-describedby={`${id}-scope ${id}-name-count`} placeholder="Name this configuration" />
+        <button type="submit" className="rg-btn" disabled={locked || !name.trim() || nameTooLong}>Create checkpoint</button>
+      </div>
+      <span id={`${id}-name-count`} className={`rg-checkpoint-name-count${nameTooLong ? ' invalid' : ''}`} role={nameTooLong ? 'status' : undefined}>{nameLength} / {maxNameLength} Unicode characters{nameTooLong ? ' · Shorten this name to create a checkpoint.' : ''}</span>
     </form>
     <p className="rg-checkpoint-boundary">Checkpoints include the harness, model, task, prompt and limits. They do not save to your account or start a run.</p>
     {error && <p className="rg-checkpoint-error" role="alert">{error}</p>}
@@ -81,7 +85,7 @@ export function ConfigurationLibrary({ entries = [], busy = false, onCreate, onR
         return <li key={entry.id} className={`rg-checkpoint-row${selected ? ' is-compared' : ''}`}>
           <div className="rg-checkpoint-row-heading"><h3>{entry.name}</h3><span className="rg-checkpoint-time">{timeLabel(entry.created_at)}</span></div>
           <dl className="rg-checkpoint-identity"><div><dt>Engine</dt><dd>{configuration.runtime_id || 'Not selected'}</dd></div><div><dt>Model</dt><dd>{configuration.model_id || 'Not selected'}</dd></div><div><dt>Task</dt><dd>{configuration.task_id || 'Not selected'}</dd></div></dl>
-          <div className="rg-checkpoint-actions">
+          <div className="rg-checkpoint-actions" role="group" aria-label={`Checkpoint ${entry.name} actions`}>
             <button type="button" className="rg-btn" disabled={locked} onClick={() => perform(() => onRestore(entry.id))} aria-label={`Restore checkpoint ${entry.name}`}>Restore</button>
             <button type="button" className="rg-btn" disabled={locked} onClick={() => perform(() => onCompare(entry.id))} aria-label={`Compare checkpoint ${entry.name}`} aria-expanded={selected} aria-controls={selected ? `${id}-comparison` : undefined}>Compare</button>
             {onExport && <button type="button" className="rg-btn ghost" disabled={locked} onClick={() => perform(() => onExport(entry.id))} aria-label={`Export checkpoint ${entry.name}`}>Export</button>}
@@ -89,8 +93,12 @@ export function ConfigurationLibrary({ entries = [], busy = false, onCreate, onR
             <button type="button" className="rg-btn ghost rg-checkpoint-delete" disabled={locked} onClick={() => perform(() => onDelete(entry.id), () => { returnFocus.current = 'create' })} aria-label={`Delete checkpoint ${entry.name}`}>Delete</button>
           </div>
           {renaming === entry.id && <form className="rg-checkpoint-rename" onSubmit={(event) => submitRename(event, entry)} onKeyDown={(event) => { if (event.key === 'Escape' && !locked) { event.preventDefault(); event.stopPropagation(); cancelRename() } }}>
-            <div className="rg-checkpoint-name-field"><label className="rg-fld" htmlFor={`${id}-rename`}>New checkpoint name<input ref={renameInput} id={`${id}-rename`} className="rg-inp" type="text" disabled={locked} value={renameValue} onChange={(event) => setRenameValue(event.target.value)} autoComplete="off" aria-invalid={renameTooLong || undefined} aria-describedby={`${id}-rename-count`} /></label><span id={`${id}-rename-count`} className={`rg-checkpoint-name-count${renameTooLong ? ' invalid' : ''}`} role={renameTooLong ? 'status' : undefined}>{renameLength} / {maxNameLength} Unicode characters{renameTooLong ? ' · Shorten this name to save it.' : ''}</span></div>
-            <button className="rg-btn" type="submit" disabled={locked || !renameValue.trim() || renameTooLong}>Save name</button><button className="rg-btn ghost" type="button" disabled={locked} onClick={cancelRename}>Cancel rename</button>
+            <label className="rg-checkpoint-label" htmlFor={`${id}-rename`}>New checkpoint name</label>
+            <div className="rg-checkpoint-control">
+              <input ref={renameInput} id={`${id}-rename`} className="rg-inp" type="text" disabled={locked} value={renameValue} onChange={(event) => setRenameValue(event.target.value)} autoComplete="off" aria-invalid={renameTooLong || undefined} aria-describedby={`${id}-rename-count`} />
+              <button className="rg-btn" type="submit" disabled={locked || !renameValue.trim() || renameTooLong}>Save name</button><button className="rg-btn ghost" type="button" disabled={locked} onClick={cancelRename}>Cancel rename</button>
+            </div>
+            <span id={`${id}-rename-count`} className={`rg-checkpoint-name-count${renameTooLong ? ' invalid' : ''}`} role={renameTooLong ? 'status' : undefined}>{renameLength} / {maxNameLength} Unicode characters{renameTooLong ? ' · Shorten this name to save it.' : ''}</span>
           </form>}
         </li>
       })}</ul>}

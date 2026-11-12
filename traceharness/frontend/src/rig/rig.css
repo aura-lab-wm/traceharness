@@ -44,35 +44,35 @@
   /* bar fill for "passed": the pass hue, stepped back so failures are what the eye finds */
   --rig-sky-fill:color-mix(in srgb,var(--rig-sky) 62%,var(--rig-panel3));--rig-qty-bg2:color-mix(in srgb,var(--rig-qty) 24%,transparent);
   --rig-mono:var(--rig-font-mono);--rig-sans:var(--rig-font-sans);
-  position:fixed;inset:0;z-index:1;display:grid;grid-template-columns:48px minmax(0,1fr);grid-template-rows:52px minmax(0,1fr) auto 26px;
-  background:var(--rig-bg);color:var(--rig-text);font:14px/1.45 var(--rig-sans);-webkit-font-smoothing:antialiased;overflow:hidden;
+  position:fixed;inset:0;z-index:var(--rig-z-base);display:grid;grid-template-columns:var(--rig-nav-w) minmax(0,1fr);grid-template-rows:var(--rig-tb-h) minmax(0,1fr) auto var(--rig-sb-h);
+  background:var(--rig-bg);color:var(--rig-text);font:var(--rig-fw-regular) var(--rig-fs-md)/var(--rig-lh-body) var(--rig-sans);-webkit-font-smoothing:antialiased;overflow:hidden;
 }
 .rig *{box-sizing:border-box}
-.rig button,.rig input,.rig select,.rig textarea{font:inherit;color:inherit}
-.rig button{cursor:pointer}
-.rig button:disabled{cursor:not-allowed}
-.rig a{color:inherit}
+/* zero-specificity reset: any class rule on a control (.rg-btn, .rg-tbtn, a view's .rg-x) wins over it */
+:where(.rig) :where(button,input,select,textarea){font:inherit;color:inherit}
+:where(.rig) :where(button){cursor:pointer}
+:where(.rig) :where(button:disabled){cursor:not-allowed}
+:where(.rig) :where(a){color:inherit}
 .rig p{margin:0 0 8px}
 .rig h1,.rig h2,.rig h3{margin:0;font-weight:600;letter-spacing:-.01em}
-.rig h1{font-size:20px;line-height:1.2}
-.rig h2{font-size:15px;line-height:1.3}
-.rig h3{font-size:13px}
-.rig :focus-visible{outline:2px solid var(--rig-sel);outline-offset:1px;border-radius:5px}
+.rig h1{font-size:var(--rig-fs-xl);line-height:1.2}
+.rig h2{font-size:var(--rig-fs-md);line-height:1.3}
+.rig h3{font-size:var(--rig-fs-sm)}
+/* one focus ring everywhere; it never changes the element's own corners */
+.rig :focus-visible{outline:var(--rig-focus-ring);outline-offset:var(--rig-focus-offset)}
 .rig ::selection{background:var(--rig-sel);color:var(--rig-sel-ink)}
-.rig code,.rig .rg-code{font-family:var(--rig-mono);font-size:11.5px;background:var(--rig-panel2);border:1px solid var(--rig-line);padding:1px 4px;border-radius:5px}
+.rig code,.rig .rg-code{font-family:var(--rig-mono);font-size:var(--rig-fs-xs);background:var(--rig-panel2);border:1px solid var(--rig-line);padding:1px 4px;border-radius:var(--rig-r-sm)}
 @media (prefers-reduced-motion:reduce){.rig *,.rig *::before,.rig *::after{animation:none!important;transition:none!important}}
-.rg-skip{position:fixed;left:8px;top:-60px;z-index:100;background:var(--rig-sel);color:var(--rig-sel-ink);padding:10px 14px;font-weight:600;text-decoration:none;border-radius:5px}
-.rg-skip:focus{top:8px}
 
 /* ---------------------------------------------------------------- utilities */
 /* ids and figures: the sans with tabular numerals. Monospace is kept for code, diffs, raw
    payloads and keys (code, .rg-code, .rg-pre, .rg-kbd), where alignment is the point. */
 .rg-mono{font-family:var(--rig-mono);font-variant-numeric:tabular-nums}
 .rg-num{font-family:var(--rig-mono);font-variant-numeric:tabular-nums;text-align:right}
-.rg-lbl{font:600 11.5px/1.2 var(--rig-sans);color:var(--rig-mute)}
+.rg-lbl{font:600 var(--rig-fs-xs)/1.2 var(--rig-sans);color:var(--rig-mute)}
 .rg-mute{color:var(--rig-mute)}.rg-dim{color:var(--rig-dim)}
 .rg-sky{color:var(--rig-sky-t)}.rg-red,.rg-red-t{color:var(--rig-red-t)}.rg-acc{color:var(--rig-sel-t)}.rg-amb{color:var(--rig-amb-t)}
-.rg-small{font-size:11px}.rg-tiny{font-size:10px}
+.rg-small{font-size:var(--rig-fs-2xs)}.rg-tiny{font-size:var(--rig-fs-2xs)}
 .rg-row{display:flex;align-items:center;gap:8px;min-width:0}
 .rg-row.wrap,.rg-wrap{flex-wrap:wrap}
 .rg-col{display:flex;flex-direction:column;gap:8px;min-width:0}
@@ -102,133 +102,49 @@
   color-scheme:dark;
 }
 
-/* ---------------------------------------------------------------- titlebar
-   The shell recedes: one quiet frame (titlebar + rail + tab strip in --rig-panel), hairlines
-   only where a region ends, and the document on --rig-bg gets every row the chrome gives up. */
-.rg-tb{grid-column:1/-1;display:flex;align-items:center;gap:8px;padding:0 8px 0 0;background:var(--rig-panel);border-bottom:1px solid var(--rig-line);min-width:0}
-.rg-brand{display:flex;align-items:center;gap:8px;height:44px;padding:0 12px 0 0;text-decoration:none;flex:none;border:0;background:none}
-.rg-brand .mk{width:48px;height:44px;display:grid;place-items:center}
-.rg-brand b{font:600 16px/1 var(--rig-sans);letter-spacing:-.015em}
-.rg-cmd{flex:1 1 auto;max-width:520px;margin:0 auto;height:32px;display:flex;align-items:center;gap:8px;padding:0 6px 0 10px;background:var(--rig-bg);border:1px solid var(--rig-line);border-radius:6px;color:var(--rig-mute);text-align:left;min-width:0}
-.rg-cmd:hover{border-color:var(--rig-line3);color:var(--rig-dim)}
-.rg-cmd .rg-cmd-ph{flex:1;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;font-family:var(--rig-sans);font-size:12px}
-.rg-tb-r{display:flex;align-items:center;gap:4px;flex:none}
-.rg-kbd{display:inline-flex;align-items:center;justify-content:center;min-width:18px;height:18px;padding:0 4px;border:1px solid var(--rig-line2);border-bottom-width:2px;border-radius:3px;font:500 10px/1 var(--rig-mono);color:var(--rig-dim);background:var(--rig-panel2);white-space:nowrap;vertical-align:middle}
-.rg-tbtn{height:32px;min-width:32px;display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:0 10px;border:1px solid transparent;border-radius:6px;background:none;color:var(--rig-dim);white-space:nowrap}
-.rg-tbtn:hover{background:var(--rig-panel2);color:var(--rig-text)}
-.rg-tbtn.on{color:var(--rig-sel-t);border-color:var(--rig-line2);background:var(--rig-sel-bg)}
-.rg-mtab{display:none;flex:1 1 auto;min-width:0;height:40px;align-items:center;gap:8px;padding:0 10px;border:1px solid var(--rig-line2);border-radius:6px;background:var(--rig-bg);text-align:left}
-.rg-mtab .tt{flex:1;min-width:0;font:500 14px/1.2 var(--rig-sans);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.rg-mtab .n{font:600 11px/1 var(--rig-sans);color:var(--rig-text);background:var(--rig-panel3);padding:3px 5px;border-radius:5px}
+.rg-kbd{display:inline-flex;align-items:center;justify-content:center;min-width:18px;height:18px;padding:0 4px;border:1px solid var(--rig-line2);border-bottom-width:2px;border-radius:var(--rig-r-xs);font:500 var(--rig-fs-2xs)/1 var(--rig-mono);color:var(--rig-dim);background:var(--rig-panel2);white-space:nowrap;vertical-align:middle}
 
-/* ---------------------------------------------------------------- rail */
-.rg-rail{grid-row:2/4;grid-column:1;display:flex;flex-direction:column;background:var(--rig-panel);border-right:1px solid var(--rig-line);padding:8px 0;gap:4px}
-.rg-rail .tip{position:absolute;left:52px;top:50%;transform:translateY(-50%);background:var(--rig-panel3);color:var(--rig-text);font:500 12px/1 var(--rig-sans);padding:6px 8px;border-radius:5px;white-space:nowrap;pointer-events:none;opacity:0;z-index:30;box-shadow:var(--rig-shadow)}
-.rg-rail button:hover .tip,.rg-rail button:focus-visible .tip{opacity:1}
-.rg-rail .sp{flex:1}
 
-/* ---------------------------------------------------------------- panes, tabs, doc */
-.rg-work{grid-row:2;grid-column:2;display:flex;min-width:0;min-height:0;background:var(--rig-bg)}
-.rg-pane{flex:1 1 0;min-width:0;display:flex;flex-direction:column;min-height:0}
-.rg-pane+.rg-pane{border-left:1px solid var(--rig-line2)}
-.rg-pane:not(.focus) .rg-tab.act{border-top-color:var(--rig-line3)}
-.rg-tabbar{display:flex;align-items:stretch;height:36px;background:var(--rig-panel);border-bottom:1px solid var(--rig-line);overflow-x:auto;overflow-y:hidden;scrollbar-width:none;flex:none}
-.rg-tabbar::-webkit-scrollbar{display:none}
-.rg-tab{display:flex;align-items:center;gap:6px;height:36px;padding:0 4px 0 12px;border-right:1px solid var(--rig-line);border-top:2px solid transparent;color:var(--rig-mute);white-space:nowrap;font:500 13px/1 var(--rig-sans);max-width:260px;flex:none}
-.rg-tab .tab-b{display:flex;gap:6px;align-items:center;height:100%;min-width:0;border:0;background:none;padding:0;color:inherit;font:inherit}
-.rg-tab .tt{overflow:hidden;text-overflow:ellipsis}
-.rg-tab .k{font-size:10px;color:var(--rig-mute)}
-.rg-tab:hover{color:var(--rig-text);background:var(--rig-panel2)}
-.rg-tab.act{color:var(--rig-text);background:var(--rig-bg);border-top-color:var(--rig-text)}
-.rg-tab .x{border:0;background:none;padding:0;width:24px;height:24px;display:grid;place-items:center;border-radius:5px;color:var(--rig-mute);font-size:14px;line-height:1;opacity:.6}
-.rg-tab.act .x,.rg-tab:hover .x,.rg-tab .x:focus-visible{opacity:1}
-.rg-tab .x:hover{background:var(--rig-panel3);color:var(--rig-text)}
-.rg-tabbar .tb-end{margin-left:auto;display:flex;align-items:center;gap:2px;padding:0 6px;position:sticky;right:0;background:var(--rig-panel)}
-.rg-splitbtn{height:28px;width:28px;display:grid;place-items:center;border:0;background:none;color:var(--rig-mute);border-radius:5px;flex:none}
-.rg-splitbtn:hover{color:var(--rig-text);background:var(--rig-panel2)}
-/* the doc toolbar belongs to the document (same ground, no rule under it), not to the chrome */
-.rg-doctb{display:flex;align-items:center;gap:12px;min-height:36px;padding:0 var(--rig-s5,24px);background:var(--rig-bg);flex:none;min-width:0}
-.rg-crumb{display:flex;align-items:center;gap:6px;font:500 12px/1 var(--rig-sans);color:var(--rig-mute);min-width:0;overflow:hidden;white-space:nowrap}
-.rg-crumb button{color:var(--rig-dim);text-decoration:none;border:0;background:none;padding:0;font:inherit}
-.rg-crumb button:hover{color:var(--rig-sel-t)}
-.rg-crumb .sep{color:var(--rig-line3)}
-.rg-crumb>.rg-row{flex:none}
-.rg-crumb .cur{color:var(--rig-text)}
-.rg-doctb .acts{margin-left:auto;display:flex;align-items:center;gap:6px;flex:none}
-.rg-doc{flex:1;min-height:0;overflow:auto;position:relative;container-type:inline-size;container-name:rgdoc}
-.rg-doc:focus{outline:none}
-.rg-banner{display:flex;align-items:center;gap:10px;padding:8px 16px;border-bottom:1px solid var(--rig-line);font-size:12px;flex-wrap:wrap}
-.rg-banner.lab{background:var(--rig-sel-bg);color:var(--rig-sel-t)}
-.rg-banner.ro{background:var(--rig-red-wash);color:var(--rig-red-t)}
 
-/* ---------------------------------------------------------------- dock */
-/* Open only: a closed dock takes no row (its launchers sit at the right of the status bar). */
-.rg-dock{grid-row:3;grid-column:2;border-top:1px solid var(--rig-line2);background:var(--rig-bg);display:flex;flex-direction:column;min-height:0}
-.rg-dock.open{height:clamp(260px,38vh,400px)}
-.rg-dock-h{display:flex;align-items:center;gap:8px;height:36px;flex:none;padding:0 8px 0 16px;border-bottom:1px solid var(--rig-line);background:var(--rig-panel)}
-.rg-dock-t{display:flex;align-items:center;gap:8px;font:600 12.5px/1 var(--rig-sans);color:var(--rig-text)}
-.rg-dock-t .rg-ico{color:var(--rig-mute)}
-.rg-dock-h .dt{white-space:nowrap;flex:none;border:0;background:none;height:28px;padding:0 10px;border-radius:5px;font:500 12.5px/1 var(--rig-sans);color:var(--rig-mute);display:flex;align-items:center;gap:6px}
-.rg-dock-h .dt:hover{color:var(--rig-text);background:var(--rig-panel2)}
-.rg-dock-h .sp{flex:1}
-.rg-dock-b{flex:1;min-height:0;overflow:auto;background:var(--rig-bg)}
-/* Event log and Capture watcher (docks with side:true) open as a right-hand panel beside the
-   document instead of under it; Buddy and the case file keep the bottom dock. */
-.rig.has-side{grid-template-columns:48px minmax(0,1fr) clamp(320px,30vw,440px)}
-.rg-dock.side{grid-row:2/4;grid-column:3;border-top:0;border-left:1px solid var(--rig-line2);min-width:0}
-.rg-dock.side.open{height:auto}
 
-/* ---------------------------------------------------------------- status bar */
-.rg-sb{grid-column:1/-1;grid-row:4;display:flex;align-items:stretch;gap:2px;height:28px;padding:0 4px;background:var(--rig-panel);border-top:1px solid var(--rig-line);font:500 12px/1 var(--rig-sans);color:var(--rig-mute);overflow-x:auto;overflow-y:hidden;scrollbar-width:none;white-space:nowrap}
-.rg-sb::-webkit-scrollbar{display:none}
-.rg-sb .it{display:flex;align-items:center;gap:6px;padding:0 8px;border:0;background:none;color:inherit;font:inherit;flex:none;border-radius:4px}
-.rg-sb button.it:hover{background:var(--rig-panel2);color:var(--rig-text)}
-.rg-sb .sp{flex:1;min-width:8px}
-.rg-sb-docks{display:flex;align-items:stretch;gap:2px;flex:none;position:sticky;right:0;background:var(--rig-panel);padding-left:6px;box-shadow:-1px 0 0 var(--rig-line)}
-.rg-sb-docks .it .rg-ico{color:var(--rig-mute)}
-.rg-sb-docks .it.on{color:var(--rig-text);background:var(--rig-panel2);box-shadow:inset 0 2px 0 var(--rig-text)}
-.rg-sb-docks .it.on .rg-ico{color:var(--rig-sel-t)}
-.rg-sb-docks .n{font:600 10.5px/1 var(--rig-sans);color:var(--rig-text);background:var(--rig-panel3);padding:2px 5px;border-radius:5px}
-.rg-sb .lab-on{background:var(--rig-sel);color:var(--rig-sel-ink);font-weight:600}
-.rg-sb .lab-on:hover{background:var(--rig-sel)!important;color:var(--rig-sel-ink)!important}
-.rg-sb b{color:var(--rig-text);font-weight:600}
-.rg-sb b.alt{color:var(--rig-sel-t)}
 .rg-dot{width:7px;height:7px;border-radius:50%;background:var(--rig-sky);display:inline-block;flex:none}
 .rg-dot.off{background:transparent;border:1px dashed var(--rig-unk)}
 .rg-dot.warn{background:var(--rig-red)}
 
 /* ---------------------------------------------------------------- buttons, inputs */
-.rg-btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:30px;padding:0 10px;border:1px solid var(--rig-line2);border-radius:6px;background:var(--rig-panel);color:var(--rig-text);font:500 13px/1 var(--rig-sans);white-space:nowrap;text-decoration:none}
+.rg-btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:30px;padding:0 10px;border:1px solid var(--rig-line2);border-radius:var(--rig-r-sm);background:var(--rig-panel);color:var(--rig-text);font:500 var(--rig-fs-sm)/1 var(--rig-sans);white-space:nowrap;text-decoration:none}
 .rg-btn:hover{border-color:var(--rig-line3);background:var(--rig-panel2)}
 .rg-btn.pri{background:var(--rig-sel);border-color:var(--rig-sel);color:var(--rig-sel-ink);font-weight:600}
 .rg-btn.pri:hover{filter:brightness(1.06)}
 .rg-btn.warn{background:var(--rig-red-bg);border-color:var(--rig-red);color:var(--rig-red-t);font-weight:600}
 .rg-btn.ghost{background:none;border-color:transparent;color:var(--rig-dim)}
 .rg-btn.ghost:hover{color:var(--rig-text);background:var(--rig-panel2)}
-.rg-btn.lg{min-height:40px;padding:0 14px;font-size:13px}
+.rg-btn.lg{min-height:40px;padding:0 14px;font-size:var(--rig-fs-sm)}
 .rg-btn:disabled{opacity:.5;filter:none}
 .rg-btn.pri .rg-kbd{background:color-mix(in srgb,var(--rig-sel-ink) 12%,transparent);border-color:color-mix(in srgb,var(--rig-sel-ink) 25%,transparent);color:var(--rig-sel-ink)}
 .rg-go{all:unset;cursor:pointer}
-.rg-go:focus-visible{outline:2px solid var(--rig-sel);outline-offset:2px}
-.rg-tlink{all:unset;cursor:pointer;font-family:var(--rig-sans);font-size:12px;color:var(--rig-text)}
+.rg-go:focus-visible{outline:var(--rig-focus-ring);outline-offset:var(--rig-focus-offset)}
+.rg-tlink{all:unset;cursor:pointer;font-family:var(--rig-sans);font-size:var(--rig-fs-xs);color:var(--rig-text)}
 .rg-tlink:hover{color:var(--rig-sel-t);text-decoration:underline}
-.rg-tlink:focus-visible{outline:2px solid var(--rig-sel);outline-offset:2px}
-.rg-seg{display:inline-flex;border:1px solid var(--rig-line2);border-radius:6px;overflow-x:auto;scrollbar-width:none;flex:none;background:var(--rig-panel);max-width:100%}
-.rg-seg button{border:0;background:none;padding:0 10px;min-height:28px;font:500 12px/1 var(--rig-sans);color:var(--rig-dim);border-right:1px solid var(--rig-line2);white-space:nowrap}
+.rg-tlink:focus-visible{outline:var(--rig-focus-ring);outline-offset:var(--rig-focus-offset)}
+.rg-seg{display:inline-flex;border:1px solid var(--rig-line2);border-radius:var(--rig-r-sm);overflow-x:auto;scrollbar-width:none;flex:none;background:var(--rig-panel);max-width:100%}
+.rg-seg button{border:0;background:none;padding:0 10px;min-height:28px;font:500 var(--rig-fs-xs)/1 var(--rig-sans);color:var(--rig-dim);border-right:1px solid var(--rig-line2);white-space:nowrap}
 .rg-seg button:last-child{border-right:0}
 .rg-seg button:hover{color:var(--rig-text);background:var(--rig-panel2)}
 .rg-seg button.on{background:var(--rig-panel3);color:var(--rig-text)}
-.rg-inp,.rg-selc{height:30px;padding:0 10px;border:1px solid var(--rig-line2);border-radius:6px;background:var(--rig-panel);color:var(--rig-text);font:13px/1 var(--rig-sans);min-width:0}
+.rg-inp,.rg-selc{height:30px;padding:0 10px;border:1px solid var(--rig-line2);border-radius:var(--rig-r-sm);background:var(--rig-panel);color:var(--rig-text);font:var(--rig-fs-sm)/1 var(--rig-sans);min-width:0}
 textarea.rg-inp{height:auto;padding:8px 10px;line-height:1.5;resize:vertical;width:100%}
 .rg-inp::placeholder{color:var(--rig-mute)}
-.rg-inp:focus,.rg-selc:focus{border-color:var(--rig-sel);outline:none;box-shadow:0 0 0 1px var(--rig-sel)}
+/* a field draws one ring: the focus outline sits on its border, no second box-shadow ring */
+.rg-inp:focus,.rg-selc:focus{border-color:var(--rig-sel);outline:none}
+.rg-inp:focus-visible,.rg-selc:focus-visible{outline:var(--rig-focus-ring);outline-offset:-1px}
 .rg-search{position:relative;display:flex;align-items:center;min-width:0;flex:1 1 220px}
 .rg-search .rg-ico{position:absolute;left:8px;color:var(--rig-mute);pointer-events:none}
 .rg-search .rg-inp{padding-left:28px;width:100%}
 .rg-search .rg-kbd{position:absolute;right:6px}
-.rg-fld{display:flex;flex-direction:column;gap:4px;font:500 11.5px/1.2 var(--rig-sans);color:var(--rig-mute);min-width:0}
+.rg-fld{display:flex;flex-direction:column;gap:4px;font:500 var(--rig-fs-xs)/1.2 var(--rig-sans);color:var(--rig-mute);min-width:0}
 .rg-sw{display:inline-flex;align-items:center;gap:10px;border:0;background:none;padding:0;color:var(--rig-text);min-height:32px;text-align:left}
-.rg-sw .rg-sw-tr{width:34px;height:18px;border-radius:9px;background:var(--rig-panel3);border:1px solid var(--rig-line2);position:relative;flex:none}
+.rg-sw .rg-sw-tr{width:34px;height:18px;border-radius:var(--rig-r-full);background:var(--rig-panel3);border:1px solid var(--rig-line2);position:relative;flex:none}
 .rg-sw .rg-sw-tr::after{content:"";position:absolute;top:2px;left:2px;width:12px;height:12px;border-radius:50%;background:var(--rig-dim);transition:left .15s}
 .rg-sw[aria-checked="true"] .rg-sw-tr{background:var(--rig-sel);border-color:var(--rig-sel)}
 .rg-sw[aria-checked="true"] .rg-sw-tr::after{left:18px;background:var(--rig-sel-ink)}
@@ -240,7 +156,7 @@ textarea.rg-inp{height:auto;padding:8px 10px;line-height:1.5;resize:vertical;wid
 .rg-pnl.rg-err>.rg-pnl-h{background:var(--rig-red-wash)}
 .rg-pnl-h{display:flex;align-items:center;gap:8px;min-height:32px;padding:0 12px;border-bottom:1px solid var(--rig-line);min-width:0}
 .rg-pnl-h .rg-lbl{white-space:nowrap}
-.rg-pnl-h .meta{margin-left:auto;font:500 12px/1 var(--rig-sans);color:var(--rig-mute);white-space:nowrap;display:flex;gap:6px;align-items:center}
+.rg-pnl-h .meta{margin-left:auto;font:500 var(--rig-fs-xs)/1 var(--rig-sans);color:var(--rig-mute);white-space:nowrap;display:flex;gap:6px;align-items:center}
 .rg-pnl-b{padding:12px}
 .rg-pnl-b.flush{padding:0}
 .rg-stats{display:grid;border:1px solid var(--rig-line);background:var(--rig-panel)}
@@ -248,30 +164,30 @@ textarea.rg-inp{height:auto;padding:8px 10px;line-height:1.5;resize:vertical;wid
 .rg-stat:last-child{border-right:0}
 button.rg-stat{border-top:0;border-bottom:0;border-left:0;background:none;color:inherit;cursor:pointer}
 button.rg-stat:hover{background:var(--rig-panel2)}
-.rg-fig{font:500 40px/1 var(--rig-sans);letter-spacing:-.03em;color:var(--rig-sky-t);font-feature-settings:"tnum" 1}
-.rg-fig.md{font-size:26px}
-.rg-fig.sm{font-size:18px}
+.rg-fig{font:500 var(--rig-fs-fig)/1 var(--rig-sans);letter-spacing:-.03em;color:var(--rig-sky-t);font-feature-settings:"tnum" 1}
+.rg-fig.md{font-size:var(--rig-fs-fig-md)}
+.rg-fig.sm{font-size:var(--rig-fs-fig-sm)}
 .rg-fig.acc{color:var(--rig-sel-t)}.rg-fig.amb{color:var(--rig-amb-t)}
 .rg-fig .u{font-size:.5em;color:var(--rig-dim);margin-left:2px;letter-spacing:0}
-.rg-tbl{width:100%;border-collapse:collapse;font-size:12px}
-.rg-tbl th{position:sticky;top:0;background:var(--rig-panel);text-align:left;padding:8px 10px;border-bottom:1px solid var(--rig-line2);white-space:nowrap;z-index:1}
+.rg-tbl{width:100%;border-collapse:collapse;font-size:var(--rig-fs-xs)}
+.rg-tbl th{position:sticky;top:0;background:var(--rig-panel);text-align:left;padding:8px 10px;border-bottom:1px solid var(--rig-line2);white-space:nowrap;z-index:var(--rig-z-base)}
 .rg-tbl td{padding:6px 10px;border-bottom:1px solid var(--rig-line);vertical-align:middle}
 .rg-tbl td.rg-num,.rg-tbl th.rg-num{text-align:right}
 .rg-tbl tr.hov:hover td{background:var(--rig-panel2);cursor:pointer}
 .rg-tbl tr.sel td{background:var(--rig-sel-bg)}
 .rg-tbl tr.sel td:first-child{box-shadow:inset 2px 0 0 var(--rig-sel)}
 .rg-tblwrap{overflow:auto;max-width:100%}
-.rg-kv{display:grid;grid-template-columns:auto 1fr;gap:6px 16px;font-size:12px;margin:0}
-.rg-kv dt{color:var(--rig-mute);font:500 12px/1.5 var(--rig-sans)}
-.rg-kv dd{margin:0;font-family:var(--rig-sans);font-size:12px;min-width:0;overflow-wrap:anywhere}
-.rg-pre{margin:0;font:11.5px/1.55 var(--rig-mono);white-space:pre-wrap;overflow-wrap:anywhere;color:var(--rig-dim);background:var(--rig-panel2);border:1px solid var(--rig-line);padding:10px 12px;max-height:420px;overflow:auto}
+.rg-kv{display:grid;grid-template-columns:auto 1fr;gap:6px 16px;font-size:var(--rig-fs-xs);margin:0}
+.rg-kv dt{color:var(--rig-mute);font:500 var(--rig-fs-xs)/1.5 var(--rig-sans)}
+.rg-kv dd{margin:0;font-family:var(--rig-sans);font-size:var(--rig-fs-xs);min-width:0;overflow-wrap:anywhere}
+.rg-pre{margin:0;font:var(--rig-fs-xs)/1.55 var(--rig-mono);white-space:pre-wrap;overflow-wrap:anywhere;color:var(--rig-dim);background:var(--rig-panel2);border:1px solid var(--rig-line);padding:10px 12px;max-height:420px;overflow:auto}
 
 /* ---------------------------------------------------------------- verdicts, bars, tags */
-.rg-v{display:inline-grid;place-items:center;width:18px;height:18px;font:700 11px/1 var(--rig-sans);border-radius:5px;flex:none}
+.rg-v{display:inline-grid;place-items:center;width:18px;height:18px;font:700 var(--rig-fs-2xs)/1 var(--rig-sans);border-radius:var(--rig-r-sm);flex:none}
 .rg-v.p{color:var(--rig-sky-t);background:var(--rig-sky-bg2)}
 .rg-v.f{color:var(--rig-red-t);background:var(--rig-red-bg2)}
 .rg-v.u{color:var(--rig-unk);border:1px dashed var(--rig-unk);background:none}
-.rg-vt{display:inline-flex;align-items:center;gap:6px;font:600 12px/1 var(--rig-sans)}
+.rg-vt{display:inline-flex;align-items:center;gap:6px;font:600 var(--rig-fs-xs)/1 var(--rig-sans)}
 .rg-vt.p{color:var(--rig-sky-t)}.rg-vt.f{color:var(--rig-red-t)}.rg-vt.u{color:var(--rig-unk)}
 .rg-obar{display:flex;height:4px;background:var(--rig-panel3);min-width:40px;overflow:hidden}
 .rg-obar i{display:block;height:100%}
@@ -283,89 +199,65 @@ button.rg-stat:hover{background:var(--rig-panel2)}
 .rg-cibar .ci{position:absolute;top:2px;bottom:2px;background:var(--rig-qty-bg2);box-shadow:inset 0 0 0 1px var(--rig-qty)}
 .rg-cibar .pt{position:absolute;top:-1px;bottom:-1px;width:2px;background:var(--rig-text)}
 .rg-cibar .z{position:absolute;top:-3px;bottom:-3px;width:1px;background:var(--rig-dim)}
-.rg-hb{display:grid;grid-template-columns:minmax(90px,170px) minmax(0,1fr) 72px;gap:10px;align-items:center;min-height:26px;font-size:12px}
+/* one row per bar; every row of a chart shares the same column widths, so the bars line up */
+.rg-hb{display:grid;grid-template-columns:minmax(6rem,11rem) minmax(0,1fr) 4.5rem;gap:var(--rig-s3);align-items:center;min-height:var(--rig-h-xs);font-size:var(--rig-fs-xs)}
+.rg-hb .vl{white-space:nowrap}
+@container (max-width:640px){.rg-hb{grid-template-columns:minmax(4.5rem,8rem) minmax(0,1fr) 4rem;gap:var(--rig-s2)}}
 .rg-hb .bt{height:8px;background:var(--rig-panel3);position:relative}
 .rg-hb .bt i{position:absolute;left:0;top:0;bottom:0;background:var(--rig-qty)}
 .rg-hb .bt i.sky{background:var(--rig-sky-fill)}
 .rg-hb .bt i.red{background:var(--rig-red)}
 .rg-hb .bt i.amb{background:var(--rig-amb)}
 .rg-hb .bt i.dim{background:var(--rig-dim)}
-.rg-hb .nm{font:500 12.5px/1.2 var(--rig-sans);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.rg-hb .vl{font:500 12.5px/1 var(--rig-sans);text-align:right}
-.rg-tag{display:inline-flex;align-items:center;gap:4px;height:18px;padding:0 6px;border:1px solid var(--rig-line2);border-radius:5px;font:600 11.5px/1 var(--rig-sans);color:var(--rig-dim);white-space:nowrap}
+.rg-hb .nm{font:500 var(--rig-fs-xs)/1.2 var(--rig-sans);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.rg-hb .vl{font:500 var(--rig-fs-xs)/1 var(--rig-sans);text-align:right}
+.rg-tag{display:inline-flex;align-items:center;gap:4px;height:18px;padding:0 6px;border:1px solid var(--rig-line2);border-radius:var(--rig-r-sm);font:600 var(--rig-fs-xs)/1 var(--rig-sans);color:var(--rig-dim);white-space:nowrap}
 .rg-tag.sky{color:var(--rig-sky-t);border-color:transparent;background:var(--rig-sky-bg)}
 .rg-tag.red{color:var(--rig-red-t);border-color:transparent;background:var(--rig-red-bg)}
 .rg-tag.acc{color:var(--rig-sel-t);border-color:transparent;background:var(--rig-sel-bg2)}
 .rg-tag.amb{color:var(--rig-amb-t);border-color:transparent;background:var(--rig-amb-bg)}
 .rg-tag.dash{border-style:dashed;color:var(--rig-mute)}
 .rg-tag.nc{text-transform:none;letter-spacing:0;font-weight:500}
-.rg-fchip{display:inline-flex;align-items:center;gap:4px;height:18px;padding:0 6px;border-radius:5px;font:600 11.5px/1 var(--rig-sans);white-space:nowrap;border:1px solid transparent;color:var(--rig-red-t);background:var(--rig-red-bg);cursor:help}
+.rg-fchip{display:inline-flex;align-items:center;gap:4px;height:18px;padding:0 6px;border-radius:var(--rig-r-sm);font:600 var(--rig-fs-xs)/1 var(--rig-sans);white-space:nowrap;border:1px solid transparent;color:var(--rig-red-t);background:var(--rig-red-bg);cursor:help}
 .rg-fchip.he{border-color:var(--rig-line3);color:var(--rig-dim);background:var(--rig-panel2)}
-.rg-note{display:flex;gap:10px;align-items:flex-start;padding:10px 12px;border:1px solid var(--rig-line2);border-left:2px solid var(--rig-line3);background:var(--rig-panel);font-size:12px;color:var(--rig-dim)}
+.rg-note{display:flex;gap:10px;align-items:flex-start;padding:10px 12px;border:1px solid var(--rig-line2);border-left:2px solid var(--rig-line3);background:var(--rig-panel);font-size:var(--rig-fs-xs);color:var(--rig-dim)}
 .rg-note.acc{border-left-color:var(--rig-sel)}.rg-note.amb{border-left-color:var(--rig-amb)}.rg-note.red{border-left-color:var(--rig-red)}.rg-note.sky{border-left-color:var(--rig-sky)}
 .rg-note b{color:var(--rig-text)}
 .rg-dh{display:flex;align-items:flex-end;gap:16px;margin-bottom:16px;flex-wrap:wrap}
 .rg-dh .t{min-width:0;flex:1}
-.rg-eyebrow{font:600 11.5px/1 var(--rig-sans);color:var(--rig-mute);margin-bottom:8px}
+.rg-eyebrow{font:600 var(--rig-fs-xs)/1 var(--rig-sans);color:var(--rig-mute);margin-bottom:8px}
 .rg-dh p{color:var(--rig-dim);margin:6px 0 0;max-width:72ch}
 
 /* ---------------------------------------------------------------- pin, asking, chain */
-.rg-pin{display:inline-flex;align-items:center;gap:4px;height:24px;padding:0 8px;border:1px solid var(--rig-line2);border-radius:6px;background:var(--rig-panel);color:var(--rig-dim);font:500 12px/1 var(--rig-sans);white-space:nowrap}
+.rg-pin{display:inline-flex;align-items:center;gap:var(--rig-s1);height:var(--rig-h-xs);padding:0 var(--rig-s2);border:1px solid var(--rig-line2);border-radius:var(--rig-r-sm);background:var(--rig-panel);color:var(--rig-dim);font:var(--rig-fw-medium) var(--rig-fs-sm)/var(--rig-lh-tight) var(--rig-sans);white-space:nowrap}
 .rg-pin:hover{border-color:var(--rig-sel);color:var(--rig-text)}
 .rg-pin.on{border-color:var(--rig-sel);color:var(--rig-sel-t);background:var(--rig-sel-bg)}
 .rg-pin.cmp{width:24px;padding:0;justify-content:center}
-.rg-asking{display:flex;flex-wrap:wrap;align-items:center;gap:4px 6px;margin:0 0 14px;font-size:14px;line-height:1.9;color:var(--rig-dim)}
-.rg-q-mark{display:inline-grid;place-items:center;width:20px;height:20px;border-radius:50%;background:var(--rig-panel3);color:var(--rig-dim);font:700 13px/1 var(--rig-sans);margin-right:2px}
+.rg-asking{display:flex;flex-wrap:wrap;align-items:center;gap:4px 6px;margin:0 0 14px;font-size:var(--rig-fs-md);line-height:1.9;color:var(--rig-dim)}
+.rg-q-mark{display:inline-grid;place-items:center;width:20px;height:20px;border-radius:50%;background:var(--rig-panel3);color:var(--rig-dim);font:700 var(--rig-fs-sm)/1 var(--rig-sans);margin-right:2px}
 .rg-brk{display:inline-flex;align-items:center;position:relative}
-.rg-brk select{appearance:none;border:0;border-bottom:1px dashed var(--rig-sel);background:var(--rig-sel-bg);color:var(--rig-text);font:600 14px/1.3 var(--rig-sans);padding:2px 18px 2px 6px;border-radius:5px;max-width:min(52vw,320px);text-overflow:ellipsis}
-.rg-brk::after{content:"▾";position:absolute;right:5px;font-size:10px;color:var(--rig-sel-t);pointer-events:none}
+.rg-brk select{appearance:none;border:0;border-bottom:1px dashed var(--rig-sel);background:var(--rig-sel-bg);color:var(--rig-text);font:600 var(--rig-fs-md)/1.3 var(--rig-sans);padding:2px 18px 2px 6px;border-radius:var(--rig-r-sm);max-width:20rem;text-overflow:ellipsis}
+.rg-brk::after{content:"▾";position:absolute;right:5px;font-size:var(--rig-fs-2xs);color:var(--rig-sel-t);pointer-events:none}
 .rg-brk select:hover{background:var(--rig-sel-bg2)}
 .rg-brk select option{background:var(--rig-panel);color:var(--rig-text)}
-.rg-chain{display:flex;align-items:center;gap:0;margin:0;padding:0;list-style:none;min-width:0;overflow-x:auto;scrollbar-width:none;font:500 12px/1 var(--rig-sans)}
-.rg-chain::-webkit-scrollbar{display:none}
+/* the chain sits in a ScrollX (.rg-chain-s): it scrolls there, with edge fades, never squeezed */
+.rg-chain{display:flex;align-items:center;gap:0;margin:0;padding:0;list-style:none;min-width:max-content;font:500 var(--rig-fs-xs)/1 var(--rig-sans)}
+.rg-chain-s{flex:1 1 auto;min-width:0}
 .rg-chain li{display:flex;align-items:center;flex:none}
-.rg-chain li+li::before{content:"→";color:var(--rig-line3);margin:0 6px}
-.rg-chain button,.rg-chain .off{display:inline-flex;align-items:center;gap:5px;border:1px solid var(--rig-line2);background:var(--rig-panel);color:var(--rig-dim);padding:3px 7px;border-radius:5px;white-space:nowrap}
+.rg-chain li+li::before{content:"→";color:var(--rig-line3);margin:0 var(--rig-s2)}
+.rg-chain button,.rg-chain .off{display:inline-flex;align-items:center;gap:5px;border:1px solid var(--rig-line2);background:var(--rig-panel);color:var(--rig-dim);padding:3px 7px;border-radius:var(--rig-r-sm);white-space:nowrap}
 .rg-chain button:hover{border-color:var(--rig-sel);color:var(--rig-text)}
 .rg-chain button[aria-current="step"]{border-color:var(--rig-line3);background:var(--rig-panel3);color:var(--rig-text)}
-.rg-chain b{font-size:9px;color:var(--rig-mute)}
+.rg-chain b{font-size:var(--rig-fs-2xs);color:var(--rig-mute)}
 .rg-chain em{font-style:normal;color:var(--rig-text)}
 .rg-chain .off{opacity:.55;border-style:dashed;cursor:default}
 
 /* ---------------------------------------------------------------- states */
 .rg-pulse{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--rig-sky);animation:rg-pl 1.2s infinite}
 @keyframes rg-pl{50%{opacity:.25}}
-.rg-skel{background:linear-gradient(90deg,var(--rig-panel2),var(--rig-panel3),var(--rig-panel2));background-size:200% 100%;animation:rg-sk 1.4s infinite linear;border-radius:5px}
+.rg-skel{background:linear-gradient(90deg,var(--rig-panel2),var(--rig-panel3),var(--rig-panel2));background-size:200% 100%;animation:rg-sk 1.4s infinite linear;border-radius:var(--rig-r-sm)}
 @keyframes rg-sk{to{background-position:-200% 0}}
-.rg-toast{position:fixed;left:50%;bottom:44px;transform:translate(-50%,20px);background:var(--rig-panel3);color:var(--rig-text);border:1px solid var(--rig-line3);font:500 13px/1.3 var(--rig-sans);padding:10px 14px;border-radius:6px;opacity:0;pointer-events:none;transition:.18s;z-index:80;max-width:calc(100vw - 32px)}
-.rg-toast.show{opacity:1;transform:translate(-50%,0)}
 
-/* ---------------------------------------------------------------- overlays: palette, pop, sheet */
-.rg-scrim{position:fixed;inset:0;background:var(--rig-scrim);z-index:60;display:flex;justify-content:center;align-items:flex-start;padding-top:10vh}
-.rg-scrim.clear{background:transparent}
-.rg-pal{width:min(680px,calc(100vw - 32px));background:var(--rig-panel);box-shadow:var(--rig-shadow);border:1px solid var(--rig-line2);border-radius:4px;display:flex;flex-direction:column;max-height:72vh;overflow:hidden}
-.rg-pal-in{display:flex;align-items:center;gap:10px;padding:0 14px;height:52px;border-bottom:1px solid var(--rig-line2)}
-.rg-pal-in input{flex:1;height:50px;border:0;background:none;font:15px/1 var(--rig-sans);color:var(--rig-text);outline:none;min-width:0}
-.rg-pal-in .rg-pal-chip{font:600 11.5px/1 var(--rig-sans);color:var(--rig-sel-t);border:1px solid var(--rig-sel);padding:4px 6px;border-radius:5px;white-space:nowrap}
-.rg-pal-list{overflow:auto;padding:4px 0;flex:1}
-.rg-pal-g{padding:10px 14px 4px;font:600 11.5px/1 var(--rig-sans);color:var(--rig-mute)}
-.rg-pal-it{display:flex;align-items:center;gap:10px;width:100%;min-height:36px;padding:0 14px;border:0;background:none;text-align:left;color:var(--rig-text);border-left:2px solid transparent}
-.rg-pal-it .k{width:64px;flex:none;font:600 11.5px/1 var(--rig-sans);color:var(--rig-mute)}
-.rg-pal-it .t{flex:1;min-width:0;font:500 14px/1.3 var(--rig-sans);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.rg-pal-it .t mark{background:none;color:var(--rig-sel-t);text-decoration:underline;text-decoration-color:var(--rig-sel);text-underline-offset:3px}
-.rg-pal-it .d{font:12px/1 var(--rig-sans);color:var(--rig-mute);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:40%}
-.rg-pal-it.on{background:var(--rig-panel3);border-left-color:var(--rig-text)}
-.rg-pal-it.on .k{color:var(--rig-sel-t)}
-.rg-pal-f{display:flex;gap:14px;align-items:center;padding:8px 14px;border-top:1px solid var(--rig-line2);font:12px/1 var(--rig-sans);color:var(--rig-mute);flex-wrap:wrap}
-.rg-pal-empty{padding:28px 14px;color:var(--rig-mute);font:13px/1.5 var(--rig-sans)}
-.rg-pop{position:fixed;z-index:65;background:var(--rig-panel);box-shadow:var(--rig-shadow);border:1px solid var(--rig-line2);border-radius:6px;padding:12px;width:320px;max-width:calc(100vw - 16px);max-height:60vh;overflow:auto}
-.rg-pop .opt{display:flex;width:100%;justify-content:flex-start;margin-bottom:4px}
-.rg-sheet{position:fixed;left:0;right:0;bottom:0;z-index:62;background:var(--rig-panel);border-top:1px solid var(--rig-line2);box-shadow:var(--rig-shadow);max-height:86vh;display:flex;flex-direction:column;border-radius:8px 8px 0 0}
-.rg-sheet .grab{width:40px;height:4px;border-radius:5px;background:var(--rig-line3);margin:8px auto}
-.rg-sheet-b{overflow:auto;padding:0 12px 16px}
-.rg-sheet .it{display:flex;align-items:center;gap:10px;width:100%;min-height:48px;padding:0 12px;border:0;border-bottom:1px solid var(--rig-line);background:none;text-align:left}
-.rg-sheet a.it{color:var(--rig-text);text-decoration:none}
-.rg-sheet .it.on{background:var(--rig-panel3);box-shadow:inset 2px 0 0 var(--rig-text)}
 
 /* ---------------------------------------------------------------- calm layer (2026-09-23)
    Readability pass requested by Antonio ("Rig is great; make it more digestible, better
@@ -377,30 +269,24 @@ button.rg-stat:hover{background:var(--rig-panel2)}
    This layer sits BEFORE the responsive sections so the phone rules (44px touch targets,
    16px gutters) still win on small screens. */
 .rig{--rig-s1:4px;--rig-s2:8px;--rig-s3:12px;--rig-s4:16px;--rig-s5:24px;--rig-s6:32px;--rig-s7:48px}
-.rig{font-size:14px;line-height:1.5;grid-template-rows:44px minmax(0,1fr) auto 28px}
-.rig h1{font-size:24px;line-height:1.2;letter-spacing:-.015em}
-.rig h2{font-size:16px}
-.rig h3{font-size:14px}
-.rg-lbl{font:500 12px/1.3 var(--rig-sans);color:var(--rig-mute)}
-.rg-small{font-size:12.5px}.rg-tiny{font-size:11.5px}
-.rg-pnl{border-radius:14px;border-color:var(--rig-line)}
-.rg-tab{font-size:13px;padding-left:14px}
-.rg-tab .k{display:none}
-.rg-tab.act{border-top-color:var(--rig-text)}
-.rg-crumb{font-size:12.5px}
-.rg-crumb button:hover,.rg-tlink:hover{color:var(--rig-text)}
-.rg-tlink{font-family:var(--rig-sans);font-size:13.5px;text-decoration:underline;text-decoration-color:var(--rig-line3);text-underline-offset:3px}
+.rig h1{font-size:var(--rig-fs-2xl);line-height:1.2;letter-spacing:-.015em}
+.rig h2{font-size:var(--rig-fs-lg)}
+.rig h3{font-size:var(--rig-fs-md)}
+.rg-lbl{font:500 var(--rig-fs-xs)/1.3 var(--rig-sans);color:var(--rig-mute)}
+.rg-small{font-size:var(--rig-fs-xs)}.rg-tiny{font-size:var(--rig-fs-xs)}
+.rg-pnl{border-radius:var(--rig-r-lg);border-color:var(--rig-line)}
+.rg-tlink:hover{color:var(--rig-text)}
+.rg-tlink{font-family:var(--rig-sans);font-size:var(--rig-fs-sm);text-decoration:underline;text-decoration-color:var(--rig-line3);text-underline-offset:3px}
 .rg-tlink:hover{text-decoration-color:var(--rig-text)}
-.rg-seg button{min-height:30px;font-size:12.5px}
+.rg-seg button{min-height:30px;font-size:var(--rig-fs-xs)}
 .rg-seg button.on{background:var(--rig-panel3);color:var(--rig-text);box-shadow:none;font-weight:600}
-.rg-btn{min-height:32px;font-size:13px}
-.rg-inp,.rg-selc{height:32px;font-size:13px}
-.rg-cmd .rg-cmd-ph{font-family:var(--rig-sans);font-size:13px}
-.rg-tag{height:20px;padding:0 7px;font-size:11.5px;font-weight:500}
-.rg-fchip{height:20px;padding:0 7px;font-size:11.5px;font-weight:500;border-radius:5px}
-.rg-vt{font-size:12.5px}
-.rg-obar{border-radius:3px}
-.rg-asking{font-size:15px}
+.rg-btn{min-height:32px;font-size:var(--rig-fs-sm)}
+.rg-inp,.rg-selc{height:32px;font-size:var(--rig-fs-sm)}
+.rg-tag{height:20px;padding:0 7px;font-size:var(--rig-fs-xs);font-weight:500}
+.rg-fchip{height:20px;padding:0 7px;font-size:var(--rig-fs-xs);font-weight:500;border-radius:var(--rig-r-sm)}
+.rg-vt{font-size:var(--rig-fs-xs)}
+.rg-obar{border-radius:var(--rig-r-xs)}
+.rg-asking{font-size:var(--rig-fs-md)}
 .rg-q-mark{font-family:var(--rig-sans)}
 /* Figures are quantities, not verdicts: they read in ink. */
 .rg-fig{color:var(--rig-text);font-weight:500}
@@ -409,11 +295,9 @@ button.rg-stat:hover{background:var(--rig-panel2)}
 .rg-q-card .n{color:var(--rig-mute)}
 .rg-q-card.lead{box-shadow:none}
 .rg-q-mark-t{box-shadow:inset 0 -1px 0 var(--rig-line3)}
-.rg-brk select{border-bottom:1px solid var(--rig-line3);background:var(--rig-panel2);border-radius:5px 5px 0 0}
-.rg-brk select:hover{background:var(--rig-panel3)}
+.rg-brk select{border:1px solid var(--rig-line2);background:var(--rig-panel2);border-radius:var(--rig-r-md)}
+.rg-brk select:hover{background:var(--rig-panel3);border-color:var(--rig-line3)}
 .rg-brk::after{color:var(--rig-mute)}
-.rg-sb .lab-on{background:var(--rig-sel-bg2);color:var(--rig-sel-t);font-weight:600}
-.rg-sb .lab-on:hover{background:var(--rig-sel-bg2)!important;color:var(--rig-sel-t)!important}
 
 /* ---------------------------------------------------------------- breathing (round 3)
    Global defaults every document inherits, on the --rig-s* scale. New properties are wrapped
@@ -432,15 +316,15 @@ button.rg-stat:hover{background:var(--rig-panel2)}
 .rg-stat{padding:var(--rig-s4) var(--rig-s5)}
 .rg-note{padding:var(--rig-s3) var(--rig-s4)}
 .rg-kv{gap:var(--rig-s2) var(--rig-s4)}
-.rg-tbl{font-size:13px}
+.rg-tbl{font-size:var(--rig-fs-sm)}
 .rg-tbl th{padding:var(--rig-s2) var(--rig-s3)}
 .rg-tbl td{padding:var(--rig-s2) var(--rig-s3)}
 :where(.rg-tbl) :where(td){height:40px}
 .rg-tbl td.rg-num,.rg-tbl th.rg-num{text-align:right}
 .rg-tbl td.rg-num{font-family:var(--rig-mono);font-variant-numeric:tabular-nums}
 /* long explanations live behind "About this" (ui.jsx <About>) */
-.rg-about{max-width:72ch;font-size:13px;color:var(--rig-dim)}
-.rg-about summary{cursor:pointer;width:max-content;max-width:100%;font:500 12.5px/1.4 var(--rig-sans);color:var(--rig-mute);list-style:none;display:flex;align-items:center;gap:6px;padding:2px 0}
+.rg-about{max-width:72ch;font-size:var(--rig-fs-sm);color:var(--rig-dim)}
+.rg-about summary{cursor:pointer;width:max-content;max-width:100%;font:500 var(--rig-fs-xs)/1.4 var(--rig-sans);color:var(--rig-mute);list-style:none;display:flex;align-items:center;gap:6px;padding:2px 0}
 .rg-about summary::-webkit-details-marker{display:none}
 .rg-about summary::before{content:"";width:0;height:0;border-left:5px solid currentColor;border-top:4px solid transparent;border-bottom:4px solid transparent;transition:transform .12s}
 .rg-about[open] summary::before{transform:rotate(90deg)}
@@ -452,73 +336,35 @@ button.rg-stat:hover{background:var(--rig-panel2)}
    ui.jsx: Empty, NextSteps, CopyCmd, Why, Btn, NotFound, ErrorState, Loading. Calm: no alarm
    boxes. A state is a short title, one plain sentence, and the ways forward. */
 .rg-empty{display:flex;flex-direction:column;gap:var(--rig-s3);padding:var(--rig-s2) 0;border:0;background:none;min-width:0}
-.rg-empty-t{display:flex;align-items:center;gap:10px;font-size:15px}
+.rg-empty-t{display:flex;align-items:center;gap:10px;font-size:var(--rig-fs-md)}
 .rg-empty-t b{font-weight:600}
-.rg-empty-why{color:var(--rig-dim);font-size:13.5px;line-height:1.55;max-width:68ch;margin:0}
+.rg-empty-why{color:var(--rig-dim);font-size:var(--rig-fs-sm);line-height:1.55;max-width:68ch;margin:0}
 .rg-next{display:flex;flex-wrap:wrap;align-items:center;gap:var(--rig-s2)}
 .rg-btnwrap{display:inline-flex;align-items:center;gap:10px;flex-wrap:wrap}
-.rg-why{font-size:12.5px;color:var(--rig-mute)}
+.rg-why{font-size:var(--rig-fs-xs);color:var(--rig-mute)}
 .rg-why::before{content:"← ";color:var(--rig-line3)}
 .rg-copy{display:inline-flex;align-items:center;gap:6px;flex-wrap:wrap;max-width:100%;min-width:0}
-.rg-copy-l{font-size:12.5px;color:var(--rig-mute)}
-.rig .rg-copy-c{font-size:12px;padding:6px 8px;border-radius:6px;white-space:pre-wrap;overflow-wrap:anywhere;min-width:0}
+.rg-copy-l{font-size:var(--rig-fs-xs);color:var(--rig-mute)}
+.rig .rg-copy-c{font-size:var(--rig-fs-xs);padding:6px 8px;border-radius:var(--rig-r-sm);white-space:pre-wrap;overflow-wrap:anywhere;min-width:0}
 .rg-copy-b{min-height:28px}
 .rg-state{padding:var(--rig-s5) var(--rig-s6);display:flex;flex-direction:column;gap:var(--rig-s3)}
 .rg-state-doc{display:flex;flex-direction:column;gap:var(--rig-s3);max-width:68ch;padding-top:var(--rig-s5)}
-.rg-state-doc h2{font-size:20px;line-height:1.3;overflow-wrap:anywhere}
+.rg-state-doc h2{font-size:var(--rig-fs-xl);line-height:1.3;overflow-wrap:anywhere}
 .rg-state-doc .rg-eyebrow{margin-bottom:0;overflow-wrap:anywhere}
 .rg-state-near{gap:var(--rig-s2);margin:var(--rig-s1) 0}
 .rg-errstate{max-width:78ch;border-left:2px solid var(--rig-red);padding:var(--rig-s2) 0 var(--rig-s2) var(--rig-s5);margin:var(--rig-s5) var(--rig-s6)}
-.rg-errstate-msg{margin:0;font-size:12.5px;overflow-wrap:anywhere;color:var(--rig-dim)}
+.rg-errstate-msg{margin:0;font-size:var(--rig-fs-xs);overflow-wrap:anywhere;color:var(--rig-dim)}
 .rg-loading{max-width:760px}
-.rg-loading-l{font-size:12.5px;color:var(--rig-mute)}
-.rg-toast{display:flex;align-items:center;gap:12px}
-.rg-toast.act.show{pointer-events:auto}
-.rg-toast-b{min-height:28px;flex:none}
+.rg-loading-l{font-size:var(--rig-fs-xs);color:var(--rig-mute)}
 
-/* ---------------------------------------------------------------- responsive: phone */
+/* ---------------------------------------------------------------- phone window: content
+   Gutters and a few content primitives. The chrome (bars, rail, dock, overlays) is in "shell" at the end. */
 @media (max-width:760px){
-  .rig{grid-template-columns:minmax(0,1fr);grid-template-rows:52px minmax(0,1fr) 0 30px;font-size:14px}
-  .rg-rail{display:none}
-  .rg-work,.rg-dock{grid-column:1}
-  .rig.has-side{grid-template-columns:minmax(0,1fr)}
-  .rg-dock.side{grid-column:1;border-left:0}
-  .rg-pane{display:none}
-  .rg-pane.focus{display:flex}
-  .rg-pane+.rg-pane{border-left:0}
-  .rg-tabbar{display:none}
-  .rg-tb{gap:6px;padding-right:6px}
-  .rg-brand{padding-right:0}
-  .rg-brand .mk{width:44px;border-right:0}
-  .rg-brand b,.rg-brand small{display:none}
-  .rg-tb .rg-cmd{flex:0 0 44px;width:44px;height:44px;padding:0;justify-content:center;margin:0}
-  .rg-tb .rg-cmd .rg-cmd-ph,.rg-tb .rg-cmd .rg-kbd{display:none}
-  .rg-tbtn{height:44px;min-width:44px;padding:0 8px}
-  .rg-tbtn .lbl-d{display:none}
-  .rg-mtab{display:flex}
-  .rg-doctb{padding:0 var(--rig-s4);min-height:38px}
-  .rg-dpad{padding:var(--rig-s5) var(--rig-s4) var(--rig-s6)}
+  .rg-dpad{padding:var(--rig-s5) var(--rig-gutter) var(--rig-s6)}
   .rg-state{padding:var(--rig-s4)}
   .rg-errstate{margin:var(--rig-s4);padding-left:var(--rig-s4)}
   .rg-hide-sm{display:none!important}
-  .rg-btn{min-height:44px}
-  .rg-seg button{min-height:40px}
-  .rg-inp,.rg-selc{height:44px;font-size:14px}
-  .rg-dock.open{position:fixed;left:0;right:0;bottom:30px;height:auto;max-height:72vh;z-index:58;border-radius:8px 8px 0 0;box-shadow:var(--rig-shadow)}
-  .rg-dock:not(.open){display:none}
-  .rg-dock-h{height:44px}
-  .rg-dock-h{padding:0 4px 0 16px}
-  .rg-sb{height:30px}
-  .rg-sb-dl{display:none}
-  .rg-sb-docks .it{min-width:36px;justify-content:center}
-  .rg-toast{bottom:40px}
-  .rg-scrim.pal{padding:0}
-  .rg-scrim.pal .rg-pal{width:100vw;height:100dvh;max-height:none;border-radius:0;border:0}
-  .rg-pal-it{min-height:48px}
-  .rg-pal-it .d{display:none}
-  .rg-pal-it .k{width:52px}
   .rg-kv{grid-template-columns:minmax(0,auto) minmax(0,1fr)}
-  .rg-hb{grid-template-columns:minmax(70px,110px) minmax(0,1fr) 60px}
 }
 @media (min-width:761px){.rg-show-sm{display:none!important}}
 
@@ -540,41 +386,13 @@ button.rg-stat:hover{background:var(--rig-panel2)}
   .rg-pnl-b{padding:var(--rig-s4)}
   .rg-stat{padding:var(--rig-s3) var(--rig-s4)}
   .rg-pnl-h .meta{white-space:normal;flex-wrap:wrap;margin-left:0}
-  .rg-fig{font-size:32px}
-  .rg-hb{grid-template-columns:minmax(70px,120px) minmax(0,1fr) 60px}
+  .rg-fig{font-size:var(--rig-fs-fig-narrow)}
 }
 
-/* On a large monitor the type and the chrome scale up with the window as well
-   (the full-width layout itself applies at every size: see "one UI, full window" below). */
+/* A wide monitor re-points the type tokens once (see "shell"); only these view widths change here. */
 @media (min-width:1800px){
-  .rig{grid-template-columns:60px minmax(0,1fr);grid-template-rows:60px minmax(0,1fr) auto 32px;font-size:clamp(16px,.52vw,20px)}
-  .rg-brand .mk{width:60px;height:52px}
-  .rg-brand b{font-size:clamp(16px,.48vw,19px)}
-  .rg-rail .tip{left:64px}
-  .rg-tabbar,.rg-tab{height:42px}
-  .rg-tab{font-size:clamp(14px,.42vw,17px)}
-  .rg-doctb{min-height:44px}
-  .rg-crumb,.rg-sb{font-size:clamp(13px,.39vw,16px)}
-  .rg-sb{height:32px}
-  .rg-cmd{max-width:680px;height:40px}
-  .rg-cmd .rg-cmd-ph{font-size:clamp(14px,.42vw,17px)}
-  .rg-tbtn{height:40px;min-width:40px}
-  .rg-btn{font-size:clamp(14px,.42vw,17px);min-height:36px}
-  .rig .rg-dpad{padding-inline:clamp(32px,3vw,96px)}
-  .rg-an-split{grid-template-columns:240px minmax(0,1fr)}
+  .rg-an-split{grid-template-columns:15rem minmax(0,1fr)}
   .rg-traj-split{--rig-trajnav-w:280px}
-  .rig h1{font-size:clamp(24px,1vw,34px)}
-  .rig h2{font-size:clamp(18px,.58vw,22px)}
-  .rg-dh p{font-size:clamp(15px,.45vw,18px)}
-  .rg-eyebrow,.rg-lbl{font-size:clamp(12px,.38vw,15px)}
-  .rg-asking,.rg-brk select{font-size:clamp(16px,.48vw,19px)}
-  .rg-tbl{font-size:clamp(14px,.46vw,18px)}
-  .rg-tbl td{height:52px}
-  .rg-home-tbl td{padding-block:clamp(16px,.55vw,22px)}
-  .rg-home-models{max-width:none;font-size:clamp(14px,.42vw,17px)}
-  .rg-q-card .qq{font-size:clamp(17px,.5vw,20px)}
-  .rg-q-card .qa{font-size:clamp(15px,.43vw,17px)}
-  .rg-q-card .qv b{font-size:clamp(26px,.74vw,30px)}
 }
 
 /* ---------------------------------------------------------------- one UI, full window
@@ -583,198 +401,18 @@ button.rg-stat:hover{background:var(--rig-panel2)}
    width they are given; running prose keeps its own measure (the 72ch/80ch rules on paragraphs),
    so lines stay readable. Phone gutters are untouched (this block is desktop-only). */
 @media (min-width:761px){
-  .rg-dpad{padding:var(--rig-s5) var(--rig-s5) var(--rig-s7)}
+  .rg-dpad{padding:var(--rig-s5) var(--rig-gutter) var(--rig-s7)}
   :where(.rg-dpad){max-width:none;margin-inline:0}
-  .rg-dpad.rg-traj-doc,.rg-dpad.rg-traj-main,.rg-dpad.rg-ws-doc,.rg-ws-max,.rg-an-report{max-width:none}
+  .rg-dpad.rg-traj-doc,.rg-dpad.rg-traj-main,.rg-dpad.rg-ws-doc,.rg-an-report{max-width:none}
   .rg-an-main>*,.rg-an-xp>*{max-width:none}
 }
-/* Settings: rows of two sections on a wide document (one column below). The two key panels share
-   their rows through subgrid, so the key fields and the buttons line up across the pair. */
-.rg-ws-setrow{display:grid;grid-template-columns:minmax(0,1fr);gap:var(--rig-s6) var(--rig-s7);align-items:start}
-.rg-ws-pairrow{row-gap:0}
-.rg-ws-pairrow>.rg-ws-slots{display:grid;grid-row:span 6;grid-template-rows:subgrid;row-gap:var(--rig-s4);align-content:start}
-.rg-ws-slots>.rg-ws-slot{min-width:0}
-.rg-ws-slots>.rg-ws-slot:empty{display:none}
-.rg-ws-pairrow>.rg-ws-slots>.rg-ws-slot:empty{display:block}
-.rg-ws-slots .rg-ws-field{gap:var(--rig-s2);max-width:760px}
-.rg-ws-slots .rg-ws-field .rg-inp{width:100%;height:34px}
-.rg-ws-slots .rg-ws-rest{display:flex;flex-direction:column;gap:var(--rig-s3)}
-@container rgdoc (max-width:1179px){.rg-ws-pairrow>.rg-ws-slots+.rg-ws-slots{margin-top:var(--rig-s6)}}
-@container rgdoc (min-width:1180px){.rg-ws-setrow{grid-template-columns:repeat(2,minmax(0,1fr))}}
 
-/* ---------------------------------------------------------------- maximize
-   One keystroke (Ctrl/Cmd+Shift+Enter, the titlebar button, or a double-click on a tab) gives
-   the document every pixel: the rail and the status bar fold away, and in a split view the
-   focused pane takes the whole width. The titlebar and tab strip stay, so the way out and the
-   open documents are always on screen. The state is in the hash (max=1). */
-.rig[data-rig-max]{grid-template-columns:minmax(0,1fr);grid-template-rows:44px minmax(0,1fr) auto 0}
-.rig.has-side[data-rig-max]{grid-template-columns:minmax(0,1fr) clamp(320px,30vw,440px)}
-.rig[data-rig-max] .rg-rail,.rig[data-rig-max] .rg-sb{display:none}
-.rig[data-rig-max] .rg-work,.rig[data-rig-max] .rg-dock{grid-column:1}
-.rig[data-rig-max] .rg-dock.side{grid-column:2}
-.rig[data-rig-max] .rg-pane:not(.focus){display:none}
-.rig[data-rig-max] .rg-pane+.rg-pane{border-left:0}
-@media (min-width:1800px){.rig[data-rig-max]{grid-template-rows:60px minmax(0,1fr) auto 0}}
 
-/* ---------------------------------------------------------------- keyboard shortcuts sheet */
-.rg-keys{width:min(560px,calc(100vw - 32px))}
-.rg-keys-h{padding:12px 12px 12px 18px;border-bottom:1px solid var(--rig-line)}
-.rg-keys-l{margin:0;padding:8px 18px 14px;overflow:auto}
-.rg-keys-l>div{padding:8px 0;border-bottom:1px solid var(--rig-line);gap:16px}
-.rg-keys-l>div:last-child{border-bottom:0}
-.rg-keys-l dt{color:var(--rig-dim);font-size:13.5px}
-.rg-keys-l dd{margin:0;display:flex;gap:4px;flex:none}
-.rg-keys:focus{outline:none}
 
-/* ================================================================ shell v2
-   A header with the search centred on the window, a labelled sidebar that collapses to icons
-   (Ctrl/Cmd+B), and every panel (Buddy, Event log, Capture watcher, Case file) on the right,
-   resizable, with its own tabs. Layout rules are desktop-only; the phone layout above stands. */
-.rig{--rig-nav-w:56px;--rig-dock-cw:min(var(--rig-dock-w,420px),60vw)}
-.rig[data-rig-nav="open"]{--rig-nav-w:224px}
-.rg-brand .mk{width:22px;height:24px;display:grid;place-items:center;flex:none}
-.rg-mark .m1{fill:var(--rig-line3)}.rg-mark .m2{fill:var(--rig-ser4)}.rg-mark .m3{fill:var(--rig-text)}.rg-mark .m4{fill:var(--rig-sel)}
-.rg-cmd-k{display:flex;gap:3px;flex:none}
-body.rg-resizing{cursor:col-resize;user-select:none}
-@media (min-width:761px){
-  .rig{grid-template-columns:var(--rig-nav-w) minmax(0,1fr);grid-template-rows:48px minmax(0,1fr) auto 28px}
-  .rig.has-side{grid-template-columns:var(--rig-nav-w) minmax(0,1fr) var(--rig-dock-cw)}
-  .rig[data-rig-max]{grid-template-columns:minmax(0,1fr);grid-template-rows:48px minmax(0,1fr) auto 0}
-  .rig.has-side[data-rig-max]{grid-template-columns:minmax(0,1fr) var(--rig-dock-cw)}
-
-  /* header: brand · search (centred on the window) · actions */
-  .rg-tb{display:grid;grid-template-columns:minmax(0,1fr) minmax(240px,600px) minmax(0,1fr);align-items:center;column-gap:16px;padding:0 12px}
-  .rg-tb-l{display:flex;align-items:center;min-width:0;height:100%}
-  .rg-brand{height:100%;gap:10px;padding:0 12px 0 4px}
-  .rg-brand b{font:600 16px/1 var(--rig-sans);letter-spacing:-.015em;color:var(--rig-text)}
-  .rg-cmd{width:100%;max-width:none;margin:0;height:34px;gap:10px;padding:0 8px 0 12px;background:var(--rig-panel2);border:1px solid var(--rig-line);border-radius:8px}
-  .rg-cmd:hover{border-color:var(--rig-line3);background:var(--rig-panel3)}
-  .rg-cmd .rg-cmd-ph{font-size:13px;color:var(--rig-mute)}
-  .rg-tb-r{justify-self:end;gap:2px}
-  .rg-tbtn{height:32px;border-radius:7px;font:500 13px/1 var(--rig-sans)}
-  .rg-tbtn.ico{width:32px;min-width:32px;padding:0}
-  .rg-tb-sep{width:1px;height:20px;background:var(--rig-line2);margin:0 6px}
-
-  /* sidebar */
-  .rg-rail{grid-row:2/4;padding:10px;gap:0;overflow:visible;background:var(--rig-panel)}
-  /* expanded, the rail scrolls instead of running under the status bar on a short window (the
-     collapsed icon rail stays overflow:visible so its tooltips can leave it) */
-  .rig:not([data-rig-nav="closed"]) .rg-rail{overflow-y:auto;overflow-x:hidden;min-height:0;scrollbar-width:thin}
-  .rg-nav-g{display:flex;flex-direction:column;gap:2px}
-  .rg-nav-g+.rg-nav-g{margin-top:16px}
-  .rg-nav-gl{font:600 11px/1 var(--rig-sans);letter-spacing:.05em;text-transform:uppercase;color:var(--rig-mute);padding:4px 9px 8px}
-  .rg-rail .rg-nav-it{position:relative;display:flex;align-items:center;gap:10px;width:100%;height:34px;padding:0 9px;border:0;border-radius:7px;background:none;color:var(--rig-dim);font:500 13.5px/1 var(--rig-sans);text-align:left;white-space:nowrap}
-  .rg-rail .rg-nav-it:hover{background:var(--rig-panel2);color:var(--rig-text)}
-  .rg-rail .rg-nav-it.on{background:var(--rig-sel-bg);color:var(--rig-text)}
-  .rg-rail .rg-nav-it.on .rg-ico{color:var(--rig-sel-t)}
-  .rg-rail .rg-nav-it .lbl{overflow:hidden;text-overflow:ellipsis;min-width:0}
-  .rg-rail .rg-nav-it .tip{display:none}
-  .rg-rail .rg-nav-foot{margin-top:10px;padding-top:10px;border-top:1px solid var(--rig-line)}
-  .rg-rail .rg-nav-toggle{color:var(--rig-mute)}
-  .rig[data-rig-nav="closed"] .rg-rail .rg-nav-it{justify-content:center;width:36px;height:36px;padding:0}
-  .rig[data-rig-nav="closed"] .rg-nav-it .lbl,.rig[data-rig-nav="closed"] .rg-nav-gl{display:none}
-  .rig[data-rig-nav="closed"] .rg-nav-g+.rg-nav-g{margin-top:10px;padding-top:10px;border-top:1px solid var(--rig-line)}
-  .rig[data-rig-nav="closed"] .rg-rail .rg-nav-foot{margin-top:10px}
-  .rig[data-rig-nav="closed"] .rg-rail .rg-nav-it .tip{display:block;left:46px}
-
-  /* dataset switcher at the top of the sidebar */
-  .rg-dsw{position:relative;margin:0 0 16px}
-  .rg-dsw-b{display:flex;align-items:center;gap:10px;width:100%;padding:6px 8px 6px 6px;border:1px solid var(--rig-line);border-radius:8px;background:var(--rig-bg);color:var(--rig-text);text-align:left}
-  .rg-dsw-b:hover,.rg-dsw-b[aria-expanded="true"]{border-color:var(--rig-line3)}
-  .rg-dsw-b>.rg-ico{color:var(--rig-mute)}
-  .rg-dsw-ic{width:28px;height:28px;border-radius:6px;display:grid;place-items:center;background:var(--rig-panel3);font:600 13px/1 var(--rig-sans);color:var(--rig-text);flex:none}
-  .rg-dsw-t{display:flex;flex-direction:column;gap:4px;min-width:0;flex:1}
-  .rg-dsw-t b{font:600 13px/1.1 var(--rig-sans);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-  .rg-dsw-t small{font:12px/1.1 var(--rig-sans);color:var(--rig-mute);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-  .rg-dsw-m{position:absolute;left:0;top:calc(100% + 6px);width:max(100%,260px);z-index:45;display:flex;flex-direction:column;padding:4px;background:var(--rig-panel);border:1px solid var(--rig-line2);border-radius:8px;box-shadow:var(--rig-shadow);max-height:60vh;overflow:auto}
-  .rg-dsw-o{display:flex;align-items:center;gap:8px;height:32px;padding:0 8px;border:0;border-radius:6px;background:none;color:var(--rig-dim);font:500 13px/1 var(--rig-sans);text-align:left}
-  .rg-dsw-o small{color:var(--rig-mute);font-size:12px;font-variant-numeric:tabular-nums}
-  .rg-dsw-o:hover{background:var(--rig-panel2);color:var(--rig-text)}
-  .rg-dsw-o.on{background:var(--rig-sel-bg);color:var(--rig-text)}
-  .rg-dsw-o.all{justify-content:space-between;margin-top:4px;padding-top:2px;border-top:1px solid var(--rig-line);border-radius:0 0 6px 6px}
-
-  /* right-hand panels */
-  .rg-dock.side{position:relative;border-left:1px solid var(--rig-line2);background:var(--rig-bg);container-type:inline-size;container-name:rgpanel}
-  .rg-dock-rs{position:absolute;left:-3px;top:0;bottom:0;width:6px;cursor:col-resize;z-index:6;outline:none}
-  .rg-dock-rs:hover,.rg-dock-rs:focus-visible{background:var(--rig-sel);opacity:.55}
-  .rg-dock-h{height:44px;gap:6px;padding:0 6px 0 8px}
-  .rg-dock-tabs{display:flex;align-items:center;gap:2px;min-width:0;flex:1;overflow-x:auto;scrollbar-width:none}
-  .rg-dock-tabs::-webkit-scrollbar{display:none}
-  .rg-dock-tab{display:flex;align-items:center;gap:6px;height:30px;padding:0 10px;border:0;border-radius:6px;background:none;color:var(--rig-mute);font:500 12.5px/1 var(--rig-sans);white-space:nowrap;flex:none}
-  .rg-dock-tab:hover{background:var(--rig-panel2);color:var(--rig-text)}
-  .rg-dock-tab.on{background:var(--rig-panel3);color:var(--rig-text)}
-  .rg-dock-tab.on .rg-ico{color:var(--rig-sel-t)}
-  .rg-dock-tab .n{font:600 10.5px/1 var(--rig-sans);color:var(--rig-text);background:var(--rig-panel3);padding:2px 5px;border-radius:5px}
-  .rg-dock-h .dt{width:30px;height:30px;padding:0;justify-content:center;flex:none}
-}
-@container rgpanel (max-width:520px){.rg-dock-tab:not(.on) .lbl{display:none}.rg-dock-tab:not(.on){padding:0 8px}}
-@container rgpanel (max-width:760px){
-  .rg-bud{grid-template-columns:minmax(0,1fr)}
-  .rg-bud>div{padding:var(--rig-s4)}
-  .rg-bud>div+div{border-left:0;border-top:1px solid var(--rig-line)}
-  .rg-bud>div:last-child{grid-column:auto}
-  .rg-bud-log{max-height:none}
-  .rg-case-pad{padding:var(--rig-s5) var(--rig-s4)}
-  .rg-case .rg-empty{gap:var(--rig-s4)}
-  .rg-case .rg-next{flex-direction:column;align-items:stretch}
-  .rg-case .rg-next>.rg-btn{justify-content:flex-start;text-align:left;width:100%}
-  .rg-case-bar{padding:var(--rig-s3) var(--rig-s4)}
-  .rg-case-it{padding:var(--rig-s3) var(--rig-s4)}
-}
-@media (min-width:1800px){
-  .rig{--rig-nav-w:64px;grid-template-rows:56px minmax(0,1fr) auto 32px}
-  .rig[data-rig-nav="open"]{--rig-nav-w:256px}
-  .rig[data-rig-max]{grid-template-rows:56px minmax(0,1fr) auto 0}
-  .rg-brand{padding-left:8px}
-  .rg-cmd{height:40px}
-  .rg-rail .rg-nav-it{height:40px;font-size:15px}
-  .rig[data-rig-nav="closed"] .rg-rail .rg-nav-it{width:44px;height:44px}
-  .rig[data-rig-nav="closed"] .rg-rail .rg-nav-it .tip{left:54px}
-}
-@media (max-width:760px){.rg-brand{padding:0 10px}.rg-dock-rs{display:none}}
-/* Dock tabs need an explicit phone layout as well as the desktop side-panel layout. */
-@media (max-width:760px){
-  .rg-dock-h{height:52px;padding:4px 8px;gap:4px}
-  .rg-dock-tabs{display:flex;align-items:center;gap:4px;min-width:0;flex:1;overflow-x:auto;scrollbar-width:thin}
-  .rg-dock-tab{display:flex;align-items:center;justify-content:center;gap:6px;flex:none;min-width:44px;height:44px;padding:0 10px;border:0;border-radius:6px;background:none;color:var(--rig-mute);font:500 12.5px/1 var(--rig-sans);white-space:nowrap}
-  .rg-dock-tab.on{background:var(--rig-panel3);color:var(--rig-text)}
-  .rg-dock-tab:not(.on) .lbl{display:none}
-  .rg-dock-h .dt{width:44px;height:44px;padding:0;justify-content:center}
-}
-.rg-sb .rg-sb-update{background:var(--rig-sel);color:var(--rig-sel-ink);font-weight:600}
-.rg-sb .rg-sb-update:hover{background:var(--rig-sel)!important;color:var(--rig-sel-ink)!important;filter:brightness(1.1)}
-
-/* ---------------------------------------------------------------- shell v3
-   One navigation, not two: in Analysis the sidebar opens the eight study steps under
-   "Analysis", and the page's own step column steps aside while the sidebar is open (it returns
-   when the sidebar collapses, and on a phone). Tables open a row on click; the chevron is the
-   quiet affordance, not a button per row. */
-@media (min-width:761px){
-  .rg-nav-node{display:flex;flex-direction:column}
-  .rg-nav-sub{position:relative;display:flex;flex-direction:column;gap:1px;margin:2px 0 6px 18px;padding-left:10px}
-  .rg-nav-sub::before{content:"";position:absolute;left:0;top:2px;bottom:2px;width:1px;background:var(--rig-line2)}
-  .rg-rail .rg-nav-sub-it{display:flex;align-items:center;gap:8px;height:28px;padding:0 8px;border:0;border-radius:6px;background:none;color:var(--rig-mute);font:500 12.5px/1 var(--rig-sans);text-align:left;white-space:nowrap}
-  .rg-rail .rg-nav-sub-it:hover{background:var(--rig-panel2);color:var(--rig-text)}
-  .rg-rail .rg-nav-sub-it.on{color:var(--rig-text);background:var(--rig-panel3)}
-  .rg-rail .rg-nav-sub-it .n{width:14px;flex:none;font:500 11px/1 var(--rig-sans);font-variant-numeric:tabular-nums;color:var(--rig-mute);text-align:right}
-  .rg-rail .rg-nav-sub-it.on .n{color:var(--rig-sel-t)}
-  .rg-rail .rg-nav-sub-it .lbl{overflow:hidden;text-overflow:ellipsis}
-  .rig[data-rig-nav="open"] .rg-an-split{grid-template-columns:minmax(0,1fr)}
-  .rig[data-rig-nav="open"] .rg-an-split>.rg-an-nav{display:none}
-}
 /* a table row opens on click: the chevron says so without a button per row */
-.rg-rowgo{display:inline-grid;place-items:center;width:28px;height:28px;border:0;border-radius:6px;background:none;color:var(--rig-mute);opacity:.55}
+.rg-rowgo{display:inline-grid;place-items:center;width:28px;height:28px;border:0;border-radius:var(--rig-r-sm);background:none;color:var(--rig-mute);opacity:.55}
 .rg-tbl tr.hov:hover .rg-rowgo,.rg-rowgo:focus-visible{opacity:1;color:var(--rig-text);background:var(--rig-panel3)}
 
-/* ---------------------------------------------------------------- one header row per pane
-   Breadcrumb (one tab) or tabs (two or more), with the page's actions and the split button at
-   the right end. Replaces the tab strip + breadcrumb pair: 36px more document on every page. */
-.rg-tabbar .tb-end,.rg-panehead .tb-end{margin-left:auto;display:flex;align-items:center;gap:6px;padding:0 6px 0 12px;flex:none}
-.rg-tabbar .tb-end .acts,.rg-panehead .tb-end .acts{display:flex;align-items:center;gap:6px;margin-left:0}
-.rg-panehead{background:var(--rig-panel);border-bottom:1px solid var(--rig-line);min-height:40px;padding:0 0 0 var(--rig-s5)}
-.rg-chainrow{border-bottom:1px solid var(--rig-line)}
-@media (min-width:761px){.rg-tabbar,.rg-tab{height:40px}}
-@media (max-width:760px){.rg-panehead{padding-left:var(--rig-s4)}}
 
 /* ---------------------------------------------------------------- shell v5
    Icon-only pins are quiet: no box until you point at them. In a table they appear on the row
@@ -787,33 +425,12 @@ body.rg-resizing{cursor:col-resize;user-select:none}
   .rg-tbl tr:hover .rg-pin.cmp,.rg-tbl tr:focus-within .rg-pin.cmp{opacity:1}
 }
 
-/* ---------------------------------------------------------------- shell v6: one left navigation, always
-   The sidebar is the only vertical navigation. With it open, the section's own list lives in it
-   (Analysis → the eight steps, Trajectories → the tasks of a task page) and the page drops its column.
-   With it collapsed to icons, the page's list becomes a strip across the top of the page, never a
-   second column beside the rail. */
+/* ---------------------------------------------------------------- one left navigation
+   With the sidebar open, a task page's task list lives in it (under Trajectories) and the page drops
+   its own column. Collapsed, the page draws its list as a strip (trajectory.css). */
 @media (min-width:761px){
-  .rg-rail .rg-nav-tasks{max-height:min(52vh,560px);overflow-y:auto;scrollbar-width:thin}
-  .rg-rail .rg-nav-sub-it .ct{margin-left:auto;padding-left:8px;flex:none;font:500 11px/1 var(--rig-sans);font-variant-numeric:tabular-nums;color:var(--rig-mute)}
-  .rg-rail .rg-nav-sub-it .ct.bad{color:var(--rig-red-t)}
-  .rg-rail .rg-nav-sub-it.rg-nav-sub-all{color:var(--rig-dim)}
   .rig[data-rig-nav="open"] .rg-traj-split{grid-template-columns:minmax(0,1fr);background:none}
   .rig[data-rig-nav="open"] .rg-traj-split>.rg-traj-nav{display:none}
-
-  .rig[data-rig-nav="closed"] .rg-an-split{grid-template-columns:minmax(0,1fr);grid-template-rows:auto minmax(0,1fr)}
-  .rig[data-rig-nav="closed"] .rg-an-nav{position:static;min-height:0;display:flex;overflow-x:auto;padding:0 var(--rig-s3);border-right:0;border-bottom:1px solid var(--rig-line);scrollbar-width:none}
-  .rig[data-rig-nav="closed"] .rg-an-nav .sh,.rig[data-rig-nav="closed"] .rg-an-nb .n{display:none}
-  .rig[data-rig-nav="closed"] .rg-an-nb{width:auto;flex:none;white-space:nowrap;border-left:0;border-bottom:2px solid transparent;min-height:44px;padding:0 14px}
-  .rig[data-rig-nav="closed"] .rg-an-nb.on{border-bottom-color:var(--rig-text);background:none}
-
-  .rig[data-rig-nav="closed"] .rg-traj-split{grid-template-columns:minmax(0,1fr);background:none}
-  .rig[data-rig-nav="closed"] .rg-traj-nav{position:static;max-height:none;display:flex;align-items:stretch;background:var(--rig-panel);border-bottom:1px solid var(--rig-line);padding:0;overflow:visible}
-  .rig[data-rig-nav="closed"] .rg-traj-nav-top{flex:none;flex-direction:row;align-items:center;padding:0 var(--rig-s3);border-right:1px solid var(--rig-line)}
-  .rig[data-rig-nav="closed"] .rg-traj-back{width:auto}
-  .rig[data-rig-nav="closed"] .rg-traj-nav-q,.rig[data-rig-nav="closed"] .rg-traj-nav-sh{display:none}
-  .rig[data-rig-nav="closed"] .rg-traj-nav-list{display:flex;flex:1;min-width:0;overflow-x:auto;scrollbar-width:none}
-  .rig[data-rig-nav="closed"] .rg-traj-nav-it{flex:none;width:auto;min-width:150px;border-left:0;border-bottom:2px solid transparent;min-height:52px}
-  .rig[data-rig-nav="closed"] .rg-traj-nav-it.on{border-bottom-color:var(--rig-text)}
 }
 
 /* ---------------------------------------------------------------- shell v7: one set of edges
@@ -834,19 +451,6 @@ body.rg-resizing{cursor:col-resize;user-select:none}
   .rg-dh:has(>.t>.rg-eyebrow:first-child)>:not(.t){grid-row:2;grid-column:2}
   .rg-dh:has(>.t>.rg-eyebrow:first-child)>:not(.t)~:not(.t){grid-column:3}
 }
-/* a control's label above it: the text beside it lines up with the control, not the label */
-.rg-an-bar{align-items:flex-end}
-.rg-an-bar>[data-el="family-pages"]{min-height:32px;display:inline-flex;align-items:center}
-/* captured-session lists read as columns */
-.rg-ws-list li.rg-ws-capl{display:grid;grid-template-columns:minmax(0,1fr) 150px 90px 110px 84px;column-gap:var(--rig-s4)}
-.rg-ws-list li.rg-ws-capo{display:grid;grid-template-columns:minmax(0,1fr) 90px 170px;column-gap:var(--rig-s4)}
-.rg-ws-list li.rg-ws-capl .rg-num,.rg-ws-list li.rg-ws-capo .rg-num{text-align:right}
-@container rgdoc (max-width:760px){
-  .rg-ws-list li.rg-ws-capl{grid-template-columns:minmax(0,1fr) auto;row-gap:2px}
-  .rg-ws-list li.rg-ws-capl>:nth-child(n+2):not(:last-child){display:none}
-  .rg-ws-list li.rg-ws-capo{grid-template-columns:minmax(0,1fr) auto}
-  .rg-ws-list li.rg-ws-capo>:last-child{display:none}
-}
 
 /* ================================================================ TraceHarness look (traceharness.dev)
    Last in the cascade on purpose: it restates the shared primitives in the website's vocabulary
@@ -855,96 +459,85 @@ body.rg-resizing{cursor:col-resize;user-select:none}
    small labels); prose and headings stay IBM Plex Sans. Shared names for the run console:
    .rg-lbl (section label)  .rg-chip + .on/.ok/.bad/.amb (chip)  .rg-sev + .s1-.s4 (severity)
    .rg-kc + .k-i/.k-e/.k-t/.k-b/.k-s (event-kind badge)  .rg-btn(.pri/.ghost)  .rg-mono  .rg-num */
-.rg-lbl,.rg-eyebrow{font:500 11px/1.2 var(--rig-mono);letter-spacing:.07em;text-transform:uppercase;color:var(--rig-mute)}
+.rg-lbl,.rg-eyebrow{font:500 var(--rig-fs-2xs)/1.2 var(--rig-mono);letter-spacing:.07em;text-transform:uppercase;color:var(--rig-mute)}
 /* Eyebrows carry task, model, run and dataset ids, which are case-sensitive data: keep their case
    (the site's eyebrows are prose, so it can uppercase them). .rg-lbl holds fixed labels only. */
 .rg-eyebrow{display:inline-flex;align-items:center;gap:8px;color:var(--rig-sel-t);margin-bottom:10px;text-transform:none;letter-spacing:.02em}
 .rg-eyebrow::before{content:"";width:6px;height:6px;border-radius:1px;background:var(--rig-sel);flex:none}
-.rg-nav-gl,.rg-pal-g,.rg-pal-it .k,.rg-fld{font-family:var(--rig-mono);font-size:11px;font-weight:500;letter-spacing:.07em;text-transform:uppercase}
+.rg-fld{font-family:var(--rig-mono);font-size:var(--rig-fs-2xs);font-weight:var(--rig-fw-medium);letter-spacing:var(--rig-track-caps);text-transform:uppercase}
 /* table headers: table.data thead th. One rule for every header row (tables and grid rows), so no
    view declares its own header font. Matrix headers are harness ids (case-sensitive data): keep case. */
-.rg-tbl th,.rg-an-mx thead th,.rg-an-trow.th>*{font:500 11.5px/1.3 var(--rig-mono);letter-spacing:.04em;text-transform:uppercase;color:var(--rig-mute);white-space:nowrap}
+.rg-tbl th,.rg-an-mx thead th,.rg-an-trow.th>*{font:var(--rig-fw-medium) var(--rig-fs-2xs)/var(--rig-lh-snug) var(--rig-mono);letter-spacing:.04em;text-transform:uppercase;color:var(--rig-mute);white-space:nowrap}
 .rg-an-mx thead th,.rg-tbl.rg-keep th{text-transform:none}   /* .rg-keep: a header row that names runs, models or harnesses keeps case in every cell */
 .rg-tbl thead th,.rg-an-mx thead th,.rg-an-trow.th{background:var(--rig-panel2)}
-.rg-pnl>.rg-tblwrap:first-child,.rg-pnl>.rg-an-trow.th:first-child{border-top-left-radius:13px;border-top-right-radius:13px}
-.rg-pnl>.rg-tblwrap:last-child{border-bottom-left-radius:13px;border-bottom-right-radius:13px}
-.rg-fld{font-size:11px}
-.rg-nav-gl{color:var(--rig-mute)}
-.rg-kbd,.rg-sb,.rg-sb .it,.rg-sb-docks .n,.rg-tab .k,.rg-mtab .n,.rg-dock-tab .n{font-family:var(--rig-mono)}
-.rg-sb{font-size:11.5px}
-.rg-crumb{font-family:var(--rig-mono);font-size:12px}
-.rg-kv dt{font-family:var(--rig-mono);font-size:11.5px}
+.rg-pnl>.rg-tblwrap:first-child,.rg-pnl>.rg-an-trow.th:first-child{border-top-left-radius:calc(var(--rig-r-lg) - 1px);border-top-right-radius:calc(var(--rig-r-lg) - 1px)}
+.rg-pnl>.rg-tblwrap:last-child{border-bottom-left-radius:calc(var(--rig-r-lg) - 1px);border-bottom-right-radius:calc(var(--rig-r-lg) - 1px)}
+.rg-fld{font-size:var(--rig-fs-2xs)}
+.rg-kbd{font-family:var(--rig-mono)}
+.rg-kv dt{font-family:var(--rig-mono);font-size:var(--rig-fs-xs)}
 .rg-kv dd{font-family:var(--rig-mono)}
 .rg-hb .nm,.rg-hb .vl{font-family:var(--rig-mono)}
-.rg-hb .nm{font-size:12px}
+.rg-hb .nm{font-size:var(--rig-fs-xs)}
 .rg-fig{font-family:var(--rig-mono);font-weight:500;letter-spacing:-.03em}
 .rg-chain{font-family:var(--rig-mono)}
-.rg-nav-sub-it .n,.rg-nav-sub-it .ct,.rg-dsw-o small{font-family:var(--rig-mono)}
 .rg-an-nb .n,.rg-traj-nav-it .n{font-family:var(--rig-mono)}
-.rig code,.rig .rg-code{border-radius:6px}
+.rig code,.rig .rg-code{border-radius:var(--rig-r-sm)}
 
 /* chips: .cx-chip */
-.rg-tag,.rg-fchip,.rg-chip{display:inline-flex;align-items:center;gap:6px;height:22px;padding:0 8px;border:1px solid var(--rig-line2);border-radius:6px;font:500 11.5px/1 var(--rig-mono);color:var(--rig-dim);white-space:nowrap;background:none;max-width:100%}
+.rg-tag,.rg-fchip,.rg-chip{display:inline-flex;align-items:center;gap:6px;height:22px;padding:0 8px;border:1px solid var(--rig-line2);border-radius:var(--rig-r-sm);font:500 var(--rig-fs-xs)/1 var(--rig-mono);color:var(--rig-dim);white-space:nowrap;background:none;max-width:100%}
 /* a chip never pokes out of its cell: <Tag> wraps plain text in .rg-ell, which truncates with an ellipsis */
 .rg-tag>.rg-ell{line-height:1.3}
 .rg-tag.sky,.rg-chip.ok{color:var(--rig-sky-t);border-color:color-mix(in srgb,var(--rig-sky) 40%,transparent);background:none}
 .rg-tag.red,.rg-chip.bad{color:var(--rig-red-t);border-color:color-mix(in srgb,var(--rig-red) 40%,transparent);background:none}
+.rg-chip.live{display:inline-flex;align-items:center;gap:var(--rig-s1)}
+.rg-chip.live::before{content:"";flex:none;width:var(--rig-s2);height:var(--rig-s2);border-radius:var(--rig-r-full);background:var(--rig-text);animation:rg-pl 1.2s infinite}
 .rg-tag.acc,.rg-chip.on{color:var(--rig-sel-t);border-color:color-mix(in srgb,var(--rig-sel-t) 45%,transparent);background:none}
 .rg-tag.amb,.rg-chip.amb{color:var(--rig-amb-t);border-color:color-mix(in srgb,var(--rig-amb) 40%,transparent);background:none}
 .rg-tag.dash{border-style:dashed;color:var(--rig-mute)}
 .rg-tag.nc{text-transform:none;letter-spacing:0}
 .rg-fchip{color:var(--rig-red-t);border-color:color-mix(in srgb,var(--rig-red) 40%,transparent);background:none}
 .rg-fchip.he{color:var(--rig-dim);border-color:var(--rig-line3);background:none}
-.rg-pal-in .rg-pal-chip{font-family:var(--rig-mono);border-radius:6px}
-.rg-pin{border-radius:6px;font-family:var(--rig-mono);font-size:11.5px}
-.rg-chain button,.rg-chain .off{border-radius:6px;padding:4px 8px}
+/* Pin is a button: one face everywhere (sans 13, set with .rg-pin above), never a mono chip in one view and a button in another */
+.rg-pin{border-radius:var(--rig-r-sm)}
+.rg-chain button,.rg-chain .off{min-height:calc(var(--rig-h-ctl) - var(--rig-s1));padding:0 var(--rig-s2);border-radius:var(--rig-r-sm)}
 /* severity: .sev */
-.rg-sev{display:inline-flex;align-items:center;gap:6px;height:22px;padding:0 8px;border-radius:6px;font:500 11px/1 var(--rig-mono);letter-spacing:.04em;text-transform:uppercase;background:var(--rig-panel3);color:var(--rig-dim)}
+.rg-sev{display:inline-flex;align-items:center;gap:6px;height:22px;padding:0 8px;border-radius:var(--rig-r-sm);font:500 var(--rig-fs-2xs)/1 var(--rig-mono);letter-spacing:.04em;text-transform:uppercase;background:var(--rig-panel3);color:var(--rig-dim)}
 .rg-sev::before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor}
 .rg-sev.s4{background:var(--rig-red-bg);color:var(--rig-red-t)}.rg-sev.s3{background:var(--rig-amb-bg);color:var(--rig-amb-t)}.rg-sev.s2{background:var(--rig-sel-bg);color:var(--rig-sel-t)}
 /* event-kind badge: .kc */
-.rg-kc{display:inline-grid;place-items:center;width:20px;height:20px;border-radius:4px;font:600 11px/1 var(--rig-mono);flex:none;background:var(--rig-panel3);color:var(--rig-dim)}
+.rg-kc{display:inline-grid;place-items:center;width:20px;height:20px;border-radius:var(--rig-r-xs);font:600 var(--rig-fs-2xs)/1 var(--rig-mono);flex:none;background:var(--rig-panel3);color:var(--rig-dim)}
 .rg-kc.k-e{background:var(--rig-sel-bg2);color:var(--rig-sel-t)}
 .rg-kc.k-t{background:var(--rig-sky-bg2);color:var(--rig-sky-t)}
 .rg-kc.k-b{background:var(--rig-amb-bg);color:var(--rig-amb-t)}
 .rg-kc.k-s{background:var(--rig-text);color:var(--rig-bg)}
-.rg-v{font-family:var(--rig-mono);border-radius:4px}
+.rg-v{font-family:var(--rig-mono);border-radius:var(--rig-r-xs)}
 .rg-vt{font-family:var(--rig-mono);font-weight:500}
 
 /* buttons: .btn (primary = accent fill + white text; default/ghost = bordered) */
-.rg-btn{border-radius:8px;font-weight:500;background:transparent}
+.rg-btn{border-radius:var(--rig-r-md);font-weight:500;background:transparent}
 .rg-btn.pri{background:var(--rig-sel);border-color:var(--rig-sel);color:var(--rig-sel-ink);font-weight:500}
 .rg-btn.pri:hover{filter:none;background:var(--rig-sel-h);border-color:var(--rig-sel-h)}
 .rg-btn.ghost{background:none;border-color:var(--rig-line2);color:var(--rig-text)}
 .rg-btn.ghost:hover{border-color:var(--rig-line3);background:var(--rig-panel2)}
 .rg-btn.warn{font-weight:500}
-.rg-tbtn{border-radius:8px}
-.rg-tbtn.on{border-color:var(--rig-line2)}
-.rg-seg{border-radius:8px}
-.rg-inp,.rg-selc{border-radius:8px}
+.rg-seg{border-radius:var(--rig-r-md)}
+.rg-inp,.rg-selc{border-radius:var(--rig-r-md)}
 /* Form text must not inherit the small uppercase field-label typography. */
-.rig input.rg-inp,.rig textarea.rg-inp,.rig select.rg-selc{font-family:var(--rig-sans);font-size:14px;font-weight:400;letter-spacing:normal;text-transform:none}
+.rig input.rg-inp,.rig textarea.rg-inp,.rig select.rg-selc{font-family:var(--rig-sans);font-size:var(--rig-fs-md);font-weight:400;letter-spacing:normal;text-transform:none}
 .rig textarea.rg-inp{line-height:1.5}
-@media (max-width:760px){.rig input.rg-inp,.rig textarea.rg-inp,.rig select.rg-selc{font-size:16px}}
-.rg-cmd{border-radius:8px}
-.rg-cmd .rg-cmd-ph{font-family:var(--rig-sans)}
-.rg-sw .rg-sw-tr{border-radius:9px}
+/* 16px text in fields on touch screens, so a phone never zooms into a focused field */
+@media (pointer:coarse){.rig input.rg-inp,.rig textarea.rg-inp,.rig select.rg-selc{font-size:var(--rig-fs-lg)}}
+.rg-sw .rg-sw-tr{border-radius:var(--rig-r-full)}
 
 /* surfaces: 1px line borders, cards 12px */
-.rg-pnl{border-radius:14px;border-color:var(--rig-line)}
-.rg-pnl>.rg-pnl-h:first-child{border-radius:13px 13px 0 0}
-.rg-stats{border-radius:14px}
-.rg-stats>.rg-stat:first-child{border-radius:13px 0 0 13px}.rg-stats>.rg-stat:last-child{border-radius:0 13px 13px 0}
-.rg-pre{border-radius:8px}
-.rg-note{border-radius:8px}
-.rg-pal{border-radius:14px}
-.rg-pop{border-radius:12px}
-.rg-sheet{border-radius:14px 14px 0 0}
-.rg-toast{border-radius:8px;font-family:var(--rig-sans)}
-.rg-pal-it .k{width:72px}
+.rg-pnl{border-radius:var(--rig-r-lg);border-color:var(--rig-line)}
+.rg-pnl>.rg-pnl-h:first-child{border-radius:calc(var(--rig-r-lg) - 1px) calc(var(--rig-r-lg) - 1px) 0 0}
+.rg-stats{border-radius:var(--rig-r-lg)}
+.rg-stats>.rg-stat:first-child{border-radius:calc(var(--rig-r-lg) - 1px) 0 0 calc(var(--rig-r-lg) - 1px)}.rg-stats>.rg-stat:last-child{border-radius:0 calc(var(--rig-r-lg) - 1px) calc(var(--rig-r-lg) - 1px) 0}
+.rg-pre{border-radius:var(--rig-r-md)}
+.rg-note{border-radius:var(--rig-r-md)}
 .rg-dh h1{letter-spacing:-.02em}
-.rg-tbl .rg-tlink{font-family:var(--rig-mono);font-size:12.5px}
-.rg-pal-in input:focus-visible{outline:none;box-shadow:none}
+.rg-tbl .rg-tlink{font-family:var(--rig-mono);font-size:var(--rig-fs-xs)}
 
 /* ================================================================ Site accuracy pass (traceharness.dev tools/site.css)
    Values copied from the website's stylesheet: headings (h1-h4 500 / -.02em / balance), the hero's
@@ -952,23 +545,521 @@ body.rg-resizing{cursor:col-resize;user-select:none}
    figures are restated in place above. Eyebrows keep their case (they carry case-sensitive ids). */
 .rig h1,.rig h2,.rig h3{font-weight:500;letter-spacing:-.02em;text-wrap:balance}
 .rig h2{letter-spacing:-.015em}
-.rig .rg-dh h1{font-size:26px;line-height:1.15}
+.rig .rg-dh h1{font-size:var(--rig-fs-2xl);line-height:1.15}
 .rg-dh{position:relative;isolation:isolate}
-/* a field of dots behind the title, as behind the site's hero: tall enough for several rows (one masked row
-   read as a stray dotted rule), fading out from the title */
-.rg-dh::before{content:"";position:absolute;z-index:-1;pointer-events:none;inset:-56px 0 -28px 0;
-  background-image:radial-gradient(var(--rig-dot) 1px,transparent 1.2px);background-size:22px 22px;background-position:11px 11px;
+/* a field of dots behind the home title only, as behind the site's hero (every other page head stays flat,
+   hairline-and-ink): tall enough for several rows, on the 4px rhythm, fading out from the title */
+.rg-home-head::before{content:"";position:absolute;z-index:-1;pointer-events:none;inset:calc(-1 * var(--rig-s7)) 0 calc(-1 * var(--rig-s5)) 0;
+  background-image:radial-gradient(var(--rig-dot) 1px,transparent 1.2px);background-size:var(--rig-s5) var(--rig-s5);background-position:var(--rig-s3) var(--rig-s3);
   -webkit-mask-image:radial-gradient(ellipse 60% 75% at 22% 45%,var(--rig-text) 25%,transparent 78%);mask-image:radial-gradient(ellipse 60% 75% at 22% 45%,var(--rig-text) 25%,transparent 78%)}
-.rig .rg-dh p,.rg-an-sub,.rg-traj-lede,.rg-ws-intro p{color:var(--rig-dim);font-size:15px;line-height:1.6;max-width:62ch}
-@media (max-width:760px){.rig .rg-dh h1{font-size:22px}}
-@media (min-width:1800px){.rig .rg-dh h1{font-size:clamp(26px,1.1vw,36px)}.rig .rg-dh p,.rg-an-sub,.rg-traj-lede,.rg-ws-intro p{font-size:clamp(15px,.45vw,18px)}}
-/* top-bar icon buttons: site .icon-btn (34px, radius 8, line2 border, dim -> text) */
-@media (min-width:761px) and (max-width:1799px){
-  .rg-tbtn.ico{width:34px;min-width:34px;height:34px;border-color:var(--rig-line2);color:var(--rig-dim);border-radius:8px}
-  .rg-tbtn.ico:hover{color:var(--rig-text);border-color:var(--rig-line3);background:none}
-}
+.rig .rg-dh p,.rg-an-sub,.rg-traj-lede{color:var(--rig-dim);font-size:var(--rig-fs-md);line-height:1.6;max-width:62ch}
 
 /* Keep named radio-group legends full width without the browser fieldset inset. */
 .rig fieldset.rg-pnl{min-inline-size:0;padding:0}
 .rig fieldset.rg-pnl>legend.rg-pnl-h{float:left;width:100%;box-sizing:border-box}
 .rig fieldset.rg-pnl>legend.rg-pnl-h+*{clear:both}
+
+/* ================================================================ foundation tokens (UI contract v1)
+   ADDITIVE. One scale for each kind of value; a rule takes its value from here or from the colour
+   tokens above, never from a literal. New work uses these names; the literals in the layers above
+   are migrated to them by the shell owner (mapping in plans/UI_CONTRACT.md).
+   Spacing      --rig-s0 2 · s1 4 · s2 8 · s3 12 · s4 16 · s5 24 · s6 32 · s7 48 · s8 64   (4px scale)
+   Radius       --rig-r-xs 4 (kbd, glyphs) · sm 6 (chips, menu items) · md 8 (controls, notes, code)
+                · lg 12 (cards, panels, popovers, dialogs) · full (dots, pills)
+   Type         --rig-fs-2xs 11 · xs 12 · sm 13 · md 14 · lg 16 · xl 20 · 2xl 26, figures 18 / 26 / 40
+   Control      --rig-h-ctl is THE control height: 36px with a mouse, 44px on a coarse pointer or a
+                phone-width window. --rig-hit is the minimum touch target, --rig-h-row a table row.
+   Layers       --rig-z-* mirror the literals in use today, so swapping one in changes no stacking. */
+.rig{
+  --rig-s0:2px;--rig-s8:64px;--rig-gutter:var(--rig-s5);--rig-measure:68ch;
+  --rig-r-xs:4px;--rig-r-sm:6px;--rig-r-md:8px;--rig-r-lg:12px;--rig-r-full:999px;
+  --rig-fs-2xs:11px;--rig-fs-xs:12px;--rig-fs-sm:13px;--rig-fs-md:14px;--rig-fs-lg:16px;--rig-fs-xl:20px;--rig-fs-2xl:26px;
+  --rig-fs-fig-sm:18px;--rig-fs-fig-md:26px;--rig-fs-fig-narrow:32px;--rig-fs-fig:40px;
+  --rig-lh-tight:1.2;--rig-lh-snug:1.35;--rig-lh-body:1.5;--rig-lh-prose:1.6;--rig-lh-code:1.7;
+  --rig-fw-regular:400;--rig-fw-medium:500;--rig-fw-semi:600;--rig-track-caps:.07em;
+  --rig-h-xs:24px;--rig-h-sm:28px;--rig-h-md:36px;--rig-h-lg:44px;
+  --rig-h-ctl:var(--rig-h-md);--rig-hit:var(--rig-h-md);--rig-h-row:40px;
+  --rig-z-base:1;--rig-z-sticky:10;--rig-z-rail:30;--rig-z-dropdown:45;--rig-z-dock:58;--rig-z-scrim:60;--rig-z-sheet:62;--rig-z-popover:65;--rig-z-menu:70;--rig-z-toast:80;--rig-z-skip:100;
+  --rig-focus-ring:2px solid var(--rig-sel);--rig-focus-offset:2px;
+  --rig-dur-1:120ms;--rig-dur-2:180ms;--rig-ease:cubic-bezier(.2,0,0,1);
+}
+@media (max-width:760px){.rig{--rig-gutter:var(--rig-s4)}}
+@media (max-width:760px),(pointer:coarse){.rig{--rig-h-ctl:var(--rig-h-lg);--rig-hit:var(--rig-h-lg);--rig-h-row:44px}}
+
+/* ---------------------------------------------------------------- shared controls read the tokens
+   Buttons, fields, segmented controls and switches are one height everywhere: --rig-h-ctl.
+   `button.rg-btn` (0,1,1) is deliberate: `.rig button{font:inherit}` at the top of this file
+   outranks a bare `.rg-btn`, so a button used to take its size and weight from whatever it sat in. */
+.rg-btn{min-height:var(--rig-h-ctl)}
+.rg-btn.lg{min-height:var(--rig-h-lg)}
+.rg-inp,.rg-selc{height:var(--rig-h-ctl)}
+.rg-seg button{min-height:calc(var(--rig-h-ctl) - 2px)}
+.rg-sw{min-height:var(--rig-h-ctl)}
+button.rg-btn,a.rg-btn{font:var(--rig-fw-medium) var(--rig-fs-sm)/var(--rig-lh-tight) var(--rig-sans)}
+
+/* ---------------------------------------------------------------- page heads keep their title
+   .rg-dh: the title block has a 20rem basis, so actions that do not fit wrap UNDER it instead of
+   squeezing it to nothing (a run id used to be drawn one character per line at 768px). The
+   side-by-side grid of "shell v7" starts at 900px of document and gives the title 28rem first. */
+.rg-dh>.t{flex:1 1 20rem}
+.rg-dh>:not(.t){min-width:0;max-width:100%}
+/* stacked (a narrow document): the basis would be a height there, so the title is as tall as its text */
+@container rgdoc (max-width:640px){.rg-dh>.t{flex:0 0 auto}}
+@container rgdoc (min-width:761px) and (max-width:899px){
+  .rg-dh:has(>.t>.rg-eyebrow:first-child){display:flex}
+  .rg-dh:has(>.t>.rg-eyebrow:first-child)>.t{display:block}
+}
+@container rgdoc (min-width:900px){
+  .rg-dh:has(>.t>.rg-eyebrow:first-child){grid-template-columns:minmax(min(28rem,100%),1fr) minmax(0,auto) minmax(0,auto)}
+}
+
+/* ---------------------------------------------------------------- coarse pointers: 44px targets
+   Keyed to the pointer, not to the window: a tablet at 1024px gets the same targets as a phone.
+   Small inline controls keep their drawn size and grow an invisible hit area (.rg-hit does the
+   same for any control a view adds). */
+/* the invisible hit areas apply on every pointer: --rig-hit is 36px with a mouse and 44px on touch,
+   so one rule gives a table link, a compact pin or a row chevron the right target on both */
+.rg-pin.cmp,.rg-rowgo,.rg-hit{position:relative}
+.rg-pin.cmp::after,.rg-rowgo::after,.rg-hit::after{content:"";position:absolute;left:50%;top:50%;width:max(100%,var(--rig-hit));height:max(100%,var(--rig-hit));transform:translate(-50%,-50%)}
+.rg-tbl .rg-tlink{position:relative}
+.rg-tbl .rg-tlink::after{content:"";position:absolute;left:0;right:0;top:50%;height:var(--rig-hit);transform:translateY(-50%)}
+@media (pointer:coarse){
+  /* no keyboard hints on a touch screen inside controls (prose that explains a shortcut keeps its key) */
+  :is(.rg-search,.rg-btn,.rg-cmd,button) .rg-kbd{display:none}
+  /* repeat-ribbon cells keep their drawn 32px (eight attempts on a phone row) and grow a 44px hit area;
+     neighbouring hit areas overlap by a few px, which a grid of cells tolerates */
+  button.rg-an-c::after{inset:calc((var(--rig-an-cell) - var(--rig-hit)) / 2)}
+  .rg-pin:not(.cmp){height:var(--rig-h-ctl);padding:0 var(--rig-s3)}
+  .rg-chain button,.rg-copy-b,.rg-toast-b{min-height:var(--rig-h-ctl)}
+  .rg-about summary{min-height:var(--rig-h-ctl)}
+  :where(.rg-tbl) :where(td){height:var(--rig-h-row)}
+  .rig input[type="checkbox"],.rig input[type="radio"]{min-width:calc(var(--rig-s4) + var(--rig-s1));min-height:calc(var(--rig-s4) + var(--rig-s1))}
+}
+
+/* ================================================================ shell (UI contract v1, section 11)
+   The chrome around the documents. Only this layer reads the window (@media):
+     phone ≤760 · tablet 761–1099 · laptop 1100–1279 · desktop ≥1280 · wide ≥1800.
+   Everything inside answers to a container: rgwork (the work area), rgpane (one pane), rgdoc (its
+   document), rgpanel (the side panel), rgdockb (the panel body), rgsb (the status bar).
+   Heights come from --rig-h-ctl, so every bar grows with it on a coarse pointer. */
+.rig{
+  --rig-rail-w:56px;--rig-side-w:224px;--rig-nav-w:var(--rig-rail-w);--rig-cmd-max:600px;--rig-pal-w:680px;--rig-drawer-w:420px;
+  --rig-tb-h:calc(var(--rig-h-ctl) + var(--rig-s3));
+  --rig-head-h:calc(var(--rig-h-ctl) + var(--rig-s1));
+  --rig-sb-h:calc(var(--rig-h-sm) + var(--rig-s1) + 1px);   /* 32px items under a 1px rule */
+  /* the docked panel: the reader's width, 320px at least, never more than 40% of the window, and never
+     leaving the document under 480px */
+  --rig-dock-cw:clamp(320px,min(var(--rig-dock-w,420px),40vw,calc(100vw - var(--rig-nav-w) - 480px)),640px);
+}
+@media (max-width:760px),(pointer:coarse){.rig{--rig-sb-h:calc(var(--rig-h-lg) + 1px)}}
+.rig[data-rig-nav="open"]{--rig-nav-w:var(--rig-side-w)}
+.rig.has-side{grid-template-columns:var(--rig-nav-w) minmax(0,1fr) var(--rig-dock-cw)}
+body.rg-resizing{cursor:col-resize;user-select:none}
+.rg-skip{position:fixed;left:var(--rig-s2);top:calc(-1 * var(--rig-s8));z-index:var(--rig-z-skip);padding:var(--rig-s2) var(--rig-s3);border-radius:var(--rig-r-md);background:var(--rig-sel);color:var(--rig-sel-ink);font:var(--rig-fw-medium) var(--rig-fs-sm)/var(--rig-lh-tight) var(--rig-sans);text-decoration:none}
+.rg-skip:focus{top:var(--rig-s2)}
+
+/* ---------------------------------------------------------------- maximize: the focused pane takes the window */
+.rig[data-rig-max]{grid-template-columns:minmax(0,1fr);grid-template-rows:var(--rig-tb-h) minmax(0,1fr) auto 0}
+.rig.has-side[data-rig-max]{grid-template-columns:minmax(0,1fr) var(--rig-dock-cw)}
+.rig[data-rig-max] .rg-rail,.rig[data-rig-max] .rg-sb,.rig[data-rig-max] .rg-nav-scrim{display:none}
+.rig[data-rig-max] .rg-work,.rig[data-rig-max] .rg-dock:not(.side){grid-column:1}
+.rig[data-rig-max] .rg-dock.side{grid-column:2}
+.rig[data-rig-max] .rg-pane:not(.focus){display:none}
+.rig[data-rig-max] .rg-pane+.rg-pane{border-left:0}
+
+/* ---------------------------------------------------------------- top bar
+   brand · search · actions. One button style for the whole cluster: ghost, --rig-h-ctl square,
+   a hairline on hover and while pressed. The search field is the only bordered element. */
+.rg-tb{grid-column:1/-1;grid-row:1;display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;column-gap:var(--rig-s4);min-width:0;padding:0 var(--rig-s3);background:var(--rig-panel);border-bottom:1px solid var(--rig-line)}
+.rg-tb-l{display:flex;align-items:center;min-width:0;height:100%}
+.rg-brand{display:flex;align-items:center;gap:var(--rig-s3);height:var(--rig-h-ctl);padding:0 var(--rig-s2);border:0;border-radius:var(--rig-r-md);background:none;color:var(--rig-text);text-decoration:none;flex:none}
+.rg-brand:hover{background:var(--rig-panel2)}
+.rg-brand .mk{display:grid;place-items:center;flex:none}
+.rg-brand b{font:var(--rig-fw-semi) var(--rig-fs-lg)/1 var(--rig-sans);letter-spacing:-.015em;white-space:nowrap}
+.rg-mark .m1{fill:var(--rig-line3)}.rg-mark .m2{fill:var(--rig-ser4)}.rg-mark .m3{fill:var(--rig-text)}.rg-mark .m4{fill:var(--rig-sel)}
+.rg-cmd{justify-self:center;display:flex;align-items:center;gap:var(--rig-s2);width:100%;max-width:var(--rig-cmd-max);min-width:0;height:var(--rig-h-ctl);padding:0 var(--rig-s2) 0 var(--rig-s3);border:1px solid var(--rig-line);border-radius:var(--rig-r-md);background:var(--rig-panel2);color:var(--rig-mute);text-align:left;font:var(--rig-fw-regular) var(--rig-fs-sm)/var(--rig-lh-tight) var(--rig-sans)}
+.rg-cmd:hover{border-color:var(--rig-line3);background:var(--rig-panel3);color:var(--rig-dim)}
+.rg-cmd-ph{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.rg-cmd-k{display:flex;gap:var(--rig-s0);flex:none}
+.rg-kbd{display:inline-flex;align-items:center;justify-content:center;min-width:var(--rig-s5);height:var(--rig-s5);padding:0 var(--rig-s1);border:1px solid var(--rig-line2);border-bottom-width:2px;border-radius:var(--rig-r-xs);background:var(--rig-panel2);color:var(--rig-dim);font:var(--rig-fw-medium) var(--rig-fs-2xs)/1 var(--rig-mono);white-space:nowrap;vertical-align:middle}
+.rg-mtab{display:none;flex:1 1 auto;align-items:center;gap:var(--rig-s2);min-width:7.5rem;height:var(--rig-h-ctl);padding:0 var(--rig-s2) 0 var(--rig-s3);border:1px solid var(--rig-line2);border-radius:var(--rig-r-md);background:var(--rig-bg);color:var(--rig-text);text-align:left}
+.rg-mtab>.rg-ico{color:var(--rig-mute)}
+.rg-mtab .tt{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font:var(--rig-fw-medium) var(--rig-fs-md)/var(--rig-lh-tight) var(--rig-sans)}
+.rg-mtab .n{flex:none;min-width:var(--rig-s5);padding:var(--rig-s1);border-radius:var(--rig-r-xs);background:var(--rig-panel3);color:var(--rig-text);font:var(--rig-fw-medium) var(--rig-fs-2xs)/1 var(--rig-mono);text-align:center}
+.rg-tb-r{display:flex;align-items:center;justify-content:flex-end;gap:var(--rig-s1);min-width:0}
+.rg-tbtn{display:inline-flex;align-items:center;justify-content:center;gap:var(--rig-s2);flex:none;height:var(--rig-h-ctl);min-width:var(--rig-h-ctl);padding:0 var(--rig-s3);border:1px solid transparent;border-radius:var(--rig-r-md);background:none;color:var(--rig-dim);font:var(--rig-fw-medium) var(--rig-fs-sm)/1 var(--rig-sans);white-space:nowrap;text-decoration:none}
+.rg-tbtn:hover{border-color:var(--rig-line2);color:var(--rig-text)}
+.rg-tbtn.on,.rg-tbtn[aria-pressed="true"]{border-color:var(--rig-line2);background:var(--rig-sel-bg);color:var(--rig-sel-t)}
+.rg-tbtn.ico{width:var(--rig-h-ctl);padding:0}
+.rg-tbtn .lbl-d{display:none}
+.rg-tb-sep{flex:none;width:1px;height:var(--rig-s5);margin:0 var(--rig-s1);background:var(--rig-line2)}
+.rg-tb-more{display:none}
+/* desktop: the search is centred on the window and the actions carry their words */
+@media (min-width:1280px){
+  .rg-tb{grid-template-columns:minmax(max-content,1fr) minmax(15rem,var(--rig-cmd-max)) minmax(max-content,1fr)}
+  .rg-tbtn .lbl-d{display:inline}
+}
+/* below it, every action is an icon with a tooltip; a member's Account moves into the overflow menu
+   (with the tour and the theme, so the menu never repeats a visible button) */
+@media (max-width:1279px){
+  .rg-tbtn:has(>.lbl-d){width:var(--rig-h-ctl);padding:0}
+  .rg-tb-member .rg-tb-acct,.rg-tb-member .rg-tour-launcher,.rg-tb-member .rg-tb-theme{display:none}
+  .rg-tb-member .rg-tb-more{display:inline-flex}
+}
+@media (max-width:899px){.rg-brand b,.rg-cmd-k{display:none}}
+
+/* ---------------------------------------------------------------- sidebar: labelled (224) or an icon rail (56) */
+.rg-rail{grid-column:1;grid-row:2/4;display:flex;flex-direction:column;min-width:0;min-height:0;padding:var(--rig-s2) calc((var(--rig-rail-w) - var(--rig-h-ctl)) / 2);background:var(--rig-panel);border-right:1px solid var(--rig-line)}
+.rig[data-rig-nav="open"] .rg-rail{padding:var(--rig-s3);overflow-x:hidden;overflow-y:auto;scrollbar-width:thin}
+.rg-rail .sp{flex:1}
+.rg-nav-g{display:flex;flex-direction:column;gap:var(--rig-s0)}
+.rg-nav-g+.rg-nav-g{margin-top:var(--rig-s4)}
+.rg-nav-gl{padding:var(--rig-s1) var(--rig-s2) var(--rig-s2);color:var(--rig-mute);font:var(--rig-fw-medium) var(--rig-fs-2xs)/1 var(--rig-mono);letter-spacing:var(--rig-track-caps);text-transform:uppercase}
+.rg-rail .rg-nav-it{position:relative;display:flex;align-items:center;gap:var(--rig-s3);width:100%;height:var(--rig-h-ctl);padding:0 var(--rig-s2);border:0;border-radius:var(--rig-r-md);background:none;color:var(--rig-dim);font:var(--rig-fw-medium) var(--rig-fs-sm)/1 var(--rig-sans);text-align:left;white-space:nowrap}
+.rg-rail .rg-nav-it:hover{background:var(--rig-panel2);color:var(--rig-text)}
+.rg-rail .rg-nav-it.on{background:var(--rig-sel-bg);color:var(--rig-text)}
+.rg-rail .rg-nav-it.on .rg-ico{color:var(--rig-sel-t)}
+.rg-rail .rg-nav-it .lbl{min-width:0;overflow:hidden;text-overflow:ellipsis}
+.rg-rail .rg-nav-foot{margin-top:var(--rig-s3);padding-top:var(--rig-s3);border-top:1px solid var(--rig-line)}
+.rg-rail .rg-nav-toggle{color:var(--rig-mute)}
+.rg-rail .tip{display:none;position:absolute;left:calc(100% + var(--rig-s3));top:50%;z-index:var(--rig-z-rail);padding:var(--rig-s1) var(--rig-s2);border-radius:var(--rig-r-sm);background:var(--rig-panel3);color:var(--rig-text);font:var(--rig-fw-medium) var(--rig-fs-xs)/var(--rig-lh-snug) var(--rig-sans);white-space:nowrap;pointer-events:none;opacity:0;transform:translateY(-50%);box-shadow:var(--rig-shadow)}
+.rg-rail button:hover .tip,.rg-rail button:focus-visible .tip{opacity:1}
+.rig[data-rig-nav="closed"] .rg-rail .rg-nav-it{justify-content:center;width:var(--rig-h-ctl);padding:0}
+.rig[data-rig-nav="closed"] .rg-rail .tip{display:block}
+.rig[data-rig-nav="closed"] .rg-nav-it .lbl,.rig[data-rig-nav="closed"] .rg-nav-gl{display:none}
+.rig[data-rig-nav="closed"] .rg-nav-g+.rg-nav-g{margin-top:var(--rig-s2);padding-top:var(--rig-s2);border-top:1px solid var(--rig-line)}
+/* the section's own list under its sidebar item (Analysis steps, a task page's tasks) */
+.rg-nav-node{display:flex;flex-direction:column}
+.rg-nav-sub{position:relative;display:flex;flex-direction:column;gap:var(--rig-s0);margin:var(--rig-s0) 0 var(--rig-s2) var(--rig-s4);padding-left:var(--rig-s2)}
+.rg-nav-sub::before{content:"";position:absolute;left:0;top:var(--rig-s0);bottom:var(--rig-s0);width:1px;background:var(--rig-line2)}
+.rg-rail .rg-nav-sub-it{display:flex;align-items:center;gap:var(--rig-s2);width:100%;height:var(--rig-h-ctl);padding:0 var(--rig-s2);border:0;border-radius:var(--rig-r-sm);background:none;color:var(--rig-mute);font:var(--rig-fw-medium) var(--rig-fs-sm)/1 var(--rig-sans);text-align:left;white-space:nowrap}
+.rg-rail .rg-nav-sub-it:hover{background:var(--rig-panel2);color:var(--rig-text)}
+.rg-rail .rg-nav-sub-it.on{background:var(--rig-panel3);color:var(--rig-text)}
+.rg-rail .rg-nav-sub-it .n{flex:none;width:var(--rig-s4);color:var(--rig-mute);font:var(--rig-fw-medium) var(--rig-fs-2xs)/1 var(--rig-mono);font-variant-numeric:tabular-nums;text-align:right}
+.rg-rail .rg-nav-sub-it.on .n{color:var(--rig-sel-t)}
+.rg-rail .rg-nav-sub-it .lbl{min-width:0;overflow:hidden;text-overflow:ellipsis}
+.rg-rail .rg-nav-sub-it .ct{flex:none;margin-left:auto;padding-left:var(--rig-s2);color:var(--rig-mute);font:var(--rig-fw-medium) var(--rig-fs-2xs)/1 var(--rig-mono);font-variant-numeric:tabular-nums}
+.rg-rail .rg-nav-sub-it .ct.bad{color:var(--rig-red-t)}
+.rg-rail .rg-nav-sub-it.rg-nav-sub-all{color:var(--rig-dim)}
+.rg-rail .rg-nav-tasks{max-height:min(52vh,35rem);overflow-y:auto;scrollbar-width:thin}
+@media (min-width:761px){
+  .rig[data-rig-nav="open"] .rg-an-split{grid-template-columns:minmax(0,1fr)}
+  .rig[data-rig-nav="open"] .rg-an-split>.rg-an-nav{display:none}
+}
+/* dataset switcher at the top of the sidebar; its menu may leave the 224px rail */
+.rg-dsw{position:relative;margin:0 0 var(--rig-s4)}
+.rg-dsw-b{display:flex;align-items:center;gap:var(--rig-s2);width:100%;min-height:var(--rig-h-lg);padding:var(--rig-s1) var(--rig-s2) var(--rig-s1) var(--rig-s1);border:1px solid var(--rig-line);border-radius:var(--rig-r-md);background:var(--rig-bg);color:var(--rig-text);text-align:left}
+.rg-dsw-b:hover,.rg-dsw-b[aria-expanded="true"]{border-color:var(--rig-line3)}
+.rg-dsw-b>.rg-ico{flex:none;color:var(--rig-mute)}
+.rg-dsw-ic{flex:none;display:grid;place-items:center;width:var(--rig-h-sm);height:var(--rig-h-sm);border-radius:var(--rig-r-sm);background:var(--rig-panel3);color:var(--rig-text);font:var(--rig-fw-semi) var(--rig-fs-sm)/1 var(--rig-sans)}
+.rg-dsw-t{display:flex;flex-direction:column;gap:var(--rig-s1);flex:1;min-width:0}
+.rg-dsw-t b{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font:var(--rig-fw-semi) var(--rig-fs-sm)/var(--rig-lh-tight) var(--rig-sans)}
+.rg-dsw-t small{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--rig-mute);font:var(--rig-fs-xs)/var(--rig-lh-tight) var(--rig-sans)}
+.rg-dsw-m{position:absolute;left:0;top:calc(100% + var(--rig-s1));z-index:var(--rig-z-dropdown);display:flex;flex-direction:column;gap:var(--rig-s0);width:max(100%,16.25rem);max-width:min(20rem,calc(100vw - 2 * var(--rig-s4)));max-height:60vh;overflow:auto;padding:var(--rig-s1);background:var(--rig-panel);border:1px solid var(--rig-line2);border-radius:var(--rig-r-lg);box-shadow:var(--rig-shadow)}
+.rig .rg-rail:has(.rg-dsw-b[aria-expanded="true"]){position:relative;z-index:var(--rig-z-dropdown);overflow:visible}
+.rg-dsw-o{display:flex;align-items:center;gap:var(--rig-s2);min-height:var(--rig-h-ctl);padding:0 var(--rig-s2);border:0;border-radius:var(--rig-r-sm);background:none;color:var(--rig-dim);font:var(--rig-fw-medium) var(--rig-fs-sm)/1 var(--rig-sans);text-align:left}
+.rg-dsw-o small{color:var(--rig-mute);font:var(--rig-fs-xs)/1 var(--rig-mono);font-variant-numeric:tabular-nums}
+.rg-dsw-o:hover{background:var(--rig-panel2);color:var(--rig-text)}
+.rg-dsw-o.on{background:var(--rig-sel-bg);color:var(--rig-text)}
+.rg-dsw-o.all{justify-content:space-between;margin-top:var(--rig-s1);border-top:1px solid var(--rig-line);border-radius:0 0 var(--rig-r-sm) var(--rig-r-sm)}
+.rg-nav-scrim{display:none}
+
+/* ---------------------------------------------------------------- panes: one, or two side by side */
+.rg-work{grid-column:2;grid-row:2;display:flex;min-width:0;min-height:0;background:var(--rig-bg);container-type:inline-size;container-name:rgwork}
+.rg-pane{display:flex;flex-direction:column;flex:1 1 0;min-width:0;min-height:0;container-type:inline-size;container-name:rgpane}
+.rg-pane+.rg-pane{border-left:1px solid var(--rig-line2)}
+/* a pane never drops under 480px: below 960px of work area only the focused one is drawn, and the
+   pane-switch button in its header brings the other one forward */
+.rg-paneswap{display:none}
+@container rgwork (max-width:959px){
+  .rg-pane:not(.focus){display:none}
+  .rg-pane+.rg-pane{border-left:0}
+  .rg-paneswap{display:grid}
+}
+/* the pane header: one row with the breadcrumb (one tab) or the tabs (two or more), then the page's
+   actions and the split controls */
+.rg-panehead,.rg-tabbar{display:flex;align-items:center;flex:none;min-width:0;height:var(--rig-head-h);background:var(--rig-panel);border-bottom:1px solid var(--rig-line)}
+.rg-panehead{gap:var(--rig-s3);padding:0 0 0 var(--rig-gutter)}
+.rg-doctb{display:flex;align-items:center;gap:var(--rig-s3);flex:none;min-width:0;min-height:var(--rig-head-h);padding:0 var(--rig-gutter);background:var(--rig-bg)}
+.rg-chainrow{border-bottom:1px solid var(--rig-line)}
+.rg-panehead .tb-end,.rg-tabbar .tb-end{display:flex;align-items:center;gap:var(--rig-s1);flex:none;height:100%;margin-left:auto;padding:0 var(--rig-s1) 0 var(--rig-s2)}
+.rg-tabbar .tb-end{border-left:1px solid var(--rig-line)}
+.rg-panehead .tb-end .acts,.rg-tabbar .tb-end .acts{display:flex;align-items:center;gap:var(--rig-s2)}
+.rg-panehead .tb-end .acts:empty,.rg-tabbar .tb-end .acts:empty{display:none}
+/* page actions in the chrome row are secondary: the page's own header carries its primary action */
+.rg-panehead .acts .rg-btn.pri,.rg-tabbar .acts .rg-btn.pri{background:var(--rig-panel);border-color:var(--rig-line2);color:var(--rig-text)}
+.rg-panehead .acts .rg-btn.pri:hover,.rg-tabbar .acts .rg-btn.pri:hover{background:var(--rig-panel2);border-color:var(--rig-line3)}
+.rg-splitbtn,.rg-paneswap{place-items:center;flex:none;width:var(--rig-h-ctl);height:var(--rig-h-ctl);padding:0;border:1px solid transparent;border-radius:var(--rig-r-md);background:none;color:var(--rig-mute)}
+.rg-splitbtn{display:grid}
+.rg-splitbtn:hover,.rg-paneswap:hover{border-color:var(--rig-line2);color:var(--rig-text)}
+/* breadcrumb: the current document (last crumb) stays whole; the middle crumbs give way first, then
+   fold into "…" under 480px of pane; "workspace ›" leaves under 640px */
+.rg-crumb{display:flex;align-items:center;gap:var(--rig-s1);flex:1 1 auto;min-width:0;color:var(--rig-mute);font:var(--rig-fw-medium) var(--rig-fs-xs)/1 var(--rig-mono);white-space:nowrap}
+.rg-crumb-i{display:flex;align-items:center;gap:var(--rig-s1);flex:0 1000 auto;min-width:0}
+.rg-crumb-i:last-child{flex-shrink:1}
+.rg-crumb-l{display:block;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.rg-crumb button.rg-crumb-l{height:var(--rig-h-ctl);padding:0 var(--rig-s1);border:0;border-radius:var(--rig-r-sm);background:none;color:var(--rig-dim);font:inherit;line-height:var(--rig-h-ctl)}
+.rg-crumb button.rg-crumb-l:hover{background:var(--rig-panel2);color:var(--rig-text)}
+.rg-crumb .sep{flex:none;color:var(--rig-line3)}
+.rg-crumb .cur{color:var(--rig-text)}
+.rg-crumb-more{display:none}
+.rg-crumb-more .rg-menu-list{left:0;right:auto}
+.rg-crumb button.rg-crumb-mb{min-width:var(--rig-h-ctl)}
+@container rgpane (max-width:640px){.rg-crumb-ws,.rg-crumb-ws+.rg-crumb-i>.sep,.rg-crumb-more>.sep,.rg-crumb-more+.rg-crumb-i>.sep{display:none}}
+@container rgpane (max-width:480px){.rg-crumb-mid{display:none}.rg-crumb-more{display:flex}}
+/* tabs: a strip that scrolls sideways with edge fades; the active tab is kept in view */
+.rg-tabbar-s{flex:1 1 auto;min-width:0;height:100%}
+.rg-tabbar-s>.rg-scrollx-v{height:100%}
+.rg-tabbar-l{display:flex;align-items:stretch;height:100%;min-width:max-content}
+.rg-tab{display:flex;align-items:center;gap:var(--rig-s1);flex:none;max-width:16rem;height:100%;padding:0 var(--rig-s1) 0 var(--rig-s4);border-right:1px solid var(--rig-line);border-top:2px solid transparent;color:var(--rig-mute);font:var(--rig-fw-medium) var(--rig-fs-sm)/1 var(--rig-sans);white-space:nowrap}
+.rg-tab .tab-b{display:flex;align-items:center;gap:var(--rig-s2);height:100%;min-width:0;padding:0;border:0;background:none;color:inherit;font:inherit}
+.rg-tab .tt{min-width:0;overflow:hidden;text-overflow:ellipsis}
+.rg-tab .k{display:none}
+.rg-tab:hover{background:var(--rig-panel2);color:var(--rig-text)}
+.rg-tab.act{background:var(--rig-bg);color:var(--rig-text);border-top-color:var(--rig-text)}
+.rg-pane:not(.focus) .rg-tab.act{border-top-color:var(--rig-line3)}
+.rg-tab .x{display:grid;place-items:center;flex:none;width:calc(var(--rig-h-sm) + var(--rig-s1));height:calc(var(--rig-h-sm) + var(--rig-s1));padding:0;border:0;border-radius:var(--rig-r-sm);background:none;color:var(--rig-mute);font-size:var(--rig-fs-md);line-height:1;opacity:.6}
+.rg-tab.act .x,.rg-tab:hover .x,.rg-tab .x:focus-visible{opacity:1}
+.rg-tab .x:hover{background:var(--rig-panel3);color:var(--rig-text)}
+/* the document */
+.rg-doc{flex:1;min-height:0;overflow:auto;position:relative;container-type:inline-size;container-name:rgdoc}
+.rg-doc:focus{outline:none}
+.rg-banner{display:flex;align-items:center;flex-wrap:wrap;gap:var(--rig-s2) var(--rig-s3);padding:var(--rig-s2) var(--rig-gutter);border-bottom:1px solid var(--rig-line);font-size:var(--rig-fs-xs);line-height:var(--rig-lh-snug)}
+/* the Student Lab notice is a caution, not a selection: a neutral tint led by an amber marker */
+.rg-banner.lab{background:var(--rig-panel2);color:var(--rig-dim)}
+.rg-banner.lab>b{display:inline-flex;align-items:center;gap:var(--rig-s2);color:var(--rig-text);font-weight:var(--rig-fw-medium)}
+.rg-banner.lab>b::before{content:"";flex:none;width:var(--rig-s2);height:var(--rig-s2);border-radius:var(--rig-r-full);background:var(--rig-amb)}
+.rg-banner.ro{background:var(--rig-red-wash);color:var(--rig-red-t)}
+
+/* ---------------------------------------------------------------- side panel (Buddy, Event log, Capture watcher, Case file)
+   Docked and resizable from 1100px; an overlay drawer on a tablet; a bottom sheet on a phone. */
+.rg-dock{grid-column:2;grid-row:3;display:flex;flex-direction:column;min-width:0;min-height:0;background:var(--rig-bg);border-top:1px solid var(--rig-line2);container-type:inline-size;container-name:rgpanel}
+.rg-dock.open:not(.side){height:clamp(16rem,38vh,25rem)}
+.rg-dock.side{position:relative;grid-column:3;grid-row:2/4;border-top:0;border-left:1px solid var(--rig-line2)}
+.rg-dock-rs{position:absolute;left:calc(-1 * var(--rig-s1));top:0;bottom:0;z-index:var(--rig-z-sticky);width:var(--rig-s2);cursor:col-resize;outline:none}
+.rg-dock-rs:hover,.rg-dock-rs:focus-visible{background:var(--rig-sel);opacity:.55}
+.rg-dock-h{display:flex;align-items:center;gap:var(--rig-s1);flex:none;height:var(--rig-head-h);padding:0 var(--rig-s1) 0 var(--rig-s2);background:var(--rig-panel);border-bottom:1px solid var(--rig-line)}
+.rg-dock-tabs{display:flex;align-items:center;gap:var(--rig-s0);flex:1;min-width:0;overflow-x:auto;scrollbar-width:thin}
+.rg-dock-tab{display:flex;align-items:center;justify-content:center;gap:var(--rig-s2);flex:none;min-width:var(--rig-h-ctl);height:var(--rig-h-ctl);padding:0 var(--rig-s3);border:0;border-radius:var(--rig-r-md);background:none;color:var(--rig-mute);font:var(--rig-fw-medium) var(--rig-fs-sm)/1 var(--rig-sans);white-space:nowrap}
+.rg-dock-tab:hover{background:var(--rig-panel2);color:var(--rig-text)}
+.rg-dock-tab.on{background:var(--rig-panel3);color:var(--rig-text)}
+.rg-dock-tab.on .rg-ico{color:var(--rig-sel-t)}
+.rg-dock-tab .n{padding:var(--rig-s0) var(--rig-s1);border-radius:var(--rig-r-xs);background:var(--rig-panel3);color:var(--rig-text);font:var(--rig-fw-medium) var(--rig-fs-2xs)/1 var(--rig-mono)}
+.rg-dock-h .dt{display:grid;place-items:center;flex:none;width:var(--rig-h-ctl);height:var(--rig-h-ctl);padding:0;border:0;border-radius:var(--rig-r-md);background:none;color:var(--rig-mute)}
+.rg-dock-h .dt:hover{background:var(--rig-panel2);color:var(--rig-text)}
+.rg-dock-b{flex:1;min-height:0;overflow:auto;overscroll-behavior:contain;background:var(--rig-bg)}
+@container rgpanel (max-width:520px){.rg-dock-tab:not(.on) .lbl{display:none}.rg-dock-tab:not(.on){padding:0}}
+.rg-dock-scrim{display:none}
+
+/* ---------------------------------------------------------------- status bar
+   Where you are on the left, the panel launchers on the right. Items leave by priority as the bar
+   narrows (dock labels, then jobs and the connection words, then Student Lab, then the condition, then
+   the dataset);
+   the connection item opens a popover that lists all of it, so nothing becomes unreachable. */
+.rg-sb{grid-column:1/-1;grid-row:4;display:flex;align-items:stretch;gap:var(--rig-s0);min-width:0;height:var(--rig-sb-h);padding:0 var(--rig-s1);background:var(--rig-panel);border-top:1px solid var(--rig-line);color:var(--rig-mute);font:var(--rig-fw-medium) var(--rig-fs-xs)/1 var(--rig-mono);white-space:nowrap;container-type:inline-size;container-name:rgsb}
+.rg-sb .it{position:relative;display:inline-flex;align-items:center;gap:var(--rig-s2);flex:0 1 auto;min-width:0;padding:0 var(--rig-s2);border:0;border-radius:var(--rig-r-xs);background:none;color:inherit;font:inherit;text-decoration:none}
+.rg-sb .it>b,.rg-sb .it>.rg-sb-t{min-width:0;overflow:hidden;text-overflow:ellipsis}
+.rg-sb button.it:hover,.rg-sb a.it:hover{background:var(--rig-panel2);color:var(--rig-text)}
+.rg-sb .rg-sb-conn{flex:0 1 auto;min-width:var(--rig-hit);justify-content:center}
+/* items without a truncating part keep their words; the connection words, dataset and condition give way */
+.rg-sb .rg-sb-oracle,.rg-sb .rg-sb-p3,.rg-sb .rg-sb-p4{flex:none}
+.rg-sb .sp{flex:1 1 var(--rig-s2);min-width:var(--rig-s2)}
+.rg-sb b{color:var(--rig-text);font-weight:var(--rig-fw-medium)}
+.rg-sb b.alt{color:var(--rig-sel-t)}
+.rg-sb .lab-on{background:var(--rig-sel-bg2);color:var(--rig-sel-t)}
+.rg-sb button.it.lab-on:hover{background:var(--rig-sel-bg2);color:var(--rig-sel-t)}
+.rg-sb .rg-sb-update{flex:none;background:var(--rig-sel);color:var(--rig-sel-ink)}
+.rg-sb button.it.rg-sb-update:hover{background:var(--rig-sel-h);color:var(--rig-sel-ink)}
+.rg-sb-docks{display:flex;align-items:stretch;gap:var(--rig-s0);flex:none;padding-left:var(--rig-s1);border-left:1px solid var(--rig-line)}
+.rg-sb-docks .it{flex:none;min-width:var(--rig-hit);justify-content:center}
+.rg-sb-docks .it .rg-ico{color:var(--rig-mute)}
+.rg-sb-docks .it.on{background:var(--rig-panel2);color:var(--rig-text);box-shadow:inset 0 2px 0 var(--rig-text)}
+.rg-sb-docks .it.on .rg-ico{color:var(--rig-sel-t)}
+.rg-sb-docks .n{padding:var(--rig-s0) var(--rig-s1);border-radius:var(--rig-r-xs);background:var(--rig-panel3);color:var(--rig-text);font:var(--rig-fw-medium) var(--rig-fs-2xs)/1 var(--rig-mono)}
+/* a 32px bar with a mouse; each item's target reaches 36px */
+@media (pointer:fine){.rg-sb .it::after{content:"";position:absolute;left:0;right:0;bottom:0;height:var(--rig-hit)}}
+@container rgsb (max-width:1359px){.rg-sb .rg-sb-dl{display:none}}
+@container rgsb (max-width:1279px){.rg-sb .rg-sb-p4,.rg-sb .rg-sb-ct{display:none}}
+@container rgsb (max-width:1099px){.rg-sb .rg-sb-p3{display:none}}
+@container rgsb (max-width:744px){.rg-sb .rg-sb-p2{display:none}}
+@container rgsb (max-width:480px){.rg-sb .rg-sb-p1{display:none}}
+@container rgsb (max-width:376px){.rg-sb .rg-sb-k{display:none}}
+
+/* ---------------------------------------------------------------- overlays: scrim, palette, popover, sheet, toast */
+.rg-scrim{position:fixed;inset:0;z-index:var(--rig-z-scrim);display:flex;justify-content:center;align-items:flex-start;padding-top:10vh;background:var(--rig-scrim)}
+.rg-scrim.clear{background:transparent}
+.rg-scrim.rg-scrim-sheet{align-items:flex-end;padding:0}
+.rg-pal{display:flex;flex-direction:column;width:min(var(--rig-pal-w),calc(100vw - 2 * var(--rig-s4)));max-height:72vh;overflow:hidden;background:var(--rig-panel);border:1px solid var(--rig-line2);border-radius:var(--rig-r-lg);box-shadow:var(--rig-shadow)}
+.rg-pal-in{display:flex;align-items:center;gap:var(--rig-s3);flex:none;height:calc(var(--rig-h-lg) + var(--rig-s2));padding:0 var(--rig-s2) 0 var(--rig-s4);border-bottom:1px solid var(--rig-line2)}
+.rg-pal-in>.rg-ico{color:var(--rig-mute)}
+.rig .rg-pal-in input{flex:1;min-width:0;height:100%;padding:0;border:0;background:none;color:var(--rig-text);font:var(--rig-fw-regular) var(--rig-fs-lg)/1 var(--rig-sans);outline:none}
+.rig .rg-pal-in input:focus-visible{outline:none}
+.rg-pal-chip{flex:none;padding:var(--rig-s1) var(--rig-s2);border:1px solid var(--rig-line2);border-radius:var(--rig-r-sm);color:var(--rig-mute);font:var(--rig-fw-medium) var(--rig-fs-2xs)/1 var(--rig-mono);white-space:nowrap}
+.rg-pal-list{flex:1;min-height:0;overflow:auto;overscroll-behavior:contain;padding:var(--rig-s1)}
+.rg-pal-g{padding:var(--rig-s3) var(--rig-s3) var(--rig-s1);color:var(--rig-mute);font:var(--rig-fw-medium) var(--rig-fs-2xs)/1 var(--rig-mono);letter-spacing:var(--rig-track-caps);text-transform:uppercase}
+.rg-pal-it{display:flex;align-items:center;gap:var(--rig-s3);width:100%;min-height:var(--rig-h-ctl);padding:0 var(--rig-s3);border:0;border-radius:var(--rig-r-sm);background:none;color:var(--rig-text);text-align:left}
+.rg-pal-it .k{flex:none;width:4.5rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--rig-mute);font:var(--rig-fw-medium) var(--rig-fs-2xs)/1 var(--rig-mono);letter-spacing:var(--rig-track-caps);text-transform:uppercase}
+.rg-pal-it .t{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font:var(--rig-fw-regular) var(--rig-fs-md)/var(--rig-lh-snug) var(--rig-sans)}
+.rg-pal-it .t mark{background:none;color:var(--rig-sel-t);text-decoration:underline;text-decoration-color:var(--rig-sel);text-underline-offset:3px}
+.rg-pal-it .d{flex:0 1 auto;max-width:40%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--rig-mute);font:var(--rig-fs-xs)/1 var(--rig-sans)}
+.rg-pal-it.on{background:var(--rig-panel3)}
+.rg-pal-it.on .k{color:var(--rig-sel-t)}
+.rg-pal-f{display:flex;flex-wrap:wrap;align-items:center;gap:var(--rig-s2) var(--rig-s4);flex:none;padding:var(--rig-s2) var(--rig-s4);border-top:1px solid var(--rig-line2);color:var(--rig-mute);font:var(--rig-fs-xs)/var(--rig-lh-snug) var(--rig-sans)}
+.rg-pal-empty{padding:var(--rig-s6) var(--rig-s4);color:var(--rig-mute);font:var(--rig-fs-sm)/var(--rig-lh-body) var(--rig-sans)}
+@media (pointer:coarse){.rg-pal-f{display:none}}
+/* keyboard shortcuts (a Modal) */
+.rg-keys-l{display:flex;flex-direction:column;margin:0}
+.rg-keys-l>div{display:flex;align-items:center;gap:var(--rig-s4);padding:var(--rig-s2) 0;border-bottom:1px solid var(--rig-line)}
+.rg-keys-l>div:last-child{border-bottom:0}
+.rg-keys-l dt{flex:1;min-width:0;color:var(--rig-dim);font-size:var(--rig-fs-sm);line-height:var(--rig-lh-snug)}
+.rg-keys-l dd{display:flex;gap:var(--rig-s1);flex:none;margin:0}
+/* status popovers: anchored to their status-bar item, clamped inside the window */
+.rg-pop{position:fixed;left:var(--rig-pop-left,var(--rig-s2));bottom:calc(var(--rig-sb-h) + var(--rig-s1));z-index:var(--rig-z-popover);width:min(20rem,calc(100vw - 2 * var(--rig-s2)));max-height:60vh;overflow:auto;overscroll-behavior:contain;padding:var(--rig-s4);background:var(--rig-panel);border:1px solid var(--rig-line2);border-radius:var(--rig-r-lg);box-shadow:var(--rig-shadow)}
+.rg-pop-sec+.rg-pop-sec{margin-top:var(--rig-s4);padding-top:var(--rig-s4);border-top:1px solid var(--rig-line)}
+.rg-pop .rg-lbl{display:block;margin-bottom:var(--rig-s2)}
+.rg-pop .rg-pop-p{margin:var(--rig-s2) 0 0;color:var(--rig-dim);font-size:var(--rig-fs-xs);line-height:var(--rig-lh-snug)}
+.rg-pop .opt{display:flex;justify-content:flex-start;width:100%}
+.rg-pop-list{display:flex;flex-direction:column;gap:var(--rig-s0);margin:0 calc(-1 * var(--rig-s2))}
+.rg-pop-row{display:flex;align-items:center;gap:var(--rig-s3);min-height:var(--rig-h-ctl);padding:0 var(--rig-s2);border:0;border-radius:var(--rig-r-sm);background:none;color:var(--rig-text);font:var(--rig-fw-regular) var(--rig-fs-sm)/var(--rig-lh-snug) var(--rig-sans);text-align:left;text-decoration:none}
+.rg-pop-row>span:first-child{flex:none;width:6.5rem;color:var(--rig-mute);font-size:var(--rig-fs-xs)}
+.rg-pop-row>b{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font:var(--rig-fw-medium) var(--rig-fs-xs)/var(--rig-lh-snug) var(--rig-mono)}
+.rg-pop-row>.rg-ico{flex:none;color:var(--rig-mute)}
+button.rg-pop-row:hover,a.rg-pop-row:hover{background:var(--rig-panel2)}
+.rg-pop-st{display:flex;align-items:center;gap:var(--rig-s2);color:var(--rig-text);font-size:var(--rig-fs-sm);line-height:var(--rig-lh-snug);overflow-wrap:anywhere}
+/* the phone document switcher (a bottom sheet) */
+.rg-sheet{position:fixed;left:0;right:0;bottom:0;z-index:var(--rig-z-sheet);display:flex;flex-direction:column;max-height:86dvh;padding-bottom:env(safe-area-inset-bottom);background:var(--rig-panel);border-top:1px solid var(--rig-line2);border-radius:var(--rig-r-lg) var(--rig-r-lg) 0 0;box-shadow:var(--rig-shadow)}
+.rg-sheet .grab{flex:none;width:var(--rig-s6);height:var(--rig-s1);margin:var(--rig-s2) auto;border-radius:var(--rig-r-full);background:var(--rig-line3)}
+.rg-sheet-h{display:flex;align-items:center;gap:var(--rig-s2);flex:none;padding:0 var(--rig-s2) var(--rig-s2) var(--rig-s4)}
+.rg-sheet-h>.rg-lbl{flex:1;min-width:0}
+.rg-sheet-b{flex:1;min-height:0;overflow:auto;overscroll-behavior:contain;padding:0 var(--rig-s2) var(--rig-s4)}
+.rg-sheet-row{display:flex;align-items:center;gap:var(--rig-s1);min-width:0;border-bottom:1px solid var(--rig-line)}
+.rg-sheet-gl{display:block;padding:var(--rig-s4) var(--rig-s3) var(--rig-s2)}
+.rg-sheet .it{display:flex;align-items:center;gap:var(--rig-s3);width:100%;min-width:0;min-height:calc(var(--rig-h-lg) + var(--rig-s1));padding:0 var(--rig-s3);border:0;border-radius:var(--rig-r-sm);background:none;color:var(--rig-text);text-align:left;text-decoration:none}
+.rg-sheet .it:hover{background:var(--rig-panel2)}
+.rg-sheet .it.on{background:var(--rig-panel3);box-shadow:inset 2px 0 0 var(--rig-text)}
+.rg-sheet-row>.rg-btn{flex:none;width:var(--rig-h-ctl);padding:0}
+/* toast: bottom centre, above the status bar */
+.rg-toast{position:fixed;left:0;right:0;bottom:calc(var(--rig-sb-h) + var(--rig-s3));z-index:var(--rig-z-toast);display:flex;align-items:center;gap:var(--rig-s3);width:max-content;max-width:calc(100vw - 2 * var(--rig-s4));margin-inline:auto;padding:var(--rig-s2) var(--rig-s4);background:var(--rig-panel3);color:var(--rig-text);border:1px solid var(--rig-line3);border-radius:var(--rig-r-md);box-shadow:var(--rig-shadow);font:var(--rig-fw-medium) var(--rig-fs-sm)/var(--rig-lh-snug) var(--rig-sans);opacity:0;pointer-events:none;transform:translateY(var(--rig-s5));transition:opacity var(--rig-dur-2) var(--rig-ease),transform var(--rig-dur-2) var(--rig-ease)}
+.rg-toast.act{padding-right:var(--rig-s2)}
+.rg-toast.show{opacity:1;transform:none}
+.rg-toast.act.show{pointer-events:auto}
+.rg-toast-b{flex:none}
+
+/* ---------------------------------------------------------------- tablet 761–1099: overlays instead of columns */
+@media (min-width:761px) and (max-width:1099px){
+  /* the sidebar stays a 56px rail; opened, it lies over the document (scrim, Esc or a click closes it) */
+  .rig[data-rig-nav="open"]{--rig-nav-w:var(--rig-rail-w)}
+  .rig[data-rig-nav="open"] .rg-rail{position:relative;z-index:var(--rig-z-dock);width:var(--rig-side-w);box-shadow:var(--rig-shadow)}
+  .rg-nav-scrim{display:block;position:fixed;inset:var(--rig-tb-h) 0 0 0;z-index:calc(var(--rig-z-dock) - 1);background:var(--rig-scrim)}
+  /* the side panel is a drawer from the right; the document keeps its width */
+  .rig.has-side{grid-template-columns:var(--rig-nav-w) minmax(0,1fr)}
+  .rig.has-side[data-rig-max]{grid-template-columns:minmax(0,1fr)}
+  .rg-dock.side{position:fixed;top:var(--rig-tb-h);right:0;bottom:0;z-index:var(--rig-z-dock);width:min(var(--rig-drawer-w),calc(100vw - var(--rig-rail-w)));box-shadow:var(--rig-shadow)}
+  .rg-dock-rs{display:none}
+  .rg-dock-scrim{display:block;position:fixed;inset:var(--rig-tb-h) 0 0 0;z-index:calc(var(--rig-z-dock) - 1);background:var(--rig-scrim)}
+  /* one pane: a split shows the focused pane, and the pane-switch button brings the other forward */
+  .rg-pane:not(.focus){display:none}
+  .rg-pane+.rg-pane{border-left:0}
+  .rg-paneswap{display:grid}
+}
+
+/* ---------------------------------------------------------------- phone ≤760: one pane, sheets, whole-screen palette */
+@media (max-width:760px){
+  .rig,.rig[data-rig-max]{grid-template-columns:minmax(0,1fr);grid-template-rows:var(--rig-tb-h) minmax(0,1fr) 0 var(--rig-sb-h)}
+  .rig.has-side,.rig.has-side[data-rig-max]{grid-template-columns:minmax(0,1fr)}
+  .rig[data-rig-max] .rg-sb{display:flex}
+  /* top bar: mark · document switcher · search · Buddy · overflow menu */
+  .rg-tb{display:flex;gap:var(--rig-s1);padding:0 var(--rig-s2)}
+  .rg-tb-l{flex:none}
+  .rg-brand{justify-content:center;width:var(--rig-h-ctl);padding:0}
+  .rg-mtab{display:flex}
+  .rg-cmd{flex:none;justify-content:center;width:var(--rig-h-ctl);padding:0;border-color:transparent;background:none;color:var(--rig-dim)}
+  .rg-cmd:hover{border-color:var(--rig-line2);background:none}
+  .rg-cmd-ph{display:none}
+  .rg-tb-r,.rg-tb-more{flex:none}
+  .rg-tb-r{gap:0}
+  .rg-tb .rg-tour-launcher,.rg-tb .rg-tb-acct,.rg-tb .rg-tb-theme,.rg-tb-sep{display:none}
+  .rg-tb-more{display:inline-flex}
+  /* no sidebar: the document switcher sheet is the navigation */
+  .rg-rail,.rg-nav-scrim{display:none}
+  .rg-work,.rig[data-rig-max] .rg-work{grid-column:1}
+  .rg-pane{display:none}
+  .rg-pane.focus{display:flex}
+  .rg-tabbar{display:none}
+  /* the pane header keeps only what the switcher does not already say: page actions, an evidence trail */
+  .rg-panehead .rg-crumb{display:none}
+  /* the row goes when nothing in it is drawn on a phone: phone-hidden actions (the oracle switch lives in
+     the status sheet) and buttons that repeat a status-bar launcher (.rg-sb-dup) do not keep a 48px band */
+  .rg-panehead .rg-sb-dup{display:none}
+  .rg-panehead:not(:has(.rg-chain,.rg-paneswap,.rg-pane-acts :is(button,a,select,input,[role="button"]):not(.rg-hide-sm,.rg-hide-sm *,.rg-sb-dup,.rg-sb-dup *))){display:none}
+  /* the panel is a bottom sheet over the document, above the status bar */
+  .rg-dock,.rg-dock.side,.rig[data-rig-max] .rg-dock.side{position:fixed;left:0;right:0;bottom:var(--rig-sb-h);top:auto;z-index:var(--rig-z-dock);width:auto;height:auto;max-height:80dvh;background:var(--rig-panel);border:0;border-top:1px solid var(--rig-line2);border-radius:var(--rig-r-lg) var(--rig-r-lg) 0 0;box-shadow:var(--rig-shadow)}
+  .rg-dock.open:not(.side){height:auto}
+  .rg-dock::before{content:"";flex:none;width:var(--rig-s6);height:var(--rig-s1);margin:var(--rig-s2) auto 0;border-radius:var(--rig-r-full);background:var(--rig-line3)}
+  .rg-dock-h{border-bottom-color:var(--rig-line)}
+  .rg-dock-rs{display:none}
+  .rg-dock-scrim{display:block;position:fixed;inset:0 0 var(--rig-sb-h) 0;z-index:calc(var(--rig-z-dock) - 1);background:var(--rig-scrim)}
+  /* palette and dialogs take the screen */
+  .rg-scrim.pal{padding:0}
+  .rg-scrim.pal .rg-pal{width:100vw;height:100dvh;max-height:none;border:0;border-radius:0}
+  /* two lines on a phone: kind + label, then the description (task · model · harness) under the label,
+     so two runs with look-alike ids can still be told apart */
+  .rg-pal-it{min-height:calc(var(--rig-h-lg) + var(--rig-s1));flex-wrap:wrap;row-gap:var(--rig-s0);padding-block:var(--rig-s2)}
+  .rg-pal-it .d{flex-basis:100%;max-width:none;padding-left:calc(4.25rem + var(--rig-s3));line-height:var(--rig-lh-snug)}
+  .rg-pal-it .d:empty{display:none}
+  .rg-pal-it .k{width:4.25rem}
+  /* popovers become bottom sheets */
+  .rg-scrim.clear{background:var(--rig-scrim)}
+  .rg-pop{left:0;right:0;bottom:0;width:auto;max-height:80dvh;padding:var(--rig-s4) var(--rig-s4) calc(var(--rig-s4) + env(safe-area-inset-bottom));border-width:1px 0 0;border-radius:var(--rig-r-lg) var(--rig-r-lg) 0 0}
+  /* a toast never covers an open sheet's rows: it moves under the top bar */
+  .rig:has(.rg-dock.open) .rg-toast{top:calc(var(--rig-tb-h) + var(--rig-s2));bottom:auto;transform:translateY(calc(-1 * var(--rig-s5)))}
+  .rig:has(.rg-dock.open) .rg-toast.show{transform:none}
+}
+
+/* ---------------------------------------------------------------- wide ≥1800: one re-point of the type and the chrome */
+@media (min-width:1800px){
+  .rig{--rig-fs-sm:14px;--rig-fs-md:15px;--rig-fs-lg:17px;--rig-fs-xl:22px;--rig-fs-2xl:30px;--rig-gutter:var(--rig-s6);--rig-rail-w:64px;--rig-side-w:256px;--rig-cmd-max:680px}
+}
+
+/* ---------------------------------------------------------------- coarse pointers: the chrome's small controls */
+@media (pointer:coarse){
+  .rg-tab .x{position:relative}
+  .rg-tab .x::after{content:"";position:absolute;left:50%;top:50%;width:var(--rig-hit);height:var(--rig-hit);transform:translate(-50%,-50%)}
+  .rg-sb .it{min-width:var(--rig-hit)}
+}
+
+/* ---------------------------------------------------------------- shared controls the views asked for
+   (UI contract v1, cross-ownership requests from the view owners) */
+/* the asking sentence: a word stays with its control */
+.rg-asking{gap:var(--rig-s2);line-height:var(--rig-lh-body)}
+.rg-asking-g{display:inline-flex;align-items:center;gap:var(--rig-s1) var(--rig-s2);flex-wrap:nowrap;max-width:100%;min-width:0}
+/* the comma sits against its select (no flex gap in front of it) */
+.rg-asking-t{display:inline-flex;align-items:center;min-width:0;max-width:100%}
+.rg-asking-p{padding-left:var(--rig-s0)}
+/* the brackets are real controls: --rig-h-ctl high (36 with a mouse, 44 on touch), one radius family */
+.rg-brk{min-width:0;max-width:100%}
+.rg-brk select{min-height:var(--rig-h-ctl);max-width:100%;padding:0 var(--rig-s5) 0 var(--rig-s2);font:var(--rig-fw-medium) var(--rig-fs-sm)/var(--rig-lh-tight) var(--rig-sans);transition:background-color var(--rig-dur-1) var(--rig-ease),border-color var(--rig-dur-1) var(--rig-ease)}
+.rg-brk::after{right:var(--rig-s2)}
+.rg-brk select:focus-visible{outline:var(--rig-focus-ring);outline-offset:var(--rig-focus-offset)}
+/* the one-line summary of the condition: only in a compact container (a phone) */
+.rg-asking-sum{display:none}
+@container (max-width:480px){
+  .rg-asking{display:grid;grid-template-columns:max-content minmax(0,1fr);gap:var(--rig-s2) var(--rig-s3);align-items:center}
+  .rg-asking-sum{display:flex;align-items:center;gap:var(--rig-s2);grid-column:1/-1;width:100%;min-width:0;min-height:var(--rig-h-ctl);padding:0 var(--rig-s3);border:1px solid var(--rig-line2);border-radius:var(--rig-r-md);background:var(--rig-panel2);color:var(--rig-text);text-align:left;font:var(--rig-fw-medium) var(--rig-fs-sm)/var(--rig-lh-tight) var(--rig-sans)}
+  .rg-asking-sum:hover{background:var(--rig-panel3);border-color:var(--rig-line3)}
+  .rg-asking-sum:focus-visible{outline:var(--rig-focus-ring);outline-offset:var(--rig-focus-offset)}
+  .rg-asking-sl{flex:none;color:var(--rig-mute);font:var(--rig-fw-medium) var(--rig-fs-2xs)/1 var(--rig-mono);letter-spacing:var(--rig-track-caps);text-transform:uppercase}
+  .rg-asking-sv{flex:1 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-family:var(--rig-mono)}
+  .rg-asking-sc{flex:none;color:var(--rig-mute);font-size:var(--rig-fs-2xs);transition:transform var(--rig-dur-2) var(--rig-ease)}
+  .rg-asking.open .rg-asking-sc{transform:rotate(180deg)}
+  /* closed: the summary alone; open: a label / control grid under it */
+  .rg-asking .rg-q-mark,.rg-asking:not(.open) .rg-asking-g,.rg-asking-x,.rg-asking-p{display:none}
+  .rg-asking.open .rg-asking-g,.rg-asking.open .rg-asking-t{display:contents}
+  .rg-asking.open .rg-brk select{width:100%}
+}
+/* "About this" is a control: a 32px row with a mouse (44px on touch, above) */
+@media (pointer:fine){.rg-about summary{min-height:calc(var(--rig-h-sm) + var(--rig-s1))}}
+/* a pin in a row of actions is as tall as its neighbours */
+:is(.rg-actbar,.rg-ph-actions,.rg-dh,.rg-card-acts)>.rg-pin:not(.cmp){height:var(--rig-h-ctl);padding:0 var(--rig-s3);gap:var(--rig-s2);border-radius:var(--rig-r-md)}
+/* a page title in a narrow document */
+@container rgdoc (max-width:640px){.rig .rg-dh h1{font-size:var(--rig-fs-xl)}}

@@ -21,7 +21,7 @@ import { makeSpec } from '../route'
 import { withEvidenceOrigin } from '../shallowEvidence'
 import { useDataset, useOverview, useRuns, useOutcomes, useRunDetail, useFindRun, short, sfx, verdict, tally, tokStats, fmt, resolveCondition, paths } from '../data'
 import { useRig, useTabState } from '../context'
-import { Panel, Loading, ErrorState, Empty, NextSteps, Btn, About, FailureChip, PinButton, AskingSentence, Verdict, VerdictText, OutcomeBar, Tag, Note, Seg, SearchBox, Switch, Go, Icon, Kbd, MOD, failureModeOf, FailureSummary } from '../ui'
+import { Panel, Loading, ErrorState, Empty, NextSteps, Btn, About, FailureChip, PinButton, AskingSentence, Verdict, VerdictText, OutcomeBar, Tag, Note, Seg, SearchBox, Switch, Go, Icon, Kbd, MOD, failureModeOf, FailureSummary, ActionBar, Tabs, TableScroll, ScrollX, Split, Toolbar } from '../ui'
 import { downloadText, useCaseFile } from '../caseFile'
 import { reviewKey, reviewReport } from '../../workspace/workspaceFacts'
 import { memberStorageKey } from '../memberStorage'
@@ -273,22 +273,22 @@ function EventList({ run, spans, open, onToggle, label = 'Recorded events', el =
             <div key={s.seq} className={cx('rg-traj-ev', on && 'on')} data-seq={s.seq}>
               <button type="button" aria-expanded={on} onClick={() => onToggle(on ? null : s.seq)}>
                 <span className="no">#{pad2(s.seq)}</span><Ki s={s} />
-                <span className="de">{spanDesc(s, nos.get(s.seq))}</span>
+                <span className="de" title={spanDesc(s, nos.get(s.seq))}>{spanDesc(s, nos.get(s.seq))}</span>
                 {isCutoff(s) && <Tag tone="red" nc>length</Tag>}
                 {s.span === 'boundary_event' && <Tag tone="red" nc>{s.status || 'boundary'}</Tag>}
                 <span className="tn rg-hide-sm">{spanTech(s)}</span>
               </button>
               {on && (
                 <div className="rg-traj-xp">
-                  <div className="rg-row rg-wrap rg-small rg-mono rg-dim" style={{ gap: 12 }}>
+                  <div className="rg-cluster rg-small rg-mono rg-dim rg-traj-xp-m">
                     <span>{s.ts || 'no timestamp'}</span>
                     {s.duration_ms != null && <span>{int(s.duration_ms)} ms</span>}
                     {s['gen_ai.usage.input_tokens'] != null && <span>{int(s['gen_ai.usage.input_tokens'])} in / {int(s['gen_ai.usage.output_tokens'])} out</span>}
                     {s.cost_usd != null && <span>{usd(s.cost_usd, 6)}</span>}
                     {s.span === 'chat' && <span>finish {finishOf(s).join(', ') || '—'}</span>}
                   </div>
-                  <pre className="rg-pre">{s.result_preview != null ? text(s.result_preview) : s.text ? s.text : s.args ? text(s.args) : callsOf(s).length ? text(callsOf(s)) : spanDesc(s, nos.get(s.seq))}</pre>
-                  <div className="rg-row rg-wrap">
+                  <pre className="rg-codeblock" tabIndex={0} aria-label={`Event #${s.seq} content`}>{s.result_preview != null ? text(s.result_preview) : s.text ? s.text : s.args ? text(s.args) : callsOf(s).length ? text(callsOf(s)) : spanDesc(s, nos.get(s.seq))}</pre>
+                  <div className="rg-cluster">
                     <Go spec={makeSpec('span', run.id, s.seq)} className="rg-btn">Open event #{s.seq} <Icon name="right" size={12} /></Go>
                     <PinButton item={eventPin(run, s, nos.get(s.seq))} />
                   </div>
@@ -309,13 +309,25 @@ function WhyFailed({ run, detail, oracle, meta, el = 'failure-finding', chip = t
   if (!story) return null
   return (
     <div className="rg-traj-why" data-el={el}>
-      <div className="rg-row rg-wrap rg-traj-why-h">
+      <div className="rg-cluster rg-traj-why-h">
         <span className="rg-lbl rg-red">How it failed</span>
         {chip && <FailureChip run={run} />}
       </div>
       <p className="rg-traj-why-t">{story.text}</p>
-      {story.refs.length > 0 && <div className="rg-row rg-wrap rg-traj-why-ev"><span className="rg-small rg-mute">Evidence</span>{story.refs.map((r) => <Ev key={r.seq + r.label} run={run} seq={r.seq} onPick={onPick}>{r.label}</Ev>)}</div>}
+      {story.refs.length > 0 && <div className="rg-cluster rg-traj-why-ev"><span className="rg-small rg-mute">Evidence</span>{story.refs.map((r) => <Ev key={r.seq + r.label} run={run} seq={r.seq} onPick={onPick}>{r.label}</Ev>)}</div>}
     </div>
+  )
+}
+
+/** The harness this run was recorded under (full JSON, fork into a draft). It comes after the
+ *  outcome and the trace: the method follows the answer. */
+function HarnessSection({ run, det }) {
+  return (
+    <section className="rg-traj-stack-s rg-traj-harness" aria-label="Recorded harness">
+      <h2 className="rg-traj-sh">Recorded harness <span className="rg-traj-h-m">{isSweRun(run) ? 'reconstructed by the importer' : 'the snapshot taken when this run started'}</span></h2>
+      <RecordedHarnessJson run={run} detail={det.data} loading={det.loading} error={det.error} onRetry={det.reload} />
+      <ForkRecordedHarness run={run} detail={det.data} loading={det.loading} error={det.error} />
+    </section>
   )
 }
 
@@ -400,7 +412,7 @@ function Findings({ run, detail, oracle }) {
       {pc.length > 0 && (
         <section>
           <h3 className="rg-traj-h">Recorded path <span className="rg-traj-h-m">one letter per tool call</span></h3>
-          <div className="rg-row rg-wrap rg-traj-pcodes">{pc.map((p) => <Go key={p.seq} spec={makeSpec('span', run.id, p.seq)} className="rg-traj-pcode" title={`#${p.seq} ${p.n}`}>{p.c}</Go>)}</div>
+          <div className="rg-cluster rg-traj-pcodes">{pc.map((p) => <Go key={p.seq} spec={makeSpec('span', run.id, p.seq)} className="rg-traj-pcode" title={`#${p.seq} ${p.n}`}>{p.c}</Go>)}</div>
           <p className="rg-tiny rg-mute rg-traj-legend">{used.map(([c, n]) => `${c} ${n}`).join(' · ')}</p>
         </section>
       )}
@@ -467,9 +479,9 @@ function PatchView({ run, detail, partner, partnerLabel }) {
   const lines = String(patch).split('\n')
   return (
     <div data-el="patch-view">
-      <div className="rg-row rg-wrap rg-traj-bodyh"><h3 className="rg-traj-h">Recorded diff <span className="rg-traj-h-m rg-mono">{(sm.files_touched || []).join(', ') || '—'}</span></h3><span className="rg-grow" />
+      <div className="rg-cluster rg-traj-bodyh"><h3 className="rg-traj-h">Recorded diff <span className="rg-traj-h-m rg-mono rg-break">{(sm.files_touched || []).join(', ') || '—'}</span></h3><span className="rg-grow" />
         <span className="rg-mono rg-small"><span className="rg-sky">+{sm.lines_added ?? '—'}</span> <span className="rg-red">−{sm.lines_removed ?? '—'}</span> · {int(sm.patch_bytes)} bytes</span></div>
-      <div className="rg-traj-diff">{lines.map((l, i) => <div key={i} className={l.startsWith('+++') || l.startsWith('---') ? 'rg-traj-dm' : l.startsWith('@@') ? 'rg-traj-dhk' : l.startsWith('+') ? 'rg-traj-da' : l.startsWith('-') ? 'rg-traj-dr' : undefined}>{l || ' '}</div>)}</div>
+      <div className="rg-traj-diff" role="region" tabIndex={0} aria-label="Recorded diff">{lines.map((l, i) => <div key={i} className={l.startsWith('+++') || l.startsWith('---') ? 'rg-traj-dm' : l.startsWith('@@') ? 'rg-traj-dhk' : l.startsWith('+') ? 'rg-traj-da' : l.startsWith('-') ? 'rg-traj-dr' : undefined}>{l || ' '}</div>)}</div>
     </div>
   )
 }
@@ -495,12 +507,14 @@ function RawRecord({ run, detail }) {
   const json = text(body)
   return (
     <div data-el="raw-record">
-      <div className="rg-row rg-wrap rg-traj-bodyh">
-        <span className="rg-lbl">{full ? `full recording · /api/results/${run.ds}/runs/${run.id}` : detail ? 'summary record' : 'run index row'}</span><span className="rg-grow" />
-        {detail && <Seg label="Record" options={[['s', 'summary'], ['f', 'full recording']]} value={full ? 'f' : 's'} onChange={(v) => setFull(v === 'f')} />}
-        <button type="button" className="rg-btn" onClick={() => { try { navigator.clipboard.writeText(json).then(() => toast('Raw record copied'), () => toast('Copy failed — select the text instead')) } catch { toast('Copy failed — select the text instead') } }}>Copy JSON</button>
+      <div className="rg-cluster rg-traj-bodyh">
+        <span className="rg-lbl rg-break rg-traj-rawl">{full ? `full recording · /api/results/${run.ds}/runs/${run.id}` : detail ? 'summary record' : 'run index row'}</span>
+        <span className="rg-cluster rg-traj-rawa">
+          {detail && <Seg label="Record" options={[['s', 'summary'], ['f', 'full recording']]} value={full ? 'f' : 's'} onChange={(v) => setFull(v === 'f')} />}
+          <button type="button" className="rg-btn" onClick={() => { try { navigator.clipboard.writeText(json).then(() => toast('Raw record copied'), () => toast('Copy failed — select the text instead')) } catch { toast('Copy failed — select the text instead') } }}>Copy JSON</button>
+        </span>
       </div>
-      <pre className="rg-pre rg-traj-raw">{json}</pre>
+      <pre className="rg-codeblock rg-traj-raw" tabIndex={0} aria-label="Raw record JSON">{json}</pre>
     </div>
   )
 }
@@ -523,12 +537,12 @@ function ChooseAttempt({ att, idx, oracle, runs }) {
       <h3 className="rg-traj-h">Compare run {pad2(idx + 1)} with another attempt</h3>
       <p className="rg-small rg-dim rg-traj-lede">Same task, model and harness: any difference between these is run-to-run variance. {MODKEY}-click Compare to open it beside this tab.</p>
       <Panel label="Attempts of this cell" meta={plural(att.length - 1, 'other')} flush>
-        <div className="rg-tblwrap"><table className="rg-tbl rg-traj-choose"><thead><tr><th>run</th><th>verdict</th><th className="rg-num rg-hide-sm">tokens</th><th className="rg-num rg-hide-sm">calls</th><th className="rg-hide-sm">exit</th><th /></tr></thead>
+        <TableScroll label="Attempts of this cell"><table className="rg-tbl rg-traj-choose"><thead><tr><th>run</th><th>verdict</th><th className="rg-num rg-cq-hide-sm">tokens</th><th className="rg-num rg-cq-hide-sm">calls</th><th className="rg-cq-hide-sm">exit</th><th><span className="sr-only">action</span></th></tr></thead>
           <tbody>{att.map((r, i) => i === idx ? null : (
-            <tr key={r.id}><td className="rg-mono">RUN {pad2(i + 1)} <span className="rg-mute rg-small">{sfx(r.id)}</span></td>
-              <td><span className="rg-row" style={{ gap: 6 }}><VerdictText v={verdict(r, oracle)} /><FailureChip run={r} /></span></td>
-              <td className="rg-num rg-hide-sm">{int(tokOf(r))}</td><td className="rg-num rg-hide-sm">{r.steps ?? '—'}</td><td className="rg-mono rg-small rg-hide-sm">{r.exit}</td>
-              <td className="rg-num"><Go spec={makeSpec('cmp', cur.id, r.id)} className="rg-btn">Compare</Go></td></tr>))}</tbody></table></div>
+            <tr key={r.id}><td className="rg-mono rg-nw">RUN {pad2(i + 1)} <span className="rg-mute rg-small">{sfx(r.id)}</span></td>
+              <td><span className="rg-cluster rg-traj-vchip"><VerdictText v={verdict(r, oracle)} /><FailureChip run={r} /></span></td>
+              <td className="rg-num rg-cq-hide-sm">{int(tokOf(r))}</td><td className="rg-num rg-cq-hide-sm">{r.steps ?? '—'}</td><td className="rg-mono rg-small rg-cq-hide-sm">{r.exit}</td>
+              <td className="rg-num"><Go spec={makeSpec('cmp', cur.id, r.id)} className="rg-btn">Compare</Go></td></tr>))}</tbody></table></TableScroll>
       </Panel>
     </div>
   )
@@ -545,7 +559,7 @@ function Lesson({ run, detail, att, oracle }) {
   return (
     <section className="rg-pnl rg-traj-lesson" data-el="lesson-panel">
       <div className="rg-pnl-h"><span className="rg-lbl rg-acc">Lesson · read this attempt</span><span className="meta">Student Lab</span></div>
-      <div className="rg-pnl-b rg-grid rg-g3">
+      <div className="rg-pnl-b rg-autogrid rg-traj-lesson-b">
         <div><div className="rg-lbl">1 · What happened</div><p className="rg-small">{spans.length ? `${plural(spans.filter((s) => s.span === 'chat').length, 'model call')}, ${ed ? `an edit to ${ed.path}` : 'no edit at all'}${cut ? `, ${cut} cut off at the output limit` : ''}` : `${plural(run.steps ?? 0, 'model call')}, ${plural(run.edits ?? 0, 'edit')}`}; graded {vWord(v)} on the {oracle} suite.</p></div>
         <div><div className="rg-lbl">2 · Investigate</div><p className="rg-small">The same condition passed {o.p} of {o.known} known attempts on this task. {o.p && o.f ? 'Open a passing attempt and find the first step where the two ledgers differ.' : 'Compare its path with a task where attempts disagree.'}</p></div>
         <div><div className="rg-lbl">3 · Why it matters</div><p className="rg-small">{o.known < 2 ? 'Repeat comparison unavailable: this task needs at least two known grades in the selected suite.' : o.p && o.f ? 'A single pass@1 hides this spread. Mixed outcomes under a fixed harness are variance, not a harness effect.' : 'The known repeats agree in this suite.'} {o.u > 0 && `${plural(o.u, 'ungraded attempt')} ${o.u === 1 ? 'remains' : 'remain'} unknown, not evidence of agreement.`}</p>
@@ -626,9 +640,16 @@ function TaskDoc({ spec, args }) {
   const facet = FACETS.some(([k]) => k === facet0) ? facet0 : 'findings'
   const navRef = useRef(null)
   useEffect(() => {
-    const l = navRef.current
-    const on = l && l.querySelector('.rg-traj-nav-it.on')
-    if (on && l.scrollWidth > l.clientWidth + 1) l.scrollLeft = Math.max(0, on.offsetLeft - l.offsetLeft - 12)
+    // the strip scrolls in its ScrollX viewport (or in the list itself where the shell makes it the scroller)
+    const list = navRef.current
+    const on = list && list.querySelector('.rg-traj-nav-it.on')
+    if (!on) return
+    for (const l of [list, list.parentElement]) {
+      if (l && l.scrollWidth > l.clientWidth + 1) {
+        const a = on.getBoundingClientRect(), b = l.getBoundingClientRect()
+        l.scrollLeft = Math.max(0, l.scrollLeft + a.left - b.left - 12)
+      }
+    }
   }, [task, row, R.data])
   if (ds.missing) return <Missing spec={spec} title={`There is no dataset named ${dir}.`} detail={`Nothing in data/runs on this machine is called ${dir}, so there is no task to investigate. It may have been renamed or not copied here.`} actions={[{ label: 'Choose a dataset', spec: 'home', primary: true }]} />
   if (ds.error || R.error) return <ErrorState error={ds.error || R.error} onRetry={ds.error ? ds.reload : R.reload} what={`The run index of ${dir}`} />
@@ -678,8 +699,8 @@ function TaskDoc({ spec, args }) {
     const issue = (det.data && det.data.issue) || (tmeta && tmeta.issue)
     body = (
       <div data-el="task-text">{issue ? <>
-        <div className="rg-row rg-wrap rg-traj-bodyh"><h3 className="rg-traj-h">The issue the agent was given</h3><span className="rg-grow" />{tmeta && tmeta.src_files && <span className="rg-mono rg-small rg-mute">src: {tmeta.src_files.join(', ')}</span>}</div>
-        <pre className="rg-pre rg-traj-issue">{issue}</pre></> : det.data || det.error
+        <div className="rg-row rg-wrap rg-traj-bodyh"><h3 className="rg-traj-h">The issue the agent was given</h3><span className="rg-grow" />{tmeta && tmeta.src_files && <span className="rg-mono rg-small rg-mute rg-break">src: {tmeta.src_files.join(', ')}</span>}</div>
+        <pre className="rg-codeblock rg-traj-issue" tabIndex={0} aria-label="Task issue text">{issue}</pre></> : det.data || det.error
         ? <Empty title="No task text recorded." actions={[{ label: 'What the agent did (Findings)', onClick: () => replaceTab(tspec(idx, 'findings')), primary: true }, { label: 'Raw record', onClick: () => replaceTab(tspec(idx, 'raw')) }]}>Neither this recording nor the benchmark index carries the issue text for <span className="rg-mono">{task}</span>. The agent's own first reply and tool calls show how it read the task.</Empty>
         : <Loading />}</div>
     )
@@ -696,13 +717,13 @@ function TaskDoc({ spec, args }) {
           <div className="rg-traj-nav-q"><SearchBox value={nq} onChange={setNq} placeholder="Filter tasks" /></div>
         </div>
         <div className="rg-lbl rg-traj-nav-sh" title="The task stays selected when you switch model or harness in the sentence above. Run numbers are scoped to each condition.">{plural(tasks.length, 'task')} · {short(model)}</div>
-        <div className="rg-traj-nav-list" ref={navRef}>
+        <ScrollX className="rg-traj-nav-sx"><div className="rg-traj-nav-list" ref={navRef}>
           {navTasks.map((t) => {
             const l = attemptsOf(cellRuns, model, harness, t)
             const oo = tally(l, oracle)
             return (
-              <button key={t} type="button" className={cx('rg-traj-nav-it', t === task && 'on')} aria-current={t === task ? 'page' : undefined} onClick={() => replaceTab(makeSpec('task', ...b, t))}>
-                <span className="rg-row"><span className="rg-mono rg-ell rg-grow">{t}</span><span className="n">{oo.p}✓ {oo.f}×{oo.u ? ` ${oo.u}?` : ''}</span></span>
+              <button key={t} type="button" className={cx('rg-traj-nav-it', t === task && 'on')} aria-current={t === task ? 'page' : undefined} title={t} onClick={() => replaceTab(makeSpec('task', ...b, t))}>
+                <span className="rg-traj-nav-r"><span className="rg-mono rg-ell rg-grow">{t}</span><span className="n">{oo.p}✓ {oo.f}×{oo.u ? ` ${oo.u}?` : ''}</span></span>
                 <OutcomeBar p={oo.p} f={oo.f} u={oo.u} />
               </button>
             )
@@ -713,7 +734,7 @@ function TaskDoc({ spec, args }) {
               <button type="button" className="rg-btn" onClick={() => setNq('')}>Clear filter</button>
             </div>
           )}
-        </div>
+        </div></ScrollX>
       </aside>
       <div className="rg-dpad rg-traj-main">
         <div className="rg-traj-lead">
@@ -742,12 +763,13 @@ function TaskDoc({ spec, args }) {
           <div className="rg-traj-sel-h">
             <h2 className="rg-traj-sel-t"><Verdict v={v} /><span>Run {pad2(idx + 1)} <span className="rg-mute">of {att.length}</span></span><span className={v === true ? 'rg-sky' : v === false ? 'rg-red' : 'rg-mute'}>{v === true ? 'passed' : v === false ? 'failed' : 'unknown grade'}</span>
               {mode && <span data-el="failure-mode"><FailureChip run={run} /></span>}</h2>
-            <span className="rg-traj-acts" data-el="run-actions">
-              {partner && <Go spec={makeSpec('cmp', run.id, partner.id)} className="rg-btn pri"><Icon name="cmp" size={13} />{partnerLabel}</Go>}
-              <Go spec={makeSpec('run', run.id)} className="rg-btn">Open run ledger</Go>
+            <ActionBar label="Attempt actions" el="run-actions" className="rg-traj-acts" actions={[
+              partner && { label: <><Icon name="cmp" size={13} />{partnerLabel}</>, spec: makeSpec('cmp', run.id, partner.id), primary: true },
+              { label: 'Open run ledger', spec: makeSpec('run', run.id), more: !!partner },
+            ]}>
               <Go spec={withEvidenceOrigin('shallowWizard', tspec(idx))} className="rg-btn" el="design-harness-from-evidence">Design a harness</Go>
               <PinButton item={runPin(run, oracle, meta)} />
-            </span>
+            </ActionBar>
           </div>
           {v === false
             ? (det.data ? <WhyFailed run={run} detail={det.data} oracle={oracle} meta={meta} chip={false} />
@@ -763,24 +785,18 @@ function TaskDoc({ spec, args }) {
               <div><dt>exit</dt><dd className="rg-mono">{run.exit || '—'}</dd></div>
               <div className="rg-traj-qf-id"><dt>run id</dt><dd className="rg-mono rg-traj-id">{run.id}</dd></div>
             </dl>
-            <span className="rg-traj-quiet-acts">
+            <span className="rg-cluster rg-traj-quiet-acts">
               <button type="button" className="rg-btn ghost" onClick={copyLink}>Copy link</button>
               {facet !== 'notes' && <Btn className="ghost" disabled={!det.data} why={exportWhy} onClick={() => doExport()} data-el="export-review">Export review</Btn>}
             </span>
           </div>
         </section>
-        <RecordedHarnessJson run={run} detail={det.data} loading={det.loading} error={det.error} onRetry={det.reload} />
-      <ForkRecordedHarness run={run} detail={det.data} loading={det.loading} error={det.error} />
-        <section className="rg-traj-evsec">
-          <div className="rg-traj-facets" role="tablist" data-el="inv-tabs" aria-label="Evidence">
-            {FACETS.map(([k, l]) => (
-              <button key={k} type="button" role="tab" aria-selected={k === facet} className={k === facet ? 'on' : ''} onClick={() => replaceTab(tspec(idx, k))}>
-                {l}{k === 'timeline' && det.data && <span className="n">{spans.length}</span>}
-              </button>
-            ))}
-          </div>
-          <div className="rg-traj-body" role="tabpanel">{body}</div>
+        <section className="rg-traj-evsec" aria-label="Evidence">
+          <Tabs label="Evidence" el="inv-tabs" idBase={`inv-${run.id}`} value={facet} onChange={(k) => replaceTab(tspec(idx, k))}
+            tabs={FACETS.map(([k, l]) => [k, l, k === 'timeline' && det.data ? spans.length : undefined])} />
+          <div className="rg-traj-body" role="tabpanel" aria-labelledby={`inv-${run.id}-${facet}`}>{body}</div>
         </section>
+        <HarnessSection run={run} det={det} />
       </div>
     </div>
   )
@@ -864,18 +880,17 @@ function RunDoc({ spec, args }) {
     <div className="rg-dpad rg-traj-doc rg-traj-stack">
       <header className="rg-dh rg-traj-dh">
         <div className="t"><div className="rg-eyebrow"><Crumbs parts={[run.task, short(run.model), run.harness, `run ${pad2(ai + 1)} of ${att.length || '—'}`]} /></div>
-          <h1 className="rg-mono rg-row rg-wrap rg-traj-h1"><Verdict v={v} /><span className="rg-traj-id">{run.id}</span><FailureChip run={run} /></h1></div>
-        <div className="rg-row rg-wrap">
-          {spans.length > 0 && <button type="button" className={cx('rg-btn', replay ? 'pri' : '')} aria-pressed={replay} onClick={() => setReplay(!replay)}>▶ Replay as live</button>}
-          {other && <Go spec={makeSpec('cmp', run.id, other.id)} className="rg-btn">Compare with {sfx(other.id)}</Go>}
-          <Go spec={taskSpecOf(run, ai >= 0 ? ai : null)} className="rg-btn">Task investigator</Go>
+          <h1 className="rg-mono rg-row rg-wrap rg-traj-h1"><span className="rg-traj-idg"><Verdict v={v} /><span className="rg-traj-id">{run.id}</span></span><FailureChip run={run} /></h1></div>
+        <ActionBar label="Run actions" className="rg-traj-acts" actions={[
+          spans.length > 0 && { label: '▶ Replay as live', onClick: () => setReplay(!replay), primary: replay, pressed: replay },
+          other && { label: `Compare with ${sfx(other.id)}`, spec: makeSpec('cmp', run.id, other.id), more: true },
+          { label: 'Task investigator', spec: taskSpecOf(run, ai >= 0 ? ai : null), more: true },
+        ]}>
           <Go spec={withEvidenceOrigin('shallowWizard', spec)} className="rg-btn" el="design-harness-from-evidence">Design a harness</Go>
           <PinButton item={runPin(run, oracle, meta)} />
-        </div>
+        </ActionBar>
       </header>
       <RecordingProvenance runs={[run]} />
-      <RecordedHarnessJson run={run} detail={det.data} loading={det.loading} error={det.error} onRetry={det.reload} />
-      <ForkRecordedHarness run={run} detail={det.data} loading={det.loading} error={det.error} />
       {replay && spans.length ? <ReplayLanes run={run} spans={spans} onExit={() => setReplay(false)} /> : (<>
         {v === false && det.data && <WhyFailed run={run} detail={det.data} oracle={oracle} meta={meta} onPick={onSel} />}
         <DetailGate det={det} run={run} what="event list" runs={runs}>
@@ -884,19 +899,21 @@ function RunDoc({ spec, args }) {
             <div ref={listRef}><RunConsole run={run} spans={spans} replay={det.data && det.data.replay} sel={sel} onSel={onSel} verdictOf={v} /></div>
           </section>
         </DetailGate>
-        <section data-el="run-facts" aria-label="Run facts">
+        <section className="rg-traj-facts" data-el="run-facts" aria-label="Run facts">
           <h2 className="rg-traj-sh">Run facts <span className="rg-traj-h-m">{run.ds} · repeat {run.rep ?? '—'}</span></h2>
           <div className="rg-traj-fgroups">{groups.map(([g, fs]) => (
             <dl key={g} className="rg-traj-fg"><div className="rg-traj-fg-h">{g}</div>{fs.map(([l, x]) => <div key={l} className="rg-traj-fg-r"><dt>{l}</dt><dd className="rg-mono">{x}</dd></div>)}</dl>
           ))}</div>
         </section>
       </>)}
+      <HarnessSection run={run} det={det} />
     </div>
   )
 }
 function RunActions() {
   const { toggleDock, state } = useRig()
-  return <button type="button" className={cx('rg-btn ghost', state && state.dock === 'log' && 'on')} onClick={() => toggleDock('log')} title="Event log of the focused run"><Icon name="log" size={13} /><span className="rg-hide-sm">Event log</span></button>
+  // rg-sb-dup: on a phone the status bar's Event log launcher does the same, so this copy is not drawn there
+  return <button type="button" className={cx('rg-btn ghost rg-sb-dup', state && state.dock === 'log' && 'on')} onClick={() => toggleDock('log')} title="Event log of the focused run"><Icon name="log" size={13} /><span className="rg-hide-sm">Event log</span></button>
 }
 
 /* ================================================================== span document */
@@ -943,16 +960,29 @@ function SpanDoc({ spec, args }) {
       <header className="rg-dh rg-traj-dh">
         <div className="t"><div className="rg-eyebrow"><Crumbs parts={[run.task, short(run.model), run.harness, `run ${sfx(run.id)}`, `event ${i + 1} of ${spans.length}`]} /></div>
           <h1 className="rg-mono rg-row rg-wrap rg-traj-h1"><Ki s={s} />Event #{s.seq} · {KIND_WORD[spanKind(s)]}</h1></div>
-        <div className="rg-row rg-wrap">
-          {i > 0 && <button type="button" className="rg-btn" onClick={() => step(-1)}>↑ prev</button>}
-          {i < spans.length - 1 && <button type="button" className="rg-btn" onClick={() => step(1)}>↓ next</button>}
-          <Go spec={makeSpec('run', run.id)} className="rg-btn">Open run</Go>
+        <ActionBar label="Event actions" className="rg-traj-acts" actions={[
+          i > 0 && { label: '↑ prev', onClick: () => step(-1) },
+          i < spans.length - 1 && { label: '↓ next', onClick: () => step(1) },
+          { label: 'Open run', spec: makeSpec('run', run.id), more: true },
+        ]}>
           <Go spec={withEvidenceOrigin('shallowWizard', spec)} className="rg-btn" el="design-harness-from-evidence">Design a harness</Go>
           <PinButton item={eventPin(run, s, nos.get(s.seq))} />
-        </div>
+        </ActionBar>
       </header>
       <RecordingProvenance runs={[run]} />
-      <div className="rg-traj-spangrid">
+      <Split end sideWidth="22rem" sideLabel="All events" side={(
+        <Panel label="All events" meta={`${spans.length} spans`} flush className="rg-traj-spanlist">
+          <div className="rg-traj-evs">
+            {spans.map((x) => (
+              <div key={x.seq} className={cx('rg-traj-ev', x.seq === s.seq && 'on')}>
+                <button type="button" aria-current={x.seq === s.seq ? 'true' : undefined} onClick={() => replaceTab(makeSpec('span', args[0], x.seq))}>
+                  <span className="no">#{pad2(x.seq)}</span><Ki s={x} /><span className="de" title={spanDesc(x, nos.get(x.seq))}>{spanDesc(x, nos.get(x.seq))}</span>{isCutoff(x) && <Tag tone="red" nc>length</Tag>}
+                </button>
+              </div>
+            ))}
+          </div>
+        </Panel>
+      )}>
         <section className="rg-pnl" data-el="span-detail" aria-label={`Span ${s.seq}`}>
           <div className="rg-pnl-h"><span className="rg-lbl">Span #{s.seq}</span><span className="meta"><Ki s={s} />{s.span}</span></div>
           <div className="rg-pnl-b rg-col rg-traj-spanb">
@@ -970,29 +1000,16 @@ function SpanDoc({ spec, args }) {
             )}
             <h3 className="rg-mono rg-traj-h3">{spanDesc(s, nos.get(s.seq))}</h3>
             <dl className="rg-kv">{fields.map(([k, x]) => <FragmentKV key={k} k={k} v={x} />)}<dt>ts</dt><dd>{s.ts || '—'}</dd></dl>
-            {s.text ? <div><div className="rg-lbl rg-traj-lblgap">model text</div><pre className="rg-pre">{s.text}</pre></div> : s.span === 'chat' ? <p className="rg-tiny rg-mute rg-traj-m0">No model text recorded for this reply.</p> : null}
-            {callsOf(s).length > 0 && <div><div className="rg-lbl rg-traj-lblgap">requested tools</div><pre className="rg-pre">{text(callsOf(s))}</pre></div>}
-            {s.args && Object.keys(s.args).length > 0 && <div><div className="rg-lbl rg-traj-lblgap">arguments</div><pre className="rg-pre">{text(s.args)}</pre></div>}
-            {s.result_preview != null && <div><div className="rg-lbl rg-traj-lblgap">result (preview — the recorder may truncate)</div><pre className="rg-pre">{text(s.result_preview)}</pre></div>}
-            {s.harness && typeof s.harness === 'object' && <div><div className="rg-lbl rg-traj-lblgap">{isSweRun(run) ? 'importer-reconstructed harness configuration' : 'recorded harness configuration'}</div><pre className="rg-pre">{text(s.harness)}</pre></div>}
-            <details><summary className="rg-lbl rg-traj-sum-t">payload · raw span</summary><pre className="rg-pre rg-traj-mt">{text(payload)}</pre></details>
-            <div className="rg-row rg-wrap">
-              {forkable && <Go spec={makeSpec('fork', run.id, s.seq)} className="rg-btn"><Icon name="fork" size={13} />Fork at this step</Go>}
-            </div>
+            {s.text ? <div><div className="rg-lbl rg-traj-lblgap">model text</div><pre className="rg-codeblock" tabIndex={0} aria-label="Model text">{s.text}</pre></div> : s.span === 'chat' ? <p className="rg-tiny rg-mute rg-traj-m0">No model text recorded for this reply.</p> : null}
+            {callsOf(s).length > 0 && <div><div className="rg-lbl rg-traj-lblgap">requested tools</div><pre className="rg-codeblock" tabIndex={0} aria-label="Requested tools">{text(callsOf(s))}</pre></div>}
+            {s.args && Object.keys(s.args).length > 0 && <div><div className="rg-lbl rg-traj-lblgap">arguments</div><pre className="rg-codeblock" tabIndex={0} aria-label="Arguments">{text(s.args)}</pre></div>}
+            {s.result_preview != null && <div><div className="rg-lbl rg-traj-lblgap">result (preview — the recorder may truncate)</div><pre className="rg-codeblock" tabIndex={0} aria-label="Result preview">{text(s.result_preview)}</pre></div>}
+            {s.harness && typeof s.harness === 'object' && <div><div className="rg-lbl rg-traj-lblgap">{isSweRun(run) ? 'importer-reconstructed harness configuration' : 'recorded harness configuration'}</div><pre className="rg-codeblock" tabIndex={0} aria-label="Harness configuration">{text(s.harness)}</pre></div>}
+            <details className="rg-traj-raw-d"><summary className="rg-lbl rg-traj-sum-t">payload · raw span</summary><pre className="rg-codeblock rg-traj-mt" tabIndex={0} aria-label="Raw span">{text(payload)}</pre></details>
+            {forkable && <div className="rg-cluster"><Go spec={makeSpec('fork', run.id, s.seq)} className="rg-btn"><Icon name="fork" size={13} />Fork at this step</Go></div>}
           </div>
         </section>
-        <Panel label="All events" meta={`${spans.length} spans`} flush className="rg-traj-spanlist">
-          <div className="rg-traj-evs">
-            {spans.map((x) => (
-              <div key={x.seq} className={cx('rg-traj-ev', x.seq === s.seq && 'on')}>
-                <button type="button" aria-current={x.seq === s.seq ? 'true' : undefined} onClick={() => replaceTab(makeSpec('span', args[0], x.seq))}>
-                  <span className="no">#{pad2(x.seq)}</span><Ki s={x} /><span className="de">{spanDesc(x, nos.get(x.seq))}</span>{isCutoff(x) && <Tag tone="red" nc>length</Tag>}
-                </button>
-              </div>
-            ))}
-          </div>
-        </Panel>
-      </div>
+      </Split>
       <p className="rg-small rg-mute">The {oracle} suite graded this run {vWord(verdict(run, oracle)) === 'unknown' ? 'unknown (not a failure)' : vWord(verdict(run, oracle))}.</p>
     </div>
   )
@@ -1049,7 +1066,7 @@ function PairPicker() {
         <section className="rg-traj-stack-s">
           <h2 className="rg-traj-sh">Pinned runs <span className="rg-traj-h-m">{ids.length > 2 ? 'tick two' : plural(ids.length, 'run')}</span></h2>
           <div className="rg-traj-picks">{ids.map((id) => (
-            <label key={id} className="rg-row rg-small rg-mono rg-traj-pick"><input type="checkbox" checked={sel.includes(id)} onChange={() => setPick(sel.includes(id) ? sel.filter((x) => x !== id) : [...sel, id].slice(-2))} />{id}</label>
+            <label key={id} className="rg-row rg-small rg-mono rg-traj-pick"><input type="checkbox" checked={sel.includes(id)} onChange={() => setPick(sel.includes(id) ? sel.filter((x) => x !== id) : [...sel, id].slice(-2))} /><span className="rg-break">{id}</span></label>
           ))}</div>
           {ids.length === 1 && <p className="rg-small rg-dim">One run is pinned. Pin a second one (a repeat of the same task works best), or open this run and use its Compare button.</p>}
           <div className="rg-row rg-wrap">
@@ -1074,13 +1091,13 @@ function CmpHead({ r, spans, tag, oracle }) {
       <div className="rg-pnl-h"><span className={cx('rg-tag', tag === 'A' ? 'acc' : undefined)}>{tag}</span>
         <Go spec={makeSpec('run', r.id)} className="rg-tlink rg-ell"><b>{sfx(r.id)}</b> · {r.harness}</Go>
         <span className="meta"><VerdictText v={verdict(r, oracle)} /></span></div>
-      <div className="rg-pnl-b rg-col" style={{ gap: 6 }}>
-        <div className="rg-mono rg-small rg-dim rg-ell">{short(r.model)} · {r.task} · repeat {r.rep ?? '—'} · seed {spans ? (seedOf(spans) ?? '—') : '…'}</div>
-        <div className="rg-row rg-wrap rg-mono rg-small" style={{ gap: 12 }}>
+      <div className="rg-pnl-b rg-stack rg-stack-sm">
+        <div className="rg-mono rg-small rg-dim rg-break">{short(r.model)} · {r.task} · repeat {r.rep ?? '—'} · seed {spans ? (seedOf(spans) ?? '—') : '…'}</div>
+        <div className="rg-cluster rg-mono rg-small rg-traj-headfacts">
           <span>{st ? st.length : '—'} actions</span><span>{plural(r.edits ?? 0, 'edit')}</span><span>{r.bnd ? plural(r.bnd, 'boundary event') : 'no boundary events'}</span><span>{int(tokOf(r))} tok</span>
           {spans && spans.some(isCutoff) && <span className="rg-red">{spans.filter(isCutoff).length} cut off</span>}
         </div>
-        <div className="rg-row rg-wrap" style={{ gap: 6 }}><FailureChip run={r} /><PinButton compact item={runPin(r, oracle)} /></div>
+        <div className="rg-cluster"><FailureChip run={r} /><PinButton item={runPin(r, oracle)} /></div>
       </div>
     </section>
   )
@@ -1141,7 +1158,7 @@ function CmpDoc({ spec, args }) {
     }
     const fa = xa[first], fb = xb[first]
     div = (
-      <div className="rg-traj-divgrid">
+      <Split sideWidth="20rem" sideLabel="First divergence" side={(
         <div className="rg-traj-stack-s">
           <div className="rg-pnl rg-traj-verdict"><div className="rg-pnl-h"><span className="rg-lbl rg-amb">First divergence</span></div>
             <div className="rg-pnl-b"><div className="rg-fig md amb">{first < 0 ? 'no fork' : 'step ' + (first + 1)}</div>
@@ -1149,18 +1166,19 @@ function CmpDoc({ spec, args }) {
               {fa && <Go spec={makeSpec('fork', A.id, fa.seq)} className="rg-btn">Fork A at this step →</Go>}</div></div>
           <Note><div><b>What this pair does not license.</b> One pair is one anecdote. A claim about {cls === 'same' ? 'run-to-run variance' : 'the difference'} comes from the {int(cls === 'cross' ? pc.cross : pc.same)} pairs of this class read as a paired set, not from this pair.</div></Note>
         </div>
+      )}>
         <Panel label="Aligned steps" meta={`${xa.length} vs ${xb.length} actions`} flush>
-          <div className="rg-tblwrap rg-traj-aligned"><table className="rg-tbl rg-keep"><thead><tr><th className="rg-num">step</th><th>A · {sfx(A.id)}</th><th>B · {sfx(B.id)}</th><th>aligned</th></tr></thead><tbody>{rows}</tbody></table></div>
+          <TableScroll label="Aligned steps of runs A and B" maxHeight={560} className="rg-traj-aligned"><table className="rg-tbl rg-keep"><thead><tr><th className="rg-num">step</th><th>A · {sfx(A.id)}</th><th>B · {sfx(B.id)}</th><th>aligned</th></tr></thead><tbody>{rows}</tbody></table></TableScroll>
           <p className="rg-tiny rg-mute rg-traj-pad">Steps align by position; a step matches when its span kind and tool name match, so “same” means the same action, not the same text.</p>
         </Panel>
-      </div>
+      </Split>
     )
   }
   return (
     <div className="rg-dpad rg-traj-doc rg-traj-stack">
       <div className="rg-traj-stack-s">
       <header className="rg-dh rg-traj-dh"><div className="t"><div className="rg-eyebrow">Compare · the first step where two ledgers differ</div><h1 className="rg-mono">{sfx(A.id)} ↔ {sfx(B.id)}</h1></div></header>
-      <div className="rg-row rg-wrap rg-traj-pairrow" data-el="pair-class"><span className="rg-lbl">pair class</span>
+      <div className="rg-cluster rg-traj-pairrow" data-el="pair-class"><span className="rg-lbl">pair class</span>
         <div className="rg-seg rg-traj-pairseg" role="group" aria-label="Pair class">
           {[['seed', `seed-paired · ${seedState === 'same' ? 'this pair' : seedState === 'diff' ? 'not this pair' : 'checking…'}`], ['same', `repeat of same cell · ${int(pc.same)}`], ['cross', `cross-harness · ${int(pc.cross)}`]].map(([k, l]) => (
             <button key={k} type="button" className={(k === 'seed' ? seedState === 'same' : cls === k) ? 'on' : ''} aria-pressed={k === 'seed' ? seedState === 'same' : cls === k} onClick={() => pickCls(k)}>{l}</button>
@@ -1225,15 +1243,15 @@ function ForkDoc({ spec, args }) {
           <p>The steps before the edit would be replayed from the recorded ledger; everything after it would be a new live run under the harness you choose.</p></div></header>
         {asked != null && String(seq) !== asked && <Note>Run {sfx(run.id)} has no model call, tool call or edit at #{asked}, so the fork starts at step #{seq} instead. Pick any step on the left.</Note>}
       </div>
-      <div className="rg-traj-forkgrid">
-        <Panel label="Pick the step to change" meta={`${steps.length} steps`} flush>
+      <Split sideWidth="24rem" sideLabel="Steps of the run" side={(
+        <Panel label="Pick the step to change" meta={`${steps.length} steps`} flush className="rg-traj-forklist">
           <div className="rg-traj-evs">
             {steps.map((x) => {
               const dropped = x.seq > seq
               return (
                 <div key={x.seq} className={cx('rg-traj-ev', x.seq === seq && 'on', dropped && 'dropped')}>
                   <button type="button" aria-current={x.seq === seq ? 'true' : undefined} onClick={() => replaceTab(makeSpec('fork', run.id, x.seq))}>
-                    <span className="no">#{pad2(x.seq)}</span><Ki s={x} /><span className="de">{spanDesc(x, nos.get(x.seq))}</span><span className="tn">{dropped ? 'dropped' : x.seq === seq ? 'edit here' : 'replayed'}</span>
+                    <span className="no">#{pad2(x.seq)}</span><Ki s={x} /><span className="de" title={spanDesc(x, nos.get(x.seq))}>{spanDesc(x, nos.get(x.seq))}</span><span className="tn">{dropped ? 'dropped' : x.seq === seq ? 'edit here' : 'replayed'}</span>
                   </button>
                 </div>
               )
@@ -1241,26 +1259,27 @@ function ForkDoc({ spec, args }) {
           </div>
           <p className="rg-tiny rg-mute rg-traj-pad">Steps after the fork are dropped: the recorded ending is not evidence about a branch the run never took.</p>
         </Panel>
+      )}>
         <div className="rg-traj-stack-s">
           <Panel label={`Step #${seq} · ${KIND_WORD[spanKind(s)]}`} meta="the one step that would change">
             <div className="rg-traj-stack-s">
               <div><div className="rg-lbl rg-traj-lblgap">As recorded</div>
-                <pre className="rg-pre">{spanDesc(s, nos.get(s.seq))}{s.result_preview ? '\n→ ' + String(s.result_preview).slice(0, 220) : ''}</pre></div>
-              <Seg label="Change" options={[['tool', 'change the tool'], ['args', 'change the arguments'], ['drop', 'drop the step'], ['inject', 'inject a new step']]} value={mode} onChange={setMode} />
+                <pre className="rg-codeblock" tabIndex={0} aria-label={`Step #${seq} as recorded`}>{spanDesc(s, nos.get(s.seq))}{s.result_preview ? '\n→ ' + String(s.result_preview).slice(0, 220) : ''}</pre></div>
+              <div className="rg-traj-forkseg"><Seg label="Change" options={[['tool', 'change the tool'], ['args', 'change the arguments'], ['drop', 'drop the step'], ['inject', 'inject a new step']]} value={mode} onChange={setMode} /></div>
               {mode === 'drop'
-                ? <p className="rg-small rg-dim">Dropping removes step #{seq}; there is nothing to edit. The run would continue from step #{(steps.find((x) => x.seq > seq) || {}).seq ?? '—'} as if #{seq} never happened.</p>
-                : <label className="rg-fld">Your change (held in this tab only, never sent)
+                ? <p className="rg-small rg-dim rg-traj-m0">Dropping removes step #{seq}; there is nothing to edit. The run would continue from step #{(steps.find((x) => x.seq > seq) || {}).seq ?? '—'} as if #{seq} never happened.</p>
+                : <label className="rg-fld rg-traj-forkdraft">Your change (held in this tab only, never sent)
                   <textarea className="rg-inp" rows={5} value={draft ?? recorded} onChange={(e) => setDraft(e.target.value)} /></label>}
-              <div className="rg-grid rg-g3 rg-traj-forkopts">
+              <div className="rg-autogrid rg-traj-forkopts">
                 <label className="rg-fld">continue under<select className="rg-selc" value={hh || run.harness} onChange={(e) => setHh(e.target.value)}>{(row ? row.harnesses : [run.harness]).map((x) => <option key={x} value={x}>{x}</option>)}</select></label>
                 <label className="rg-fld">model<select className="rg-selc" value={mm || run.model} onChange={(e) => setMm(e.target.value)}>{(row ? row.models : [run.model]).map((x) => <option key={x} value={x}>{short(x)}</option>)}</select></label>
                 <label className="rg-fld">repeats<input className="rg-inp" type="number" min={1} max={50} value={reps} onChange={(e) => setReps(Math.max(1, Math.min(50, +e.target.value || 1)))} /></label>
               </div>
-              <div className="rg-row"><button type="button" className="rg-btn" onClick={() => { setDraft(null); setMode('args'); setHh(null); setMm(null); setReps(8); toast('Fork draft discarded') }}>Discard draft</button></div>
+              <div className="rg-cluster"><button type="button" className="rg-btn" onClick={() => { setDraft(null); setMode('args'); setHh(null); setMm(null); setReps(8); toast('Fork draft discarded') }}>Discard draft</button></div>
             </div>
           </Panel>
           <section className="rg-traj-unavail" data-el="fork-unavailable" aria-label="Running a fork">
-            <div className="rg-row rg-wrap"><b>Running this fork is not available.</b><Tag tone="red">not implemented · proposed capability</Tag></div>
+            <div className="rg-cluster"><b>Running this fork is not available.</b><Tag tone="red">not implemented · proposed capability</Tag></div>
             <p className="rg-small rg-dim">The backend's <span className="rg-mono">/api/fork</span> routes only compare recorded runs, and the agentlab CLI has no fork runner, so no edited step can be executed yet. The closest real measurements are another recorded repeat of the same cell, or new runs of this condition:</p>
             <NextSteps actions={[
               sib && { label: `Compare with repeat ${sfx(sib.id)}`, spec: makeSpec('cmp', run.id, sib.id), primary: true },
@@ -1274,10 +1293,10 @@ function ForkDoc({ spec, args }) {
               <li>Conduct and trajectory tests would apply to the branch exactly as to any recorded run.</li>
               <li>It is not a paired twin: the prefix is shared by construction, so its fork index is trivially the step you edited.</li>
             </ul>
-            <dl className="rg-kv rg-traj-forkkv"><dt>would record to</dt><dd>data/runs/forks/{sfx(run.id)}_s{seq}/ (proposed)</dd><dt>parent</dt><dd>{run.id}</dd><dt>fork_step</dt><dd>{seq}</dd><dt>prefix</dt><dd>replayed · {plural(spans.filter((x) => x.seq < seq).length, 'span')}</dd></dl>
+            <dl className="rg-kv rg-traj-forkkv"><dt>would record to</dt><dd className="rg-break">data/runs/forks/{sfx(run.id)}_s{seq}/ (proposed)</dd><dt>parent</dt><dd className="rg-break">{run.id}</dd><dt>fork_step</dt><dd>{seq}</dd><dt>prefix</dt><dd>replayed · {plural(spans.filter((x) => x.seq < seq).length, 'span')}</dd></dl>
           </About>
         </div>
-      </div>
+      </Split>
     </div>
   )
 }
@@ -1325,22 +1344,23 @@ function FieldDoc({ spec, args }) {
   const label = (m) => (meta[m] && meta[m].label) || (m === 'strengthened_only' ? 'strengthened only' : m.replace(/_/g, ' '))
   return (
     <div className="rg-dpad rg-traj-doc rg-traj-stack">
-      <RecordingProvenance runs={scope} />
       <header className="rg-dh rg-traj-dh"><div className="t"><div className="rg-eyebrow">{dir} · recorded trajectories</div><h1>Every run, every span</h1>
         <p>Open any run to follow its outcome into the recorded actions.{nNoLedger ? <> {int(nNoLedger)} of {int(scope.length)} runs in scope have no ledger and are marked <span className="rg-traj-led">no ledger</span>.</> : ''}</p></div></header>
+      <RecordingProvenance runs={scope} />
       <div data-el="field-run-list" className="rg-traj-stack-s">
-        <div className="rg-row rg-wrap rg-traj-filters">
+        <Toolbar label="Filter runs" twoUp>
           <SearchBox value={q} onChange={reset(setQ)} placeholder="Search run id, task, model, harness, exit" el="field-search" />
           <select className="rg-selc" aria-label="Model scope" value={mf} onChange={(e) => reset(setMf)(e.target.value)}><option value="all">All models</option>{row.models.map((m) => <option key={m} value={m}>{short(m)}</option>)}</select>
           <select className="rg-selc" aria-label="Harness scope" value={hf} onChange={(e) => reset(setHf)(e.target.value)}><option value="all">All harnesses</option>{row.harnesses.map((h) => <option key={h} value={h}>{h}</option>)}</select>
           <Seg label="Verdict" options={[['all', 'all'], ['p', '✓ pass'], ['f', '× fail'], ['u', '? unknown']]} value={vf} onChange={reset(setVf)} />
-        </div>
-        <div className="rg-row rg-wrap rg-mono rg-small rg-traj-totals" data-el="field-totals">
-          <span>{int(scope.length)} in scope</span><span className="rg-sky">✓ {int(o.p)} passed</span><span className="rg-red">× {int(o.f)} failed</span><span className="rg-mute">? {int(o.u)} unknown</span>
-          <span className="rg-mute">· {suiteLabel(scope, oracle)} · mean {tk.mean == null ? '—' : int(tk.mean)} tok ({tokenCoverage(tk)})</span>
+        </Toolbar>
+        <div className="rg-cluster rg-mono rg-small rg-traj-totals" data-el="field-totals">
+          {/* one fact per cluster item (the gap separates them): no line ever starts with a "·" */}
+          <span className="rg-nw">{int(scope.length)} in scope</span><span className="rg-sky rg-nw">✓ {int(o.p)} passed</span><span className="rg-red rg-nw">× {int(o.f)} failed</span><span className="rg-mute rg-nw">? {int(o.u)} unknown</span>
+          <span className="rg-mute">{suiteLabel(scope, oracle)}</span><span className="rg-mute"><span className="rg-nw">mean {tk.mean == null ? '—' : int(tk.mean)} tok</span> ({tokenCoverage(tk)})</span>
         </div>
         {modes.length > 0 && (
-          <div className="rg-row rg-wrap rg-traj-mchips" role="group" aria-label="Failure mode filter" data-el="failure-mode-filter">
+          <div className="rg-cluster rg-traj-mchips" role="group" aria-label="Failure mode filter" data-el="failure-mode-filter">
             <span className="rg-lbl">failure mode</span>
             <button type="button" className={cx('rg-traj-mchip all', fm === 'all' && 'on')} aria-pressed={fm === 'all'} onClick={() => reset(setFm)('all')}>any</button>
             {modes.map(([m, n]) => (
@@ -1349,20 +1369,20 @@ function FieldDoc({ spec, args }) {
           </div>
         )}
         <Panel label="Runs" meta={`${int(list.length)} match`} flush>
-          <div className="rg-tblwrap">{shown.length ? (
-            <table className="rg-tbl rg-traj-field"><thead><tr><th>run</th><th>task</th><th className="rg-hide-sm">model · harness</th><th>verdict</th><th className="rg-num rg-hide-sm">calls</th><th className="rg-num rg-hide-sm">tokens</th><th className="rg-hide-sm" /></tr></thead>
+          {shown.length ? (
+            <TableScroll label="Runs"><table className="rg-tbl rg-traj-field"><thead><tr><th>run</th><th>task</th><th className="rg-cq-hide-md">model · harness</th><th>verdict</th><th className="rg-num rg-cq-hide-sm">calls</th><th className="rg-num rg-cq-hide-sm">tokens</th><th className="rg-cq-hide-sm"><span className="sr-only">pin</span></th></tr></thead>
               <tbody>{shown.map((r) => (
                 <tr key={r.id}>
-                  <td className="rg-mono rg-small"><Go spec={makeSpec('run', r.id)} className="rg-tlink" title={r.id}><span className="rg-hide-sm rg-mute">{String(r.id).slice(0, -6)}</span>{sfx(r.id) === r.id ? r.id : sfx(r.id)}</Go> {r.hasLedger === false && <span className="rg-traj-led">no ledger</span>}</td>
-                  <td className="rg-mono rg-small"><Go spec={taskSpecOf(r)} className="rg-tlink">{r.task}</Go><div className="rg-show-sm rg-tiny rg-mute">{short(r.model)} · {r.harness}</div></td>
-                  <td className="rg-mono rg-small rg-hide-sm">{short(r.model)} · {r.harness}</td>
-                  <td><span className="rg-row rg-wrap" style={{ gap: 6 }}><VerdictText v={verdict(r, oracle)} /><FailureChip run={r} /></span></td>
-                  <td className="rg-num rg-mono rg-hide-sm">{r.steps ?? '—'}</td>
-                  <td className="rg-num rg-mono rg-hide-sm">{int(tokOf(r))}</td>
-                  <td className="rg-hide-sm"><PinButton compact item={runPin(r, oracle, meta)} /></td>
-                </tr>))}</tbody></table>
+                  <td className="rg-mono rg-small rg-nw"><Go spec={makeSpec('run', r.id)} className="rg-tlink" title={r.id}><span className="rg-cq-hide-md rg-mute">{String(r.id).slice(0, -6)}</span>{sfx(r.id) === r.id ? r.id : sfx(r.id)}</Go> {r.hasLedger === false && <span className="rg-traj-led">no ledger</span>}</td>
+                  <td className="rg-mono rg-small"><Go spec={taskSpecOf(r)} className="rg-tlink">{r.task}</Go><div className="rg-cq-show-md rg-tiny rg-mute rg-nohyphen">{short(r.model)} · {r.harness}</div></td>
+                  <td className="rg-mono rg-small rg-cq-hide-md rg-nohyphen">{short(r.model)} · {r.harness}</td>
+                  <td><span className="rg-cluster rg-traj-vchip"><VerdictText v={verdict(r, oracle)} /><FailureChip run={r} /></span></td>
+                  <td className="rg-num rg-mono rg-cq-hide-sm">{r.steps ?? '—'}</td>
+                  <td className="rg-num rg-mono rg-cq-hide-sm">{int(tokOf(r))}</td>
+                  <td className="rg-cq-hide-sm"><PinButton compact item={runPin(r, oracle, meta)} /></td>
+                </tr>))}</tbody></table></TableScroll>
           ) : <div className="rg-pnl-b"><Empty title="No run matches." actions={filtered ? [{ label: 'Clear search and filters', onClick: clearAll, primary: true }] : [{ label: 'Choose another dataset', spec: 'home', primary: true }]}>
-            {scope.length ? <>{int(scope.length)} runs are in scope, but none match{q ? ` “${q}”` : ''}{vf !== 'all' ? ' with this verdict' : ''}{fm !== 'all' ? ` with failure mode ${label(fm)}` : ''}.</> : <>No run of {dir} is recorded{mf !== 'all' ? ` for ${short(mf)}` : ''}{hf !== 'all' ? ` under ${hf}` : ''}.</>}</Empty></div>}</div>
+            {scope.length ? <>{int(scope.length)} runs are in scope, but none match{q ? ` “${q}”` : ''}{vf !== 'all' ? ' with this verdict' : ''}{fm !== 'all' ? ` with failure mode ${label(fm)}` : ''}.</> : <>No run of {dir} is recorded{mf !== 'all' ? ` for ${short(mf)}` : ''}{hf !== 'all' ? ` under ${hf}` : ''}.</>}</Empty></div>}
           {list.length > 0 && (
             <div className="rg-row rg-wrap rg-traj-pager" aria-label="Pages">
               <span className="rg-mono rg-small rg-mute">{`${int(pg * PAGE + 1)}–${int(Math.min(list.length, pg * PAGE + PAGE))} of ${int(list.length)}`}</span><span className="rg-grow" />

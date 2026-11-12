@@ -78,16 +78,21 @@ export class AppBoundary extends Component {
   }
   render() {
     if (!this.state.error) return this.props.children
-    const box = { position: 'fixed', inset: 0, display: 'grid', placeItems: 'center', background: 'var(--rig-bg-d)', color: 'var(--rig-text-d)', font: '15px/1.55 var(--font-sans)', padding: 24 }
-    const btn = { font: 'inherit', padding: '8px 14px', borderRadius: 8, border: '1px solid var(--rig-line2-d)', background: 'var(--rig-panel2-d)', color: 'inherit', cursor: 'pointer', marginRight: 8 }
+    // Literal values on purpose: the --rig-* scale lives in rig.css, which may be what failed. They
+    // follow that scale (4 px steps, 14 / 12 px type, 8 px radius, 44 px targets).
+    const box = { position: 'fixed', inset: 0, display: 'flex', overflow: 'auto', background: 'var(--rig-bg-d)', color: 'var(--rig-text-d)', font: '14px/1.5 var(--font-sans)', padding: 16 }
+    const card = { boxSizing: 'border-box', margin: 'auto', width: '100%', maxWidth: 560, padding: 24, border: '1px solid var(--rig-line-d)', borderRadius: 12, background: 'var(--rig-panel-d)' }
+    const btn = { font: '500 13px/1 var(--font-sans)', minHeight: 44, padding: '0 16px', borderRadius: 8, border: '1px solid var(--rig-line2-d)', background: 'var(--rig-panel2-d)', color: 'inherit', cursor: 'pointer' }
     return (
       <div style={box} data-el="app-crash" role="alert">
-        <div style={{ maxWidth: 560 }}>
-          <h1 style={{ font: '600 20px/1.3 var(--font-sans)', margin: '0 0 8px' }}>TraceHarness hit an error while drawing the workbench.</h1>
-          <p style={{ margin: '0 0 16px', color: 'var(--rig-dim-d)' }}>Your recorded runs are untouched: this is the page, not the data. Reset the layout to reopen the workbench on the datasets page, or reload to try the same address again.</p>
-          <p style={{ margin: '0 0 20px', font: '12.5px/1.5 var(--font-mono)', color: 'var(--rig-mute-d)', overflowWrap: 'anywhere' }}>{String(this.state.error.message || this.state.error)}</p>
-          <button type="button" style={{ ...btn, background: 'var(--rig-sel-d)', borderColor: 'var(--rig-sel-d)', color: 'var(--rig-sel-ink-d)' }} onClick={this.reset}>Reset layout</button>
-          <button type="button" style={btn} onClick={() => location.reload()}>Reload</button>
+        <div style={card}>
+          <h1 style={{ font: '500 20px/1.2 var(--font-sans)', margin: '0 0 8px' }}>TraceHarness hit an error while drawing the workbench.</h1>
+          <p style={{ margin: '0 0 16px', color: 'var(--rig-dim-d)', maxWidth: '68ch' }}>Your recorded runs are untouched: this is the page, not the data. Reset the layout to reopen the workbench on the datasets page, or reload to try the same address again.</p>
+          <p style={{ margin: '0 0 24px', padding: '8px 12px', borderRadius: 8, background: 'var(--rig-panel2-d)', font: '12px/1.7 var(--font-mono)', color: 'var(--rig-mute-d)', overflowWrap: 'anywhere' }}>{String(this.state.error.message || this.state.error)}</p>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+            <button type="button" style={{ ...btn, background: 'var(--rig-sel-d)', borderColor: 'var(--rig-sel-d)', color: 'var(--rig-sel-ink-d)' }} onClick={this.reset}>Reset layout</button>
+            <button type="button" style={btn} onClick={() => location.reload()}>Reload</button>
+          </div>
         </div>
       </div>
     )

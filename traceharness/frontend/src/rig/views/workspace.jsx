@@ -42,7 +42,7 @@ import {
 } from '../data'
 import { useRig, useTabState } from '../context'
 import { downloadText } from '../caseFile'
-import { Icon, Kbd, MOD, Stat, Tag, Note, Seg, Switch, Go, Loading, ErrorState, Empty, NextSteps, Btn, ConfirmAction, CiBar, PinButton, FailureChip } from '../ui'
+import { Icon, Kbd, MOD, Tag, Note, Seg, Switch, Go, Loading, ErrorState, Empty, NextSteps, Btn, ConfirmAction, CiBar, PinButton, FailureChip, PageHeader, Kpis, Kpi, TableScroll } from '../ui'
 import './workspace.css'
 
 const { pct, int, fx, usd, pp, plural } = fmt
@@ -55,13 +55,9 @@ const day = (iso) => { const d = new Date(iso); return Number.isFinite(d.getTime
 const stamp = (at) => { const d = new Date((at || 0) * 1000); return at && Number.isFinite(d.getTime()) ? d.toISOString().slice(0, 19).replace('T', ' ') : '—' }
 
 /* ================================================================ local primitives */
-function Head({ eyebrow, title, children, actions, el }) {
-  return (
-    <div className="rg-dh" data-el={el}>
-      <div className="t"><div className="rg-eyebrow">{eyebrow}</div><h1>{title}</h1>{children && <p>{children}</p>}</div>
-      {actions}
-    </div>
-  )
+/** The document head: the shared PageHeader (title keeps a 20rem basis, actions wrap under it). */
+function Head({ eyebrow, title, meta, children, actions, el }) {
+  return <PageHeader eyebrow={eyebrow} title={title} meta={meta} lede={children || null} actions={actions} el={el} />
 }
 const StaticNote = ({ what }) => <Note el="read-only-export-state"><div><b>{IS_MEMBER ? 'Local workbench required.' : 'Read-only export.'}</b> {what} needs the local app (<span className="rg-mono">python -m traceharness{IS_MEMBER ? ' --port 8742' : ''}</span>){IS_MEMBER ? ' at 127.0.0.1:8742' : ''}.</div></Note>
 
@@ -77,17 +73,17 @@ function Sec({ title, meta, lead, el, className, children }) {
   )
 }
 /** <SlotSec> — a Sec with fixed slots (heading · lead · status · field · actions · rest). Two of
- *  them side by side in .rg-ws-pairrow share their rows (CSS subgrid), so the key fields and the
+ *  them side by side in .rg-ws-keys share their rows (CSS subgrid), so the key fields and the
  *  buttons of both panels sit on the same lines however long either description is. */
 function SlotSec({ title, meta, lead, el, status, field, actions, rest }) {
   return (
-    <section className="rg-ws-sec rg-ws-slots" data-el={el} aria-label={typeof title === 'string' ? title : undefined}>
+    <section className="rg-ws-sec rg-ws-slotsec" data-el={el} aria-label={typeof title === 'string' ? title : undefined}>
       <div className="rg-ws-sech"><h2>{title}</h2>{meta ? <span className="rg-ws-meta">{meta}</span> : null}</div>
       <p className="rg-ws-lead">{lead}</p>
-      <div className="rg-ws-slot">{status}</div>
-      <div className="rg-ws-slot">{field}</div>
-      <div className="rg-ws-slot">{actions}</div>
-      <div className="rg-ws-slot rg-ws-rest">{rest}</div>
+      <div className="rg-ws-sl">{status}</div>
+      <div className="rg-ws-sl">{field}</div>
+      <div className="rg-ws-sl">{actions}</div>
+      <div className="rg-ws-sl rg-ws-rest">{rest}</div>
     </section>
   )
 }
@@ -198,25 +194,26 @@ function Sources({ spec }) {
   const vdir = (datasets.find((d) => d.name === 'llma4se_live') || all.find((d) => d.kind === 'recorded') || all[0] || {}).name
   return (
     <div className="rg-dpad rg-ws rg-ws-doc">
-      <Head eyebrow="Sources & machine" title="Results on disk">
-        <span className="rg-mono rg-small">{st.data ? st.data.results_root : 'data/runs'} · {int(total)} runs in {plural(all.length, 'directory', 'directories')}</span>
-      </Head>
+      <Head eyebrow="Sources & machine" title="Results on disk"
+        meta={<span className="rg-mono rg-break">{st.data ? st.data.results_root : 'data/runs'} · {int(total)} runs in {plural(all.length, 'directory', 'directories')}</span>} />
+      {/* A narrow document stacks each row (name and tag, description, then runs · models · date):
+          the count moves into the meta line instead of squeezing the description into a column. */}
       <div className="rg-pnl" data-el="results-on-disk">
         <div className="rg-tblwrap"><table className="rg-tbl rg-ws-disk">
-          <thead><tr><th>directory</th><th className="rg-num">runs</th><th className="rg-hide-sm">models</th><th className="rg-hide-sm">updated</th><th><span className="sr-only">Open</span></th></tr></thead>
+          <thead><tr><th>directory</th><th className="rg-num rg-cq-hide-sm">runs</th><th className="rg-cq-hide-sm">models</th><th className="rg-cq-hide-sm">updated</th><th><span className="sr-only">Open</span></th></tr></thead>
           <tbody>{all.map((r) => (
             <tr key={r.name} className="hov" tabIndex={0}
               onKeyDown={(e) => { if (e.key === 'Enter' && e.target === e.currentTarget) rig.openTab(makeSpec('ds', r.name), { side: e.metaKey || e.ctrlKey }) }}
               onClick={(e) => { if (!e.target.closest('button,a')) rig.openTab(makeSpec('ds', r.name), { side: e.metaKey || e.ctrlKey }) }}>
               <td>
-                <div className="rg-row rg-wrap"><Go spec={makeSpec('ds', r.name)} className="rg-tlink"><b>{r.name}</b></Go><Tag tone={r.kind === 'mock' ? 'dash' : undefined}>{r.kind === 'mock' ? 'mock' : 'recorded'}</Tag></div>
-                <div className="rg-small rg-dim rg-ws-desc">{NOTES[r.name] || <span className="rg-mute">No description ships with this directory.</span>}</div>
-                <div className="rg-tiny rg-mute rg-mono rg-show-sm">{r.models.length === 1 ? short(r.models[0]) : `${r.models.length} models`} · {day(r.updated)}</div>
+                <div className="rg-cluster"><Go spec={makeSpec('ds', r.name)} className="rg-tlink rg-hit rg-ws-dname"><b>{r.name}</b></Go><Tag tone={r.kind === 'mock' ? 'dash' : undefined}>{r.kind === 'mock' ? 'mock' : 'recorded'}</Tag></div>
+                <div className="rg-dim rg-ws-desc">{NOTES[r.name] || <span className="rg-mute">No description ships with this directory.</span>}</div>
+                <div className="rg-mute rg-mono rg-ws-dmeta rg-cq-show-sm"><b>{int(r.runs)} {r.runs === 1 ? 'run' : 'runs'}</b> · {r.models.length === 1 ? short(r.models[0]) : `${r.models.length} models`} · <span className="rg-nw">{day(r.updated)}</span></div>
               </td>
-              <td className="rg-num rg-mono">{int(r.runs)}</td>
-              <td className="rg-mono rg-small rg-hide-sm" title={r.models.join('\n')}>{r.models.length === 1 ? short(r.models[0]) : `${r.models.length} models`}</td>
-              <td className="rg-mono rg-small rg-hide-sm rg-ws-nowrap">{day(r.updated)}</td>
-              <td className="rg-num"><Go spec={makeSpec('ds', r.name)} className="rg-rowgo" label={`Open ${r.name}`}><Icon name="right" size={15} /></Go></td>
+              <td className="rg-num rg-mono rg-cq-hide-sm">{int(r.runs)}</td>
+              <td className="rg-mono rg-small rg-cq-hide-sm rg-ws-dmodels" title={r.models.join('\n')}>{r.models.length === 1 ? short(r.models[0]) : `${r.models.length} models`}</td>
+              <td className="rg-mono rg-small rg-cq-hide-sm rg-nw">{day(r.updated)}</td>
+              <td className="rg-num rg-ws-go"><Go spec={makeSpec('ds', r.name)} className="rg-rowgo" label={`Open ${r.name}`}><Icon name="right" size={15} /></Go></td>
             </tr>))}</tbody>
         </table></div>
       </div>
@@ -419,12 +416,12 @@ function ImportResult({ r, onAgain }) {
   return (
     <div className="rg-ws-result" data-el="import-result">
       <h4 className="rg-ws-h4">Last import · {tool(r.source)} → data/runs/{r.results_dir}</h4>
-      <div className="rg-stats rg-ws-s4">
-        <Stat label="imported"><span className="rg-fig sm">{int(r.imported)}</span><span className="rg-tiny rg-mute">new runs</span></Stat>
-        <Stat label="already there"><span className="rg-fig sm">{int(r.skipped)}</span><span className="rg-tiny rg-mute">re-importing adds nothing</span></Stat>
-        <Stat label="tasks"><span className="rg-fig sm">{int(r.n_tasks)}</span><span className="rg-tiny rg-mute">{(r.tasks || []).slice(0, 1).join('') || '—'}</span></Stat>
-        <Stat label="real verdicts"><span className={cx('rg-fig sm', v.flagged && 'amb')}>{v.value}</span><span className="rg-tiny rg-mute">{v.note}</span></Stat>
-      </div>
+      <Kpis label="Last import" className="rg-ws-kpis">
+        <Kpi label="imported" value={int(r.imported)} hint="new runs" />
+        <Kpi label="already there" value={int(r.skipped)} hint="re-importing adds nothing" />
+        <Kpi label="tasks" value={int(r.n_tasks)} hint={(r.tasks || []).slice(0, 1).join('') || '—'} />
+        <Kpi label="real verdicts" value={v.value} tone={v.flagged ? 'amb' : undefined} hint={v.note} />
+      </Kpis>
       {unknown > 0 && <Note><div>{plural(unknown, 'run')} carried no verdict and {unknown === 1 ? 'imports' : 'import'} with an unknown outcome. Unknown is never a failure here, but pass@1 over this directory counts only the known ones.</div></Note>}
       {(r.harnesses || []).map((h) => <div key={h.harness_id} className="rg-mono rg-tiny rg-dim">{h.harness_id} · {plural(h.runs, 'run')} · hash {h.hash}</div>)}
       {(r.errors || []).slice(0, 4).map((e, i) => <div key={i} className="rg-mono rg-tiny rg-red">{e}</div>)}
@@ -521,11 +518,11 @@ function HarnessVersions({ dir }) {
       lead="Each run records the hash of the harness file it ran under. A drifted version means the file on disk changed after those runs.">
       {v.error ? <Failed what="Could not read the harness versions." error={v.error} onRetry={v.reload} />
         : !v.data ? <div className="rg-skel rg-ws-sk" />
-          : <div className="rg-pnl"><div className="rg-tblwrap"><table className="rg-tbl">
-            <thead><tr><th>harness</th><th className="rg-hide-sm">hash</th><th className="rg-num">runs</th><th className="rg-num">pass@1</th><th>file</th></tr></thead>
+          : <div className="rg-pnl rg-ws-numpnl"><div className="rg-tblwrap"><table className="rg-tbl rg-ws-numtbl">
+            <thead><tr><th>harness</th><th className="rg-cq-hide-sm">hash</th><th className="rg-num">runs</th><th className="rg-num">pass@1</th><th>file</th></tr></thead>
             <tbody>{list.map((x) => (
-              <tr key={x.harness_id + x.hash}><td className="rg-mono rg-small">{x.harness_id}</td><td className="rg-mono rg-small rg-hide-sm">{x.hash}</td><td className="rg-num rg-mono">{int(x.runs)}</td><td className="rg-num rg-mono">{pct(x.pass1)}</td>
-                <td>{x.matches_current ? <span className="rg-small rg-sky">✓ current</span> : x.has_file ? <span className="rg-small rg-red">× drifted</span> : <span className="rg-small rg-mute">? no file</span>}</td></tr>))}</tbody>
+              <tr key={x.harness_id + x.hash}><td className="rg-mono rg-small">{x.harness_id}</td><td className="rg-mono rg-small rg-cq-hide-sm">{x.hash}</td><td className="rg-num rg-mono">{int(x.runs)}</td><td className="rg-num rg-mono">{pct(x.pass1)}</td>
+                <td className="rg-nw">{x.matches_current ? <span className="rg-small rg-sky">✓ current</span> : x.has_file ? <span className="rg-small rg-red">× drifted</span> : <span className="rg-small rg-mute">? no file</span>}</td></tr>))}</tbody>
           </table></div></div>}
       {v.data && !drift && list.length > 0 && <p className="rg-small rg-mute">Every recorded version matches its harness file on disk.</p>}
     </Sec>
@@ -613,7 +610,7 @@ function Capture() {
   return (
     <div className="rg-dpad rg-ws rg-ws-doc" data-el="capture">
       <Head eyebrow="On this machine" title="Session capture">Your own coding-agent sessions, recorded on this machine and read back as runs.</Head>
-      <div className="rg-col rg-ws-intro">
+      <div className="rg-stack rg-stack-md">
         <Note el="capture-private"><div><b>Private.</b> These runs stay on this machine — hidden from every listing, excluded from every export, and each request this page makes has to ask for them by name.</div></Note>
         <About summary="About session capture">
           <p>Each captured session is read back with the same ledger the lab&apos;s runner writes, so every page measures it like any other corpus. A session becomes a run once it has been quiet long enough to count as finished; until then it is open and counted separately.</p>
@@ -626,13 +623,13 @@ function Capture() {
           <CopyCmd label="Record what is already here" cmd={BACKFILL_CMD} el="capture-backfill" />
         </Empty>
       ) : (
-        <div className="rg-stats rg-ws-s5" data-el="capture-kpis">
-          <Stat label="runs captured"><span className="rg-fig sm">{int(s.runs_indexed)}</span></Stat>
-          <Stat label="still open"><span className="rg-fig sm">{int(s.open_runs)}</span><span className="rg-tiny rg-mute">quiet for less than the segment gap</span></Stat>
-          <Stat label="input tokens"><span className="rg-fig sm">{int(t.input_tokens)}</span>{um > 0 && <span className="rg-tiny rg-mute">over the runs that reported usage</span>}</Stat>
-          <Stat label="output tokens"><span className="rg-fig sm">{int(t.output_tokens)}</span>{um > 0 && <span className="rg-tiny rg-mute">{plural(um, 'run')} recorded no usage</span>}</Stat>
-          <Stat label="cost"><span className="rg-fig sm">{usd(t.cost_usd, 2)}</span><span className="rg-tiny rg-mute">{um ? `priced from the ledger; ${plural(um, 'run')} unpriced` : 'priced from the ledger, not estimated'}</span></Stat>
-        </div>
+        <Kpis label="Captured sessions" el="capture-kpis" className="rg-ws-kpis">
+          <Kpi label="runs captured" value={int(s.runs_indexed)} />
+          <Kpi label="still open" value={int(s.open_runs)} hint="quiet for less than the segment gap" />
+          <Kpi label="input tokens" value={int(t.input_tokens)} hint={um > 0 ? 'over the runs that reported usage' : null} />
+          <Kpi label="output tokens" value={int(t.output_tokens)} hint={um > 0 ? `${plural(um, 'run')} recorded no usage` : null} />
+          <Kpi label="cost" value={usd(t.cost_usd, 2)} hint={um ? `priced from the ledger; ${plural(um, 'run')} unpriced` : 'priced from the ledger, not estimated'} />
+        </Kpis>
       )}
       <Sec title="The watcher" meta={stateWord(sn)} el="capture-watcher">
         <p className="rg-ws-lead">{watcherSentence(sn)}</p>
@@ -653,10 +650,10 @@ function Capture() {
           {runs.error ? <Failed what="Could not read the captured runs." error={runs.error} onRetry={runs.reload} />
             : rows.length === 0 ? <Empty title="No finished run to list yet." actions={[{ label: 'Import a session file instead', spec: 'sources' }]}><p className="rg-ws-p">Sessions still open are listed below; a backfill records what is already on this machine.</p><CopyCmd cmd={BACKFILL_CMD} /></Empty>
               : <div className="rg-pnl"><ul className="rg-ws-list">{rows.map((r) => (
-                <li key={r.run_id} className="rg-ws-capl"><span className="rg-mono rg-ell">{r.task_id || r.run_id}</span><span className="rg-mono rg-small rg-dim rg-ell">{(r.model || '').split('/').pop() || '—'}</span><span className="rg-mono rg-small rg-dim rg-num">{int(r.steps)} steps</span><span className="rg-mono rg-small rg-dim rg-ell">{r.exit_reason || '—'}</span><span className="rg-mono rg-small rg-mute rg-num">{usd(r.cost_usd, 2)}</span></li>))}</ul></div>}
+                <li key={r.run_id} className="rg-ws-caprun"><span className="rg-mono rg-ell">{r.task_id || r.run_id}</span><span className="rg-mono rg-small rg-dim rg-ell">{(r.model || '').split('/').pop() || '—'}</span><span className="rg-mono rg-small rg-dim rg-num">{int(r.steps)} steps</span><span className="rg-mono rg-small rg-dim rg-ell">{r.exit_reason || '—'}</span><span className="rg-mono rg-small rg-mute rg-num">{usd(r.cost_usd, 2)}</span></li>))}</ul></div>}
           <h3 className="rg-ws-h3">Open right now <span className="rg-ws-meta">{open.length}</span></h3>
           {open.length === 0 ? <p className="rg-small rg-dim">None open: every captured session has been quiet long enough to count as finished.</p>
-            : <div className="rg-pnl"><ul className="rg-ws-list">{open.map((r) => <li key={r.run_id} className="rg-ws-capo"><span className="rg-mono rg-ell">{r.task_id || r.run_id}</span><span className="rg-mono rg-small rg-dim rg-num">{int(r.steps)} steps</span><span className="rg-mono rg-small rg-mute rg-num">{String(r.last_ts || '').slice(0, 19).replace('T', ' ')}</span></li>)}</ul></div>}
+            : <div className="rg-pnl"><ul className="rg-ws-list">{open.map((r) => <li key={r.run_id} className="rg-ws-capopen"><span className="rg-mono rg-ell">{r.task_id || r.run_id}</span><span className="rg-mono rg-small rg-dim rg-num">{int(r.steps)} steps</span><span className="rg-mono rg-small rg-mute rg-num">{String(r.last_ts || '').slice(0, 19).replace('T', ' ')}</span></li>)}</ul></div>}
           <h3 className="rg-ws-h3">What replaced what <span className="rg-ws-meta">{superseded.length} superseded · {forked.length} forked</span></h3>
           {rel.error ? <Failed what="Could not read which runs replaced which." error={rel.error} onRetry={rel.reload} />
             : related.length === 0 ? <p className="rg-small rg-dim">No captured session has been resumed or forked.</p>
@@ -744,12 +741,12 @@ function Sentinel({ spec }) {
       <Head eyebrow="Sentinel · score the partial trajectory at every step" title="Block the submit when it crosses">
         Model <span className="rg-mono">{sn.data.active || M.name || '—'}</span>, trained {String(M.trained_at || '').slice(0, 10) || '—'} on {int(M.n_runs)} runs ({int(M.n_examples)} prefixes) · {M.folds}-fold · harness filter <span className="rg-mono">{M.harness_filter || 'none'}</span> · fail rate {pct(M.fail_rate)}.
       </Head>
-      <div className="rg-stats rg-ws-s4">
-        <Stat label="training AUC · all prefixes"><span className="rg-fig md">{fx(M.auc_all_prefixes)}</span><span className="rg-small rg-mono rg-mute">{ci ? `95% [${fx(ci[0])}, ${fx(ci[1])}] · ${M.auc_ci.bootstrap} boot` : 'no interval recorded'}</span></Stat>
-        <Stat label="run-weighted AUC"><span className="rg-fig md">{fx(M.auc_run_weighted)}</span><span className="rg-small rg-mono rg-mute">{M.auc_baselines ? `rules only ${fx(M.auc_baselines.rules_only)} · prior ${fx(M.auc_baselines.prior)}` : ''}</span></Stat>
-        <Stat label="calibration ECE"><span className="rg-fig md">{fx(M.ece)}</span><span className="rg-small rg-mute">lower is better</span></Stat>
-        <Stat label="failures invisible to visible tests"><span className="rg-fig md">{pct(M.oracle_invisible_failure_share, 0)}</span><span className="rg-small rg-mono rg-mute">{oi ? `${oi.invisible} of ${oi.n_fail} fails` : '—'}</span></Stat>
-      </div>
+      <Kpis label="Sentinel model" className="rg-ws-kpis">
+        <Kpi label="training AUC · all prefixes" value={fx(M.auc_all_prefixes)} hint={<span className="rg-mono">{ci ? `95% [${fx(ci[0])}, ${fx(ci[1])}] · ${M.auc_ci.bootstrap} boot` : 'no interval recorded'}</span>} />
+        <Kpi label="run-weighted AUC" value={fx(M.auc_run_weighted)} hint={M.auc_baselines ? <span className="rg-mono">{`rules only ${fx(M.auc_baselines.rules_only)} · prior ${fx(M.auc_baselines.prior)}`}</span> : null} />
+        <Kpi label="calibration ECE" value={fx(M.ece)} hint="lower is better" />
+        <Kpi label="failures invisible to visible tests" value={pct(M.oracle_invisible_failure_share, 0)} hint={<span className="rg-mono">{oi ? `${oi.invisible} of ${oi.n_fail} fails` : '—'}</span>} />
+      </Kpis>
       <Sec title="Threshold · operating point" meta={deployed != null ? `deployed at ${fx(deployed)}` : ''} el="sentinel-threshold">
         {ops.length && op ? <div className="rg-ws-2up">
           <div className="rg-ws-col760">
@@ -759,11 +756,11 @@ function Sentinel({ spec }) {
             <span className="rg-fig sm acc">{fx(thr)}</span>
           </div>
           <div className="rg-row rg-mono rg-tiny rg-mute rg-ws-ticks">{ops.map((o) => <span key={o.threshold}>{fx(o.threshold, 1)}</span>)}</div>
-          <div className="rg-stats rg-ws-s3">
-            <Stat label="bad submits caught"><span className="rg-fig md">{pct(op.recall, 0)}</span></Stat>
-            <Stat label="good submits blocked"><span className="rg-fig md rg-ws-redfig">{pct(op.false_alarm, 0)}</span></Stat>
-            <Stat label="mean warning lead"><span className="rg-fig md">{fx(op.mean_lead_steps, 1)}<span className="u"> steps</span></span></Stat>
-          </div>
+          <Kpis label="At this operating point" className="rg-ws-kpis">
+            <Kpi label="bad submits caught" value={pct(op.recall, 0)} />
+            <Kpi label="good submits blocked" value={<span className="rg-ws-redfig">{pct(op.false_alarm, 0)}</span>} />
+            <Kpi label="mean warning lead" value={fx(op.mean_lead_steps, 1)} unit=" steps" />
+          </Kpis>
           <p className="rg-ws-lead">At {fx(op.threshold)} the hook blocks about {pct(op.false_alarm, 0)} of good submits to catch {pct(op.recall, 0)} of bad ones, {fx(op.mean_lead_steps, 1)} steps before the end.</p>
           <About summary="About the operating points">
             <p>Only {plural(ops.length, 'operating point')} {ops.length === 1 ? 'was' : 'were'} evaluated when the model was trained; the slider snaps to them rather than inventing points in between. The deployed threshold is the engine&apos;s config and is not changed from here.</p>
@@ -900,21 +897,21 @@ function Leaderboard({ spec, models, active }) {
   return (
     <Sec title="Trained sentinels" meta={plural(models.length, 'model')} el="sentinel-leaderboard">
       {models.length === 0 ? <p className="rg-small rg-dim">No trained sentinel is registered on this server yet.</p>
-        : <div className="rg-pnl"><div className="rg-tblwrap"><table className="rg-tbl">
-          <thead><tr><th>model</th><th className="rg-num" title="AUC over all prefixes, out of fold">AUC</th><th className="rg-num rg-hide-sm">run-weighted</th><th className="rg-num">runs</th><th><span className="sr-only">Export</span></th></tr></thead>
+        : <div className="rg-pnl rg-ws-numpnl"><TableScroll label="Trained sentinels" stickyCol={false}><table className="rg-tbl rg-ws-numtbl">
+          <thead><tr><th>model</th><th className="rg-num" title="AUC over all prefixes, out of fold">AUC</th><th className="rg-num rg-cq-hide-xs">run-weighted</th><th className="rg-num">runs</th><th><span className="sr-only">Export</span></th></tr></thead>
           <tbody>{sorted.map((m, k) => (
             <tr key={m.name} className={m.name === active || m.active ? 'sel' : ''}>
-              <td className="rg-mono rg-small">{k + 1}. {m.name} {(m.name === active || m.active) && <Tag tone="acc">active</Tag>}</td>
+              <td className="rg-mono rg-small"><span className="rg-cluster rg-ws-lbname"><span className="rg-break">{k + 1}. {m.name}</span>{(m.name === active || m.active) && <Tag tone="acc">active</Tag>}</span></td>
               <td className="rg-num rg-mono">{fx(m.meta && m.meta.auc_all_prefixes)}</td>
-              <td className="rg-num rg-mono rg-hide-sm">{fx(m.meta && m.meta.auc_run_weighted)}</td>
+              <td className="rg-num rg-mono rg-cq-hide-xs">{fx(m.meta && m.meta.auc_run_weighted)}</td>
               <td className="rg-num rg-mono">{int(m.meta && m.meta.n_runs)}</td>
-              <td className="rg-num">{!IS_STATIC && <button type="button" className="rg-btn ghost" onClick={() => exp(m.name)} aria-label={`Export ${m.name}`} title="GET /api/sentinel/export/{name}"><Icon name="down" size={13} /></button>}</td>
+              <td className="rg-num">{!IS_STATIC && <button type="button" className="rg-btn ghost rg-ws-icob" onClick={() => exp(m.name)} aria-label={`Export ${m.name}`} title="GET /api/sentinel/export/{name}"><Icon name="down" size={13} /></button>}</td>
             </tr>))}</tbody>
-        </table></div></div>}
+        </table></TableScroll></div>}
       {msg && <Failed what="The export did not download." error={msg} back={false} />}
       {!IS_STATIC && models.length > 0 && <>
-        <div className="rg-row rg-wrap rg-ws-acts">
-          <label className="rg-row rg-small rg-dim">Replay every model on
+        <div className="rg-ws-replay">
+          <label className="rg-fld">Replay every model on
             <select className="rg-selc" value={d || ''} onChange={(e) => { setDir(e.target.value); setGo(false) }} aria-label="Directory to replay on">{datasets.map((x) => <option key={x.name} value={x.name}>{x.name}</option>)}</select>
           </label>
           <Btn disabled={!d || (go && lb.loading)} why={!d ? 'No directory on disk to replay on' : 'Replaying every model on it…'} onClick={() => { if (go) lb.reload(); else setGo(true) }}>Replay on this directory</Btn>
@@ -934,7 +931,7 @@ function LeaderboardTable({ lb }) {
   return (
     <div className="rg-col" data-el="sentinel-replay">
       <div className="rg-small rg-mono rg-mute">{lb.dir} · {int(lb.n_runs)} runs ({int(lb.n_fail)} eventual failures) · {int(lb.n_prefixes)} prefixes · recall and false alarm at risk ≥ {lb.threshold} · {lb.bootstrap} bootstrap resamples</div>
-      <div className="rg-pnl"><div className="rg-tblwrap"><table className="rg-tbl rg-ws-lbt">
+      <div className="rg-pnl"><TableScroll label="Replay of every model on one directory"><table className="rg-tbl rg-ws-lbt">
         <thead><tr><th>model</th>{ks.map((k) => <th key={k} className="rg-num">EW-AUC@{k}</th>)}<th className="rg-num">recall</th><th className="rg-num">false alarm</th></tr></thead>
         <tbody>{(lb.rows || []).map((r) => (
           <tr key={r.model} className={r.active ? 'sel' : ''}>
@@ -943,7 +940,7 @@ function LeaderboardTable({ lb }) {
             <td className="rg-num rg-mono rg-small">{r.overall ? pct(r.overall.recall, 0) : '—'}</td>
             <td className="rg-num rg-mono rg-small">{r.overall ? pct(r.overall.false_alarm, 0) : '—'}</td>
           </tr>))}</tbody>
-      </table></div></div>
+      </table></TableScroll></div>
       {(lb.rows || []).some((r) => r.in_sample) && <p className="rg-small rg-mute">† trained on this directory: in-sample, and therefore optimistic.</p>}
       <p className="rg-small rg-mute">Alive-at-k cohorts: {((lb.rows && lb.rows[0] && lb.rows[0].per_k) || []).map((p) => `k=${p.k}: n=${p.n_alive} (${pct(p.fail_share, 0)} fail)`).join(' · ')}</p>
     </div>
@@ -969,11 +966,14 @@ export function canvasLayout(availW, availH, counts) {
   const grow = (base, n) => Math.round(Math.max(base, Math.min(base * 1.5, room && n ? room / n : base)))
   return { NW, CX, W: Math.max(w, x0 + used + 16), pitch: { s: grow(84, counts.s), m: grow(84, counts.m), c: grow(104, counts.c) }, rows }
 }
+/** Below this box width the canvas uses its compact tree; below this zoom its labels stop being legible. */
+const CANVAS_NARROW = 640
+const CANVAS_READABLE = 0.75
 const sepOf = (c) => !!c && Array.isArray(c.ci95) && (c.ci95[0] > 0 || c.ci95[1] < 0)
 
 function Canvas({ spec }) {
   const rig = useRig()
-  const { datasets, openTab, setPalette, isMobile } = rig
+  const { datasets, openTab, setPalette } = rig
   const jobs = useJobs()
   const def = (datasets.find((d) => d.name === (rig.condition && rig.condition.dir)) || datasets.find((d) => d.name === 'llma4se_live') || datasets.find((d) => d.kind === 'recorded') || datasets[0] || {}).name || null
   const [dirS, setDir] = useTabState(spec, 'dir', null)
@@ -1018,8 +1018,10 @@ function Canvas({ spec }) {
   const cell = mcells.find((c) => c.harness === harness) || null
   const C = (cmp.data && cmp.data.comparisons && cmp.data.comparisons[model]) || {}
 
-  /* layout */
-  const L = canvasLayout(isMobile ? 0 : wrapW, isMobile ? 0 : wrapH, { s: datasets.length, m: models.length, c: mcells.length })
+  /* layout: a narrow box (a phone, a pane beside a panel) gets the compact tree, read from the box's
+     own width, never from the window */
+  const narrow = wrapW > 0 && wrapW < CANVAS_NARROW
+  const L = canvasLayout(narrow ? 0 : wrapW, narrow ? 0 : wrapH, { s: datasets.length, m: models.length, c: mcells.length })
   const { NW, CX } = L
   // columns are centred on each other, so a short column sits level with the middle of a long one
   const colH = { s: (datasets.length - 1) * L.pitch.s + 68, m: (models.length - 1) * L.pitch.m + 64, c: (mcells.length - 1) * L.pitch.c + 88 }
@@ -1033,7 +1035,9 @@ function Canvas({ spec }) {
   const W = L.W
   const H = Math.max(...[...N.s, ...N.m, ...N.c].map((n) => n.y + n.h), noteY + notes.length * 70) + 32
   const fit = wrapW ? Math.max(0.3, Math.min(1, +(wrapW / W).toFixed(2))) : 1
-  const z = zS == null ? (isMobile || (wrapW && wrapW < W) ? fit : 1) : zS
+  // Opening zoom: fit the tree while that keeps the labels readable; below that the canvas opens at
+  // a readable size and pans inside its own box (the hint under the toolbar says so).
+  const z = zS == null ? (wrapW && wrapW < W ? Math.max(fit, CANVAS_READABLE) : 1) : zS
   const mid = (n) => n.y + n.h / 2
   const curve = (x1, y1, x2, y2) => { const k = Math.max(40, (x2 - x1) * 0.45); return `M${x1},${y1} C${x1 + k},${y1} ${x2 - k},${y2} ${x2},${y2}` }
   const wires = []
@@ -1057,14 +1061,14 @@ function Canvas({ spec }) {
       <div className="rg-ws-cvtools" role="toolbar" aria-label="Canvas tools">
         <button type="button" className="rg-btn" aria-expanded={adding} onClick={() => setAdding(!adding)}>+ Note</button>
         <span className="rg-ws-sep" />
-        <button type="button" className="rg-btn" aria-label="Zoom out" onClick={() => zoom(-0.1)}>−</button>
+        <button type="button" className="rg-btn rg-ws-icob" aria-label="Zoom out" onClick={() => zoom(-0.1)}>−</button>
         <span className="rg-mono rg-small rg-ws-zv" aria-live="polite">{Math.round(z * 100)}%</span>
-        <button type="button" className="rg-btn" aria-label="Zoom in" onClick={() => zoom(0.1)}>+</button>
+        <button type="button" className="rg-btn rg-ws-icob" aria-label="Zoom in" onClick={() => zoom(0.1)}>+</button>
         <button type="button" className="rg-btn" onClick={() => setZ(fit)}>fit</button>
         <button type="button" className="rg-btn" onClick={() => setZ(1)} aria-label="Actual size">1:1</button>
         <span className="rg-ws-sep" />
         <button type="button" className="rg-btn" onClick={() => setPalette(true)} aria-label="Search"><Icon name="search" size={13} /> <Kbd>{MOD} K</Kbd></button>
-        <span className="rg-ws-sel rg-show-sm">
+        <span className="rg-ws-sel rg-cq-show-sm">
           <select className="rg-selc" aria-label="Study" value={dir} onChange={(e) => pickDir(e.target.value)}>{datasets.map((d) => <option key={d.name} value={d.name}>{d.name}</option>)}</select>
           <select className="rg-selc" aria-label="Model" value={model || ''} onChange={(e) => { setM(e.target.value); setH(null) }}>{models.map((x) => <option key={x} value={x}>{short(x)}</option>)}</select>
           <select className="rg-selc" aria-label="Cell" value={harness || ''} onChange={(e) => setH(e.target.value)}>{mcells.map((x) => <option key={x.harness} value={x.harness}>{x.harness} · {pct(x['pass@1'])}</option>)}</select>
@@ -1081,8 +1085,9 @@ function Canvas({ spec }) {
           </div>
         </form>
       )}
-      <div className="rg-grid rg-ws-cvgrid">
-        <div className="rg-ws-cvwrap" ref={wrap}>
+      {wrapW > 0 && W * z > wrapW + 1 && <p className="rg-ws-cvhint" data-el="canvas-pan-hint">The canvas is wider than this view: scroll or drag inside it to pan, or use <b>fit</b> to see the whole tree.</p>}
+      <div className="rg-ws-cvgrid">
+        <div className="rg-ws-cvwrap" ref={wrap} tabIndex={0} role="region" aria-label="Canvas: studies, models and cells">
           <div style={{ width: W * z, height: H * z }}>
             <div className="rg-ws-cv" style={{ width: W, height: H, transform: `scale(${z})` }}>
               <svg className="rg-ws-wires" width={W} height={H} viewBox={`0 0 ${W} ${H}`} aria-hidden="true">
@@ -1190,12 +1195,12 @@ function Settings() {
   return (
     <div className="rg-dpad rg-ws rg-ws-doc rg-ws-settings">
       <Head eyebrow="Settings" title="Preferences, keys, paths">A key is only needed to ask Buddy a question in words or to run live models. Every finding in the workbench is arithmetic over the ledger and works without one.</Head>
-      <div className="rg-ws-setrow">
+      <div className="rg-ws-set">
       <Sec title="Appearance" meta="this browser" el="appearance">
-        <div className="rg-col rg-ws-prefs">
-          <div className="rg-row rg-wrap"><span className="rg-ws-pl">Theme</span><Seg label="Theme" value={rig.themePref} onChange={rig.setTheme} options={[['dark', 'dark · primary'], ['light', 'paper'], ['system', 'system']]} /></div>
-          <div className="rg-row rg-wrap"><span className="rg-ws-pl">Density</span><Seg label="Density" value={density} onChange={(v) => setP(DENSITY_KEY, v, setDensity)} options={[['compact', 'compact'], ['comfortable', 'comfortable']]} /></div>
-          <div className="rg-row rg-wrap"><span className="rg-ws-pl">Motion</span><Seg label="Motion" value={motion} onChange={(v) => setP(MOTION_KEY, v, setMotion)} options={[['on', 'on'], ['off', 'reduced']]} /></div>
+        <div className="rg-ws-prefs">
+          <div className="rg-ws-prow"><span className="rg-ws-pl">Theme</span><Seg label="Theme" value={rig.themePref} onChange={rig.setTheme} options={[['dark', 'dark · primary'], ['light', 'paper'], ['system', 'system']]} /></div>
+          <div className="rg-ws-prow"><span className="rg-ws-pl">Density</span><Seg label="Density" value={density} onChange={(v) => setP(DENSITY_KEY, v, setDensity)} options={[['compact', 'compact'], ['comfortable', 'comfortable']]} /></div>
+          <div className="rg-ws-prow"><span className="rg-ws-pl">Motion</span><Seg label="Motion" value={motion} onChange={(v) => setP(MOTION_KEY, v, setMotion)} options={[['on', 'on'], ['off', 'reduced']]} /></div>
         </div>
         <p className="rg-small rg-mute">Remembered in this browser. Your system&apos;s reduced-motion setting is always honoured.</p>
         {(prefFail || !probe) && <p className="rg-small rg-red">This browser blocks storage — the preference holds for this visit only.</p>}
@@ -1212,10 +1217,10 @@ function Settings() {
       </Sec>
       </div>
       {/* The two key panels share their rows: key field beside key field, buttons beside buttons. */}
-      <div className="rg-ws-setrow rg-ws-pairrow">
+      <div className="rg-ws-set rg-ws-keys">
         {IS_MEMBER ? <Sec title="Local model integrations" el="member-local-keys"><p>Connect your OpenRouter key in Harnesses for hosted runs. Configure Buddy, the narrator and local judging in your local workbench at <code>127.0.0.1:8742</code>.</p><CopyCmd cmd="python -m traceharness --host 127.0.0.1 --port 8742" /></Sec> : <><BuddyPanel /><LabKeyPanel st={st} /></>}
       </div>
-      <div className="rg-ws-setrow">
+      <div className="rg-ws-set">
       {!IS_MEMBER && <NarratorPanel />}
       <Sec title="Paths in use" meta={IS_STATIC ? 'export' : 'GET /api/settings'} el="paths-in-use">
         {IS_STATIC ? <StaticNote what="The server's paths" /> : st.error ? <Failed what="Could not read the server's settings." error={st.error} onRetry={st.reload} /> : !s ? <div className="rg-skel rg-ws-sk" /> : (
@@ -1235,7 +1240,7 @@ function SettingsActions() {
   const { state, openTab } = useRig()
   const p = state && state.panes ? state.panes[state.focus] || state.panes[0] : null
   const back = (p && p.tabs.find((t) => t !== 'settings')) || 'home'
-  return <button type="button" className="rg-btn pri" data-el="return-to-work" onClick={() => openTab(back)}>Return to work</button>
+  return <button type="button" className="rg-btn" data-el="return-to-work" onClick={() => openTab(back)}>Return to work</button>
 }
 
 /** Buddy's browser-held key + model: matekey.js / buddyClient.js exactly as workspace/BuddySettings.jsx. */
@@ -1266,9 +1271,9 @@ function BuddyPanel() {
           <dt>model</dt><dd><BuddyModelPicker variant="field" value={state.model} onChange={(v) => { writeModel(stores, v); refresh(); setNote(null) }} /></dd>
         </dl>}
       field={
-        <div className="rg-col rg-ws-field">
+        <div className="rg-col rg-ws-keyf">
           <input className="rg-inp" type="password" autoComplete="off" aria-label="Buddy OpenRouter key" value={key} placeholder={state.keyPresent ? 'Paste a new key to replace it' : KEY_PH} onChange={(e) => setKey(e.target.value)} />
-          <label className="rg-row rg-small rg-dim"><input type="checkbox" checked={remember} onChange={(e) => setRemember(e.target.checked)} aria-label="Remember key on this browser" /> remember on this browser</label>
+          <label className="rg-row rg-small rg-dim rg-ws-check"><input type="checkbox" checked={remember} onChange={(e) => setRemember(e.target.checked)} aria-label="Remember key on this browser" /> remember on this browser</label>
         </div>}
       actions={
         <div className="rg-row rg-wrap rg-ws-acts">
@@ -1277,7 +1282,7 @@ function BuddyPanel() {
         </div>}
       rest={<>
         {note && <p className={cx('rg-small', note.ok ? 'rg-dim' : 'rg-red')} role="status">{note.t}</p>}
-        <button type="button" className="rg-tlink rg-ws-openbuddy" onClick={() => setDock('buddy')}>Open Buddy →</button>
+        <button type="button" className="rg-btn ghost rg-ws-openbuddy" onClick={() => setDock('buddy')}>Open Buddy →</button>
         <About summary="How the key is kept">
           <p>Not an encrypted vault: scripts and extensions with access to this page can read it. Use a spend-limited key. Each question asks your consent before recorded excerpts go to OpenRouter.</p>
         </About>
@@ -1304,7 +1309,7 @@ function LabKeyPanel({ st }) {
           <dt>used for</dt><dd>live model runs and the LLM judge</dd>
         </dl>}
       field={IS_STATIC ? <StaticNote what="Setting the server key" />
-        : <div className="rg-col rg-ws-field"><input className="rg-inp" type="password" autoComplete="off" aria-label="traceharness key" value={draft} placeholder={KEY_PH} onChange={(e) => setDraft(e.target.value)} /></div>}
+        : <div className="rg-col rg-ws-keyf"><input className="rg-inp" type="password" autoComplete="off" aria-label="traceharness key" value={draft} placeholder={KEY_PH} onChange={(e) => setDraft(e.target.value)} /></div>}
       actions={IS_STATIC ? null :
         <div className="rg-row rg-wrap rg-ws-acts">
           <ConfirmAction label="Save server key" confirmLabel="Send to the server" disabled={!draft.trim()} why="Paste a key first" detail="POST /api/settings/key" onConfirm={() => send(draft.trim(), 'Saved on the server.')} el="lab-key-save" />
@@ -1405,7 +1410,7 @@ function Guide() {
 }
 function GuideActions() {
   const { lab, setLab } = useRig()
-  return lab ? null : <button type="button" className="rg-btn pri" onClick={() => setLab(true)}>Turn Student Lab on</button>
+  return lab ? null : <button type="button" className="rg-btn" onClick={() => setLab(true)}>Turn Student Lab on</button>
 }
 function DatasetList() {
   const ds = useDatasets()
@@ -1416,7 +1421,7 @@ function DatasetList() {
         const d = present.get(name)
         return (
           <li key={name}>
-            <div className="rg-row rg-wrap">{d ? <Go spec={makeSpec('ds', name)} className="rg-tlink"><b>{name}</b></Go> : <b className="rg-mono rg-mute">{name}</b>}<span className="rg-grow" /><span className="rg-mono rg-small rg-mute">{d ? `${int(d.runs)} runs` : 'not present on disk'}</span></div>
+            <div className="rg-row rg-wrap">{d ? <Go spec={makeSpec('ds', name)} className="rg-tlink rg-hit"><b>{name}</b></Go> : <b className="rg-mono rg-mute">{name}</b>}<span className="rg-grow" /><span className="rg-mono rg-small rg-mute">{d ? `${int(d.runs)} runs` : 'not present on disk'}</span></div>
             {NOTES[name] && <div className="rg-small rg-dim">{NOTES[name]}</div>}
           </li>)
       })}</ul></div>

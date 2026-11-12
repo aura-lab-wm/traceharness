@@ -1,0 +1,11 @@
+/* Rig · RecordingFork.css — "Fork recorded harness" (RecordingFork.jsx). One row: the action, then
+   what it does and why it may be unavailable; the text wraps under the button in a narrow pane.
+   No outer margin: the document's stack sets the rhythm. Tokens only. */
+.rig .rg-recfork{display:flex;flex-wrap:wrap;align-items:baseline;gap:var(--rig-s2) var(--rig-s4);min-width:0}
+.rig .rg-recfork-b{flex:none}
+.rig .rg-recfork-t{flex:1 1 18rem;min-width:0;display:flex;flex-direction:column;gap:var(--rig-s1)}
+.rig .rg-recfork-t p{margin:0;max-width:var(--rig-measure)}
+.rig .rg-recfork-lead{font-size:var(--rig-fs-sm);line-height:var(--rig-lh-snug);color:var(--rig-text)}
+.rig .rg-recfork-why{font-size:var(--rig-fs-xs);line-height:var(--rig-lh-body);color:var(--rig-mute)}
+.rig .rg-recfork-why.off{color:var(--rig-dim)}
+.rig .rg-recfork-err{flex-basis:100%;margin:0;font-size:var(--rig-fs-sm);color:var(--rig-red-t)}

@@ -14,6 +14,7 @@ import { useRig } from '../context'
 import { useRuns, verdict, short, sfx } from '../data'
 import { Icon, Tag, ConfirmAction, Btn, Empty } from '../ui'
 import './dock.css'
+import './casefile.css'
 
 const KIND_LABEL = { answer: 'answer', figure: 'figure', cell: 'cell', run: 'run', event: 'event' }
 const vWord = (v) => (v === true ? 'pass' : v === false ? 'fail' : 'unknown')
@@ -76,18 +77,18 @@ function CaseFile({ ctx = {} }) {
     <div className="rg-case" data-el="case-file">
       <div className="rg-case-bar">
         <div className="rg-case-row">
-        <span className="rg-lbl">{items.length} pinned</span>
-        {!storageOk() && <Tag tone="red" nc>kept for this visit only — browser storage is unavailable</Tag>}
-        <span className="rg-grow" />
-        <Btn onClick={exportMd} data-el="export-review"><Icon name="down" size={14} /> Export review</Btn>
+          <span className="rg-lbl rg-case-count">{items.length} pinned</span>
+          {!storageOk() && <Tag tone="red" nc>kept for this visit only — browser storage is unavailable</Tag>}
+          <span className="rg-grow" />
+          <Btn onClick={exportMd} data-el="export-review"><Icon name="down" size={14} /> Export review</Btn>
         </div>
         <div className="rg-case-row">
-        <Btn disabled={!pair} why={cmpWhy} title={pair ? `Compare ${pair.map((x) => x.slice(-6)).join(' ↔ ')}` : undefined}
-          onClick={() => pair && openTab(makeSpec('cmp', pair[0], pair[1]))}><Icon name="cmp" size={14} /> Compare</Btn>
-        <Btn disabled={!one} why={forkWhy} title={one ? `Fork run ${one.slice(-6)} (proposed capability)` : undefined}
-          onClick={() => one && openTab(makeSpec('fork', one))}><Icon name="fork" size={14} /> Fork</Btn>
-        <span className="rg-grow" />
-        <ConfirmAction label="Clear" confirmLabel="Clear all pins" danger onConfirm={() => { clearCase(); setPicked([]) }} />
+          <Btn disabled={!pair} why={cmpWhy} title={pair ? `Compare ${pair.map((x) => x.slice(-6)).join(' ↔ ')}` : undefined}
+            onClick={() => pair && openTab(makeSpec('cmp', pair[0], pair[1]))}><Icon name="cmp" size={14} /> Compare</Btn>
+          <Btn disabled={!one} why={forkWhy} title={one ? `Fork run ${one.slice(-6)} (proposed capability)` : undefined}
+            onClick={() => one && openTab(makeSpec('fork', one))}><Icon name="fork" size={14} /> Fork</Btn>
+          <span className="rg-grow" />
+          <ConfirmAction label="Clear" confirmLabel="Clear all pins" danger onConfirm={() => { clearCase(); setPicked([]) }} />
         </div>
         {hint && <p className="rg-case-hint">{hint}</p>}
       </div>
@@ -95,17 +96,19 @@ function CaseFile({ ctx = {} }) {
         {items.map((x) => (
           <li key={x.id} className="rg-case-it">
             {x.run && (x.kind === 'run' || x.kind === 'event')
-              ? <input type="checkbox" aria-label={`Select ${x.label} for compare or fork`} checked={sel.includes(x.run)} onChange={() => toggle(x.run)} />
-              : <span className="rg-case-sp" />}
-            <Tag tone={x.kind === 'answer' || x.kind === 'figure' ? 'acc' : undefined}>{KIND_LABEL[x.kind] || x.kind}</Tag>
-            <div className="rg-grow">
-              {x.spec && parseSpec(x.spec).kind
-                ? <button type="button" className="rg-tlink rg-case-open" onClick={(e) => openTab(x.spec, { side: e.metaKey || e.ctrlKey })}>{x.label}</button>
-                : <span className="rg-case-open">{x.label}</span>}
-              {x.value && <div className="rg-small rg-dim rg-mono">{x.value}</div>}
-              <input className="rg-inp rg-case-note" aria-label={`Note on ${x.label}`} placeholder="Add a note…" value={x.note || ''} onChange={(e) => setNote(x.id, e.target.value)} />
+              ? <label className="rg-case-pick rg-hit"><input type="checkbox" aria-label={`Select ${x.label} for compare or fork`} checked={sel.includes(x.run)} onChange={() => toggle(x.run)} /></label>
+              : <span className="rg-case-pick" aria-hidden="true" />}
+            <div className="rg-case-main">
+              <div className="rg-case-head">
+                <Tag tone={x.kind === 'answer' || x.kind === 'figure' ? 'acc' : undefined}>{KIND_LABEL[x.kind] || x.kind}</Tag>
+                {x.spec && parseSpec(x.spec).kind
+                  ? <button type="button" className="rg-tlink rg-case-ttl" onClick={(e) => openTab(x.spec, { side: e.metaKey || e.ctrlKey })}>{x.label}</button>
+                  : <span className="rg-case-ttl">{x.label}</span>}
+              </div>
+              {x.value && <div className="rg-case-val">{x.value}</div>}
+              <input className="rg-inp rg-case-memo" aria-label={`Note on ${x.label}`} placeholder="Add a note…" value={x.note || ''} onChange={(e) => setNote(x.id, e.target.value)} />
             </div>
-            <button type="button" className="rg-btn ghost" aria-label={`Unpin ${x.label}`} title="Unpin" onClick={() => unpin(x.id)}>×</button>
+            <button type="button" className="rg-btn ghost rg-case-x" aria-label={`Unpin ${x.label}`} title="Unpin" onClick={() => unpin(x.id)}><Icon name="x" size={14} /></button>
           </li>
         ))}
       </ul>

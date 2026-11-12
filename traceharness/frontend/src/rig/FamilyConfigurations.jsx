@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Go } from './ui'
+import { Go, PanelState } from './ui'
 import { makeSpec } from './route'
 import { HarnessJson } from './HarnessJson'
 
@@ -73,6 +73,25 @@ function BaselineDifference({ current, baseline }) {
     : <p>No differences in the fields shown above. Other recorded fields may differ.</p>}</div>
 }
 
+// Shaped like the inspector that replaces it: a field grid, then the tool list.
+function ConfigurationLoading() {
+  return <div className="rg-stack rg-stack-md">
+    <PanelState kind="loading" title="Reading recorded configurations…" />
+    <div className="rg-skel-stack" aria-hidden="true">
+      {['92%', '78%', '64%'].map((width) => <div key={width} className="rg-skel rg-skel-line" style={{ width }} />)}
+    </div>
+  </div>
+}
+
+// A polite status, not an alert: the matrix above stays usable and only this read is retried.
+function ConfigurationUnavailable({ onRetry }) {
+  return <div className="rg-pstate" role="status" data-el="panel-error">
+    <div className="rg-pstate-t"><span className="rg-v f" aria-hidden="true">×</span><span>Recorded configurations are unavailable.</span></div>
+    <div className="rg-pstate-b">The matrix results remain available.</div>
+    <div className="rg-cluster"><button type="button" className="rg-btn" onClick={onRetry}>Retry configurations</button></div>
+  </div>
+}
+
 export function FamilyConfiguration({ harness, modelLabel, cohort, baseline, loading, error, onRetry }) {
   const [selected, setSelected] = useState('')
   const entry = cohort.variants.find((variant) => variant.id + ':' + variant.hash === selected) || cohort.variants[0]
@@ -84,7 +103,7 @@ export function FamilyConfiguration({ harness, modelLabel, cohort, baseline, loa
     <div className="rg-an-config-head"><div><div className="rg-lbl">Agent & harness configuration</div><h2>{harness}</h2><p>{modelLabel} · settings recorded with these runs</p></div>
       {!loading && !error && <span className="rg-small">Configuration recorded for <b>{cohort.recorded} / {cohort.total}</b> runs</span>}
     </div>
-    {loading ? <p role="status">Reading recorded configurations…</p> : error ? <div><p role="status">Recorded configurations are unavailable. The matrix results remain available.</p><button type="button" className="rg-btn" onClick={onRetry}>Retry configurations</button></div> : <>
+    {loading ? <ConfigurationLoading /> : error ? <ConfigurationUnavailable onRetry={onRetry} /> : <>
       {cohort.missing > 0 && <p className="rg-an-config-warning">{cohort.missing} run{cohort.missing === 1 ? '' : 's'} could not be matched to a configuration record.{cohort.conflicting > 0 ? ' Conflicting records are excluded from this inspector.' : ''} No current preset is substituted.</p>}
       {cohort.variants.length > 1 && <div className="rg-an-config-versions" aria-label="Recorded configuration snapshots"><p><b>{cohort.variants.length} snapshots contribute to this column.</b> Inspect each version; the matrix combines their outcomes.</p><div className="rg-row rg-wrap">{cohort.variants.map((variant, index) => <button type="button" key={variant.id + ':' + variant.hash} className="rg-btn" aria-pressed={variant === entry} onClick={() => setSelected(variant.id + ':' + variant.hash)}>Snapshot {index + 1} · {variant.runIds.length} runs</button>)}</div></div>}
       {entry ? <>

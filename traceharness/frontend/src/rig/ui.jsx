@@ -9,6 +9,12 @@ import { useCaseFile, togglePin } from './caseFile'
 import { useDatasets, useDataset, useOutcomes, verdict, short, fmt, isFailureMode, resolveCondition } from './data'
 import { QUESTION_META } from './answers'
 
+/* Responsive building blocks (Split, PageHeader, Toolbar, Card, TableScroll, Tabs, ActionBar, Menu, Kpis,
+   Id, PanelState, Skeleton, Field, Modal, ScrollX, useSize) live in primitives.jsx and are part of this
+   module's surface: views import everything from '../ui'. */
+export * from './primitives'
+import { ScrollX } from './primitives'
+
 export const MOD = typeof navigator !== 'undefined' && /Mac|iPhone|iPad/.test(navigator.platform || '') ? '⌘' : 'Ctrl'
 const cx = (...a) => a.filter(Boolean).join(' ')
 
@@ -48,6 +54,8 @@ const IC = {
   fork: <><circle cx="6" cy="5" r="2" /><circle cx="18" cy="5" r="2" /><circle cx="12" cy="19" r="2" /><path d="M6 7v3a3 3 0 0 0 3 3h6a3 3 0 0 0 3-3V7M12 13v4" /></>,
   cmp: <><rect x="3" y="4" width="7" height="16" /><rect x="14" y="4" width="7" height="16" /></>,
   pkg: <><path d="M3 7l9-4 9 4v10l-9 4-9-4z" /><path d="M3 7l9 4 9-4M12 11v10" /></>,
+  more: <><circle cx="5" cy="12" r="1" /><circle cx="12" cy="12" r="1" /><circle cx="19" cy="12" r="1" /></>,
+  info: <><circle cx="12" cy="12" r="9" /><path d="M12 11v6M12 7.5v.01" /></>,
 }
 /** <Icon name="search" size={16}/> — stroke icon, aria-hidden. */
 export function Icon({ name, size = 18 }) {
@@ -408,15 +416,22 @@ export function AskingSentence({ dir, model, harness }) {
   const { oracle, setOracle, setCondition, conditionFor } = useRig()
   const ds = useDatasets()
   const row = useDataset(dir).data
+  const [open, setOpen] = useState(false)
   const c = row ? resolveCondition(row, model || conditionFor(dir).model, harness || conditionFor(dir).harness) : null
   if (!ds.data || !row || !c) return null
+  const summary = [dir, short(c.model), c.harness, oracle].join(' · ')
   return (
-    <p className="rg-asking" data-el="asking-sentence condition-picker">
+    <p className={cx('rg-asking', open && 'open')} data-el="asking-sentence condition-picker">
+      {/* compact containers (a phone) show the condition as one line; the four controls open under it */}
+      <button type="button" className="rg-asking-sum" aria-expanded={open} title={summary} onClick={() => setOpen(!open)}>
+        <span className="rg-asking-sl">Condition</span><span className="rg-asking-sv">{summary}</span><span className="rg-asking-sc" aria-hidden="true">▾</span>
+      </button>
       <span className="rg-q-mark" aria-hidden="true">?</span>
-      Asking <Bracket label="Dataset" el="condition-dataset" value={dir} options={ds.data.map((r) => [r.name, r.name])} onChange={(v) => setCondition({ dir: v })} />
-      {' '}about <Bracket label="Model" el="condition-model" value={c.model} options={row.models.map((m) => [m, short(m)])} onChange={(v) => setCondition({ dir, model: v, harness: c.harness })} />
-      {' '}under <Bracket label="Harness" el="condition-harness" value={c.harness} options={row.harnesses.map((h) => [h, h])} onChange={(v) => setCondition({ dir, model: c.model, harness: v })} />,
-      {' '}graded by the <Bracket label="Test suite" el="harness-oracle-picker" value={oracle} options={[['visible', 'visible'], ['hidden', 'hidden'], ['strengthened', 'strengthened']]} onChange={setOracle} /> suite.
+      {/* each word stays with its control, and the comma stays with the harness, so no line starts with "," */}
+      <span className="rg-asking-g">Asking <Bracket label="Dataset" el="condition-dataset" value={dir} options={ds.data.map((r) => [r.name, r.name])} onChange={(v) => setCondition({ dir: v })} /></span>
+      {' '}<span className="rg-asking-g">about <Bracket label="Model" el="condition-model" value={c.model} options={row.models.map((m) => [m, short(m)])} onChange={(v) => setCondition({ dir, model: v, harness: c.harness })} /></span>
+      {' '}<span className="rg-asking-g">under <span className="rg-asking-t"><Bracket label="Harness" el="condition-harness" value={c.harness} options={row.harnesses.map((h) => [h, h])} onChange={(v) => setCondition({ dir, model: c.model, harness: v })} /><span className="rg-asking-p">,</span></span></span>
+      {' '}<span className="rg-asking-g">graded by the <Bracket label="Test suite" el="harness-oracle-picker" value={oracle} options={[['visible', 'visible'], ['hidden', 'hidden'], ['strengthened', 'strengthened']]} onChange={setOracle} /> <span className="rg-asking-x">suite.</span></span>
     </p>
   )
 }
@@ -437,6 +452,7 @@ export function EvidenceChain({ dir, qid, runId, seq, step, count, runLabel }) {
     ['event', 'Event', runId && seq != null ? withChain(makeSpec('span', runId, seq), chain) : null, seq != null ? '#' + seq : null],
   ]
   return (
+    <ScrollX className="rg-chain-s">
     <ol className="rg-chain" aria-label="Evidence chain" data-el="evidence-chain">
       {steps.map(([k, l, spec, em], i) => (
         <li key={k}>
@@ -446,6 +462,7 @@ export function EvidenceChain({ dir, qid, runId, seq, step, count, runLabel }) {
         </li>
       ))}
     </ol>
+    </ScrollX>
   )
 }
 
