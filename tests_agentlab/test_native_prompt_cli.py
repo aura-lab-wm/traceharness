@@ -385,6 +385,17 @@ class CommandLine(unittest.TestCase):
         tampered["profile"]["default_action"] = "disable"
         self.assertEqual(self.run_cli("profile", "convert", self.claude, self.write("tampered.json", tampered), "--from", "bundle")[0], 1)
 
+    def test_profile_convert_from_blocks_without_o_prints_only_the_profile_file(self):
+        """`convert --from agent-patcher-blocks > p.json` must leave a readable profile file: the
+        conversion report goes to stderr, as the skipped rows of `--to agent-patcher-blocks` do."""
+        dump = str(self.dir / "dump.json")
+        self.assertEqual(self.run_cli("profile", "convert", self.claude, self.mixed, "--to", "agent-patcher-blocks", "-o", dump)[0], 0)
+        code, out, err = self.run_cli("profile", "convert", self.claude, dump, "--from", "agent-patcher-blocks")
+        self.assertEqual(code, 0, err)
+        self.assertEqual(out, T.serialize_profile_file(self.mixed_profile))
+        self.assertEqual(json.loads(out), self.mixed_profile)
+        self.assertRegex(err, r"^14 blocks: keep \d+, disable \d+, replace \d+, skipped 0\.\n$")
+
     # --- experiment --------------------------------------------------------------------------------
 
     def test_experiment_summarize_every_format(self):

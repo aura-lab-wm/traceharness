@@ -148,9 +148,14 @@ class Output:
     def __init__(self, args):
         self.json = getattr(args, "json", False)
         self.escape = not getattr(args, "raw", False) and sys.stdout.isatty()
+        self.escape_notes = not getattr(args, "raw", False) and sys.stderr.isatty()
 
     def text(self, value=""):
         sys.stdout.write(safe(value, self.escape) + "\n")
+
+    def note(self, value):
+        """A report line that must not mix with a file printed on stdout: stderr, escaped for a terminal."""
+        sys.stderr.write(safe(value, self.escape_notes) + "\n")
 
     def data(self, value):
         sys.stdout.write(safe_json(json.dumps(value, ensure_ascii=False, indent=2), self.escape) + "\n")
@@ -539,10 +544,12 @@ def cmd_profile_convert(args, out):
         profile = canonical(profile, inventory)
         summary = {"from": parsed["kind"], "profile_sha256": T.profile_sha256(profile), **({"report": report} if report else {})}
         if report and not out.json:
-            out.text(f"{report['total']} blocks: keep {report['keep']}, disable {report['disable']}, replace {report['replace']}, "
+            # stderr, like the skipped rows of `--to agent-patcher-blocks`: without -o the profile
+            # file itself goes to stdout, and `convert ... > profile.json` must stay a readable file.
+            out.note(f"{report['total']} blocks: keep {report['keep']}, disable {report['disable']}, replace {report['replace']}, "
                      f"skipped {len(report['skipped'])}.")
             for row in report["skipped"]:
-                out.text(f"  skipped {row['id']}: {row['reason']}")
+                out.note(f"  skipped {row['id']}: {row['reason']}")
         return emit_file(args, out, _profile_file(profile), summary)
     profile = canonical(load_profile(args.source), inventory)
     if args.target_format == "bundle":
@@ -556,7 +563,7 @@ def cmd_profile_convert(args, out):
     dump = T.agent_patcher_blocks_from_profile(profile, inventory)
     if dump["skipped"] and not out.json:
         for row in dump["skipped"]:
-            sys.stderr.write(f"skipped {row['id']}: {row['reason']}\n")
+            out.note(f"skipped {row['id']}: {row['reason']}")
     return emit_file(args, out, json.dumps(dump["blocks"], ensure_ascii=False, indent=2) + "\n",
                      {"to": "agent-patcher-blocks", "blocks": len(dump["blocks"]), "skipped": dump["skipped"],
                       "note": "The dump contains baseline text from the inventory; keep it as private as the inventory."})
