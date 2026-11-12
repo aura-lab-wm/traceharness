@@ -1,0 +1,1120 @@
+{
+  "record": "Eight-workstream platform audit",
+  "date_eastern": "2026-11-11",
+  "date_utc": "2026-11-12",
+  "application_commit": "7c354b5d99f910022c93cb565709c91d14bb5a95",
+  "site_proof_commit_local_only": "72b5670dfb09b1e8600b2ff3cdd25afea8a792eb",
+  "application_defects_fixed": 12,
+  "proof_tool_defects_fixed": 1,
+  "tests": {
+    "python": {
+      "passed": 1617,
+      "skipped": 68,
+      "subtests_passed": 1097,
+      "warnings": 2
+    },
+    "frontend": {
+      "passed": 1118,
+      "failed": 0,
+      "pending": 0,
+      "files": 66
+    },
+    "worker_pages": {
+      "passed": 273,
+      "skipped": 0
+    },
+    "release_helper": {
+      "passed": 54
+    },
+    "member_evidence_helper": {
+      "passed": 7
+    },
+    "source_parity": {
+      "source_commit": "7c354b5d99f910022c93cb565709c91d14bb5a95",
+      "files_compared": 305,
+      "mismatches": []
+    },
+    "wheel": {
+      "wheel": "traceharness-0.3.0-py3-none-any.whl",
+      "sha256": "ca343118098eb782c52f457b75f6bd051ebc200219b5a425b6f32822e5cd673d",
+      "bytes": 2857947,
+      "checked_source_and_assets": 132,
+      "mismatches": []
+    },
+    "focused_counts_overlap": true,
+    "fixture_browser": {
+      "states": 40,
+      "horizontal_overflow": 0,
+      "uncaught_page_errors": 0,
+      "unnamed_visible_buttons": 0
+    },
+    "initial_frontend": {
+      "passed": 1095,
+      "files": 66,
+      "pending": 0,
+      "failed": 0
+    }
+  },
+  "live_before_publication": {
+    "html_sha256": "5c254fac4a76ad017c9d0dece8f8da75d91baec1d445711ced0e1fa518b740fd",
+    "headless": {
+      "assertions": 1176,
+      "route_states": 196,
+      "datasets": 8,
+      "failures": 0,
+      "scope": "Rendering/navigation, not model execution"
+    },
+    "visible_editor": {
+      "checks": [
+        "The member home has one accurate hosted-workflow entry into Harnesses",
+        "Whole-configuration Unicode JSON edits apply to the actual prompt and fields; pending edits block review",
+        "Invalid JSON cannot apply and Discard restores the current configuration",
+        "The actual exported file matches the complete configuration; review succeeds without collecting a key or starting a job",
+        "A named tab checkpoint restores the exact prompt, model, task and harness configuration",
+        "The exported file imports as an editable draft without account persistence or execution",
+        "Read-only and permissive warnings come from the real compiler; guided/advanced navigation preserves edits and explicit reset retains model/task selections"
+      ],
+      "new_jobs": 0
+    },
+    "readiness": {
+      "ui_configurations": 9,
+      "server_reviews": 72,
+      "accepted": 67,
+      "intentionally_rejected": 5,
+      "all_matched_expectations": true,
+      "new_jobs": 0
+    },
+    "real_member_saved_prompt": {
+      "durable_write_confirmed": true,
+      "fresh_visible_browser_exact_prompt_paint": true,
+      "original_restored_and_revalidated": true,
+      "service_role_used": false
+    },
+    "edited_native_trial": {
+      "maximum_new_jobs": 1,
+      "model_budget_cap_usd": 0.25,
+      "automatic_retries": false,
+      "task_success": true,
+      "status": "succeeded",
+      "grade": "passed",
+      "usage": {
+        "requests": 8,
+        "input_tokens": 71395,
+        "output_tokens": 1300,
+        "cost_usd": 0.00901579
+      },
+      "review_sha256": "ea973b4ce17e07f817f23737016a7c0f03466c65ed3a23034dbbacc4d1d0c457",
+      "native_application_readback_verified": true,
+      "replacement_observed_in_model_request": true,
+      "grade_artifact_outcome": "passed",
+      "credential_revoked": true,
+      "paid_job_post_count": 1
+    },
+    "real_capture": {
+      "fixture_transcript": false,
+      "steps": 20,
+      "visible_detail_and_deletion": true,
+      "original_capture_ids_preserved": true,
+      "capture_token_revoked": true,
+      "new_model_calls": 0
+    }
+  },
+  "publication": {
+    "kv": {
+      "at": "2026-11-12T03:53:20.810534+00:00",
+      "exit_code": 0,
+      "source_commit": "7c354b5d99f910022c93cb565709c91d14bb5a95",
+      "input_file": "/Users/amastro/Documents/TraceHarness-eight-sol-audit-2026-11-11/app-eight-sol-candidate.html.gz",
+      "input_sha256": "415304afe56e7dc9da1bde38f4b330dea3b4a11faa582134ba81d461f8c61ae4",
+      "input_bytes": 16432241,
+      "html_sha256": "993b77359850be8a94d682f2454e3cfbeb0a75ff8b5450b3ea6d0da594ae0041",
+      "worker_version_id": "4b0d1d11-83b1-42f4-844b-0256ace83c8e",
+      "worker_redeployed": false,
+      "last_10_log_lines": [
+        "",
+        " ⛅️ wrangler 4.90.1",
+        "───────────────────",
+        "Resource location: remote ",
+        "",
+        "Writing the contents of /Users/amastro/Documents/TraceHarness-eight-sol-audit-2026-11-11/app-eight-sol-candidate.html.gz to the key \"app.html.gz\" on namespace id: \"8a74dd2fba124b1a8d82e6eeff5ba3ae\".",
+        ""
+      ]
+    },
+    "http_readback": {
+      "complete": true,
+      "real_member_password_session": true,
+      "observations": [
+        {
+          "attempt": 1,
+          "status": 200,
+          "html_sha256": "993b77359850be8a94d682f2454e3cfbeb0a75ff8b5450b3ea6d0da594ae0041"
+        }
+      ],
+      "html_sha256": "993b77359850be8a94d682f2454e3cfbeb0a75ff8b5450b3ea6d0da594ae0041",
+      "temporary_config_deleted": true,
+      "scope": "Production HTTP readback, not a post-upload browser-render claim"
+    },
+    "runner_deploy": {
+      "at": "2026-11-12T03:48:19.633529+00:00",
+      "exit_code": 0,
+      "image": "registry.fly.io/traceharness-runner@sha256:9c3331292fe6c85de7fc2cdb1db2f41e188a123601368ad260cd8fdfca2d9d6d",
+      "previous_image": "registry.fly.io/traceharness-runner@sha256:b336f41a0d10dfab76989443ed67ec11a203df103f5d284a6ba1e552e6ab8c89",
+      "module_sha256": "1f174a62f72219a7baba5217ea0a053ccb90b55366cfcfe491ebbba219760d8d",
+      "registry_sha256": "2d90f0f7a9710890c2aedad0e972ac6d1f1a52ecebec4848d195793370496d10",
+      "last_10_log_lines": [
+        "> Updating 8e64d7b7d01e68 [app]",
+        "> Updated machine config for 8e64d7b7d01e68",
+        "✔ Machine 8e64d7b7d01e68 is now in a good state",
+        "> Clearing lease for 8e64d7b7d01e68",
+        "✔ Cleared lease for 8e64d7b7d01e68",
+        "Checking DNS configuration for traceharness-runner.fly.dev",
+        "✓ DNS configuration verified",
+        "",
+        "Visit your newly deployed app at https://traceharness-runner.fly.dev/",
+        ""
+      ]
+    },
+    "runner_postdeploy": {
+      "module_sha256": "1f174a62f72219a7baba5217ea0a053ccb90b55366cfcfe491ebbba219760d8d",
+      "registry_sha256": "2d90f0f7a9710890c2aedad0e972ac6d1f1a52ecebec4848d195793370496d10",
+      "live_controller_boundary_checks": [
+        "expired_before_launch",
+        "cancelled_before_launch",
+        "completed_after_deadline"
+      ],
+      "actual_process_launches_in_probes": 0,
+      "active_or_needs_attention": 0,
+      "containers": 0,
+      "release_version": 17,
+      "release_status": "complete",
+      "image": "registry.fly.io/traceharness-runner@sha256:9c3331292fe6c85de7fc2cdb1db2f41e188a123601368ad260cd8fdfca2d9d6d",
+      "machines": [
+        {
+          "id": "8e64d7b7d01e68",
+          "state": "started",
+          "checks": [
+            {
+              "name": "servicecheck-00-tcp-8743",
+              "status": "passing"
+            }
+          ]
+        }
+      ],
+      "complete": true
+    },
+    "recorded_data": {
+      "datasets": {
+        "captured_claude_code": {
+          "index_rows": 1,
+          "embedded_runs": 1,
+          "spans": 63
+        },
+        "demo_mock": {
+          "index_rows": 24,
+          "embedded_runs": 24,
+          "spans": 586
+        },
+        "families_mock": {
+          "index_rows": 80,
+          "embedded_runs": 80,
+          "spans": 1525
+        },
+        "live": {
+          "index_rows": 576,
+          "embedded_runs": 576,
+          "spans": 12718
+        },
+        "llma4se_live": {
+          "index_rows": 1632,
+          "embedded_runs": 1632,
+          "spans": 29405
+        },
+        "prerecorded_mock": {
+          "index_rows": 480,
+          "embedded_runs": 480,
+          "spans": 7458
+        },
+        "prerecorded_mock_weak": {
+          "index_rows": 160,
+          "embedded_runs": 160,
+          "spans": 2292
+        },
+        "real_swe_agent_500": {
+          "index_rows": 500,
+          "embedded_runs": 500,
+          "spans": 26349
+        }
+      },
+      "runs": 3453,
+      "spans": 80396,
+      "audio_chapters": 5,
+      "compared_recorded_index_and_detail_endpoints": 3461,
+      "all_equal": true,
+      "differing_endpoint_names": [],
+      "candidate_derived_analysis_regenerated": true
+    },
+    "anonymous_gate": {
+      "complete": true,
+      "at": "2026-11-12T04:00:27.917447+00:00",
+      "curl_max_redirs": 0,
+      "user_agent": "traceharness-proof",
+      "checks": [
+        {
+          "path": "/app",
+          "hostile_origin": false,
+          "status": 302,
+          "location": "/login",
+          "acao": null
+        },
+        {
+          "path": "/app/shallow",
+          "hostile_origin": false,
+          "status": 302,
+          "location": "/login",
+          "acao": null
+        },
+        {
+          "path": "/link",
+          "hostile_origin": false,
+          "status": 302,
+          "location": "/login",
+          "acao": null
+        },
+        {
+          "path": "/app/device",
+          "hostile_origin": false,
+          "status": 302,
+          "location": "/login",
+          "acao": null
+        },
+        {
+          "path": "/app/capture",
+          "hostile_origin": false,
+          "status": 302,
+          "location": "/login",
+          "acao": null
+        },
+        {
+          "path": "/api/shallow/harnesses",
+          "hostile_origin": false,
+          "status": 401,
+          "location": null,
+          "acao": null
+        },
+        {
+          "path": "/api/shallow/harnesses",
+          "hostile_origin": true,
+          "status": 401,
+          "location": null,
+          "acao": null
+        },
+        {
+          "path": "/api/capture/tokens",
+          "hostile_origin": false,
+          "status": 401,
+          "location": null,
+          "acao": null
+        },
+        {
+          "path": "/api/capture/tokens",
+          "hostile_origin": true,
+          "status": 401,
+          "location": null,
+          "acao": null
+        },
+        {
+          "path": "/api/capture/runs",
+          "hostile_origin": false,
+          "status": 401,
+          "location": null,
+          "acao": null
+        },
+        {
+          "path": "/api/capture/runs",
+          "hostile_origin": true,
+          "status": 401,
+          "location": null,
+          "acao": null
+        },
+        {
+          "path": "/api/runner/catalog",
+          "hostile_origin": false,
+          "status": 401,
+          "location": null,
+          "acao": null
+        },
+        {
+          "path": "/api/runner/catalog",
+          "hostile_origin": true,
+          "status": 401,
+          "location": null,
+          "acao": null
+        },
+        {
+          "path": "/api/onboarding",
+          "hostile_origin": false,
+          "status": 401,
+          "location": null,
+          "acao": null
+        },
+        {
+          "path": "/api/onboarding",
+          "hostile_origin": true,
+          "status": 401,
+          "location": null,
+          "acao": null
+        }
+      ]
+    },
+    "authenticated_api": {
+      "complete": true,
+      "at": "2026-11-12T04:00:29.906934+00:00",
+      "checks": [
+        "Real member catalog remains available after runner and snapshot publication",
+        "Hostile Origin blocked: /app",
+        "Hostile Origin blocked: /app/shallow",
+        "Hostile Origin blocked: /api/runner/catalog",
+        "Hostile Origin blocked: /api/shallow/harnesses",
+        "Stale scope refused: /api/runner/jobs",
+        "Stale scope refused: /api/shallow/harnesses",
+        "Stale scope refused: /api/onboarding",
+        "Machine-local mutation blocked: /api/jobs",
+        "Machine-local mutation blocked: /api/blocks/run",
+        "Machine-local mutation blocked: /api/judge/run",
+        "Machine-local mutation blocked: /api/real/import",
+        "Machine-local mutation blocked: /api/capture/control",
+        "Machine-local mutation blocked: /api/settings/key",
+        "Machine-local mutation blocked: /api/harness/ablate"
+      ],
+      "new_jobs": 0,
+      "new_model_calls": 0,
+      "catalog": {
+        "execution_available": true,
+        "credentials_available": true,
+        "runtime_ids": [
+          "traceharness",
+          "native-claude-code",
+          "native-codex"
+        ],
+        "tasks": 8
+      },
+      "saved_native_job_preserved": {
+        "id": "40e7fe019924e93ac94ea64f565c5fb73a6a705ade565f7d",
+        "status": "succeeded",
+        "grade": "passed",
+        "usage": {
+          "requests": 8,
+          "input_tokens": 71395,
+          "output_tokens": 1300,
+          "cost_usd": 0.00901579
+        }
+      },
+      "revocation_wire_statuses": {
+        "before_identity": 200,
+        "revoke": 200,
+        "after_identity": 401,
+        "after_upload": 401,
+        "raw_token_persisted": false,
+        "upload_attempt_refused_before_payload": true
+      }
+    }
+  },
+  "chrome_chatgpt": {
+    "complete": true,
+    "observed_at": "2026-11-12T04:20:01.504573+00:00",
+    "surface": "Actual ChatGPT Work side panel in Google Chrome; browser integration navigated production TraceHarness",
+    "duration_seconds": 296,
+    "normal_member_signin": "1Password saved login in regular Chrome profile; no raw password output",
+    "reviewed_snapshot_html_sha256": "993b77359850be8a94d682f2454e3cfbeb0a75ff8b5450b3ea6d0da594ae0041",
+    "new_jobs": 0,
+    "model_credentials_connected": false,
+    "member_data_writes": false,
+    "findings": [
+      {
+        "severity": "high",
+        "observation": "Mouse selection intermittently closes Harness picker without changing selection; keyboard selection succeeds",
+        "reproduction": "Datasets > Open Harnesses > Edit selections > Show harness options; select native Claude Code, also stock Claude Code from native Codex",
+        "root_limit": "A later native AX click of stock Claude Code succeeded. Universal pointer failure is not established; the separate hover-scroll regression is reproduced locally."
+      },
+      {
+        "severity": "medium",
+        "observation": "Single ungraded captured attempt described as every task repeats agree",
+        "reproduction": "captured_claude_code > Overview > Open as a document; repeat answer shows 0/1 and agreement despite zero known hidden grades",
+        "root_source_reproduced": true
+      }
+    ],
+    "reported_verified_navigation": [
+      "Recorded-agent dataset filter, analysis and captured run evidence",
+      "Parseable full harness JSON, partial-source explanation and refused executable fork",
+      "Custom model/task selection and prompt expansion",
+      "Codex native inventory with 13 patchable and 9 observed-only components",
+      "Existing completed experiment queue and existing successful run result",
+      "Voice-tour chapter navigation and chapter-five Buddy workflow link",
+      "Capture availability and current device/run listing"
+    ],
+    "unverified_by_this_review": [
+      "Narration playback",
+      "New device connection or recording",
+      "New model execution or paired performance",
+      "Full post-fix coverage"
+    ],
+    "account_admin_recommendations": [
+      "Dedicated membership, roles and active-session console plus searchable audit",
+      "Unified run/experiment operations and confirmed/unknown spend",
+      "Scoped device/provider connection metadata with no secret values"
+    ]
+  },
+  "accounts_admin": {
+    "status": "Design only, not implemented or deployed",
+    "document": "ACCOUNT_PLATFORM_DESIGN.md",
+    "proposed_default": "Owner-approved requests",
+    "policy_answer_received": false,
+    "production_auth_changes": false
+  },
+  "unverified": [
+    "Fresh paid task under runner v17",
+    "Fresh matched baseline/edited performance comparison or performance improvement",
+    "Historical unknown charges",
+    "Successful Claude task completion",
+    "Arbitrary native/profile/model/task combinations",
+    "Live general-matrix throughput and production crowd load",
+    "Complete interactive matrix on newly uploaded snapshot",
+    "End-to-end email/OAuth/PKCE callback repair",
+    "New account/admin/session/MFA/suspension platform",
+    "Locator-positioned automation click discrepancy; direct-pointer input passed"
+  ],
+  "evidence_hashes": {
+    "integrated-python.log": "bf0eb10ee641e668507aab8d701a175b8eb464e10a37b2a0ae0db190456a2655",
+    "integrated-frontend.json": "f10cdb6089df2701d1a6e9ebfa72ea09bbcd2a9838e2072e850ffa58b4dcd6aa",
+    "integrated-worker.log": "a7e132211f2e8735895b7d62a1a7f285e6766fc3c14a664dea7fffd20cc40176",
+    "integrated-release-check.log": "94bd6c51420521158175ab97d5f9c677b83316cd236615415826129d62dd8f7c",
+    "integrated-member-evidence-green.log": "3cd02e884955c8b49b809ce57755ae46aacba4d9ef1382b84e081568bb3f04a5",
+    "integrated-lint.log": "693c9d581abe91614daded2882861ae2c5c4c8625c11f4b4073fc696fb93f66e",
+    "final-source-build.log": "d18f291338e9343f9dbbce778c19fade0e5e912611a1e74a453fcc4940d1f820",
+    "tested-source-parity.json": "354e6c9bb8c49c328fd779cca5eef7eb7b008527b79e6324f52cc60fb1c97602",
+    "final-wheel-parity.json": "4d17fd317c6a5df8b93c11f268e5f8aeed72ae6cf2231aa9c7a880145d35d3cf",
+    "candidate-recorded-data-parity.json": "d36afca6a2a8fe7bc05b7b329704e9f0fb36f55360a20d16d5c69cf279dd8b4f",
+    "candidate-stream-proof.json": "83add19a26807e343564db0093a983cdb8939d4f638ce6c800fffda21fdae01f",
+    "live-verified-smoke-proof.json": "0ad0638b792cda6ddf924f8d0701ca0aa1d0cd398c9812661a5789d183374347",
+    "headful-editing-c10b925c-editing-proof.json": "96f0144c4af53dc993358c38122b696eabd17f15417603d1655e06dd9c0f2147",
+    "headful-readiness-d2765cdc-readiness-proof.json": "dee342dd816ea0523221dc7a29e4860d3d633ec04b2a84adda25475933cf145a",
+    "headful-persistence-a9fe9d06-persistence-proof.json": "134c70ff3db16bb309a525270d93dec1998026a48f865499d0b10740caa843b5",
+    "headful-execution-proof.json": "608c1d1457f180288fefa93bd000bebb8f4b5e3cbbdc9cb4f889a30d10be91a5",
+    "headful-result-cda6a75f-result-proof.json": "6304fd5d9ed03a9197fe231b2fb61e6a1b2091e6a95f766ed5b02f6a6cd15c6a",
+    "headful-real-capture-proof.json": "e2fdecf1683850e0d93a530f8b8bcab441d119e511763f6ca7504732d4c79f5c",
+    "post-publish-api-proof.json": "6438c1a09a4cb7e23c3ed606a2067fd6c98f2275ffab405caea7753dbab82e42",
+    "post-publish-anonymous.json": "3d791a4e22acb3b725bf58214379574706aee6c926f39ca3a232078934bec47d",
+    "published-readback.json": "e136b347a1c0046d6cd69e5226a70b13d5ecc07ed904da05e99bf57763bbb1a0",
+    "runner-postdeploy.json": "81bc9c0b76ab559ada3881f324ad804fb73977f3e2fde86f0afaef0d7b2f9f7c",
+    "runner-deploy.json": "3418d0f5aeceda4273627f7a0dc5ce353371f6a65db243c072094479ff340883",
+    "kv-upload.json": "90aec927a8f923ee7e70a728d19c5ddfd54e0f8e36f7866256048c0296759bd9",
+    "chatgpt-chrome-review.json": "2f391023e780e467713994412ad8bb31fa66612319b21349e0d9b5edea4f27b3",
+    "chrome-followup-frontend.json": "8404f01493af2ba288286333e35e7b55e419b07de673d5055a1ce4ff19af307b",
+    "chrome-followup-lint.log": "693c9d581abe91614daded2882861ae2c5c4c8625c11f4b4073fc696fb93f66e",
+    "chrome-followup-build.log": "ce1e526fa083b82d2e2c1d368e0703f349b1ca53c8de7a32f2c82b594f108217",
+    "chrome-followup-artifact.json": "d7034d14839de98672f93fbe772866251edcadbbcc232704ec89dbb97320f3e5",
+    "chrome-followup-stream-proof.json": "0e17289850aa3570fba2801a93d2e1c9d5576bdfbdfa1f2060e3ec7ae2eb8f19",
+    "chrome-followup-kv-upload.json": "4a043f1a1cad9f5c41174f69252054e9f4a4198965c2344ca1d76b8994a425ad",
+    "chrome-followup-readback.json": "22ffaa42587662de89bc4280cb6b5a655fd63c42260cc9df6a8e055dd84fe5a0",
+    "chrome-followup-anonymous.json": "e1068fdbdfbd91aeb35cad9bb65956db3f409a4d5c7adc7db45ecf365b9e56c2",
+    "chrome-followup-wheel-parity.json": "5016b9d7e842ab763c4ce8848c75d8d296b2fc6b1748ff07c3c73c7f6ef09a75",
+    "chrome-followup-distribution.log": "f1ede15c98572c6714e758aa02874ab8d12c08822c3385ea2f7ff011bb7fcc45",
+    "chatgpt-chrome-retest.json": "fd881225f21235edbb07dc8664f642311e2aaec7becaa1ed610a4ffc181afb20",
+    "counter-final-frontend.json": "fab680732c1ab686dd581516b66e81278eeb0d496e2389b02f206d60f90bda0b",
+    "counter-final-lint.log": "693c9d581abe91614daded2882861ae2c5c4c8625c11f4b4073fc696fb93f66e",
+    "counter-final-build.log": "711dd20e1226522f373c50b269a2c53c7e4e550e2241883efcda70bc4f4305a3",
+    "counter-followup-artifact.json": "77890e8bcd1ab0d12d86c84c91223c1197ead9fd8736dca870b79da5b65aa3d6",
+    "counter-followup-stream-proof.json": "893d6fb195b9098ba6ec94a234c347e2abc2e70bb8dc072a640bf408afe9b157",
+    "counter-followup-kv-upload.json": "162fa44c99f344b86ae5abeb4cb203e6ea63215ace1dda17e28675dbbb1f183e",
+    "counter-followup-readback.json": "e239c1f25c5894ebb2f683bf47d2c032ab853717dee64d3df0ed3762187ca19f",
+    "counter-final-anonymous.json": "f0cd223c306fd7e20c6f7ba439f3a29af746e71956a5455c7ecf90a9ce127d32",
+    "counter-final-wheel-parity.json": "e0486c745f9321df58756eb66792370886e2ffc8ca1e96f5007620c7217f671b",
+    "counter-final-distribution.log": "24fcde9b983064d5bf667f9d547d6feb5b68b0a9ed1cf72e699045dc3ae91a40",
+    "chatgpt-counter-retest.json": "fe9cc2549415862b58aed1530429559c0dec03b1b50ec40a90c5cdeb0787e7ef",
+    "labels-final-frontend.json": "67d2d69f14a596cb6fdc6f7e95e8e756d4e150747e1cf320470a9eed3cf33c11",
+    "labels-final-lint.log": "693c9d581abe91614daded2882861ae2c5c4c8625c11f4b4073fc696fb93f66e",
+    "labels-final-build.log": "7c30bbc55142a9ab784c114486960e005766de86be0b1600d96a862cdcf35fd0",
+    "pass-label-red.log": "a7ff0ddfea33ba75b22ab6525bdaa3e7aca725629f6fce4725e90185cb28cbc6",
+    "labels-followup-artifact.json": "1d2990549d05813a4ccbf5594c6ce9135e7c83737393c794732d664a4de8a0d4",
+    "labels-followup-stream-proof.json": "27714131c3c0b603c2d3afd5b1c2ac21a5a45ff3cdd53c3d7a3bc55da56e5ab8",
+    "labels-followup-kv-upload.json": "eaa99d221adcc399c9c885bad854c23f9064a3684b6f8c4e2d1d13dd67231f2f",
+    "labels-followup-readback.json": "65e0331b008b155311265f9e30f5a8d1a4008a84e7fb85823fffce3f1fe44177",
+    "labels-final-anonymous.json": "edd3f1977d46367996d5289e380f2eff9a324b1aeaf58de050f7d4d0ec86cc37",
+    "labels-final-wheel-parity.json": "cf0d69d1da2ac5ebc7b36c7865b243610acf5c33ec9ca2ba2e800bd0ebe6cb06",
+    "labels-final-distribution.log": "ba4e42fde4b68335cc9d0fc50a61c7c3c5c5189e3a55f1f2d44fef6fadae7f34",
+    "chatgpt-label-retest.json": "631ebd3cccf6addf592f972304fc8f6da11b5f699c4dd62a8bacd81ca4279f91"
+  },
+  "privacy": "Evidence contents with credentials, private provider balances, prompts and recovery material are excluded; hashes identify local receipts only.",
+  "initial_application_defects_fixed": 9,
+  "followup_application_defects_fixed": 3,
+  "current_application_commit": "f55c182260d7b74eded6763ff0f7c5032d50dc5b",
+  "chrome_followup": {
+    "artifact": {
+      "complete": true,
+      "source_commit": "fc1397956e28b9a6bf2f8d046170e101fba20241",
+      "source_parent": "7c354b5d99f910022c93cb565709c91d14bb5a95",
+      "method": "Replace only the rebuilt application module in the already-verified full-corpus HTML; preserve exact bootstrap, CSS, encoded recorded data and five audio chapters",
+      "html": {
+        "path": "/Users/amastro/Documents/TraceHarness-eight-sol-audit-2026-11-11/app-chrome-reviewed.html",
+        "bytes": 22602243,
+        "sha256": "75b3f2d1b2651d8dcf771712b770aca65a3cc3e1895bbbee497cc7cb93057826"
+      },
+      "gzip": {
+        "path": "/Users/amastro/Documents/TraceHarness-eight-sol-audit-2026-11-11/app-chrome-reviewed.html.gz",
+        "bytes": 16432391,
+        "sha256": "280d3b9e8b1c26b9eeeb1edaf88760035bb7ab3046b764fe55a124a533df9e61"
+      },
+      "exact_embedded_data_unchanged": true,
+      "audio_chapters": 5,
+      "old_asset": "/assets/index-dKNKHiFo.js",
+      "new_asset": "/assets/index-duTepL_6.js",
+      "new_module_exactly_matches_dist": true,
+      "uploaded": false
+    },
+    "local_stream": {
+      "complete": true,
+      "scope": "Local exact-file streaming through production serveWorkbench with a fixture scope, not live authentication or browser-render evidence",
+      "status": 200,
+      "gzip_bytes": 16432391,
+      "response_bytes": 22602820,
+      "exact_expected_injections": true,
+      "candidate_html_sha256": "75b3f2d1b2651d8dcf771712b770aca65a3cc3e1895bbbee497cc7cb93057826",
+      "security_headers": true
+    },
+    "upload": {
+      "at": "2026-11-12T04:21:50.373638+00:00",
+      "exit_code": 0,
+      "source_commit": "fc1397956e28b9a6bf2f8d046170e101fba20241",
+      "input_file": "/Users/amastro/Documents/TraceHarness-eight-sol-audit-2026-11-11/app-chrome-reviewed.html.gz",
+      "input_sha256": "280d3b9e8b1c26b9eeeb1edaf88760035bb7ab3046b764fe55a124a533df9e61",
+      "input_bytes": 16432391,
+      "html_sha256": "75b3f2d1b2651d8dcf771712b770aca65a3cc3e1895bbbee497cc7cb93057826",
+      "worker_version_id": "4b0d1d11-83b1-42f4-844b-0256ace83c8e",
+      "worker_redeployed": false,
+      "last_10_log_lines": [
+        "",
+        " ⛅️ wrangler 4.90.1 (update available 4.160.1)",
+        "──────────────────────────────────────────────",
+        "Resource location: remote ",
+        "",
+        "Writing the contents of /Users/amastro/Documents/TraceHarness-eight-sol-audit-2026-11-11/app-chrome-reviewed.html.gz to the key \"app.html.gz\" on namespace id: \"8a74dd2fba124b1a8d82e6eeff5ba3ae\".",
+        ""
+      ]
+    },
+    "real_member_readback": {
+      "complete": true,
+      "real_member_password_session": true,
+      "observations": [
+        {
+          "attempt": 1,
+          "status": 200,
+          "html_sha256": "75b3f2d1b2651d8dcf771712b770aca65a3cc3e1895bbbee497cc7cb93057826"
+        }
+      ],
+      "html_sha256": "75b3f2d1b2651d8dcf771712b770aca65a3cc3e1895bbbee497cc7cb93057826",
+      "temporary_config_deleted": true,
+      "scope": "Production HTTP readback, not a post-upload browser-render claim"
+    },
+    "anonymous": {
+      "complete": true,
+      "at": "2026-11-12T04:22:46.457148+00:00",
+      "user_agent": "traceharness-proof",
+      "curl_max_redirs": 0,
+      "snapshot_html_sha256": "75b3f2d1b2651d8dcf771712b770aca65a3cc3e1895bbbee497cc7cb93057826",
+      "checks": [
+        {
+          "path": "/app",
+          "hostile_origin": false,
+          "status": 302,
+          "location": "/login",
+          "acao": null,
+          "exact_expected_body": false,
+          "passed": true
+        },
+        {
+          "path": "/app/shallow",
+          "hostile_origin": false,
+          "status": 302,
+          "location": "/login",
+          "acao": null,
+          "exact_expected_body": false,
+          "passed": true
+        },
+        {
+          "path": "/link",
+          "hostile_origin": false,
+          "status": 302,
+          "location": "/login",
+          "acao": null,
+          "exact_expected_body": false,
+          "passed": true
+        },
+        {
+          "path": "/app/device",
+          "hostile_origin": false,
+          "status": 302,
+          "location": "/login",
+          "acao": null,
+          "exact_expected_body": false,
+          "passed": true
+        },
+        {
+          "path": "/app/capture",
+          "hostile_origin": false,
+          "status": 302,
+          "location": "/login",
+          "acao": null,
+          "exact_expected_body": false,
+          "passed": true
+        },
+        {
+          "path": "/api/shallow/harnesses",
+          "hostile_origin": false,
+          "status": 401,
+          "location": null,
+          "acao": null,
+          "exact_expected_body": true,
+          "passed": true
+        },
+        {
+          "path": "/api/shallow/harnesses",
+          "hostile_origin": true,
+          "status": 401,
+          "location": null,
+          "acao": null,
+          "exact_expected_body": true,
+          "passed": true
+        },
+        {
+          "path": "/api/capture/tokens",
+          "hostile_origin": false,
+          "status": 401,
+          "location": null,
+          "acao": null,
+          "exact_expected_body": true,
+          "passed": true
+        },
+        {
+          "path": "/api/capture/tokens",
+          "hostile_origin": true,
+          "status": 401,
+          "location": null,
+          "acao": null,
+          "exact_expected_body": true,
+          "passed": true
+        },
+        {
+          "path": "/api/capture/runs",
+          "hostile_origin": false,
+          "status": 401,
+          "location": null,
+          "acao": null,
+          "exact_expected_body": true,
+          "passed": true
+        },
+        {
+          "path": "/api/capture/runs",
+          "hostile_origin": true,
+          "status": 401,
+          "location": null,
+          "acao": null,
+          "exact_expected_body": true,
+          "passed": true
+        },
+        {
+          "path": "/api/runner/catalog",
+          "hostile_origin": false,
+          "status": 401,
+          "location": null,
+          "acao": null,
+          "exact_expected_body": true,
+          "passed": true
+        },
+        {
+          "path": "/api/runner/catalog",
+          "hostile_origin": true,
+          "status": 401,
+          "location": null,
+          "acao": null,
+          "exact_expected_body": true,
+          "passed": true
+        },
+        {
+          "path": "/api/onboarding",
+          "hostile_origin": false,
+          "status": 401,
+          "location": null,
+          "acao": null,
+          "exact_expected_body": true,
+          "passed": true
+        },
+        {
+          "path": "/api/onboarding",
+          "hostile_origin": true,
+          "status": 401,
+          "location": null,
+          "acao": null,
+          "exact_expected_body": true,
+          "passed": true
+        }
+      ]
+    },
+    "wheel": {
+      "wheel": "traceharness-0.3.0-py3-none-any.whl",
+      "bytes": 2858227,
+      "sha256": "e88fb152f6173dcfe1bb92fd8cb90c204e4a243bcba6024656c8bab43c8ffc3b",
+      "source_commit": "fc1397956e28b9a6bf2f8d046170e101fba20241",
+      "checked_source_and_assets": 140,
+      "mismatches": []
+    },
+    "distribution_tests_passed": 2,
+    "browser_retest_complete": true,
+    "browser_retest": {
+      "complete": true,
+      "observed_at": "2026-11-12T04:25:19.322873+00:00",
+      "source_commit": "fc1397956e28b9a6bf2f8d046170e101fba20241",
+      "html_sha256": "75b3f2d1b2651d8dcf771712b770aca65a3cc3e1895bbbee497cc7cb93057826",
+      "production_reloaded": true,
+      "duration_seconds": 127,
+      "reviewer": "Actual ChatGPT Work Chrome side panel and browser integration",
+      "direct_pointer_selection": {
+        "passed": true,
+        "harnesses": [
+          "Custom",
+          "Claude Code stand-in",
+          "native Codex CLI",
+          "native Claude Code"
+        ],
+        "selected_configuration_updated": true,
+        "fully_visible_rows": true,
+        "roughly_half_clipped_rows_in_upward_scrolled_popup": true
+      },
+      "keyboard_selection": {
+        "passed": true,
+        "harness": "native Codex CLI"
+      },
+      "repeat_answer": {
+        "passed": true,
+        "surfaces": [
+          "Overview question",
+          "analysis document",
+          "detailed answer"
+        ],
+        "insufficient_evidence_explained": true,
+        "disagreement_rate_absent": true
+      },
+      "remaining_findings": [
+        "Overview Mixed outcomes tile still shows 0/1 tasks for ungraded singleton",
+        "Destination task view still shows Mixed outcomes 0 for ungraded singleton",
+        "Locator-positioned automation clicks still close popup without selection; direct pointer input did not reproduce it"
+      ],
+      "new_jobs": 0,
+      "credentials_accessed": false,
+      "member_data_writes": false,
+      "account_changes": false,
+      "chrome_tab_memory_indicator_mb_single_observation": 872,
+      "memory_observation_limit": "Chrome tab indicator from one review state, not a benchmark, leak diagnosis or capacity claim"
+    }
+  },
+  "counter_followup": {
+    "artifact": {
+      "complete": true,
+      "source_commit": "4522f750b137cc29063ee76abacdace3fc3c5482",
+      "source_parent": "7c354b5d99f910022c93cb565709c91d14bb5a95",
+      "method": "Replace only the rebuilt application module in the already-verified full-corpus HTML; preserve exact bootstrap, CSS, encoded recorded data and five audio chapters",
+      "html": {
+        "path": "/Users/amastro/Documents/TraceHarness-eight-sol-audit-2026-11-11/app-repeat-counters.html",
+        "bytes": 22603888,
+        "sha256": "d502a0f009bd4ca176dabf2585aeaa75d28d1b3aa5a9053ccb83c1dbd083e550"
+      },
+      "gzip": {
+        "path": "/Users/amastro/Documents/TraceHarness-eight-sol-audit-2026-11-11/app-repeat-counters.html.gz",
+        "bytes": 16432789,
+        "sha256": "8c831e62b93a3d4644d6c8889ab5feb311bab56f2ec392caf07f484fbbaa372b"
+      },
+      "exact_embedded_data_unchanged": true,
+      "audio_chapters": 5,
+      "old_asset": "/assets/index-dKNKHiFo.js",
+      "new_asset": "/assets/index-B0ANA6RM.js",
+      "new_module_exactly_matches_dist": true,
+      "uploaded": false
+    },
+    "upload": {
+      "at": "2026-11-12T04:29:49.829531+00:00",
+      "exit_code": 0,
+      "source_commit": "4522f750b137cc29063ee76abacdace3fc3c5482",
+      "input_file": "/Users/amastro/Documents/TraceHarness-eight-sol-audit-2026-11-11/app-repeat-counters.html.gz",
+      "input_sha256": "8c831e62b93a3d4644d6c8889ab5feb311bab56f2ec392caf07f484fbbaa372b",
+      "input_bytes": 16432789,
+      "html_sha256": "d502a0f009bd4ca176dabf2585aeaa75d28d1b3aa5a9053ccb83c1dbd083e550",
+      "worker_version_id": "4b0d1d11-83b1-42f4-844b-0256ace83c8e",
+      "worker_redeployed": false,
+      "last_10_log_lines": [
+        "",
+        " ⛅️ wrangler 4.90.1 (update available 4.160.1)",
+        "──────────────────────────────────────────────",
+        "Resource location: remote ",
+        "",
+        "Writing the contents of /Users/amastro/Documents/TraceHarness-eight-sol-audit-2026-11-11/app-repeat-counters.html.gz to the key \"app.html.gz\" on namespace id: \"8a74dd2fba124b1a8d82e6eeff5ba3ae\".",
+        ""
+      ]
+    },
+    "real_member_readback": {
+      "complete": true,
+      "real_member_password_session": true,
+      "observations": [
+        {
+          "attempt": 1,
+          "status": 200,
+          "html_sha256": "d502a0f009bd4ca176dabf2585aeaa75d28d1b3aa5a9053ccb83c1dbd083e550"
+        }
+      ],
+      "html_sha256": "d502a0f009bd4ca176dabf2585aeaa75d28d1b3aa5a9053ccb83c1dbd083e550",
+      "temporary_config_deleted": true,
+      "scope": "Production HTTP readback, not a post-upload browser-render claim"
+    },
+    "local_stream": {
+      "complete": true,
+      "scope": "Local exact-file Worker streaming, fixture scope; not live auth/browser evidence",
+      "status": 200,
+      "gzip_bytes": 16432789,
+      "candidate_html_sha256": "d502a0f009bd4ca176dabf2585aeaa75d28d1b3aa5a9053ccb83c1dbd083e550",
+      "exact_expected_injections": true
+    },
+    "anonymous": {
+      "complete": true,
+      "at": "2026-11-12T04:30:24.138924+00:00",
+      "snapshot_html_sha256": "d502a0f009bd4ca176dabf2585aeaa75d28d1b3aa5a9053ccb83c1dbd083e550",
+      "user_agent": "traceharness-proof",
+      "curl_max_redirs": 0,
+      "checks": [
+        {
+          "path": "/app",
+          "hostile_origin": false,
+          "status": 302,
+          "passed": true
+        },
+        {
+          "path": "/app/shallow",
+          "hostile_origin": false,
+          "status": 302,
+          "passed": true
+        },
+        {
+          "path": "/link",
+          "hostile_origin": false,
+          "status": 302,
+          "passed": true
+        },
+        {
+          "path": "/api/shallow/harnesses",
+          "hostile_origin": false,
+          "status": 401,
+          "passed": true
+        },
+        {
+          "path": "/api/shallow/harnesses",
+          "hostile_origin": true,
+          "status": 401,
+          "passed": true
+        }
+      ]
+    },
+    "wheel": {
+      "wheel": "traceharness-0.3.0-py3-none-any.whl",
+      "bytes": 2858515,
+      "sha256": "c66a78b39dac7b9f429387bf17d6c23aa8883843fbf705248c7f444ed71546c0",
+      "source_commit": "4522f750b137cc29063ee76abacdace3fc3c5482",
+      "checked_source_and_assets": 140,
+      "mismatches": [],
+      "clean_tracked_source_archive": true,
+      "only_current_js_asset": true
+    },
+    "distribution_tests_passed": 2,
+    "live_counter_retest_complete": true,
+    "live_counter_retest": {
+      "complete": true,
+      "observed_at": "2026-11-12T04:33:37.542920+00:00",
+      "source_commit": "4522f750b137cc29063ee76abacdace3fc3c5482",
+      "html_sha256": "d502a0f009bd4ca176dabf2585aeaa75d28d1b3aa5a9053ccb83c1dbd083e550",
+      "reviewer": "Actual ChatGPT Chrome browser integration",
+      "production_reloaded": true,
+      "duration_seconds": 49,
+      "overview_counter": {
+        "passed": true,
+        "display": "Unavailable",
+        "coverage": "0 of 1 tasks eligible; 1 excluded; 1 unknown attempt"
+      },
+      "task_filter": {
+        "passed": true,
+        "display": "Mixed outcomes unavailable",
+        "reason_visible": true
+      },
+      "all_attempts": {
+        "passed": true,
+        "display": "All 1, Run 1 unknown",
+        "attempt_preserved": true
+      },
+      "outcomes_flip": {
+        "passed": true,
+        "display": "Unavailable",
+        "coverage_visible": true,
+        "unknown_attempt_visible": true
+      },
+      "remaining_label_issue": "Outcomes summary has one recorded task but pass@1 tile labels zero graded tasks as 0 tasks without explaining grade coverage",
+      "new_jobs": 0,
+      "member_data_writes": false
+    }
+  },
+  "grade_coverage_followup": {
+    "artifact": {
+      "complete": true,
+      "source_commit": "f55c182260d7b74eded6763ff0f7c5032d50dc5b",
+      "source_parent": "7c354b5d99f910022c93cb565709c91d14bb5a95",
+      "method": "Replace only the rebuilt application module in the already-verified full-corpus HTML; preserve exact bootstrap, CSS, encoded recorded data and five audio chapters",
+      "html": {
+        "path": "/Users/amastro/Documents/TraceHarness-eight-sol-audit-2026-11-11/app-grade-coverage.html",
+        "bytes": 22603895,
+        "sha256": "afc9ce38a0ef7f44ee757583282ab9af935fd482fbe0651173668412e664e4c7"
+      },
+      "gzip": {
+        "path": "/Users/amastro/Documents/TraceHarness-eight-sol-audit-2026-11-11/app-grade-coverage.html.gz",
+        "bytes": 16432791,
+        "sha256": "e40597e8a8d6363b2654c3637c325ea9244e7c7cf35c0e8b9417f0c406ac551b"
+      },
+      "exact_embedded_data_unchanged": true,
+      "audio_chapters": 5,
+      "old_asset": "/assets/index-dKNKHiFo.js",
+      "new_asset": "/assets/index-B-CJgAga.js",
+      "new_module_exactly_matches_dist": true,
+      "uploaded": false
+    },
+    "upload": {
+      "at": "2026-11-12T04:34:29.788185+00:00",
+      "exit_code": 0,
+      "source_commit": "f55c182260d7b74eded6763ff0f7c5032d50dc5b",
+      "input_file": "/Users/amastro/Documents/TraceHarness-eight-sol-audit-2026-11-11/app-grade-coverage.html.gz",
+      "input_sha256": "e40597e8a8d6363b2654c3637c325ea9244e7c7cf35c0e8b9417f0c406ac551b",
+      "input_bytes": 16432791,
+      "html_sha256": "afc9ce38a0ef7f44ee757583282ab9af935fd482fbe0651173668412e664e4c7",
+      "worker_version_id": "4b0d1d11-83b1-42f4-844b-0256ace83c8e",
+      "worker_redeployed": false,
+      "last_10_log_lines": [
+        "",
+        " ⛅️ wrangler 4.90.1 (update available 4.160.1)",
+        "──────────────────────────────────────────────",
+        "Resource location: remote ",
+        "",
+        "Writing the contents of /Users/amastro/Documents/TraceHarness-eight-sol-audit-2026-11-11/app-grade-coverage.html.gz to the key \"app.html.gz\" on namespace id: \"8a74dd2fba124b1a8d82e6eeff5ba3ae\".",
+        ""
+      ]
+    },
+    "real_member_readback": {
+      "complete": true,
+      "real_member_password_session": true,
+      "observations": [
+        {
+          "attempt": 1,
+          "status": 200,
+          "html_sha256": "afc9ce38a0ef7f44ee757583282ab9af935fd482fbe0651173668412e664e4c7"
+        }
+      ],
+      "html_sha256": "afc9ce38a0ef7f44ee757583282ab9af935fd482fbe0651173668412e664e4c7",
+      "temporary_config_deleted": true,
+      "scope": "Production HTTP readback, not a post-upload browser-render claim"
+    },
+    "local_stream": {
+      "complete": true,
+      "scope": "Local exact-file Worker streaming, fixture scope; not live auth/browser evidence",
+      "status": 200,
+      "gzip_bytes": 16432791,
+      "candidate_html_sha256": "afc9ce38a0ef7f44ee757583282ab9af935fd482fbe0651173668412e664e4c7",
+      "exact_expected_injections": true
+    },
+    "anonymous": {
+      "complete": true,
+      "at": "2026-11-12T04:35:22.700916+00:00",
+      "snapshot_html_sha256": "afc9ce38a0ef7f44ee757583282ab9af935fd482fbe0651173668412e664e4c7",
+      "user_agent": "traceharness-proof",
+      "curl_max_redirs": 0,
+      "checks": [
+        {
+          "path": "/app",
+          "hostile_origin": false,
+          "status": 302,
+          "passed": true
+        },
+        {
+          "path": "/app/shallow",
+          "hostile_origin": false,
+          "status": 302,
+          "passed": true
+        },
+        {
+          "path": "/link",
+          "hostile_origin": false,
+          "status": 302,
+          "passed": true
+        },
+        {
+          "path": "/api/shallow/harnesses",
+          "hostile_origin": false,
+          "status": 401,
+          "passed": true
+        },
+        {
+          "path": "/api/shallow/harnesses",
+          "hostile_origin": true,
+          "status": 401,
+          "passed": true
+        }
+      ]
+    },
+    "wheel": {
+      "wheel": "traceharness-0.3.0-py3-none-any.whl",
+      "bytes": 2858512,
+      "sha256": "d8aa71250129283ec3bdfcab09d496788043bcba53fbe29e4776b129cf068a59",
+      "source_commit": "f55c182260d7b74eded6763ff0f7c5032d50dc5b",
+      "checked_source_and_assets": 140,
+      "mismatches": [],
+      "clean_tracked_source_archive": true,
+      "only_current_js_asset": true
+    },
+    "distribution_tests_passed": 2,
+    "live_label_retest_complete": true,
+    "live_label_retest": {
+      "complete": true,
+      "observed_at": "2026-11-12T04:36:30.531787+00:00",
+      "reviewer": "Actual ChatGPT Chrome browser integration",
+      "production_reloaded": true,
+      "duration_seconds": 15,
+      "source_commit": "f55c182260d7b74eded6763ff0f7c5032d50dc5b",
+      "html_sha256": "afc9ce38a0ef7f44ee757583282ab9af935fd482fbe0651173668412e664e4c7",
+      "condition": {
+        "dataset": "captured_claude_code",
+        "model": "claude-sonnet-5",
+        "harness": "claude-code@2.1.x",
+        "suite": "hidden"
+      },
+      "summary_and_tile_coverage": "1 recorded attempt · 1 recorded task · 1 repeat · 0 known hidden grades",
+      "pass_at_one_unavailable": true,
+      "confidence_interval_unavailable": true,
+      "repeat_comparison_unavailable": true,
+      "unknown_attempt_preserved": true,
+      "contradiction_resolved": true,
+      "new_jobs": 0,
+      "member_data_writes": false
+    }
+  },
+  "current_status": {
+    "published_application_commit": "f55c182260d7b74eded6763ff0f7c5032d50dc5b",
+    "published_html_sha256": "afc9ce38a0ef7f44ee757583282ab9af935fd482fbe0651173668412e664e4c7",
+    "final_focused_chrome_verification_complete": true,
+    "account_admin_platform": "Designed, not implemented/deployed",
+    "unresolved_observed_behavior": [
+      "Locator-positioned automation clicks close the picker without selecting; actual direct-pointer and keyboard checks passed"
+    ],
+    "performance_improvement": "UNVERIFIED",
+    "crowd_capacity": "UNVERIFIED"
+  }
+}

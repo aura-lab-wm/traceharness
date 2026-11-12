@@ -32,6 +32,10 @@ the grader, not the model, is broken (see `docs/STUDENT_GUIDE.md`, section 13).
 
 **Astra review repairs:** [seven repaired findings and regression evidence](docs/ASTRA_REVIEW_FIXES.md). **Capture is enabled:** [production uploads, two-member isolation and verification limits](docs/CAPTURE_PRODUCTION_VERIFICATION.md).
 
+**Latest platform audit:** [twelve repairs, ChatGPT's Chrome review, visible production evidence and remaining limits](docs/EIGHT_SOL_PLATFORM_AUDIT.md).
+
+**Account and owner administration:** [proposed login, membership, sessions, MFA and admin-console design](docs/ACCOUNT_PLATFORM_DESIGN.md). This is a design proposal, not deployed account functionality.
+
 **First visit and help:** [narrated tour and Ask Buddy workflow guidance](docs/VOICE_TOUR_AND_BUDDY.md), with transcripts, real control navigation and current runner availability.
 
 ## Run the dashboard
