@@ -34,7 +34,7 @@ export function HarnessJson({ documents = [], source, description, identity, loa
     const name = (document.filename || 'harness.json').replace(/[^A-Za-z0-9_.-]/g, '_').slice(0, 180)
     setNotice(downloadText(name, content.json, 'application/json;charset=utf-8') ? 'JSON download prepared.' : 'Could not prepare the download. Select and copy the JSON text.')
   }
-  return <section className="rg-hjson" aria-labelledby={id + '-heading'} data-el="harness-json">
+  return <section className="rg-hjson rg-cq" aria-labelledby={id + '-heading'} data-el="harness-json">
     <div className="rg-hjson-head"><div><span className="rg-hjson-source">{source}</span><h3 id={id + '-heading'}>{title}</h3></div>
       <div className="rg-hjson-actions"><button type="button" className="rg-btn" aria-expanded={open} aria-controls={id + '-body'} onClick={() => setOpen(!open)}>{open ? 'Hide JSON' : 'View JSON'}</button><button type="button" className="rg-btn" onClick={copy} disabled={!available}>Copy JSON</button><button type="button" className="rg-btn" onClick={download} disabled={!available}>Download JSON</button></div>
     </div>

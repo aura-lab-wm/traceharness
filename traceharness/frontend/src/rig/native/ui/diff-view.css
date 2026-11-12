@@ -1,0 +1,44 @@
+/* Word-level diff. One DOM, two layouts: a single column by default, two columns where the
+   diff's own box is wider than 640px and the reader has not chosen "Unified". Deletions are
+   struck through and insertions underlined, so colour is never the only signal. Tokens only. */
+.rg-diff{container-type:inline-size;min-width:0;border:1px solid var(--rig-line);border-radius:var(--rig-r-md);background:var(--rig-bg);overflow:hidden}
+.rg-diff-head{display:flex;flex-wrap:wrap;align-items:center;gap:var(--rig-s1) var(--rig-s3);min-height:var(--rig-h-ctl);padding:var(--rig-s1) var(--rig-s3);border-bottom:1px solid var(--rig-line);background:var(--rig-panel2);font:var(--rig-fs-xs)/var(--rig-lh-body) var(--rig-sans);color:var(--rig-dim)}
+.rg-diff-head b{color:var(--rig-text);font-weight:var(--rig-fw-medium)}
+.rg-diff-stats{font:var(--rig-fs-xs)/var(--rig-lh-body) var(--rig-mono);font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
+.rg-diff .rg-diff-head .rg-diff-switch{display:none;margin-left:auto}
+.rg-diff-note{margin:0;padding:var(--rig-s2) var(--rig-s3);font:var(--rig-fs-xs)/var(--rig-lh-prose) var(--rig-sans);color:var(--rig-dim);overflow-wrap:anywhere}
+.rg-diff-note b{color:var(--rig-text);font-weight:var(--rig-fw-medium)}
+.rg-diff-rows{max-height:min(60dvh,560px);overflow:auto;overscroll-behavior:contain;scrollbar-width:thin;padding:var(--rig-s1) 0;font:var(--rig-fs-xs)/var(--rig-lh-code) var(--rig-mono)}
+.rg-diff-cell{display:grid;grid-template-columns:var(--rig-diff-no,3ch) 1.5ch minmax(0,1fr);column-gap:var(--rig-s2);padding:0 var(--rig-s2);min-width:0}
+.rg-diff-cell.empty{display:none}
+.rg-diff-row[data-kind=context]>.before{display:none}
+.rg-diff-no{color:var(--rig-mute);text-align:right;user-select:none;font-variant-numeric:tabular-nums}
+.rg-diff-sign{color:var(--rig-mute);text-align:center;user-select:none}
+.rg-diff-text{white-space:pre-wrap;overflow-wrap:anywhere;word-break:break-word;min-width:0}
+.rg-diff-cell[data-kind=delete]{background:var(--rig-red-wash)}
+.rg-diff-cell[data-kind=insert]{background:var(--rig-sel-bg)}
+.rg-diff-cell[data-kind=delete]>.rg-diff-sign{color:var(--rig-red-t);font-weight:var(--rig-fw-semi)}
+.rg-diff-cell[data-kind=insert]>.rg-diff-sign{color:var(--rig-sel-t);font-weight:var(--rig-fw-semi)}
+.rg-diff del{background:var(--rig-red-bg2);color:var(--rig-red-t);text-decoration:line-through;text-decoration-thickness:1px;border-radius:var(--rig-r-xs)}
+.rg-diff ins{background:var(--rig-sel-bg2);color:var(--rig-text);text-decoration:underline;text-decoration-thickness:1px;text-underline-offset:3px;border-radius:var(--rig-r-xs)}
+.rg-diff .rg-diff-nl{color:var(--rig-mute);padding:0 var(--rig-s0)}
+.rig .rg-diff .rg-diff-fold{display:block;width:100%;min-height:var(--rig-h-ctl);border:0;border-block:1px dashed var(--rig-line2);background:var(--rig-panel2);color:var(--rig-dim);font:var(--rig-fs-xs)/var(--rig-lh-snug) var(--rig-sans);text-align:center;margin:var(--rig-s0) 0;cursor:pointer}
+.rig .rg-diff .rg-diff-fold:hover{color:var(--rig-text);background:var(--rig-panel3)}
+.rig .rg-diff .rg-diff-fold:focus-visible{outline:var(--rig-focus-ring);outline-offset:calc(-1 * var(--rig-focus-offset))}
+.rig .rg-diff .rg-diff-more{margin:var(--rig-s2) var(--rig-s3) var(--rig-s3);white-space:normal}
+@container (min-width:641px){
+  .rg-diff .rg-diff-head .rg-diff-switch{display:inline-flex}
+  .rg-diff[data-layout=split] .rg-diff-row:not([data-kind=fold]){display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr)}
+  .rg-diff[data-layout=split] .rg-diff-cell.empty{display:block;background:var(--rig-panel2)}
+  .rg-diff[data-layout=split] .rg-diff-row[data-kind=context]>.before{display:grid}
+  .rg-diff[data-layout=split] .rg-diff-cell.after{border-left:1px solid var(--rig-line)}
+}
+/* Replaced lines are paired in the DOM (for two columns). In one column the pairs dissolve and
+   the cells regroup: every removed line of the hunk, then every added line. */
+.rg-diff-hunk{display:flex;flex-direction:column}
+.rg-diff-hunk>.rg-diff-row{display:contents}
+.rg-diff-hunk .rg-diff-cell.after{order:1}
+@container (min-width:641px){
+  .rg-diff[data-layout=split] .rg-diff-hunk{display:block}
+  .rg-diff[data-layout=split] .rg-diff-hunk>.rg-diff-row{display:grid}
+}

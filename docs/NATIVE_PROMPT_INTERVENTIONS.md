@@ -7,6 +7,15 @@ The initial Claude release and its proof boundaries are recorded in
 source-bound Codex assets, frozen balanced schedules, owner-bound execution,
 all-outcome summaries and reviewed output caps.
 
+**Workbench (2026-11-12).** The member panel is now a workbench with five views
+(Inventory, Changes, Audit, Snapshots, Pair): full-text search, word-level diffs,
+a live audit that predicts runner refusals, labelled budgets (exact, estimate,
+measured), macros, profile files and bundles, a browser library, rebase, one-step
+pairing against the baseline and all-outcome paired results. The same logic runs
+offline in `python -m traceharness native-prompts …`. Neither needs a runner or
+gateway release, and the frozen materializers are unchanged. The user guide is
+[Native prompt workbench](NATIVE_PROMPT_WORKBENCH.md).
+
 The broader design below retains its historical source baseline. Initial paired
 scheduling compares profiles within one native runtime/model/task cell;
 cross-model grids, multi-task scheduling and confirmatory performance inference

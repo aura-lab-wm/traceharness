@@ -1,17 +1,31 @@
-.rg-hjson{min-width:0;border:1px solid var(--rig-line);border-radius:6px;padding:var(--rig-s4);margin-block:var(--rig-s4);background:var(--rig-panel)}
-.rg-hjson-head{display:flex;align-items:center;justify-content:space-between;gap:var(--rig-s3);flex-wrap:wrap}
-.rg-hjson-source{font:500 10px/1.5 var(--rig-mono);color:var(--rig-dim);letter-spacing:.05em;text-transform:uppercase}
-.rg-hjson h3{font:600 14px/1.5 var(--rig-sans);color:var(--rig-text);margin:2px 0 0}
-.rg-hjson-actions,.rg-hjson-documents{display:flex;flex-wrap:wrap;gap:var(--rig-s2)}
-.rg-hjson .rg-btn{min-height:36px}
-.rg-hjson-description,.rg-hjson-missing{font-size:12px;line-height:1.6;color:var(--rig-dim);margin:var(--rig-s2) 0}
-.rg-hjson-identity{font:11px/1.6 var(--rig-mono);color:var(--rig-mute);overflow-wrap:anywhere;margin:var(--rig-s2) 0}
+/* Full harness JSON. The section is its own size container (.rg-cq): its head and actions answer
+   to the width the section actually has (a card in a two-column grid, a side summary, a page). */
+.rg-hjson{min-width:0;border:1px solid var(--rig-line);border-radius:var(--rig-r-lg);padding:var(--rig-s4);margin-block:var(--rig-s4);background:var(--rig-panel)}
+.rg-hjson-head{display:flex;align-items:center;justify-content:space-between;gap:var(--rig-s2) var(--rig-s4);flex-wrap:wrap}
+.rg-hjson-head>div:first-child{flex:1 1 14rem;min-width:0}
+.rg-hjson-source{font:var(--rig-fw-medium) var(--rig-fs-2xs)/var(--rig-lh-snug) var(--rig-mono);color:var(--rig-dim);letter-spacing:var(--rig-track-caps);text-transform:uppercase;overflow-wrap:anywhere}
+.rig .rg-hjson h3{font:var(--rig-fw-medium) var(--rig-fs-md)/var(--rig-lh-snug) var(--rig-sans);color:var(--rig-text);margin:var(--rig-s0) 0 0;overflow-wrap:anywhere}
+.rg-hjson-actions,.rg-hjson-documents{display:flex;flex-wrap:wrap;gap:var(--rig-s2);min-width:0}
+.rg-hjson-description,.rg-hjson-missing{font-size:var(--rig-fs-xs);line-height:var(--rig-lh-body);color:var(--rig-dim);margin:var(--rig-s3) 0 0;max-width:var(--rig-measure)}
+.rg-hjson-identity{font:var(--rig-fs-xs)/var(--rig-lh-body) var(--rig-mono);color:var(--rig-mute);overflow-wrap:anywhere;margin:var(--rig-s1) 0 0}
+.rg-hjson>p[role]{font-size:var(--rig-fs-xs);line-height:var(--rig-lh-body);margin:var(--rig-s3) 0 0}
 .rg-hjson-documents{margin-top:var(--rig-s4)}
-.rg-hjson-documents [aria-pressed=true]{color:var(--rig-sel-t);border-color:var(--rig-sel)}
-.rg-hjson-file{display:flex;justify-content:space-between;flex-wrap:wrap;align-items:center;gap:var(--rig-s2);margin-top:var(--rig-s3);font:11px/1.6 var(--rig-mono);color:var(--rig-dim)}
-.rg-hjson-file label{display:flex;align-items:center;gap:var(--rig-s2);font-family:var(--rig-sans)}
-.rg-hjson pre{box-sizing:border-box;max-width:100%;max-height:32rem;overflow:auto;white-space:pre;background:var(--rig-panel2);border:1px solid var(--rig-line);border-radius:4px;padding:var(--rig-s4);margin:var(--rig-s2) 0 0;font:12px/1.7 var(--rig-mono);color:var(--rig-text);tab-size:2}
+.rg-hjson-documents [aria-pressed=true]{color:var(--rig-sel-t);border-color:var(--rig-sel);background:var(--rig-sel-bg)}
+.rg-hjson-file{display:flex;justify-content:space-between;flex-wrap:wrap;align-items:center;gap:var(--rig-s1) var(--rig-s3);margin-top:var(--rig-s3);font:var(--rig-fs-xs)/var(--rig-lh-body) var(--rig-mono);color:var(--rig-dim)}
+.rg-hjson-file>span{min-width:0;overflow-wrap:anywhere}
+.rg-hjson-file label{display:inline-flex;align-items:center;gap:var(--rig-s2);min-height:var(--rig-hit);cursor:pointer;font-family:var(--rig-sans);color:var(--rig-text)}
+.rg-hjson-file input{accent-color:var(--rig-sel);margin:0}
+.rg-hjson pre{box-sizing:border-box;max-width:100%;max-height:32rem;overflow:auto;white-space:pre;background:var(--rig-panel2);border:0;border-radius:var(--rig-r-md);padding:var(--rig-s3) var(--rig-s4);margin:var(--rig-s2) 0 0;font:var(--rig-fs-xs)/var(--rig-lh-code) var(--rig-mono);color:var(--rig-text);tab-size:2;scrollbar-width:thin}
+.rg-hjson pre:focus-visible{outline:var(--rig-focus-ring);outline-offset:var(--rig-focus-offset)}
 .rg-hjson pre.wrap{white-space:pre-wrap;overflow-wrap:anywhere;word-break:normal}
-.rg-hjson-redaction{font-size:12px;color:var(--rig-amb);line-height:1.6}
-.rg-hjson-notice{font-size:12px;color:var(--rig-dim);margin:var(--rig-s2) 0 0}
-@container rgdoc (max-width:600px){.rg-hjson{padding:var(--rig-s3)}.rg-hjson .rg-btn{min-height:44px}.rg-hjson pre{padding:var(--rig-s3);font-size:11px}.rg-hjson-head{align-items:flex-start}.rg-hjson-actions{width:100%}.rg-hjson-actions .rg-btn{flex:1}}
+.rg-hjson-redaction{font-size:var(--rig-fs-xs);color:var(--rig-amb-t);line-height:var(--rig-lh-body);margin:var(--rig-s2) 0 0}
+.rg-hjson-notice{font-size:var(--rig-fs-xs);color:var(--rig-dim);margin:var(--rig-s2) 0 0}
+/* inside a bordered card or summary the section is a tinted second level, never a frame in a frame */
+:is(.rg-harness-card,.rg-harness-summary,.rg-pnl,.rg-card) .rg-hjson{border:0;background:var(--rig-panel2);border-radius:var(--rig-r-md);margin-block:0}
+:is(.rg-harness-card,.rg-harness-summary,.rg-pnl,.rg-card) .rg-hjson pre{background:var(--rig-bg)}
+@container (max-width:480px){
+  .rg-hjson{padding:var(--rig-s3)}
+  .rg-hjson-actions{width:100%}
+  .rg-hjson-actions>.rg-btn{flex:1 1 auto}
+  .rg-hjson pre{padding:var(--rig-s3)}
+}

@@ -1,0 +1,3149 @@
+{
+ "function": "profile_budget",
+ "cases": [
+  {
+   "name": "baseline",
+   "args": [
+    {
+     "schema_version": 1,
+     "runtime_id": "native-claude-code",
+     "runtime_version": "0.0.0-golden",
+     "image_digest": "sha256:2d032a622cf94baf637a4488720865da983853e4a655fea4e45d0e80f0a9c640",
+     "binary_sha256": "25ba8ebec5f227618d8d58f475622669f4c45019d40259d1d292a823f4184c27",
+     "inventory_sha256": "44e7b67bbdc0842fecf8cfa158641e03998f7d0b34184bc297ede967ab24ce7a",
+     "taxonomy_sha256": "6064ebcb6693a1dd7b3e50fbfbcc94ff959f7957ac184188fd91744900a429a3",
+     "materializer_sha256": "ba6245da8b07901b6793898e70e2e974a1e641a2c3be0d357ba53d15101f4081",
+     "default_action": "keep",
+     "overrides": []
+    },
+    "@inventory-claude",
+    {}
+   ],
+   "expected": {
+    "estimator": "chars-div-3.9-v1",
+    "exact": {
+     "baseline_bytes": 1136,
+     "effective_bytes": 1136,
+     "delta_bytes": 0,
+     "profile_bytes": 558,
+     "overrides": 0,
+     "keep": 12,
+     "replace": 0,
+     "disable": 0
+    },
+    "estimate": {
+     "baseline_tokens": 289,
+     "effective_tokens": 289,
+     "delta_tokens": 0,
+     "not_estimated_blocks": 0
+    },
+    "limits": [
+     {
+      "id": "overrides",
+      "used": 0,
+      "max": 4096,
+      "kind": "exact",
+      "state": "ok"
+     },
+     {
+      "id": "profile_bytes",
+      "used": 558,
+      "max": 786432,
+      "kind": "exact",
+      "state": "ok"
+     },
+     {
+      "id": "manifest_bytes",
+      "used": 2608,
+      "max": 1048576,
+      "kind": "estimate",
+      "state": "ok"
+     },
+     {
+      "id": "paired_plan_bytes",
+      "used": 14812,
+      "max": 786432,
+      "kind": "estimate",
+      "state": "ok"
+     }
+    ],
+    "by_class": [
+     {
+      "class_name": "Tool Descriptions",
+      "blocks": 1,
+      "patchable": 1,
+      "keep": 1,
+      "replace": 0,
+      "disable": 0,
+      "baseline_bytes": 81,
+      "effective_bytes": 81,
+      "baseline_tokens": 21,
+      "effective_tokens": 21
+     },
+     {
+      "class_name": "System Reminders",
+      "blocks": 1,
+      "patchable": 1,
+      "keep": 1,
+      "replace": 0,
+      "disable": 0,
+      "baseline_bytes": 106,
+      "effective_bytes": 106,
+      "baseline_tokens": 27,
+      "effective_tokens": 27
+     },
+     {
+      "class_name": "Security & Safety",
+      "blocks": 2,
+      "patchable": 2,
+      "keep": 2,
+      "replace": 0,
+      "disable": 0,
+      "baseline_bytes": 152,
+      "effective_bytes": 152,
+      "baseline_tokens": 40,
+      "effective_tokens": 40
+     },
+     {
+      "class_name": "Response Quality",
+      "blocks": 1,
+      "patchable": 1,
+      "keep": 1,
+      "replace": 0,
+      "disable": 0,
+      "baseline_bytes": 132,
+      "effective_bytes": 132,
+      "baseline_tokens": 33,
+      "effective_tokens": 33
+     },
+     {
+      "class_name": "General Behavior",
+      "blocks": 6,
+      "patchable": 4,
+      "keep": 4,
+      "replace": 0,
+      "disable": 0,
+      "baseline_bytes": 272,
+      "effective_bytes": 272,
+      "baseline_tokens": 71,
+      "effective_tokens": 71
+     },
+     {
+      "class_name": "File & Code Ops",
+      "blocks": 1,
+      "patchable": 1,
+      "keep": 1,
+      "replace": 0,
+      "disable": 0,
+      "baseline_bytes": 110,
+      "effective_bytes": 110,
+      "baseline_tokens": 24,
+      "effective_tokens": 24
+     },
+     {
+      "class_name": "Environment & Platform",
+      "blocks": 1,
+      "patchable": 1,
+      "keep": 1,
+      "replace": 0,
+      "disable": 0,
+      "baseline_bytes": 140,
+      "effective_bytes": 140,
+      "baseline_tokens": 36,
+      "effective_tokens": 36
+     },
+     {
+      "class_name": "Git & VCS",
+      "blocks": 1,
+      "patchable": 1,
+      "keep": 1,
+      "replace": 0,
+      "disable": 0,
+      "baseline_bytes": 143,
+      "effective_bytes": 143,
+      "baseline_tokens": 37,
+      "effective_tokens": 37
+     }
+    ]
+   }
+  },
+  {
+   "name": "mixed",
+   "args": [
+    {
+     "schema_version": 1,
+     "runtime_id": "native-claude-code",
+     "runtime_version": "0.0.0-golden",
+     "image_digest": "sha256:2d032a622cf94baf637a4488720865da983853e4a655fea4e45d0e80f0a9c640",
+     "binary_sha256": "25ba8ebec5f227618d8d58f475622669f4c45019d40259d1d292a823f4184c27",
+     "inventory_sha256": "44e7b67bbdc0842fecf8cfa158641e03998f7d0b34184bc297ede967ab24ce7a",
+     "taxonomy_sha256": "6064ebcb6693a1dd7b3e50fbfbcc94ff959f7957ac184188fd91744900a429a3",
+     "materializer_sha256": "ba6245da8b07901b6793898e70e2e974a1e641a2c3be0d357ba53d15101f4081",
+     "default_action": "keep",
+     "overrides": [
+      {
+       "block_id": "tool-bash-guide",
+       "baseline_sha256": "c5db5a79c94bb7a9835cbe2e3897337c52e3bb72b73edaedf1165a51246b057b",
+       "action": "replace",
+       "replacement_utf8": "Fabricated, shorter.",
+       "replacement_sha256": "77ba73eae4d1011d3cfb79cea86d463e0808b98f39d6db9302cd45d080987854"
+      },
+      {
+       "block_id": "short",
+       "baseline_sha256": "213c22ed7234eb11116e1e88f314c73cb3a019b5c87fe224b6ce5665bd9ec50e",
+       "action": "disable"
+      },
+      {
+       "block_id": "unicode-mix",
+       "baseline_sha256": "d00da6c5a836c9df66e6b20ea37a93990bedea7ff26d8c203fd257d9b47523a8",
+       "action": "replace",
+       "replacement_utf8": "\u65e5\u672c \ud83d\ude42",
+       "replacement_sha256": "d5bed3f52102ce6ce8a3870bda862bb976f481d976c415d4ad901ab71aed1b9f"
+      }
+     ]
+    },
+    "@inventory-claude",
+    {}
+   ],
+   "expected": {
+    "estimator": "chars-div-3.9-v1",
+    "exact": {
+     "baseline_bytes": 1136,
+     "effective_bytes": 967,
+     "delta_bytes": -169,
+     "profile_bytes": 1199,
+     "overrides": 3,
+     "keep": 9,
+     "replace": 2,
+     "disable": 1
+    },
+    "estimate": {
+     "baseline_tokens": 289,
+     "effective_tokens": 249,
+     "delta_tokens": -40,
+     "not_estimated_blocks": 0
+    },
+    "limits": [
+     {
+      "id": "overrides",
+      "used": 3,
+      "max": 4096,
+      "kind": "exact",
+      "state": "ok"
+     },
+     {
+      "id": "profile_bytes",
+      "used": 1199,
+      "max": 786432,
+      "kind": "exact",
+      "state": "ok"
+     },
+     {
+      "id": "manifest_bytes",
+      "used": 3249,
+      "max": 1048576,
+      "kind": "estimate",
+      "state": "ok"
+     },
+     {
+      "id": "paired_plan_bytes",
+      "used": 16094,
+      "max": 786432,
+      "kind": "estimate",
+      "state": "ok"
+     }
+    ],
+    "by_class": [
+     {
+      "class_name": "Tool Descriptions",
+      "blocks": 1,
+      "patchable": 1,
+      "keep": 0,
+      "replace": 1,
+      "disable": 0,
+      "baseline_bytes": 81,
+      "effective_bytes": 20,
+      "baseline_tokens": 21,
+      "effective_tokens": 6
+     },
+     {
+      "class_name": "System Reminders",
+      "blocks": 1,
+      "patchable": 1,
+      "keep": 1,
+      "replace": 0,
+      "disable": 0,
+      "baseline_bytes": 106,
+      "effective_bytes": 106,
+      "baseline_tokens": 27,
+      "effective_tokens": 27
+     },
+     {
+      "class_name": "Security & Safety",
+      "blocks": 2,
+      "patchable": 2,
+      "keep": 2,
+      "replace": 0,
+      "disable": 0,
+      "baseline_bytes": 152,
+      "effective_bytes": 152,
+      "baseline_tokens": 40,
+      "effective_tokens": 40
+     },
+     {
+      "class_name": "Response Quality",
+      "blocks": 1,
+      "patchable": 1,
+      "keep": 1,
+      "replace": 0,
+      "disable": 0,
+      "baseline_bytes": 132,
+      "effective_bytes": 132,
+      "baseline_tokens": 33,
+      "effective_tokens": 33
+     },
+     {
+      "class_name": "General Behavior",
+      "blocks": 6,
+      "patchable": 4,
+      "keep": 3,
+      "replace": 0,
+      "disable": 1,
+      "baseline_bytes": 272,
+      "effective_bytes": 263,
+      "baseline_tokens": 71,
+      "effective_tokens": 68
+     },
+     {
+      "class_name": "File & Code Ops",
+      "blocks": 1,
+      "patchable": 1,
+      "keep": 0,
+      "replace": 1,
+      "disable": 0,
+      "baseline_bytes": 110,
+      "effective_bytes": 11,
+      "baseline_tokens": 24,
+      "effective_tokens": 2
+     },
+     {
+      "class_name": "Environment & Platform",
+      "blocks": 1,
+      "patchable": 1,
+      "keep": 1,
+      "replace": 0,
+      "disable": 0,
+      "baseline_bytes": 140,
+      "effective_bytes": 140,
+      "baseline_tokens": 36,
+      "effective_tokens": 36
+     },
+     {
+      "class_name": "Git & VCS",
+      "blocks": 1,
+      "patchable": 1,
+      "keep": 1,
+      "replace": 0,
+      "disable": 0,
+      "baseline_bytes": 143,
+      "effective_bytes": 143,
+      "baseline_tokens": 37,
+      "effective_tokens": 37
+     }
+    ]
+   }
+  },
+  {
+   "name": "none included",
+   "args": [
+    {
+     "schema_version": 1,
+     "runtime_id": "native-claude-code",
+     "runtime_version": "0.0.0-golden",
+     "image_digest": "sha256:2d032a622cf94baf637a4488720865da983853e4a655fea4e45d0e80f0a9c640",
+     "binary_sha256": "25ba8ebec5f227618d8d58f475622669f4c45019d40259d1d292a823f4184c27",
+     "inventory_sha256": "44e7b67bbdc0842fecf8cfa158641e03998f7d0b34184bc297ede967ab24ce7a",
+     "taxonomy_sha256": "6064ebcb6693a1dd7b3e50fbfbcc94ff959f7957ac184188fd91744900a429a3",
+     "materializer_sha256": "ba6245da8b07901b6793898e70e2e974a1e641a2c3be0d357ba53d15101f4081",
+     "default_action": "disable",
+     "overrides": []
+    },
+    "@inventory-claude",
+    {}
+   ],
+   "expected": {
+    "estimator": "chars-div-3.9-v1",
+    "exact": {
+     "baseline_bytes": 1136,
+     "effective_bytes": 0,
+     "delta_bytes": -1136,
+     "profile_bytes": 561,
+     "overrides": 0,
+     "keep": 0,
+     "replace": 0,
+     "disable": 12
+    },
+    "estimate": {
+     "baseline_tokens": 289,
+     "effective_tokens": 0,
+     "delta_tokens": -289,
+     "not_estimated_blocks": 0
+    },
+    "limits": [
+     {
+      "id": "overrides",
+      "used": 0,
+      "max": 4096,
+      "kind": "exact",
+      "state": "ok"
+     },
+     {
+      "id": "profile_bytes",
+      "used": 561,
+      "max": 786432,
+      "kind": "exact",
+      "state": "ok"
+     },
+     {
+      "id": "manifest_bytes",
+      "used": 2611,
+      "max": 1048576,
+      "kind": "estimate",
+      "state": "ok"
+     },
+     {
+      "id": "paired_plan_bytes",
+      "used": 14818,
+      "max": 786432,
+      "kind": "estimate",
+      "state": "ok"
+     }
+    ],
+    "by_class": [
+     {
+      "class_name": "Tool Descriptions",
+      "blocks": 1,
+      "patchable": 1,
+      "keep": 0,
+      "replace": 0,
+      "disable": 1,
+      "baseline_bytes": 81,
+      "effective_bytes": 0,
+      "baseline_tokens": 21,
+      "effective_tokens": 0
+     },
+     {
+      "class_name": "System Reminders",
+      "blocks": 1,
+      "patchable": 1,
+      "keep": 0,
+      "replace": 0,
+      "disable": 1,
+      "baseline_bytes": 106,
+      "effective_bytes": 0,
+      "baseline_tokens": 27,
+      "effective_tokens": 0
+     },
+     {
+      "class_name": "Security & Safety",
+      "blocks": 2,
+      "patchable": 2,
+      "keep": 0,
+      "replace": 0,
+      "disable": 2,
+      "baseline_bytes": 152,
+      "effective_bytes": 0,
+      "baseline_tokens": 40,
+      "effective_tokens": 0
+     },
+     {
+      "class_name": "Response Quality",
+      "blocks": 1,
+      "patchable": 1,
+      "keep": 0,
+      "replace": 0,
+      "disable": 1,
+      "baseline_bytes": 132,
+      "effective_bytes": 0,
+      "baseline_tokens": 33,
+      "effective_tokens": 0
+     },
+     {
+      "class_name": "General Behavior",
+      "blocks": 6,
+      "patchable": 4,
+      "keep": 0,
+      "replace": 0,
+      "disable": 4,
+      "baseline_bytes": 272,
+      "effective_bytes": 0,
+      "baseline_tokens": 71,
+      "effective_tokens": 0
+     },
+     {
+      "class_name": "File & Code Ops",
+      "blocks": 1,
+      "patchable": 1,
+      "keep": 0,
+      "replace": 0,
+      "disable": 1,
+      "baseline_bytes": 110,
+      "effective_bytes": 0,
+      "baseline_tokens": 24,
+      "effective_tokens": 0
+     },
+     {
+      "class_name": "Environment & Platform",
+      "blocks": 1,
+      "patchable": 1,
+      "keep": 0,
+      "replace": 0,
+      "disable": 1,
+      "baseline_bytes": 140,
+      "effective_bytes": 0,
+      "baseline_tokens": 36,
+      "effective_tokens": 0
+     },
+     {
+      "class_name": "Git & VCS",
+      "blocks": 1,
+      "patchable": 1,
+      "keep": 0,
+      "replace": 0,
+      "disable": 1,
+      "baseline_bytes": 143,
+      "effective_bytes": 0,
+      "baseline_tokens": 37,
+      "effective_tokens": 0
+     }
+    ]
+   }
+  },
+  {
+   "name": "none included with one kept",
+   "args": [
+    {
+     "schema_version": 1,
+     "runtime_id": "native-claude-code",
+     "runtime_version": "0.0.0-golden",
+     "image_digest": "sha256:2d032a622cf94baf637a4488720865da983853e4a655fea4e45d0e80f0a9c640",
+     "binary_sha256": "25ba8ebec5f227618d8d58f475622669f4c45019d40259d1d292a823f4184c27",
+     "inventory_sha256": "44e7b67bbdc0842fecf8cfa158641e03998f7d0b34184bc297ede967ab24ce7a",
+     "taxonomy_sha256": "6064ebcb6693a1dd7b3e50fbfbcc94ff959f7957ac184188fd91744900a429a3",
+     "materializer_sha256": "ba6245da8b07901b6793898e70e2e974a1e641a2c3be0d357ba53d15101f4081",
+     "default_action": "disable",
+     "overrides": [
+      {
+       "block_id": "short",
+       "baseline_sha256": "213c22ed7234eb11116e1e88f314c73cb3a019b5c87fe224b6ce5665bd9ec50e",
+       "action": "keep"
+      }
+     ]
+    },
+    "@inventory-claude",
+    {}
+   ],
+   "expected": {
+    "estimator": "chars-div-3.9-v1",
+    "exact": {
+     "baseline_bytes": 1136,
+     "effective_bytes": 9,
+     "delta_bytes": -1127,
+     "profile_bytes": 682,
+     "overrides": 1,
+     "keep": 1,
+     "replace": 0,
+     "disable": 11
+    },
+    "estimate": {
+     "baseline_tokens": 289,
+     "effective_tokens": 3,
+     "delta_tokens": -286,
+     "not_estimated_blocks": 0
+    },
+    "limits": [
+     {
+      "id": "overrides",
+      "used": 1,
+      "max": 4096,
+      "kind": "exact",
+      "state": "ok"
+     },
+     {
+      "id": "profile_bytes",
+      "used": 682,
+      "max": 786432,
+      "kind": "exact",
+      "state": "ok"
+     },
+     {
+      "id": "manifest_bytes",
+      "used": 2732,
+      "max": 1048576,
+      "kind": "estimate",
+      "state": "ok"
+     },
+     {
+      "id": "paired_plan_bytes",
+      "used": 15060,
+      "max": 786432,
+      "kind": "estimate",
+      "state": "ok"
+     }
+    ],
+    "by_class": [
+     {
+      "class_name": "Tool Descriptions",
+      "blocks": 1,
+      "patchable": 1,
+      "keep": 0,
+      "replace": 0,
+      "disable": 1,
+      "baseline_bytes": 81,
+      "effective_bytes": 0,
+      "baseline_tokens": 21,
+      "effective_tokens": 0
+     },
+     {
+      "class_name": "System Reminders",
+      "blocks": 1,
+      "patchable": 1,
+      "keep": 0,
+      "replace": 0,
+      "disable": 1,
+      "baseline_bytes": 106,
+      "effective_bytes": 0,
+      "baseline_tokens": 27,
+      "effective_tokens": 0
+     },
+     {
+      "class_name": "Security & Safety",
+      "blocks": 2,
+      "patchable": 2,
+      "keep": 0,
+      "replace": 0,
+      "disable": 2,
+      "baseline_bytes": 152,
+      "effective_bytes": 0,
+      "baseline_tokens": 40,
+      "effective_tokens": 0
+     },
+     {
+      "class_name": "Response Quality",
+      "blocks": 1,
+      "patchable": 1,
+      "keep": 0,
+      "replace": 0,
+      "disable": 1,
+      "baseline_bytes": 132,
+      "effective_bytes": 0,
+      "baseline_tokens": 33,
+      "effective_tokens": 0
+     },
+     {
+      "class_name": "General Behavior",
+      "blocks": 6,
+      "patchable": 4,
+      "keep": 1,
+      "replace": 0,
+      "disable": 3,
+      "baseline_bytes": 272,
+      "effective_bytes": 9,
+      "baseline_tokens": 71,
+      "effective_tokens": 3
+     },
+     {
+      "class_name": "File & Code Ops",
+      "blocks": 1,
+      "patchable": 1,
+      "keep": 0,
+      "replace": 0,
+      "disable": 1,
+      "baseline_bytes": 110,
+      "effective_bytes": 0,
+      "baseline_tokens": 24,
+      "effective_tokens": 0
+     },
+     {
+      "class_name": "Environment & Platform",
+      "blocks": 1,
+      "patchable": 1,
+      "keep": 0,
+      "replace": 0,
+      "disable": 1,
+      "baseline_bytes": 140,
+      "effective_bytes": 0,
+      "baseline_tokens": 36,
+      "effective_tokens": 0
+     },
+     {
+      "class_name": "Git & VCS",
+      "blocks": 1,
+      "patchable": 1,
+      "keep": 0,
+      "replace": 0,
+      "disable": 1,
+      "baseline_bytes": 143,
+      "effective_bytes": 0,
+      "baseline_tokens": 37,
+      "effective_tokens": 0
+     }
+    ]
+   }
+  },
+  {
+   "name": "with a prompt",
+   "args": [
+    {
+     "schema_version": 1,
+     "runtime_id": "native-claude-code",
+     "runtime_version": "0.0.0-golden",
+     "image_digest": "sha256:2d032a622cf94baf637a4488720865da983853e4a655fea4e45d0e80f0a9c640",
+     "binary_sha256": "25ba8ebec5f227618d8d58f475622669f4c45019d40259d1d292a823f4184c27",
+     "inventory_sha256": "44e7b67bbdc0842fecf8cfa158641e03998f7d0b34184bc297ede967ab24ce7a",
+     "taxonomy_sha256": "6064ebcb6693a1dd7b3e50fbfbcc94ff959f7957ac184188fd91744900a429a3",
+     "materializer_sha256": "ba6245da8b07901b6793898e70e2e974a1e641a2c3be0d357ba53d15101f4081",
+     "default_action": "keep",
+     "overrides": [
+      {
+       "block_id": "tool-bash-guide",
+       "baseline_sha256": "c5db5a79c94bb7a9835cbe2e3897337c52e3bb72b73edaedf1165a51246b057b",
+       "action": "replace",
+       "replacement_utf8": "Fabricated, shorter.",
+       "replacement_sha256": "77ba73eae4d1011d3cfb79cea86d463e0808b98f39d6db9302cd45d080987854"
+      },
+      {
+       "block_id": "short",
+       "baseline_sha256": "213c22ed7234eb11116e1e88f314c73cb3a019b5c87fe224b6ce5665bd9ec50e",
+       "action": "disable"
+      },
+      {
+       "block_id": "unicode-mix",
+       "baseline_sha256": "d00da6c5a836c9df66e6b20ea37a93990bedea7ff26d8c203fd257d9b47523a8",
+       "action": "replace",
+       "replacement_utf8": "\u65e5\u672c \ud83d\ude42",
+       "replacement_sha256": "d5bed3f52102ce6ce8a3870bda862bb976f481d976c415d4ad901ab71aed1b9f"
+      }
+     ]
+    },
+    "@inventory-claude",
+    {
+     "prompt": "Fabricated additional instructions \ud83d\ude42."
+    }
+   ],
+   "expected": {
+    "estimator": "chars-div-3.9-v1",
+    "exact": {
+     "baseline_bytes": 1136,
+     "effective_bytes": 967,
+     "delta_bytes": -169,
+     "profile_bytes": 1199,
+     "overrides": 3,
+     "keep": 9,
+     "replace": 2,
+     "disable": 1
+    },
+    "estimate": {
+     "baseline_tokens": 289,
+     "effective_tokens": 249,
+     "delta_tokens": -40,
+     "not_estimated_blocks": 0
+    },
+    "limits": [
+     {
+      "id": "overrides",
+      "used": 3,
+      "max": 4096,
+      "kind": "exact",
+      "state": "ok"
+     },
+     {
+      "id": "profile_bytes",
+      "used": 1199,
+      "max": 786432,
+      "kind": "exact",
+      "state": "ok"
+     },
+     {
+      "id": "manifest_bytes",
+      "used": 3289,
+      "max": 1048576,
+      "kind": "estimate",
+      "state": "ok"
+     },
+     {
+      "id": "paired_plan_bytes",
+      "used": 16254,
+      "max": 786432,
+      "kind": "estimate",
+      "state": "ok"
+     }
+    ],
+    "by_class": [
+     {
+      "class_name": "Tool Descriptions",
+      "blocks": 1,
+      "patchable": 1,
+      "keep": 0,
+      "replace": 1,
+      "disable": 0,
+      "baseline_bytes": 81,
+      "effective_bytes": 20,
+      "baseline_tokens": 21,
+      "effective_tokens": 6
+     },
+     {
+      "class_name": "System Reminders",
+      "blocks": 1,
+      "patchable": 1,
+      "keep": 1,
+      "replace": 0,
+      "disable": 0,
+      "baseline_bytes": 106,
+      "effective_bytes": 106,
+      "baseline_tokens": 27,
+      "effective_tokens": 27
+     },
+     {
+      "class_name": "Security & Safety",
+      "blocks": 2,
+      "patchable": 2,
+      "keep": 2,
+      "replace": 0,
+      "disable": 0,
+      "baseline_bytes": 152,
+      "effective_bytes": 152,
+      "baseline_tokens": 40,
+      "effective_tokens": 40
+     },
+     {
+      "class_name": "Response Quality",
+      "blocks": 1,
+      "patchable": 1,
+      "keep": 1,
+      "replace": 0,
+      "disable": 0,
+      "baseline_bytes": 132,
+      "effective_bytes": 132,
+      "baseline_tokens": 33,
+      "effective_tokens": 33
+     },
+     {
+      "class_name": "General Behavior",
+      "blocks": 6,
+      "patchable": 4,
+      "keep": 3,
+      "replace": 0,
+      "disable": 1,
+      "baseline_bytes": 272,
+      "effective_bytes": 263,
+      "baseline_tokens": 71,
+      "effective_tokens": 68
+     },
+     {
+      "class_name": "File & Code Ops",
+      "blocks": 1,
+      "patchable": 1,
+      "keep": 0,
+      "replace": 1,
+      "disable": 0,
+      "baseline_bytes": 110,
+      "effective_bytes": 11,
+      "baseline_tokens": 24,
+      "effective_tokens": 2
+     },
+     {
+      "class_name": "Environment & Platform",
+      "blocks": 1,
+      "patchable": 1,
+      "keep": 1,
+      "replace": 0,
+      "disable": 0,
+      "baseline_bytes": 140,
+      "effective_bytes": 140,
+      "baseline_tokens": 36,
+      "effective_tokens": 36
+     },
+     {
+      "class_name": "Git & VCS",
+      "blocks": 1,
+      "patchable": 1,
+      "keep": 1,
+      "replace": 0,
+      "disable": 0,
+      "baseline_bytes": 143,
+      "effective_bytes": 143,
+      "baseline_tokens": 37,
+      "effective_tokens": 37
+     }
+    ]
+   }
+  },
+  {
+   "name": "prompt is not text",
+   "args": [
+    {
+     "schema_version": 1,
+     "runtime_id": "native-claude-code",
+     "runtime_version": "0.0.0-golden",
+     "image_digest": "sha256:2d032a622cf94baf637a4488720865da983853e4a655fea4e45d0e80f0a9c640",
+     "binary_sha256": "25ba8ebec5f227618d8d58f475622669f4c45019d40259d1d292a823f4184c27",
+     "inventory_sha256": "44e7b67bbdc0842fecf8cfa158641e03998f7d0b34184bc297ede967ab24ce7a",
+     "taxonomy_sha256": "6064ebcb6693a1dd7b3e50fbfbcc94ff959f7957ac184188fd91744900a429a3",
+     "materializer_sha256": "ba6245da8b07901b6793898e70e2e974a1e641a2c3be0d357ba53d15101f4081",
+     "default_action": "keep",
+     "overrides": [
+      {
+       "block_id": "tool-bash-guide",
+       "baseline_sha256": "c5db5a79c94bb7a9835cbe2e3897337c52e3bb72b73edaedf1165a51246b057b",
+       "action": "replace",
+       "replacement_utf8": "Fabricated, shorter.",
+       "replacement_sha256": "77ba73eae4d1011d3cfb79cea86d463e0808b98f39d6db9302cd45d080987854"
+      },
+      {
+       "block_id": "short",
+       "baseline_sha256": "213c22ed7234eb11116e1e88f314c73cb3a019b5c87fe224b6ce5665bd9ec50e",
+       "action": "disable"
+      },
+      {
+       "block_id": "unicode-mix",
+       "baseline_sha256": "d00da6c5a836c9df66e6b20ea37a93990bedea7ff26d8c203fd257d9b47523a8",
+       "action": "replace",
+       "replacement_utf8": "\u65e5\u672c \ud83d\ude42",
+       "replacement_sha256": "d5bed3f52102ce6ce8a3870bda862bb976f481d976c415d4ad901ab71aed1b9f"
+      }
+     ]
+    },
+    "@inventory-claude",
+    {
+     "prompt": 12
+    }
+   ],
+   "expected": {
+    "estimator": "chars-div-3.9-v1",
+    "exact": {
+     "baseline_bytes": 1136,
+     "effective_bytes": 967,
+     "delta_bytes": -169,
+     "profile_bytes": 1199,
+     "overrides": 3,
+     "keep": 9,
+     "replace": 2,
+     "disable": 1
+    },
+    "estimate": {
+     "baseline_tokens": 289,
+     "effective_tokens": 249,
+     "delta_tokens": -40,
+     "not_estimated_blocks": 0
+    },
+    "limits": [
+     {
+      "id": "overrides",
+      "used": 3,
+      "max": 4096,
+      "kind": "exact",
+      "state": "ok"
+     },
+     {
+      "id": "profile_bytes",
+      "used": 1199,
+      "max": 786432,
+      "kind": "exact",
+      "state": "ok"
+     },
+     {
+      "id": "manifest_bytes",
+      "used": 3249,
+      "max": 1048576,
+      "kind": "estimate",
+      "state": "ok"
+     },
+     {
+      "id": "paired_plan_bytes",
+      "used": 16094,
+      "max": 786432,
+      "kind": "estimate",
+      "state": "ok"
+     }
+    ],
+    "by_class": [
+     {
+      "class_name": "Tool Descriptions",
+      "blocks": 1,
+      "patchable": 1,
+      "keep": 0,
+      "replace": 1,
+      "disable": 0,
+      "baseline_bytes": 81,
+      "effective_bytes": 20,
+      "baseline_tokens": 21,
+      "effective_tokens": 6
+     },
+     {
+      "class_name": "System Reminders",
+      "blocks": 1,
+      "patchable": 1,
+      "keep": 1,
+      "replace": 0,
+      "disable": 0,
+      "baseline_bytes": 106,
+      "effective_bytes": 106,
+      "baseline_tokens": 27,
+      "effective_tokens": 27
+     },
+     {
+      "class_name": "Security & Safety",
+      "blocks": 2,
+      "patchable": 2,
+      "keep": 2,
+      "replace": 0,
+      "disable": 0,
+      "baseline_bytes": 152,
+      "effective_bytes": 152,
+      "baseline_tokens": 40,
+      "effective_tokens": 40
+     },
+     {
+      "class_name": "Response Quality",
+      "blocks": 1,
+      "patchable": 1,
+      "keep": 1,
+      "replace": 0,
+      "disable": 0,
+      "baseline_bytes": 132,
+      "effective_bytes": 132,
+      "baseline_tokens": 33,
+      "effective_tokens": 33
+     },
+     {
+      "class_name": "General Behavior",
+      "blocks": 6,
+      "patchable": 4,
+      "keep": 3,
+      "replace": 0,
+      "disable": 1,
+      "baseline_bytes": 272,
+      "effective_bytes": 263,
+      "baseline_tokens": 71,
+      "effective_tokens": 68
+     },
+     {
+      "class_name": "File & Code Ops",
+      "blocks": 1,
+      "patchable": 1,
+      "keep": 0,
+      "replace": 1,
+      "disable": 0,
+      "baseline_bytes": 110,
+      "effective_bytes": 11,
+      "baseline_tokens": 24,
+      "effective_tokens": 2
+     },
+     {
+      "class_name": "Environment & Platform",
+      "blocks": 1,
+      "patchable": 1,
+      "keep": 1,
+      "replace": 0,
+      "disable": 0,
+      "baseline_bytes": 140,
+      "effective_bytes": 140,
+      "baseline_tokens": 36,
+      "effective_tokens": 36
+     },
+     {
+      "class_name": "Git & VCS",
+      "blocks": 1,
+      "patchable": 1,
+      "keep": 1,
+      "replace": 0,
+      "disable": 0,
+      "baseline_bytes": 143,
+      "effective_bytes": 143,
+      "baseline_tokens": 37,
+      "effective_tokens": 37
+     }
+    ]
+   }
+  },
+  {
+   "name": "Codex padding: shorter replacement and a disable",
+   "args": [
+    {
+     "schema_version": 1,
+     "runtime_id": "native-codex",
+     "runtime_version": "0.167.1",
+     "image_digest": "sha256:716f940f0958cd4abdda846a256caa95e40a5a858709f72692a16a89f9d14c7f",
+     "binary_sha256": "18ee9689f82cda3a1af3da8b40e0b5477a56b83e9e4fa620554a2fd6c6112053",
+     "inventory_sha256": "4eca453646cf1f187f5872ccafdec818d4536b3452b5ea1d33dcb436ad78273d",
+     "taxonomy_sha256": "6064ebcb6693a1dd7b3e50fbfbcc94ff959f7957ac184188fd91744900a429a3",
+     "materializer_sha256": "8a1ee9f8fba86a80c057f7712d4aeddb02096ec17f3c22451ecaf5ded9c1c185",
+     "default_action": "keep",
+     "overrides": [
+      {
+       "block_id": "codex-review",
+       "baseline_sha256": "7f587ebb523bdfb535b38804a344d40b9991372fa7343e4f5fced81ce3bd4dfa",
+       "action": "replace",
+       "replacement_utf8": "Short.",
+       "replacement_sha256": "c9145e654bf3ea4822d6f2a3246ab4e18e28ad6c950bf80d7b1e4d81eb315f6a"
+      },
+      {
+       "block_id": "codex-short",
+       "baseline_sha256": "fa6eb19205792e9f5eedf1535af30a3bd9d94d49e92bedf94dd1261de32e17c8",
+       "action": "disable"
+      }
+     ]
+    },
+    "@inventory-codex",
+    {}
+   ],
+   "expected": {
+    "estimator": "chars-div-3.9-v1",
+    "exact": {
+     "baseline_bytes": 157,
+     "effective_bytes": 157,
+     "delta_bytes": 0,
+     "profile_bytes": 925,
+     "overrides": 2,
+     "keep": 2,
+     "replace": 1,
+     "disable": 1
+    },
+    "estimate": {
+     "baseline_tokens": 40,
+     "effective_tokens": 40,
+     "delta_tokens": 0,
+     "not_estimated_blocks": 2
+    },
+    "limits": [
+     {
+      "id": "overrides",
+      "used": 2,
+      "max": 4096,
+      "kind": "exact",
+      "state": "ok"
+     },
+     {
+      "id": "profile_bytes",
+      "used": 925,
+      "max": 786432,
+      "kind": "exact",
+      "state": "ok"
+     },
+     {
+      "id": "manifest_bytes",
+      "used": 2975,
+      "max": 1048576,
+      "kind": "estimate",
+      "state": "ok"
+     },
+     {
+      "id": "paired_plan_bytes",
+      "used": 15546,
+      "max": 786432,
+      "kind": "estimate",
+      "state": "ok"
+     }
+    ],
+    "by_class": [
+     {
+      "class_name": "File & Code Ops",
+      "blocks": 6,
+      "patchable": 4,
+      "keep": 2,
+      "replace": 1,
+      "disable": 1,
+      "baseline_bytes": 157,
+      "effective_bytes": 157,
+      "baseline_tokens": 40,
+      "effective_tokens": 40
+     }
+    ]
+   }
+  },
+  {
+   "name": "Codex replacement of equal length",
+   "args": [
+    {
+     "schema_version": 1,
+     "runtime_id": "native-codex",
+     "runtime_version": "0.167.1",
+     "image_digest": "sha256:716f940f0958cd4abdda846a256caa95e40a5a858709f72692a16a89f9d14c7f",
+     "binary_sha256": "18ee9689f82cda3a1af3da8b40e0b5477a56b83e9e4fa620554a2fd6c6112053",
+     "inventory_sha256": "4eca453646cf1f187f5872ccafdec818d4536b3452b5ea1d33dcb436ad78273d",
+     "taxonomy_sha256": "6064ebcb6693a1dd7b3e50fbfbcc94ff959f7957ac184188fd91744900a429a3",
+     "materializer_sha256": "8a1ee9f8fba86a80c057f7712d4aeddb02096ec17f3c22451ecaf5ded9c1c185",
+     "default_action": "keep",
+     "overrides": [
+      {
+       "block_id": "codex-short",
+       "baseline_sha256": "fa6eb19205792e9f5eedf1535af30a3bd9d94d49e92bedf94dd1261de32e17c8",
+       "action": "replace",
+       "replacement_utf8": "Tiny text.",
+       "replacement_sha256": "f75fcbce911e6ecbd24e2410fdcba72ca7af432aa2af587c135729fa17f292c3"
+      }
+     ]
+    },
+    "@inventory-codex",
+    {}
+   ],
+   "expected": {
+    "estimator": "chars-div-3.9-v1",
+    "exact": {
+     "baseline_bytes": 157,
+     "effective_bytes": 157,
+     "delta_bytes": 0,
+     "profile_bytes": 797,
+     "overrides": 1,
+     "keep": 3,
+     "replace": 1,
+     "disable": 0
+    },
+    "estimate": {
+     "baseline_tokens": 40,
+     "effective_tokens": 40,
+     "delta_tokens": 0,
+     "not_estimated_blocks": 0
+    },
+    "limits": [
+     {
+      "id": "overrides",
+      "used": 1,
+      "max": 4096,
+      "kind": "exact",
+      "state": "ok"
+     },
+     {
+      "id": "profile_bytes",
+      "used": 797,
+      "max": 786432,
+      "kind": "exact",
+      "state": "ok"
+     },
+     {
+      "id": "manifest_bytes",
+      "used": 2847,
+      "max": 1048576,
+      "kind": "estimate",
+      "state": "ok"
+     },
+     {
+      "id": "paired_plan_bytes",
+      "used": 15290,
+      "max": 786432,
+      "kind": "estimate",
+      "state": "ok"
+     }
+    ],
+    "by_class": [
+     {
+      "class_name": "File & Code Ops",
+      "blocks": 6,
+      "patchable": 4,
+      "keep": 3,
+      "replace": 1,
+      "disable": 0,
+      "baseline_bytes": 157,
+      "effective_bytes": 157,
+      "baseline_tokens": 40,
+      "effective_tokens": 40
+     }
+    ]
+   }
+  },
+  {
+   "name": "Codex none included",
+   "args": [
+    {
+     "schema_version": 1,
+     "runtime_id": "native-codex",
+     "runtime_version": "0.167.1",
+     "image_digest": "sha256:716f940f0958cd4abdda846a256caa95e40a5a858709f72692a16a89f9d14c7f",
+     "binary_sha256": "18ee9689f82cda3a1af3da8b40e0b5477a56b83e9e4fa620554a2fd6c6112053",
+     "inventory_sha256": "4eca453646cf1f187f5872ccafdec818d4536b3452b5ea1d33dcb436ad78273d",
+     "taxonomy_sha256": "6064ebcb6693a1dd7b3e50fbfbcc94ff959f7957ac184188fd91744900a429a3",
+     "materializer_sha256": "8a1ee9f8fba86a80c057f7712d4aeddb02096ec17f3c22451ecaf5ded9c1c185",
+     "default_action": "disable",
+     "overrides": []
+    },
+    "@inventory-codex",
+    {}
+   ],
+   "expected": {
+    "estimator": "chars-div-3.9-v1",
+    "exact": {
+     "baseline_bytes": 157,
+     "effective_bytes": 157,
+     "delta_bytes": 0,
+     "profile_bytes": 550,
+     "overrides": 0,
+     "keep": 0,
+     "replace": 0,
+     "disable": 4
+    },
+    "estimate": {
+     "baseline_tokens": 40,
+     "effective_tokens": 40,
+     "delta_tokens": 0,
+     "not_estimated_blocks": 4
+    },
+    "limits": [
+     {
+      "id": "overrides",
+      "used": 0,
+      "max": 4096,
+      "kind": "exact",
+      "state": "ok"
+     },
+     {
+      "id": "profile_bytes",
+      "used": 550,
+      "max": 786432,
+      "kind": "exact",
+      "state": "ok"
+     },
+     {
+      "id": "manifest_bytes",
+      "used": 2600,
+      "max": 1048576,
+      "kind": "estimate",
+      "state": "ok"
+     },
+     {
+      "id": "paired_plan_bytes",
+      "used": 14796,
+      "max": 786432,
+      "kind": "estimate",
+      "state": "ok"
+     }
+    ],
+    "by_class": [
+     {
+      "class_name": "File & Code Ops",
+      "blocks": 6,
+      "patchable": 4,
+      "keep": 0,
+      "replace": 0,
+      "disable": 4,
+      "baseline_bytes": 157,
+      "effective_bytes": 157,
+      "baseline_tokens": 40,
+      "effective_tokens": 40
+     }
+    ]
+   }
+  },
+  {
+   "name": "profile bytes near the limit",
+   "args": [
+    {
+     "schema_version": 1,
+     "runtime_id": "native-claude-code",
+     "runtime_version": "0.0.0-golden",
+     "image_digest": "sha256:2d032a622cf94baf637a4488720865da983853e4a655fea4e45d0e80f0a9c640",
+     "binary_sha256": "25ba8ebec5f227618d8d58f475622669f4c45019d40259d1d292a823f4184c27",
+     "inventory_sha256": "44e7b67bbdc0842fecf8cfa158641e03998f7d0b34184bc297ede967ab24ce7a",
+     "taxonomy_sha256": "6064ebcb6693a1dd7b3e50fbfbcc94ff959f7957ac184188fd91744900a429a3",
+     "materializer_sha256": "ba6245da8b07901b6793898e70e2e974a1e641a2c3be0d357ba53d15101f4081",
+     "default_action": "keep",
+     "overrides": [
+      {
+       "block_id": "tool-bash-guide",
+       "baseline_sha256": "c5db5a79c94bb7a9835cbe2e3897337c52e3bb72b73edaedf1165a51246b057b",
+       "action": "replace",
+       "replacement_utf8": {
+        "@repeat": "Fabricated filler. ",
+        "times": 8400
+       },
+       "replacement_sha256": "59a1d602854bf17ab40d217123a1ad41d3f858edb328e60401e5365239d0b632"
+      },
+      {
+       "block_id": "security-sandbox-note",
+       "baseline_sha256": "da29f4d417fb4114d86cf22df8e7b8b94933d8df6b415974fb64812073588596",
+       "action": "replace",
+       "replacement_utf8": {
+        "@repeat": "Fabricated filler. ",
+        "times": 8400
+       },
+       "replacement_sha256": "59a1d602854bf17ab40d217123a1ad41d3f858edb328e60401e5365239d0b632"
+      },
+      {
+       "block_id": "response-style",
+       "baseline_sha256": "dfdce2e37fd61eaecb69669b607c265d2dd9f8ab9c574eea221bb5e77620c6be",
+       "action": "replace",
+       "replacement_utf8": {
+        "@repeat": "Fabricated filler. ",
+        "times": 8400
+       },
+       "replacement_sha256": "59a1d602854bf17ab40d217123a1ad41d3f858edb328e60401e5365239d0b632"
+      },
+      {
+       "block_id": "general-hedge",
+       "baseline_sha256": "9e5dada3492558f4af8fff686a4bb57c2bcc6e83faa7b86f653206cff34ac914",
+       "action": "replace",
+       "replacement_utf8": {
+        "@repeat": "Fabricated filler. ",
+        "times": 8400
+       },
+       "replacement_sha256": "59a1d602854bf17ab40d217123a1ad41d3f858edb328e60401e5365239d0b632"
+      }
+     ]
+    },
+    "@inventory-claude",
+    {}
+   ],
+   "expected": {
+    "estimator": "chars-div-3.9-v1",
+    "exact": {
+     "baseline_bytes": 1136,
+     "effective_bytes": 639077,
+     "delta_bytes": 637941,
+     "profile_bytes": 639940,
+     "overrides": 4,
+     "keep": 8,
+     "replace": 4,
+     "disable": 0
+    },
+    "estimate": {
+     "baseline_tokens": 289,
+     "effective_tokens": 163863,
+     "delta_tokens": 163574,
+     "not_estimated_blocks": 0
+    },
+    "limits": [
+     {
+      "id": "overrides",
+      "used": 4,
+      "max": 4096,
+      "kind": "exact",
+      "state": "ok"
+     },
+     {
+      "id": "profile_bytes",
+      "used": 639940,
+      "max": 786432,
+      "kind": "exact",
+      "state": "near"
+     },
+     {
+      "id": "manifest_bytes",
+      "used": 641990,
+      "max": 1048576,
+      "kind": "estimate",
+      "state": "ok"
+     },
+     {
+      "id": "paired_plan_bytes",
+      "used": 1293576,
+      "max": 786432,
+      "kind": "estimate",
+      "state": "over"
+     }
+    ],
+    "by_class": [
+     {
+      "class_name": "Tool Descriptions",
+      "blocks": 1,
+      "patchable": 1,
+      "keep": 0,
+      "replace": 1,
+      "disable": 0,
+      "baseline_bytes": 81,
+      "effective_bytes": 159600,
+      "baseline_tokens": 21,
+      "effective_tokens": 40923
+     },
+     {
+      "class_name": "System Reminders",
+      "blocks": 1,
+      "patchable": 1,
+      "keep": 1,
+      "replace": 0,
+      "disable": 0,
+      "baseline_bytes": 106,
+      "effective_bytes": 106,
+      "baseline_tokens": 27,
+      "effective_tokens": 27
+     },
+     {
+      "class_name": "Security & Safety",
+      "blocks": 2,
+      "patchable": 2,
+      "keep": 1,
+      "replace": 1,
+      "disable": 0,
+      "baseline_bytes": 152,
+      "effective_bytes": 159661,
+      "baseline_tokens": 40,
+      "effective_tokens": 40939
+     },
+     {
+      "class_name": "Response Quality",
+      "blocks": 1,
+      "patchable": 1,
+      "keep": 0,
+      "replace": 1,
+      "disable": 0,
+      "baseline_bytes": 132,
+      "effective_bytes": 159600,
+      "baseline_tokens": 33,
+      "effective_tokens": 40923
+     },
+     {
+      "class_name": "General Behavior",
+      "blocks": 6,
+      "patchable": 4,
+      "keep": 3,
+      "replace": 1,
+      "disable": 0,
+      "baseline_bytes": 272,
+      "effective_bytes": 159717,
+      "baseline_tokens": 71,
+      "effective_tokens": 40954
+     },
+     {
+      "class_name": "File & Code Ops",
+      "blocks": 1,
+      "patchable": 1,
+      "keep": 1,
+      "replace": 0,
+      "disable": 0,
+      "baseline_bytes": 110,
+      "effective_bytes": 110,
+      "baseline_tokens": 24,
+      "effective_tokens": 24
+     },
+     {
+      "class_name": "Environment & Platform",
+      "blocks": 1,
+      "patchable": 1,
+      "keep": 1,
+      "replace": 0,
+      "disable": 0,
+      "baseline_bytes": 140,
+      "effective_bytes": 140,
+      "baseline_tokens": 36,
+      "effective_tokens": 36
+     },
+     {
+      "class_name": "Git & VCS",
+      "blocks": 1,
+      "patchable": 1,
+      "keep": 1,
+      "replace": 0,
+      "disable": 0,
+      "baseline_bytes": 143,
+      "effective_bytes": 143,
+      "baseline_tokens": 37,
+      "effective_tokens": 37
+     }
+    ]
+   }
+  },
+  {
+   "name": "profile bytes over the limit",
+   "args": [
+    {
+     "schema_version": 1,
+     "runtime_id": "native-claude-code",
+     "runtime_version": "0.0.0-golden",
+     "image_digest": "sha256:2d032a622cf94baf637a4488720865da983853e4a655fea4e45d0e80f0a9c640",
+     "binary_sha256": "25ba8ebec5f227618d8d58f475622669f4c45019d40259d1d292a823f4184c27",
+     "inventory_sha256": "44e7b67bbdc0842fecf8cfa158641e03998f7d0b34184bc297ede967ab24ce7a",
+     "taxonomy_sha256": "6064ebcb6693a1dd7b3e50fbfbcc94ff959f7957ac184188fd91744900a429a3",
+     "materializer_sha256": "ba6245da8b07901b6793898e70e2e974a1e641a2c3be0d357ba53d15101f4081",
+     "default_action": "keep",
+     "overrides": [
+      {
+       "block_id": "tool-bash-guide",
+       "baseline_sha256": "c5db5a79c94bb7a9835cbe2e3897337c52e3bb72b73edaedf1165a51246b057b",
+       "action": "replace",
+       "replacement_utf8": {
+        "@repeat": "Fabricated filler. ",
+        "times": 9000
+       },
+       "replacement_sha256": "edba55fe31afde6012ace2415874634cc3a4d2e17e26a0d220c9002cab31718e"
+      },
+      {
+       "block_id": "security-sandbox-note",
+       "baseline_sha256": "da29f4d417fb4114d86cf22df8e7b8b94933d8df6b415974fb64812073588596",
+       "action": "replace",
+       "replacement_utf8": {
+        "@repeat": "Fabricated filler. ",
+        "times": 9000
+       },
+       "replacement_sha256": "edba55fe31afde6012ace2415874634cc3a4d2e17e26a0d220c9002cab31718e"
+      },
+      {
+       "block_id": "response-style",
+       "baseline_sha256": "dfdce2e37fd61eaecb69669b607c265d2dd9f8ab9c574eea221bb5e77620c6be",
+       "action": "replace",
+       "replacement_utf8": {
+        "@repeat": "Fabricated filler. ",
+        "times": 9000
+       },
+       "replacement_sha256": "edba55fe31afde6012ace2415874634cc3a4d2e17e26a0d220c9002cab31718e"
+      },
+      {
+       "block_id": "general-hedge",
+       "baseline_sha256": "9e5dada3492558f4af8fff686a4bb57c2bcc6e83faa7b86f653206cff34ac914",
+       "action": "replace",
+       "replacement_utf8": {
+        "@repeat": "Fabricated filler. ",
+        "times": 9000
+       },
+       "replacement_sha256": "edba55fe31afde6012ace2415874634cc3a4d2e17e26a0d220c9002cab31718e"
+      },
+      {
+       "block_id": "short",
+       "baseline_sha256": "213c22ed7234eb11116e1e88f314c73cb3a019b5c87fe224b6ce5665bd9ec50e",
+       "action": "replace",
+       "replacement_utf8": {
+        "@repeat": "Fabricated filler. ",
+        "times": 9000
+       },
+       "replacement_sha256": "edba55fe31afde6012ace2415874634cc3a4d2e17e26a0d220c9002cab31718e"
+      }
+     ]
+    },
+    "@inventory-claude",
+    {}
+   ],
+   "expected": {
+    "estimator": "chars-div-3.9-v1",
+    "exact": {
+     "baseline_bytes": 1136,
+     "effective_bytes": 855668,
+     "delta_bytes": 854532,
+     "profile_bytes": 856775,
+     "overrides": 5,
+     "keep": 7,
+     "replace": 5,
+     "disable": 0
+    },
+    "estimate": {
+     "baseline_tokens": 289,
+     "effective_tokens": 219398,
+     "delta_tokens": 219109,
+     "not_estimated_blocks": 0
+    },
+    "limits": [
+     {
+      "id": "overrides",
+      "used": 5,
+      "max": 4096,
+      "kind": "exact",
+      "state": "ok"
+     },
+     {
+      "id": "profile_bytes",
+      "used": 856775,
+      "max": 786432,
+      "kind": "exact",
+      "state": "over"
+     },
+     {
+      "id": "manifest_bytes",
+      "used": 858825,
+      "max": 1048576,
+      "kind": "estimate",
+      "state": "near"
+     },
+     {
+      "id": "paired_plan_bytes",
+      "used": 1727246,
+      "max": 786432,
+      "kind": "estimate",
+      "state": "over"
+     }
+    ],
+    "by_class": [
+     {
+      "class_name": "Tool Descriptions",
+      "blocks": 1,
+      "patchable": 1,
+      "keep": 0,
+      "replace": 1,
+      "disable": 0,
+      "baseline_bytes": 81,
+      "effective_bytes": 171000,
+      "baseline_tokens": 21,
+      "effective_tokens": 43846
+     },
+     {
+      "class_name": "System Reminders",
+      "blocks": 1,
+      "patchable": 1,
+      "keep": 1,
+      "replace": 0,
+      "disable": 0,
+      "baseline_bytes": 106,
+      "effective_bytes": 106,
+      "baseline_tokens": 27,
+      "effective_tokens": 27
+     },
+     {
+      "class_name": "Security & Safety",
+      "blocks": 2,
+      "patchable": 2,
+      "keep": 1,
+      "replace": 1,
+      "disable": 0,
+      "baseline_bytes": 152,
+      "effective_bytes": 171061,
+      "baseline_tokens": 40,
+      "effective_tokens": 43862
+     },
+     {
+      "class_name": "Response Quality",
+      "blocks": 1,
+      "patchable": 1,
+      "keep": 0,
+      "replace": 1,
+      "disable": 0,
+      "baseline_bytes": 132,
+      "effective_bytes": 171000,
+      "baseline_tokens": 33,
+      "effective_tokens": 43846
+     },
+     {
+      "class_name": "General Behavior",
+      "blocks": 6,
+      "patchable": 4,
+      "keep": 2,
+      "replace": 2,
+      "disable": 0,
+      "baseline_bytes": 272,
+      "effective_bytes": 342108,
+      "baseline_tokens": 71,
+      "effective_tokens": 87720
+     },
+     {
+      "class_name": "File & Code Ops",
+      "blocks": 1,
+      "patchable": 1,
+      "keep": 1,
+      "replace": 0,
+      "disable": 0,
+      "baseline_bytes": 110,
+      "effective_bytes": 110,
+      "baseline_tokens": 24,
+      "effective_tokens": 24
+     },
+     {
+      "class_name": "Environment & Platform",
+      "blocks": 1,
+      "patchable": 1,
+      "keep": 1,
+      "replace": 0,
+      "disable": 0,
+      "baseline_bytes": 140,
+      "effective_bytes": 140,
+      "baseline_tokens": 36,
+      "effective_tokens": 36
+     },
+     {
+      "class_name": "Git & VCS",
+      "blocks": 1,
+      "patchable": 1,
+      "keep": 1,
+      "replace": 0,
+      "disable": 0,
+      "baseline_bytes": 143,
+      "effective_bytes": 143,
+      "baseline_tokens": 37,
+      "effective_tokens": 37
+     }
+    ]
+   }
+  },
+  {
+   "name": "manifest estimate near",
+   "args": [
+    {
+     "schema_version": 1,
+     "runtime_id": "native-claude-code",
+     "runtime_version": "0.0.0-golden",
+     "image_digest": "sha256:2d032a622cf94baf637a4488720865da983853e4a655fea4e45d0e80f0a9c640",
+     "binary_sha256": "25ba8ebec5f227618d8d58f475622669f4c45019d40259d1d292a823f4184c27",
+     "inventory_sha256": "44e7b67bbdc0842fecf8cfa158641e03998f7d0b34184bc297ede967ab24ce7a",
+     "taxonomy_sha256": "6064ebcb6693a1dd7b3e50fbfbcc94ff959f7957ac184188fd91744900a429a3",
+     "materializer_sha256": "ba6245da8b07901b6793898e70e2e974a1e641a2c3be0d357ba53d15101f4081",
+     "default_action": "keep",
+     "overrides": [
+      {
+       "block_id": "tool-bash-guide",
+       "baseline_sha256": "c5db5a79c94bb7a9835cbe2e3897337c52e3bb72b73edaedf1165a51246b057b",
+       "action": "replace",
+       "replacement_utf8": {
+        "@repeat": "Fabricated filler. ",
+        "times": 9000
+       },
+       "replacement_sha256": "edba55fe31afde6012ace2415874634cc3a4d2e17e26a0d220c9002cab31718e"
+      }
+     ]
+    },
+    "@inventory-claude",
+    {
+     "prompt": {
+      "@repeat": "Fabricated prompt. ",
+      "times": 35000
+     }
+    }
+   ],
+   "expected": {
+    "estimator": "chars-div-3.9-v1",
+    "exact": {
+     "baseline_bytes": 1136,
+     "effective_bytes": 172055,
+     "delta_bytes": 170919,
+     "profile_bytes": 171802,
+     "overrides": 1,
+     "keep": 11,
+     "replace": 1,
+     "disable": 0
+    },
+    "estimate": {
+     "baseline_tokens": 289,
+     "effective_tokens": 44114,
+     "delta_tokens": 43825,
+     "not_estimated_blocks": 0
+    },
+    "limits": [
+     {
+      "id": "overrides",
+      "used": 1,
+      "max": 4096,
+      "kind": "exact",
+      "state": "ok"
+     },
+     {
+      "id": "profile_bytes",
+      "used": 171802,
+      "max": 786432,
+      "kind": "exact",
+      "state": "ok"
+     },
+     {
+      "id": "manifest_bytes",
+      "used": 838852,
+      "max": 1048576,
+      "kind": "estimate",
+      "state": "ok"
+     },
+     {
+      "id": "paired_plan_bytes",
+      "used": 3017300,
+      "max": 786432,
+      "kind": "estimate",
+      "state": "over"
+     }
+    ],
+    "by_class": [
+     {
+      "class_name": "Tool Descriptions",
+      "blocks": 1,
+      "patchable": 1,
+      "keep": 0,
+      "replace": 1,
+      "disable": 0,
+      "baseline_bytes": 81,
+      "effective_bytes": 171000,
+      "baseline_tokens": 21,
+      "effective_tokens": 43846
+     },
+     {
+      "class_name": "System Reminders",
+      "blocks": 1,
+      "patchable": 1,
+      "keep": 1,
+      "replace": 0,
+      "disable": 0,
+      "baseline_bytes": 106,
+      "effective_bytes": 106,
+      "baseline_tokens": 27,
+      "effective_tokens": 27
+     },
+     {
+      "class_name": "Security & Safety",
+      "blocks": 2,
+      "patchable": 2,
+      "keep": 2,
+      "replace": 0,
+      "disable": 0,
+      "baseline_bytes": 152,
+      "effective_bytes": 152,
+      "baseline_tokens": 40,
+      "effective_tokens": 40
+     },
+     {
+      "class_name": "Response Quality",
+      "blocks": 1,
+      "patchable": 1,
+      "keep": 1,
+      "replace": 0,
+      "disable": 0,
+      "baseline_bytes": 132,
+      "effective_bytes": 132,
+      "baseline_tokens": 33,
+      "effective_tokens": 33
+     },
+     {
+      "class_name": "General Behavior",
+      "blocks": 6,
+      "patchable": 4,
+      "keep": 4,
+      "replace": 0,
+      "disable": 0,
+      "baseline_bytes": 272,
+      "effective_bytes": 272,
+      "baseline_tokens": 71,
+      "effective_tokens": 71
+     },
+     {
+      "class_name": "File & Code Ops",
+      "blocks": 1,
+      "patchable": 1,
+      "keep": 1,
+      "replace": 0,
+      "disable": 0,
+      "baseline_bytes": 110,
+      "effective_bytes": 110,
+      "baseline_tokens": 24,
+      "effective_tokens": 24
+     },
+     {
+      "class_name": "Environment & Platform",
+      "blocks": 1,
+      "patchable": 1,
+      "keep": 1,
+      "replace": 0,
+      "disable": 0,
+      "baseline_bytes": 140,
+      "effective_bytes": 140,
+      "baseline_tokens": 36,
+      "effective_tokens": 36
+     },
+     {
+      "class_name": "Git & VCS",
+      "blocks": 1,
+      "patchable": 1,
+      "keep": 1,
+      "replace": 0,
+      "disable": 0,
+      "baseline_bytes": 143,
+      "effective_bytes": 143,
+      "baseline_tokens": 37,
+      "effective_tokens": 37
+     }
+    ]
+   }
+  },
+  {
+   "name": "manifest estimate over",
+   "args": [
+    {
+     "schema_version": 1,
+     "runtime_id": "native-claude-code",
+     "runtime_version": "0.0.0-golden",
+     "image_digest": "sha256:2d032a622cf94baf637a4488720865da983853e4a655fea4e45d0e80f0a9c640",
+     "binary_sha256": "25ba8ebec5f227618d8d58f475622669f4c45019d40259d1d292a823f4184c27",
+     "inventory_sha256": "44e7b67bbdc0842fecf8cfa158641e03998f7d0b34184bc297ede967ab24ce7a",
+     "taxonomy_sha256": "6064ebcb6693a1dd7b3e50fbfbcc94ff959f7957ac184188fd91744900a429a3",
+     "materializer_sha256": "ba6245da8b07901b6793898e70e2e974a1e641a2c3be0d357ba53d15101f4081",
+     "default_action": "keep",
+     "overrides": [
+      {
+       "block_id": "tool-bash-guide",
+       "baseline_sha256": "c5db5a79c94bb7a9835cbe2e3897337c52e3bb72b73edaedf1165a51246b057b",
+       "action": "replace",
+       "replacement_utf8": {
+        "@repeat": "Fabricated filler. ",
+        "times": 9000
+       },
+       "replacement_sha256": "edba55fe31afde6012ace2415874634cc3a4d2e17e26a0d220c9002cab31718e"
+      }
+     ]
+    },
+    "@inventory-claude",
+    {
+     "prompt": {
+      "@repeat": "Fabricated prompt. ",
+      "times": 47000
+     }
+    }
+   ],
+   "expected": {
+    "estimator": "chars-div-3.9-v1",
+    "exact": {
+     "baseline_bytes": 1136,
+     "effective_bytes": 172055,
+     "delta_bytes": 170919,
+     "profile_bytes": 171802,
+     "overrides": 1,
+     "keep": 11,
+     "replace": 1,
+     "disable": 0
+    },
+    "estimate": {
+     "baseline_tokens": 289,
+     "effective_tokens": 44114,
+     "delta_tokens": 43825,
+     "not_estimated_blocks": 0
+    },
+    "limits": [
+     {
+      "id": "overrides",
+      "used": 1,
+      "max": 4096,
+      "kind": "exact",
+      "state": "ok"
+     },
+     {
+      "id": "profile_bytes",
+      "used": 171802,
+      "max": 786432,
+      "kind": "exact",
+      "state": "ok"
+     },
+     {
+      "id": "manifest_bytes",
+      "used": 1066852,
+      "max": 1048576,
+      "kind": "estimate",
+      "state": "over"
+     },
+     {
+      "id": "paired_plan_bytes",
+      "used": 3929300,
+      "max": 786432,
+      "kind": "estimate",
+      "state": "over"
+     }
+    ],
+    "by_class": [
+     {
+      "class_name": "Tool Descriptions",
+      "blocks": 1,
+      "patchable": 1,
+      "keep": 0,
+      "replace": 1,
+      "disable": 0,
+      "baseline_bytes": 81,
+      "effective_bytes": 171000,
+      "baseline_tokens": 21,
+      "effective_tokens": 43846
+     },
+     {
+      "class_name": "System Reminders",
+      "blocks": 1,
+      "patchable": 1,
+      "keep": 1,
+      "replace": 0,
+      "disable": 0,
+      "baseline_bytes": 106,
+      "effective_bytes": 106,
+      "baseline_tokens": 27,
+      "effective_tokens": 27
+     },
+     {
+      "class_name": "Security & Safety",
+      "blocks": 2,
+      "patchable": 2,
+      "keep": 2,
+      "replace": 0,
+      "disable": 0,
+      "baseline_bytes": 152,
+      "effective_bytes": 152,
+      "baseline_tokens": 40,
+      "effective_tokens": 40
+     },
+     {
+      "class_name": "Response Quality",
+      "blocks": 1,
+      "patchable": 1,
+      "keep": 1,
+      "replace": 0,
+      "disable": 0,
+      "baseline_bytes": 132,
+      "effective_bytes": 132,
+      "baseline_tokens": 33,
+      "effective_tokens": 33
+     },
+     {
+      "class_name": "General Behavior",
+      "blocks": 6,
+      "patchable": 4,
+      "keep": 4,
+      "replace": 0,
+      "disable": 0,
+      "baseline_bytes": 272,
+      "effective_bytes": 272,
+      "baseline_tokens": 71,
+      "effective_tokens": 71
+     },
+     {
+      "class_name": "File & Code Ops",
+      "blocks": 1,
+      "patchable": 1,
+      "keep": 1,
+      "replace": 0,
+      "disable": 0,
+      "baseline_bytes": 110,
+      "effective_bytes": 110,
+      "baseline_tokens": 24,
+      "effective_tokens": 24
+     },
+     {
+      "class_name": "Environment & Platform",
+      "blocks": 1,
+      "patchable": 1,
+      "keep": 1,
+      "replace": 0,
+      "disable": 0,
+      "baseline_bytes": 140,
+      "effective_bytes": 140,
+      "baseline_tokens": 36,
+      "effective_tokens": 36
+     },
+     {
+      "class_name": "Git & VCS",
+      "blocks": 1,
+      "patchable": 1,
+      "keep": 1,
+      "replace": 0,
+      "disable": 0,
+      "baseline_bytes": 143,
+      "effective_bytes": 143,
+      "baseline_tokens": 37,
+      "effective_tokens": 37
+     }
+    ]
+   }
+  },
+  {
+   "name": "override count over the limit",
+   "args": [
+    "@profile-large-over",
+    "@inventory-large",
+    {}
+   ],
+   "expected": {
+    "estimator": "chars-div-3.9-v1",
+    "exact": {
+     "baseline_bytes": 98400,
+     "effective_bytes": 98400,
+     "delta_bytes": 0,
+     "profile_bytes": 500397,
+     "overrides": 4097,
+     "keep": 4100,
+     "replace": 0,
+     "disable": 0
+    },
+    "estimate": {
+     "baseline_tokens": 24600,
+     "effective_tokens": 24600,
+     "delta_tokens": 0,
+     "not_estimated_blocks": 0
+    },
+    "limits": [
+     {
+      "id": "overrides",
+      "used": 4097,
+      "max": 4096,
+      "kind": "exact",
+      "state": "over"
+     },
+     {
+      "id": "profile_bytes",
+      "used": 500397,
+      "max": 786432,
+      "kind": "exact",
+      "state": "ok"
+     },
+     {
+      "id": "manifest_bytes",
+      "used": 502447,
+      "max": 1048576,
+      "kind": "estimate",
+      "state": "ok"
+     },
+     {
+      "id": "paired_plan_bytes",
+      "used": 1014490,
+      "max": 786432,
+      "kind": "estimate",
+      "state": "over"
+     }
+    ],
+    "by_class": [
+     {
+      "class_name": "General Behavior",
+      "blocks": 4100,
+      "patchable": 4100,
+      "keep": 4100,
+      "replace": 0,
+      "disable": 0,
+      "baseline_bytes": 98400,
+      "effective_bytes": 98400,
+      "baseline_tokens": 24600,
+      "effective_tokens": 24600
+     }
+    ]
+   }
+  },
+  {
+   "name": "plan: two arms",
+   "args": [
+    {
+     "version": 1,
+     "name": "Fabricated plan",
+     "seed": 7,
+     "repeats": 2,
+     "arms": [
+      {
+       "id": "arm-0",
+       "label": "Arm 0",
+       "configuration": {
+        "version": 2,
+        "runtime_id": "native-claude-code",
+        "model_id": "fixture/model-a",
+        "task_id": "fixture-task",
+        "prompt": "",
+        "prompt_mode": "append",
+        "harness": {},
+        "limits": {
+         "max_steps": 5,
+         "wall_time_seconds": 60,
+         "max_cost_usd": 0.12
+        },
+        "native_prompt_profile": {
+         "schema_version": 1,
+         "runtime_id": "native-claude-code",
+         "runtime_version": "0.0.0-golden",
+         "image_digest": "sha256:2d032a622cf94baf637a4488720865da983853e4a655fea4e45d0e80f0a9c640",
+         "binary_sha256": "25ba8ebec5f227618d8d58f475622669f4c45019d40259d1d292a823f4184c27",
+         "inventory_sha256": "44e7b67bbdc0842fecf8cfa158641e03998f7d0b34184bc297ede967ab24ce7a",
+         "taxonomy_sha256": "6064ebcb6693a1dd7b3e50fbfbcc94ff959f7957ac184188fd91744900a429a3",
+         "materializer_sha256": "ba6245da8b07901b6793898e70e2e974a1e641a2c3be0d357ba53d15101f4081",
+         "default_action": "keep",
+         "overrides": []
+        }
+       }
+      },
+      {
+       "id": "arm-1",
+       "label": "Arm 1",
+       "configuration": {
+        "version": 2,
+        "runtime_id": "native-claude-code",
+        "model_id": "fixture/model-a",
+        "task_id": "fixture-task",
+        "prompt": "",
+        "prompt_mode": "append",
+        "harness": {},
+        "limits": {
+         "max_steps": 5,
+         "wall_time_seconds": 60,
+         "max_cost_usd": 0.12
+        },
+        "native_prompt_profile": {
+         "schema_version": 1,
+         "runtime_id": "native-claude-code",
+         "runtime_version": "0.0.0-golden",
+         "image_digest": "sha256:2d032a622cf94baf637a4488720865da983853e4a655fea4e45d0e80f0a9c640",
+         "binary_sha256": "25ba8ebec5f227618d8d58f475622669f4c45019d40259d1d292a823f4184c27",
+         "inventory_sha256": "44e7b67bbdc0842fecf8cfa158641e03998f7d0b34184bc297ede967ab24ce7a",
+         "taxonomy_sha256": "6064ebcb6693a1dd7b3e50fbfbcc94ff959f7957ac184188fd91744900a429a3",
+         "materializer_sha256": "ba6245da8b07901b6793898e70e2e974a1e641a2c3be0d357ba53d15101f4081",
+         "default_action": "keep",
+         "overrides": [
+          {
+           "block_id": "tool-bash-guide",
+           "baseline_sha256": "c5db5a79c94bb7a9835cbe2e3897337c52e3bb72b73edaedf1165a51246b057b",
+           "action": "replace",
+           "replacement_utf8": "Fabricated, shorter.",
+           "replacement_sha256": "77ba73eae4d1011d3cfb79cea86d463e0808b98f39d6db9302cd45d080987854"
+          },
+          {
+           "block_id": "short",
+           "baseline_sha256": "213c22ed7234eb11116e1e88f314c73cb3a019b5c87fe224b6ce5665bd9ec50e",
+           "action": "disable"
+          },
+          {
+           "block_id": "unicode-mix",
+           "baseline_sha256": "d00da6c5a836c9df66e6b20ea37a93990bedea7ff26d8c203fd257d9b47523a8",
+           "action": "replace",
+           "replacement_utf8": "\u65e5\u672c \ud83d\ude42",
+           "replacement_sha256": "d5bed3f52102ce6ce8a3870bda862bb976f481d976c415d4ad901ab71aed1b9f"
+          }
+         ]
+        }
+       }
+      }
+     ]
+    }
+   ],
+   "function": "plan_budget",
+   "expected": {
+    "draft_bytes": 2405,
+    "frozen_bytes_estimate": 10054,
+    "max": 786432,
+    "state": "ok",
+    "maximum_cost_usd": 0.48,
+    "trials": 4
+   }
+  },
+  {
+   "name": "plan: three arms, three repetitions",
+   "args": [
+    {
+     "version": 1,
+     "name": "Fabricated plan",
+     "seed": 7,
+     "repeats": 3,
+     "arms": [
+      {
+       "id": "arm-0",
+       "label": "Arm 0",
+       "configuration": {
+        "version": 2,
+        "runtime_id": "native-claude-code",
+        "model_id": "fixture/model-a",
+        "task_id": "fixture-task",
+        "prompt": "",
+        "prompt_mode": "append",
+        "harness": {},
+        "limits": {
+         "max_steps": 5,
+         "wall_time_seconds": 60,
+         "max_cost_usd": 0.12
+        },
+        "native_prompt_profile": {
+         "schema_version": 1,
+         "runtime_id": "native-claude-code",
+         "runtime_version": "0.0.0-golden",
+         "image_digest": "sha256:2d032a622cf94baf637a4488720865da983853e4a655fea4e45d0e80f0a9c640",
+         "binary_sha256": "25ba8ebec5f227618d8d58f475622669f4c45019d40259d1d292a823f4184c27",
+         "inventory_sha256": "44e7b67bbdc0842fecf8cfa158641e03998f7d0b34184bc297ede967ab24ce7a",
+         "taxonomy_sha256": "6064ebcb6693a1dd7b3e50fbfbcc94ff959f7957ac184188fd91744900a429a3",
+         "materializer_sha256": "ba6245da8b07901b6793898e70e2e974a1e641a2c3be0d357ba53d15101f4081",
+         "default_action": "keep",
+         "overrides": []
+        }
+       }
+      },
+      {
+       "id": "arm-1",
+       "label": "Arm 1",
+       "configuration": {
+        "version": 2,
+        "runtime_id": "native-claude-code",
+        "model_id": "fixture/model-a",
+        "task_id": "fixture-task",
+        "prompt": "",
+        "prompt_mode": "append",
+        "harness": {},
+        "limits": {
+         "max_steps": 5,
+         "wall_time_seconds": 60,
+         "max_cost_usd": 0.12
+        },
+        "native_prompt_profile": {
+         "schema_version": 1,
+         "runtime_id": "native-claude-code",
+         "runtime_version": "0.0.0-golden",
+         "image_digest": "sha256:2d032a622cf94baf637a4488720865da983853e4a655fea4e45d0e80f0a9c640",
+         "binary_sha256": "25ba8ebec5f227618d8d58f475622669f4c45019d40259d1d292a823f4184c27",
+         "inventory_sha256": "44e7b67bbdc0842fecf8cfa158641e03998f7d0b34184bc297ede967ab24ce7a",
+         "taxonomy_sha256": "6064ebcb6693a1dd7b3e50fbfbcc94ff959f7957ac184188fd91744900a429a3",
+         "materializer_sha256": "ba6245da8b07901b6793898e70e2e974a1e641a2c3be0d357ba53d15101f4081",
+         "default_action": "keep",
+         "overrides": [
+          {
+           "block_id": "tool-bash-guide",
+           "baseline_sha256": "c5db5a79c94bb7a9835cbe2e3897337c52e3bb72b73edaedf1165a51246b057b",
+           "action": "replace",
+           "replacement_utf8": "Fabricated, shorter.",
+           "replacement_sha256": "77ba73eae4d1011d3cfb79cea86d463e0808b98f39d6db9302cd45d080987854"
+          },
+          {
+           "block_id": "short",
+           "baseline_sha256": "213c22ed7234eb11116e1e88f314c73cb3a019b5c87fe224b6ce5665bd9ec50e",
+           "action": "disable"
+          },
+          {
+           "block_id": "unicode-mix",
+           "baseline_sha256": "d00da6c5a836c9df66e6b20ea37a93990bedea7ff26d8c203fd257d9b47523a8",
+           "action": "replace",
+           "replacement_utf8": "\u65e5\u672c \ud83d\ude42",
+           "replacement_sha256": "d5bed3f52102ce6ce8a3870bda862bb976f481d976c415d4ad901ab71aed1b9f"
+          }
+         ]
+        }
+       }
+      },
+      {
+       "id": "arm-2",
+       "label": "Arm 2",
+       "configuration": {
+        "version": 2,
+        "runtime_id": "native-claude-code",
+        "model_id": "fixture/model-a",
+        "task_id": "fixture-task",
+        "prompt": "",
+        "prompt_mode": "append",
+        "harness": {},
+        "limits": {
+         "max_steps": 5,
+         "wall_time_seconds": 60,
+         "max_cost_usd": 0.12
+        },
+        "native_prompt_profile": {
+         "schema_version": 1,
+         "runtime_id": "native-claude-code",
+         "runtime_version": "0.0.0-golden",
+         "image_digest": "sha256:2d032a622cf94baf637a4488720865da983853e4a655fea4e45d0e80f0a9c640",
+         "binary_sha256": "25ba8ebec5f227618d8d58f475622669f4c45019d40259d1d292a823f4184c27",
+         "inventory_sha256": "44e7b67bbdc0842fecf8cfa158641e03998f7d0b34184bc297ede967ab24ce7a",
+         "taxonomy_sha256": "6064ebcb6693a1dd7b3e50fbfbcc94ff959f7957ac184188fd91744900a429a3",
+         "materializer_sha256": "ba6245da8b07901b6793898e70e2e974a1e641a2c3be0d357ba53d15101f4081",
+         "default_action": "disable",
+         "overrides": []
+        }
+       }
+      }
+     ]
+    }
+   ],
+   "function": "plan_budget",
+   "expected": {
+    "draft_bytes": 3256,
+    "frozen_bytes_estimate": 14756,
+    "max": 786432,
+    "state": "ok",
+    "maximum_cost_usd": 1.08,
+    "trials": 9
+   }
+  },
+  {
+   "name": "plan: whole-number cost",
+   "args": [
+    {
+     "version": 1,
+     "name": "Fabricated plan",
+     "seed": 7,
+     "repeats": 2,
+     "arms": [
+      {
+       "id": "arm-0",
+       "label": "Arm 0",
+       "configuration": {
+        "version": 2,
+        "runtime_id": "native-claude-code",
+        "model_id": "fixture/model-a",
+        "task_id": "fixture-task",
+        "prompt": "",
+        "prompt_mode": "append",
+        "harness": {},
+        "limits": {
+         "max_steps": 5,
+         "wall_time_seconds": 60,
+         "max_cost_usd": 1
+        },
+        "native_prompt_profile": {
+         "schema_version": 1,
+         "runtime_id": "native-claude-code",
+         "runtime_version": "0.0.0-golden",
+         "image_digest": "sha256:2d032a622cf94baf637a4488720865da983853e4a655fea4e45d0e80f0a9c640",
+         "binary_sha256": "25ba8ebec5f227618d8d58f475622669f4c45019d40259d1d292a823f4184c27",
+         "inventory_sha256": "44e7b67bbdc0842fecf8cfa158641e03998f7d0b34184bc297ede967ab24ce7a",
+         "taxonomy_sha256": "6064ebcb6693a1dd7b3e50fbfbcc94ff959f7957ac184188fd91744900a429a3",
+         "materializer_sha256": "ba6245da8b07901b6793898e70e2e974a1e641a2c3be0d357ba53d15101f4081",
+         "default_action": "keep",
+         "overrides": []
+        }
+       }
+      },
+      {
+       "id": "arm-1",
+       "label": "Arm 1",
+       "configuration": {
+        "version": 2,
+        "runtime_id": "native-claude-code",
+        "model_id": "fixture/model-a",
+        "task_id": "fixture-task",
+        "prompt": "",
+        "prompt_mode": "append",
+        "harness": {},
+        "limits": {
+         "max_steps": 5,
+         "wall_time_seconds": 60,
+         "max_cost_usd": 1
+        },
+        "native_prompt_profile": {
+         "schema_version": 1,
+         "runtime_id": "native-claude-code",
+         "runtime_version": "0.0.0-golden",
+         "image_digest": "sha256:2d032a622cf94baf637a4488720865da983853e4a655fea4e45d0e80f0a9c640",
+         "binary_sha256": "25ba8ebec5f227618d8d58f475622669f4c45019d40259d1d292a823f4184c27",
+         "inventory_sha256": "44e7b67bbdc0842fecf8cfa158641e03998f7d0b34184bc297ede967ab24ce7a",
+         "taxonomy_sha256": "6064ebcb6693a1dd7b3e50fbfbcc94ff959f7957ac184188fd91744900a429a3",
+         "materializer_sha256": "ba6245da8b07901b6793898e70e2e974a1e641a2c3be0d357ba53d15101f4081",
+         "default_action": "keep",
+         "overrides": [
+          {
+           "block_id": "tool-bash-guide",
+           "baseline_sha256": "c5db5a79c94bb7a9835cbe2e3897337c52e3bb72b73edaedf1165a51246b057b",
+           "action": "replace",
+           "replacement_utf8": "Fabricated, shorter.",
+           "replacement_sha256": "77ba73eae4d1011d3cfb79cea86d463e0808b98f39d6db9302cd45d080987854"
+          },
+          {
+           "block_id": "short",
+           "baseline_sha256": "213c22ed7234eb11116e1e88f314c73cb3a019b5c87fe224b6ce5665bd9ec50e",
+           "action": "disable"
+          },
+          {
+           "block_id": "unicode-mix",
+           "baseline_sha256": "d00da6c5a836c9df66e6b20ea37a93990bedea7ff26d8c203fd257d9b47523a8",
+           "action": "replace",
+           "replacement_utf8": "\u65e5\u672c \ud83d\ude42",
+           "replacement_sha256": "d5bed3f52102ce6ce8a3870bda862bb976f481d976c415d4ad901ab71aed1b9f"
+          }
+         ]
+        }
+       }
+      }
+     ]
+    }
+   ],
+   "function": "plan_budget",
+   "expected": {
+    "draft_bytes": 2399,
+    "frozen_bytes_estimate": 10042,
+    "max": 786432,
+    "state": "ok",
+    "maximum_cost_usd": 4,
+    "trials": 4
+   }
+  },
+  {
+   "name": "plan: cost given as text",
+   "args": [
+    {
+     "version": 1,
+     "name": "Fabricated plan",
+     "seed": 7,
+     "repeats": 2,
+     "arms": [
+      {
+       "id": "arm-0",
+       "label": "Arm 0",
+       "configuration": {
+        "version": 2,
+        "runtime_id": "native-claude-code",
+        "model_id": "fixture/model-a",
+        "task_id": "fixture-task",
+        "prompt": "",
+        "prompt_mode": "append",
+        "harness": {},
+        "limits": {
+         "max_steps": 5,
+         "wall_time_seconds": 60,
+         "max_cost_usd": "0.25"
+        },
+        "native_prompt_profile": {
+         "schema_version": 1,
+         "runtime_id": "native-claude-code",
+         "runtime_version": "0.0.0-golden",
+         "image_digest": "sha256:2d032a622cf94baf637a4488720865da983853e4a655fea4e45d0e80f0a9c640",
+         "binary_sha256": "25ba8ebec5f227618d8d58f475622669f4c45019d40259d1d292a823f4184c27",
+         "inventory_sha256": "44e7b67bbdc0842fecf8cfa158641e03998f7d0b34184bc297ede967ab24ce7a",
+         "taxonomy_sha256": "6064ebcb6693a1dd7b3e50fbfbcc94ff959f7957ac184188fd91744900a429a3",
+         "materializer_sha256": "ba6245da8b07901b6793898e70e2e974a1e641a2c3be0d357ba53d15101f4081",
+         "default_action": "keep",
+         "overrides": []
+        }
+       }
+      },
+      {
+       "id": "arm-1",
+       "label": "Arm 1",
+       "configuration": {
+        "version": 2,
+        "runtime_id": "native-claude-code",
+        "model_id": "fixture/model-a",
+        "task_id": "fixture-task",
+        "prompt": "",
+        "prompt_mode": "append",
+        "harness": {},
+        "limits": {
+         "max_steps": 5,
+         "wall_time_seconds": 60,
+         "max_cost_usd": "0.25"
+        },
+        "native_prompt_profile": {
+         "schema_version": 1,
+         "runtime_id": "native-claude-code",
+         "runtime_version": "0.0.0-golden",
+         "image_digest": "sha256:2d032a622cf94baf637a4488720865da983853e4a655fea4e45d0e80f0a9c640",
+         "binary_sha256": "25ba8ebec5f227618d8d58f475622669f4c45019d40259d1d292a823f4184c27",
+         "inventory_sha256": "44e7b67bbdc0842fecf8cfa158641e03998f7d0b34184bc297ede967ab24ce7a",
+         "taxonomy_sha256": "6064ebcb6693a1dd7b3e50fbfbcc94ff959f7957ac184188fd91744900a429a3",
+         "materializer_sha256": "ba6245da8b07901b6793898e70e2e974a1e641a2c3be0d357ba53d15101f4081",
+         "default_action": "keep",
+         "overrides": [
+          {
+           "block_id": "tool-bash-guide",
+           "baseline_sha256": "c5db5a79c94bb7a9835cbe2e3897337c52e3bb72b73edaedf1165a51246b057b",
+           "action": "replace",
+           "replacement_utf8": "Fabricated, shorter.",
+           "replacement_sha256": "77ba73eae4d1011d3cfb79cea86d463e0808b98f39d6db9302cd45d080987854"
+          },
+          {
+           "block_id": "short",
+           "baseline_sha256": "213c22ed7234eb11116e1e88f314c73cb3a019b5c87fe224b6ce5665bd9ec50e",
+           "action": "disable"
+          },
+          {
+           "block_id": "unicode-mix",
+           "baseline_sha256": "d00da6c5a836c9df66e6b20ea37a93990bedea7ff26d8c203fd257d9b47523a8",
+           "action": "replace",
+           "replacement_utf8": "\u65e5\u672c \ud83d\ude42",
+           "replacement_sha256": "d5bed3f52102ce6ce8a3870bda862bb976f481d976c415d4ad901ab71aed1b9f"
+          }
+         ]
+        }
+       }
+      }
+     ]
+    }
+   ],
+   "function": "plan_budget",
+   "expected": {
+    "draft_bytes": 2409,
+    "frozen_bytes_estimate": 10062,
+    "max": 786432,
+    "state": "ok",
+    "maximum_cost_usd": 1.0,
+    "trials": 4
+   }
+  },
+  {
+   "name": "plan: cost missing",
+   "args": [
+    {
+     "version": 1,
+     "name": "Fabricated plan",
+     "seed": 7,
+     "repeats": 2,
+     "arms": [
+      {
+       "id": "arm-0",
+       "label": "Arm 0",
+       "configuration": {
+        "version": 2,
+        "runtime_id": "native-claude-code",
+        "model_id": "fixture/model-a",
+        "task_id": "fixture-task",
+        "prompt": "",
+        "prompt_mode": "append",
+        "harness": {},
+        "limits": {},
+        "native_prompt_profile": {
+         "schema_version": 1,
+         "runtime_id": "native-claude-code",
+         "runtime_version": "0.0.0-golden",
+         "image_digest": "sha256:2d032a622cf94baf637a4488720865da983853e4a655fea4e45d0e80f0a9c640",
+         "binary_sha256": "25ba8ebec5f227618d8d58f475622669f4c45019d40259d1d292a823f4184c27",
+         "inventory_sha256": "44e7b67bbdc0842fecf8cfa158641e03998f7d0b34184bc297ede967ab24ce7a",
+         "taxonomy_sha256": "6064ebcb6693a1dd7b3e50fbfbcc94ff959f7957ac184188fd91744900a429a3",
+         "materializer_sha256": "ba6245da8b07901b6793898e70e2e974a1e641a2c3be0d357ba53d15101f4081",
+         "default_action": "keep",
+         "overrides": []
+        }
+       }
+      },
+      {
+       "id": "arm-1",
+       "label": "Arm 1",
+       "configuration": {
+        "version": 2,
+        "runtime_id": "native-claude-code",
+        "model_id": "fixture/model-a",
+        "task_id": "fixture-task",
+        "prompt": "",
+        "prompt_mode": "append",
+        "harness": {},
+        "limits": {},
+        "native_prompt_profile": {
+         "schema_version": 1,
+         "runtime_id": "native-claude-code",
+         "runtime_version": "0.0.0-golden",
+         "image_digest": "sha256:2d032a622cf94baf637a4488720865da983853e4a655fea4e45d0e80f0a9c640",
+         "binary_sha256": "25ba8ebec5f227618d8d58f475622669f4c45019d40259d1d292a823f4184c27",
+         "inventory_sha256": "44e7b67bbdc0842fecf8cfa158641e03998f7d0b34184bc297ede967ab24ce7a",
+         "taxonomy_sha256": "6064ebcb6693a1dd7b3e50fbfbcc94ff959f7957ac184188fd91744900a429a3",
+         "materializer_sha256": "ba6245da8b07901b6793898e70e2e974a1e641a2c3be0d357ba53d15101f4081",
+         "default_action": "keep",
+         "overrides": [
+          {
+           "block_id": "tool-bash-guide",
+           "baseline_sha256": "c5db5a79c94bb7a9835cbe2e3897337c52e3bb72b73edaedf1165a51246b057b",
+           "action": "replace",
+           "replacement_utf8": "Fabricated, shorter.",
+           "replacement_sha256": "77ba73eae4d1011d3cfb79cea86d463e0808b98f39d6db9302cd45d080987854"
+          },
+          {
+           "block_id": "short",
+           "baseline_sha256": "213c22ed7234eb11116e1e88f314c73cb3a019b5c87fe224b6ce5665bd9ec50e",
+           "action": "disable"
+          },
+          {
+           "block_id": "unicode-mix",
+           "baseline_sha256": "d00da6c5a836c9df66e6b20ea37a93990bedea7ff26d8c203fd257d9b47523a8",
+           "action": "replace",
+           "replacement_utf8": "\u65e5\u672c \ud83d\ude42",
+           "replacement_sha256": "d5bed3f52102ce6ce8a3870bda862bb976f481d976c415d4ad901ab71aed1b9f"
+          }
+         ]
+        }
+       }
+      }
+     ]
+    }
+   ],
+   "function": "plan_budget",
+   "expected": {
+    "draft_bytes": 2293,
+    "frozen_bytes_estimate": 9830,
+    "max": 786432,
+    "state": "ok",
+    "maximum_cost_usd": 0,
+    "trials": 4
+   }
+  },
+  {
+   "name": "plan: non-ASCII prompt",
+   "args": [
+    {
+     "version": 1,
+     "name": "Fabricated plan",
+     "seed": 7,
+     "repeats": 2,
+     "arms": [
+      {
+       "id": "arm-0",
+       "label": "Arm 0",
+       "configuration": {
+        "version": 2,
+        "runtime_id": "native-claude-code",
+        "model_id": "fixture/model-a",
+        "task_id": "fixture-task",
+        "prompt": "\u65e5\u672c\u8a9e \ud83d\ude42",
+        "prompt_mode": "append",
+        "harness": {},
+        "limits": {
+         "max_steps": 5,
+         "wall_time_seconds": 60,
+         "max_cost_usd": 0.12
+        },
+        "native_prompt_profile": {
+         "schema_version": 1,
+         "runtime_id": "native-claude-code",
+         "runtime_version": "0.0.0-golden",
+         "image_digest": "sha256:2d032a622cf94baf637a4488720865da983853e4a655fea4e45d0e80f0a9c640",
+         "binary_sha256": "25ba8ebec5f227618d8d58f475622669f4c45019d40259d1d292a823f4184c27",
+         "inventory_sha256": "44e7b67bbdc0842fecf8cfa158641e03998f7d0b34184bc297ede967ab24ce7a",
+         "taxonomy_sha256": "6064ebcb6693a1dd7b3e50fbfbcc94ff959f7957ac184188fd91744900a429a3",
+         "materializer_sha256": "ba6245da8b07901b6793898e70e2e974a1e641a2c3be0d357ba53d15101f4081",
+         "default_action": "keep",
+         "overrides": []
+        }
+       }
+      },
+      {
+       "id": "arm-1",
+       "label": "Arm 1",
+       "configuration": {
+        "version": 2,
+        "runtime_id": "native-claude-code",
+        "model_id": "fixture/model-a",
+        "task_id": "fixture-task",
+        "prompt": "\u65e5\u672c\u8a9e \ud83d\ude42",
+        "prompt_mode": "append",
+        "harness": {},
+        "limits": {
+         "max_steps": 5,
+         "wall_time_seconds": 60,
+         "max_cost_usd": 0.12
+        },
+        "native_prompt_profile": {
+         "schema_version": 1,
+         "runtime_id": "native-claude-code",
+         "runtime_version": "0.0.0-golden",
+         "image_digest": "sha256:2d032a622cf94baf637a4488720865da983853e4a655fea4e45d0e80f0a9c640",
+         "binary_sha256": "25ba8ebec5f227618d8d58f475622669f4c45019d40259d1d292a823f4184c27",
+         "inventory_sha256": "44e7b67bbdc0842fecf8cfa158641e03998f7d0b34184bc297ede967ab24ce7a",
+         "taxonomy_sha256": "6064ebcb6693a1dd7b3e50fbfbcc94ff959f7957ac184188fd91744900a429a3",
+         "materializer_sha256": "ba6245da8b07901b6793898e70e2e974a1e641a2c3be0d357ba53d15101f4081",
+         "default_action": "keep",
+         "overrides": [
+          {
+           "block_id": "tool-bash-guide",
+           "baseline_sha256": "c5db5a79c94bb7a9835cbe2e3897337c52e3bb72b73edaedf1165a51246b057b",
+           "action": "replace",
+           "replacement_utf8": "Fabricated, shorter.",
+           "replacement_sha256": "77ba73eae4d1011d3cfb79cea86d463e0808b98f39d6db9302cd45d080987854"
+          },
+          {
+           "block_id": "short",
+           "baseline_sha256": "213c22ed7234eb11116e1e88f314c73cb3a019b5c87fe224b6ce5665bd9ec50e",
+           "action": "disable"
+          },
+          {
+           "block_id": "unicode-mix",
+           "baseline_sha256": "d00da6c5a836c9df66e6b20ea37a93990bedea7ff26d8c203fd257d9b47523a8",
+           "action": "replace",
+           "replacement_utf8": "\u65e5\u672c \ud83d\ude42",
+           "replacement_sha256": "d5bed3f52102ce6ce8a3870bda862bb976f481d976c415d4ad901ab71aed1b9f"
+          }
+         ]
+        }
+       }
+      }
+     ]
+    }
+   ],
+   "function": "plan_budget",
+   "expected": {
+    "draft_bytes": 2433,
+    "frozen_bytes_estimate": 10110,
+    "max": 786432,
+    "state": "ok",
+    "maximum_cost_usd": 0.48,
+    "trials": 4
+   }
+  },
+  {
+   "name": "plan: frozen estimate near the limit",
+   "args": [
+    {
+     "version": 1,
+     "name": "Fabricated plan",
+     "seed": 7,
+     "repeats": 2,
+     "arms": [
+      {
+       "id": "arm-0",
+       "label": "Arm 0",
+       "configuration": {
+        "version": 2,
+        "runtime_id": "native-claude-code",
+        "model_id": "fixture/model-a",
+        "task_id": "fixture-task",
+        "prompt": {
+         "@repeat": "Fabricated prompt. ",
+         "times": 13500
+        },
+        "prompt_mode": "append",
+        "harness": {},
+        "limits": {
+         "max_steps": 5,
+         "wall_time_seconds": 60,
+         "max_cost_usd": 0.12
+        },
+        "native_prompt_profile": {
+         "schema_version": 1,
+         "runtime_id": "native-claude-code",
+         "runtime_version": "0.0.0-golden",
+         "image_digest": "sha256:2d032a622cf94baf637a4488720865da983853e4a655fea4e45d0e80f0a9c640",
+         "binary_sha256": "25ba8ebec5f227618d8d58f475622669f4c45019d40259d1d292a823f4184c27",
+         "inventory_sha256": "44e7b67bbdc0842fecf8cfa158641e03998f7d0b34184bc297ede967ab24ce7a",
+         "taxonomy_sha256": "6064ebcb6693a1dd7b3e50fbfbcc94ff959f7957ac184188fd91744900a429a3",
+         "materializer_sha256": "ba6245da8b07901b6793898e70e2e974a1e641a2c3be0d357ba53d15101f4081",
+         "default_action": "keep",
+         "overrides": []
+        }
+       }
+      },
+      {
+       "id": "arm-1",
+       "label": "Arm 1",
+       "configuration": {
+        "version": 2,
+        "runtime_id": "native-claude-code",
+        "model_id": "fixture/model-a",
+        "task_id": "fixture-task",
+        "prompt": {
+         "@repeat": "Fabricated prompt. ",
+         "times": 13500
+        },
+        "prompt_mode": "append",
+        "harness": {},
+        "limits": {
+         "max_steps": 5,
+         "wall_time_seconds": 60,
+         "max_cost_usd": 0.12
+        },
+        "native_prompt_profile": {
+         "schema_version": 1,
+         "runtime_id": "native-claude-code",
+         "runtime_version": "0.0.0-golden",
+         "image_digest": "sha256:2d032a622cf94baf637a4488720865da983853e4a655fea4e45d0e80f0a9c640",
+         "binary_sha256": "25ba8ebec5f227618d8d58f475622669f4c45019d40259d1d292a823f4184c27",
+         "inventory_sha256": "44e7b67bbdc0842fecf8cfa158641e03998f7d0b34184bc297ede967ab24ce7a",
+         "taxonomy_sha256": "6064ebcb6693a1dd7b3e50fbfbcc94ff959f7957ac184188fd91744900a429a3",
+         "materializer_sha256": "ba6245da8b07901b6793898e70e2e974a1e641a2c3be0d357ba53d15101f4081",
+         "default_action": "keep",
+         "overrides": [
+          {
+           "block_id": "tool-bash-guide",
+           "baseline_sha256": "c5db5a79c94bb7a9835cbe2e3897337c52e3bb72b73edaedf1165a51246b057b",
+           "action": "replace",
+           "replacement_utf8": "Fabricated, shorter.",
+           "replacement_sha256": "77ba73eae4d1011d3cfb79cea86d463e0808b98f39d6db9302cd45d080987854"
+          },
+          {
+           "block_id": "short",
+           "baseline_sha256": "213c22ed7234eb11116e1e88f314c73cb3a019b5c87fe224b6ce5665bd9ec50e",
+           "action": "disable"
+          },
+          {
+           "block_id": "unicode-mix",
+           "baseline_sha256": "d00da6c5a836c9df66e6b20ea37a93990bedea7ff26d8c203fd257d9b47523a8",
+           "action": "replace",
+           "replacement_utf8": "\u65e5\u672c \ud83d\ude42",
+           "replacement_sha256": "d5bed3f52102ce6ce8a3870bda862bb976f481d976c415d4ad901ab71aed1b9f"
+          }
+         ]
+        }
+       }
+      }
+     ]
+    }
+   ],
+   "function": "plan_budget",
+   "expected": {
+    "draft_bytes": 515405,
+    "frozen_bytes_estimate": 1036054,
+    "max": 786432,
+    "state": "over",
+    "maximum_cost_usd": 0.48,
+    "trials": 4
+   }
+  },
+  {
+   "name": "plan: frozen estimate over the limit",
+   "args": [
+    {
+     "version": 1,
+     "name": "Fabricated plan",
+     "seed": 7,
+     "repeats": 2,
+     "arms": [
+      {
+       "id": "arm-0",
+       "label": "Arm 0",
+       "configuration": {
+        "version": 2,
+        "runtime_id": "native-claude-code",
+        "model_id": "fixture/model-a",
+        "task_id": "fixture-task",
+        "prompt": {
+         "@repeat": "Fabricated prompt. ",
+         "times": 17000
+        },
+        "prompt_mode": "append",
+        "harness": {},
+        "limits": {
+         "max_steps": 5,
+         "wall_time_seconds": 60,
+         "max_cost_usd": 0.12
+        },
+        "native_prompt_profile": {
+         "schema_version": 1,
+         "runtime_id": "native-claude-code",
+         "runtime_version": "0.0.0-golden",
+         "image_digest": "sha256:2d032a622cf94baf637a4488720865da983853e4a655fea4e45d0e80f0a9c640",
+         "binary_sha256": "25ba8ebec5f227618d8d58f475622669f4c45019d40259d1d292a823f4184c27",
+         "inventory_sha256": "44e7b67bbdc0842fecf8cfa158641e03998f7d0b34184bc297ede967ab24ce7a",
+         "taxonomy_sha256": "6064ebcb6693a1dd7b3e50fbfbcc94ff959f7957ac184188fd91744900a429a3",
+         "materializer_sha256": "ba6245da8b07901b6793898e70e2e974a1e641a2c3be0d357ba53d15101f4081",
+         "default_action": "keep",
+         "overrides": []
+        }
+       }
+      },
+      {
+       "id": "arm-1",
+       "label": "Arm 1",
+       "configuration": {
+        "version": 2,
+        "runtime_id": "native-claude-code",
+        "model_id": "fixture/model-a",
+        "task_id": "fixture-task",
+        "prompt": {
+         "@repeat": "Fabricated prompt. ",
+         "times": 17000
+        },
+        "prompt_mode": "append",
+        "harness": {},
+        "limits": {
+         "max_steps": 5,
+         "wall_time_seconds": 60,
+         "max_cost_usd": 0.12
+        },
+        "native_prompt_profile": {
+         "schema_version": 1,
+         "runtime_id": "native-claude-code",
+         "runtime_version": "0.0.0-golden",
+         "image_digest": "sha256:2d032a622cf94baf637a4488720865da983853e4a655fea4e45d0e80f0a9c640",
+         "binary_sha256": "25ba8ebec5f227618d8d58f475622669f4c45019d40259d1d292a823f4184c27",
+         "inventory_sha256": "44e7b67bbdc0842fecf8cfa158641e03998f7d0b34184bc297ede967ab24ce7a",
+         "taxonomy_sha256": "6064ebcb6693a1dd7b3e50fbfbcc94ff959f7957ac184188fd91744900a429a3",
+         "materializer_sha256": "ba6245da8b07901b6793898e70e2e974a1e641a2c3be0d357ba53d15101f4081",
+         "default_action": "keep",
+         "overrides": [
+          {
+           "block_id": "tool-bash-guide",
+           "baseline_sha256": "c5db5a79c94bb7a9835cbe2e3897337c52e3bb72b73edaedf1165a51246b057b",
+           "action": "replace",
+           "replacement_utf8": "Fabricated, shorter.",
+           "replacement_sha256": "77ba73eae4d1011d3cfb79cea86d463e0808b98f39d6db9302cd45d080987854"
+          },
+          {
+           "block_id": "short",
+           "baseline_sha256": "213c22ed7234eb11116e1e88f314c73cb3a019b5c87fe224b6ce5665bd9ec50e",
+           "action": "disable"
+          },
+          {
+           "block_id": "unicode-mix",
+           "baseline_sha256": "d00da6c5a836c9df66e6b20ea37a93990bedea7ff26d8c203fd257d9b47523a8",
+           "action": "replace",
+           "replacement_utf8": "\u65e5\u672c \ud83d\ude42",
+           "replacement_sha256": "d5bed3f52102ce6ce8a3870bda862bb976f481d976c415d4ad901ab71aed1b9f"
+          }
+         ]
+        }
+       }
+      }
+     ]
+    }
+   ],
+   "function": "plan_budget",
+   "expected": {
+    "draft_bytes": 648405,
+    "frozen_bytes_estimate": 1302054,
+    "max": 786432,
+    "state": "over",
+    "maximum_cost_usd": 0.48,
+    "trials": 4
+   }
+  },
+  {
+   "name": "plan: ten repetitions",
+   "args": [
+    {
+     "version": 1,
+     "name": "Fabricated plan",
+     "seed": 7,
+     "repeats": 10,
+     "arms": [
+      {
+       "id": "arm-0",
+       "label": "Arm 0",
+       "configuration": {
+        "version": 2,
+        "runtime_id": "native-claude-code",
+        "model_id": "fixture/model-a",
+        "task_id": "fixture-task",
+        "prompt": "",
+        "prompt_mode": "append",
+        "harness": {},
+        "limits": {
+         "max_steps": 5,
+         "wall_time_seconds": 60,
+         "max_cost_usd": 0.3
+        },
+        "native_prompt_profile": {
+         "schema_version": 1,
+         "runtime_id": "native-claude-code",
+         "runtime_version": "0.0.0-golden",
+         "image_digest": "sha256:2d032a622cf94baf637a4488720865da983853e4a655fea4e45d0e80f0a9c640",
+         "binary_sha256": "25ba8ebec5f227618d8d58f475622669f4c45019d40259d1d292a823f4184c27",
+         "inventory_sha256": "44e7b67bbdc0842fecf8cfa158641e03998f7d0b34184bc297ede967ab24ce7a",
+         "taxonomy_sha256": "6064ebcb6693a1dd7b3e50fbfbcc94ff959f7957ac184188fd91744900a429a3",
+         "materializer_sha256": "ba6245da8b07901b6793898e70e2e974a1e641a2c3be0d357ba53d15101f4081",
+         "default_action": "keep",
+         "overrides": []
+        }
+       }
+      },
+      {
+       "id": "arm-1",
+       "label": "Arm 1",
+       "configuration": {
+        "version": 2,
+        "runtime_id": "native-claude-code",
+        "model_id": "fixture/model-a",
+        "task_id": "fixture-task",
+        "prompt": "",
+        "prompt_mode": "append",
+        "harness": {},
+        "limits": {
+         "max_steps": 5,
+         "wall_time_seconds": 60,
+         "max_cost_usd": 0.3
+        },
+        "native_prompt_profile": {
+         "schema_version": 1,
+         "runtime_id": "native-claude-code",
+         "runtime_version": "0.0.0-golden",
+         "image_digest": "sha256:2d032a622cf94baf637a4488720865da983853e4a655fea4e45d0e80f0a9c640",
+         "binary_sha256": "25ba8ebec5f227618d8d58f475622669f4c45019d40259d1d292a823f4184c27",
+         "inventory_sha256": "44e7b67bbdc0842fecf8cfa158641e03998f7d0b34184bc297ede967ab24ce7a",
+         "taxonomy_sha256": "6064ebcb6693a1dd7b3e50fbfbcc94ff959f7957ac184188fd91744900a429a3",
+         "materializer_sha256": "ba6245da8b07901b6793898e70e2e974a1e641a2c3be0d357ba53d15101f4081",
+         "default_action": "keep",
+         "overrides": [
+          {
+           "block_id": "tool-bash-guide",
+           "baseline_sha256": "c5db5a79c94bb7a9835cbe2e3897337c52e3bb72b73edaedf1165a51246b057b",
+           "action": "replace",
+           "replacement_utf8": "Fabricated, shorter.",
+           "replacement_sha256": "77ba73eae4d1011d3cfb79cea86d463e0808b98f39d6db9302cd45d080987854"
+          },
+          {
+           "block_id": "short",
+           "baseline_sha256": "213c22ed7234eb11116e1e88f314c73cb3a019b5c87fe224b6ce5665bd9ec50e",
+           "action": "disable"
+          },
+          {
+           "block_id": "unicode-mix",
+           "baseline_sha256": "d00da6c5a836c9df66e6b20ea37a93990bedea7ff26d8c203fd257d9b47523a8",
+           "action": "replace",
+           "replacement_utf8": "\u65e5\u672c \ud83d\ude42",
+           "replacement_sha256": "d5bed3f52102ce6ce8a3870bda862bb976f481d976c415d4ad901ab71aed1b9f"
+          }
+         ]
+        }
+       }
+      }
+     ]
+    }
+   ],
+   "function": "plan_budget",
+   "expected": {
+    "draft_bytes": 2404,
+    "frozen_bytes_estimate": 13251,
+    "max": 786432,
+    "state": "ok",
+    "maximum_cost_usd": 6.0,
+    "trials": 20
+   }
+  }
+ ]
+}

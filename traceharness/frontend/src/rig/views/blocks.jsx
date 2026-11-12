@@ -5,11 +5,12 @@ import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { api, IS_MEMBER } from '../../api'
 import { HarnessJson } from '../HarnessJson'
 import { requireStored } from '../../member-api'
-import { Btn, Empty, ErrorState, Go, Loading, Note, Tag } from '../ui'
+import { Btn, Empty, ErrorState, Go, Icon, Loading, Note, Tag } from '../ui'
 import { EvidenceOrigin, evidenceOrigin, withEvidenceOrigin } from '../shallowEvidence'
 import { blocksFromHarness, readDraft, wizardBlocks, writeDraft } from './shallow-drafts'
 import { HarnessNav, HarnessSummary, NumericField, focusWorkspaceSection } from '../harnessWorkspace'
 import { NUMBER_FIELDS, fieldIssues } from '../harnessFields'
+import './blocks.css'
 
 const TYPE_LABEL = {
   prompt: 'Prompt',
@@ -59,12 +60,12 @@ export function BlockCard({ block, index, count, tools, onChange, onMove, onRemo
   }, [index])
   return (
     <article className="rg-pnl" data-el="harness-block" data-block-type={block.type}>
-      <div className="rg-pnl-h">
-        <span className="rg-lbl">{index + 1} · {TYPE_LABEL[block.type] || block.type}</span>
-        <span className="rg-row">
-          <button ref={(node) => { moveButtons.current.up = node }} type="button" className="rg-btn ghost" disabled={index === 0} onClick={() => { focusAfterMove.current = 'up'; onMove(index, -1) }} aria-label="Move block up">Up</button>
-          <button ref={(node) => { moveButtons.current.down = node }} type="button" className="rg-btn ghost" disabled={index === count - 1} onClick={() => { focusAfterMove.current = 'down'; onMove(index, 1) }} aria-label="Move block down">Down</button>
-          {!IS_MEMBER && allowRemove && <button type="button" className="rg-btn ghost" onClick={() => onRemove(index)}>Remove</button>}
+      <div className="rg-pnl-h rg-blk-h">
+        <span className="rg-lbl rg-blk-t">{index + 1} · {TYPE_LABEL[block.type] || block.type}</span>
+        <span className="rg-blk-acts">
+          <button ref={(node) => { moveButtons.current.up = node }} type="button" className="rg-btn ghost rg-blk-ico" disabled={index === 0} onClick={() => { focusAfterMove.current = 'up'; onMove(index, -1) }} aria-label="Move block up" title="Move up"><Icon name="up" size={16} /></button>
+          <button ref={(node) => { moveButtons.current.down = node }} type="button" className="rg-btn ghost rg-blk-ico" disabled={index === count - 1} onClick={() => { focusAfterMove.current = 'down'; onMove(index, 1) }} aria-label="Move block down" title="Move down"><Icon name="chev" size={16} /></button>
+          {!IS_MEMBER && allowRemove && <button type="button" className="rg-btn ghost rg-blk-ico rg-blk-rm" onClick={() => onRemove(index)} aria-label="Remove" title="Remove block"><Icon name="x" size={16} /></button>}
         </span>
       </div>
       <div className="rg-pnl-b rg-col">
@@ -76,7 +77,7 @@ export function BlockCard({ block, index, count, tools, onChange, onMove, onRemo
         {block.type === 'tools' && (
           <div className="rg-row rg-wrap" role="group" aria-label="Tools">
             {tools.map((name) => (
-              <label key={name} className="rg-row" style={{ gap: 6 }}>
+              <label key={name} className="rg-row rg-blk-opt">
                 <input type="checkbox" checked={(block.names || []).includes(name)} onChange={(e) => {
                   const cur = new Set(block.names || [])
                   if (e.target.checked) cur.add(name)
@@ -100,7 +101,7 @@ export function BlockCard({ block, index, count, tools, onChange, onMove, onRemo
           {NUMBER_FIELDS[block.type].map((field) => <NumericField key={field.key} field={field} value={block[field.key]} onChange={(value) => set({ [field.key]: value })} />)}
         </div>}
         {block.type === 'listing' && (
-          <label className="rg-row" style={{ gap: 6 }}>
+          <label className="rg-row rg-blk-opt">
             <input type="checkbox" checked={!!block.include} onChange={(e) => set({ include: e.target.checked })} />
             <span>Show the repository file list in the first message</span>
           </label>
@@ -334,7 +335,7 @@ function Blocks({ args } = {}) {
       {preset && basis && <Note>{basis}{catalog.find((r) => r.id === preset)?.same_loop_as?.length ? ` Same loop as ${catalog.find((r) => r.id === preset).same_loop_as.join(', ')}.` : ''}</Note>}
       <div className="rg-harness-layout">
       <div>
-      <fieldset ref={editorRef} tabIndex={-1} className="rg-harness-blocks" aria-label="Harness blocks" disabled={busy} style={{ border: 0, padding: 0, margin: 0, minWidth: 0 }}>
+      <fieldset ref={editorRef} tabIndex={-1} className="rg-harness-blocks rg-blk-fs" aria-label="Harness blocks" disabled={busy}>
         {blocks.map((block, i) => (
           <BlockCard key={blockKey(block)} block={block} index={i} count={blocks.length} tools={tools} onChange={onChange} onMove={onMove} onRemove={onRemove} />
         ))}

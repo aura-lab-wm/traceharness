@@ -1,74 +1,174 @@
-/* Matrix experiment workspace: Rig design tokens only, responsive axes and scrollable results. */
-.rg-matrix-experiments { margin-top: 24px; overflow: hidden; }
-.rg-matrix-experiments > summary { padding: 18px 20px; cursor: pointer; font-weight: 600; }
-.rg-matrix-experiments > summary span { margin-left: 12px; color: var(--rig-dim); font-size: 12px; font-weight: 400; }
-.rg-matrix-experiments .rg-mono { overflow-wrap: anywhere; }
+/* Matrix experiment workspace (UI contract v1).
+   One bordered level: the disclosure is the card; inside it, groups are divided by hairlines and
+   a second level is a tint (axes, snapshots, cells, review). Layout answers to containers:
+   .rg-matrix-body and each .rg-matrix-axis are size containers (.rg-cq). */
 
-.rg-matrix-fields { display: flex; align-items: end; flex-wrap: wrap; gap: 12px; margin-block: 12px; }
-.rg-matrix-fields .rg-fld { flex: 1 1 160px; min-width: 0; margin: 0; }
+/* ---------------------------------------------------------------- the section and its header */
+.rg-matrix-experiments{margin-top:var(--rig-s6);min-width:0;background:var(--rig-panel);border:1px solid var(--rig-line);border-radius:var(--rig-r-lg);color:var(--rig-text)}
+.rig .rg-matrix-sum{display:flex;align-items:center;gap:var(--rig-s3);min-height:calc(var(--rig-h-ctl) + 2 * var(--rig-s3));padding:var(--rig-s3) var(--rig-s5);border-radius:var(--rig-r-lg);cursor:pointer;list-style:none;transition:background-color var(--rig-dur-1) var(--rig-ease)}
+.rg-matrix-sum::-webkit-details-marker{display:none}
+.rig .rg-matrix-sum:hover{background:var(--rig-panel2)}
+.rig .rg-matrix-sum:focus-visible{outline:var(--rig-focus-ring);outline-offset:var(--rig-focus-offset)}
+.rig .rg-matrix-experiments[open]>.rg-matrix-sum{border-bottom:1px solid var(--rig-line);border-radius:var(--rig-r-lg) var(--rig-r-lg) 0 0}
+.rg-matrix-sum-ico{display:inline-grid;place-items:center;flex:none;width:var(--rig-h-xs);height:var(--rig-h-xs);color:var(--rig-mute);transform:rotate(-90deg);transition:transform var(--rig-dur-2) var(--rig-ease)}
+.rg-matrix-experiments[open] .rg-matrix-sum-ico{transform:none}
+.rg-matrix-sum-main{display:flex;flex-wrap:wrap;align-items:baseline;gap:var(--rig-s1) var(--rig-s3);flex:1 1 auto;min-width:0}
+.rg-matrix-sum-t{font-size:var(--rig-fs-lg);line-height:var(--rig-lh-snug);font-weight:var(--rig-fw-medium);letter-spacing:-.01em}
+.rg-matrix-sum-meta{color:var(--rig-mute);font:var(--rig-fs-xs)/var(--rig-lh-snug) var(--rig-mono)}
+.rg-matrix-sum::after{content:"Open";flex:none;display:inline-flex;align-items:center;height:var(--rig-h-sm);padding:0 var(--rig-s3);border:1px solid var(--rig-line2);border-radius:var(--rig-r-md);color:var(--rig-dim);font-size:var(--rig-fs-xs);font-weight:var(--rig-fw-medium)}
+.rg-matrix-experiments[open]>.rg-matrix-sum::after{content:"Hide"}
+.rig .rg-matrix-sum:hover::after{border-color:var(--rig-line3);color:var(--rig-text)}
 
-.rg-matrix-snapshots { list-style: none; padding: 0; margin: 12px 0; display: grid; gap: 8px; }
-.rg-matrix-snapshot { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; padding: 10px 12px; border: 1px solid var(--rig-line); border-radius: 5px; background: var(--rig-panel2); }
-.rg-matrix-snapshot-copy { display: flex; flex-direction: column; gap: 3px; min-width: 0; overflow-wrap: anywhere; }
-.rg-matrix-snapshot-copy small { font-size: 11px; color: var(--rig-dim); }
-.rg-matrix-snapshot-actions { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+/* ---------------------------------------------------------------- body and groups */
+.rg-matrix-body{display:flex;flex-direction:column;padding:var(--rig-s5);min-width:0}
+.rig .rg-matrix-lede{margin:0 0 var(--rig-s5);max-width:var(--rig-measure);color:var(--rig-dim);font-size:var(--rig-fs-md);line-height:var(--rig-lh-prose)}
+.rg-matrix-group{display:flex;flex-direction:column;gap:var(--rig-s4);min-width:0;padding-block:var(--rig-s5);border-top:1px solid var(--rig-line)}
+.rg-matrix-lede+.rg-matrix-group{padding-top:0;border-top:0}
+.rg-matrix-group:last-child{padding-bottom:0}
+.rg-matrix-group-h{display:flex;flex-wrap:wrap;align-items:center;gap:var(--rig-s2) var(--rig-s3);min-width:0}
+.rg-matrix-step{display:inline-grid;place-items:center;flex:none;width:var(--rig-h-xs);height:var(--rig-h-xs);border:1px solid var(--rig-line2);border-radius:var(--rig-r-full);color:var(--rig-dim);font:var(--rig-fw-medium) var(--rig-fs-2xs)/1 var(--rig-mono);font-variant-numeric:tabular-nums}
+.rig .rg-matrix-group-t{margin:0;min-width:0;font-size:var(--rig-fs-md);line-height:var(--rig-lh-snug);font-weight:var(--rig-fw-medium);letter-spacing:0;overflow-wrap:anywhere}
+.rg-matrix-group-meta{color:var(--rig-mute);font:var(--rig-fs-xs)/var(--rig-lh-snug) var(--rig-mono);font-variant-numeric:tabular-nums}
+.rig .rg-matrix-hint{margin:0;color:var(--rig-mute);font-size:var(--rig-fs-xs);line-height:var(--rig-lh-snug);overflow-wrap:anywhere}
+.rig .rg-matrix-name{max-width:40rem}
 
-.rg-matrix-axes { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; margin-block: 16px; }
-.rg-matrix-axis { display: flex; flex-direction: column; gap: 10px; min-width: 0; padding: 14px; border: 1px solid var(--rig-line2); border-radius: 6px; background: var(--rig-panel); }
-.rg-matrix-axis-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap; }
-.rg-matrix-axis-head h3 { font-size: 13px; margin: 0; }
-.rg-matrix-axis-head > span { font-size: 11px; color: var(--rig-dim); }
-.rg-matrix-axis-tools { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
-.rg-matrix-axis-tools .rg-fld { flex: 1 1 140px; min-width: 0; margin: 0; }
+/* ---------------------------------------------------------------- 1 · harnesses */
+.rg-matrix-capture{display:grid;grid-template-columns:minmax(0,28rem) auto;align-items:end;justify-content:start;gap:var(--rig-s2) var(--rig-s3);min-width:0}
+.rg-matrix-snapshots{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:var(--rig-s3);min-width:0}
+.rg-matrix-snapshot{display:flex;flex-direction:column;gap:var(--rig-s3);min-width:0;padding:var(--rig-s4);background:var(--rig-panel2);border-radius:var(--rig-r-md)}
+.rg-matrix-snapshot-h{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:var(--rig-s3) var(--rig-s4);min-width:0}
+.rg-matrix-snapshot-copy{display:flex;flex-direction:column;gap:var(--rig-s1);flex:1 1 14rem;min-width:0;overflow-wrap:anywhere}
+.rg-matrix-snapshot-copy strong{font-size:var(--rig-fs-md);line-height:var(--rig-lh-snug);font-weight:var(--rig-fw-medium)}
+.rg-matrix-snapshot-copy small{color:var(--rig-dim);font-size:var(--rig-fs-xs);line-height:var(--rig-lh-snug)}
+.rg-matrix-snapshot-actions{display:flex;flex-wrap:wrap;align-items:center;gap:var(--rig-s2);min-width:0}
+/* The snapshot's JSON card is the third level here: a hairline, not another frame. */
+.rg-matrix-snapshot>.rg-hjson{margin:0;padding:var(--rig-s3) 0 0;border:0;border-top:1px solid var(--rig-line);border-radius:0;background:none}
+.rg-matrix-experiments .rg-hjson h3{font-size:var(--rig-fs-sm);font-weight:var(--rig-fw-medium)}
+.rg-matrix-experiments .rg-hjson-description{font-size:var(--rig-fs-xs);line-height:var(--rig-lh-body);max-width:var(--rig-measure)}
 
-.rg-matrix-choices { list-style: none; padding: 0; margin: 0; max-height: 240px; overflow-y: auto; display: grid; gap: 6px; scrollbar-width: thin; }
-.rg-matrix-choice { display: flex; align-items: flex-start; gap: 8px; padding: 8px 10px; border: 1px solid var(--rig-line); border-radius: 4px; background: var(--rig-bg); min-width: 0; }
-.rg-matrix-choice.is-selected { border-color: var(--rig-line3); background: var(--rig-sel-bg); }
-.rg-matrix-choice.is-disabled { opacity: 0.72; }
-.rg-matrix-choice input { accent-color: var(--rig-sel); margin-top: 3px; flex-shrink: 0; }
-.rg-matrix-choice-body { display: flex; flex-direction: column; gap: 2px; min-width: 0; overflow-wrap: anywhere; }
-.rg-matrix-choice-body strong { font-size: 12.5px; font-weight: 500; }
-.rg-matrix-choice-body small { font-size: 11px; color: var(--rig-dim); }
-.rg-matrix-choice-reason { font-size: 11px; color: var(--rig-amb-t); }
+/* ---------------------------------------------------------------- 2 · models and tasks */
+.rg-matrix-axes{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,20rem),1fr));gap:var(--rig-s4);min-width:0}
+.rg-matrix-axis{display:flex;flex-direction:column;gap:var(--rig-s3);min-width:0;padding:var(--rig-s4);background:var(--rig-panel2);border-radius:var(--rig-r-md)}
+.rg-matrix-axis-h{display:flex;align-items:baseline;justify-content:space-between;gap:var(--rig-s2)}
+.rig .rg-matrix-axis-h h4{margin:0;font-size:var(--rig-fs-sm);line-height:var(--rig-lh-snug);font-weight:var(--rig-fw-medium)}
+.rg-matrix-axis-h>span{color:var(--rig-mute);font:var(--rig-fs-xs)/var(--rig-lh-snug) var(--rig-mono);font-variant-numeric:tabular-nums}
+.rg-matrix-axis-tools{display:grid;grid-template-columns:minmax(0,1fr) auto auto;align-items:center;gap:var(--rig-s2);min-width:0}
+.rg-matrix-axis-tools>.rg-inp{width:100%;min-width:0}
+.rg-matrix-choices{list-style:none;margin:0;padding:0;max-height:calc(4 * var(--rig-s8));overflow-y:auto;overscroll-behavior:contain;scrollbar-width:thin;border-top:1px solid var(--rig-line);min-width:0}
+.rg-matrix-choices>li{border-bottom:1px solid var(--rig-line)}
+.rg-matrix-choice{display:flex;align-items:flex-start;gap:var(--rig-s3);min-height:var(--rig-h-row);padding:var(--rig-s2);cursor:pointer;min-width:0;transition:background-color var(--rig-dur-1) var(--rig-ease)}
+.rg-matrix-choice:hover{background:var(--rig-panel3)}
+.rg-matrix-choice.is-selected{background:var(--rig-sel-bg)}
+.rg-matrix-choice.is-disabled{cursor:not-allowed}
+.rg-matrix-choice.is-disabled:not(.is-selected) .rg-matrix-choice-body>:not(.rg-matrix-choice-reason){opacity:.5}
+.rg-matrix-choice>input,.rg-matrix-cell-row>input{flex:none;margin:var(--rig-s0) 0 0;accent-color:var(--rig-sel)}
+.rg-matrix-choice-body{display:flex;flex-direction:column;gap:var(--rig-s0);min-width:0;overflow-wrap:anywhere}
+.rg-matrix-choice-body strong{font-size:var(--rig-fs-sm);line-height:var(--rig-lh-snug);font-weight:var(--rig-fw-medium)}
+.rg-matrix-choice-body small{color:var(--rig-mute);font:var(--rig-fs-xs)/var(--rig-lh-snug) var(--rig-mono)}
+.rg-matrix-choice-reason{color:var(--rig-amb-t);font-size:var(--rig-fs-xs);line-height:var(--rig-lh-snug)}
 
-.rg-matrix-preview { border: 1px solid var(--rig-line2); border-radius: 6px; padding: 14px; margin-block: 16px; background: var(--rig-panel); }
-.rg-matrix-preview-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-bottom: 10px; font-size: 12px; color: var(--rig-dim); }
-.rg-matrix-preview-head strong { color: var(--rig-text); }
-.rg-matrix-cells { list-style: none; padding: 0; margin: 0; max-height: 280px; overflow-y: auto; display: grid; gap: 6px; scrollbar-width: thin; }
-.rg-matrix-cell { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; flex-wrap: wrap; padding: 8px 10px; border: 1px solid var(--rig-line); border-radius: 4px; background: var(--rig-bg); font-size: 12px; }
-.rg-matrix-cell.is-incompatible { border-color: var(--rig-red); background: var(--rig-red-bg); }
-.rg-matrix-cell-main { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; min-width: 0; overflow-wrap: anywhere; }
-.rg-matrix-cell-meta { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; font-size: 11px; color: var(--rig-dim); overflow-wrap: anywhere; }
-.rg-matrix-cell.is-incompatible .rg-matrix-cell-meta { color: var(--rig-red-t); }
+/* ---------------------------------------------------------------- 3 · schedule, budget and the expanded cells */
+.rg-form.rg-matrix-schedule{--rig-col-min:12rem;max-width:48rem}
+.rg-matrix-preview{display:flex;flex-direction:column;gap:var(--rig-s3);min-width:0}
+.rg-matrix-preview-h{display:flex;flex-wrap:wrap;align-items:baseline;justify-content:space-between;gap:var(--rig-s1) var(--rig-s4);min-width:0}
+.rig .rg-matrix-preview-h h4{margin:0;font-size:var(--rig-fs-sm);line-height:var(--rig-lh-snug);font-weight:var(--rig-fw-medium)}
+.rg-matrix-preview-meta{color:var(--rig-dim);font:var(--rig-fs-xs)/var(--rig-lh-snug) var(--rig-mono);font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
+.rg-matrix-preview-tools{display:flex;flex-wrap:wrap;align-items:center;gap:var(--rig-s2) var(--rig-s3);min-width:0}
+.rg-matrix-cells{list-style:none;margin:0;padding:0 var(--rig-s3);max-height:calc(5 * var(--rig-s8));overflow-y:auto;overscroll-behavior:contain;scrollbar-width:thin;background:var(--rig-panel2);border-radius:var(--rig-r-md);min-width:0}
+.rg-matrix-cell{border-bottom:1px solid var(--rig-line)}
+.rg-matrix-cell:last-child{border-bottom:0}
+.rg-matrix-cell-row{display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:baseline;gap:var(--rig-s1) var(--rig-s3);min-height:var(--rig-h-row);padding:var(--rig-s2) 0;cursor:pointer;font-size:var(--rig-fs-sm);line-height:var(--rig-lh-snug);transition:opacity var(--rig-dur-1) var(--rig-ease)}
+.rg-matrix-cell-row>input{align-self:start;margin-top:var(--rig-s0)}
+.rg-matrix-cell:has(input:not(:checked)) .rg-matrix-cell-row{opacity:.55}
+.rg-matrix-cell-main{display:flex;flex-wrap:wrap;align-items:baseline;gap:var(--rig-s0) var(--rig-s2);min-width:0;overflow-wrap:anywhere}
+.rg-matrix-cell-main strong{font-weight:var(--rig-fw-medium)}
+.rg-matrix-cell-main>span{color:var(--rig-dim)}
+.rg-matrix-cell-task{flex-basis:100%;color:var(--rig-mute);font:var(--rig-fs-xs)/var(--rig-lh-snug) var(--rig-mono)}
+.rg-matrix-cell-meta{display:flex;flex-wrap:wrap;justify-content:flex-end;align-items:baseline;gap:var(--rig-s0) var(--rig-s3);max-width:24rem;color:var(--rig-dim);font-size:var(--rig-fs-xs);text-align:right;overflow-wrap:anywhere}
+.rg-matrix-cell.is-incompatible .rg-matrix-cell-row{box-shadow:inset 2px 0 0 var(--rig-red);padding-left:var(--rig-s3);margin-left:calc(-1 * var(--rig-s3))}
+.rg-matrix-cell-issue{color:var(--rig-red-t)}
+.rig .rg-matrix-empty{margin:0;padding:var(--rig-s4);background:var(--rig-panel2);border-radius:var(--rig-r-md);color:var(--rig-dim);font-size:var(--rig-fs-sm);line-height:var(--rig-lh-body)}
 
-.rg-matrix-issue { margin: 10px 0; padding: 10px 12px; border-left: 2px solid var(--rig-amb); background: var(--rig-amb-bg); color: var(--rig-text); font-size: 12px; line-height: 1.6; overflow-wrap: anywhere; }
-.rg-matrix-review { border: 1px solid var(--rig-line2); border-radius: 6px; padding: 16px; margin-block: 16px; background: var(--rig-panel2); }
-.rg-matrix-review ol { max-height: 240px; overflow-y: auto; padding-left: 22px; margin: 10px 0 0; font-size: 12px; }
-.rg-matrix-review li { padding: 4px 0; overflow-wrap: anywhere; }
+/* ---------------------------------------------------------------- 4 · review, notes and errors */
+.rg-matrix-actions{display:flex;flex-wrap:wrap;align-items:center;gap:var(--rig-s2);min-width:0}
+.rig .rg-matrix-issue{margin:0;padding:var(--rig-s2) var(--rig-s3);border-left:2px solid var(--rig-amb);border-radius:0 var(--rig-r-md) var(--rig-r-md) 0;background:var(--rig-amb-bg);color:var(--rig-text);font-size:var(--rig-fs-sm);line-height:var(--rig-lh-body);overflow-wrap:anywhere}
+.rig .rg-matrix-err{margin:0;color:var(--rig-red-t);font-size:var(--rig-fs-sm);line-height:var(--rig-lh-body);overflow-wrap:anywhere}
+.rg-matrix-review{display:flex;flex-direction:column;gap:var(--rig-s2);min-width:0;padding:var(--rig-s4);background:var(--rig-panel2);border-radius:var(--rig-r-md)}
+.rg-matrix-review>strong{font-size:var(--rig-fs-sm);font-weight:var(--rig-fw-medium);line-height:var(--rig-lh-snug)}
+.rg-matrix-review ol{margin:0;padding:0 0 0 var(--rig-s5);max-height:calc(4 * var(--rig-s8));overflow-y:auto;overscroll-behavior:contain;scrollbar-width:thin;color:var(--rig-dim);font-size:var(--rig-fs-xs);line-height:var(--rig-lh-body)}
+.rg-matrix-review li{padding-block:var(--rig-s0);overflow-wrap:anywhere}
+.rig .rg-matrix-hash{margin:0;color:var(--rig-mute);font:var(--rig-fs-xs)/var(--rig-lh-snug) var(--rig-mono);overflow-wrap:anywhere}
 
-.rg-matrix-results { border-top: 1px solid var(--rig-line); padding-top: 16px; margin-top: 16px; }
-.rg-matrix-result-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-bottom: 8px; }
-.rg-matrix-scroll { width: 100%; overflow-x: auto; max-height: 520px; overflow-y: auto; margin-block: 14px; border: 1px solid var(--rig-line); border-radius: 5px; scrollbar-width: thin; }
-.rg-matrix-table { width: 100%; min-width: 960px; border-collapse: collapse; font-size: 12.5px; }
-.rg-matrix-table td, .rg-matrix-table th { padding: 10px 12px; text-align: left; border-bottom: 1px solid var(--rig-line); vertical-align: top; }
-.rg-matrix-identity { min-width: 240px; display: flex; flex-direction: column; gap: 2px; font-size: 11px; color: var(--rig-dim); overflow-wrap: anywhere; }
-.rg-matrix-identity code { font-size: 10.5px; overflow-wrap: anywhere; }
-.rg-matrix-cost { font-family: var(--rig-mono); font-variant-numeric: tabular-nums; white-space: nowrap; }
-.rg-matrix-history { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-top: 20px; }
-.rg-matrix-history-list { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+/* ---------------------------------------------------------------- results and the trial queue */
+.rg-matrix-result-h{display:flex;flex-wrap:wrap;align-items:center;gap:var(--rig-s2) var(--rig-s3);min-width:0}
+.rg-matrix-facts{display:flex;flex-direction:column;gap:var(--rig-s1);min-width:0;color:var(--rig-dim);font-size:var(--rig-fs-sm);line-height:var(--rig-lh-snug)}
+.rig .rg-matrix-facts>p{margin:0;overflow-wrap:anywhere}
+.rig .rg-matrix-facts>.rg-matrix-hash{margin-bottom:var(--rig-s1)}
+.rg-matrix-queue{--rig-max-h:calc(8 * var(--rig-s8));border-block:1px solid var(--rig-line)}
+.rg-matrix-queue .rg-tbl tbody tr:last-child td{border-bottom:0}
+/* The table fills its box on a wide screen and scrolls (arm column pinned) once its columns'
+   minimum widths no longer fit; the inner blocks set those minimums, cells cannot. */
+.rg-matrix-queue table.rg-matrix-table{width:100%;min-width:0}
+.rg-matrix-table td{vertical-align:top}
+.rg-matrix-table td.rg-num,.rg-matrix-table td[data-label="Grade"],.rg-matrix-table .rg-btn{white-space:nowrap}
+.rg-matrix-arm{display:block;min-width:10rem;max-width:20rem;overflow-wrap:anywhere}
+.rg-matrix-exec{min-width:7rem;max-width:18rem}
+.rg-matrix-trial-issue{margin-top:var(--rig-s1);color:var(--rig-amb-t);font-size:var(--rig-fs-xs);line-height:var(--rig-lh-snug)}
+.rg-matrix-identity{display:flex;flex-direction:column;gap:var(--rig-s0);min-width:14rem;max-width:22rem;color:var(--rig-dim);font-size:var(--rig-fs-xs);line-height:var(--rig-lh-snug);overflow-wrap:anywhere}
+.rig .rg-matrix-identity code{display:block;padding:0;border:0;background:none;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--rig-mute);font:var(--rig-fs-xs)/var(--rig-lh-snug) var(--rig-mono)}
+.rg-matrix-cost{font-family:var(--rig-mono);font-variant-numeric:tabular-nums;white-space:nowrap}
+.rg-matrix-results>.rg-hjson{margin:0;padding:var(--rig-s4);border:0;border-radius:var(--rig-r-md);background:var(--rig-panel2)}
 
-@media (max-width: 860px) {
-  .rg-matrix-axes { grid-template-columns: 1fr; }
+/* ---------------------------------------------------------------- saved experiments */
+.rg-matrix-refresh{margin-left:auto}
+.rg-matrix-history-list{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,16rem),1fr));gap:var(--rig-s2);min-width:0}
+.rg-matrix-history-list .rg-btn{width:100%;justify-content:flex-start;font-family:var(--rig-mono);font-variant-numeric:tabular-nums;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.rg-matrix-history-list .rg-btn.is-current{border-color:var(--rig-sel);background:var(--rig-sel-bg)}
+
+/* ---------------------------------------------------------------- narrow containers */
+@container (max-width:640px){
+  .rig .rg-matrix-sum{padding-inline:var(--rig-s4)}
+  .rg-matrix-body{padding:var(--rig-s4)}
+  /* the trial queue becomes one stacked record per trial: arm, four labelled facts, identity, job */
+  .rg-matrix-queue table.rg-matrix-table,.rg-matrix-table tbody,.rg-matrix-table tr,.rg-matrix-table td{display:block}
+  .rg-matrix-table thead{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
+  .rg-matrix-queue table.rg-matrix-table thead th{display:block;width:1px;height:1px;padding:0;overflow:hidden;border:0}
+  .rg-matrix-table tr{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:var(--rig-s3) var(--rig-s4);padding:var(--rig-s3) 0;border-bottom:1px solid var(--rig-line)}
+  .rg-matrix-queue table.rg-matrix-table td{position:static;height:auto;padding:0;border:0;background:none;text-align:left;min-width:0}
+  .rg-matrix-table td:first-child{grid-column:1/4;grid-row:1;align-self:center}
+  .rg-matrix-table .rg-matrix-job{grid-column:4;grid-row:1;justify-self:end}
+  .rg-matrix-table .rg-matrix-id{grid-column:1/-1}
+  .rg-matrix-table tr:not(:has(.rg-matrix-job button)) td:first-child{grid-column:1/-1}
+  .rg-matrix-table td[data-label]{display:flex;flex-direction:column;gap:var(--rig-s1)}
+  .rg-matrix-table td[data-label]::before{content:attr(data-label);color:var(--rig-mute);font:var(--rig-fw-medium) var(--rig-fs-2xs)/var(--rig-lh-tight) var(--rig-mono);letter-spacing:.06em;text-transform:uppercase}
+  .rg-matrix-table .rg-matrix-job:not(:has(button)){display:none}
+  .rg-matrix-arm{min-width:0;max-width:none;font-weight:var(--rig-fw-medium)}
+  .rg-matrix-exec{min-width:0;max-width:none}
+  .rg-matrix-identity{min-width:0;max-width:none}
 }
-@media (max-width: 600px) {
-  .rg-matrix-experiments > summary span { display: block; margin: 6px 0 0; }
-  .rg-matrix-fields { flex-direction: column; align-items: stretch; }
-  .rg-matrix-fields .rg-fld { flex: auto; }
+@container (max-width:480px){
+  .rg-matrix-capture{grid-template-columns:minmax(0,1fr)}
+  .rg-matrix-capture>.rg-btn{width:100%}
+  .rg-matrix-snapshot{padding:var(--rig-s3)}
+  .rg-matrix-snapshot-actions{width:100%}
+  .rg-matrix-snapshot-actions>.rg-btn{flex:1 1 auto}
+  .rg-matrix-axis{padding:var(--rig-s3)}
+  .rg-matrix-axis-tools{display:flex;flex-wrap:wrap}
+  .rg-matrix-axis-tools>.rg-inp{flex:1 1 100%}
+  .rg-matrix-axis-tools>.rg-btn{flex:1 1 auto}
+  .rg-matrix-cell-row{grid-template-columns:auto minmax(0,1fr)}
+  .rg-matrix-cell-meta{grid-column:2;justify-content:flex-start;text-align:left;max-width:none}
+  .rg-matrix-preview-tools>.rg-btn{flex:1 1 0}
+  .rg-matrix-preview-tools>.rg-matrix-hint{flex:1 1 100%}
+  /* a two-column block: the primary action (first) takes the full row when the count is odd, so
+     "More" ends the second row in the right column and its menu opens inward */
+  .rg-matrix-actions.rg-actbar{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}
+  .rg-matrix-actions.rg-actbar>*{min-width:0;justify-content:center}
+  .rg-matrix-actions.rg-actbar>:nth-child(1 of :not(.rg-actbar-2)):nth-last-child(odd of :not(.rg-actbar-2)){grid-column:1/-1}
+  .rg-matrix-actions.rg-actbar>.rg-menu{display:flex}
+  .rg-matrix-actions.rg-actbar>.rg-menu>.rg-btn{flex:1 1 auto;justify-content:center}
+  .rg-matrix-table tr{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .rg-matrix-table td:first-child{grid-column:1/-1}
+  .rg-matrix-table .rg-matrix-job{grid-column:1/-1;grid-row:auto;justify-self:start;order:2}
+  .rg-matrix-table .rg-matrix-id{order:1}
 }
-
-.rg-matrix-snapshot > .rg-hjson { flex-basis: 100%; min-width: 0; margin: 0; }
-.rg-matrix-cell > input { accent-color: var(--rig-sel); flex-shrink: 0; }
-.rg-matrix-cell:has(> input:not(:checked)) { opacity: .65; }
-
-.rg-matrix-table th { white-space: nowrap; }
-.rg-matrix-table td:nth-child(2) { min-width: 160px; }

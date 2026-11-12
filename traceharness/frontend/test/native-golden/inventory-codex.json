@@ -1,0 +1,84 @@
+{
+ "schema_version": 1,
+ "runtime_id": "native-codex",
+ "runtime_version": "0.167.1",
+ "image_digest": "sha256:716f940f0958cd4abdda846a256caa95e40a5a858709f72692a16a89f9d14c7f",
+ "binary_sha256": "18ee9689f82cda3a1af3da8b40e0b5477a56b83e9e4fa620554a2fd6c6112053",
+ "inventory_sha256": "4eca453646cf1f187f5872ccafdec818d4536b3452b5ea1d33dcb436ad78273d",
+ "taxonomy_sha256": "6064ebcb6693a1dd7b3e50fbfbcc94ff959f7957ac184188fd91744900a429a3",
+ "materializer_sha256": "8a1ee9f8fba86a80c057f7712d4aeddb02096ec17f3c22451ecaf5ded9c1c185",
+ "blocks": [
+  {
+   "id": "codex-base-instructions",
+   "title": "base.md \u00b7 core/prompts/base.md",
+   "class_name": "File & Code Ops",
+   "class_source": "agent-patcher@8d3c17099974c06f2cfb1547bb4744c05f845b56:workbench.py:CLAUDE_NFR_CATEGORIES",
+   "source_layer": "fabricated-golden-fragment",
+   "capability": "patchable",
+   "baseline_sha256": "04b714360378a9022492a219659487658c02520f37174c08d287b37f62086689",
+   "baseline_utf8": "Fabricated Codex base instructions for golden tests.\n",
+   "occurrence_count": 1,
+   "required_placeholders": []
+  },
+  {
+   "id": "codex-review",
+   "title": "review.md \u00b7 core/prompts/review.md",
+   "class_name": "File & Code Ops",
+   "class_source": "agent-patcher@8d3c17099974c06f2cfb1547bb4744c05f845b56:workbench.py:CLAUDE_NFR_CATEGORIES",
+   "source_layer": "fabricated-golden-fragment",
+   "capability": "patchable",
+   "baseline_sha256": "7f587ebb523bdfb535b38804a344d40b9991372fa7343e4f5fced81ce3bd4dfa",
+   "baseline_utf8": "Fabricated review prompt with a few lines.\nLine two.\n",
+   "occurrence_count": 1,
+   "required_placeholders": []
+  },
+  {
+   "id": "codex-template",
+   "title": "template.md \u00b7 core/templates/template.md",
+   "class_name": "File & Code Ops",
+   "class_source": "agent-patcher@8d3c17099974c06f2cfb1547bb4744c05f845b56:workbench.py:CLAUDE_NFR_CATEGORIES",
+   "source_layer": "fabricated-golden-fragment",
+   "capability": "observed-only",
+   "baseline_sha256": "f2b36162c9c4fc83044c1a8bd0daa8c44b17b06cf8298e7b25cc64c390b2cfaf",
+   "baseline_utf8": "Fabricated template {{ user }} text.\n",
+   "occurrence_count": 1,
+   "required_placeholders": []
+  },
+  {
+   "id": "codex-jinja",
+   "title": "conditional.md \u00b7 core/templates/conditional.md",
+   "class_name": "File & Code Ops",
+   "class_source": "agent-patcher@8d3c17099974c06f2cfb1547bb4744c05f845b56:workbench.py:CLAUDE_NFR_CATEGORIES",
+   "source_layer": "fabricated-golden-fragment",
+   "capability": "observed-only",
+   "baseline_sha256": "c834e5f56e7f9d2986754a3edaf5759eb27e0761da36b2edd9842217449ee5bf",
+   "baseline_utf8": "Fabricated {% if flag %}conditional{% endif %} text.\n",
+   "occurrence_count": 1,
+   "required_placeholders": []
+  },
+  {
+   "id": "codex-short",
+   "title": "note.md \u00b7 core/prompts/note.md",
+   "class_name": "File & Code Ops",
+   "class_source": "agent-patcher@8d3c17099974c06f2cfb1547bb4744c05f845b56:workbench.py:CLAUDE_NFR_CATEGORIES",
+   "source_layer": "fabricated-golden-fragment",
+   "capability": "patchable",
+   "baseline_sha256": "fa6eb19205792e9f5eedf1535af30a3bd9d94d49e92bedf94dd1261de32e17c8",
+   "baseline_utf8": "Tiny note.",
+   "occurrence_count": 1,
+   "required_placeholders": []
+  },
+  {
+   "id": "codex-unicode",
+   "title": "accents.md \u00b7 core/prompts/accents.md",
+   "class_name": "File & Code Ops",
+   "class_source": "agent-patcher@8d3c17099974c06f2cfb1547bb4744c05f845b56:workbench.py:CLAUDE_NFR_CATEGORIES",
+   "source_layer": "fabricated-golden-fragment",
+   "capability": "patchable",
+   "baseline_sha256": "6e26354bc904ed19304c6ddb020a9809a5a897a82e81c235c53ae120c3c25b4a",
+   "baseline_utf8": "Fabricated: na\u00efve r\u00e9sum\u00e9 \u2713 accents.\n",
+   "occurrence_count": 1,
+   "required_placeholders": []
+  }
+ ]
+}

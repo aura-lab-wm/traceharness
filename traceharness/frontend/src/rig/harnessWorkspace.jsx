@@ -7,7 +7,7 @@ import './harnessWorkspace.css'
 export function HarnessNav({ active, args }) {
   const origin = evidenceOrigin(args)
   return <nav className="rg-harness-return" aria-label="Harness workspace">
-    <Go spec={withEvidenceOrigin('harnesses', origin, active === 'minimal' ? 'guided' : active === 'fixed' ? 'fixed' : 'custom')} className="rg-btn" label="Open unified Harnesses workspace"><Icon name="tabs" size={16} />Harnesses<span aria-hidden="true">·</span>Choose a harness, model and task<Icon name="right" size={16} /></Go>
+    <Go spec={withEvidenceOrigin('harnesses', origin, active === 'minimal' ? 'guided' : active === 'fixed' ? 'fixed' : 'custom')} className="rg-btn" label="Open unified Harnesses workspace"><Icon name="tabs" size={16} />Harnesses<span className="rg-harness-return-what">· Choose a harness, model and task</span><Icon name="right" size={16} /></Go>
   </nav>
 }
 

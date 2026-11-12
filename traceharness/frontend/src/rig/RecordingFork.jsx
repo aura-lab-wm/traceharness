@@ -1,11 +1,13 @@
 import { useId, useState } from 'react'
 import { useRig } from './context'
+import { Icon } from './ui'
 import { makeSpec } from './route'
 import { prepareHarnessJSON, recordedHarnessSnapshot } from './harness-json'
 import { configurationFromRecordedHarness } from './configuration-from-recording'
 import { parseConfiguration } from './views/harness-composer-state'
 import { readDraft, writeDraft } from './views/shallow-drafts'
 import { encodeMemberJSON } from '../member-api'
+import './RecordingFork.css'
 
 export function safeRecordingSource(value) {
   try {
@@ -59,9 +61,12 @@ export function ForkRecordedHarness({ run, detail, loading, error }) {
       openTab(makeSpec('harnesses', 'fork', request_id))
     } catch (cause) { setFailure(cause.message || 'The fork could not be opened. The recording is unchanged.') }
   }
-  return <div className="rg-col" style={{ gap: 8, marginBottom: 16 }}>
-    <div className="rg-row rg-wrap"><button type="button" className="rg-btn" disabled={!configuration} aria-describedby={id} onClick={fork}>Fork recorded harness</button><span className="rg-small rg-dim">Create an editable draft from this run.</span></div>
-    <p id={id} className="rg-small rg-mute">{reason || 'The recorded settings are copied into a new draft. Review its model, task and resource caps before dispatching.'}</p>
-    {failure && <p role="alert">{failure}</p>}
+  return <div className="rg-recfork">
+    <button type="button" className="rg-btn rg-recfork-b" disabled={!configuration} aria-describedby={id} onClick={fork}><Icon name="fork" size={14} />Fork recorded harness</button>
+    <div className="rg-recfork-t">
+      <p className="rg-recfork-lead">Create an editable draft from this run.</p>
+      <p id={id} className={reason ? 'rg-recfork-why off' : 'rg-recfork-why'}>{reason || 'The recorded settings are copied into a new draft. Review its model, task and resource caps before dispatching.'}</p>
+    </div>
+    {failure && <p role="alert" className="rg-recfork-err">{failure}</p>}
   </div>
 }

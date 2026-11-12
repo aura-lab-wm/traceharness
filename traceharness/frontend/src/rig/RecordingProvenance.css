@@ -1,0 +1,16 @@
+/* Rig · RecordingProvenance.css — where imported or captured recordings came from (RecordingProvenance.jsx).
+   A quiet note on the page ground: one hairline box, prose at the reading measure. Tokens only. */
+.rig .rg-prov{margin:0 0 var(--rig-s4);padding:var(--rig-s3) var(--rig-s4);border:1px solid var(--rig-line);border-radius:var(--rig-r-lg);background:var(--rig-panel);font-size:var(--rig-fs-sm);line-height:var(--rig-lh-body);color:var(--rig-dim);min-width:0;overflow-wrap:anywhere}
+/* inside a stacked document the stack's gap is the spacing */
+.rig :where(.rg-stack,.rg-traj-stack,.rg-traj-stack-s)>.rg-prov{margin-bottom:0}
+.rig .rg-prov p{margin:0;max-width:var(--rig-measure)}
+.rig .rg-prov p+p,.rig .rg-prov p+.rg-prov-more,.rig .rg-prov .rg-prov-more+p{margin-top:var(--rig-s2)}
+.rig .rg-prov b{color:var(--rig-text);font-weight:var(--rig-fw-medium)}
+.rig .rg-prov a{color:var(--rig-sel-t);text-underline-offset:2px}
+.rig .rg-prov-more>summary{display:inline-flex;align-items:center;gap:var(--rig-s2);min-height:var(--rig-hit);color:var(--rig-dim);cursor:pointer;list-style:none;border-radius:var(--rig-r-sm)}
+.rig .rg-prov-more>summary::-webkit-details-marker{display:none}
+.rig .rg-prov-more>summary::before{content:"▸";width:1ch;color:var(--rig-mute)}
+.rig .rg-prov-more[open]>summary::before{content:"▾"}
+.rig .rg-prov-more>summary:hover{color:var(--rig-text)}
+.rig .rg-prov-more>summary:focus-visible{outline:var(--rig-focus-ring);outline-offset:var(--rig-focus-offset)}
+.rig .rg-prov-more>p{color:var(--rig-mute);font-size:var(--rig-fs-xs);line-height:var(--rig-lh-body)}

@@ -30,7 +30,9 @@ def build_parser() -> argparse.ArgumentParser:
                "`traceharness logout` revokes the token. `traceharness capture push` sends redacted "
                "captured runs; `traceharness capture --watch --sync` uploads consented sessions. "
                "`traceharness link --member` connects this account; `link --url wss://...` dials out "
-               "to a console. Neither opens a port.",
+               "to a console. Neither opens a port. "
+               "`traceharness native-prompts inventory|profile|experiment ...` inspects native prompt inventories and authors "
+               "profiles offline.",
     )
     p.add_argument("--host", default=os.environ.get("TRACEHARNESS_HOST", "127.0.0.1"),
                    help="interface to bind (default 127.0.0.1; use 0.0.0.0 in a container)")
@@ -656,6 +658,9 @@ def main(argv: list[str] | None = None) -> int:
     if argv and argv[0] == "link":
         from traceharness.backend.remote_link import link_main  # noqa: E402
         return link_main(argv[1:])
+    if argv and argv[0] == "native-prompts":
+        from traceharness.runner_service.native_prompt_cli import main as native_prompts_main  # noqa: E402
+        return native_prompts_main(argv[1:])
     if argv and argv[0] == "serve":
         argv = argv[1:]
 

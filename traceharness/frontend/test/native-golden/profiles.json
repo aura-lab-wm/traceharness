@@ -1,0 +1,2735 @@
+{
+ "function": "canonical_profile",
+ "cases": [
+  {
+   "name": "valid profile",
+   "args": [
+    {
+     "schema_version": 1,
+     "runtime_id": "native-claude-code",
+     "runtime_version": "0.0.0-golden",
+     "image_digest": "sha256:2d032a622cf94baf637a4488720865da983853e4a655fea4e45d0e80f0a9c640",
+     "binary_sha256": "25ba8ebec5f227618d8d58f475622669f4c45019d40259d1d292a823f4184c27",
+     "inventory_sha256": "44e7b67bbdc0842fecf8cfa158641e03998f7d0b34184bc297ede967ab24ce7a",
+     "taxonomy_sha256": "6064ebcb6693a1dd7b3e50fbfbcc94ff959f7957ac184188fd91744900a429a3",
+     "materializer_sha256": "ba6245da8b07901b6793898e70e2e974a1e641a2c3be0d357ba53d15101f4081",
+     "default_action": "keep",
+     "overrides": [
+      {
+       "block_id": "tool-bash-guide",
+       "baseline_sha256": "c5db5a79c94bb7a9835cbe2e3897337c52e3bb72b73edaedf1165a51246b057b",
+       "action": "replace",
+       "replacement_utf8": "Fabricated replacement text.",
+       "replacement_sha256": "1b10d1f88eeb90d1941d319ac3624e9f5020a05f36129893ecb91a97207e7be0"
+      },
+      {
+       "block_id": "short",
+       "baseline_sha256": "213c22ed7234eb11116e1e88f314c73cb3a019b5c87fe224b6ce5665bd9ec50e",
+       "action": "disable"
+      },
+      {
+       "block_id": "observed-dynamic",
+       "baseline_sha256": "051b5a1029b4b78cbfdc9d1fe6ade44d634c605f3ad3b88ed5d59a55c877d6f7",
+       "action": "keep"
+      }
+     ]
+    },
+    "@inventory-claude"
+   ],
+   "expected": {
+    "schema_version": 1,
+    "inventory_sha256": "44e7b67bbdc0842fecf8cfa158641e03998f7d0b34184bc297ede967ab24ce7a",
+    "taxonomy_sha256": "6064ebcb6693a1dd7b3e50fbfbcc94ff959f7957ac184188fd91744900a429a3",
+    "runtime_version": "0.0.0-golden",
+    "binary_sha256": "25ba8ebec5f227618d8d58f475622669f4c45019d40259d1d292a823f4184c27",
+    "runtime_id": "native-claude-code",
+    "image_digest": "sha256:2d032a622cf94baf637a4488720865da983853e4a655fea4e45d0e80f0a9c640",
+    "default_action": "keep",
+    "materializer_sha256": "ba6245da8b07901b6793898e70e2e974a1e641a2c3be0d357ba53d15101f4081",
+    "overrides": [
+     {
+      "block_id": "tool-bash-guide",
+      "baseline_sha256": "c5db5a79c94bb7a9835cbe2e3897337c52e3bb72b73edaedf1165a51246b057b",
+      "action": "replace",
+      "replacement_utf8": "Fabricated replacement text.",
+      "replacement_sha256": "1b10d1f88eeb90d1941d319ac3624e9f5020a05f36129893ecb91a97207e7be0"
+     },
+     {
+      "block_id": "observed-dynamic",
+      "baseline_sha256": "051b5a1029b4b78cbfdc9d1fe6ade44d634c605f3ad3b88ed5d59a55c877d6f7",
+      "action": "keep"
+     },
+     {
+      "block_id": "short",
+      "baseline_sha256": "213c22ed7234eb11116e1e88f314c73cb3a019b5c87fe224b6ce5665bd9ec50e",
+      "action": "disable"
+     }
+    ]
+   }
+  },
+  {
+   "name": "overrides return in inventory order",
+   "args": [
+    {
+     "schema_version": 1,
+     "runtime_id": "native-claude-code",
+     "runtime_version": "0.0.0-golden",
+     "image_digest": "sha256:2d032a622cf94baf637a4488720865da983853e4a655fea4e45d0e80f0a9c640",
+     "binary_sha256": "25ba8ebec5f227618d8d58f475622669f4c45019d40259d1d292a823f4184c27",
+     "inventory_sha256": "44e7b67bbdc0842fecf8cfa158641e03998f7d0b34184bc297ede967ab24ce7a",
+     "taxonomy_sha256": "6064ebcb6693a1dd7b3e50fbfbcc94ff959f7957ac184188fd91744900a429a3",
+     "materializer_sha256": "ba6245da8b07901b6793898e70e2e974a1e641a2c3be0d357ba53d15101f4081",
+     "default_action": "keep",
+     "overrides": [
+      {
+       "block_id": "zebra-only",
+       "baseline_sha256": "2ce9d291f5392ccce812660963901c0f0d97b67cf0e9fcb371d02e8574afda87",
+       "action": "disable"
+      },
+      {
+       "block_id": "observed-dynamic",
+       "baseline_sha256": "051b5a1029b4b78cbfdc9d1fe6ade44d634c605f3ad3b88ed5d59a55c877d6f7",
+       "action": "keep"
+      },
+      {
+       "block_id": "tool-bash-guide",
+       "baseline_sha256": "c5db5a79c94bb7a9835cbe2e3897337c52e3bb72b73edaedf1165a51246b057b",
+       "action": "replace",
+       "replacement_utf8": "Fabricated replacement text.",
+       "replacement_sha256": "1b10d1f88eeb90d1941d319ac3624e9f5020a05f36129893ecb91a97207e7be0"
+      }
+     ]
+    },
+    "@inventory-claude"
+   ],
+   "expected": {
+    "schema_version": 1,
+    "inventory_sha256": "44e7b67bbdc0842fecf8cfa158641e03998f7d0b34184bc297ede967ab24ce7a",
+    "taxonomy_sha256": "6064ebcb6693a1dd7b3e50fbfbcc94ff959f7957ac184188fd91744900a429a3",
+    "runtime_version": "0.0.0-golden",
+    "binary_sha256": "25ba8ebec5f227618d8d58f475622669f4c45019d40259d1d292a823f4184c27",
+    "runtime_id": "native-claude-code",
+    "image_digest": "sha256:2d032a622cf94baf637a4488720865da983853e4a655fea4e45d0e80f0a9c640",
+    "default_action": "keep",
+    "materializer_sha256": "ba6245da8b07901b6793898e70e2e974a1e641a2c3be0d357ba53d15101f4081",
+    "overrides": [
+     {
+      "block_id": "tool-bash-guide",
+      "baseline_sha256": "c5db5a79c94bb7a9835cbe2e3897337c52e3bb72b73edaedf1165a51246b057b",
+      "action": "replace",
+      "replacement_utf8": "Fabricated replacement text.",
+      "replacement_sha256": "1b10d1f88eeb90d1941d319ac3624e9f5020a05f36129893ecb91a97207e7be0"
+     },
+     {
+      "block_id": "observed-dynamic",
+      "baseline_sha256": "051b5a1029b4b78cbfdc9d1fe6ade44d634c605f3ad3b88ed5d59a55c877d6f7",
+      "action": "keep"
+     },
+     {
+      "block_id": "zebra-only",
+      "baseline_sha256": "2ce9d291f5392ccce812660963901c0f0d97b67cf0e9fcb371d02e8574afda87",
+      "action": "disable"
+     }
+    ]
+   }
+  },
+  {
+   "name": "baseline profile",
+   "args": [
+    {
+     "schema_version": 1,
+     "runtime_id": "native-claude-code",
+     "runtime_version": "0.0.0-golden",
+     "image_digest": "sha256:2d032a622cf94baf637a4488720865da983853e4a655fea4e45d0e80f0a9c640",
+     "binary_sha256": "25ba8ebec5f227618d8d58f475622669f4c45019d40259d1d292a823f4184c27",
+     "inventory_sha256": "44e7b67bbdc0842fecf8cfa158641e03998f7d0b34184bc297ede967ab24ce7a",
+     "taxonomy_sha256": "6064ebcb6693a1dd7b3e50fbfbcc94ff959f7957ac184188fd91744900a429a3",
+     "materializer_sha256": "ba6245da8b07901b6793898e70e2e974a1e641a2c3be0d357ba53d15101f4081",
+     "default_action": "keep",
+     "overrides": []
+    },
+    "@inventory-claude"
+   ],
+   "expected": {
+    "schema_version": 1,
+    "inventory_sha256": "44e7b67bbdc0842fecf8cfa158641e03998f7d0b34184bc297ede967ab24ce7a",
+    "taxonomy_sha256": "6064ebcb6693a1dd7b3e50fbfbcc94ff959f7957ac184188fd91744900a429a3",
+    "runtime_version": "0.0.0-golden",
+    "binary_sha256": "25ba8ebec5f227618d8d58f475622669f4c45019d40259d1d292a823f4184c27",
+    "runtime_id": "native-claude-code",
+    "image_digest": "sha256:2d032a622cf94baf637a4488720865da983853e4a655fea4e45d0e80f0a9c640",
+    "default_action": "keep",
+    "materializer_sha256": "ba6245da8b07901b6793898e70e2e974a1e641a2c3be0d357ba53d15101f4081",
+    "overrides": []
+   }
+  },
+  {
+   "name": "none included",
+   "args": [
+    {
+     "schema_version": 1,
+     "runtime_id": "native-claude-code",
+     "runtime_version": "0.0.0-golden",
+     "image_digest": "sha256:2d032a622cf94baf637a4488720865da983853e4a655fea4e45d0e80f0a9c640",
+     "binary_sha256": "25ba8ebec5f227618d8d58f475622669f4c45019d40259d1d292a823f4184c27",
+     "inventory_sha256": "44e7b67bbdc0842fecf8cfa158641e03998f7d0b34184bc297ede967ab24ce7a",
+     "taxonomy_sha256": "6064ebcb6693a1dd7b3e50fbfbcc94ff959f7957ac184188fd91744900a429a3",
+     "materializer_sha256": "ba6245da8b07901b6793898e70e2e974a1e641a2c3be0d357ba53d15101f4081",
+     "default_action": "disable",
+     "overrides": []
+    },
+    "@inventory-claude"
+   ],
+   "expected": {
+    "schema_version": 1,
+    "inventory_sha256": "44e7b67bbdc0842fecf8cfa158641e03998f7d0b34184bc297ede967ab24ce7a",
+    "taxonomy_sha256": "6064ebcb6693a1dd7b3e50fbfbcc94ff959f7957ac184188fd91744900a429a3",
+    "runtime_version": "0.0.0-golden",
+    "binary_sha256": "25ba8ebec5f227618d8d58f475622669f4c45019d40259d1d292a823f4184c27",
+    "runtime_id": "native-claude-code",
+    "image_digest": "sha256:2d032a622cf94baf637a4488720865da983853e4a655fea4e45d0e80f0a9c640",
+    "default_action": "disable",
+    "materializer_sha256": "ba6245da8b07901b6793898e70e2e974a1e641a2c3be0d357ba53d15101f4081",
+    "overrides": []
+   }
+  },
+  {
+   "name": "templated replacement keeps placeholders",
+   "args": [
+    {
+     "schema_version": 1,
+     "runtime_id": "native-claude-code",
+     "runtime_version": "0.0.0-golden",
+     "image_digest": "sha256:2d032a622cf94baf637a4488720865da983853e4a655fea4e45d0e80f0a9c640",
+     "binary_sha256": "25ba8ebec5f227618d8d58f475622669f4c45019d40259d1d292a823f4184c27",
+     "inventory_sha256": "44e7b67bbdc0842fecf8cfa158641e03998f7d0b34184bc297ede967ab24ce7a",
+     "taxonomy_sha256": "6064ebcb6693a1dd7b3e50fbfbcc94ff959f7957ac184188fd91744900a429a3",
+     "materializer_sha256": "ba6245da8b07901b6793898e70e2e974a1e641a2c3be0d357ba53d15101f4081",
+     "default_action": "keep",
+     "overrides": [
+      {
+       "block_id": "system-reminder-plan",
+       "baseline_sha256": "5911fea64f55d714569aff07fa8a887a235adca26c869f4f492da7c88c004a73",
+       "action": "replace",
+       "replacement_utf8": "Fabricated: ${TH_PROMPT_EXPR_0} then ${TH_PROMPT_EXPR_1}.",
+       "replacement_sha256": "5c87f84a6139ef88f6f0dff5daec3a6df89250feb6e3f8220d126c1e4060aef3"
+      }
+     ]
+    },
+    "@inventory-claude"
+   ],
+   "expected": {
+    "schema_version": 1,
+    "inventory_sha256": "44e7b67bbdc0842fecf8cfa158641e03998f7d0b34184bc297ede967ab24ce7a",
+    "taxonomy_sha256": "6064ebcb6693a1dd7b3e50fbfbcc94ff959f7957ac184188fd91744900a429a3",
+    "runtime_version": "0.0.0-golden",
+    "binary_sha256": "25ba8ebec5f227618d8d58f475622669f4c45019d40259d1d292a823f4184c27",
+    "runtime_id": "native-claude-code",
+    "image_digest": "sha256:2d032a622cf94baf637a4488720865da983853e4a655fea4e45d0e80f0a9c640",
+    "default_action": "keep",
+    "materializer_sha256": "ba6245da8b07901b6793898e70e2e974a1e641a2c3be0d357ba53d15101f4081",
+    "overrides": [
+     {
+      "block_id": "system-reminder-plan",
+      "baseline_sha256": "5911fea64f55d714569aff07fa8a887a235adca26c869f4f492da7c88c004a73",
+      "action": "replace",
+      "replacement_utf8": "Fabricated: ${TH_PROMPT_EXPR_0} then ${TH_PROMPT_EXPR_1}.",
+      "replacement_sha256": "5c87f84a6139ef88f6f0dff5daec3a6df89250feb6e3f8220d126c1e4060aef3"
+     }
+    ]
+   }
+  },
+  {
+   "name": "unknown top-level field",
+   "args": [
+    {
+     "schema_version": 1,
+     "runtime_id": "native-claude-code",
+     "runtime_version": "0.0.0-golden",
+     "image_digest": "sha256:2d032a622cf94baf637a4488720865da983853e4a655fea4e45d0e80f0a9c640",
+     "binary_sha256": "25ba8ebec5f227618d8d58f475622669f4c45019d40259d1d292a823f4184c27",
+     "inventory_sha256": "44e7b67bbdc0842fecf8cfa158641e03998f7d0b34184bc297ede967ab24ce7a",
+     "taxonomy_sha256": "6064ebcb6693a1dd7b3e50fbfbcc94ff959f7957ac184188fd91744900a429a3",
+     "materializer_sha256": "ba6245da8b07901b6793898e70e2e974a1e641a2c3be0d357ba53d15101f4081",
+     "default_action": "keep",
+     "overrides": [],
+     "name": "x"
+    },
+    "@inventory-claude"
+   ],
+   "expected": {
+    "error": "Invalid native prompt profile fields"
+   }
+  },
+  {
+   "name": "missing field",
+   "args": [
+    {
+     "schema_version": 1,
+     "runtime_id": "native-claude-code",
+     "runtime_version": "0.0.0-golden",
+     "image_digest": "sha256:2d032a622cf94baf637a4488720865da983853e4a655fea4e45d0e80f0a9c640",
+     "binary_sha256": "25ba8ebec5f227618d8d58f475622669f4c45019d40259d1d292a823f4184c27",
+     "inventory_sha256": "44e7b67bbdc0842fecf8cfa158641e03998f7d0b34184bc297ede967ab24ce7a",
+     "taxonomy_sha256": "6064ebcb6693a1dd7b3e50fbfbcc94ff959f7957ac184188fd91744900a429a3",
+     "materializer_sha256": "ba6245da8b07901b6793898e70e2e974a1e641a2c3be0d357ba53d15101f4081",
+     "default_action": "keep"
+    },
+    "@inventory-claude"
+   ],
+   "expected": {
+    "error": "Invalid native prompt profile fields"
+   }
+  },
+  {
+   "name": "unsupported schema",
+   "args": [
+    {
+     "schema_version": 2,
+     "runtime_id": "native-claude-code",
+     "runtime_version": "0.0.0-golden",
+     "image_digest": "sha256:2d032a622cf94baf637a4488720865da983853e4a655fea4e45d0e80f0a9c640",
+     "binary_sha256": "25ba8ebec5f227618d8d58f475622669f4c45019d40259d1d292a823f4184c27",
+     "inventory_sha256": "44e7b67bbdc0842fecf8cfa158641e03998f7d0b34184bc297ede967ab24ce7a",
+     "taxonomy_sha256": "6064ebcb6693a1dd7b3e50fbfbcc94ff959f7957ac184188fd91744900a429a3",
+     "materializer_sha256": "ba6245da8b07901b6793898e70e2e974a1e641a2c3be0d357ba53d15101f4081",
+     "default_action": "keep",
+     "overrides": []
+    },
+    "@inventory-claude"
+   ],
+   "expected": {
+    "error": "Unsupported native prompt profile schema"
+   }
+  },
+  {
+   "name": "runtime version pin differs",
+   "args": [
+    {
+     "schema_version": 1,
+     "runtime_id": "native-claude-code",
+     "runtime_version": "9.9.9",
+     "image_digest": "sha256:2d032a622cf94baf637a4488720865da983853e4a655fea4e45d0e80f0a9c640",
+     "binary_sha256": "25ba8ebec5f227618d8d58f475622669f4c45019d40259d1d292a823f4184c27",
+     "inventory_sha256": "44e7b67bbdc0842fecf8cfa158641e03998f7d0b34184bc297ede967ab24ce7a",
+     "taxonomy_sha256": "6064ebcb6693a1dd7b3e50fbfbcc94ff959f7957ac184188fd91744900a429a3",
+     "materializer_sha256": "ba6245da8b07901b6793898e70e2e974a1e641a2c3be0d357ba53d15101f4081",
+     "default_action": "keep",
+     "overrides": []
+    },
+    "@inventory-claude"
+   ],
+   "expected": {
+    "error": "Native prompt runtime_version does not match the selected inventory"
+   }
+  },
+  {
+   "name": "inventory digest pin differs",
+   "args": [
+    {
+     "schema_version": 1,
+     "runtime_id": "native-claude-code",
+     "runtime_version": "0.0.0-golden",
+     "image_digest": "sha256:2d032a622cf94baf637a4488720865da983853e4a655fea4e45d0e80f0a9c640",
+     "binary_sha256": "25ba8ebec5f227618d8d58f475622669f4c45019d40259d1d292a823f4184c27",
+     "inventory_sha256": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+     "taxonomy_sha256": "6064ebcb6693a1dd7b3e50fbfbcc94ff959f7957ac184188fd91744900a429a3",
+     "materializer_sha256": "ba6245da8b07901b6793898e70e2e974a1e641a2c3be0d357ba53d15101f4081",
+     "default_action": "keep",
+     "overrides": []
+    },
+    "@inventory-claude"
+   ],
+   "expected": {
+    "error": "Native prompt inventory_sha256 does not match the selected inventory"
+   }
+  },
+  {
+   "name": "materializer pin differs",
+   "args": [
+    {
+     "schema_version": 1,
+     "runtime_id": "native-claude-code",
+     "runtime_version": "0.0.0-golden",
+     "image_digest": "sha256:2d032a622cf94baf637a4488720865da983853e4a655fea4e45d0e80f0a9c640",
+     "binary_sha256": "25ba8ebec5f227618d8d58f475622669f4c45019d40259d1d292a823f4184c27",
+     "inventory_sha256": "44e7b67bbdc0842fecf8cfa158641e03998f7d0b34184bc297ede967ab24ce7a",
+     "taxonomy_sha256": "6064ebcb6693a1dd7b3e50fbfbcc94ff959f7957ac184188fd91744900a429a3",
+     "materializer_sha256": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+     "default_action": "keep",
+     "overrides": []
+    },
+    "@inventory-claude"
+   ],
+   "expected": {
+    "error": "Native prompt materializer_sha256 does not match the selected inventory"
+   }
+  },
+  {
+   "name": "invalid default action",
+   "args": [
+    {
+     "schema_version": 1,
+     "runtime_id": "native-claude-code",
+     "runtime_version": "0.0.0-golden",
+     "image_digest": "sha256:2d032a622cf94baf637a4488720865da983853e4a655fea4e45d0e80f0a9c640",
+     "binary_sha256": "25ba8ebec5f227618d8d58f475622669f4c45019d40259d1d292a823f4184c27",
+     "inventory_sha256": "44e7b67bbdc0842fecf8cfa158641e03998f7d0b34184bc297ede967ab24ce7a",
+     "taxonomy_sha256": "6064ebcb6693a1dd7b3e50fbfbcc94ff959f7957ac184188fd91744900a429a3",
+     "materializer_sha256": "ba6245da8b07901b6793898e70e2e974a1e641a2c3be0d357ba53d15101f4081",
+     "default_action": "replace",
+     "overrides": []
+    },
+    "@inventory-claude"
+   ],
+   "expected": {
+    "error": "Invalid default native prompt action"
+   }
+  },
+  {
+   "name": "overrides is not a list",
+   "args": [
+    {
+     "schema_version": 1,
+     "runtime_id": "native-claude-code",
+     "runtime_version": "0.0.0-golden",
+     "image_digest": "sha256:2d032a622cf94baf637a4488720865da983853e4a655fea4e45d0e80f0a9c640",
+     "binary_sha256": "25ba8ebec5f227618d8d58f475622669f4c45019d40259d1d292a823f4184c27",
+     "inventory_sha256": "44e7b67bbdc0842fecf8cfa158641e03998f7d0b34184bc297ede967ab24ce7a",
+     "taxonomy_sha256": "6064ebcb6693a1dd7b3e50fbfbcc94ff959f7957ac184188fd91744900a429a3",
+     "materializer_sha256": "ba6245da8b07901b6793898e70e2e974a1e641a2c3be0d357ba53d15101f4081",
+     "default_action": "keep",
+     "overrides": {}
+    },
+    "@inventory-claude"
+   ],
+   "expected": {
+    "error": "Too many native prompt overrides"
+   }
+  },
+  {
+   "name": "too many overrides",
+   "args": [
+    "@profile-large-over",
+    "@inventory-large"
+   ],
+   "expected": {
+    "error": "Too many native prompt overrides"
+   }
+  },
+  {
+   "name": "override is not an object",
+   "args": [
+    {
+     "schema_version": 1,
+     "runtime_id": "native-claude-code",
+     "runtime_version": "0.0.0-golden",
+     "image_digest": "sha256:2d032a622cf94baf637a4488720865da983853e4a655fea4e45d0e80f0a9c640",
+     "binary_sha256": "25ba8ebec5f227618d8d58f475622669f4c45019d40259d1d292a823f4184c27",
+     "inventory_sha256": "44e7b67bbdc0842fecf8cfa158641e03998f7d0b34184bc297ede967ab24ce7a",
+     "taxonomy_sha256": "6064ebcb6693a1dd7b3e50fbfbcc94ff959f7957ac184188fd91744900a429a3",
+     "materializer_sha256": "ba6245da8b07901b6793898e70e2e974a1e641a2c3be0d357ba53d15101f4081",
+     "default_action": "keep",
+     "overrides": [
+      "tool-bash-guide"
+     ]
+    },
+    "@inventory-claude"
+   ],
+   "expected": {
+    "error": "Invalid native prompt override"
+   }
+  },
+  {
+   "name": "override with an extra field",
+   "args": [
+    {
+     "schema_version": 1,
+     "runtime_id": "native-claude-code",
+     "runtime_version": "0.0.0-golden",
+     "image_digest": "sha256:2d032a622cf94baf637a4488720865da983853e4a655fea4e45d0e80f0a9c640",
+     "binary_sha256": "25ba8ebec5f227618d8d58f475622669f4c45019d40259d1d292a823f4184c27",
+     "inventory_sha256": "44e7b67bbdc0842fecf8cfa158641e03998f7d0b34184bc297ede967ab24ce7a",
+     "taxonomy_sha256": "6064ebcb6693a1dd7b3e50fbfbcc94ff959f7957ac184188fd91744900a429a3",
+     "materializer_sha256": "ba6245da8b07901b6793898e70e2e974a1e641a2c3be0d357ba53d15101f4081",
+     "default_action": "keep",
+     "overrides": [
+      {
+       "block_id": "short",
+       "baseline_sha256": "213c22ed7234eb11116e1e88f314c73cb3a019b5c87fe224b6ce5665bd9ec50e",
+       "action": "disable",
+       "note": "x"
+      }
+     ]
+    },
+    "@inventory-claude"
+   ],
+   "expected": {
+    "error": "Invalid native prompt override fields"
+   }
+  },
+  {
+   "name": "override with an unknown action",
+   "args": [
+    {
+     "schema_version": 1,
+     "runtime_id": "native-claude-code",
+     "runtime_version": "0.0.0-golden",
+     "image_digest": "sha256:2d032a622cf94baf637a4488720865da983853e4a655fea4e45d0e80f0a9c640",
+     "binary_sha256": "25ba8ebec5f227618d8d58f475622669f4c45019d40259d1d292a823f4184c27",
+     "inventory_sha256": "44e7b67bbdc0842fecf8cfa158641e03998f7d0b34184bc297ede967ab24ce7a",
+     "taxonomy_sha256": "6064ebcb6693a1dd7b3e50fbfbcc94ff959f7957ac184188fd91744900a429a3",
+     "materializer_sha256": "ba6245da8b07901b6793898e70e2e974a1e641a2c3be0d357ba53d15101f4081",
+     "default_action": "keep",
+     "overrides": [
+      {
+       "block_id": "short",
+       "baseline_sha256": "213c22ed7234eb11116e1e88f314c73cb3a019b5c87fe224b6ce5665bd9ec50e",
+       "action": "insert"
+      }
+     ]
+    },
+    "@inventory-claude"
+   ],
+   "expected": {
+    "error": "Invalid native prompt override fields"
+   }
+  },
+  {
+   "name": "override for an unknown block",
+   "args": [
+    {
+     "schema_version": 1,
+     "runtime_id": "native-claude-code",
+     "runtime_version": "0.0.0-golden",
+     "image_digest": "sha256:2d032a622cf94baf637a4488720865da983853e4a655fea4e45d0e80f0a9c640",
+     "binary_sha256": "25ba8ebec5f227618d8d58f475622669f4c45019d40259d1d292a823f4184c27",
+     "inventory_sha256": "44e7b67bbdc0842fecf8cfa158641e03998f7d0b34184bc297ede967ab24ce7a",
+     "taxonomy_sha256": "6064ebcb6693a1dd7b3e50fbfbcc94ff959f7957ac184188fd91744900a429a3",
+     "materializer_sha256": "ba6245da8b07901b6793898e70e2e974a1e641a2c3be0d357ba53d15101f4081",
+     "default_action": "keep",
+     "overrides": [
+      {
+       "block_id": "missing-block",
+       "baseline_sha256": "213c22ed7234eb11116e1e88f314c73cb3a019b5c87fe224b6ce5665bd9ec50e",
+       "action": "keep"
+      }
+     ]
+    },
+    "@inventory-claude"
+   ],
+   "expected": {
+    "error": "Unknown or duplicate native prompt override"
+   }
+  },
+  {
+   "name": "duplicate override",
+   "args": [
+    {
+     "schema_version": 1,
+     "runtime_id": "native-claude-code",
+     "runtime_version": "0.0.0-golden",
+     "image_digest": "sha256:2d032a622cf94baf637a4488720865da983853e4a655fea4e45d0e80f0a9c640",
+     "binary_sha256": "25ba8ebec5f227618d8d58f475622669f4c45019d40259d1d292a823f4184c27",
+     "inventory_sha256": "44e7b67bbdc0842fecf8cfa158641e03998f7d0b34184bc297ede967ab24ce7a",
+     "taxonomy_sha256": "6064ebcb6693a1dd7b3e50fbfbcc94ff959f7957ac184188fd91744900a429a3",
+     "materializer_sha256": "ba6245da8b07901b6793898e70e2e974a1e641a2c3be0d357ba53d15101f4081",
+     "default_action": "keep",
+     "overrides": [
+      {
+       "block_id": "short",
+       "baseline_sha256": "213c22ed7234eb11116e1e88f314c73cb3a019b5c87fe224b6ce5665bd9ec50e",
+       "action": "keep"
+      },
+      {
+       "block_id": "short",
+       "baseline_sha256": "213c22ed7234eb11116e1e88f314c73cb3a019b5c87fe224b6ce5665bd9ec50e",
+       "action": "disable"
+      }
+     ]
+    },
+    "@inventory-claude"
+   ],
+   "expected": {
+    "error": "Unknown or duplicate native prompt override"
+   }
+  },
+  {
+   "name": "baseline changed",
+   "args": [
+    {
+     "schema_version": 1,
+     "runtime_id": "native-claude-code",
+     "runtime_version": "0.0.0-golden",
+     "image_digest": "sha256:2d032a622cf94baf637a4488720865da983853e4a655fea4e45d0e80f0a9c640",
+     "binary_sha256": "25ba8ebec5f227618d8d58f475622669f4c45019d40259d1d292a823f4184c27",
+     "inventory_sha256": "44e7b67bbdc0842fecf8cfa158641e03998f7d0b34184bc297ede967ab24ce7a",
+     "taxonomy_sha256": "6064ebcb6693a1dd7b3e50fbfbcc94ff959f7957ac184188fd91744900a429a3",
+     "materializer_sha256": "ba6245da8b07901b6793898e70e2e974a1e641a2c3be0d357ba53d15101f4081",
+     "default_action": "keep",
+     "overrides": [
+      {
+       "block_id": "short",
+       "baseline_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+       "action": "disable"
+      }
+     ]
+    },
+    "@inventory-claude"
+   ],
+   "expected": {
+    "error": "Native prompt override baseline changed"
+   }
+  },
+  {
+   "name": "observed-only block disabled",
+   "args": [
+    {
+     "schema_version": 1,
+     "runtime_id": "native-claude-code",
+     "runtime_version": "0.0.0-golden",
+     "image_digest": "sha256:2d032a622cf94baf637a4488720865da983853e4a655fea4e45d0e80f0a9c640",
+     "binary_sha256": "25ba8ebec5f227618d8d58f475622669f4c45019d40259d1d292a823f4184c27",
+     "inventory_sha256": "44e7b67bbdc0842fecf8cfa158641e03998f7d0b34184bc297ede967ab24ce7a",
+     "taxonomy_sha256": "6064ebcb6693a1dd7b3e50fbfbcc94ff959f7957ac184188fd91744900a429a3",
+     "materializer_sha256": "ba6245da8b07901b6793898e70e2e974a1e641a2c3be0d357ba53d15101f4081",
+     "default_action": "keep",
+     "overrides": [
+      {
+       "block_id": "observed-dynamic",
+       "baseline_sha256": "051b5a1029b4b78cbfdc9d1fe6ade44d634c605f3ad3b88ed5d59a55c877d6f7",
+       "action": "disable"
+      }
+     ]
+    },
+    "@inventory-claude"
+   ],
+   "expected": {
+    "error": "Native prompt block is not patchable"
+   }
+  },
+  {
+   "name": "unavailable block replaced",
+   "args": [
+    {
+     "schema_version": 1,
+     "runtime_id": "native-claude-code",
+     "runtime_version": "0.0.0-golden",
+     "image_digest": "sha256:2d032a622cf94baf637a4488720865da983853e4a655fea4e45d0e80f0a9c640",
+     "binary_sha256": "25ba8ebec5f227618d8d58f475622669f4c45019d40259d1d292a823f4184c27",
+     "inventory_sha256": "44e7b67bbdc0842fecf8cfa158641e03998f7d0b34184bc297ede967ab24ce7a",
+     "taxonomy_sha256": "6064ebcb6693a1dd7b3e50fbfbcc94ff959f7957ac184188fd91744900a429a3",
+     "materializer_sha256": "ba6245da8b07901b6793898e70e2e974a1e641a2c3be0d357ba53d15101f4081",
+     "default_action": "keep",
+     "overrides": [
+      {
+       "block_id": "unavailable-fragment",
+       "baseline_sha256": "e5f67235304253a532f9d320332a59008a26ffe56aa2f3ce9a80c97a98d3b105",
+       "action": "replace",
+       "replacement_utf8": "Fabricated.",
+       "replacement_sha256": "bb688a5116da03d6e9987461246747769b56f229fb7bdc03423f95918d0e9244"
+      }
+     ]
+    },
+    "@inventory-claude"
+   ],
+   "expected": {
+    "error": "Native prompt block is not patchable"
+   }
+  },
+  {
+   "name": "replacement is not text",
+   "args": [
+    {
+     "schema_version": 1,
+     "runtime_id": "native-claude-code",
+     "runtime_version": "0.0.0-golden",
+     "image_digest": "sha256:2d032a622cf94baf637a4488720865da983853e4a655fea4e45d0e80f0a9c640",
+     "binary_sha256": "25ba8ebec5f227618d8d58f475622669f4c45019d40259d1d292a823f4184c27",
+     "inventory_sha256": "44e7b67bbdc0842fecf8cfa158641e03998f7d0b34184bc297ede967ab24ce7a",
+     "taxonomy_sha256": "6064ebcb6693a1dd7b3e50fbfbcc94ff959f7957ac184188fd91744900a429a3",
+     "materializer_sha256": "ba6245da8b07901b6793898e70e2e974a1e641a2c3be0d357ba53d15101f4081",
+     "default_action": "keep",
+     "overrides": [
+      {
+       "block_id": "short",
+       "baseline_sha256": "213c22ed7234eb11116e1e88f314c73cb3a019b5c87fe224b6ce5665bd9ec50e",
+       "action": "replace",
+       "replacement_utf8": 7,
+       "replacement_sha256": "2d711642b726b04401627ca9fbac32f5c8530fb1903cc4db02258717921a4881"
+      }
+     ]
+    },
+    "@inventory-claude"
+   ],
+   "expected": {
+    "error": "replacement_utf8 must be text"
+   }
+  },
+  {
+   "name": "replacement with a lone surrogate",
+   "args": [
+    {
+     "schema_version": 1,
+     "runtime_id": "native-claude-code",
+     "runtime_version": "0.0.0-golden",
+     "image_digest": "sha256:2d032a622cf94baf637a4488720865da983853e4a655fea4e45d0e80f0a9c640",
+     "binary_sha256": "25ba8ebec5f227618d8d58f475622669f4c45019d40259d1d292a823f4184c27",
+     "inventory_sha256": "44e7b67bbdc0842fecf8cfa158641e03998f7d0b34184bc297ede967ab24ce7a",
+     "taxonomy_sha256": "6064ebcb6693a1dd7b3e50fbfbcc94ff959f7957ac184188fd91744900a429a3",
+     "materializer_sha256": "ba6245da8b07901b6793898e70e2e974a1e641a2c3be0d357ba53d15101f4081",
+     "default_action": "keep",
+     "overrides": [
+      {
+       "block_id": "short",
+       "baseline_sha256": "213c22ed7234eb11116e1e88f314c73cb3a019b5c87fe224b6ce5665bd9ec50e",
+       "action": "replace",
+       "replacement_utf8": "bad \ud800 text",
+       "replacement_sha256": "d555f95a4426132b08d1a28778a305ea2fd8fe7f41e49822e66538f35127ae91"
+      }
+     ]
+    },
+    "@inventory-claude"
+   ],
+   "expected": {
+    "error": "replacement_utf8 is not valid UTF-8"
+   }
+  },
+  {
+   "name": "replacement with a NUL",
+   "args": [
+    {
+     "schema_version": 1,
+     "runtime_id": "native-claude-code",
+     "runtime_version": "0.0.0-golden",
+     "image_digest": "sha256:2d032a622cf94baf637a4488720865da983853e4a655fea4e45d0e80f0a9c640",
+     "binary_sha256": "25ba8ebec5f227618d8d58f475622669f4c45019d40259d1d292a823f4184c27",
+     "inventory_sha256": "44e7b67bbdc0842fecf8cfa158641e03998f7d0b34184bc297ede967ab24ce7a",
+     "taxonomy_sha256": "6064ebcb6693a1dd7b3e50fbfbcc94ff959f7957ac184188fd91744900a429a3",
+     "materializer_sha256": "ba6245da8b07901b6793898e70e2e974a1e641a2c3be0d357ba53d15101f4081",
+     "default_action": "keep",
+     "overrides": [
+      {
+       "block_id": "short",
+       "baseline_sha256": "213c22ed7234eb11116e1e88f314c73cb3a019b5c87fe224b6ce5665bd9ec50e",
+       "action": "replace",
+       "replacement_utf8": "bad \u0000 text",
+       "replacement_sha256": "eb875d7f5181320c0b290c868d38d36fc65bed8738828895f30c8db9b60444bb"
+      }
+     ]
+    },
+    "@inventory-claude"
+   ],
+   "expected": {
+    "error": "replacement_utf8 contains a NUL"
+   }
+  },
+  {
+   "name": "empty replacement",
+   "args": [
+    {
+     "schema_version": 1,
+     "runtime_id": "native-claude-code",
+     "runtime_version": "0.0.0-golden",
+     "image_digest": "sha256:2d032a622cf94baf637a4488720865da983853e4a655fea4e45d0e80f0a9c640",
+     "binary_sha256": "25ba8ebec5f227618d8d58f475622669f4c45019d40259d1d292a823f4184c27",
+     "inventory_sha256": "44e7b67bbdc0842fecf8cfa158641e03998f7d0b34184bc297ede967ab24ce7a",
+     "taxonomy_sha256": "6064ebcb6693a1dd7b3e50fbfbcc94ff959f7957ac184188fd91744900a429a3",
+     "materializer_sha256": "ba6245da8b07901b6793898e70e2e974a1e641a2c3be0d357ba53d15101f4081",
+     "default_action": "keep",
+     "overrides": [
+      {
+       "block_id": "short",
+       "baseline_sha256": "213c22ed7234eb11116e1e88f314c73cb3a019b5c87fe224b6ce5665bd9ec50e",
+       "action": "replace",
+       "replacement_utf8": "",
+       "replacement_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      }
+     ]
+    },
+    "@inventory-claude"
+   ],
+   "expected": {
+    "error": "Native replacement must be nonempty and within the byte limit"
+   }
+  },
+  {
+   "name": "replacement over 250,000 bytes",
+   "args": [
+    {
+     "schema_version": 1,
+     "runtime_id": "native-claude-code",
+     "runtime_version": "0.0.0-golden",
+     "image_digest": "sha256:2d032a622cf94baf637a4488720865da983853e4a655fea4e45d0e80f0a9c640",
+     "binary_sha256": "25ba8ebec5f227618d8d58f475622669f4c45019d40259d1d292a823f4184c27",
+     "inventory_sha256": "44e7b67bbdc0842fecf8cfa158641e03998f7d0b34184bc297ede967ab24ce7a",
+     "taxonomy_sha256": "6064ebcb6693a1dd7b3e50fbfbcc94ff959f7957ac184188fd91744900a429a3",
+     "materializer_sha256": "ba6245da8b07901b6793898e70e2e974a1e641a2c3be0d357ba53d15101f4081",
+     "default_action": "keep",
+     "overrides": [
+      {
+       "block_id": "tool-bash-guide",
+       "baseline_sha256": "c5db5a79c94bb7a9835cbe2e3897337c52e3bb72b73edaedf1165a51246b057b",
+       "action": "replace",
+       "replacement_utf8": {
+        "@repeat": "z",
+        "times": 250001
+       },
+       "replacement_sha256": "013bf2a987e8b1a3bafc4c732b6644b6bb0f938eac66bc2b67719b725c54c742"
+      }
+     ]
+    },
+    "@inventory-claude"
+   ],
+   "expected": {
+    "error": "Native replacement must be nonempty and within the byte limit"
+   }
+  },
+  {
+   "name": "replacement digest mismatch",
+   "args": [
+    {
+     "schema_version": 1,
+     "runtime_id": "native-claude-code",
+     "runtime_version": "0.0.0-golden",
+     "image_digest": "sha256:2d032a622cf94baf637a4488720865da983853e4a655fea4e45d0e80f0a9c640",
+     "binary_sha256": "25ba8ebec5f227618d8d58f475622669f4c45019d40259d1d292a823f4184c27",
+     "inventory_sha256": "44e7b67bbdc0842fecf8cfa158641e03998f7d0b34184bc297ede967ab24ce7a",
+     "taxonomy_sha256": "6064ebcb6693a1dd7b3e50fbfbcc94ff959f7957ac184188fd91744900a429a3",
+     "materializer_sha256": "ba6245da8b07901b6793898e70e2e974a1e641a2c3be0d357ba53d15101f4081",
+     "default_action": "keep",
+     "overrides": [
+      {
+       "block_id": "short",
+       "baseline_sha256": "213c22ed7234eb11116e1e88f314c73cb3a019b5c87fe224b6ce5665bd9ec50e",
+       "action": "replace",
+       "replacement_utf8": "Fabricated.",
+       "replacement_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+      }
+     ]
+    },
+    "@inventory-claude"
+   ],
+   "expected": {
+    "error": "Native replacement digest mismatch"
+   }
+  },
+  {
+   "name": "placeholders reordered",
+   "args": [
+    {
+     "schema_version": 1,
+     "runtime_id": "native-claude-code",
+     "runtime_version": "0.0.0-golden",
+     "image_digest": "sha256:2d032a622cf94baf637a4488720865da983853e4a655fea4e45d0e80f0a9c640",
+     "binary_sha256": "25ba8ebec5f227618d8d58f475622669f4c45019d40259d1d292a823f4184c27",
+     "inventory_sha256": "44e7b67bbdc0842fecf8cfa158641e03998f7d0b34184bc297ede967ab24ce7a",
+     "taxonomy_sha256": "6064ebcb6693a1dd7b3e50fbfbcc94ff959f7957ac184188fd91744900a429a3",
+     "materializer_sha256": "ba6245da8b07901b6793898e70e2e974a1e641a2c3be0d357ba53d15101f4081",
+     "default_action": "keep",
+     "overrides": [
+      {
+       "block_id": "system-reminder-plan",
+       "baseline_sha256": "5911fea64f55d714569aff07fa8a887a235adca26c869f4f492da7c88c004a73",
+       "action": "replace",
+       "replacement_utf8": "A ${TH_PROMPT_EXPR_1} B ${TH_PROMPT_EXPR_0}",
+       "replacement_sha256": "fe43e188ad92f581c6aa0049e7a3c88d488beb26ccd352ee852f1d6d4e6e9255"
+      }
+     ]
+    },
+    "@inventory-claude"
+   ],
+   "expected": {
+    "error": "Native replacement must preserve the exact template placeholder order and multiplicity"
+   }
+  },
+  {
+   "name": "placeholder missing",
+   "args": [
+    {
+     "schema_version": 1,
+     "runtime_id": "native-claude-code",
+     "runtime_version": "0.0.0-golden",
+     "image_digest": "sha256:2d032a622cf94baf637a4488720865da983853e4a655fea4e45d0e80f0a9c640",
+     "binary_sha256": "25ba8ebec5f227618d8d58f475622669f4c45019d40259d1d292a823f4184c27",
+     "inventory_sha256": "44e7b67bbdc0842fecf8cfa158641e03998f7d0b34184bc297ede967ab24ce7a",
+     "taxonomy_sha256": "6064ebcb6693a1dd7b3e50fbfbcc94ff959f7957ac184188fd91744900a429a3",
+     "materializer_sha256": "ba6245da8b07901b6793898e70e2e974a1e641a2c3be0d357ba53d15101f4081",
+     "default_action": "keep",
+     "overrides": [
+      {
+       "block_id": "system-reminder-plan",
+       "baseline_sha256": "5911fea64f55d714569aff07fa8a887a235adca26c869f4f492da7c88c004a73",
+       "action": "replace",
+       "replacement_utf8": "A ${TH_PROMPT_EXPR_0} only",
+       "replacement_sha256": "3633ebc20349a0627fe35062cf4709f8b2cb47dca0ff52f45ff14e6cf686044e"
+      }
+     ]
+    },
+    "@inventory-claude"
+   ],
+   "expected": {
+    "error": "Native replacement must preserve the exact template placeholder order and multiplicity"
+   }
+  },
+  {
+   "name": "stray placeholder text",
+   "args": [
+    {
+     "schema_version": 1,
+     "runtime_id": "native-claude-code",
+     "runtime_version": "0.0.0-golden",
+     "image_digest": "sha256:2d032a622cf94baf637a4488720865da983853e4a655fea4e45d0e80f0a9c640",
+     "binary_sha256": "25ba8ebec5f227618d8d58f475622669f4c45019d40259d1d292a823f4184c27",
+     "inventory_sha256": "44e7b67bbdc0842fecf8cfa158641e03998f7d0b34184bc297ede967ab24ce7a",
+     "taxonomy_sha256": "6064ebcb6693a1dd7b3e50fbfbcc94ff959f7957ac184188fd91744900a429a3",
+     "materializer_sha256": "ba6245da8b07901b6793898e70e2e974a1e641a2c3be0d357ba53d15101f4081",
+     "default_action": "keep",
+     "overrides": [
+      {
+       "block_id": "short",
+       "baseline_sha256": "213c22ed7234eb11116e1e88f314c73cb3a019b5c87fe224b6ce5665bd9ec50e",
+       "action": "replace",
+       "replacement_utf8": "Fabricated ${TH_PROMPT_EXPR text",
+       "replacement_sha256": "3a4430c9d6685b4c601520822ca49520254dccf3033dc2cf99eb39fed01e9969"
+      }
+     ]
+    },
+    "@inventory-claude"
+   ],
+   "expected": {
+    "error": "Native replacement contains an invalid template placeholder"
+   }
+  },
+  {
+   "name": "canonical profile over 768 KiB",
+   "args": [
+    {
+     "schema_version": 1,
+     "runtime_id": "native-claude-code",
+     "runtime_version": "0.0.0-golden",
+     "image_digest": "sha256:2d032a622cf94baf637a4488720865da983853e4a655fea4e45d0e80f0a9c640",
+     "binary_sha256": "25ba8ebec5f227618d8d58f475622669f4c45019d40259d1d292a823f4184c27",
+     "inventory_sha256": "44e7b67bbdc0842fecf8cfa158641e03998f7d0b34184bc297ede967ab24ce7a",
+     "taxonomy_sha256": "6064ebcb6693a1dd7b3e50fbfbcc94ff959f7957ac184188fd91744900a429a3",
+     "materializer_sha256": "ba6245da8b07901b6793898e70e2e974a1e641a2c3be0d357ba53d15101f4081",
+     "default_action": "keep",
+     "overrides": [
+      {
+       "block_id": "tool-bash-guide",
+       "baseline_sha256": "c5db5a79c94bb7a9835cbe2e3897337c52e3bb72b73edaedf1165a51246b057b",
+       "action": "replace",
+       "replacement_utf8": {
+        "@repeat": "Fabricated filler. ",
+        "times": 9000
+       },
+       "replacement_sha256": "edba55fe31afde6012ace2415874634cc3a4d2e17e26a0d220c9002cab31718e"
+      },
+      {
+       "block_id": "security-sandbox-note",
+       "baseline_sha256": "da29f4d417fb4114d86cf22df8e7b8b94933d8df6b415974fb64812073588596",
+       "action": "replace",
+       "replacement_utf8": {
+        "@repeat": "Fabricated filler. ",
+        "times": 9000
+       },
+       "replacement_sha256": "edba55fe31afde6012ace2415874634cc3a4d2e17e26a0d220c9002cab31718e"
+      },
+      {
+       "block_id": "response-style",
+       "baseline_sha256": "dfdce2e37fd61eaecb69669b607c265d2dd9f8ab9c574eea221bb5e77620c6be",
+       "action": "replace",
+       "replacement_utf8": {
+        "@repeat": "Fabricated filler. ",
+        "times": 9000
+       },
+       "replacement_sha256": "edba55fe31afde6012ace2415874634cc3a4d2e17e26a0d220c9002cab31718e"
+      },
+      {
+       "block_id": "general-hedge",
+       "baseline_sha256": "9e5dada3492558f4af8fff686a4bb57c2bcc6e83faa7b86f653206cff34ac914",
+       "action": "replace",
+       "replacement_utf8": {
+        "@repeat": "Fabricated filler. ",
+        "times": 9000
+       },
+       "replacement_sha256": "edba55fe31afde6012ace2415874634cc3a4d2e17e26a0d220c9002cab31718e"
+      },
+      {
+       "block_id": "short",
+       "baseline_sha256": "213c22ed7234eb11116e1e88f314c73cb3a019b5c87fe224b6ce5665bd9ec50e",
+       "action": "replace",
+       "replacement_utf8": {
+        "@repeat": "Fabricated filler. ",
+        "times": 9000
+       },
+       "replacement_sha256": "edba55fe31afde6012ace2415874634cc3a4d2e17e26a0d220c9002cab31718e"
+      }
+     ]
+    },
+    "@inventory-claude"
+   ],
+   "expected": {
+    "error": "Native prompt profile exceeds the byte limit"
+   }
+  },
+  {
+   "name": "Codex replacement within capacity",
+   "args": [
+    {
+     "schema_version": 1,
+     "runtime_id": "native-codex",
+     "runtime_version": "0.167.1",
+     "image_digest": "sha256:716f940f0958cd4abdda846a256caa95e40a5a858709f72692a16a89f9d14c7f",
+     "binary_sha256": "18ee9689f82cda3a1af3da8b40e0b5477a56b83e9e4fa620554a2fd6c6112053",
+     "inventory_sha256": "4eca453646cf1f187f5872ccafdec818d4536b3452b5ea1d33dcb436ad78273d",
+     "taxonomy_sha256": "6064ebcb6693a1dd7b3e50fbfbcc94ff959f7957ac184188fd91744900a429a3",
+     "materializer_sha256": "8a1ee9f8fba86a80c057f7712d4aeddb02096ec17f3c22451ecaf5ded9c1c185",
+     "default_action": "keep",
+     "overrides": [
+      {
+       "block_id": "codex-base-instructions",
+       "baseline_sha256": "04b714360378a9022492a219659487658c02520f37174c08d287b37f62086689",
+       "action": "replace",
+       "replacement_utf8": "Shorter Codex text.",
+       "replacement_sha256": "0a9e38ae35200a39063f684d152ba58d43aac9d0255f515b39d330853d553ec6"
+      }
+     ]
+    },
+    "@inventory-codex"
+   ],
+   "expected": {
+    "schema_version": 1,
+    "inventory_sha256": "4eca453646cf1f187f5872ccafdec818d4536b3452b5ea1d33dcb436ad78273d",
+    "taxonomy_sha256": "6064ebcb6693a1dd7b3e50fbfbcc94ff959f7957ac184188fd91744900a429a3",
+    "runtime_version": "0.167.1",
+    "binary_sha256": "18ee9689f82cda3a1af3da8b40e0b5477a56b83e9e4fa620554a2fd6c6112053",
+    "runtime_id": "native-codex",
+    "image_digest": "sha256:716f940f0958cd4abdda846a256caa95e40a5a858709f72692a16a89f9d14c7f",
+    "default_action": "keep",
+    "materializer_sha256": "8a1ee9f8fba86a80c057f7712d4aeddb02096ec17f3c22451ecaf5ded9c1c185",
+    "overrides": [
+     {
+      "block_id": "codex-base-instructions",
+      "baseline_sha256": "04b714360378a9022492a219659487658c02520f37174c08d287b37f62086689",
+      "action": "replace",
+      "replacement_utf8": "Shorter Codex text.",
+      "replacement_sha256": "0a9e38ae35200a39063f684d152ba58d43aac9d0255f515b39d330853d553ec6"
+     }
+    ]
+   }
+  },
+  {
+   "name": "Codex replacement over capacity",
+   "args": [
+    {
+     "schema_version": 1,
+     "runtime_id": "native-codex",
+     "runtime_version": "0.167.1",
+     "image_digest": "sha256:716f940f0958cd4abdda846a256caa95e40a5a858709f72692a16a89f9d14c7f",
+     "binary_sha256": "18ee9689f82cda3a1af3da8b40e0b5477a56b83e9e4fa620554a2fd6c6112053",
+     "inventory_sha256": "4eca453646cf1f187f5872ccafdec818d4536b3452b5ea1d33dcb436ad78273d",
+     "taxonomy_sha256": "6064ebcb6693a1dd7b3e50fbfbcc94ff959f7957ac184188fd91744900a429a3",
+     "materializer_sha256": "8a1ee9f8fba86a80c057f7712d4aeddb02096ec17f3c22451ecaf5ded9c1c185",
+     "default_action": "keep",
+     "overrides": [
+      {
+       "block_id": "codex-short",
+       "baseline_sha256": "fa6eb19205792e9f5eedf1535af30a3bd9d94d49e92bedf94dd1261de32e17c8",
+       "action": "replace",
+       "replacement_utf8": "This is longer than ten bytes.",
+       "replacement_sha256": "f3ec9374ad66f40ff9a95d9f7bc1f8f892ff9733fbcd5f705df667fffdf3eab2"
+      }
+     ]
+    },
+    "@inventory-codex"
+   ],
+   "expected": {
+    "error": "Codex replacement exceeds the native fragment UTF-8 byte capacity"
+   }
+  },
+  {
+   "name": "Codex observed-only template disabled",
+   "args": [
+    {
+     "schema_version": 1,
+     "runtime_id": "native-codex",
+     "runtime_version": "0.167.1",
+     "image_digest": "sha256:716f940f0958cd4abdda846a256caa95e40a5a858709f72692a16a89f9d14c7f",
+     "binary_sha256": "18ee9689f82cda3a1af3da8b40e0b5477a56b83e9e4fa620554a2fd6c6112053",
+     "inventory_sha256": "4eca453646cf1f187f5872ccafdec818d4536b3452b5ea1d33dcb436ad78273d",
+     "taxonomy_sha256": "6064ebcb6693a1dd7b3e50fbfbcc94ff959f7957ac184188fd91744900a429a3",
+     "materializer_sha256": "8a1ee9f8fba86a80c057f7712d4aeddb02096ec17f3c22451ecaf5ded9c1c185",
+     "default_action": "keep",
+     "overrides": [
+      {
+       "block_id": "codex-template",
+       "baseline_sha256": "f2b36162c9c4fc83044c1a8bd0daa8c44b17b06cf8298e7b25cc64c390b2cfaf",
+       "action": "disable"
+      }
+     ]
+    },
+    "@inventory-codex"
+   ],
+   "expected": {
+    "error": "Native prompt block is not patchable"
+   }
+  },
+  {
+   "name": "Claude profile against the Codex inventory",
+   "args": [
+    {
+     "schema_version": 1,
+     "runtime_id": "native-claude-code",
+     "runtime_version": "0.0.0-golden",
+     "image_digest": "sha256:2d032a622cf94baf637a4488720865da983853e4a655fea4e45d0e80f0a9c640",
+     "binary_sha256": "25ba8ebec5f227618d8d58f475622669f4c45019d40259d1d292a823f4184c27",
+     "inventory_sha256": "44e7b67bbdc0842fecf8cfa158641e03998f7d0b34184bc297ede967ab24ce7a",
+     "taxonomy_sha256": "6064ebcb6693a1dd7b3e50fbfbcc94ff959f7957ac184188fd91744900a429a3",
+     "materializer_sha256": "ba6245da8b07901b6793898e70e2e974a1e641a2c3be0d357ba53d15101f4081",
+     "default_action": "keep",
+     "overrides": [
+      {
+       "block_id": "tool-bash-guide",
+       "baseline_sha256": "c5db5a79c94bb7a9835cbe2e3897337c52e3bb72b73edaedf1165a51246b057b",
+       "action": "replace",
+       "replacement_utf8": "Fabricated replacement text.",
+       "replacement_sha256": "1b10d1f88eeb90d1941d319ac3624e9f5020a05f36129893ecb91a97207e7be0"
+      },
+      {
+       "block_id": "short",
+       "baseline_sha256": "213c22ed7234eb11116e1e88f314c73cb3a019b5c87fe224b6ce5665bd9ec50e",
+       "action": "disable"
+      },
+      {
+       "block_id": "observed-dynamic",
+       "baseline_sha256": "051b5a1029b4b78cbfdc9d1fe6ade44d634c605f3ad3b88ed5d59a55c877d6f7",
+       "action": "keep"
+      }
+     ]
+    },
+    "@inventory-codex"
+   ],
+   "expected": {
+    "error": "Native prompt runtime_id does not match the selected inventory"
+   }
+  },
+  {
+   "name": "digest: canonical valid profile",
+   "args": [
+    {
+     "schema_version": 1,
+     "inventory_sha256": "44e7b67bbdc0842fecf8cfa158641e03998f7d0b34184bc297ede967ab24ce7a",
+     "taxonomy_sha256": "6064ebcb6693a1dd7b3e50fbfbcc94ff959f7957ac184188fd91744900a429a3",
+     "runtime_version": "0.0.0-golden",
+     "binary_sha256": "25ba8ebec5f227618d8d58f475622669f4c45019d40259d1d292a823f4184c27",
+     "runtime_id": "native-claude-code",
+     "image_digest": "sha256:2d032a622cf94baf637a4488720865da983853e4a655fea4e45d0e80f0a9c640",
+     "default_action": "keep",
+     "materializer_sha256": "ba6245da8b07901b6793898e70e2e974a1e641a2c3be0d357ba53d15101f4081",
+     "overrides": [
+      {
+       "block_id": "tool-bash-guide",
+       "baseline_sha256": "c5db5a79c94bb7a9835cbe2e3897337c52e3bb72b73edaedf1165a51246b057b",
+       "action": "replace",
+       "replacement_utf8": "Fabricated replacement text.",
+       "replacement_sha256": "1b10d1f88eeb90d1941d319ac3624e9f5020a05f36129893ecb91a97207e7be0"
+      },
+      {
+       "block_id": "observed-dynamic",
+       "baseline_sha256": "051b5a1029b4b78cbfdc9d1fe6ade44d634c605f3ad3b88ed5d59a55c877d6f7",
+       "action": "keep"
+      },
+      {
+       "block_id": "short",
+       "baseline_sha256": "213c22ed7234eb11116e1e88f314c73cb3a019b5c87fe224b6ce5665bd9ec50e",
+       "action": "disable"
+      }
+     ]
+    }
+   ],
+   "function": "profile_sha256",
+   "expected": "41359688f7add5fba5df6858cff56057159845a3fb3c83ad1552731d0621200c"
+  },
+  {
+   "name": "bytes: canonical valid profile",
+   "args": [
+    {
+     "schema_version": 1,
+     "inventory_sha256": "44e7b67bbdc0842fecf8cfa158641e03998f7d0b34184bc297ede967ab24ce7a",
+     "taxonomy_sha256": "6064ebcb6693a1dd7b3e50fbfbcc94ff959f7957ac184188fd91744900a429a3",
+     "runtime_version": "0.0.0-golden",
+     "binary_sha256": "25ba8ebec5f227618d8d58f475622669f4c45019d40259d1d292a823f4184c27",
+     "runtime_id": "native-claude-code",
+     "image_digest": "sha256:2d032a622cf94baf637a4488720865da983853e4a655fea4e45d0e80f0a9c640",
+     "default_action": "keep",
+     "materializer_sha256": "ba6245da8b07901b6793898e70e2e974a1e641a2c3be0d357ba53d15101f4081",
+     "overrides": [
+      {
+       "block_id": "tool-bash-guide",
+       "baseline_sha256": "c5db5a79c94bb7a9835cbe2e3897337c52e3bb72b73edaedf1165a51246b057b",
+       "action": "replace",
+       "replacement_utf8": "Fabricated replacement text.",
+       "replacement_sha256": "1b10d1f88eeb90d1941d319ac3624e9f5020a05f36129893ecb91a97207e7be0"
+      },
+      {
+       "block_id": "observed-dynamic",
+       "baseline_sha256": "051b5a1029b4b78cbfdc9d1fe6ade44d634c605f3ad3b88ed5d59a55c877d6f7",
+       "action": "keep"
+      },
+      {
+       "block_id": "short",
+       "baseline_sha256": "213c22ed7234eb11116e1e88f314c73cb3a019b5c87fe224b6ce5665bd9ec50e",
+       "action": "disable"
+      }
+     ]
+    }
+   ],
+   "function": "profile_bytes",
+   "expected": 1088
+  },
+  {
+   "name": "digest: baseline",
+   "args": [
+    {
+     "schema_version": 1,
+     "runtime_id": "native-claude-code",
+     "runtime_version": "0.0.0-golden",
+     "image_digest": "sha256:2d032a622cf94baf637a4488720865da983853e4a655fea4e45d0e80f0a9c640",
+     "binary_sha256": "25ba8ebec5f227618d8d58f475622669f4c45019d40259d1d292a823f4184c27",
+     "inventory_sha256": "44e7b67bbdc0842fecf8cfa158641e03998f7d0b34184bc297ede967ab24ce7a",
+     "taxonomy_sha256": "6064ebcb6693a1dd7b3e50fbfbcc94ff959f7957ac184188fd91744900a429a3",
+     "materializer_sha256": "ba6245da8b07901b6793898e70e2e974a1e641a2c3be0d357ba53d15101f4081",
+     "default_action": "keep",
+     "overrides": []
+    }
+   ],
+   "function": "profile_sha256",
+   "expected": "9c20f2936d33c80b1ea4b3201b104eed936eacf5ccb9e8705c4ae1a2ec09a778"
+  },
+  {
+   "name": "bytes: baseline",
+   "args": [
+    {
+     "schema_version": 1,
+     "runtime_id": "native-claude-code",
+     "runtime_version": "0.0.0-golden",
+     "image_digest": "sha256:2d032a622cf94baf637a4488720865da983853e4a655fea4e45d0e80f0a9c640",
+     "binary_sha256": "25ba8ebec5f227618d8d58f475622669f4c45019d40259d1d292a823f4184c27",
+     "inventory_sha256": "44e7b67bbdc0842fecf8cfa158641e03998f7d0b34184bc297ede967ab24ce7a",
+     "taxonomy_sha256": "6064ebcb6693a1dd7b3e50fbfbcc94ff959f7957ac184188fd91744900a429a3",
+     "materializer_sha256": "ba6245da8b07901b6793898e70e2e974a1e641a2c3be0d357ba53d15101f4081",
+     "default_action": "keep",
+     "overrides": []
+    }
+   ],
+   "function": "profile_bytes",
+   "expected": 558
+  },
+  {
+   "name": "digest: none included",
+   "args": [
+    {
+     "schema_version": 1,
+     "runtime_id": "native-claude-code",
+     "runtime_version": "0.0.0-golden",
+     "image_digest": "sha256:2d032a622cf94baf637a4488720865da983853e4a655fea4e45d0e80f0a9c640",
+     "binary_sha256": "25ba8ebec5f227618d8d58f475622669f4c45019d40259d1d292a823f4184c27",
+     "inventory_sha256": "44e7b67bbdc0842fecf8cfa158641e03998f7d0b34184bc297ede967ab24ce7a",
+     "taxonomy_sha256": "6064ebcb6693a1dd7b3e50fbfbcc94ff959f7957ac184188fd91744900a429a3",
+     "materializer_sha256": "ba6245da8b07901b6793898e70e2e974a1e641a2c3be0d357ba53d15101f4081",
+     "default_action": "disable",
+     "overrides": []
+    }
+   ],
+   "function": "profile_sha256",
+   "expected": "b608d664641f74f4c33a17efa2ed1b948ffdb5e10da6c4048d8cdfd268eca368"
+  },
+  {
+   "name": "bytes: none included",
+   "args": [
+    {
+     "schema_version": 1,
+     "runtime_id": "native-claude-code",
+     "runtime_version": "0.0.0-golden",
+     "image_digest": "sha256:2d032a622cf94baf637a4488720865da983853e4a655fea4e45d0e80f0a9c640",
+     "binary_sha256": "25ba8ebec5f227618d8d58f475622669f4c45019d40259d1d292a823f4184c27",
+     "inventory_sha256": "44e7b67bbdc0842fecf8cfa158641e03998f7d0b34184bc297ede967ab24ce7a",
+     "taxonomy_sha256": "6064ebcb6693a1dd7b3e50fbfbcc94ff959f7957ac184188fd91744900a429a3",
+     "materializer_sha256": "ba6245da8b07901b6793898e70e2e974a1e641a2c3be0d357ba53d15101f4081",
+     "default_action": "disable",
+     "overrides": []
+    }
+   ],
+   "function": "profile_bytes",
+   "expected": 561
+  },
+  {
+   "name": "digest: templated",
+   "args": [
+    {
+     "schema_version": 1,
+     "inventory_sha256": "44e7b67bbdc0842fecf8cfa158641e03998f7d0b34184bc297ede967ab24ce7a",
+     "taxonomy_sha256": "6064ebcb6693a1dd7b3e50fbfbcc94ff959f7957ac184188fd91744900a429a3",
+     "runtime_version": "0.0.0-golden",
+     "binary_sha256": "25ba8ebec5f227618d8d58f475622669f4c45019d40259d1d292a823f4184c27",
+     "runtime_id": "native-claude-code",
+     "image_digest": "sha256:2d032a622cf94baf637a4488720865da983853e4a655fea4e45d0e80f0a9c640",
+     "default_action": "keep",
+     "materializer_sha256": "ba6245da8b07901b6793898e70e2e974a1e641a2c3be0d357ba53d15101f4081",
+     "overrides": [
+      {
+       "block_id": "system-reminder-plan",
+       "baseline_sha256": "5911fea64f55d714569aff07fa8a887a235adca26c869f4f492da7c88c004a73",
+       "action": "replace",
+       "replacement_utf8": "Fabricated: ${TH_PROMPT_EXPR_0} then ${TH_PROMPT_EXPR_1}.",
+       "replacement_sha256": "5c87f84a6139ef88f6f0dff5daec3a6df89250feb6e3f8220d126c1e4060aef3"
+      }
+     ]
+    }
+   ],
+   "function": "profile_sha256",
+   "expected": "b2da4ec194db6968e9b1c1f14d3698a23f4cbb06d582d20bb4217dbaf2b88107"
+  },
+  {
+   "name": "bytes: templated",
+   "args": [
+    {
+     "schema_version": 1,
+     "inventory_sha256": "44e7b67bbdc0842fecf8cfa158641e03998f7d0b34184bc297ede967ab24ce7a",
+     "taxonomy_sha256": "6064ebcb6693a1dd7b3e50fbfbcc94ff959f7957ac184188fd91744900a429a3",
+     "runtime_version": "0.0.0-golden",
+     "binary_sha256": "25ba8ebec5f227618d8d58f475622669f4c45019d40259d1d292a823f4184c27",
+     "runtime_id": "native-claude-code",
+     "image_digest": "sha256:2d032a622cf94baf637a4488720865da983853e4a655fea4e45d0e80f0a9c640",
+     "default_action": "keep",
+     "materializer_sha256": "ba6245da8b07901b6793898e70e2e974a1e641a2c3be0d357ba53d15101f4081",
+     "overrides": [
+      {
+       "block_id": "system-reminder-plan",
+       "baseline_sha256": "5911fea64f55d714569aff07fa8a887a235adca26c869f4f492da7c88c004a73",
+       "action": "replace",
+       "replacement_utf8": "Fabricated: ${TH_PROMPT_EXPR_0} then ${TH_PROMPT_EXPR_1}.",
+       "replacement_sha256": "5c87f84a6139ef88f6f0dff5daec3a6df89250feb6e3f8220d126c1e4060aef3"
+      }
+     ]
+    }
+   ],
+   "function": "profile_bytes",
+   "expected": 864
+  },
+  {
+   "name": "digest: non-ASCII replacement",
+   "args": [
+    {
+     "schema_version": 1,
+     "inventory_sha256": "44e7b67bbdc0842fecf8cfa158641e03998f7d0b34184bc297ede967ab24ce7a",
+     "taxonomy_sha256": "6064ebcb6693a1dd7b3e50fbfbcc94ff959f7957ac184188fd91744900a429a3",
+     "runtime_version": "0.0.0-golden",
+     "binary_sha256": "25ba8ebec5f227618d8d58f475622669f4c45019d40259d1d292a823f4184c27",
+     "runtime_id": "native-claude-code",
+     "image_digest": "sha256:2d032a622cf94baf637a4488720865da983853e4a655fea4e45d0e80f0a9c640",
+     "default_action": "keep",
+     "materializer_sha256": "ba6245da8b07901b6793898e70e2e974a1e641a2c3be0d357ba53d15101f4081",
+     "overrides": [
+      {
+       "block_id": "unicode-mix",
+       "baseline_sha256": "d00da6c5a836c9df66e6b20ea37a93990bedea7ff26d8c203fd257d9b47523a8",
+       "action": "replace",
+       "replacement_utf8": "\u65e5\u672c \ud83d\ude42 \u2028 caf\u00e9",
+       "replacement_sha256": "9419a79f13cf8074a8b907660062b83ae43cbfa72552faa00cbacdf24ecba9d1"
+      }
+     ]
+    }
+   ],
+   "function": "profile_sha256",
+   "expected": "96ea1861254766eed63baa840ce3337952dda6ad213a0dd431e5f72bb624596f"
+  },
+  {
+   "name": "bytes: non-ASCII replacement",
+   "args": [
+    {
+     "schema_version": 1,
+     "inventory_sha256": "44e7b67bbdc0842fecf8cfa158641e03998f7d0b34184bc297ede967ab24ce7a",
+     "taxonomy_sha256": "6064ebcb6693a1dd7b3e50fbfbcc94ff959f7957ac184188fd91744900a429a3",
+     "runtime_version": "0.0.0-golden",
+     "binary_sha256": "25ba8ebec5f227618d8d58f475622669f4c45019d40259d1d292a823f4184c27",
+     "runtime_id": "native-claude-code",
+     "image_digest": "sha256:2d032a622cf94baf637a4488720865da983853e4a655fea4e45d0e80f0a9c640",
+     "default_action": "keep",
+     "materializer_sha256": "ba6245da8b07901b6793898e70e2e974a1e641a2c3be0d357ba53d15101f4081",
+     "overrides": [
+      {
+       "block_id": "unicode-mix",
+       "baseline_sha256": "d00da6c5a836c9df66e6b20ea37a93990bedea7ff26d8c203fd257d9b47523a8",
+       "action": "replace",
+       "replacement_utf8": "\u65e5\u672c \ud83d\ude42 \u2028 caf\u00e9",
+       "replacement_sha256": "9419a79f13cf8074a8b907660062b83ae43cbfa72552faa00cbacdf24ecba9d1"
+      }
+     ]
+    }
+   ],
+   "function": "profile_bytes",
+   "expected": 819
+  },
+  {
+   "name": "digest: control characters in a replacement",
+   "args": [
+    {
+     "schema_version": 1,
+     "inventory_sha256": "44e7b67bbdc0842fecf8cfa158641e03998f7d0b34184bc297ede967ab24ce7a",
+     "taxonomy_sha256": "6064ebcb6693a1dd7b3e50fbfbcc94ff959f7957ac184188fd91744900a429a3",
+     "runtime_version": "0.0.0-golden",
+     "binary_sha256": "25ba8ebec5f227618d8d58f475622669f4c45019d40259d1d292a823f4184c27",
+     "runtime_id": "native-claude-code",
+     "image_digest": "sha256:2d032a622cf94baf637a4488720865da983853e4a655fea4e45d0e80f0a9c640",
+     "default_action": "keep",
+     "materializer_sha256": "ba6245da8b07901b6793898e70e2e974a1e641a2c3be0d357ba53d15101f4081",
+     "overrides": [
+      {
+       "block_id": "short",
+       "baseline_sha256": "213c22ed7234eb11116e1e88f314c73cb3a019b5c87fe224b6ce5665bd9ec50e",
+       "action": "replace",
+       "replacement_utf8": "tab\tand\u0001",
+       "replacement_sha256": "7c18011804718deddccf66686f5ed7fc4755df2996aef454d04fef3d0dd8898c"
+      }
+     ]
+    }
+   ],
+   "function": "profile_sha256",
+   "expected": "5a5de30000f03b5220636f5f7b92b5d565bbca5f5d0570e4b63edd44a4af8255"
+  },
+  {
+   "name": "bytes: control characters in a replacement",
+   "args": [
+    {
+     "schema_version": 1,
+     "inventory_sha256": "44e7b67bbdc0842fecf8cfa158641e03998f7d0b34184bc297ede967ab24ce7a",
+     "taxonomy_sha256": "6064ebcb6693a1dd7b3e50fbfbcc94ff959f7957ac184188fd91744900a429a3",
+     "runtime_version": "0.0.0-golden",
+     "binary_sha256": "25ba8ebec5f227618d8d58f475622669f4c45019d40259d1d292a823f4184c27",
+     "runtime_id": "native-claude-code",
+     "image_digest": "sha256:2d032a622cf94baf637a4488720865da983853e4a655fea4e45d0e80f0a9c640",
+     "default_action": "keep",
+     "materializer_sha256": "ba6245da8b07901b6793898e70e2e974a1e641a2c3be0d357ba53d15101f4081",
+     "overrides": [
+      {
+       "block_id": "short",
+       "baseline_sha256": "213c22ed7234eb11116e1e88f314c73cb3a019b5c87fe224b6ce5665bd9ec50e",
+       "action": "replace",
+       "replacement_utf8": "tab\tand\u0001",
+       "replacement_sha256": "7c18011804718deddccf66686f5ed7fc4755df2996aef454d04fef3d0dd8898c"
+      }
+     ]
+    }
+   ],
+   "function": "profile_bytes",
+   "expected": 806
+  },
+  {
+   "name": "digest: Codex baseline",
+   "args": [
+    {
+     "schema_version": 1,
+     "runtime_id": "native-codex",
+     "runtime_version": "0.167.1",
+     "image_digest": "sha256:716f940f0958cd4abdda846a256caa95e40a5a858709f72692a16a89f9d14c7f",
+     "binary_sha256": "18ee9689f82cda3a1af3da8b40e0b5477a56b83e9e4fa620554a2fd6c6112053",
+     "inventory_sha256": "4eca453646cf1f187f5872ccafdec818d4536b3452b5ea1d33dcb436ad78273d",
+     "taxonomy_sha256": "6064ebcb6693a1dd7b3e50fbfbcc94ff959f7957ac184188fd91744900a429a3",
+     "materializer_sha256": "8a1ee9f8fba86a80c057f7712d4aeddb02096ec17f3c22451ecaf5ded9c1c185",
+     "default_action": "keep",
+     "overrides": []
+    }
+   ],
+   "function": "profile_sha256",
+   "expected": "4b9944a8fd21a3fcb889e2c7b8a38e50cd8d9d8f68acaab2f621bfa80cfb4a34"
+  },
+  {
+   "name": "bytes: Codex baseline",
+   "args": [
+    {
+     "schema_version": 1,
+     "runtime_id": "native-codex",
+     "runtime_version": "0.167.1",
+     "image_digest": "sha256:716f940f0958cd4abdda846a256caa95e40a5a858709f72692a16a89f9d14c7f",
+     "binary_sha256": "18ee9689f82cda3a1af3da8b40e0b5477a56b83e9e4fa620554a2fd6c6112053",
+     "inventory_sha256": "4eca453646cf1f187f5872ccafdec818d4536b3452b5ea1d33dcb436ad78273d",
+     "taxonomy_sha256": "6064ebcb6693a1dd7b3e50fbfbcc94ff959f7957ac184188fd91744900a429a3",
+     "materializer_sha256": "8a1ee9f8fba86a80c057f7712d4aeddb02096ec17f3c22451ecaf5ded9c1c185",
+     "default_action": "keep",
+     "overrides": []
+    }
+   ],
+   "function": "profile_bytes",
+   "expected": 547
+  },
+  {
+   "name": "digest: Codex replacement",
+   "args": [
+    {
+     "schema_version": 1,
+     "inventory_sha256": "4eca453646cf1f187f5872ccafdec818d4536b3452b5ea1d33dcb436ad78273d",
+     "taxonomy_sha256": "6064ebcb6693a1dd7b3e50fbfbcc94ff959f7957ac184188fd91744900a429a3",
+     "runtime_version": "0.167.1",
+     "binary_sha256": "18ee9689f82cda3a1af3da8b40e0b5477a56b83e9e4fa620554a2fd6c6112053",
+     "runtime_id": "native-codex",
+     "image_digest": "sha256:716f940f0958cd4abdda846a256caa95e40a5a858709f72692a16a89f9d14c7f",
+     "default_action": "keep",
+     "materializer_sha256": "8a1ee9f8fba86a80c057f7712d4aeddb02096ec17f3c22451ecaf5ded9c1c185",
+     "overrides": [
+      {
+       "block_id": "codex-review",
+       "baseline_sha256": "7f587ebb523bdfb535b38804a344d40b9991372fa7343e4f5fced81ce3bd4dfa",
+       "action": "replace",
+       "replacement_utf8": "Fabricated review.\n",
+       "replacement_sha256": "6ede03b26f78483653cfcdad8548836e24282d0d7847866745c46c55e6affd07"
+      }
+     ]
+    }
+   ],
+   "function": "profile_sha256",
+   "expected": "4e3005b7f1f15d9c2a5d06ade030da73b5e616a02bb6b2b6075520470f3e0a3f"
+  },
+  {
+   "name": "bytes: Codex replacement",
+   "args": [
+    {
+     "schema_version": 1,
+     "inventory_sha256": "4eca453646cf1f187f5872ccafdec818d4536b3452b5ea1d33dcb436ad78273d",
+     "taxonomy_sha256": "6064ebcb6693a1dd7b3e50fbfbcc94ff959f7957ac184188fd91744900a429a3",
+     "runtime_version": "0.167.1",
+     "binary_sha256": "18ee9689f82cda3a1af3da8b40e0b5477a56b83e9e4fa620554a2fd6c6112053",
+     "runtime_id": "native-codex",
+     "image_digest": "sha256:716f940f0958cd4abdda846a256caa95e40a5a858709f72692a16a89f9d14c7f",
+     "default_action": "keep",
+     "materializer_sha256": "8a1ee9f8fba86a80c057f7712d4aeddb02096ec17f3c22451ecaf5ded9c1c185",
+     "overrides": [
+      {
+       "block_id": "codex-review",
+       "baseline_sha256": "7f587ebb523bdfb535b38804a344d40b9991372fa7343e4f5fced81ce3bd4dfa",
+       "action": "replace",
+       "replacement_utf8": "Fabricated review.\n",
+       "replacement_sha256": "6ede03b26f78483653cfcdad8548836e24282d0d7847866745c46c55e6affd07"
+      }
+     ]
+    }
+   ],
+   "function": "profile_bytes",
+   "expected": 808
+  },
+  {
+   "name": "actions: baseline",
+   "args": [
+    {
+     "schema_version": 1,
+     "runtime_id": "native-claude-code",
+     "runtime_version": "0.0.0-golden",
+     "image_digest": "sha256:2d032a622cf94baf637a4488720865da983853e4a655fea4e45d0e80f0a9c640",
+     "binary_sha256": "25ba8ebec5f227618d8d58f475622669f4c45019d40259d1d292a823f4184c27",
+     "inventory_sha256": "44e7b67bbdc0842fecf8cfa158641e03998f7d0b34184bc297ede967ab24ce7a",
+     "taxonomy_sha256": "6064ebcb6693a1dd7b3e50fbfbcc94ff959f7957ac184188fd91744900a429a3",
+     "materializer_sha256": "ba6245da8b07901b6793898e70e2e974a1e641a2c3be0d357ba53d15101f4081",
+     "default_action": "keep",
+     "overrides": []
+    },
+    "@inventory-claude"
+   ],
+   "function": "resolve_actions",
+   "expected": {
+    "tool-bash-guide": "keep",
+    "system-reminder-plan": "keep",
+    "security-sandbox-note": "keep",
+    "response-style": "keep",
+    "general-hedge": "keep",
+    "observed-dynamic": "keep",
+    "unavailable-fragment": "keep",
+    "short": "keep",
+    "unicode-mix": "keep",
+    "credential-prose": "keep",
+    "escapes-sample": "keep",
+    "zebra-only": "keep",
+    "git-commit-guide": "keep",
+    "permission-deny-list": "keep"
+   }
+  },
+  {
+   "name": "counts: baseline",
+   "args": [
+    {
+     "schema_version": 1,
+     "runtime_id": "native-claude-code",
+     "runtime_version": "0.0.0-golden",
+     "image_digest": "sha256:2d032a622cf94baf637a4488720865da983853e4a655fea4e45d0e80f0a9c640",
+     "binary_sha256": "25ba8ebec5f227618d8d58f475622669f4c45019d40259d1d292a823f4184c27",
+     "inventory_sha256": "44e7b67bbdc0842fecf8cfa158641e03998f7d0b34184bc297ede967ab24ce7a",
+     "taxonomy_sha256": "6064ebcb6693a1dd7b3e50fbfbcc94ff959f7957ac184188fd91744900a429a3",
+     "materializer_sha256": "ba6245da8b07901b6793898e70e2e974a1e641a2c3be0d357ba53d15101f4081",
+     "default_action": "keep",
+     "overrides": []
+    },
+    "@inventory-claude"
+   ],
+   "function": "profile_counts",
+   "expected": {
+    "patchable": 12,
+    "keep": 12,
+    "replace": 0,
+    "disable": 0,
+    "observed": 1,
+    "unavailable": 1,
+    "overrides": 0,
+    "default_action": "keep"
+   }
+  },
+  {
+   "name": "actions: none included",
+   "args": [
+    {
+     "schema_version": 1,
+     "runtime_id": "native-claude-code",
+     "runtime_version": "0.0.0-golden",
+     "image_digest": "sha256:2d032a622cf94baf637a4488720865da983853e4a655fea4e45d0e80f0a9c640",
+     "binary_sha256": "25ba8ebec5f227618d8d58f475622669f4c45019d40259d1d292a823f4184c27",
+     "inventory_sha256": "44e7b67bbdc0842fecf8cfa158641e03998f7d0b34184bc297ede967ab24ce7a",
+     "taxonomy_sha256": "6064ebcb6693a1dd7b3e50fbfbcc94ff959f7957ac184188fd91744900a429a3",
+     "materializer_sha256": "ba6245da8b07901b6793898e70e2e974a1e641a2c3be0d357ba53d15101f4081",
+     "default_action": "disable",
+     "overrides": []
+    },
+    "@inventory-claude"
+   ],
+   "function": "resolve_actions",
+   "expected": {
+    "tool-bash-guide": "disable",
+    "system-reminder-plan": "disable",
+    "security-sandbox-note": "disable",
+    "response-style": "disable",
+    "general-hedge": "disable",
+    "observed-dynamic": "keep",
+    "unavailable-fragment": "keep",
+    "short": "disable",
+    "unicode-mix": "disable",
+    "credential-prose": "disable",
+    "escapes-sample": "disable",
+    "zebra-only": "disable",
+    "git-commit-guide": "disable",
+    "permission-deny-list": "disable"
+   }
+  },
+  {
+   "name": "counts: none included",
+   "args": [
+    {
+     "schema_version": 1,
+     "runtime_id": "native-claude-code",
+     "runtime_version": "0.0.0-golden",
+     "image_digest": "sha256:2d032a622cf94baf637a4488720865da983853e4a655fea4e45d0e80f0a9c640",
+     "binary_sha256": "25ba8ebec5f227618d8d58f475622669f4c45019d40259d1d292a823f4184c27",
+     "inventory_sha256": "44e7b67bbdc0842fecf8cfa158641e03998f7d0b34184bc297ede967ab24ce7a",
+     "taxonomy_sha256": "6064ebcb6693a1dd7b3e50fbfbcc94ff959f7957ac184188fd91744900a429a3",
+     "materializer_sha256": "ba6245da8b07901b6793898e70e2e974a1e641a2c3be0d357ba53d15101f4081",
+     "default_action": "disable",
+     "overrides": []
+    },
+    "@inventory-claude"
+   ],
+   "function": "profile_counts",
+   "expected": {
+    "patchable": 12,
+    "keep": 0,
+    "replace": 0,
+    "disable": 12,
+    "observed": 1,
+    "unavailable": 1,
+    "overrides": 0,
+    "default_action": "disable"
+   }
+  },
+  {
+   "name": "actions: mixed",
+   "args": [
+    {
+     "schema_version": 1,
+     "inventory_sha256": "44e7b67bbdc0842fecf8cfa158641e03998f7d0b34184bc297ede967ab24ce7a",
+     "taxonomy_sha256": "6064ebcb6693a1dd7b3e50fbfbcc94ff959f7957ac184188fd91744900a429a3",
+     "runtime_version": "0.0.0-golden",
+     "binary_sha256": "25ba8ebec5f227618d8d58f475622669f4c45019d40259d1d292a823f4184c27",
+     "runtime_id": "native-claude-code",
+     "image_digest": "sha256:2d032a622cf94baf637a4488720865da983853e4a655fea4e45d0e80f0a9c640",
+     "default_action": "keep",
+     "materializer_sha256": "ba6245da8b07901b6793898e70e2e974a1e641a2c3be0d357ba53d15101f4081",
+     "overrides": [
+      {
+       "block_id": "tool-bash-guide",
+       "baseline_sha256": "c5db5a79c94bb7a9835cbe2e3897337c52e3bb72b73edaedf1165a51246b057b",
+       "action": "replace",
+       "replacement_utf8": "Fabricated replacement text.",
+       "replacement_sha256": "1b10d1f88eeb90d1941d319ac3624e9f5020a05f36129893ecb91a97207e7be0"
+      },
+      {
+       "block_id": "observed-dynamic",
+       "baseline_sha256": "051b5a1029b4b78cbfdc9d1fe6ade44d634c605f3ad3b88ed5d59a55c877d6f7",
+       "action": "keep"
+      },
+      {
+       "block_id": "short",
+       "baseline_sha256": "213c22ed7234eb11116e1e88f314c73cb3a019b5c87fe224b6ce5665bd9ec50e",
+       "action": "disable"
+      }
+     ]
+    },
+    "@inventory-claude"
+   ],
+   "function": "resolve_actions",
+   "expected": {
+    "tool-bash-guide": "replace",
+    "system-reminder-plan": "keep",
+    "security-sandbox-note": "keep",
+    "response-style": "keep",
+    "general-hedge": "keep",
+    "observed-dynamic": "keep",
+    "unavailable-fragment": "keep",
+    "short": "disable",
+    "unicode-mix": "keep",
+    "credential-prose": "keep",
+    "escapes-sample": "keep",
+    "zebra-only": "keep",
+    "git-commit-guide": "keep",
+    "permission-deny-list": "keep"
+   }
+  },
+  {
+   "name": "counts: mixed",
+   "args": [
+    {
+     "schema_version": 1,
+     "inventory_sha256": "44e7b67bbdc0842fecf8cfa158641e03998f7d0b34184bc297ede967ab24ce7a",
+     "taxonomy_sha256": "6064ebcb6693a1dd7b3e50fbfbcc94ff959f7957ac184188fd91744900a429a3",
+     "runtime_version": "0.0.0-golden",
+     "binary_sha256": "25ba8ebec5f227618d8d58f475622669f4c45019d40259d1d292a823f4184c27",
+     "runtime_id": "native-claude-code",
+     "image_digest": "sha256:2d032a622cf94baf637a4488720865da983853e4a655fea4e45d0e80f0a9c640",
+     "default_action": "keep",
+     "materializer_sha256": "ba6245da8b07901b6793898e70e2e974a1e641a2c3be0d357ba53d15101f4081",
+     "overrides": [
+      {
+       "block_id": "tool-bash-guide",
+       "baseline_sha256": "c5db5a79c94bb7a9835cbe2e3897337c52e3bb72b73edaedf1165a51246b057b",
+       "action": "replace",
+       "replacement_utf8": "Fabricated replacement text.",
+       "replacement_sha256": "1b10d1f88eeb90d1941d319ac3624e9f5020a05f36129893ecb91a97207e7be0"
+      },
+      {
+       "block_id": "observed-dynamic",
+       "baseline_sha256": "051b5a1029b4b78cbfdc9d1fe6ade44d634c605f3ad3b88ed5d59a55c877d6f7",
+       "action": "keep"
+      },
+      {
+       "block_id": "short",
+       "baseline_sha256": "213c22ed7234eb11116e1e88f314c73cb3a019b5c87fe224b6ce5665bd9ec50e",
+       "action": "disable"
+      }
+     ]
+    },
+    "@inventory-claude"
+   ],
+   "function": "profile_counts",
+   "expected": {
+    "patchable": 12,
+    "keep": 10,
+    "replace": 1,
+    "disable": 1,
+    "observed": 1,
+    "unavailable": 1,
+    "overrides": 3,
+    "default_action": "keep"
+   }
+  },
+  {
+   "name": "actions: observed-only keep override",
+   "args": [
+    {
+     "schema_version": 1,
+     "runtime_id": "native-claude-code",
+     "runtime_version": "0.0.0-golden",
+     "image_digest": "sha256:2d032a622cf94baf637a4488720865da983853e4a655fea4e45d0e80f0a9c640",
+     "binary_sha256": "25ba8ebec5f227618d8d58f475622669f4c45019d40259d1d292a823f4184c27",
+     "inventory_sha256": "44e7b67bbdc0842fecf8cfa158641e03998f7d0b34184bc297ede967ab24ce7a",
+     "taxonomy_sha256": "6064ebcb6693a1dd7b3e50fbfbcc94ff959f7957ac184188fd91744900a429a3",
+     "materializer_sha256": "ba6245da8b07901b6793898e70e2e974a1e641a2c3be0d357ba53d15101f4081",
+     "default_action": "keep",
+     "overrides": [
+      {
+       "block_id": "observed-dynamic",
+       "baseline_sha256": "051b5a1029b4b78cbfdc9d1fe6ade44d634c605f3ad3b88ed5d59a55c877d6f7",
+       "action": "keep"
+      }
+     ]
+    },
+    "@inventory-claude"
+   ],
+   "function": "resolve_actions",
+   "expected": {
+    "tool-bash-guide": "keep",
+    "system-reminder-plan": "keep",
+    "security-sandbox-note": "keep",
+    "response-style": "keep",
+    "general-hedge": "keep",
+    "observed-dynamic": "keep",
+    "unavailable-fragment": "keep",
+    "short": "keep",
+    "unicode-mix": "keep",
+    "credential-prose": "keep",
+    "escapes-sample": "keep",
+    "zebra-only": "keep",
+    "git-commit-guide": "keep",
+    "permission-deny-list": "keep"
+   }
+  },
+  {
+   "name": "counts: observed-only keep override",
+   "args": [
+    {
+     "schema_version": 1,
+     "runtime_id": "native-claude-code",
+     "runtime_version": "0.0.0-golden",
+     "image_digest": "sha256:2d032a622cf94baf637a4488720865da983853e4a655fea4e45d0e80f0a9c640",
+     "binary_sha256": "25ba8ebec5f227618d8d58f475622669f4c45019d40259d1d292a823f4184c27",
+     "inventory_sha256": "44e7b67bbdc0842fecf8cfa158641e03998f7d0b34184bc297ede967ab24ce7a",
+     "taxonomy_sha256": "6064ebcb6693a1dd7b3e50fbfbcc94ff959f7957ac184188fd91744900a429a3",
+     "materializer_sha256": "ba6245da8b07901b6793898e70e2e974a1e641a2c3be0d357ba53d15101f4081",
+     "default_action": "keep",
+     "overrides": [
+      {
+       "block_id": "observed-dynamic",
+       "baseline_sha256": "051b5a1029b4b78cbfdc9d1fe6ade44d634c605f3ad3b88ed5d59a55c877d6f7",
+       "action": "keep"
+      }
+     ]
+    },
+    "@inventory-claude"
+   ],
+   "function": "profile_counts",
+   "expected": {
+    "patchable": 12,
+    "keep": 12,
+    "replace": 0,
+    "disable": 0,
+    "observed": 1,
+    "unavailable": 1,
+    "overrides": 1,
+    "default_action": "keep"
+   }
+  },
+  {
+   "name": "actions: templated replaced",
+   "args": [
+    {
+     "schema_version": 1,
+     "inventory_sha256": "44e7b67bbdc0842fecf8cfa158641e03998f7d0b34184bc297ede967ab24ce7a",
+     "taxonomy_sha256": "6064ebcb6693a1dd7b3e50fbfbcc94ff959f7957ac184188fd91744900a429a3",
+     "runtime_version": "0.0.0-golden",
+     "binary_sha256": "25ba8ebec5f227618d8d58f475622669f4c45019d40259d1d292a823f4184c27",
+     "runtime_id": "native-claude-code",
+     "image_digest": "sha256:2d032a622cf94baf637a4488720865da983853e4a655fea4e45d0e80f0a9c640",
+     "default_action": "keep",
+     "materializer_sha256": "ba6245da8b07901b6793898e70e2e974a1e641a2c3be0d357ba53d15101f4081",
+     "overrides": [
+      {
+       "block_id": "system-reminder-plan",
+       "baseline_sha256": "5911fea64f55d714569aff07fa8a887a235adca26c869f4f492da7c88c004a73",
+       "action": "replace",
+       "replacement_utf8": "Fabricated: ${TH_PROMPT_EXPR_0} then ${TH_PROMPT_EXPR_1}.",
+       "replacement_sha256": "5c87f84a6139ef88f6f0dff5daec3a6df89250feb6e3f8220d126c1e4060aef3"
+      }
+     ]
+    },
+    "@inventory-claude"
+   ],
+   "function": "resolve_actions",
+   "expected": {
+    "tool-bash-guide": "keep",
+    "system-reminder-plan": "replace",
+    "security-sandbox-note": "keep",
+    "response-style": "keep",
+    "general-hedge": "keep",
+    "observed-dynamic": "keep",
+    "unavailable-fragment": "keep",
+    "short": "keep",
+    "unicode-mix": "keep",
+    "credential-prose": "keep",
+    "escapes-sample": "keep",
+    "zebra-only": "keep",
+    "git-commit-guide": "keep",
+    "permission-deny-list": "keep"
+   }
+  },
+  {
+   "name": "counts: templated replaced",
+   "args": [
+    {
+     "schema_version": 1,
+     "inventory_sha256": "44e7b67bbdc0842fecf8cfa158641e03998f7d0b34184bc297ede967ab24ce7a",
+     "taxonomy_sha256": "6064ebcb6693a1dd7b3e50fbfbcc94ff959f7957ac184188fd91744900a429a3",
+     "runtime_version": "0.0.0-golden",
+     "binary_sha256": "25ba8ebec5f227618d8d58f475622669f4c45019d40259d1d292a823f4184c27",
+     "runtime_id": "native-claude-code",
+     "image_digest": "sha256:2d032a622cf94baf637a4488720865da983853e4a655fea4e45d0e80f0a9c640",
+     "default_action": "keep",
+     "materializer_sha256": "ba6245da8b07901b6793898e70e2e974a1e641a2c3be0d357ba53d15101f4081",
+     "overrides": [
+      {
+       "block_id": "system-reminder-plan",
+       "baseline_sha256": "5911fea64f55d714569aff07fa8a887a235adca26c869f4f492da7c88c004a73",
+       "action": "replace",
+       "replacement_utf8": "Fabricated: ${TH_PROMPT_EXPR_0} then ${TH_PROMPT_EXPR_1}.",
+       "replacement_sha256": "5c87f84a6139ef88f6f0dff5daec3a6df89250feb6e3f8220d126c1e4060aef3"
+      }
+     ]
+    },
+    "@inventory-claude"
+   ],
+   "function": "profile_counts",
+   "expected": {
+    "patchable": 12,
+    "keep": 11,
+    "replace": 1,
+    "disable": 0,
+    "observed": 1,
+    "unavailable": 1,
+    "overrides": 1,
+    "default_action": "keep"
+   }
+  },
+  {
+   "name": "actions: default disable with a keep override",
+   "args": [
+    {
+     "schema_version": 1,
+     "runtime_id": "native-claude-code",
+     "runtime_version": "0.0.0-golden",
+     "image_digest": "sha256:2d032a622cf94baf637a4488720865da983853e4a655fea4e45d0e80f0a9c640",
+     "binary_sha256": "25ba8ebec5f227618d8d58f475622669f4c45019d40259d1d292a823f4184c27",
+     "inventory_sha256": "44e7b67bbdc0842fecf8cfa158641e03998f7d0b34184bc297ede967ab24ce7a",
+     "taxonomy_sha256": "6064ebcb6693a1dd7b3e50fbfbcc94ff959f7957ac184188fd91744900a429a3",
+     "materializer_sha256": "ba6245da8b07901b6793898e70e2e974a1e641a2c3be0d357ba53d15101f4081",
+     "default_action": "disable",
+     "overrides": [
+      {
+       "block_id": "short",
+       "baseline_sha256": "213c22ed7234eb11116e1e88f314c73cb3a019b5c87fe224b6ce5665bd9ec50e",
+       "action": "keep"
+      }
+     ]
+    },
+    "@inventory-claude"
+   ],
+   "function": "resolve_actions",
+   "expected": {
+    "tool-bash-guide": "disable",
+    "system-reminder-plan": "disable",
+    "security-sandbox-note": "disable",
+    "response-style": "disable",
+    "general-hedge": "disable",
+    "observed-dynamic": "keep",
+    "unavailable-fragment": "keep",
+    "short": "keep",
+    "unicode-mix": "disable",
+    "credential-prose": "disable",
+    "escapes-sample": "disable",
+    "zebra-only": "disable",
+    "git-commit-guide": "disable",
+    "permission-deny-list": "disable"
+   }
+  },
+  {
+   "name": "counts: default disable with a keep override",
+   "args": [
+    {
+     "schema_version": 1,
+     "runtime_id": "native-claude-code",
+     "runtime_version": "0.0.0-golden",
+     "image_digest": "sha256:2d032a622cf94baf637a4488720865da983853e4a655fea4e45d0e80f0a9c640",
+     "binary_sha256": "25ba8ebec5f227618d8d58f475622669f4c45019d40259d1d292a823f4184c27",
+     "inventory_sha256": "44e7b67bbdc0842fecf8cfa158641e03998f7d0b34184bc297ede967ab24ce7a",
+     "taxonomy_sha256": "6064ebcb6693a1dd7b3e50fbfbcc94ff959f7957ac184188fd91744900a429a3",
+     "materializer_sha256": "ba6245da8b07901b6793898e70e2e974a1e641a2c3be0d357ba53d15101f4081",
+     "default_action": "disable",
+     "overrides": [
+      {
+       "block_id": "short",
+       "baseline_sha256": "213c22ed7234eb11116e1e88f314c73cb3a019b5c87fe224b6ce5665bd9ec50e",
+       "action": "keep"
+      }
+     ]
+    },
+    "@inventory-claude"
+   ],
+   "function": "profile_counts",
+   "expected": {
+    "patchable": 12,
+    "keep": 1,
+    "replace": 0,
+    "disable": 11,
+    "observed": 1,
+    "unavailable": 1,
+    "overrides": 1,
+    "default_action": "disable"
+   }
+  },
+  {
+   "name": "actions: default disable with a replacement",
+   "args": [
+    {
+     "schema_version": 1,
+     "runtime_id": "native-claude-code",
+     "runtime_version": "0.0.0-golden",
+     "image_digest": "sha256:2d032a622cf94baf637a4488720865da983853e4a655fea4e45d0e80f0a9c640",
+     "binary_sha256": "25ba8ebec5f227618d8d58f475622669f4c45019d40259d1d292a823f4184c27",
+     "inventory_sha256": "44e7b67bbdc0842fecf8cfa158641e03998f7d0b34184bc297ede967ab24ce7a",
+     "taxonomy_sha256": "6064ebcb6693a1dd7b3e50fbfbcc94ff959f7957ac184188fd91744900a429a3",
+     "materializer_sha256": "ba6245da8b07901b6793898e70e2e974a1e641a2c3be0d357ba53d15101f4081",
+     "default_action": "disable",
+     "overrides": [
+      {
+       "block_id": "zebra-only",
+       "baseline_sha256": "2ce9d291f5392ccce812660963901c0f0d97b67cf0e9fcb371d02e8574afda87",
+       "action": "replace",
+       "replacement_utf8": "Fabricated other fact.",
+       "replacement_sha256": "c09127f432773a882b6757d40fc42ec14f13490ca186f0e88dedb451c874d016"
+      }
+     ]
+    },
+    "@inventory-claude"
+   ],
+   "function": "resolve_actions",
+   "expected": {
+    "tool-bash-guide": "disable",
+    "system-reminder-plan": "disable",
+    "security-sandbox-note": "disable",
+    "response-style": "disable",
+    "general-hedge": "disable",
+    "observed-dynamic": "keep",
+    "unavailable-fragment": "keep",
+    "short": "disable",
+    "unicode-mix": "disable",
+    "credential-prose": "disable",
+    "escapes-sample": "disable",
+    "zebra-only": "replace",
+    "git-commit-guide": "disable",
+    "permission-deny-list": "disable"
+   }
+  },
+  {
+   "name": "counts: default disable with a replacement",
+   "args": [
+    {
+     "schema_version": 1,
+     "runtime_id": "native-claude-code",
+     "runtime_version": "0.0.0-golden",
+     "image_digest": "sha256:2d032a622cf94baf637a4488720865da983853e4a655fea4e45d0e80f0a9c640",
+     "binary_sha256": "25ba8ebec5f227618d8d58f475622669f4c45019d40259d1d292a823f4184c27",
+     "inventory_sha256": "44e7b67bbdc0842fecf8cfa158641e03998f7d0b34184bc297ede967ab24ce7a",
+     "taxonomy_sha256": "6064ebcb6693a1dd7b3e50fbfbcc94ff959f7957ac184188fd91744900a429a3",
+     "materializer_sha256": "ba6245da8b07901b6793898e70e2e974a1e641a2c3be0d357ba53d15101f4081",
+     "default_action": "disable",
+     "overrides": [
+      {
+       "block_id": "zebra-only",
+       "baseline_sha256": "2ce9d291f5392ccce812660963901c0f0d97b67cf0e9fcb371d02e8574afda87",
+       "action": "replace",
+       "replacement_utf8": "Fabricated other fact.",
+       "replacement_sha256": "c09127f432773a882b6757d40fc42ec14f13490ca186f0e88dedb451c874d016"
+      }
+     ]
+    },
+    "@inventory-claude"
+   ],
+   "function": "profile_counts",
+   "expected": {
+    "patchable": 12,
+    "keep": 0,
+    "replace": 1,
+    "disable": 11,
+    "observed": 1,
+    "unavailable": 1,
+    "overrides": 1,
+    "default_action": "disable"
+   }
+  },
+  {
+   "name": "actions: every patchable block disabled",
+   "args": [
+    {
+     "schema_version": 1,
+     "runtime_id": "native-claude-code",
+     "runtime_version": "0.0.0-golden",
+     "image_digest": "sha256:2d032a622cf94baf637a4488720865da983853e4a655fea4e45d0e80f0a9c640",
+     "binary_sha256": "25ba8ebec5f227618d8d58f475622669f4c45019d40259d1d292a823f4184c27",
+     "inventory_sha256": "44e7b67bbdc0842fecf8cfa158641e03998f7d0b34184bc297ede967ab24ce7a",
+     "taxonomy_sha256": "6064ebcb6693a1dd7b3e50fbfbcc94ff959f7957ac184188fd91744900a429a3",
+     "materializer_sha256": "ba6245da8b07901b6793898e70e2e974a1e641a2c3be0d357ba53d15101f4081",
+     "default_action": "keep",
+     "overrides": [
+      {
+       "block_id": "tool-bash-guide",
+       "baseline_sha256": "c5db5a79c94bb7a9835cbe2e3897337c52e3bb72b73edaedf1165a51246b057b",
+       "action": "disable"
+      },
+      {
+       "block_id": "system-reminder-plan",
+       "baseline_sha256": "5911fea64f55d714569aff07fa8a887a235adca26c869f4f492da7c88c004a73",
+       "action": "disable"
+      },
+      {
+       "block_id": "security-sandbox-note",
+       "baseline_sha256": "da29f4d417fb4114d86cf22df8e7b8b94933d8df6b415974fb64812073588596",
+       "action": "disable"
+      },
+      {
+       "block_id": "response-style",
+       "baseline_sha256": "dfdce2e37fd61eaecb69669b607c265d2dd9f8ab9c574eea221bb5e77620c6be",
+       "action": "disable"
+      },
+      {
+       "block_id": "general-hedge",
+       "baseline_sha256": "9e5dada3492558f4af8fff686a4bb57c2bcc6e83faa7b86f653206cff34ac914",
+       "action": "disable"
+      },
+      {
+       "block_id": "short",
+       "baseline_sha256": "213c22ed7234eb11116e1e88f314c73cb3a019b5c87fe224b6ce5665bd9ec50e",
+       "action": "disable"
+      },
+      {
+       "block_id": "unicode-mix",
+       "baseline_sha256": "d00da6c5a836c9df66e6b20ea37a93990bedea7ff26d8c203fd257d9b47523a8",
+       "action": "disable"
+      },
+      {
+       "block_id": "credential-prose",
+       "baseline_sha256": "6293d59414e9a5247a284f06bd5b229c7df4ac146349300fd02e33cc5729977f",
+       "action": "disable"
+      },
+      {
+       "block_id": "escapes-sample",
+       "baseline_sha256": "94e18873b9964d4d17b4df09af32075440f099df200461eeec07934da30feba4",
+       "action": "disable"
+      },
+      {
+       "block_id": "zebra-only",
+       "baseline_sha256": "2ce9d291f5392ccce812660963901c0f0d97b67cf0e9fcb371d02e8574afda87",
+       "action": "disable"
+      },
+      {
+       "block_id": "git-commit-guide",
+       "baseline_sha256": "b52acffead6afdd004e98f407b6e01be0ee3c1fb8ca7921989aebc6cf97a21d6",
+       "action": "disable"
+      },
+      {
+       "block_id": "permission-deny-list",
+       "baseline_sha256": "039c555594a44e8b16d8fa1ff05e52d243c3cf43cd0a41e79bcc0ae2baeeaedb",
+       "action": "disable"
+      }
+     ]
+    },
+    "@inventory-claude"
+   ],
+   "function": "resolve_actions",
+   "expected": {
+    "tool-bash-guide": "disable",
+    "system-reminder-plan": "disable",
+    "security-sandbox-note": "disable",
+    "response-style": "disable",
+    "general-hedge": "disable",
+    "observed-dynamic": "keep",
+    "unavailable-fragment": "keep",
+    "short": "disable",
+    "unicode-mix": "disable",
+    "credential-prose": "disable",
+    "escapes-sample": "disable",
+    "zebra-only": "disable",
+    "git-commit-guide": "disable",
+    "permission-deny-list": "disable"
+   }
+  },
+  {
+   "name": "counts: every patchable block disabled",
+   "args": [
+    {
+     "schema_version": 1,
+     "runtime_id": "native-claude-code",
+     "runtime_version": "0.0.0-golden",
+     "image_digest": "sha256:2d032a622cf94baf637a4488720865da983853e4a655fea4e45d0e80f0a9c640",
+     "binary_sha256": "25ba8ebec5f227618d8d58f475622669f4c45019d40259d1d292a823f4184c27",
+     "inventory_sha256": "44e7b67bbdc0842fecf8cfa158641e03998f7d0b34184bc297ede967ab24ce7a",
+     "taxonomy_sha256": "6064ebcb6693a1dd7b3e50fbfbcc94ff959f7957ac184188fd91744900a429a3",
+     "materializer_sha256": "ba6245da8b07901b6793898e70e2e974a1e641a2c3be0d357ba53d15101f4081",
+     "default_action": "keep",
+     "overrides": [
+      {
+       "block_id": "tool-bash-guide",
+       "baseline_sha256": "c5db5a79c94bb7a9835cbe2e3897337c52e3bb72b73edaedf1165a51246b057b",
+       "action": "disable"
+      },
+      {
+       "block_id": "system-reminder-plan",
+       "baseline_sha256": "5911fea64f55d714569aff07fa8a887a235adca26c869f4f492da7c88c004a73",
+       "action": "disable"
+      },
+      {
+       "block_id": "security-sandbox-note",
+       "baseline_sha256": "da29f4d417fb4114d86cf22df8e7b8b94933d8df6b415974fb64812073588596",
+       "action": "disable"
+      },
+      {
+       "block_id": "response-style",
+       "baseline_sha256": "dfdce2e37fd61eaecb69669b607c265d2dd9f8ab9c574eea221bb5e77620c6be",
+       "action": "disable"
+      },
+      {
+       "block_id": "general-hedge",
+       "baseline_sha256": "9e5dada3492558f4af8fff686a4bb57c2bcc6e83faa7b86f653206cff34ac914",
+       "action": "disable"
+      },
+      {
+       "block_id": "short",
+       "baseline_sha256": "213c22ed7234eb11116e1e88f314c73cb3a019b5c87fe224b6ce5665bd9ec50e",
+       "action": "disable"
+      },
+      {
+       "block_id": "unicode-mix",
+       "baseline_sha256": "d00da6c5a836c9df66e6b20ea37a93990bedea7ff26d8c203fd257d9b47523a8",
+       "action": "disable"
+      },
+      {
+       "block_id": "credential-prose",
+       "baseline_sha256": "6293d59414e9a5247a284f06bd5b229c7df4ac146349300fd02e33cc5729977f",
+       "action": "disable"
+      },
+      {
+       "block_id": "escapes-sample",
+       "baseline_sha256": "94e18873b9964d4d17b4df09af32075440f099df200461eeec07934da30feba4",
+       "action": "disable"
+      },
+      {
+       "block_id": "zebra-only",
+       "baseline_sha256": "2ce9d291f5392ccce812660963901c0f0d97b67cf0e9fcb371d02e8574afda87",
+       "action": "disable"
+      },
+      {
+       "block_id": "git-commit-guide",
+       "baseline_sha256": "b52acffead6afdd004e98f407b6e01be0ee3c1fb8ca7921989aebc6cf97a21d6",
+       "action": "disable"
+      },
+      {
+       "block_id": "permission-deny-list",
+       "baseline_sha256": "039c555594a44e8b16d8fa1ff05e52d243c3cf43cd0a41e79bcc0ae2baeeaedb",
+       "action": "disable"
+      }
+     ]
+    },
+    "@inventory-claude"
+   ],
+   "function": "profile_counts",
+   "expected": {
+    "patchable": 12,
+    "keep": 0,
+    "replace": 0,
+    "disable": 12,
+    "observed": 1,
+    "unavailable": 1,
+    "overrides": 12,
+    "default_action": "keep"
+   }
+  },
+  {
+   "name": "effective text: tool-bash-guide in a mixed profile",
+   "args": [
+    {
+     "id": "tool-bash-guide",
+     "title": "Shell tool guide",
+     "class_name": "Tool Descriptions",
+     "class_source": "agent-patcher@8d3c17099974c06f2cfb1547bb4744c05f845b56:workbench.py:CLAUDE_NFR_CATEGORIES",
+     "source_layer": "fabricated-golden-fragment",
+     "capability": "patchable",
+     "baseline_sha256": "c5db5a79c94bb7a9835cbe2e3897337c52e3bb72b73edaedf1165a51246b057b",
+     "baseline_utf8": "Fabricated guidance: run one shell command at a time and report its exit status.\n",
+     "occurrence_count": 1,
+     "required_placeholders": []
+    },
+    {
+     "schema_version": 1,
+     "inventory_sha256": "44e7b67bbdc0842fecf8cfa158641e03998f7d0b34184bc297ede967ab24ce7a",
+     "taxonomy_sha256": "6064ebcb6693a1dd7b3e50fbfbcc94ff959f7957ac184188fd91744900a429a3",
+     "runtime_version": "0.0.0-golden",
+     "binary_sha256": "25ba8ebec5f227618d8d58f475622669f4c45019d40259d1d292a823f4184c27",
+     "runtime_id": "native-claude-code",
+     "image_digest": "sha256:2d032a622cf94baf637a4488720865da983853e4a655fea4e45d0e80f0a9c640",
+     "default_action": "keep",
+     "materializer_sha256": "ba6245da8b07901b6793898e70e2e974a1e641a2c3be0d357ba53d15101f4081",
+     "overrides": [
+      {
+       "block_id": "tool-bash-guide",
+       "baseline_sha256": "c5db5a79c94bb7a9835cbe2e3897337c52e3bb72b73edaedf1165a51246b057b",
+       "action": "replace",
+       "replacement_utf8": "Fabricated replacement text.",
+       "replacement_sha256": "1b10d1f88eeb90d1941d319ac3624e9f5020a05f36129893ecb91a97207e7be0"
+      },
+      {
+       "block_id": "observed-dynamic",
+       "baseline_sha256": "051b5a1029b4b78cbfdc9d1fe6ade44d634c605f3ad3b88ed5d59a55c877d6f7",
+       "action": "keep"
+      },
+      {
+       "block_id": "short",
+       "baseline_sha256": "213c22ed7234eb11116e1e88f314c73cb3a019b5c87fe224b6ce5665bd9ec50e",
+       "action": "disable"
+      }
+     ]
+    }
+   ],
+   "function": "effective_text",
+   "expected": {
+    "action": "replace",
+    "text": "Fabricated replacement text."
+   }
+  },
+  {
+   "name": "effective text: short in a mixed profile",
+   "args": [
+    {
+     "id": "short",
+     "title": "Short literal",
+     "class_name": "General Behavior",
+     "class_source": "agent-patcher@8d3c17099974c06f2cfb1547bb4744c05f845b56:workbench.py:CLAUDE_NFR_CATEGORIES",
+     "source_layer": "fabricated-golden-fragment",
+     "capability": "patchable",
+     "baseline_sha256": "213c22ed7234eb11116e1e88f314c73cb3a019b5c87fe224b6ce5665bd9ec50e",
+     "baseline_utf8": "Be brief.",
+     "occurrence_count": 1,
+     "required_placeholders": []
+    },
+    {
+     "schema_version": 1,
+     "inventory_sha256": "44e7b67bbdc0842fecf8cfa158641e03998f7d0b34184bc297ede967ab24ce7a",
+     "taxonomy_sha256": "6064ebcb6693a1dd7b3e50fbfbcc94ff959f7957ac184188fd91744900a429a3",
+     "runtime_version": "0.0.0-golden",
+     "binary_sha256": "25ba8ebec5f227618d8d58f475622669f4c45019d40259d1d292a823f4184c27",
+     "runtime_id": "native-claude-code",
+     "image_digest": "sha256:2d032a622cf94baf637a4488720865da983853e4a655fea4e45d0e80f0a9c640",
+     "default_action": "keep",
+     "materializer_sha256": "ba6245da8b07901b6793898e70e2e974a1e641a2c3be0d357ba53d15101f4081",
+     "overrides": [
+      {
+       "block_id": "tool-bash-guide",
+       "baseline_sha256": "c5db5a79c94bb7a9835cbe2e3897337c52e3bb72b73edaedf1165a51246b057b",
+       "action": "replace",
+       "replacement_utf8": "Fabricated replacement text.",
+       "replacement_sha256": "1b10d1f88eeb90d1941d319ac3624e9f5020a05f36129893ecb91a97207e7be0"
+      },
+      {
+       "block_id": "observed-dynamic",
+       "baseline_sha256": "051b5a1029b4b78cbfdc9d1fe6ade44d634c605f3ad3b88ed5d59a55c877d6f7",
+       "action": "keep"
+      },
+      {
+       "block_id": "short",
+       "baseline_sha256": "213c22ed7234eb11116e1e88f314c73cb3a019b5c87fe224b6ce5665bd9ec50e",
+       "action": "disable"
+      }
+     ]
+    }
+   ],
+   "function": "effective_text",
+   "expected": {
+    "action": "disable",
+    "text": ""
+   }
+  },
+  {
+   "name": "effective text: observed-dynamic in a mixed profile",
+   "args": [
+    {
+     "id": "observed-dynamic",
+     "title": "Observed template",
+     "class_name": "General Behavior",
+     "class_source": "agent-patcher@8d3c17099974c06f2cfb1547bb4744c05f845b56:workbench.py:CLAUDE_NFR_CATEGORIES",
+     "source_layer": "fabricated-golden-fragment",
+     "capability": "observed-only",
+     "baseline_sha256": "051b5a1029b4b78cbfdc9d1fe6ade44d634c605f3ad3b88ed5d59a55c877d6f7",
+     "baseline_utf8": "Fabricated observed text with {{name}} inside.\n",
+     "occurrence_count": 0,
+     "required_placeholders": []
+    },
+    {
+     "schema_version": 1,
+     "inventory_sha256": "44e7b67bbdc0842fecf8cfa158641e03998f7d0b34184bc297ede967ab24ce7a",
+     "taxonomy_sha256": "6064ebcb6693a1dd7b3e50fbfbcc94ff959f7957ac184188fd91744900a429a3",
+     "runtime_version": "0.0.0-golden",
+     "binary_sha256": "25ba8ebec5f227618d8d58f475622669f4c45019d40259d1d292a823f4184c27",
+     "runtime_id": "native-claude-code",
+     "image_digest": "sha256:2d032a622cf94baf637a4488720865da983853e4a655fea4e45d0e80f0a9c640",
+     "default_action": "keep",
+     "materializer_sha256": "ba6245da8b07901b6793898e70e2e974a1e641a2c3be0d357ba53d15101f4081",
+     "overrides": [
+      {
+       "block_id": "tool-bash-guide",
+       "baseline_sha256": "c5db5a79c94bb7a9835cbe2e3897337c52e3bb72b73edaedf1165a51246b057b",
+       "action": "replace",
+       "replacement_utf8": "Fabricated replacement text.",
+       "replacement_sha256": "1b10d1f88eeb90d1941d319ac3624e9f5020a05f36129893ecb91a97207e7be0"
+      },
+      {
+       "block_id": "observed-dynamic",
+       "baseline_sha256": "051b5a1029b4b78cbfdc9d1fe6ade44d634c605f3ad3b88ed5d59a55c877d6f7",
+       "action": "keep"
+      },
+      {
+       "block_id": "short",
+       "baseline_sha256": "213c22ed7234eb11116e1e88f314c73cb3a019b5c87fe224b6ce5665bd9ec50e",
+       "action": "disable"
+      }
+     ]
+    }
+   ],
+   "function": "effective_text",
+   "expected": {
+    "action": "keep",
+    "text": "Fabricated observed text with {{name}} inside.\n"
+   }
+  },
+  {
+   "name": "effective text: unavailable-fragment in a mixed profile",
+   "args": [
+    {
+     "id": "unavailable-fragment",
+     "title": "Unavailable fragment",
+     "class_name": "General Behavior",
+     "class_source": "agent-patcher@8d3c17099974c06f2cfb1547bb4744c05f845b56:workbench.py:CLAUDE_NFR_CATEGORIES",
+     "source_layer": "fabricated-golden-fragment",
+     "capability": "unavailable",
+     "baseline_sha256": "e5f67235304253a532f9d320332a59008a26ffe56aa2f3ce9a80c97a98d3b105",
+     "baseline_utf8": "Fabricated text that cannot be located.\n",
+     "occurrence_count": 0,
+     "required_placeholders": []
+    },
+    {
+     "schema_version": 1,
+     "inventory_sha256": "44e7b67bbdc0842fecf8cfa158641e03998f7d0b34184bc297ede967ab24ce7a",
+     "taxonomy_sha256": "6064ebcb6693a1dd7b3e50fbfbcc94ff959f7957ac184188fd91744900a429a3",
+     "runtime_version": "0.0.0-golden",
+     "binary_sha256": "25ba8ebec5f227618d8d58f475622669f4c45019d40259d1d292a823f4184c27",
+     "runtime_id": "native-claude-code",
+     "image_digest": "sha256:2d032a622cf94baf637a4488720865da983853e4a655fea4e45d0e80f0a9c640",
+     "default_action": "keep",
+     "materializer_sha256": "ba6245da8b07901b6793898e70e2e974a1e641a2c3be0d357ba53d15101f4081",
+     "overrides": [
+      {
+       "block_id": "tool-bash-guide",
+       "baseline_sha256": "c5db5a79c94bb7a9835cbe2e3897337c52e3bb72b73edaedf1165a51246b057b",
+       "action": "replace",
+       "replacement_utf8": "Fabricated replacement text.",
+       "replacement_sha256": "1b10d1f88eeb90d1941d319ac3624e9f5020a05f36129893ecb91a97207e7be0"
+      },
+      {
+       "block_id": "observed-dynamic",
+       "baseline_sha256": "051b5a1029b4b78cbfdc9d1fe6ade44d634c605f3ad3b88ed5d59a55c877d6f7",
+       "action": "keep"
+      },
+      {
+       "block_id": "short",
+       "baseline_sha256": "213c22ed7234eb11116e1e88f314c73cb3a019b5c87fe224b6ce5665bd9ec50e",
+       "action": "disable"
+      }
+     ]
+    }
+   ],
+   "function": "effective_text",
+   "expected": {
+    "action": "keep",
+    "text": "Fabricated text that cannot be located.\n"
+   }
+  },
+  {
+   "name": "effective text: zebra-only in a mixed profile",
+   "args": [
+    {
+     "id": "zebra-only",
+     "title": "Animal fact",
+     "class_name": "General Behavior",
+     "class_source": "agent-patcher@8d3c17099974c06f2cfb1547bb4744c05f845b56:workbench.py:CLAUDE_NFR_CATEGORIES",
+     "source_layer": "fabricated-golden-fragment",
+     "capability": "patchable",
+     "baseline_sha256": "2ce9d291f5392ccce812660963901c0f0d97b67cf0e9fcb371d02e8574afda87",
+     "baseline_utf8": "Fabricated fact: the zebra appears only in this body.\n",
+     "occurrence_count": 1,
+     "required_placeholders": []
+    },
+    {
+     "schema_version": 1,
+     "inventory_sha256": "44e7b67bbdc0842fecf8cfa158641e03998f7d0b34184bc297ede967ab24ce7a",
+     "taxonomy_sha256": "6064ebcb6693a1dd7b3e50fbfbcc94ff959f7957ac184188fd91744900a429a3",
+     "runtime_version": "0.0.0-golden",
+     "binary_sha256": "25ba8ebec5f227618d8d58f475622669f4c45019d40259d1d292a823f4184c27",
+     "runtime_id": "native-claude-code",
+     "image_digest": "sha256:2d032a622cf94baf637a4488720865da983853e4a655fea4e45d0e80f0a9c640",
+     "default_action": "keep",
+     "materializer_sha256": "ba6245da8b07901b6793898e70e2e974a1e641a2c3be0d357ba53d15101f4081",
+     "overrides": [
+      {
+       "block_id": "tool-bash-guide",
+       "baseline_sha256": "c5db5a79c94bb7a9835cbe2e3897337c52e3bb72b73edaedf1165a51246b057b",
+       "action": "replace",
+       "replacement_utf8": "Fabricated replacement text.",
+       "replacement_sha256": "1b10d1f88eeb90d1941d319ac3624e9f5020a05f36129893ecb91a97207e7be0"
+      },
+      {
+       "block_id": "observed-dynamic",
+       "baseline_sha256": "051b5a1029b4b78cbfdc9d1fe6ade44d634c605f3ad3b88ed5d59a55c877d6f7",
+       "action": "keep"
+      },
+      {
+       "block_id": "short",
+       "baseline_sha256": "213c22ed7234eb11116e1e88f314c73cb3a019b5c87fe224b6ce5665bd9ec50e",
+       "action": "disable"
+      }
+     ]
+    }
+   ],
+   "function": "effective_text",
+   "expected": {
+    "action": "keep",
+    "text": "Fabricated fact: the zebra appears only in this body.\n"
+   }
+  },
+  {
+   "name": "effective text: system-reminder-plan in a mixed profile",
+   "args": [
+    {
+     "id": "system-reminder-plan",
+     "title": "Plan reminder",
+     "class_name": "System Reminders",
+     "class_source": "agent-patcher@8d3c17099974c06f2cfb1547bb4744c05f845b56:workbench.py:CLAUDE_NFR_CATEGORIES",
+     "source_layer": "fabricated-golden-fragment",
+     "capability": "patchable",
+     "baseline_sha256": "5911fea64f55d714569aff07fa8a887a235adca26c869f4f492da7c88c004a73",
+     "baseline_utf8": "Fabricated reminder for ${TH_PROMPT_EXPR_0}: keep the plan short and confirm it with ${TH_PROMPT_EXPR_1}.\n",
+     "occurrence_count": 1,
+     "required_placeholders": [
+      "${TH_PROMPT_EXPR_0}",
+      "${TH_PROMPT_EXPR_1}"
+     ]
+    },
+    {
+     "schema_version": 1,
+     "inventory_sha256": "44e7b67bbdc0842fecf8cfa158641e03998f7d0b34184bc297ede967ab24ce7a",
+     "taxonomy_sha256": "6064ebcb6693a1dd7b3e50fbfbcc94ff959f7957ac184188fd91744900a429a3",
+     "runtime_version": "0.0.0-golden",
+     "binary_sha256": "25ba8ebec5f227618d8d58f475622669f4c45019d40259d1d292a823f4184c27",
+     "runtime_id": "native-claude-code",
+     "image_digest": "sha256:2d032a622cf94baf637a4488720865da983853e4a655fea4e45d0e80f0a9c640",
+     "default_action": "keep",
+     "materializer_sha256": "ba6245da8b07901b6793898e70e2e974a1e641a2c3be0d357ba53d15101f4081",
+     "overrides": [
+      {
+       "block_id": "tool-bash-guide",
+       "baseline_sha256": "c5db5a79c94bb7a9835cbe2e3897337c52e3bb72b73edaedf1165a51246b057b",
+       "action": "replace",
+       "replacement_utf8": "Fabricated replacement text.",
+       "replacement_sha256": "1b10d1f88eeb90d1941d319ac3624e9f5020a05f36129893ecb91a97207e7be0"
+      },
+      {
+       "block_id": "observed-dynamic",
+       "baseline_sha256": "051b5a1029b4b78cbfdc9d1fe6ade44d634c605f3ad3b88ed5d59a55c877d6f7",
+       "action": "keep"
+      },
+      {
+       "block_id": "short",
+       "baseline_sha256": "213c22ed7234eb11116e1e88f314c73cb3a019b5c87fe224b6ce5665bd9ec50e",
+       "action": "disable"
+      }
+     ]
+    }
+   ],
+   "function": "effective_text",
+   "expected": {
+    "action": "keep",
+    "text": "Fabricated reminder for ${TH_PROMPT_EXPR_0}: keep the plan short and confirm it with ${TH_PROMPT_EXPR_1}.\n"
+   }
+  },
+  {
+   "name": "effective text: unicode-mix in a mixed profile",
+   "args": [
+    {
+     "id": "unicode-mix",
+     "title": "Unicode sample \u65e5\u672c",
+     "class_name": "File & Code Ops",
+     "class_source": "agent-patcher@8d3c17099974c06f2cfb1547bb4744c05f845b56:workbench.py:CLAUDE_NFR_CATEGORIES",
+     "source_layer": "fabricated-golden-fragment",
+     "capability": "patchable",
+     "baseline_sha256": "d00da6c5a836c9df66e6b20ea37a93990bedea7ff26d8c203fd257d9b47523a8",
+     "baseline_utf8": "Fabricated text: \u65e5\u672c\u8a9e\u306e\u8aac\u660e, emoji \ud83d\ude42, cafe\u0301 with a combining accent, and a line separator\u2028here.\n",
+     "occurrence_count": 1,
+     "required_placeholders": []
+    },
+    {
+     "schema_version": 1,
+     "inventory_sha256": "44e7b67bbdc0842fecf8cfa158641e03998f7d0b34184bc297ede967ab24ce7a",
+     "taxonomy_sha256": "6064ebcb6693a1dd7b3e50fbfbcc94ff959f7957ac184188fd91744900a429a3",
+     "runtime_version": "0.0.0-golden",
+     "binary_sha256": "25ba8ebec5f227618d8d58f475622669f4c45019d40259d1d292a823f4184c27",
+     "runtime_id": "native-claude-code",
+     "image_digest": "sha256:2d032a622cf94baf637a4488720865da983853e4a655fea4e45d0e80f0a9c640",
+     "default_action": "keep",
+     "materializer_sha256": "ba6245da8b07901b6793898e70e2e974a1e641a2c3be0d357ba53d15101f4081",
+     "overrides": [
+      {
+       "block_id": "tool-bash-guide",
+       "baseline_sha256": "c5db5a79c94bb7a9835cbe2e3897337c52e3bb72b73edaedf1165a51246b057b",
+       "action": "replace",
+       "replacement_utf8": "Fabricated replacement text.",
+       "replacement_sha256": "1b10d1f88eeb90d1941d319ac3624e9f5020a05f36129893ecb91a97207e7be0"
+      },
+      {
+       "block_id": "observed-dynamic",
+       "baseline_sha256": "051b5a1029b4b78cbfdc9d1fe6ade44d634c605f3ad3b88ed5d59a55c877d6f7",
+       "action": "keep"
+      },
+      {
+       "block_id": "short",
+       "baseline_sha256": "213c22ed7234eb11116e1e88f314c73cb3a019b5c87fe224b6ce5665bd9ec50e",
+       "action": "disable"
+      }
+     ]
+    }
+   ],
+   "function": "effective_text",
+   "expected": {
+    "action": "keep",
+    "text": "Fabricated text: \u65e5\u672c\u8a9e\u306e\u8aac\u660e, emoji \ud83d\ude42, cafe\u0301 with a combining accent, and a line separator\u2028here.\n"
+   }
+  },
+  {
+   "name": "effective text: general-hedge in a mixed profile",
+   "args": [
+    {
+     "id": "general-hedge",
+     "title": "Assistant persona",
+     "class_name": "General Behavior",
+     "class_source": "agent-patcher@8d3c17099974c06f2cfb1547bb4744c05f845b56:workbench.py:CLAUDE_NFR_CATEGORIES",
+     "source_layer": "fabricated-golden-fragment",
+     "capability": "patchable",
+     "baseline_sha256": "9e5dada3492558f4af8fff686a4bb57c2bcc6e83faa7b86f653206cff34ac914",
+     "baseline_utf8": "As a helpful AI assistant, you greet the user.\nFabricated persona line two.\n------------\nPlease note that as an AI you have limits.\nFinal fabricated line.\n",
+     "occurrence_count": 1,
+     "required_placeholders": []
+    },
+    {
+     "schema_version": 1,
+     "inventory_sha256": "44e7b67bbdc0842fecf8cfa158641e03998f7d0b34184bc297ede967ab24ce7a",
+     "taxonomy_sha256": "6064ebcb6693a1dd7b3e50fbfbcc94ff959f7957ac184188fd91744900a429a3",
+     "runtime_version": "0.0.0-golden",
+     "binary_sha256": "25ba8ebec5f227618d8d58f475622669f4c45019d40259d1d292a823f4184c27",
+     "runtime_id": "native-claude-code",
+     "image_digest": "sha256:2d032a622cf94baf637a4488720865da983853e4a655fea4e45d0e80f0a9c640",
+     "default_action": "keep",
+     "materializer_sha256": "ba6245da8b07901b6793898e70e2e974a1e641a2c3be0d357ba53d15101f4081",
+     "overrides": [
+      {
+       "block_id": "tool-bash-guide",
+       "baseline_sha256": "c5db5a79c94bb7a9835cbe2e3897337c52e3bb72b73edaedf1165a51246b057b",
+       "action": "replace",
+       "replacement_utf8": "Fabricated replacement text.",
+       "replacement_sha256": "1b10d1f88eeb90d1941d319ac3624e9f5020a05f36129893ecb91a97207e7be0"
+      },
+      {
+       "block_id": "observed-dynamic",
+       "baseline_sha256": "051b5a1029b4b78cbfdc9d1fe6ade44d634c605f3ad3b88ed5d59a55c877d6f7",
+       "action": "keep"
+      },
+      {
+       "block_id": "short",
+       "baseline_sha256": "213c22ed7234eb11116e1e88f314c73cb3a019b5c87fe224b6ce5665bd9ec50e",
+       "action": "disable"
+      }
+     ]
+    }
+   ],
+   "function": "effective_text",
+   "expected": {
+    "action": "keep",
+    "text": "As a helpful AI assistant, you greet the user.\nFabricated persona line two.\n------------\nPlease note that as an AI you have limits.\nFinal fabricated line.\n"
+   }
+  },
+  {
+   "name": "effective text: patchable block under default disable",
+   "args": [
+    {
+     "id": "zebra-only",
+     "title": "Animal fact",
+     "class_name": "General Behavior",
+     "class_source": "agent-patcher@8d3c17099974c06f2cfb1547bb4744c05f845b56:workbench.py:CLAUDE_NFR_CATEGORIES",
+     "source_layer": "fabricated-golden-fragment",
+     "capability": "patchable",
+     "baseline_sha256": "2ce9d291f5392ccce812660963901c0f0d97b67cf0e9fcb371d02e8574afda87",
+     "baseline_utf8": "Fabricated fact: the zebra appears only in this body.\n",
+     "occurrence_count": 1,
+     "required_placeholders": []
+    },
+    {
+     "schema_version": 1,
+     "runtime_id": "native-claude-code",
+     "runtime_version": "0.0.0-golden",
+     "image_digest": "sha256:2d032a622cf94baf637a4488720865da983853e4a655fea4e45d0e80f0a9c640",
+     "binary_sha256": "25ba8ebec5f227618d8d58f475622669f4c45019d40259d1d292a823f4184c27",
+     "inventory_sha256": "44e7b67bbdc0842fecf8cfa158641e03998f7d0b34184bc297ede967ab24ce7a",
+     "taxonomy_sha256": "6064ebcb6693a1dd7b3e50fbfbcc94ff959f7957ac184188fd91744900a429a3",
+     "materializer_sha256": "ba6245da8b07901b6793898e70e2e974a1e641a2c3be0d357ba53d15101f4081",
+     "default_action": "disable",
+     "overrides": []
+    }
+   ],
+   "function": "effective_text",
+   "expected": {
+    "action": "disable",
+    "text": ""
+   }
+  },
+  {
+   "name": "effective text: observed-only block under default disable",
+   "args": [
+    {
+     "id": "observed-dynamic",
+     "title": "Observed template",
+     "class_name": "General Behavior",
+     "class_source": "agent-patcher@8d3c17099974c06f2cfb1547bb4744c05f845b56:workbench.py:CLAUDE_NFR_CATEGORIES",
+     "source_layer": "fabricated-golden-fragment",
+     "capability": "observed-only",
+     "baseline_sha256": "051b5a1029b4b78cbfdc9d1fe6ade44d634c605f3ad3b88ed5d59a55c877d6f7",
+     "baseline_utf8": "Fabricated observed text with {{name}} inside.\n",
+     "occurrence_count": 0,
+     "required_placeholders": []
+    },
+    {
+     "schema_version": 1,
+     "runtime_id": "native-claude-code",
+     "runtime_version": "0.0.0-golden",
+     "image_digest": "sha256:2d032a622cf94baf637a4488720865da983853e4a655fea4e45d0e80f0a9c640",
+     "binary_sha256": "25ba8ebec5f227618d8d58f475622669f4c45019d40259d1d292a823f4184c27",
+     "inventory_sha256": "44e7b67bbdc0842fecf8cfa158641e03998f7d0b34184bc297ede967ab24ce7a",
+     "taxonomy_sha256": "6064ebcb6693a1dd7b3e50fbfbcc94ff959f7957ac184188fd91744900a429a3",
+     "materializer_sha256": "ba6245da8b07901b6793898e70e2e974a1e641a2c3be0d357ba53d15101f4081",
+     "default_action": "disable",
+     "overrides": []
+    }
+   ],
+   "function": "effective_text",
+   "expected": {
+    "action": "keep",
+    "text": "Fabricated observed text with {{name}} inside.\n"
+   }
+  }
+ ]
+}

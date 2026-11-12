@@ -1,15 +1,53 @@
-/* views/home.jsx — dataset library. Classes: rg-home-*. Colours: var(--rig-*) only. */
-.rg-home-bar{margin-bottom:var(--rig-s4);gap:var(--rig-s3)}
-.rg-home-list{margin-bottom:var(--rig-s5)}
-.rg-home-tbl td{padding-top:var(--rig-s3);padding-bottom:var(--rig-s3)}
+/* views/home.jsx — dataset library. Classes: rg-home-*. Tokens only (UI contract v1).
+   Layout answers to the pane (unnamed container queries), never to the window.
+   Rhythm: header → design card 24 · card → library 32 · toolbar → table 12 · table → About 24. */
+
+/* the page header stacks under 640px of pane; its button spans the width only on a phone-sized pane */
+@container (min-width:481px) and (max-width:640px){.rg-home-head>.rg-btn{align-self:flex-start}}
+
+/* ---- "Design from the evidence": the text keeps a 20rem basis, the buttons wrap under it */
+.rg-home-design{flex-direction:row;flex-wrap:wrap;align-items:center;gap:var(--rig-s4) var(--rig-s6);padding:var(--rig-s5)}
+.rg-home-design-t{flex:1 1 20rem;min-width:0;display:flex;flex-direction:column;gap:var(--rig-s1)}
+.rig .rg-home-design-t h2{margin:0;font-size:var(--rig-fs-md);line-height:var(--rig-lh-snug);font-weight:var(--rig-fw-medium);letter-spacing:0}
+.rig .rg-home-design-t p{margin:0;max-width:var(--rig-measure);color:var(--rig-dim);font-size:var(--rig-fs-sm);line-height:var(--rig-lh-body)}
+.rg-home-design-a{flex:0 1 auto}
+@container (max-width:640px){.rg-home-design{padding:var(--rig-s4)}}
+/* a phone-width card: the primary action on its own row, the two secondary ones share the next */
+@container (max-width:480px){.rg-home-design-a{flex:1 1 100%}.rg-home-design-a>.rg-btn{flex:1 1 0}.rg-home-design-a>.rg-btn.pri{flex-basis:100%}}
+
+/* ---- library: filters, then one table */
+.rg-home-lib{display:flex;flex-direction:column;gap:var(--rig-s3);min-width:0}
+.rg-home-bar>.rg-search{flex:1 1 16rem}
+.rg-home-list{border-radius:var(--rig-r-lg);overflow:hidden}
 .rg-home-tbl tbody tr:last-child td{border-bottom:0}
-.rg-home-name{min-width:220px;max-width:460px}
-.rg-home-nl{gap:4px var(--rig-s2);flex-wrap:wrap}
-.rg-home-nl b{font-weight:600}
-.rg-home-models{margin-top:4px;max-width:420px;font:12px/1.4 var(--rig-sans);color:var(--rig-mute)}
-.rg-home-date{white-space:nowrap}
-@container rgdoc (max-width:640px){.rg-home-name{min-width:0;max-width:220px}.rg-home-models{max-width:200px}}
-.rg-home-pr{display:inline-flex;align-items:center;justify-content:flex-end;gap:10px}
-.rg-home-prt{width:56px;height:4px;border-radius:2px;background:var(--rig-panel3);overflow:hidden;display:inline-block}
+.rg-home-tbl :is(th,td){white-space:nowrap}
+.rg-home-tbl :is(th,td):first-child{padding-left:var(--rig-s5)}
+.rg-home-tbl :is(th,td):last-child{padding-right:var(--rig-s3)}
+.rg-home-tbl td{padding-top:var(--rig-s3);padding-bottom:var(--rig-s3)}
+/* the name column takes the width the figures leave; its models line truncates inside it */
+.rg-home-tbl .rg-home-name{width:100%;max-width:0;min-width:10rem;white-space:normal}
+.rg-home-nl{display:flex;flex-wrap:wrap;align-items:center;gap:var(--rig-s1) var(--rig-s2);min-width:0}
+.rig .rg-home-tbl .rg-home-dn{font:var(--rig-fw-medium) var(--rig-fs-sm)/var(--rig-lh-snug) var(--rig-mono);color:var(--rig-text);text-decoration:none;overflow-wrap:anywhere;min-width:0}
+.rig .rg-home-tbl .rg-home-dn b{font-weight:inherit}
+.rig .rg-home-tbl tr:hover .rg-home-dn,.rig .rg-home-tbl .rg-home-dn:focus-visible{text-decoration:underline;text-decoration-color:var(--rig-line3);text-underline-offset:3px}
+.rg-home-meta{display:flex;align-items:center;gap:var(--rig-s2);min-width:0;margin-top:var(--rig-s1)}
+.rg-home-meta>.rg-tag{flex:none}
+.rg-home-models{flex:1 1 auto;min-width:0;font:var(--rig-fs-xs)/var(--rig-lh-snug) var(--rig-sans);color:var(--rig-mute)}
+.rg-home-date{color:var(--rig-mute);font-size:var(--rig-fs-xs)}
+
+/* pass: a bar and a figure in fixed slots, so every graded row lines up; "Not graded" ends where the figures end */
+.rg-home-pr{display:inline-grid;grid-template-columns:3.5rem 6ch;align-items:center;gap:var(--rig-s3);vertical-align:middle}
+.rg-home-prt{display:block;height:var(--rig-s1);border-radius:var(--rig-r-full);background:var(--rig-panel3);overflow:hidden}
 .rg-home-prt i{display:block;height:100%;background:var(--rig-sky-fill)}
-.rg-home-go{width:44px}
+.rg-home-ng{color:var(--rig-mute);font:var(--rig-fs-xs)/var(--rig-lh-snug) var(--rig-sans)}
+@container (max-width:480px){
+  .rg-home-pr{grid-template-columns:6ch}
+  .rg-home-prt{display:none}
+  .rg-home-tbl :is(th,td):first-child{padding-left:var(--rig-s4)}
+  .rg-home-tbl .rg-home-name{min-width:8rem}
+}
+
+/* the chevron column: as narrow as its target */
+.rg-home-tbl .rg-home-go{width:var(--rig-hit);text-align:right}
+
+.rg-home-lib+.rg-about{margin-top:var(--rig-s5)}

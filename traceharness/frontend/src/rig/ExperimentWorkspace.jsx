@@ -1,5 +1,6 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useId, useMemo, useRef, useState } from 'react'
 import { runnerRequest } from '../runner-api'
+import { ActionBar, Field, Icon } from './ui'
 import { expiryTime } from './views/harness-composer-state'
 import {
   captureHarnessSnapshot,
@@ -17,6 +18,15 @@ import { HarnessJson } from './HarnessJson'
 import './ExperimentWorkspace.css'
 
 const cellIdentity = cell => `${cell.snapshotId}:${cell.modelId}:${cell.taskId}`
+
+// A running experiment is a neutral chip with a pulsing dot (blue is reserved for focus, selection and
+// the one primary action); amber asks for attention. Terminal states stay neutral.
+const STATUS_TONES = {
+  running: 'live',
+  paused: 'amb',
+  cancelling: 'amb',
+  needs_attention: 'amb',
+}
 
 const GRADE_LABELS = {
   ungraded: 'Not graded',
@@ -97,6 +107,38 @@ function syncExperimentLease(leaseTarget, uncertainId, activeRecord, rows) {
     || rows.some(experimentActive)
 }
 
+// The trial queue scrolls inside its own box with the arm column pinned; the far edge fades
+// while columns are hidden, and the region stays keyboard-reachable at every width.
+function TrialQueue({ children }) {
+  const view = useRef(null)
+  const [edge, setEdge] = useState({ start: false, end: false })
+  useEffect(() => {
+    const node = view.current
+    if (!node) return undefined
+    const measure = () => {
+      const max = node.scrollWidth - node.clientWidth
+      const start = node.scrollLeft > 1
+      const end = node.scrollLeft < max - 1
+      setEdge((current) => (current.start === start && current.end === end ? current : { start, end }))
+    }
+    measure()
+    node.addEventListener('scroll', measure, { passive: true })
+    if (typeof ResizeObserver === 'undefined') return () => node.removeEventListener('scroll', measure)
+    const observer = new ResizeObserver(measure)
+    observer.observe(node)
+    if (node.firstElementChild) observer.observe(node.firstElementChild)
+    return () => {
+      node.removeEventListener('scroll', measure)
+      observer.disconnect()
+    }
+  }, [])
+  return (
+    <div className="rg-scrollx rg-tscroll rg-sticky-col rg-matrix-queue" data-start={edge.start ? '' : undefined} data-end={edge.end ? '' : undefined}>
+      <div ref={view} className="rg-scrollx-v" role="region" aria-label="Experiment trial queue" tabIndex={0}>{children}</div>
+    </div>
+  )
+}
+
 export function ExperimentWorkspace({
   configuration,
   catalog,
@@ -106,6 +148,7 @@ export function ExperimentWorkspace({
   lease,
   onOpenJob,
 }) {
+  const uid = useId()
   const [open, setOpen] = useState(false)
   const [experimentName, setExperimentName] = useState('Harness × model × task matrix')
   const [snapshotName, setSnapshotName] = useState('Harness 1')
@@ -585,28 +628,35 @@ export function ExperimentWorkspace({
   const parsedRepeatsPreview = /^\d+$/.test(String(repeats)) ? Number(repeats) : 0
   const plannedTrialPreview = includedCells.length * parsedRepeatsPreview
 
+  const statusTone = STATUS_TONES[experiment?.status] || ''
+
   return (
-    <details className="rg-pnl rg-matrix-experiments" open={open}>
+    <details className="rg-matrix-experiments" open={open}>
       <summary
+        className="rg-matrix-sum"
         onClick={(event) => {
           event.preventDefault()
           setOpen((current) => !current)
         }}
       >
-        Experiment matrix <span>Harness × model × task</span>
+        <span className="rg-matrix-sum-ico" aria-hidden="true"><Icon name="chev" size={16} /></span>
+        <span className="rg-matrix-sum-main">
+          <span className="rg-matrix-sum-t">Experiment matrix</span>
+          <span className="rg-matrix-sum-meta">Harness × model × task</span>
+        </span>
       </summary>
 
       {open && (
-        <div className="rg-pnl-b">
-          <p className="rg-sub">
+        <div className="rg-matrix-body rg-cq">
+          <p className="rg-matrix-lede">
             Capture immutable harness snapshots from the composer above, choose models and runnable tasks, verify the worst-case budget ceiling, then freeze and run an interleaved trial schedule.
           </p>
 
-          <div className="rg-matrix-fields">
-            <label className="rg-fld">
-              <span>Experiment name</span>
+          <div className="rg-matrix-group">
+            <Field label="Experiment name" htmlFor={`${uid}-name`}>
               <input
-                className="rg-inp"
+                id={`${uid}-name`}
+                className="rg-inp rg-matrix-name"
                 value={experimentName}
                 maxLength={120}
                 onChange={(event) => {
@@ -614,70 +664,88 @@ export function ExperimentWorkspace({
                   setExperimentName(event.target.value)
                 }}
               />
-            </label>
-            <label className="rg-fld">
-              <span>Harness snapshot name</span>
-              <input
-                className="rg-inp"
-                value={snapshotName}
-                maxLength={80}
-                onChange={(event) => setSnapshotName(event.target.value)}
-              />
-            </label>
-            <button
-              type="button"
-              className="rg-btn"
-              disabled={busy || disabled}
-              onClick={handleCaptureSnapshot}
-            >
-              Capture current harness
-            </button>
+            </Field>
           </div>
 
-          {snapshots.length > 0 && (
-            <ul className="rg-matrix-snapshots" aria-label="Captured harnesses">
-              {snapshots.map((snapshot) => (
-                <li key={snapshot.id} className="rg-matrix-snapshot">
-                  <div className="rg-matrix-snapshot-copy">
-                    <strong>{snapshot.label}</strong>
-                    <small>
-                      {describeCapturedConfiguration(snapshot.configuration)} · cap {money(snapshot.configuration.limits.max_cost_usd)}/trial
-                    </small>
-                  </div>
-                  <div className="rg-matrix-snapshot-actions">
-                    <button
-                      type="button"
-                      className="rg-btn"
-                      aria-label={`Update harness ${snapshot.label}`}
-                      disabled={busy || disabled}
-                      onClick={() => handleReplaceSnapshot(snapshot.id)}
-                    >
-                      Update with current
-                    </button>
-                    <button
-                      type="button"
-                      className="rg-btn"
-                      aria-label={`Remove harness ${snapshot.label}`}
-                      disabled={busy}
-                      onClick={() => handleRemoveSnapshot(snapshot.id)}
-                    >
-                      Remove
-                    </button>
-                  </div>
-                  <HarnessJson title={`Captured configuration · ${snapshot.label}`} source="Immutable harness snapshot" description="Model and task are selected independently below. This snapshot changes only when you choose Update with current." documents={[{ id: snapshot.id, label: snapshot.label, value: snapshot.configuration, filename: `harness-${snapshot.id}.json` }]} />
-                </li>
-              ))}
-            </ul>
-          )}
+          <div className="rg-matrix-group">
+            <div className="rg-matrix-group-h">
+              <span className="rg-matrix-step" aria-hidden="true">1</span>
+              <h3 className="rg-matrix-group-t">Harnesses</h3>
+              <span className="rg-matrix-group-meta">{snapshots.length} captured</span>
+            </div>
+            <div className="rg-matrix-capture">
+              <Field label="Harness snapshot name" htmlFor={`${uid}-snapshot`}>
+                <input
+                  id={`${uid}-snapshot`}
+                  className="rg-inp"
+                  value={snapshotName}
+                  maxLength={80}
+                  onChange={(event) => setSnapshotName(event.target.value)}
+                />
+              </Field>
+              <button
+                type="button"
+                className="rg-btn"
+                disabled={busy || disabled}
+                onClick={handleCaptureSnapshot}
+              >
+                Capture current harness
+              </button>
+            </div>
 
-          <div className="rg-matrix-axes">
-            <div className="rg-matrix-axis" role="group" aria-label="Matrix models">
-              <div className="rg-matrix-axis-head">
-                <h3>Models</h3>
-                <span>{orderedModelIds.length} selected</span>
-              </div>
-              <div className="rg-matrix-axis-tools">
-                <div className="rg-fld">
+            {snapshots.length > 0 ? (
+              <ul className="rg-matrix-snapshots" aria-label="Captured harnesses">
+                {snapshots.map((snapshot) => (
+                  <li key={snapshot.id} className="rg-matrix-snapshot">
+                    <div className="rg-matrix-snapshot-h">
+                      <div className="rg-matrix-snapshot-copy">
+                        <strong>{snapshot.label}</strong>
+                        <small>
+                          {describeCapturedConfiguration(snapshot.configuration)} · cap {money(snapshot.configuration.limits.max_cost_usd)}/trial
+                        </small>
+                      </div>
+                      <div className="rg-matrix-snapshot-actions">
+                        <button
+                          type="button"
+                          className="rg-btn"
+                          aria-label={`Update harness ${snapshot.label}`}
+                          disabled={busy || disabled}
+                          onClick={() => handleReplaceSnapshot(snapshot.id)}
+                        >
+                          Update with current
+                        </button>
+                        <button
+                          type="button"
+                          className="rg-btn ghost"
+                          aria-label={`Remove harness ${snapshot.label}`}
+                          disabled={busy}
+                          onClick={() => handleRemoveSnapshot(snapshot.id)}
+                        >
+                          Remove
+                        </button>
+                      </div>
+                    </div>
+                    <HarnessJson title={`Captured configuration · ${snapshot.label}`} source="Immutable harness snapshot" description="Model and task are selected independently below. This snapshot changes only when you choose Update with current." documents={[{ id: snapshot.id, label: snapshot.label, value: snapshot.configuration, filename: `harness-${snapshot.id}.json` }]} />
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="rg-matrix-hint">No harness captured yet. Each capture becomes one row of the matrix.</p>
+            )}
+          </div>
+
+          <div className="rg-matrix-group">
+            <div className="rg-matrix-group-h">
+              <span className="rg-matrix-step" aria-hidden="true">2</span>
+              <h3 className="rg-matrix-group-t">Models and tasks</h3>
+            </div>
+            <div className="rg-matrix-axes">
+              <div className="rg-matrix-axis rg-cq" role="group" aria-label="Matrix models">
+                <div className="rg-matrix-axis-h">
+                  <h4>Models</h4>
+                  <span>{orderedModelIds.length} selected</span>
+                </div>
+                <div className="rg-matrix-axis-tools">
                   <input
                     className="rg-inp"
                     type="search"
@@ -686,63 +754,63 @@ export function ExperimentWorkspace({
                     value={modelQuery}
                     onChange={(event) => setModelQuery(event.target.value)}
                   />
+                  <button
+                    type="button"
+                    className="rg-btn"
+                    disabled={busy || modelOptions.length === 0}
+                    onClick={() => {
+                      invalidateAuthoringReview()
+                      setSelectedModelIds(modelOptions.map((row) => row.id))
+                    }}
+                  >
+                    Select all models
+                  </button>
+                  <button
+                    type="button"
+                    className="rg-btn"
+                    disabled={busy || selectedModelIds.length === 0}
+                    onClick={() => {
+                      invalidateAuthoringReview()
+                      setSelectedModelIds([])
+                    }}
+                  >
+                    Clear models
+                  </button>
                 </div>
-                <button
-                  type="button"
-                  className="rg-btn"
-                  disabled={busy || modelOptions.length === 0}
-                  onClick={() => {
-                    invalidateAuthoringReview()
-                    setSelectedModelIds(modelOptions.map((row) => row.id))
-                  }}
-                >
-                  Select all models
-                </button>
-                <button
-                  type="button"
-                  className="rg-btn"
-                  disabled={busy || selectedModelIds.length === 0}
-                  onClick={() => {
-                    invalidateAuthoringReview()
-                    setSelectedModelIds([])
-                  }}
-                >
-                  Clear models
-                </button>
+                <ul className="rg-matrix-choices">
+                  {filteredModels.map((model) => {
+                    const checked = selectedModelIds.includes(model.id)
+                    const title = model.name || model.id
+                    return (
+                      <li key={model.id}>
+                        <label className={`rg-matrix-choice${checked ? ' is-selected' : ''}${busy ? ' is-disabled' : ''}`}>
+                          <input
+                            type="checkbox"
+                            aria-label={`Select model ${title}`}
+                            checked={checked}
+                            disabled={busy}
+                            onChange={() => toggleModel(model.id)}
+                          />
+                          <span className="rg-matrix-choice-body">
+                            <strong>{title}</strong>
+                            <small>{model.id}</small>
+                          </span>
+                        </label>
+                      </li>
+                    )
+                  })}
+                </ul>
+                {filteredModels.length === 0 && (
+                  <p className="rg-matrix-hint">{modelOptions.length ? 'No model matches this filter.' : 'The connected catalog lists no models.'}</p>
+                )}
               </div>
-              <ul className="rg-matrix-choices">
-                {filteredModels.map((model) => {
-                  const checked = selectedModelIds.includes(model.id)
-                  const title = model.name || model.id
-                  return (
-                    <li
-                      key={model.id}
-                      className={`rg-matrix-choice${checked ? ' is-selected' : ''}`}
-                    >
-                      <input
-                        type="checkbox"
-                        aria-label={`Select model ${title}`}
-                        checked={checked}
-                        disabled={busy}
-                        onChange={() => toggleModel(model.id)}
-                      />
-                      <div className="rg-matrix-choice-body">
-                        <strong>{title}</strong>
-                        <small className="rg-mono">{model.id}</small>
-                      </div>
-                    </li>
-                  )
-                })}
-              </ul>
-            </div>
 
-            <div className="rg-matrix-axis" role="group" aria-label="Matrix tasks">
-              <div className="rg-matrix-axis-head">
-                <h3>Tasks</h3>
-                <span>{orderedTaskIds.length} selected</span>
-              </div>
-              <div className="rg-matrix-axis-tools">
-                <div className="rg-fld">
+              <div className="rg-matrix-axis rg-cq" role="group" aria-label="Matrix tasks">
+                <div className="rg-matrix-axis-h">
+                  <h4>Tasks</h4>
+                  <span>{orderedTaskIds.length} selected</span>
+                </div>
+                <div className="rg-matrix-axis-tools">
                   <input
                     className="rg-inp"
                     type="search"
@@ -751,283 +819,295 @@ export function ExperimentWorkspace({
                     value={taskQuery}
                     onChange={(event) => setTaskQuery(event.target.value)}
                   />
+                  <button
+                    type="button"
+                    className="rg-btn"
+                    disabled={busy || !taskOptions.some((row) => row.ready)}
+                    onClick={() => {
+                      invalidateAuthoringReview()
+                      setSelectedTaskIds(taskOptions.filter((row) => row.ready).map((row) => row.id))
+                    }}
+                  >
+                    Select runnable tasks
+                  </button>
+                  <button
+                    type="button"
+                    className="rg-btn"
+                    disabled={busy || selectedTaskIds.length === 0}
+                    onClick={() => {
+                      invalidateAuthoringReview()
+                      setSelectedTaskIds([])
+                    }}
+                  >
+                    Clear tasks
+                  </button>
                 </div>
-                <button
-                  type="button"
-                  className="rg-btn"
-                  disabled={busy || !taskOptions.some((row) => row.ready)}
-                  onClick={() => {
-                    invalidateAuthoringReview()
-                    setSelectedTaskIds(taskOptions.filter((row) => row.ready).map((row) => row.id))
-                  }}
-                >
-                  Select runnable tasks
-                </button>
-                <button
-                  type="button"
-                  className="rg-btn"
-                  disabled={busy || selectedTaskIds.length === 0}
-                  onClick={() => {
-                    invalidateAuthoringReview()
-                    setSelectedTaskIds([])
-                  }}
-                >
-                  Clear tasks
-                </button>
-              </div>
-              <ul className="rg-matrix-choices">
-                {filteredTasks.map((task) => {
-                  const checked = selectedTaskIds.includes(task.id)
-                  const itemDisabled = busy || (!task.ready && !checked)
-                  const title = task.title || task.id
-                  return (
-                    <li
-                      key={task.id}
-                      className={`rg-matrix-choice${checked ? ' is-selected' : ''}${!task.ready ? ' is-disabled' : ''}`}
-                    >
-                      <input
-                        type="checkbox"
-                        aria-label={`Select task ${title}`}
-                        checked={checked}
-                        disabled={itemDisabled}
-                        onChange={() => toggleTask(task.id, Boolean(task.ready))}
-                      />
-                      <div className="rg-matrix-choice-body">
-                        <strong>{title}</strong>
-                        <small className="rg-mono">
-                          {task.id}
-                          {task.repository ? ` · ${task.repository}` : ''}
-                          {task.revision ? `@${task.revision.slice(0, 12)}` : ''}
-                        </small>
-                        {!task.ready && (
-                          <span className="rg-matrix-choice-reason">
-                            {task.reason || 'Task is not runnable.'}
+                <ul className="rg-matrix-choices">
+                  {filteredTasks.map((task) => {
+                    const checked = selectedTaskIds.includes(task.id)
+                    const itemDisabled = busy || (!task.ready && !checked)
+                    const title = task.title || task.id
+                    return (
+                      <li key={task.id}>
+                        <label className={`rg-matrix-choice${checked ? ' is-selected' : ''}${itemDisabled ? ' is-disabled' : ''}`}>
+                          <input
+                            type="checkbox"
+                            aria-label={`Select task ${title}`}
+                            checked={checked}
+                            disabled={itemDisabled}
+                            onChange={() => toggleTask(task.id, Boolean(task.ready))}
+                          />
+                          <span className="rg-matrix-choice-body">
+                            <strong>{title}</strong>
+                            <small>
+                              {task.id}
+                              {task.repository ? ` · ${task.repository}` : ''}
+                              {task.revision ? `@${task.revision.slice(0, 12)}` : ''}
+                            </small>
+                            {!task.ready && (
+                              <span className="rg-matrix-choice-reason">
+                                {task.reason || 'Task is not runnable.'}
+                              </span>
+                            )}
                           </span>
-                        )}
-                      </div>
-                    </li>
-                  )
-                })}
-              </ul>
+                        </label>
+                      </li>
+                    )
+                  })}
+                </ul>
+                {filteredTasks.length === 0 && (
+                  <p className="rg-matrix-hint">{taskOptions.length ? 'No task matches this filter.' : 'The connected catalog lists no tasks.'}</p>
+                )}
+              </div>
             </div>
           </div>
 
-          <div className="rg-matrix-fields">
-            <label className="rg-fld">
-              <span>Repetitions</span>
-              <input
-                className="rg-inp"
-                type="number"
-                min="1"
-                max="10"
-                value={repeats}
-                onChange={(event) => {
-                  invalidateAuthoringReview()
-                  setRepeats(event.target.value)
-                }}
-              />
-            </label>
-            <label className="rg-fld">
-              <span>Schedule seed</span>
-              <input
-                className="rg-inp"
-                inputMode="numeric"
-                value={seed}
-                onChange={(event) => {
-                  invalidateAuthoringReview()
-                  setSeed(event.target.value)
-                }}
-              />
-            </label>
-            <label className="rg-fld">
-              <span>Experiment budget (USD)</span>
-              <input
-                className="rg-inp"
-                inputMode="decimal"
-                value={budgetUsd}
-                onChange={(event) => {
-                  invalidateAuthoringReview()
-                  setBudgetUsd(event.target.value)
-                }}
-              />
-            </label>
-          </div>
-
-          <section className="rg-matrix-preview" aria-label="Expanded matrix cells">
-            <div className="rg-matrix-preview-head">
-              <strong>Expanded matrix cells</strong>
-              <span>
-                {includedCells.length} included / {expanded.cells.length} candidates · {plannedTrialPreview} trials
-                {!draftIssue ? ` · ceiling ${money(draftEvaluation.maximumCostUsd)}` : ''}
-              </span>
+          <div className="rg-matrix-group">
+            <div className="rg-matrix-group-h">
+              <span className="rg-matrix-step" aria-hidden="true">3</span>
+              <h3 className="rg-matrix-group-t">Schedule and budget</h3>
             </div>
-            <div className="rg-row rg-wrap" style={{ marginBottom: 10 }}>
-              <button type="button" className="rg-btn" disabled={busy || !expanded.cells.length} onClick={() => { invalidateAuthoringReview(); setExcludedCells(new Set(expanded.cells.filter(cell => !cell.compatible).map(cellIdentity))) }}>Select verified cells</button>
-              <button type="button" className="rg-btn" disabled={busy || !excludedCells.size} onClick={() => { invalidateAuthoringReview(); setExcludedCells(new Set()) }}>Include all cells</button>
-              <span className="rg-small rg-dim">Excluded cells stay visible and will not be scheduled.</span>
+            <div className="rg-form rg-matrix-schedule">
+              <Field label="Repetitions" htmlFor={`${uid}-repeats`}>
+                <input
+                  id={`${uid}-repeats`}
+                  className="rg-inp"
+                  type="number"
+                  min="1"
+                  max="10"
+                  value={repeats}
+                  onChange={(event) => {
+                    invalidateAuthoringReview()
+                    setRepeats(event.target.value)
+                  }}
+                />
+              </Field>
+              <Field label="Schedule seed" htmlFor={`${uid}-seed`}>
+                <input
+                  id={`${uid}-seed`}
+                  className="rg-inp"
+                  inputMode="numeric"
+                  value={seed}
+                  onChange={(event) => {
+                    invalidateAuthoringReview()
+                    setSeed(event.target.value)
+                  }}
+                />
+              </Field>
+              <Field label="Experiment budget (USD)" htmlFor={`${uid}-budget`}>
+                <input
+                  id={`${uid}-budget`}
+                  className="rg-inp"
+                  inputMode="decimal"
+                  value={budgetUsd}
+                  onChange={(event) => {
+                    invalidateAuthoringReview()
+                    setBudgetUsd(event.target.value)
+                  }}
+                />
+              </Field>
             </div>
-            {expanded.cells.length > 0 ? (
-              <ol className="rg-matrix-cells">
-                {expanded.cells.map((cell) => {
-                  const modelDisplay = modelById.get(cell.modelId)?.name || cell.modelId
-                  const taskDisplay = taskById.get(cell.taskId)?.title || cell.taskId
-                  return (
-                    <li
-                      key={cell.id}
-                      className={`rg-matrix-cell${cell.compatible ? '' : ' is-incompatible'}`}
-                    >
-                      <input type="checkbox" aria-label={`Include cell ${cell.label}`} checked={!excludedCells.has(cellIdentity(cell))} disabled={busy} onChange={() => { invalidateAuthoringReview(); setExcludedCells(previous => { const next = new Set(previous); const key = cellIdentity(cell); if (next.has(key)) next.delete(key); else next.add(key); return next }) }} />
-                      <div className="rg-matrix-cell-main">
-                        <strong>{cell.snapshotLabel}</strong>
-                        <span>{modelDisplay}</span>
-                        <span className="rg-mono">{taskDisplay}</span>
-                      </div>
-                      <div className="rg-matrix-cell-meta">
-                        <span className="rg-mono">{cell.runtimeId}</span>
-                        <span className="rg-mono">{money(cell.maxCostUsd)}</span>
-                        {cell.compatible ? (
-                          <span>Compatible</span>
-                        ) : (
-                          cell.issues.map((issue) => <span key={issue}>{issue}</span>)
-                        )}
-                      </div>
-                    </li>
-                  )
-                })}
-              </ol>
-            ) : (
-              <p className="rg-sub">Capture at least one harness snapshot and select models and runnable tasks to expand matrix arms.</p>
-            )}
-          </section>
 
-          {draftIssue && (
-            <p className="rg-matrix-issue" role="status">{draftIssue}</p>
-          )}
-
-          <div className="rg-exe-actions">
-            <button
-              type="button"
-              className="rg-btn"
-              disabled={busy || disabled || !available || Boolean(draftIssue)}
-              onClick={handleReviewPlan}
-            >
-              Review matrix experiment
-            </button>
-            <button
-              type="button"
-              className="rg-btn pri"
-              disabled={busy || disabled || !reviewed}
-              onClick={handleFreezePlan}
-            >
-              Freeze matrix experiment
-            </button>
-          </div>
-
-          {activeReview && (
-            <div className="rg-matrix-review" role="region" aria-label="Matrix experiment review">
-              {activeReview.result.issues.map((issue) => (
-                <p key={issue} className="rg-err" role="alert">{issue}</p>
-              ))}
-              {activeReview.result.ok && (
-                <>
-                  <strong>
-                    {activeReview.result.trial_count} planned trials · maximum {money(activeReview.result.maximum_cost_usd)} · budget {money(draftEvaluation.plan.budget_usd)}
-                  </strong>
-                  <p className="rg-sub rg-mono">Plan {activeReview.result.plan_sha256}</p>
-                  <ol>
-                    {activeReview.result.plan.schedule.map((row) => {
-                      const armLabel = reviewArmById.get(row.arm_id)?.label || row.arm_id
-                      return (
-                        <li key={row.id}>
-                          Repeat {row.repeat} · {armLabel} · <span className="rg-mono">{row.manifest_sha256.slice(0, 12)}</span>
-                        </li>
-                      )
-                    })}
-                  </ol>
-                </>
+            <section className="rg-matrix-preview" aria-label="Expanded matrix cells">
+              <div className="rg-matrix-preview-h">
+                <h4>Expanded matrix cells</h4>
+                <span className="rg-matrix-preview-meta">
+                  {includedCells.length} included / {expanded.cells.length} candidates · {plannedTrialPreview} trials
+                  {!draftIssue ? ` · ceiling ${money(draftEvaluation.maximumCostUsd)}` : ''}
+                </span>
+              </div>
+              <div className="rg-matrix-preview-tools">
+                <button type="button" className="rg-btn" disabled={busy || !expanded.cells.length} onClick={() => { invalidateAuthoringReview(); setExcludedCells(new Set(expanded.cells.filter(cell => !cell.compatible).map(cellIdentity))) }}>Select verified cells</button>
+                <button type="button" className="rg-btn" disabled={busy || !excludedCells.size} onClick={() => { invalidateAuthoringReview(); setExcludedCells(new Set()) }}>Include all cells</button>
+                <span className="rg-matrix-hint">Excluded cells stay visible and will not be scheduled.</span>
+              </div>
+              {expanded.cells.length > 0 ? (
+                <ol className="rg-matrix-cells">
+                  {expanded.cells.map((cell) => {
+                    const modelDisplay = modelById.get(cell.modelId)?.name || cell.modelId
+                    const taskDisplay = taskById.get(cell.taskId)?.title || cell.taskId
+                    return (
+                      <li
+                        key={cell.id}
+                        className={`rg-matrix-cell${cell.compatible ? '' : ' is-incompatible'}`}
+                      >
+                        <label className="rg-matrix-cell-row">
+                          <input type="checkbox" aria-label={`Include cell ${cell.label}`} checked={!excludedCells.has(cellIdentity(cell))} disabled={busy} onChange={() => { invalidateAuthoringReview(); setExcludedCells(previous => { const next = new Set(previous); const key = cellIdentity(cell); if (next.has(key)) next.delete(key); else next.add(key); return next }) }} />
+                          <span className="rg-matrix-cell-main">
+                            <strong>{cell.snapshotLabel}</strong>
+                            <span>{modelDisplay}</span>
+                            <span className="rg-matrix-cell-task">{taskDisplay}</span>
+                          </span>
+                          <span className="rg-matrix-cell-meta">
+                            <span className="rg-mono">{cell.runtimeId}</span>
+                            <span className="rg-mono">{money(cell.maxCostUsd)}</span>
+                            {cell.compatible ? (
+                              <span>Compatible</span>
+                            ) : (
+                              cell.issues.map((issue) => <span key={issue} className="rg-matrix-cell-issue">{issue}</span>)
+                            )}
+                          </span>
+                        </label>
+                      </li>
+                    )
+                  })}
+                </ol>
+              ) : (
+                <p className="rg-matrix-empty">Capture at least one harness snapshot and select models and runnable tasks to expand matrix arms.</p>
               )}
-            </div>
-          )}
+            </section>
+          </div>
 
-          {error && <p className="rg-err" role="alert">{error}</p>}
+          <div className="rg-matrix-group">
+            <div className="rg-matrix-group-h">
+              <span className="rg-matrix-step" aria-hidden="true">4</span>
+              <h3 className="rg-matrix-group-t">Review and freeze</h3>
+            </div>
+
+            {draftIssue && (
+              <p className="rg-matrix-issue" role="status">{draftIssue}</p>
+            )}
+
+            <div className="rg-matrix-actions">
+              <button
+                type="button"
+                className="rg-btn"
+                disabled={busy || disabled || !available || Boolean(draftIssue)}
+                onClick={handleReviewPlan}
+              >
+                Review matrix experiment
+              </button>
+              <button
+                type="button"
+                className="rg-btn pri"
+                disabled={busy || disabled || !reviewed}
+                onClick={handleFreezePlan}
+              >
+                Freeze matrix experiment
+              </button>
+            </div>
+
+            {activeReview && (
+              <div className="rg-matrix-review" role="region" aria-label="Matrix experiment review">
+                {activeReview.result.issues.map((issue) => (
+                  <p key={issue} className="rg-matrix-err" role="alert">{issue}</p>
+                ))}
+                {activeReview.result.ok && (
+                  <>
+                    <strong>
+                      {activeReview.result.trial_count} planned trials · maximum {money(activeReview.result.maximum_cost_usd)} · budget {money(draftEvaluation.plan.budget_usd)}
+                    </strong>
+                    <p className="rg-matrix-hash">Plan {activeReview.result.plan_sha256}</p>
+                    <ol>
+                      {activeReview.result.plan.schedule.map((row) => {
+                        const armLabel = reviewArmById.get(row.arm_id)?.label || row.arm_id
+                        return (
+                          <li key={row.id}>
+                            Repeat {row.repeat} · {armLabel} · <span className="rg-mono">{row.manifest_sha256.slice(0, 12)}</span>
+                          </li>
+                        )
+                      })}
+                    </ol>
+                  </>
+                )}
+              </div>
+            )}
+
+            {error && <p className="rg-matrix-err" role="alert">{error}</p>}
+          </div>
 
           {experiment && (
-            <section className="rg-matrix-results" aria-label="Matrix experiment results">
-              <div className="rg-matrix-result-head">
-                <h3>{experiment.plan.name}</h3>
-                <strong>{experiment.status}</strong>
+            <section className="rg-matrix-group rg-matrix-results" aria-label="Matrix experiment results">
+              <div className="rg-matrix-result-h">
+                <h3 className="rg-matrix-group-t">{experiment.plan.name}</h3>
+                <strong className={`rg-chip${statusTone ? ' ' + statusTone : ''}`}>{experiment.status}</strong>
               </div>
-              <p className="rg-sub rg-mono">Plan {experiment.plan_sha256}</p>
-              <p className="rg-sub">
-                {experiment.trial_count} trials · ceiling {money(experiment.maximum_cost_usd)}
-                {experiment.plan.budget_usd !== undefined ? ` · budget ${money(experiment.plan.budget_usd)}` : ''}
-              </p>
+              <div className="rg-matrix-facts">
+                <p className="rg-matrix-hash">Plan {experiment.plan_sha256}</p>
+                <p>
+                  {experiment.trial_count} trials · ceiling {money(experiment.maximum_cost_usd)}
+                  {experiment.plan.budget_usd !== undefined ? ` · budget ${money(experiment.plan.budget_usd)}` : ''}
+                </p>
+                <p>
+                  {experiment.summary.finalized_trials} finalized · {experiment.summary.active_trials} active · {experiment.summary.pending_trials} pending
+                </p>
+                <p>
+                  Confirmed cost subtotal: {money(experiment.summary.confirmed_cost_usd)} · {experiment.summary.cost_unknown_trials} trials with unconfirmed cost
+                </p>
+              </div>
 
-              <HarnessJson title="Frozen experiment JSON" source="Saved runner record" description="The reviewed configurations, resolved manifests and complete schedule retained for this experiment." documents={[{ id: experiment.id, label: 'Frozen plan', value: experiment.plan, filename: `experiment-plan-${experiment.id}.json` }]} />
               {experiment.issues.map((issue) => (
-                <p key={issue} className="rg-err" role="alert">{issue}</p>
+                <p key={issue} className="rg-matrix-err" role="alert">{issue}</p>
               ))}
 
-              <div className="rg-exe-actions">
-                <button
-                  type="button"
-                  className="rg-btn pri"
-                  disabled={busy || disabled || !!uncertainStart || !!leaseRef.current?.current || !credentialReady || !['ready', 'paused'].includes(experiment.status)}
-                  onClick={handleStartExperiment}
-                >
-                  {experiment.status === 'paused' ? 'Resume experiment' : 'Start experiment'}
-                </button>
-                <button
-                  type="button"
-                  className="rg-btn"
-                  disabled={busy}
-                  onClick={() => handleLoadExperiment(experiment.id)}
-                >
-                  Refresh experiment
-                </button>
-                <button
-                  type="button"
-                  className="rg-btn"
-                  disabled={busy || ['completed', 'cancelled'].includes(experiment.status)}
-                  onClick={handleCancelExperiment}
-                >
-                  Cancel experiment
-                </button>
-                <button
-                  type="button"
-                  className="rg-btn"
-                  disabled={busy}
-                  onClick={handleExportExperiment}
-                >
-                  Export experiment results
-                </button>
-              </div>
+              <ActionBar
+                label="Experiment actions"
+                className="rg-matrix-actions"
+                actions={[
+                  {
+                    label: experiment.status === 'paused' ? 'Resume experiment' : 'Start experiment',
+                    primary: true,
+                    disabled: busy || disabled || !!uncertainStart || !!leaseRef.current?.current || !credentialReady || !['ready', 'paused'].includes(experiment.status),
+                    onClick: handleStartExperiment,
+                  },
+                  {
+                    label: 'Cancel experiment',
+                    disabled: busy || ['completed', 'cancelled'].includes(experiment.status),
+                    onClick: handleCancelExperiment,
+                  },
+                  {
+                    label: 'Refresh experiment',
+                    disabled: busy,
+                    onClick: () => handleLoadExperiment(experiment.id),
+                    more: true,
+                  },
+                  {
+                    label: 'Export experiment results',
+                    disabled: busy,
+                    onClick: handleExportExperiment,
+                    more: true,
+                  },
+                ]}
+              />
 
               {uncertainStart && <p role="status" className="rg-matrix-issue">Start outcome is unconfirmed. Refresh the experiment before taking another start action.</p>}
               {!credentialReady && ['ready', 'paused'].includes(experiment.status) && (
-                <p className="rg-sub">
+                <p className="rg-matrix-hint">
                   Connect an active OpenRouter key above before starting or resuming this frozen experiment.
                 </p>
               )}
 
-              <p className="rg-sub">
-                {experiment.summary.finalized_trials} finalized · {experiment.summary.active_trials} active · {experiment.summary.pending_trials} pending
-              </p>
-              <p className="rg-sub">
-                Confirmed cost subtotal: {money(experiment.summary.confirmed_cost_usd)} · {experiment.summary.cost_unknown_trials} trials with unconfirmed cost
-              </p>
-
-              <div className="rg-matrix-scroll" role="region" aria-label="Experiment trial queue" tabIndex={0}>
+              <TrialQueue>
                 <table className="rg-tbl rg-matrix-table">
                   <thead>
                     <tr>
-                      <th>Repeat</th>
                       <th>Arm</th>
-                      <th>Identity</th>
+                      <th className="rg-num">Repeat</th>
                       <th>Execution</th>
                       <th>Grade</th>
-                      <th>Reported cost</th>
+                      <th className="rg-num">Reported cost</th>
                       <th>Job</th>
+                      <th>Identity</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -1042,23 +1122,18 @@ export function ExperimentWorkspace({
                         : 'Pending'
                       return (
                         <tr key={trial.id}>
-                          <td>{trial.repeat}</td>
-                          <td>{arm?.label || trial.arm_id}</td>
-                          <td>
-                            <div className="rg-matrix-identity">
-                              <span>{identity.runtimeLine}</span>
-                              <span>{identity.taskLine}</span>
-                              <code className="rg-mono">{trial.manifest_sha256}</code>
+                          <td><span className="rg-matrix-arm">{arm?.label || trial.arm_id}</span></td>
+                          <td className="rg-num" data-label="Repeat">{trial.repeat}</td>
+                          <td data-label="Execution">
+                            <div className="rg-matrix-exec">
+                              <div>{trial.status}</div>
+                              {trialIssues.map((issue) => (
+                                <div key={issue} className="rg-matrix-trial-issue">{issue}</div>
+                              ))}
                             </div>
                           </td>
-                          <td>
-                            <div>{trial.status}</div>
-                            {trialIssues.map((issue) => (
-                              <div key={issue} className="rg-sub">{issue}</div>
-                            ))}
-                          </td>
-                          <td>{gradeText}</td>
-                          <td>
+                          <td data-label="Grade">{gradeText}</td>
+                          <td className="rg-num" data-label="Reported cost">
                             {costUsd === undefined || costUsd === null ? (
                               'Unconfirmed'
                             ) : (
@@ -1068,7 +1143,7 @@ export function ExperimentWorkspace({
                               </span>
                             )}
                           </td>
-                          <td>
+                          <td className="rg-matrix-job">
                             {jobId && onOpenJob ? (
                               <button
                                 type="button"
@@ -1079,18 +1154,25 @@ export function ExperimentWorkspace({
                                 Open job
                               </button>
                             ) : (
-                              '—'
+                              <span className="rg-mute">—</span>
                             )}
+                          </td>
+                          <td className="rg-matrix-id">
+                            <div className="rg-matrix-identity">
+                              <span>{identity.runtimeLine}</span>
+                              <span>{identity.taskLine}</span>
+                              <code title={trial.manifest_sha256}>{trial.manifest_sha256}</code>
+                            </div>
                           </td>
                         </tr>
                       )
                     })}
                   </tbody>
                 </table>
-              </div>
+              </TrialQueue>
 
               {experiment.plan.version === 1 && experiment.summary.comparisons.length > 0 && (
-                <div className="rg-sub">
+                <div className="rg-matrix-facts">
                   {experiment.summary.comparisons.map((comparison) => (
                     <p key={comparison.arm_id}>
                       Paired summary ({comparison.arm_id}): {comparison.graded_pairs ?? 0} of {comparison.planned_pairs ?? 0} pairs graded.
@@ -1098,38 +1180,45 @@ export function ExperimentWorkspace({
                   ))}
                 </div>
               )}
+
+              <HarnessJson title="Frozen experiment JSON" source="Saved runner record" description="The reviewed configurations, resolved manifests and complete schedule retained for this experiment." documents={[{ id: experiment.id, label: 'Frozen plan', value: experiment.plan, filename: `experiment-plan-${experiment.id}.json` }]} />
             </section>
           )}
 
           {available && (
-            <>
-              <div className="rg-matrix-history">
-                <strong>Saved experiments</strong>
+            <div className="rg-matrix-group rg-matrix-history">
+              <div className="rg-matrix-group-h">
+                <h3 className="rg-matrix-group-t">Saved experiments</h3>
+                <span className="rg-matrix-group-meta">{history.length}</span>
                 <button
                   type="button"
-                  className="rg-btn"
+                  className="rg-btn ghost rg-matrix-refresh"
                   disabled={busy}
                   onClick={handleRefreshHistory}
                 >
                   Refresh experiments
                 </button>
               </div>
-              {history.length > 0 && (
-                <div className="rg-matrix-history-list">
+              {history.length > 0 ? (
+                <ul className="rg-matrix-history-list">
                   {history.map((row) => (
-                    <button
-                      key={row.id}
-                      type="button"
-                      className="rg-btn"
-                      disabled={busy}
-                      onClick={() => handleLoadExperiment(row.id)}
-                    >
-                      {row.id.slice(0, 8)} · {row.status} · {row.trial_count} trials
-                    </button>
+                    <li key={row.id}>
+                      <button
+                        type="button"
+                        className={`rg-btn${experiment?.id === row.id ? ' is-current' : ''}`}
+                        aria-current={experiment?.id === row.id ? 'true' : undefined}
+                        disabled={busy}
+                        onClick={() => handleLoadExperiment(row.id)}
+                      >
+                        {row.id.slice(0, 8)} · {row.status} · {row.trial_count} trials
+                      </button>
+                    </li>
                   ))}
-                </div>
+                </ul>
+              ) : (
+                <p className="rg-matrix-hint">No saved experiments in this account yet. A frozen experiment appears here.</p>
               )}
-            </>
+            </div>
           )}
         </div>
       )}

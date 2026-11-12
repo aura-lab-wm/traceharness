@@ -1,0 +1,621 @@
+{
+ "function": "text_metrics",
+ "cases": [
+  {
+   "name": "text_metrics: empty",
+   "args": [
+    ""
+   ],
+   "expected": {
+    "bytes": 0,
+    "code_points": 0,
+    "lines": 0,
+    "est_tokens": 0
+   }
+  },
+  {
+   "name": "text_metrics: ascii",
+   "args": [
+    "Fabricated words."
+   ],
+   "expected": {
+    "bytes": 17,
+    "code_points": 17,
+    "lines": 1,
+    "est_tokens": 5
+   }
+  },
+  {
+   "name": "text_metrics: cjk",
+   "args": [
+    "\u65e5\u672c\u8a9e\u306e\u6587"
+   ],
+   "expected": {
+    "bytes": 15,
+    "code_points": 5,
+    "lines": 1,
+    "est_tokens": 2
+   }
+  },
+  {
+   "name": "text_metrics: emoji",
+   "args": [
+    "ok \ud83d\ude42\ud83d\ude80"
+   ],
+   "expected": {
+    "bytes": 11,
+    "code_points": 5,
+    "lines": 1,
+    "est_tokens": 2
+   }
+  },
+  {
+   "name": "text_metrics: combining marks",
+   "args": [
+    "cafe\u0301 nai\u0308ve"
+   ],
+   "expected": {
+    "bytes": 14,
+    "code_points": 12,
+    "lines": 1,
+    "est_tokens": 4
+   }
+  },
+  {
+   "name": "text_metrics: whitespace only",
+   "args": [
+    " \t\n\u000b\f\r "
+   ],
+   "expected": {
+    "bytes": 7,
+    "code_points": 7,
+    "lines": 2,
+    "est_tokens": 0
+   }
+  },
+  {
+   "name": "text_metrics: trailing line feed",
+   "args": [
+    "one\ntwo\n"
+   ],
+   "expected": {
+    "bytes": 8,
+    "code_points": 8,
+    "lines": 3,
+    "est_tokens": 2
+   }
+  },
+  {
+   "name": "text_metrics: no final line feed",
+   "args": [
+    "one\ntwo"
+   ],
+   "expected": {
+    "bytes": 7,
+    "code_points": 7,
+    "lines": 2,
+    "est_tokens": 2
+   }
+  },
+  {
+   "name": "text_metrics: line separator is not ASCII whitespace",
+   "args": [
+    "\u2028"
+   ],
+   "expected": {
+    "bytes": 3,
+    "code_points": 1,
+    "lines": 1,
+    "est_tokens": 1
+   }
+  },
+  {
+   "name": "text_metrics: non-breaking space kept",
+   "args": [
+    "\u00a0x\u00a0"
+   ],
+   "expected": {
+    "bytes": 5,
+    "code_points": 3,
+    "lines": 1,
+    "est_tokens": 1
+   }
+  },
+  {
+   "name": "text_metrics: lone surrogate",
+   "args": [
+    "a\ud800b"
+   ],
+   "expected": {
+    "bytes": 5,
+    "code_points": 3,
+    "lines": 1,
+    "est_tokens": 1
+   }
+  },
+  {
+   "name": "text_metrics: 39 code points",
+   "args": [
+    "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+   ],
+   "expected": {
+    "bytes": 39,
+    "code_points": 39,
+    "lines": 1,
+    "est_tokens": 10
+   }
+  },
+  {
+   "name": "text_metrics: 40 code points",
+   "args": [
+    "yyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy"
+   ],
+   "expected": {
+    "bytes": 40,
+    "code_points": 40,
+    "lines": 1,
+    "est_tokens": 11
+   }
+  },
+  {
+   "name": "text_metrics: NUL character",
+   "args": [
+    "a\u0000b"
+   ],
+   "expected": {
+    "bytes": 3,
+    "code_points": 3,
+    "lines": 1,
+    "est_tokens": 1
+   }
+  },
+  {
+   "name": "utf8_bytes: empty",
+   "args": [
+    ""
+   ],
+   "function": "utf8_bytes",
+   "expected": 0
+  },
+  {
+   "name": "utf8_bytes: ascii",
+   "args": [
+    "Fabricated words."
+   ],
+   "function": "utf8_bytes",
+   "expected": 17
+  },
+  {
+   "name": "utf8_bytes: cjk",
+   "args": [
+    "\u65e5\u672c\u8a9e\u306e\u6587"
+   ],
+   "function": "utf8_bytes",
+   "expected": 15
+  },
+  {
+   "name": "utf8_bytes: emoji",
+   "args": [
+    "ok \ud83d\ude42\ud83d\ude80"
+   ],
+   "function": "utf8_bytes",
+   "expected": 11
+  },
+  {
+   "name": "utf8_bytes: combining marks",
+   "args": [
+    "cafe\u0301 nai\u0308ve"
+   ],
+   "function": "utf8_bytes",
+   "expected": 14
+  },
+  {
+   "name": "utf8_bytes: whitespace only",
+   "args": [
+    " \t\n\u000b\f\r "
+   ],
+   "function": "utf8_bytes",
+   "expected": 7
+  },
+  {
+   "name": "utf8_bytes: trailing line feed",
+   "args": [
+    "one\ntwo\n"
+   ],
+   "function": "utf8_bytes",
+   "expected": 8
+  },
+  {
+   "name": "utf8_bytes: no final line feed",
+   "args": [
+    "one\ntwo"
+   ],
+   "function": "utf8_bytes",
+   "expected": 7
+  },
+  {
+   "name": "utf8_bytes: line separator is not ASCII whitespace",
+   "args": [
+    "\u2028"
+   ],
+   "function": "utf8_bytes",
+   "expected": 3
+  },
+  {
+   "name": "utf8_bytes: non-breaking space kept",
+   "args": [
+    "\u00a0x\u00a0"
+   ],
+   "function": "utf8_bytes",
+   "expected": 5
+  },
+  {
+   "name": "utf8_bytes: lone surrogate",
+   "args": [
+    "a\ud800b"
+   ],
+   "function": "utf8_bytes",
+   "expected": 5
+  },
+  {
+   "name": "utf8_bytes: 39 code points",
+   "args": [
+    "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+   ],
+   "function": "utf8_bytes",
+   "expected": 39
+  },
+  {
+   "name": "utf8_bytes: 40 code points",
+   "args": [
+    "yyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy"
+   ],
+   "function": "utf8_bytes",
+   "expected": 40
+  },
+  {
+   "name": "utf8_bytes: NUL character",
+   "args": [
+    "a\u0000b"
+   ],
+   "function": "utf8_bytes",
+   "expected": 3
+  },
+  {
+   "name": "code_points: empty",
+   "args": [
+    ""
+   ],
+   "function": "code_points",
+   "expected": 0
+  },
+  {
+   "name": "code_points: ascii",
+   "args": [
+    "Fabricated words."
+   ],
+   "function": "code_points",
+   "expected": 17
+  },
+  {
+   "name": "code_points: cjk",
+   "args": [
+    "\u65e5\u672c\u8a9e\u306e\u6587"
+   ],
+   "function": "code_points",
+   "expected": 5
+  },
+  {
+   "name": "code_points: emoji",
+   "args": [
+    "ok \ud83d\ude42\ud83d\ude80"
+   ],
+   "function": "code_points",
+   "expected": 5
+  },
+  {
+   "name": "code_points: combining marks",
+   "args": [
+    "cafe\u0301 nai\u0308ve"
+   ],
+   "function": "code_points",
+   "expected": 12
+  },
+  {
+   "name": "code_points: whitespace only",
+   "args": [
+    " \t\n\u000b\f\r "
+   ],
+   "function": "code_points",
+   "expected": 7
+  },
+  {
+   "name": "code_points: trailing line feed",
+   "args": [
+    "one\ntwo\n"
+   ],
+   "function": "code_points",
+   "expected": 8
+  },
+  {
+   "name": "code_points: no final line feed",
+   "args": [
+    "one\ntwo"
+   ],
+   "function": "code_points",
+   "expected": 7
+  },
+  {
+   "name": "code_points: line separator is not ASCII whitespace",
+   "args": [
+    "\u2028"
+   ],
+   "function": "code_points",
+   "expected": 1
+  },
+  {
+   "name": "code_points: non-breaking space kept",
+   "args": [
+    "\u00a0x\u00a0"
+   ],
+   "function": "code_points",
+   "expected": 3
+  },
+  {
+   "name": "code_points: lone surrogate",
+   "args": [
+    "a\ud800b"
+   ],
+   "function": "code_points",
+   "expected": 3
+  },
+  {
+   "name": "code_points: 39 code points",
+   "args": [
+    "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+   ],
+   "function": "code_points",
+   "expected": 39
+  },
+  {
+   "name": "code_points: 40 code points",
+   "args": [
+    "yyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy"
+   ],
+   "function": "code_points",
+   "expected": 40
+  },
+  {
+   "name": "code_points: NUL character",
+   "args": [
+    "a\u0000b"
+   ],
+   "function": "code_points",
+   "expected": 3
+  },
+  {
+   "name": "line_count: empty",
+   "args": [
+    ""
+   ],
+   "function": "line_count",
+   "expected": 0
+  },
+  {
+   "name": "line_count: ascii",
+   "args": [
+    "Fabricated words."
+   ],
+   "function": "line_count",
+   "expected": 1
+  },
+  {
+   "name": "line_count: cjk",
+   "args": [
+    "\u65e5\u672c\u8a9e\u306e\u6587"
+   ],
+   "function": "line_count",
+   "expected": 1
+  },
+  {
+   "name": "line_count: emoji",
+   "args": [
+    "ok \ud83d\ude42\ud83d\ude80"
+   ],
+   "function": "line_count",
+   "expected": 1
+  },
+  {
+   "name": "line_count: combining marks",
+   "args": [
+    "cafe\u0301 nai\u0308ve"
+   ],
+   "function": "line_count",
+   "expected": 1
+  },
+  {
+   "name": "line_count: whitespace only",
+   "args": [
+    " \t\n\u000b\f\r "
+   ],
+   "function": "line_count",
+   "expected": 2
+  },
+  {
+   "name": "line_count: trailing line feed",
+   "args": [
+    "one\ntwo\n"
+   ],
+   "function": "line_count",
+   "expected": 3
+  },
+  {
+   "name": "line_count: no final line feed",
+   "args": [
+    "one\ntwo"
+   ],
+   "function": "line_count",
+   "expected": 2
+  },
+  {
+   "name": "line_count: line separator is not ASCII whitespace",
+   "args": [
+    "\u2028"
+   ],
+   "function": "line_count",
+   "expected": 1
+  },
+  {
+   "name": "line_count: non-breaking space kept",
+   "args": [
+    "\u00a0x\u00a0"
+   ],
+   "function": "line_count",
+   "expected": 1
+  },
+  {
+   "name": "line_count: lone surrogate",
+   "args": [
+    "a\ud800b"
+   ],
+   "function": "line_count",
+   "expected": 1
+  },
+  {
+   "name": "line_count: 39 code points",
+   "args": [
+    "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+   ],
+   "function": "line_count",
+   "expected": 1
+  },
+  {
+   "name": "line_count: 40 code points",
+   "args": [
+    "yyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy"
+   ],
+   "function": "line_count",
+   "expected": 1
+  },
+  {
+   "name": "line_count: NUL character",
+   "args": [
+    "a\u0000b"
+   ],
+   "function": "line_count",
+   "expected": 1
+  },
+  {
+   "name": "estimate_tokens: empty",
+   "args": [
+    ""
+   ],
+   "function": "estimate_tokens",
+   "expected": 0
+  },
+  {
+   "name": "estimate_tokens: ascii",
+   "args": [
+    "Fabricated words."
+   ],
+   "function": "estimate_tokens",
+   "expected": 5
+  },
+  {
+   "name": "estimate_tokens: cjk",
+   "args": [
+    "\u65e5\u672c\u8a9e\u306e\u6587"
+   ],
+   "function": "estimate_tokens",
+   "expected": 2
+  },
+  {
+   "name": "estimate_tokens: emoji",
+   "args": [
+    "ok \ud83d\ude42\ud83d\ude80"
+   ],
+   "function": "estimate_tokens",
+   "expected": 2
+  },
+  {
+   "name": "estimate_tokens: combining marks",
+   "args": [
+    "cafe\u0301 nai\u0308ve"
+   ],
+   "function": "estimate_tokens",
+   "expected": 4
+  },
+  {
+   "name": "estimate_tokens: whitespace only",
+   "args": [
+    " \t\n\u000b\f\r "
+   ],
+   "function": "estimate_tokens",
+   "expected": 0
+  },
+  {
+   "name": "estimate_tokens: trailing line feed",
+   "args": [
+    "one\ntwo\n"
+   ],
+   "function": "estimate_tokens",
+   "expected": 2
+  },
+  {
+   "name": "estimate_tokens: no final line feed",
+   "args": [
+    "one\ntwo"
+   ],
+   "function": "estimate_tokens",
+   "expected": 2
+  },
+  {
+   "name": "estimate_tokens: line separator is not ASCII whitespace",
+   "args": [
+    "\u2028"
+   ],
+   "function": "estimate_tokens",
+   "expected": 1
+  },
+  {
+   "name": "estimate_tokens: non-breaking space kept",
+   "args": [
+    "\u00a0x\u00a0"
+   ],
+   "function": "estimate_tokens",
+   "expected": 1
+  },
+  {
+   "name": "estimate_tokens: lone surrogate",
+   "args": [
+    "a\ud800b"
+   ],
+   "function": "estimate_tokens",
+   "expected": 1
+  },
+  {
+   "name": "estimate_tokens: 39 code points",
+   "args": [
+    "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+   ],
+   "function": "estimate_tokens",
+   "expected": 10
+  },
+  {
+   "name": "estimate_tokens: 40 code points",
+   "args": [
+    "yyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy"
+   ],
+   "function": "estimate_tokens",
+   "expected": 11
+  },
+  {
+   "name": "estimate_tokens: NUL character",
+   "args": [
+    "a\u0000b"
+   ],
+   "function": "estimate_tokens",
+   "expected": 1
+  }
+ ]
+}

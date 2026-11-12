@@ -53,7 +53,7 @@ function ShallowApply({ args } = {}) {
       <EvidenceOrigin args={args} />
       {storageError && <p role="alert">{storageError}</p>}
       <label className="rg-fld">Prompt applied to all six
-        <textarea className="rg-inp" value={prompt} onChange={(e) => setPrompt(e.target.value)} spellCheck={false} />
+        <textarea className="rg-inp" rows={6} value={prompt} onChange={(e) => setPrompt(e.target.value)} spellCheck={false} />
       </label>
       <div className="rg-harness-toolbar"><button type="button" className="rg-btn pri" onClick={() => setApplied(prompt)}>Apply to all six</button>
       <span className="rg-small">{prompt !== applied ? 'Unapplied edits' : 'Preview only · account prompts unchanged'}</span></div>

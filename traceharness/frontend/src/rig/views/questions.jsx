@@ -14,7 +14,8 @@ import { useDataset, useDatasets, useRuns, useMetrics, useExperiment, useOracle,
   short, sfx, fmt, verdict, tally, isFailureMode, resolveCondition, invalidate } from '../data'
 import { QUESTIONS, QMAP, answerQuestion, operatingPoint } from '../answers'
 import { useRig, useTabState } from '../context'
-import { AskingSentence, PinButton, Go, Panel, HBar, OutcomeBar, CiBar, Verdict, FailureChip, Tag, Loading, ErrorState, NotFound, Empty, NextSteps, Seg, About } from '../ui'
+import { AskingSentence, PinButton, Go, Panel, HBar, OutcomeBar, CiBar, Verdict, FailureChip, Tag, Loading, ErrorState, NotFound, Empty, NextSteps, Seg, About,
+  TableScroll, Toolbar, PanelState } from '../ui'
 import './questions.css'
 
 const { pct, int, pp } = fmt
@@ -68,7 +69,7 @@ export function QuestionStack({ dir, compact, model, harness }) {
             <span className="qq">{cond && cond.model ? q.q(cond) : q.q({ model: '…', harness: '…' })}</span>
             {state === 'answered' && <span className="qv"><b>{answer.num}</b><small>{answer.numLabel}</small></span>}
             {state === 'answered' && <span className="qa"><Sentence parts={answer.sentence} /></span>}
-            {state === 'loading' && <span className="qa"><span className="rg-skel" style={{ display: 'block', height: 12, width: '70%' }} /></span>}
+            {state === 'loading' && <span className="qa"><span className="rg-skel rg-q-skel" aria-hidden="true" /></span>}
             {state === 'unanswered' && <><span className="qv"><Tag tone="dash">not answered</Tag></span><span className="qa">{reason}</span></>}
           </Go>
         </li>
@@ -84,31 +85,31 @@ function Figure({ fig, dir }) {
     case 'variance': {
       const { f } = fig
       return (<>
-        <div className="rg-col" style={{ gap: 4 }}>
+        <div className="rg-q-bars">
           <HBar label="model" value={f.model.share} text={pct(f.model.share)} />
           <HBar label="harness" value={f.harness.share} text={pct(f.harness.share)} />
           <HBar label="interaction" value={f.interaction_share} text={pct(f.interaction_share)} tone="dim" />
         </div>
-        <p className="rg-small rg-dim" style={{ marginTop: 8 }}>Share of the sum of squares in a two-factor fit of hidden-suite pass (model × harness). Spread of level means: model {pp(f.model.range)}, harness {pp(f.harness.range)}.</p>
-        <div className="rg-lbl" style={{ margin: '12px 0 6px' }}>{fig.nSep ? `Contrasts that separate from zero · ${fig.nSep} of ${fig.nAll}` : `Largest contrasts · none of ${fig.nAll} separates`}</div>
-        <div className="rg-tblwrap"><table className="rg-tbl"><thead><tr><th>model</th><th>from → to (harness)</th><th className="rg-num">Δ pass@1</th><th className="rg-hide-sm">95% CI</th></tr></thead>
-          <tbody>{fig.contrasts.map((c, i) => <tr key={i}><td className="rg-mono">{short(c.a)}</td><td className="rg-mono">{c.from} → {c.to}</td><td className={`rg-num rg-mono ${c.delta < 0 ? 'rg-red' : 'rg-sky'}`}>{pp(c.delta)}</td>
-            <td className="rg-hide-sm"><CiBar lo={c.ci95[0]} hi={c.ci95[1]} pt={c.delta} min={-0.6} max={0.6} zero={0} /></td></tr>)}</tbody></table></div>
+        <p className="rg-small rg-dim rg-q-cap">Share of the sum of squares in a two-factor fit of hidden-suite pass (model × harness). Spread of level means: model {pp(f.model.range)}, harness {pp(f.harness.range)}.</p>
+        <div className="rg-lbl rg-q-sub">{fig.nSep ? `Contrasts that separate from zero · ${fig.nSep} of ${fig.nAll}` : `Largest contrasts · none of ${fig.nAll} separates`}</div>
+        <TableScroll label="Contrasts between harnesses"><table className="rg-tbl rg-q-tbl"><thead><tr><th>model</th><th>from → to (harness)</th><th className="rg-num">Δ pass@1</th><th className="rg-cq-hide-sm rg-q-ci">95% CI</th></tr></thead>
+          <tbody>{fig.contrasts.map((c, i) => <tr key={i}><td className="rg-mono">{short(c.a)}</td><td className="rg-mono">{c.from} → {c.to}</td><td className={`rg-num ${c.delta < 0 ? 'rg-red' : 'rg-sky'}`}>{pp(c.delta)}</td>
+            <td className="rg-cq-hide-sm rg-q-ci"><CiBar lo={c.ci95[0]} hi={c.ci95[1]} pt={c.delta} min={-0.6} max={0.6} zero={0} /></td></tr>)}</tbody></table></TableScroll>
       </>)
     }
     case 'oracle': {
       const { o } = fig
       const c = o.cells
       return (<>
-        <div className="rg-col" style={{ gap: 4 }}>
+        <div className="rg-q-bars">
           <HBar label="hidden suite" value={o.rate_a.rate} text={pct(o.rate_a.rate)} tone="sky" />
           <HBar label="strengthened" value={o.rate_b.rate} text={pct(o.rate_b.rate)} tone="sky" />
         </div>
-        <div className="rg-tblwrap" role="region" aria-label="Grader agreement" tabIndex={0}><table className="rg-tbl rg-q-2x2" style={{ marginTop: 12 }}><caption className="rg-lbl" style={{ textAlign: 'left', padding: '0 0 6px' }}>Agreement over {int(o.n_eligible)} runs graded by both · κ {fmt.fx(o.kappa)}</caption>
+        <TableScroll label="Grader agreement" className="rg-q-2x2w"><table className="rg-tbl rg-q-2x2"><caption className="rg-lbl">Agreement over {int(o.n_eligible)} runs graded by both · κ {fmt.fx(o.kappa)}</caption>
           <thead><tr><th /><th className="rg-num">strengthened ✓</th><th className="rg-num">strengthened ×</th></tr></thead>
           <tbody><tr><th>hidden ✓</th><td className="rg-num rg-mono">{int(c.both_true)}</td><td className="rg-num rg-mono rg-red">{int(c.only_a_true)}</td></tr>
-            <tr><th>hidden ×</th><td className="rg-num rg-mono">{int(c.only_b_true)}</td><td className="rg-num rg-mono">{int(c.both_false)}</td></tr></tbody></table></div>
-        {o.n_excluded ? <p className="rg-small rg-dim">{int(o.n_excluded)} runs lack one of the two grades and are excluded, not counted as failures.</p> : null}
+            <tr><th>hidden ×</th><td className="rg-num rg-mono">{int(c.only_b_true)}</td><td className="rg-num rg-mono">{int(c.both_false)}</td></tr></tbody></table></TableScroll>
+        {o.n_excluded ? <p className="rg-small rg-dim rg-q-cap">{int(o.n_excluded)} runs lack one of the two grades and are excluded, not counted as failures.</p> : null}
       </>)
     }
     case 'strips':
@@ -120,7 +121,7 @@ function Figure({ fig, dir }) {
             <span className="rg-mono rg-small">{s.p}/{s.known}{s.u ? ` · ${s.u}?` : ''}</span>
             {s.mixed ? <Tag tone="amb">mixed</Tag> : <span />}
           </div>))}</div>
-        <p className="rg-small rg-dim">Repeats in order of repeat_index, graded by the {oracle} suite. A task is mixed when some repeats pass and others fail.</p>
+        <p className="rg-small rg-dim rg-q-cap">Repeats in order of repeat_index, graded by the {oracle} suite. A task is mixed when some repeats pass and others fail.</p>
       </>)
     case 'modes': {
       const max = Math.max(...fig.fails.map(([, n]) => n), 1)
@@ -128,22 +129,22 @@ function Figure({ fig, dir }) {
       const meaning = (id) => (fig.modes.find((m) => m.id === id) || {}).meaning
       const cf = Object.entries(fig.condCounts).sort((a, b) => b[1] - a[1])
       return (<>
-        <div className="rg-lbl" style={{ marginBottom: 6 }}>Every failed run in {dir} · {int(fig.failures)}</div>
-        <div className="rg-col" style={{ gap: 4 }}>{fig.fails.map(([m, n]) => <div key={m} title={meaning(m)}><HBar label={label(m)} value={n} max={max} text={`${int(n)} · ${pct(n / fig.failures, 0)}`} tone="red" /></div>)}</div>
-        <div className="rg-lbl" style={{ margin: '14px 0 6px' }}>In {short(fig.cond.model)} · {fig.cond.harness} · {int(fig.condFailures)} failed</div>
-        {cf.length ? <div className="rg-row rg-wrap">{cf.map(([m, n]) => <span key={m} className="rg-row" style={{ gap: 4 }}><FailureChip mode={m} dir={dir} /><span className="rg-mono rg-small">×{n}</span></span>)}</div>
+        <div className="rg-lbl rg-q-sub rg-q-first">Every failed run in {dir} · {int(fig.failures)}</div>
+        <div className="rg-q-bars">{fig.fails.map(([m, n]) => <div key={m} title={meaning(m)}><HBar label={label(m)} value={n} max={max} text={`${int(n)} · ${pct(n / fig.failures, 0)}`} tone="red" /></div>)}</div>
+        <div className="rg-lbl rg-q-sub">In {short(fig.cond.model)} · {fig.cond.harness} · {int(fig.condFailures)} failed</div>
+        {cf.length ? <div className="rg-cluster rg-cluster-lg">{cf.map(([m, n]) => <span key={m} className="rg-q-chipn"><FailureChip mode={m} dir={dir} /><span className="rg-mono rg-small">×{n}</span></span>)}</div>
           : <p className="rg-small rg-dim">No run in this condition failed the hidden suite.</p>}
       </>)
     }
     case 'leak': {
       const max = Math.max(...fig.rows.map((x) => x.patch_issue_similarity), 0.01)
       return (<>
-        <div className="rg-col" style={{ gap: 4 }}>{fig.rows.map((x) => (
-          <div key={x.task} className="rg-row" style={{ gap: 8 }}>
-            <div className="rg-grow"><HBar label={x.task} value={x.patch_issue_similarity} max={max} text={pct(x.patch_issue_similarity, 0)} tone={x.probe && x.probe !== 'none' ? 'amb' : undefined} /></div>
+        <div className="rg-q-bars">{fig.rows.map((x) => (
+          <div key={x.task} className="rg-q-leak">
+            <div className="rg-q-leakb"><HBar label={x.task} value={x.patch_issue_similarity} max={max} text={pct(x.patch_issue_similarity, 0)} tone={x.probe && x.probe !== 'none' ? 'amb' : undefined} /></div>
             <span className="rg-q-probe">{x.probe && x.probe !== 'none' ? <Tag tone="amb">◆ {x.probe.replace(/_/g, ' ')}</Tag> : null}</span>
           </div>))}</div>
-        <p className="rg-small rg-dim" style={{ marginTop: 8 }}>Similarity between each task's patches and its issue text. ◆ marks tasks built as probes (a planted leak, injection or temptation).</p>
+        <p className="rg-small rg-dim rg-q-cap">Similarity between each task's patches and its issue text. ◆ marks tasks built as probes (a planted leak, injection or temptation).</p>
       </>)
     }
     case 'run': {
@@ -163,26 +164,26 @@ function Figure({ fig, dir }) {
       const ops = (fig.model.meta.operating_points || [])
       const op = operatingPoint(fig.model, fig.threshold)
       return (<>
-        <div className="rg-tblwrap"><table className="rg-tbl"><thead><tr><th className="rg-num">threshold</th><th className="rg-num">bad caught</th><th className="rg-num">good blocked</th><th className="rg-num">lead (steps)</th></tr></thead>
-          <tbody>{ops.map((o) => <tr key={o.threshold} className={o === op ? 'sel' : ''}><td className="rg-num rg-mono">{fmt.fx(o.threshold)}</td><td className="rg-num rg-mono">{pct(o.recall, 0)}</td><td className="rg-num rg-mono rg-red">{pct(o.false_alarm, 0)}</td><td className="rg-num rg-mono">{fmt.fx(o.mean_lead_steps, 1)}</td></tr>)}</tbody></table></div>
-        <p className="rg-small rg-dim" style={{ marginTop: 8 }}>{fig.model.name} · trained on {(fig.model.meta.sources || []).join(', ')} · {int(fig.model.meta.n_runs)} runs · run-weighted AUC {fmt.fx(fig.model.meta.auc_run_weighted)}. Highlighted row = the default threshold.</p>
+        <TableScroll label="Sentinel operating points" stickyCol={false}><table className="rg-tbl rg-q-tbl rg-q-narrow"><thead><tr><th className="rg-num">threshold</th><th className="rg-num">bad caught</th><th className="rg-num">good blocked</th><th className="rg-num">lead (steps)</th></tr></thead>
+          <tbody>{ops.map((o) => <tr key={o.threshold} className={o === op ? 'sel' : ''}><td className="rg-num rg-mono">{fmt.fx(o.threshold)}</td><td className="rg-num rg-mono">{pct(o.recall, 0)}</td><td className="rg-num rg-mono rg-red">{pct(o.false_alarm, 0)}</td><td className="rg-num rg-mono">{fmt.fx(o.mean_lead_steps, 1)}</td></tr>)}</tbody></table></TableScroll>
+        <p className="rg-small rg-dim rg-q-cap">{fig.model.name} · trained on {(fig.model.meta.sources || []).join(', ')} · {int(fig.model.meta.n_runs)} runs · run-weighted AUC {fmt.fx(fig.model.meta.auc_run_weighted)}. Highlighted row = the default threshold.</p>
       </>)
     }
     case 'report': {
       const o = fig.card.outcome
       const ks = Object.keys(o.pass_at_k || {})
       return (<>
-        <div className="rg-row" style={{ gap: 12, marginBottom: 8 }}><span className="rg-fig md">{pct(o.pass1)}</span><div className="rg-grow"><CiBar lo={o.ci95[0]} hi={o.ci95[1]} pt={o.pass1} /></div></div>
+        <div className="rg-q-rep"><span className="rg-fig md">{pct(o.pass1)}</span><div className="rg-q-repci"><CiBar lo={o.ci95[0]} hi={o.ci95[1]} pt={o.pass1} /></div></div>
         <p className="rg-small"><Tag tone={fig.pooled ? 'amb' : undefined} nc>{fig.scope}</Tag> <span className="rg-dim">n = {int(fig.card.cell.runs)} · {fig.card.cell.repeat_range ? [...new Set(fig.card.cell.repeat_range)].join('–') : fig.card.cell.repeats} attempts per observed task slot · {fig.card.cell.tasks.length} tasks</span></p>
-        <table className="rg-tbl rg-q-metrics"><thead><tr><th>k</th><th className="rg-num">pass@k (any of k)</th><th className="rg-num">pass^k (all of k)</th></tr></thead>
-          <tbody>{ks.map((k) => <tr key={k}><td className="rg-mono">{k}</td><td className="rg-num rg-mono">{pct(o.pass_at_k[k])}</td><td className="rg-num rg-mono">{pct(o.pass_pow_k[k])}</td></tr>)}</tbody></table>
-        {(fig.card.missing || []).length > 0 && <><div className="rg-lbl" style={{ margin: '12px 0 6px' }}>What this card does not cover</div><ul className="rg-small rg-dim rg-q-list">{fig.card.missing.map((m, i) => <li key={i}>{m}</li>)}</ul></>}
+        <TableScroll label="pass@k and pass^k" stickyCol={false}><table className="rg-tbl rg-q-metrics rg-q-narrow"><thead><tr><th>k</th><th className="rg-num">pass@k (any of k)</th><th className="rg-num">pass^k (all of k)</th></tr></thead>
+          <tbody>{ks.map((k) => <tr key={k}><td className="rg-mono">{k}</td><td className="rg-num rg-mono">{pct(o.pass_at_k[k])}</td><td className="rg-num rg-mono">{pct(o.pass_pow_k[k])}</td></tr>)}</tbody></table></TableScroll>
+        {(fig.card.missing || []).length > 0 && <><div className="rg-lbl rg-q-sub">What this card does not cover</div><ul className="rg-small rg-dim rg-q-list">{fig.card.missing.map((m, i) => <li key={i}>{m}</li>)}</ul></>}
       </>)
     }
     case 'plan':
       return (<>
-        <div className="rg-col" style={{ gap: 4 }}>{fig.p.models.map((x) => <HBar key={x.m} label={short(x.m)} value={x.reps} max={fig.p.max} text={`${x.reps} / task`} tone={x.reps < fig.p.max ? 'amb' : undefined} />)}</div>
-        <p className="rg-small rg-dim" style={{ marginTop: 8 }}>Fewest repeats per task across each model's (harness, task) slots.</p>
+        <div className="rg-q-bars">{fig.p.models.map((x) => <HBar key={x.m} label={short(x.m)} value={x.reps} max={fig.p.max} text={`${x.reps} / task`} tone={x.reps < fig.p.max ? 'amb' : undefined} />)}</div>
+        <p className="rg-small rg-dim rg-q-cap">Fewest repeats per task across each model's (harness, task) slots.</p>
       </>)
     default: return null
   }
@@ -289,7 +290,7 @@ function QuestionsDoc({ spec, args }) {
     return (
       <div className="rg-dpad">
         <div className="rg-dh"><div className="t"><div className="rg-eyebrow">{A.row.kind === 'mock' ? 'Mock control' : 'Recorded dataset'} · {int(A.row.runs)} runs</div>
-          <h1>What do you want to know about <span className="rg-mono">{dir}</span>?</h1>
+          <h1>What do you want to know about <span className="rg-mono rg-break">{dir}</span>?</h1>
           <p>Nine questions, each answered from the recorded runs with one sentence and one number. Every answer leads down to the runs and the exact recorded event behind it.</p></div></div>
         <AskingSentence dir={dir} />
         <QuestionStack dir={dir} />
@@ -308,16 +309,16 @@ function QuestionsDoc({ spec, args }) {
       {res.state === 'unanswered' && <Unanswered dir={dir} qid={qid} reason={res.reason} A={A} />}
       {res.state === 'answered' && (<>
         <div className="rg-q-answer" data-el="answer">
-          <p className="a"><Sentence parts={res.answer.sentence} /></p>
           <div className="big"><div className="v">{res.answer.num}</div><div className="l">{res.answer.numLabel}</div></div>
+          <p className="a"><Sentence parts={res.answer.sentence} /></p>
         </div>
-        <div className="rg-row rg-wrap rg-q-pinrow">
+        <div className="rg-q-foot">
+          {res.answer.note && <p className="rg-q-note">{res.answer.note}</p>}
           <PinButton item={{ id: `answer:${dir}:${qid}`, kind: 'answer', label: q.q(cond), value: `${res.answer.num} — ${plain(res.answer.sentence)}`, spec: makeSpec('q', dir, qid), dir, model: cond.model, harness: cond.harness }} />
-          {res.answer.note && <span className="rg-small rg-dim rg-grow rg-q-note">{res.answer.note}</span>}
         </div>
         {lab && <Lesson qid={qid} dir={dir} />}
         <div ref={figRef} tabIndex={-1} id="rg-q-figure">
-          <Panel label="Figure" el="question-figure" meta={res.answer.short}
+          <Panel label="Figure" el="question-figure" className="rg-q-fig" meta={res.answer.short}
             actions={<PinButton compact item={{ id: `figure:${dir}:${qid}`, kind: 'figure', label: `Figure · ${q.short} · ${dir}`, value: res.answer.short, spec: makeSpec('q', dir, qid, 'figure'), dir }} />}>
             <Figure fig={res.answer.fig} dir={dir} answer={res.answer} />
           </Panel>
@@ -365,30 +366,32 @@ function RunsDoc({ dir, res, runs, spec }) {
   return (
     <div className="rg-dpad">
       <div className="rg-dh"><div className="t"><div className="rg-eyebrow">Runs behind the answer · {q.short}</div><h1>{res.answer.runs.title}</h1>
-        <p className="rg-mono rg-small">{int(all.length)} runs · {t.p} pass · {t.f} fail · {t.u} unknown under the {oracle} suite</p></div>
-        <div className="rg-q-runsbar"><OutcomeBar p={t.p} f={t.f} u={t.u} tall /></div></div>
-      <div className="rg-row rg-wrap" style={{ marginBottom: 10 }}>
+        <p className="rg-mono rg-small">{int(all.length)} runs · {t.p} pass · {t.f} fail · {t.u} unknown under the {oracle} suite</p>
+        <div className="rg-q-runsbar"><OutcomeBar p={t.p} f={t.f} u={t.u} tall /></div></div></div>
+      <div className="rg-q-runs">
+      <Toolbar label="Filter the runs behind this answer">
         <Seg label="Filter runs" el="failure-mode-filter" value={mode} onChange={(v) => { setMode(v); setPg(0) }}
           options={[['all', `All ${all.length}`], ['failed', `Failed ${t.f}`], ...modes.map((m) => [m, `${modeLabel(m)} ${all.filter((r) => r.mode === m).length}`])]} />
-      </div>
-      <div className="rg-pnl" data-el="question-runs"><div className="rg-tblwrap"><table className="rg-tbl">
-        <thead><tr><th>{oracle}</th><th>run</th><th>task</th><th className="rg-hide-sm">model · harness</th><th className="rg-num rg-hide-sm">rep</th><th className="rg-num">calls</th><th className="rg-num rg-hide-sm">tokens</th><th>how it failed</th><th><span className="sr-only">Pin</span></th></tr></thead>
+      </Toolbar>
+      <div className="rg-pnl rg-q-runspnl" data-el="question-runs"><TableScroll label="Runs behind this answer" stickyCol={false}><table className="rg-tbl rg-q-runtbl">
+        <thead><tr><th className="rg-q-v">{oracle}</th><th>run</th><th>task</th><th className="rg-cq-hide-sm">model · harness</th><th className="rg-num rg-q-lo">rep</th><th className="rg-num">calls</th><th className="rg-num rg-q-lo">tokens</th><th>how it failed</th><th className="rg-q-pin"><span className="sr-only">Pin</span></th></tr></thead>
         <tbody>{shown.map((r) => (
           <tr key={r.id}>
-            <td><Verdict v={verdict(r, oracle)} /></td>
+            <td className="rg-q-v"><Verdict v={verdict(r, oracle)} /></td>
             <td><Go spec={withChain(makeSpec('run', r.id), chain)} className="rg-tlink" title={r.id}>{sfx(r.id)}</Go></td>
-            <td className="rg-mono rg-small">{r.task}</td>
-            <td className="rg-mono rg-small rg-hide-sm">{short(r.model)} · {r.harness}</td>
-            <td className="rg-num rg-mono rg-hide-sm">{r.rep}</td>
-            <td className="rg-num rg-mono">{r.steps}</td>
-            <td className="rg-num rg-mono rg-hide-sm">{r.in == null || r.out == null ? '—' : int(r.in + r.out)}</td>
+            <td className="rg-mono">{r.task}</td>
+            <td className="rg-mono rg-cq-hide-sm rg-q-dim">{short(r.model)} · {r.harness}</td>
+            <td className="rg-num rg-q-lo">{r.rep}</td>
+            <td className="rg-num">{r.steps}</td>
+            <td className="rg-num rg-q-lo">{r.in == null || r.out == null ? '—' : int(r.in + r.out)}</td>
             <td><FailureChip run={r} /></td>
-            <td><PinButton compact item={{ id: `run:${r.id}`, kind: 'run', label: `run ${sfx(r.id)} · ${r.task}`, value: `${short(r.model)} · ${r.harness} · ${verdict(r, oracle) === true ? 'pass' : verdict(r, oracle) === false ? 'fail' : 'unknown'} (${oracle})`, spec: withChain(makeSpec('run', r.id), chain), dir, run: r.id, model: r.model, harness: r.harness, task: r.task }} /></td>
+            <td className="rg-q-pin"><PinButton compact item={{ id: `run:${r.id}`, kind: 'run', label: `run ${sfx(r.id)} · ${r.task}`, value: `${short(r.model)} · ${r.harness} · ${verdict(r, oracle) === true ? 'pass' : verdict(r, oracle) === false ? 'fail' : 'unknown'} (${oracle})`, spec: withChain(makeSpec('run', r.id), chain), dir, run: r.id, model: r.model, harness: r.harness, task: r.task }} /></td>
           </tr>))}</tbody>
-      </table></div>
-      {!list.length && <div className="rg-pnl-b"><Empty title="No run matches this filter." actions={[{ label: `Show all ${all.length} runs`, onClick: () => { setMode('all'); setPg(0) }, primary: true }]}>None of the runs behind this answer has this outcome under the {oracle} suite.</Empty></div>}
-      {list.length > PAGE && <div className="rg-row rg-q-pager"><span className="rg-small rg-mono rg-mute">{pg * PAGE + 1}–{Math.min(list.length, pg * PAGE + PAGE)} of {list.length}</span><span className="rg-grow" />
-        {pg > 0 && <button type="button" className="rg-btn" onClick={() => setPg(pg - 1)}>← previous {PAGE}</button>}{(pg + 1) * PAGE < list.length && <button type="button" className="rg-btn" onClick={() => setPg(pg + 1)}>next {Math.min(PAGE, list.length - (pg + 1) * PAGE)} →</button>}</div>}
+      </table></TableScroll>
+      {!list.length && <PanelState title="No run matches this filter." actions={<button type="button" className="rg-btn pri" onClick={() => { setMode('all'); setPg(0) }}>Show all {all.length} runs</button>}>None of the runs behind this answer has this outcome under the {oracle} suite.</PanelState>}
+      {list.length > PAGE && <div className="rg-q-pager"><span className="rg-small rg-mono rg-mute">{pg * PAGE + 1}–{Math.min(list.length, pg * PAGE + PAGE)} of {list.length}</span>
+        <div className="rg-cluster">{pg > 0 && <button type="button" className="rg-btn" onClick={() => setPg(pg - 1)}>← previous {PAGE}</button>}{(pg + 1) * PAGE < list.length && <button type="button" className="rg-btn" onClick={() => setPg(pg + 1)}>next {Math.min(PAGE, list.length - (pg + 1) * PAGE)} →</button>}</div></div>}
+      </div>
       </div>
       <About summary="Where the failure modes come from">Failure modes are read from each run's ledger by /api/outcomes, on the hidden suite whatever suite grades the rest of the page. Open a run to follow the chain down to the event where it stopped.</About>
     </div>

@@ -312,11 +312,12 @@ export function RunConsole({ run, spans, replay, sel, onSel, verdictOf }) {
       <div className="rg-cx-bar">
         <span className="rg-cx-live"><i className={live ? 'on' : ''} aria-hidden="true" />{live ? 'live' : 'recorded'}</span>
         <span className="rg-cx-sep" aria-hidden="true">/</span><span className="rg-cx-idv">run {sfx(run.id)}</span>
-        <span className="rg-cx-sep hide-sm" aria-hidden="true">/</span><span className="hide-sm rg-cx-task">{run.task}</span>
-        <span className="rg-cx-sep hide-sm" aria-hidden="true">/</span><span className="hide-sm rg-cx-model">{short(run.model)}</span>
-        <span className="rg-cx-grow" />
-        <span className={cx('rg-cx-chip', sentLabel === 'sentinel on' && 'on')}>{sentLabel}</span>
-        <span className="rg-cx-chip" data-el="console-step">{N ? `step ${row.n} / ${N}` : 'no steps'}</span>
+        <span className="rg-cx-sep rg-cx-opt" aria-hidden="true">/</span><span className="rg-cx-opt rg-cx-task" title={run.task}>{run.task}</span>
+        <span className="rg-cx-sep rg-cx-opt" aria-hidden="true">/</span><span className="rg-cx-opt rg-cx-model" title={run.model}>{short(run.model)}</span>
+        <span className="rg-cx-chips">
+          <span className={cx('rg-cx-chip', sentLabel === 'sentinel on' && 'on')}>{sentLabel}</span>
+          <span className="rg-cx-chip" data-el="console-step">{N ? `step ${row.n} / ${N}` : 'no steps'}</span>
+        </span>
       </div>
       <div className="rg-cx-body">
         <ol className="rg-cx-steps" ref={listRef} aria-label="Tool calls, in order" onKeyDown={onKey}>
@@ -380,7 +381,6 @@ export function RunConsole({ run, spans, replay, sel, onSel, verdictOf }) {
       </div>
       <div className="rg-cx-foot">
         <span>{!steps.length ? 'Recorded run · no Sentinel replay is available for it.' : recordedMode ? 'Recorded run · risk and interventions as Sentinel recorded them.' : 'Recorded run · risk and detectors replayed by Sentinel.'}</span>
-        <span className="rg-cx-grow" />
         <button type="button" className="rg-cx-replay" disabled={!N} onClick={onReplay} data-el="console-replay"
           title={reduce ? 'Reduced motion is on: each press moves the playhead one step' : undefined}>
           {reduce ? 'Step playhead' : replaying ? 'Replaying…' : rp ? 'Replay again' : 'Replay run'}

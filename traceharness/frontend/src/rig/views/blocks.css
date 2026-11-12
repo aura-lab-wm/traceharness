@@ -1,0 +1,19 @@
+/* Rig · blocks.css — one harness block card (views/blocks.jsx BlockCard, also rendered by the
+   composer's advanced settings) and the block builder's fieldset. Tokens only (UI contract v1).
+   The card head is one line: the block's name on the left, three square icon buttons on the right
+   at the shared control height (36px with a mouse, 44px on touch). Selectors carry enough classes
+   to outrank the older `.rg-harness-blocks .rg-pnl-h .rg-btn` sizes in harnessWorkspace.css. */
+
+.rig fieldset.rg-blk-fs{border:0;padding:0;margin:0;min-width:0}
+
+.rig .rg-pnl-h.rg-blk-h{display:flex;align-items:center;justify-content:space-between;flex-wrap:nowrap;gap:var(--rig-s2);min-height:calc(var(--rig-h-ctl) + 2 * var(--rig-s2));padding-top:var(--rig-s1);padding-bottom:var(--rig-s1)}
+.rig .rg-blk-h .rg-blk-t{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.rig .rg-blk-h .rg-blk-acts{display:flex;align-items:center;gap:var(--rig-s1);flex:none;margin-left:auto}
+.rig .rg-blk-h .rg-blk-acts .rg-btn.rg-blk-ico{width:var(--rig-h-ctl);min-width:var(--rig-h-ctl);min-height:var(--rig-h-ctl);padding:0;border-color:transparent;background:none;color:var(--rig-dim);font-size:var(--rig-fs-sm)}
+.rig .rg-blk-h .rg-blk-acts .rg-btn.rg-blk-ico:hover:not(:disabled){background:var(--rig-panel3);color:var(--rig-text)}
+.rig .rg-blk-h .rg-blk-acts .rg-btn.rg-blk-rm:hover:not(:disabled){color:var(--rig-red-t)}
+.rig .rg-blk-h .rg-blk-acts .rg-btn.rg-blk-ico:disabled{opacity:.35;cursor:not-allowed}
+
+/* a checkbox option: the whole row is the target */
+.rig .rg-blk-opt{gap:var(--rig-s2);min-height:var(--rig-hit);cursor:pointer}
+.rig .rg-blk-opt input[type=checkbox]{flex:none;margin:0}

@@ -1,0 +1,56 @@
+/* Rig · buddy.css — the model-interpretation half of the Buddy dock (views/buddy.jsx). Tokens only.
+   Buddy lives in a resizable panel (and in a phone bottom sheet), so it is ONE column at every
+   width: its three sections (selection, question, evidence) stack with a hairline between them.
+   Nothing here reads the viewport. Selectors carry two classes so the older .rg-bud rules in
+   dock.css and the panel rules in rig.css (one class each) cannot switch the layout back. */
+
+.rig .rg-bud{display:flex;flex-direction:column;min-width:0}
+.rig .rg-bud>div{min-width:0;padding:var(--rig-s4) 0;border-left:0}
+.rig .rg-bud>div+div{border-top:1px solid var(--rig-line)}
+.rig .rg-bud>div:first-child{padding-top:var(--rig-s2)}
+.rig .rg-bud .rg-bud-h{margin-bottom:var(--rig-s3)}
+.rig .rg-bud .rg-bud-sel{margin-bottom:var(--rig-s3)}
+.rig .rg-bud .rg-bud-sel+.rg-note,.rig .rg-bud .rg-bud-sel+.rg-tiny+.rg-note{margin-top:var(--rig-s3)}
+.rig .rg-bud dl.rg-bud-sel dd{overflow-wrap:anywhere;min-width:0}
+.rig .rg-bud .rg-bud-dot{margin-top:var(--rig-s1)}
+.rig .rg-bud .rg-bud-gap{margin-top:var(--rig-s2)}
+
+/* suggested questions: full-width rows, one control height, wrap their own text */
+.rig .rg-bud .rg-bud-sugg{display:flex;flex-direction:column;gap:var(--rig-s2)}
+.rig .rg-bud-sugg button.rg-bud-q{display:block;width:100%;min-height:var(--rig-h-ctl);padding:var(--rig-s2) var(--rig-s3);border:1px solid var(--rig-line2);border-radius:var(--rig-r-md);background:var(--rig-panel);color:var(--rig-text);font:var(--rig-fw-regular) var(--rig-fs-sm)/var(--rig-lh-snug) var(--rig-sans);text-align:left;white-space:normal;overflow-wrap:anywhere;cursor:pointer;transition:border-color var(--rig-dur-1) var(--rig-ease),background-color var(--rig-dur-1) var(--rig-ease)}
+.rig .rg-bud-sugg button.rg-bud-q:hover{border-color:var(--rig-line3);background:var(--rig-panel2)}
+.rig .rg-bud-sugg button.rg-bud-q:active{background:var(--rig-panel3)}
+.rig .rg-bud-sugg button.rg-bud-q:focus-visible{outline:var(--rig-focus-ring);outline-offset:var(--rig-focus-offset)}
+.rig .rg-bud-sugg button.rg-bud-q:disabled{opacity:.5;cursor:not-allowed}
+
+/* the question form */
+.rig .rg-bud .rg-bud-form{display:flex;flex-direction:column;gap:var(--rig-s2);margin-top:var(--rig-s3)}
+.rig .rg-bud-form textarea.rg-inp{min-height:calc(2 * var(--rig-h-ctl))}
+.rig .rg-bud .rg-bud-consent{display:flex;align-items:flex-start;gap:var(--rig-s2);min-height:var(--rig-hit);padding:var(--rig-s1) 0;font-size:var(--rig-fs-xs);line-height:var(--rig-lh-snug);color:var(--rig-dim);cursor:pointer}
+.rig .rg-bud .rg-bud-consent input{flex:none;margin:var(--rig-s0) 0 0}
+.rig .rg-bud .rg-bud-send{display:flex;flex-wrap:wrap;align-items:center;gap:var(--rig-s2);margin-top:0}
+.rig .rg-bud .rg-bud-send .rg-btnwrap{display:inline-flex;flex-wrap:wrap;align-items:center;gap:var(--rig-s1) var(--rig-s2);min-width:0}
+.rig .rg-bud .rg-bud-picker{flex:0 1 auto;min-width:0}
+.rig .rg-bud .pw-buddy-model-trigger{min-height:var(--rig-h-ctl);border-radius:var(--rig-r-md);font-size:var(--rig-fs-sm)}
+.rig .rg-bud .rg-bud-err{margin:0}
+
+/* the conversation */
+.rig .rg-bud .rg-bud-log{gap:var(--rig-s2);margin-bottom:var(--rig-s3);padding-right:var(--rig-s1)}
+.rig .rg-bud .rg-bud-msg{border-radius:var(--rig-r-md);padding:var(--rig-s2) var(--rig-s3);font-size:var(--rig-fs-sm);line-height:var(--rig-lh-body);overflow-wrap:anywhere}
+.rig .rg-bud .rg-bud-msg strong{font:var(--rig-fw-medium) var(--rig-fs-2xs)/var(--rig-lh-tight) var(--rig-mono);letter-spacing:var(--rig-track-caps);text-transform:uppercase;margin-bottom:var(--rig-s1)}
+.rig .rg-bud .rg-bud-msg pre{font:var(--rig-fs-xs)/var(--rig-lh-code) var(--rig-mono);border-radius:var(--rig-r-sm);padding:var(--rig-s2);overflow-x:auto}
+
+/* evidence */
+.rig .rg-bud .rg-bud-ev{gap:var(--rig-s1);margin:var(--rig-s2) 0 var(--rig-s3)}
+.rig .rg-bud .rg-bud-ev li{display:flex;align-items:baseline;gap:var(--rig-s2);min-width:0;overflow-wrap:anywhere}
+.rig .rg-bud .rg-bud-ev li .rg-tag{flex:none}
+.rig .rg-bud .rg-bud-preview{margin-top:var(--rig-s3)}
+.rig .rg-bud .rg-bud-preview>summary{display:flex;align-items:center;gap:var(--rig-s2);min-height:var(--rig-hit);font-size:var(--rig-fs-sm);color:var(--rig-dim);cursor:pointer;border-radius:var(--rig-r-sm)}
+.rig .rg-bud .rg-bud-preview>summary{list-style:none}
+.rig .rg-bud .rg-bud-preview>summary::-webkit-details-marker{display:none}
+.rig .rg-bud .rg-bud-preview>summary::before{content:"▸";flex:none;width:1ch;color:var(--rig-mute)}
+.rig .rg-bud .rg-bud-preview[open]>summary::before{content:"▾"}
+.rig .rg-bud .rg-bud-preview>summary:hover{color:var(--rig-text)}
+.rig .rg-bud .rg-bud-preview>summary:focus-visible{outline:var(--rig-focus-ring);outline-offset:var(--rig-focus-offset)}
+.rig .rg-bud .rg-bud-preview .rg-pre{max-height:180px;overflow:auto;font-size:var(--rig-fs-xs);line-height:var(--rig-lh-code)}
+.rig .rg-bud .rg-bud-disc{margin:var(--rig-s3) 0 0;font-size:var(--rig-fs-xs);line-height:var(--rig-lh-snug)}

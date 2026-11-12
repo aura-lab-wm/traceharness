@@ -1,4 +1,5 @@
 import { checkedNativeProfile, replacementIssue } from '../../native-prompts-contract'
+import { sha256HexSync } from '../native/profile-model'
 
 // Authoring operations only. Inventory identity and execution support are validated
 // separately; these helpers neither fetch native content nor materialize a runtime.
@@ -15,10 +16,22 @@ export function nativeDraftForProfile(profile, previous) {
     sets: same ? clone(previous.sets || []) : [] }
 }
 
+/**
+ * '' when `name` can label a profile, else the sentence to show. A name becomes an arm label
+ * in a paired plan, so it follows the deployed label rules: 1 to 80 characters, no leading or
+ * trailing space, no control or invisible characters, nothing shaped like a credential.
+ */
+export function profileNameIssue(name) {
+  if (typeof name !== 'string' || !name.trim() || name.trim() !== name || name.length > 80 || /[\p{Cc}\p{Cf}\p{Cs}]/u.test(name)) return 'Use a profile name from 1 to 80 visible characters, without leading or trailing spaces.'
+  if (/sk-or-v\d+-[A-Za-z0-9_-]{16,}/.test(name) || /\bsk-(?:or-)?[A-Za-z0-9_-]{10,}\b/.test(name)) return 'Remove provider credentials from the profile name.'
+  return ''
+}
+
 /** Recover only bounded member-authored data; baseline bodies never enter storage. */
 export function safeNativeDraft(value, runtimeId) {
   try {
-    if (!value || Object.keys(value).some((key) => !['enabled', 'profile', 'remembered', 'sets'].includes(key)) || typeof value.enabled !== 'boolean') return null
+    if (!value || Object.keys(value).some((key) => !['enabled', 'profile', 'remembered', 'sets', 'name'].includes(key)) || typeof value.enabled !== 'boolean') return null
+    if (Object.hasOwn(value, 'name') && profileNameIssue(value.name)) return null
     const profile = checkedNativeProfile(value.profile, runtimeId)
     const remembered = value.remembered
     if (!remembered || typeof remembered !== 'object' || Array.isArray(remembered)) return null
@@ -30,7 +43,7 @@ export function safeNativeDraft(value, runtimeId) {
         || /[\p{Cc}\p{Cf}\p{Cs}]/u.test(set.name) || /sk-or-v\d+-[A-Za-z0-9_-]{16,}/.test(set.name) || !Array.isArray(set.block_ids) || set.block_ids.length > 20000
         || set.block_ids.some((id) => typeof id !== 'string' || !id || id.length > 240) || new Set(set.block_ids).size !== set.block_ids.length)) return null
     if (promptBytes(JSON.stringify(value)) > 2 * 1024 * 1024) return null
-    return clone({ enabled: value.enabled, profile, remembered, sets: value.sets })
+    return clone({ enabled: value.enabled, profile, remembered, sets: value.sets, ...(Object.hasOwn(value, 'name') ? { name: value.name } : {}) })
   } catch { return null }
 }
 
@@ -96,6 +109,38 @@ export function changePromptActions(blocks, overrides, remembered, ids, action, 
     if (!patchable(block)) return []
     const entry = changed.get(block.id) || { block_id: block.id, baseline_sha256: block.baseline_sha256, action: defaultAction }
     return entry.action === nextDefault ? [] : [entry]
+  }), remembered: Object.fromEntries(drafts) }
+}
+
+/**
+ * Replace many prompts in one step (macros, imports). Atomic: every edit is checked first
+ * and nothing changes when one is invalid. Each edit needs the replacement text and its
+ * SHA-256 digest. The result has the shape `changePromptActions` returns; the caller still
+ * passes the whole profile through `nativeProfileIssue` before committing it.
+ */
+export function applyReplaceEdits(blocks, overrides, remembered, edits, defaultAction = 'keep') {
+  const targets = new Map(blocks.filter(patchable).map((block) => [block.id, block]))
+  const allBlocks = new Map(blocks.map((block) => [block.id, block]))
+  if (overrides.some((entry) => !allBlocks.has(entry.block_id) || allBlocks.get(entry.block_id).baseline_sha256 !== entry.baseline_sha256
+    || !targets.has(entry.block_id) && entry.action !== 'keep')) fail('This draft targets a different inventory. Restore it only after choosing its exact inventory.')
+  if (!Array.isArray(edits) || !edits.length) fail('Choose at least one prompt to replace.')
+  const next = new Map()
+  for (const edit of edits) {
+    const block = targets.get(edit?.block_id)
+    if (!block) fail('Only patchable prompts in this inventory can be changed.')
+    if (next.has(block.id)) fail('Each prompt can be replaced once per step.')
+    if (typeof edit.replacement_utf8 !== 'string' || typeof edit.replacement_sha256 !== 'string' || !/^[a-f0-9]{64}$/.test(edit.replacement_sha256)) fail('Replace each prompt with explicit text and its SHA-256 digest.')
+    const issue = replacementIssue(edit.replacement_utf8, block.required_placeholders || [])
+    if (issue) fail(`${block.title}: ${issue}`)
+    if (sha256HexSync(edit.replacement_utf8) !== edit.replacement_sha256) fail(`${block.title}: the replacement does not match its SHA-256 digest.`)
+    next.set(block.id, { block_id: block.id, baseline_sha256: block.baseline_sha256, action: 'replace', replacement_utf8: edit.replacement_utf8, replacement_sha256: edit.replacement_sha256 })
+  }
+  const changed = new Map(overrides.map((entry) => [entry.block_id, clone(entry)]))
+  const drafts = new Map(Object.entries(remembered || {}).map(([id, entry]) => [id, clone(entry)]))
+  for (const [id, entry] of next) { changed.set(id, entry); drafts.set(id, clone(entry)) }
+  return { default_action: defaultAction, overrides: blocks.flatMap((block) => {
+    const entry = changed.get(block.id)
+    return !entry || !patchable(block) || entry.action === defaultAction ? [] : [entry]
   }), remembered: Object.fromEntries(drafts) }
 }
 
