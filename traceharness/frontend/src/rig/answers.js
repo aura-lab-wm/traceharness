@@ -15,7 +15,7 @@
               note? }                                        // honesty caveat shown under the answer
    ==================================================================================== */
 import { oracleChanges } from './provenance'
-import { short, sfx, tally, verdict, metricsCell, isFailureMode, fmt, conditionRuns } from './data'
+import { short, sfx, tally, verdict, isFailureMode, fmt, conditionRuns } from './data'
 
 const { pct, pp, int, plural } = fmt
 const humanReason = (r) => String(r || 'not computed').replace(/_/g, ' ').replace(/\blevels a\b/, 'models').replace(/\blevels b\b/, 'harnesses')
@@ -114,20 +114,22 @@ export const QUESTIONS = [
     q: (c) => `Where do repeats of ${short(c.model)} under ${c.harness} disagree?`,
     answer({ runs, metrics, cond, oracle }) {
       if (!runs || !metrics) return null
-      const cell = metricsCell(metrics, cond.model, cond.harness)
       const rs = conditionRuns(runs, cond.model, cond.harness)
       if (!rs.length) return { unanswered: `No runs of ${short(cond.model)} under ${cond.harness} in this dataset.` }
       const strips = taskStrips(rs, oracle)
-      const mixed = strips.filter((x) => x.mixed).sort((a, b) => Math.abs(a.rate - 0.5) - Math.abs(b.rate - 0.5) || a.task.localeCompare(b.task))
+      const eligible = strips.filter((x) => x.known >= 2)
+      if (!eligible.length) return { unanswered: `Repeat agreement needs at least two known grades for the same task under ${short(cond.model)} · ${cond.harness} (${oracle} suite). No task qualifies among ${rs.length} recorded attempts.` }
+      const mixed = eligible.filter((x) => x.mixed).sort((a, b) => Math.abs(a.rate - 0.5) - Math.abs(b.rate - 0.5) || a.task.localeCompare(b.task))
       const top = mixed[0]
-      const flip = cell ? cell.flip_rate : null
+      const unknown = strips.reduce((sum, strip) => sum + strip.u, 0)
       return {
         sentence: top
-          ? [`Repeats disagree on `, { mark: `${mixed.length} of ${strips.length} tasks` }, `; ${top.task} is closest to a coin flip — ${top.p} of ${top.known} repeats pass the ${oracle} suite.`]
-          : ['Nowhere: ', { mark: `every task's repeats agree` }, ` under ${short(cond.model)} · ${cond.harness} (${oracle} suite).`],
-        num: flip == null ? `${mixed.length}/${strips.length}` : pct(flip, 0),
-        numLabel: flip == null ? 'tasks with mixed outcomes' : 'flip rate · hidden suite (/metrics)',
-        short: top ? `${top.task} — ${top.p} of ${top.known} repeats pass` : 'no task flips in this condition',
+          ? [`Repeats disagree on `, { mark: `${mixed.length} of ${eligible.length} tasks` }, ` with at least two known grades; ${top.task} is closest to a coin flip — ${top.p} of ${top.known} graded repeats pass the ${oracle} suite.`]
+          : ['No disagreement among known grades in ', { mark: `${eligible.length} eligible ${eligible.length === 1 ? 'task' : 'tasks'}` }, ` under ${short(cond.model)} · ${cond.harness} (${oracle} suite).`],
+        num: pct(mixed.length / eligible.length, 0),
+        numLabel: `flip rate · ${oracle} suite · eligible tasks`,
+        short: top ? `${top.task} — ${top.p} of ${top.known} graded repeats pass` : 'no graded task flips among eligible tasks',
+        note: `${eligible.length} of ${strips.length} tasks have at least two known grades; ${strips.length - eligible.length} excluded. ${unknown} ungraded attempts are unknown, not agreement or failure.`,
         fig: { kind: 'strips', strips },
         runs: { title: top ? `${top.task} under ${short(cond.model)} · ${cond.harness}, repeats in order` : `Every attempt of ${short(cond.model)} · ${cond.harness}`, test: (r) => r.model === cond.model && r.harness === cond.harness && (!top || r.task === top.task) },
       }

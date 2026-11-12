@@ -105,6 +105,37 @@ describe('searchable harness workspace picker', () => {
     expect(changed).toHaveBeenCalledWith('fixed:codex')
     expect(document.activeElement).toBe(input)
   })
+  it('does not scroll a partially visible option away from the pointer before selection', () => {
+    const original = HTMLElement.prototype.getBoundingClientRect
+    vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockImplementation(function () {
+      if (this.classList.contains('rg-harness-picker-list')) return { top: 100, bottom: 200, height: 100 }
+      if (this.getAttribute('role') === 'option') return this.getAttribute('aria-label') === 'Native Codex'
+        ? { top: 190, bottom: 250, height: 60 } : { top: 110, bottom: 160, height: 50 }
+      return original.call(this)
+    })
+    const changed = vi.fn(); render(<TestPicker onChange={changed} />)
+    const input = screen.getByRole('combobox', { name: 'Harness' })
+    input.focus(); fireEvent.click(screen.getByRole('button', { name: 'Show harness options' }))
+    const list = screen.getByRole('listbox')
+    const option = screen.getByRole('option', { name: 'Native Codex' })
+    fireEvent.mouseMove(option)
+    // Pointer movement precedes browser hit testing for the subsequent click.
+    // Scrolling here moves a partially visible row away from that pointer.
+    expect(list.scrollTop).toBe(0)
+    fireEvent.pointerDown(option); fireEvent.mouseDown(option)
+    fireEvent.mouseUp(option); fireEvent.click(option)
+    expect(changed).toHaveBeenCalledExactlyOnceWith('native:codex')
+    expect(input.value).toBe('Native Codex')
+    expect(screen.queryByRole('listbox')).toBeNull()
+
+    fireEvent.click(input)
+    const reopenedList = screen.getByRole('listbox')
+    reopenedList.scrollTop = 0
+    fireEvent.mouseMove(screen.getByRole('option', { name: 'Native Codex' }))
+    fireEvent.keyDown(input, { key: 'End' })
+    expect(reopenedList.scrollTop).toBe(50)
+    expect(document.getElementById(input.getAttribute('aria-activedescendant')).getAttribute('aria-label')).toBe('Native Codex')
+  })
   it('respects the workbench scrollport even when the browser has more room', () => {
     vi.stubGlobal('innerHeight', 900)
     const original = HTMLElement.prototype.getBoundingClientRect

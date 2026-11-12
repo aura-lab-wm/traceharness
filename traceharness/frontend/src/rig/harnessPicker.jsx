@@ -8,6 +8,9 @@ export function HarnessPicker({ label, value, options = [], onChange, placeholde
   const control = useRef(null)
   const popup = useRef(null)
   const list = useRef(null)
+  // Hover must not move a partially visible row away from the next click.
+  // State also re-enables keyboard scrolling when the active ID stays the same.
+  const [scrollActive, setScrollActive] = useState(true)
   const [open, setOpen] = useState(false)
   const [query, setQuery] = useState('')
   const [activeValue, setActiveValue] = useState(null)
@@ -38,13 +41,13 @@ export function HarnessPicker({ label, value, options = [], onChange, placeholde
     return () => document.removeEventListener('pointerdown', outside)
   }, [shown])
   useLayoutEffect(() => {
-    if (!shown || !placement || activeIndex < 0 || !list.current) return
+    if (!shown || !placement || activeIndex < 0 || !list.current || !scrollActive) return
     const option = document.getElementById(`${id}-option-${activeIndex}`)?.getBoundingClientRect()
     const bounds = list.current.getBoundingClientRect()
     if (!option) return
     if (option.top < bounds.top) list.current.scrollTop -= bounds.top - option.top
     else if (option.bottom > bounds.bottom) list.current.scrollTop += option.bottom - bounds.bottom
-  }, [shown, activeIndex, id, query, placement])
+  }, [shown, activeIndex, id, query, placement, scrollActive])
   useLayoutEffect(() => {
     if (!shown) return
     const viewport = window.visualViewport
@@ -86,6 +89,7 @@ export function HarnessPicker({ label, value, options = [], onChange, placeholde
 
   function expand() {
     if (disabled || shown) return
+    setScrollActive(true)
     setQuery(''); setActiveValue(value); setOpen(true)
   }
   function choose(option) {
@@ -110,6 +114,7 @@ export function HarnessPicker({ label, value, options = [], onChange, placeholde
     event.preventDefault()
     if (!shown) { expand(); return }
     if (!enabled.length) return
+    setScrollActive(true)
     const current = enabled.findIndex((option) => option.value === active?.value)
     const index = event.key === 'Home' ? 0 : event.key === 'End' ? enabled.length - 1
       : (current + (event.key === 'ArrowDown' ? 1 : -1) + enabled.length) % enabled.length
@@ -126,7 +131,7 @@ export function HarnessPicker({ label, value, options = [], onChange, placeholde
         aria-describedby={hint ? `${id}-hint` : undefined} aria-busy={loading || undefined} disabled={disabled}
         autoComplete="off" spellCheck={false} value={shown ? query : selected?.label || value || ''}
         placeholder={shown ? searchPlaceholder || `Search ${label.toLowerCase()}` : loading ? 'Loading…' : placeholder}
-        onFocus={(event) => event.currentTarget.select()} onClick={expand} onKeyDown={keydown} onChange={(event) => { setOpen(true); setQuery(event.target.value); setActiveValue(null) }} />
+        onFocus={(event) => event.currentTarget.select()} onClick={expand} onKeyDown={keydown} onChange={(event) => { setScrollActive(true); setOpen(true); setQuery(event.target.value); setActiveValue(null) }} />
       <button type="button" className="rg-harness-picker-toggle" tabIndex={-1} aria-label={`${shown ? 'Close' : 'Show'} ${label.toLowerCase()} options`} disabled={disabled}
         onMouseDown={(event) => event.preventDefault()} onClick={() => { if (shown) setOpen(false); else expand(); input.current?.focus() }}>
         <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="m4 6 4 4 4-4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /></svg>
@@ -144,7 +149,7 @@ export function HarnessPicker({ label, value, options = [], onChange, placeholde
             const details = [option.description && `${id}-description-${index}`, option.meta && `${id}-meta-${index}`, option.status && `${id}-status-${index}`].filter(Boolean).join(' ')
             return <div key={option.value} id={`${id}-option-${index}`} role="option" aria-label={option.label} aria-describedby={details || undefined} aria-selected={option.value === value} aria-disabled={option.disabled || undefined}
               className={`rg-harness-picker-option${active?.value === option.value ? ' is-active' : ''}${option.value === value ? ' is-selected' : ''}`}
-              onMouseDown={(event) => event.preventDefault()} onMouseMove={() => { if (!option.disabled) setActiveValue(option.value) }} onClick={() => choose(option)}>
+              onMouseDown={(event) => event.preventDefault()} onMouseMove={() => { if (!option.disabled) { setScrollActive(false); setActiveValue(option.value) } }} onClick={() => choose(option)}>
               <span className="rg-harness-picker-option-copy"><strong>{option.label}</strong>{option.description && <span id={`${id}-description-${index}`}>{option.description}</span>}{option.meta && <small id={`${id}-meta-${index}`}>{option.meta}</small>}</span>
               <span className="rg-harness-picker-option-trailing">{option.status && <small id={`${id}-status-${index}`}>{option.status}</small>}{option.value === value && <span className="rg-harness-picker-check" aria-hidden="true">✓</span>}</span>
             </div>

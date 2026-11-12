@@ -80,3 +80,42 @@ it('distinguishes gross lost/gained passes from net oracle change, even when net
   expect(text(equal)).toContain('6.0 percentage points lost')
   expect(text(equal)).not.toContain('no pass is lost')
 })
+
+describe('repeat agreement needs comparable known grades in the selected suite', () => {
+  const attempt = (task, rep, hid, extra = {}) => ({ id: `${task}-${rep}`, task, rep, model: 'fixture/model', harness: 'baseline', hid, vis: null, str: null, ...extra })
+  const repeatAnswer = (attempts, oracle = 'hidden') => ask('repeats', {
+    runs: attempts, oracle, cond: { model: 'fixture/model', harness: 'baseline' },
+    metrics: { cells: [{ model: 'fixture/model', harness: 'baseline', flip_rate: 0.75 }] },
+  })
+  it.each([
+    [[attempt('a', 0, null)]],
+    [[attempt('a', 0, true)]],
+    [[attempt('a', 0, null), attempt('a', 1, null)]],
+    [[attempt('a', 0, true), attempt('a', 1, null)]],
+  ])('leaves insufficient known repeats unanswered: %j', (attempts) => {
+    const result = repeatAnswer(attempts)
+    expect(result.state).toBe('unanswered')
+    expect(result.reason).toMatch(/at least two known grades/i)
+  })
+  it('counts eligible tasks and discloses excluded tasks and unknown attempts', () => {
+    const result = repeatAnswer([
+      attempt('mixed', 0, true), attempt('mixed', 1, false),
+      attempt('agree', 0, true), attempt('agree', 1, true), attempt('agree', 2, null),
+      attempt('singleton', 0, false), attempt('unknown', 0, null),
+    ]).answer
+    expect(result.num).toBe('50%')
+    expect(text(result)).toContain('1 of 2 tasks')
+    expect(result.note).toContain('2 of 4 tasks')
+    expect(result.note).toContain('2 ungraded attempts')
+    expect(result.fig.strips).toHaveLength(4)
+  })
+  it.each(['visible', 'strengthened'])('uses %s grades rather than hidden metrics', (oracle) => {
+    const key = oracle === 'visible' ? 'vis' : 'str'
+    const result = repeatAnswer([attempt('a', 0, true, { [key]: true }), attempt('a', 1, false, { [key]: true })], oracle).answer
+    expect(result.num).toBe('0%')
+    expect(result.numLabel).toContain(oracle)
+    expect(text(result)).toContain('1 eligible task')
+    expect(text(result)).not.toContain("every task's repeats agree")
+    expect(repeatAnswer([attempt('a', 0, true), attempt('a', 1, false)], oracle).state).toBe('unanswered')
+  })
+})
