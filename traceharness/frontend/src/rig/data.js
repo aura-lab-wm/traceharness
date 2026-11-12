@@ -155,6 +155,24 @@ export function tally(list, oracle = 'hidden') {
   for (const r of list || []) { const v = verdict(r, oracle); if (v === true) p++; else if (v === false) f++; else u++ }
   return { p, f, u, n: p + f + u, known: p + f, rate: p + f ? p / (p + f) : null }
 }
+/** Repeat comparisons need two known selected-suite grades in a single condition/task. */
+export function repeatEvidence(list, oracle = 'hidden') {
+  const groups = new Map()
+  for (const run of list || []) {
+    const key = JSON.stringify([run.model, run.harness, run.task])
+    if (!groups.has(key)) groups.set(key, [])
+    groups.get(key).push(run)
+  }
+  const counts = [...groups.values()].map((runs) => tally(runs, oracle))
+  const eligible = counts.filter((count) => count.known >= 2)
+  const mixed = eligible.filter((count) => count.p > 0 && count.f > 0).length
+  const unknown = counts.reduce((sum, count) => sum + count.u, 0)
+  return {
+    total: counts.length, eligible: eligible.length, excluded: counts.length - eligible.length,
+    mixed, unknown, rate: eligible.length ? mixed / eligible.length : null,
+    coverage: `${eligible.length} of ${counts.length} tasks eligible (at least two known ${oracle}-suite grades); ${counts.length - eligible.length} excluded; ${unknown} unknown attempt${unknown === 1 ? '' : 's'}.`,
+  }
+}
 /** Mean available tokens; rec counts supplied values, estimated separates importer estimates from measured usage. */
 export function tokStats(list) {
   const rec = (list || []).filter((r) => r.in != null && r.out != null)

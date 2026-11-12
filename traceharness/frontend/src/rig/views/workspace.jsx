@@ -38,7 +38,7 @@ import BuddyModelPicker from '../../workspace/BuddyModelPicker'
 import { makeSpec } from '../route'
 import {
   useApi, useOverview, useDatasets, useSettings, useSentinel, useMetrics, useComparisons, useHarnessVersions, useJobs, useRuns,
-  invalidate, short, fmt, verdict, conditionRuns, tally, paths,
+  invalidate, short, fmt, verdict, conditionRuns, tally, repeatEvidence, paths,
 } from '../data'
 import { useRig, useTabState } from '../context'
 import { downloadText } from '../caseFile'
@@ -1365,7 +1365,7 @@ function Guide() {
     const tasks = [...new Set(list.map((r) => r.task))].sort()
     const mixed = tasks.filter((t) => { const o = tally(list.filter((r) => r.task === t), oracle); return o.p && o.f })
     const failing = list.filter((r) => mixed.includes(r.task) && verdict(r, oracle) === false).sort((a, b) => a.task.localeCompare(b.task) || a.rep - b.rep)[0] || list.find((r) => verdict(r, oracle) === false) || null
-    return { n: list.length, tasks: tasks.length, mixed, failing }
+    return { n: list.length, tasks: tasks.length, mixed, failing, repeats: repeatEvidence(list, oracle) }
   }, [R.data, c && c.model, c && c.harness, oracle]) // eslint-disable-line react-hooks/exhaustive-deps
   if (!datasets.length) return <Loading label="Reading /api/overview…" />
   const m = c && c.model ? short(c.model) : null
@@ -1373,7 +1373,7 @@ function Guide() {
     ['Pick a dataset', 'home', 'Recorded datasets versus mock controls. Mocks have designed failure rates — an all-pass or all-fail mock means the grader broke, not the model.'],
     ['Read the answered questions', makeSpec('q', dir), `${dir} opens with its questions already answered from the data, each with one sentence and one number you can follow down.`],
     ['Read one condition', makeSpec('ds', dir, m, c && c.harness), `${m || 'A model'} under ${c && c.harness}: the success rate always shows its known denominator; unknown is never failure.`],
-    ['Find the mixed task', makeSpec('tasks', dir, m, c && c.harness), ex ? (ex.mixed.length ? `${plural(ex.mixed.length, 'task')} of ${ex.tasks} ${ex.mixed.length === 1 ? 'has' : 'have'} both passing and failing repeats under the ${oracle} suite (${ex.mixed.slice(0, 3).join(', ')}${ex.mixed.length > 3 ? '…' : ''}). Same model, same harness, different outcomes: that spread is variance.` : `No task is mixed for this condition under the ${oracle} suite; try another model.`) : 'Same model, same harness, different outcomes: that spread is variance.'],
+    ['Find the mixed task', makeSpec('tasks', dir, m, c && c.harness), ex ? (ex.repeats.rate == null ? `Repeat comparison unavailable under the ${oracle} suite. ${ex.repeats.coverage}` : ex.mixed.length ? `${plural(ex.mixed.length, 'task')} of ${ex.repeats.eligible} eligible tasks ${ex.mixed.length === 1 ? 'has' : 'have'} both passing and failing repeats under the ${oracle} suite (${ex.mixed.slice(0, 3).join(', ')}${ex.mixed.length > 3 ? '…' : ''}). Same model, same harness, different outcomes: that spread is variance. ${ex.repeats.coverage}` : `No mixed outcomes among eligible tasks under the ${oracle} suite. ${ex.repeats.coverage}`) : 'Same model, same harness, different outcomes: that spread is variance.'],
     ['Open a failing attempt', ex && ex.failing ? makeSpec('run', ex.failing.id) : makeSpec('tasks', dir, m, c && c.harness), ex && ex.failing ? <>Run <span className="rg-mono">{ex.failing.id.slice(-6)}</span> on {ex.failing.task} failed <FailureChip run={ex.failing} />. Follow each claim to the span that records it.</> : 'Follow each claim to the span that records it.'],
     ['Put an interval on it', makeSpec('an', dir, 'outcomes'), 'pass@1 with a 95% interval; pass^k is what a user who retries k times experiences.'],
     ['Attribute the difference', makeSpec('an', dir, 'delta'), 'Paired differences against baseline on the same tasks. Count how many intervals exclude zero before believing any of them.'],

@@ -118,7 +118,7 @@ export const QUESTIONS = [
       if (!rs.length) return { unanswered: `No runs of ${short(cond.model)} under ${cond.harness} in this dataset.` }
       const strips = taskStrips(rs, oracle)
       const eligible = strips.filter((x) => x.known >= 2)
-      if (!eligible.length) return { unanswered: `Repeat agreement needs at least two known grades for the same task under ${short(cond.model)} · ${cond.harness} (${oracle} suite). No task qualifies among ${rs.length} recorded attempts.` }
+      if (!eligible.length) return { unanswered: `Repeat agreement needs at least two known grades for the same task under ${short(cond.model)} · ${cond.harness} (${oracle} suite). No task qualifies among ${plural(rs.length, 'recorded attempt')}.` }
       const mixed = eligible.filter((x) => x.mixed).sort((a, b) => Math.abs(a.rate - 0.5) - Math.abs(b.rate - 0.5) || a.task.localeCompare(b.task))
       const top = mixed[0]
       const unknown = strips.reduce((sum, strip) => sum + strip.u, 0)

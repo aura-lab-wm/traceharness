@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
-import { verdict, tally, tokStats, normRun, normRuns, joinOutcomes, normOverview, resolveCondition, defaultCondition, sfx, short, fmt,
+import { verdict, tally, repeatEvidence, tokStats, normRun, normRuns, joinOutcomes, normOverview, resolveCondition, defaultCondition, sfx, short, fmt,
   isFailureMode, runHandle, prime, peek, invalidate, resetCache, primeError, load, isOnline } from './data'
 import { miniRuns, miniOutcomes } from '../../test/rig-testing'
 
@@ -114,5 +114,24 @@ describe('connection: a stopped server is noticed, and a restarted one heals the
     vi.stubGlobal('fetch', vi.fn(async () => answer({ detail: 'boom' }, 500)))
     await load('/overview')
     expect(isOnline()).toBe(true)
+  })
+})
+
+
+describe('repeat evidence counts condition/task slots with two known selected-suite grades', () => {
+  const attempt = (task, hid, extra = {}) => ({ task, model: 'm', harness: 'h', hid, vis: null, str: null, ...extra })
+  it('does not pool singleton tasks across conditions or count unknowns as agreement', () => {
+    expect(repeatEvidence([
+      attempt('same-task', true), attempt('same-task', false, { model: 'other' }),
+      attempt('same-task', true, { harness: 'other' }), attempt('unknown', null),
+    ])).toMatchObject({ total: 4, eligible: 0, excluded: 4, mixed: 0, unknown: 1, rate: null })
+  })
+  it.each([['hidden', 'hid'], ['visible', 'vis'], ['strengthened', 'str']])('uses only known %s grades and the eligible denominator', (oracle, key) => {
+    const evidence = repeatEvidence([
+      attempt('mixed', null, { [key]: true }), attempt('mixed', null, { [key]: false }),
+      attempt('agree', null, { [key]: true }), attempt('agree', null, { [key]: true }),
+      attempt('agree', null), attempt('single', null, { [key]: false }),
+    ], oracle)
+    expect(evidence).toMatchObject({ total: 3, eligible: 2, excluded: 1, mixed: 1, unknown: 1, rate: .5 })
   })
 })

@@ -548,7 +548,7 @@ function Lesson({ run, detail, att, oracle }) {
       <div className="rg-pnl-b rg-grid rg-g3">
         <div><div className="rg-lbl">1 · What happened</div><p className="rg-small">{spans.length ? `${plural(spans.filter((s) => s.span === 'chat').length, 'model call')}, ${ed ? `an edit to ${ed.path}` : 'no edit at all'}${cut ? `, ${cut} cut off at the output limit` : ''}` : `${plural(run.steps ?? 0, 'model call')}, ${plural(run.edits ?? 0, 'edit')}`}; graded {vWord(v)} on the {oracle} suite.</p></div>
         <div><div className="rg-lbl">2 · Investigate</div><p className="rg-small">The same condition passed {o.p} of {o.known} known attempts on this task. {o.p && o.f ? 'Open a passing attempt and find the first step where the two ledgers differ.' : 'Compare its path with a task where attempts disagree.'}</p></div>
-        <div><div className="rg-lbl">3 · Why it matters</div><p className="rg-small">A single pass@1 hides this spread. {o.p && o.f ? 'Mixed outcomes under a fixed harness are variance, not a harness effect.' : 'Consistent outcomes are what pass^k rewards.'}</p>
+        <div><div className="rg-lbl">3 · Why it matters</div><p className="rg-small">{o.known < 2 ? 'Repeat comparison unavailable: this task needs at least two known grades in the selected suite.' : o.p && o.f ? 'A single pass@1 hides this spread. Mixed outcomes under a fixed harness are variance, not a harness effect.' : 'The known repeats agree in this suite.'} {o.u > 0 && `${plural(o.u, 'ungraded attempt')} ${o.u === 1 ? 'remains' : 'remain'} unknown, not evidence of agreement.`}</p>
           {(ed || gr) && <Go spec={makeSpec('span', run.id, (ed || gr).seq)} className="rg-btn">Evidence · event #{(ed || gr).seq} →</Go>}</div>
       </div>
     </section>

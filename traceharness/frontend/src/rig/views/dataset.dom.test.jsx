@@ -63,3 +63,31 @@ describe('dataset tab', () => {
     expect(location.hash).toBe('#/rig/ds:mini:beta-2:terse')
   })
 })
+
+describe('mixed-outcome overview evidence', () => {
+  it.each([null, true])('does not turn one %j grade into repeat agreement', (grade) => {
+    const data = rigFixture()
+    data['/results/mini/runs'] = [{ ...data['/results/mini/runs'][0], hidden_pass: grade }]
+    const { container } = renderRig('#/rig/ds:mini:alpha-1:baseline', { data })
+    const tile = container.querySelector('[data-el="mixed-outcomes-count"]')
+    expect(tile.textContent).toContain('Unavailable')
+    expect(tile.textContent).toContain('0 of 1 tasks eligible')
+    expect(tile.textContent).toContain('1 excluded')
+    expect(tile.textContent).not.toContain('/ 1 tasks')
+  })
+  it('uses the comparable-task denominator and discloses unknown coverage', () => {
+    const { container } = renderRig('#/rig/ds:mini:beta-2:baseline')
+    const tile = container.querySelector('[data-el="mixed-outcomes-count"]')
+    expect(tile.textContent).toContain('/ 1 eligible tasks')
+    expect(tile.textContent).toContain('1 excluded')
+    expect(tile.textContent).toContain('1 unknown attempt')
+  })
+})
+
+it('overview repeat eligibility follows the selected suite', () => {
+  const { container } = renderRig('#/rig/ds:mini:beta-2:baseline?o=visible')
+  const tile = container.querySelector('[data-el="mixed-outcomes-count"]')
+  expect(tile.textContent).toContain('/ 2 eligible tasks')
+  expect(tile.textContent).toContain('2 of 2 tasks eligible')
+  expect(tile.textContent).toContain('0 unknown attempts')
+})

@@ -602,3 +602,34 @@ describe('experiment hold', () => {
     everyEmptyHasAWay(container)
   })
 })
+
+describe('mixed outcomes require repeat evidence', () => {
+  it.each([null, true])('marks singleton %j grades unavailable in task filters and outcomes', (grade) => {
+    const fixture = data()
+    fixture['/results/mini/runs'] = [{ ...fixture['/results/mini/runs'][0], hidden_pass: grade }]
+    const task = renderRig('#/rig/tasks:mini:alpha-1:baseline', { data: fixture })
+    expect(el(task.container, 'task-quick-filters').textContent).toContain('Mixed outcomes unavailable')
+    expect(el(task.container, 'repeat-coverage').textContent).toContain('0 of 1 tasks eligible')
+    fireEvent.click(screen.getByRole('button', { name: 'Mixed outcomes unavailable' }))
+    expect(screen.getByText(/Repeat comparison unavailable/)).toBeTruthy()
+    resetRig()
+    const outcomes = renderRig('#/rig/an:mini:outcomes:alpha-1:baseline', { data: fixture })
+    expect(el(outcomes.container, 'flip-rate').textContent).toContain('Unavailable')
+    expect(el(outcomes.container, 'flip-rate').textContent).not.toContain('50%')
+  })
+  it('keeps the task filter count scoped to eligible selected-suite evidence', () => {
+    const { container } = renderRig('#/rig/tasks:mini:beta-2:baseline', { data: data() })
+    expect(el(container, 'repeat-coverage').textContent).toContain('1 of 2 tasks eligible')
+    expect(el(container, 'repeat-coverage').textContent).toContain('1 excluded')
+    expect(el(container, 'repeat-coverage').textContent).toContain('1 unknown attempt')
+  })
+})
+
+it('outcome flips use the selected suite even when hidden outcomes differ', () => {
+  const fixture = data()
+  fixture['/results/mini/runs'] = fixture['/results/mini/runs'].map((run) => ({ ...run, visible_pass: true }))
+  const { container } = renderRig('#/rig/an:mini:outcomes:alpha-1:baseline?o=visible', { data: fixture })
+  expect(el(container, 'flip-rate').textContent).toContain('0%')
+  expect(el(container, 'flip-rate').textContent).toContain('visible suite')
+  expect(el(container, 'flip-rate').textContent).toContain('0 of 2 eligible tasks')
+})

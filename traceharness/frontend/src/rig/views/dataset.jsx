@@ -9,7 +9,7 @@
    ==================================================================================== */
 import { useMemo } from 'react'
 import { makeSpec } from '../route'
-import { useDataset, useRuns, useOutcomes, short, fmt, tally, tokStats, conditionRuns, resolveCondition, isFailureMode, verdict } from '../data'
+import { useDataset, useRuns, useOutcomes, short, fmt, tally, repeatEvidence, tokStats, conditionRuns, resolveCondition, isFailureMode, verdict } from '../data'
 import { useRig } from '../context'
 import { AskingSentence, Go, Kbd, Panel, OutcomeBar, Verdict, FailureChip, PinButton, Tag, Loading, ErrorState, NotFound, Empty, failureSummary } from '../ui'
 import { QuestionStack } from './questions'
@@ -38,7 +38,7 @@ function Overview({ dir, c, row }) {
     const next = [...byTask].sort((a, b) => (!!(b.o.p && b.o.f) - !!(a.o.p && a.o.f)) || (b.o.f - a.o.f) || a.t.localeCompare(b.t)).slice(0, 8)
     const modes = {}
     for (const r of list) if (verdict(r, 'hidden') === false && isFailureMode(r.mode)) modes[r.mode] = (modes[r.mode] || 0) + 1
-    return { list, o, tasks, byTask, mixed, both, dis, visOnly, tk, models, next, modes }
+    return { list, o, tasks, byTask, mixed, repeats: repeatEvidence(list, oracle), both, dis, visOnly, tk, models, next, modes }
   }, [R.data, c.model, c.harness, oracle, row.models])
   if (R.error) return <ErrorState error={R.error} onRetry={R.reload} what={`The run index of ${dir}`} />
   if (!d) return <Loading label={`Reading /api/results/${dir}/runs…`} />
@@ -72,7 +72,7 @@ function Overview({ dir, c, row }) {
         <OutcomeBar p={d.o.p} f={d.o.f} u={d.o.u} tall />
         <div className="rg-row rg-wrap rg-small rg-mono" style={{ gap: 12 }}><span className="rg-row" style={{ gap: 4 }}><Verdict v={true} /> {d.o.p} passed</span><span className="rg-row" style={{ gap: 4 }}><Verdict v={false} /> {d.o.f} failed</span><span className="rg-row" style={{ gap: 4 }}><Verdict v={null} /> {d.o.u} unknown</span></div>
         <span className="rg-small rg-mute">{d.o.u ? `${d.o.u} unknown grade${d.o.u > 1 ? 's' : ''} excluded from the rate.` : 'No unknown grades here.'}</span></div>
-      <Go spec={makeSpec('tasks', ...cs)} className="rg-stat" el="mixed-outcomes-count"><span className="rg-lbl">Mixed outcomes</span><span className="rg-fig md">{d.mixed.length}<span className="u">/ {d.tasks.length} tasks</span></span><span className="rg-small rg-dim">Same condition — some attempts pass, others fail.</span>{d.mixed.length > 0 && <span className="rg-small rg-amb rg-mono">{d.mixed.slice(0, 3).map((x) => x.t).join(' · ')}</span>}</Go>
+      <Go spec={makeSpec('tasks', ...cs)} className="rg-stat" el="mixed-outcomes-count"><span className="rg-lbl">Mixed outcomes</span><span className="rg-fig md">{d.repeats.rate == null ? 'Unavailable' : <>{d.repeats.mixed}<span className="u">/ {d.repeats.eligible} eligible tasks</span></>}</span><span className="rg-small rg-dim">Same condition — some graded attempts pass, others fail.</span><span className="rg-small rg-mute">{d.repeats.coverage}</span>{d.mixed.length > 0 && <span className="rg-small rg-amb rg-mono">{d.mixed.slice(0, 3).map((x) => x.t).join(' · ')}</span>}</Go>
       <div className="rg-stat" data-el="visible-hidden-disagreements"><span className="rg-lbl">Visible ≠ hidden</span><span className="rg-fig md">{d.dis.length}<span className="u">/ {d.both.length}</span></span><span className="rg-small rg-dim">{d.visOnly} passed the visible tests and not the hidden suite.</span><span className="rg-small rg-mute">{d.list.length - d.both.length} attempts lack one of the two grades.</span></div>
       <div className="rg-stat" data-el="mean-tokens"><span className="rg-lbl">Mean tokens / run{d.tk.estimated ? ' · includes estimates' : ''}</span><span className="rg-fig md">{d.tk.mean == null ? '—' : int(d.tk.mean)}</span><span className="rg-small rg-dim rg-mono">{tokenCoverage(d.tk)}</span><span className="rg-small rg-mute">Not a savings estimate.</span></div>
     </div>

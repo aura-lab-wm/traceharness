@@ -446,3 +446,12 @@ it('forks a complete recorded harness into an editable draft without changing th
   expect(stored.source.value).toEqual(config)
   expect(stored.configuration.prompt).toBe(config.system_prompt)
 })
+
+it('Student Lab lesson does not infer consistency from a singleton unknown attempt', () => {
+  const fixture = data()
+  fixture['/results/mini/runs'] = [{ ...summaryOf(ID3), hidden_pass: null }]
+  const { container } = renderRig('#/rig/task:mini:alpha-1:baseline:t2?lab=1', { data: fixture })
+  const lesson = container.querySelector('[data-el="lesson-panel"]')
+  expect(lesson.textContent).toContain('Repeat comparison unavailable')
+  expect(lesson.textContent).not.toContain('Consistent outcomes')
+})

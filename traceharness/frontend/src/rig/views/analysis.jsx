@@ -35,7 +35,7 @@ import { makeSpec } from '../route'
 import { api, IS_STATIC, IS_MEMBER } from '../../api'
 import {
   useDataset, useDatasets, useOverview, useRuns, useMetrics, useComparisons, useExperiment, isCapturedDir, useOracle, useIntegrity, useReport,
-  useTasks, useModels, useJobs, useApi, useRealAnalysis, usePatterns, useQuery, short, fmt, tally, tokStats, conditionRuns, resolveCondition, metricsCell,
+  useTasks, useModels, useJobs, useApi, useRealAnalysis, usePatterns, useQuery, short, fmt, tally, repeatEvidence, tokStats, conditionRuns, resolveCondition, metricsCell,
   verdict, invalidate, paths, useHarnessVersions,
 } from '../data'
 import { useRig, useTabState } from '../context'
@@ -419,9 +419,8 @@ function Outcomes({ dir, c }) {
   const probe = Object.fromEntries(((Array.isArray(T.data) && T.data) || []).map((t) => [t.id, t.probe]))
   const nT = d.rows.length
   const [lo, hi] = cell.ci95 || [null, null]
-  const flips = d.rows.filter((x) => x.o.p > 0 && x.o.f > 0).length
+  const repeats = repeatEvidence(d.list, oracle)
   const nCellTasks = Object.keys(cell.tasks || {}).length
-  const mflips = Object.values(cell.tasks || {}).filter((t) => t.c > 0 && t.c < t.n).length
   const curve = (cell.passk_curve || []).filter((p) => [1, 2, 3, 5, 8, 10].includes(p.k))
   const p1 = cell['pass@1']
   // Strengthened figures only where a run of this condition carries a strengthened grade;
@@ -432,12 +431,12 @@ function Outcomes({ dir, c }) {
   const reps = repeatsText(d.list)
   const nLine = `n = ${int(cell.runs)} · ${plural(nT, 'task')} × ${reps}`
   const figLabel = `pass@1 · ${short(c.model)} · ${c.harness} · ${dir}`
-  const lead = <>pass@1 for <b className="rg-mono">{short(c.model)}</b> under <b className="rg-mono">{c.harness}</b> is <b>{pct(p1)}</b>, 95% CI {ciText(cell.ci95)}, on the hidden suite ({nLine}){nT > 1 ? <>; {flips} of {nT} tasks flip between pass and fail</> : null}.</>
+  const lead = <>pass@1 for <b className="rg-mono">{short(c.model)}</b> under <b className="rg-mono">{c.harness}</b> is <b>{pct(p1)}</b>, 95% CI {ciText(cell.ci95)}, on the hidden suite ({nLine}){repeats.rate != null ? <>; {repeats.mixed} of {repeats.eligible} eligible tasks flip between pass and fail under the {oracle} suite</> : <>; repeat comparison unavailable under the {oracle} suite</>}.</>
   return (<>
     <Head eyebrow="Step 2 · an estimate with an interval, on a stated oracle" title="Outcomes" el="outcomes-answer" lead={lead}
       actions={<PinButton item={{ id: `figure:${dir}:outcomes:${c.model}:${c.harness}`, kind: 'figure', label: figLabel, value: `pass@1 ${pct(p1)} ${ciText(cell.ci95)} · n=${cell.runs} (hidden)`, spec: makeSpec('an', dir, 'outcomes', short(c.model), c.harness), dir, model: c.model, harness: c.harness }} />}
       about={<>
-        <p>pass@1, its interval, pass^k and the flip rate come from <span className="rg-mono">/metrics</span>, graded against the hidden suite. The per-task strips follow the suite chosen in the sentence above.</p>
+        <p>pass@1, its interval and pass^k come from <span className="rg-mono">/metrics</span>, graded against the hidden suite. The flip rate and per-task strips follow the suite chosen in the sentence above, using only tasks with at least two known grades for the flip rate.</p>
         <p><b>pass^k</b> is the chance that k attempts in a row all pass — what a user experiences. <b>pass@k</b> is the chance that at least one of k passes — a leaderboard with retries. The flip rate is the share of tasks whose repeats disagree.</p>
         <p>The strengthened suite adds cases to the hidden one; a drop means some passes did not survive it.</p>
       </>} />
@@ -452,13 +451,13 @@ function Outcomes({ dir, c }) {
         <span className="rg-mono rg-small rg-mute">n={int(cell.runs)} · {plural(nCellTasks, 'task')} × {reps}</span></div>
       <div className="rg-stat" data-el="pass-k"><span className="rg-lbl">pass^3 · three in a row</span><span className="rg-fig md">{pct(cell['pass^3'])}</span>
         <span className="rg-small rg-dim">pass@3 <span className="rg-mono">{pct(cell['pass@3'])}</span> with retries</span></div>
-      <div className="rg-stat" data-el="flip-rate"><span className="rg-lbl">flip rate</span><span className="rg-fig md">{pct(cell.flip_rate, 0)}</span><span className="rg-small rg-dim">{mflips} of {nCellTasks} tasks have mixed outcomes</span></div>
+      <div className="rg-stat" data-el="flip-rate"><span className="rg-lbl">flip rate · {oracle} suite</span><span className="rg-fig md">{repeats.rate == null ? 'Unavailable' : pct(repeats.rate, 0)}</span><span className="rg-small rg-dim">{repeats.rate != null ? `${repeats.mixed} of ${repeats.eligible} eligible tasks have mixed outcomes. ` : ''}{repeats.coverage}</span></div>
       <div className="rg-stat" data-el="strengthened-delta"><span className="rg-lbl">strengthened suite</span>
         {hasStrong
           ? <><span className="rg-fig md">{pct(cell.pass1_strong)}</span><span className={cx('rg-mono rg-small', sd < 0 ? 'rg-red' : 'rg-dim')}>Δ {pp(sd)} vs hidden</span></>
           : <><span className="rg-fig md">—</span><span className="rg-small rg-dim">not graded: no run in this condition has a strengthened grade</span></>}</div>
     </div>
-    <Sec title="Per task · repeats in order" meta={`${oracle} suite · ${flips} of ${nT} tasks flip`} el="per-task-repeats">
+    <Sec title="Per task · repeats in order" meta={`${oracle} suite · ${repeats.rate == null ? 'repeat comparison unavailable' : `${repeats.mixed} of ${repeats.eligible} eligible tasks flip`}`} el="per-task-repeats">
       <div className="rg-pnl">
         <div className="rg-an-tlist">{d.rows.map((x) => {
           const fl = x.o.p > 0 && x.o.f > 0
@@ -1362,7 +1361,8 @@ function TaskExplorer({ spec, args }) {
   if (!row || !d) return <Loading label={`Reading /api/results/${dir}/runs…`} />
   const cs = [dir, short(c.model), c.harness]
   const probeOf = (t) => (meta[t] ? meta[t].probe : null)
-  const nMixed = d.rows.filter((x) => x.mixed).length, nFail = d.rows.filter((x) => x.o.f).length
+  const repeats = repeatEvidence(d.list, oracle)
+  const nMixed = repeats.mixed, nFail = d.rows.filter((x) => x.o.f).length
   const nClean = d.rows.filter((x) => x.o.p > 0 && !x.o.f && !x.o.u).length
   const nNever = d.rows.filter((x) => !x.o.p && x.o.f).length
   const nUnk = d.rows.filter((x) => x.o.u).length
@@ -1401,7 +1401,7 @@ function TaskExplorer({ spec, args }) {
         ]}>{short(c.model)} was not run under {c.harness} in {dir}. The family matrix shows which combinations were.</Empty>
       ) : (<>
         <div className="rg-row rg-wrap rg-an-bar rg-an-xbar">
-          <div data-el="task-quick-filters"><Seg label="Quick filter" options={[['all', `All ${nT}`], ['mixed', `Mixed outcomes ${nMixed}`], ['fail', `With failures ${nFail}`]]} value={qf} onChange={reset(setQf)} /></div>
+          <div data-el="task-quick-filters"><Seg label="Quick filter" options={[['all', `All ${nT}`], ['mixed', repeats.rate == null ? 'Mixed outcomes unavailable' : `Mixed outcomes ${nMixed}`], ['fail', `With failures ${nFail}`]]} value={qf} onChange={reset(setQf)} /></div>
           <div className="rg-an-srch"><SearchBox value={q} onChange={reset(setQ)} placeholder="Search tasks" el="task-search" /></div>
           <label data-el="task-filter-select"><span className="sr-only">Probe filter</span><select className="rg-selc" value={pf} onChange={(e) => reset(setPf)(e.target.value)} aria-label="Probe filter">
             <option value="all">all tasks</option><option value="probe">probe tasks only</option><option value="plain">no probe</option></select></label>
@@ -1410,6 +1410,7 @@ function TaskExplorer({ spec, args }) {
           <label data-el="task-sort"><span className="sr-only">Sort</span><select className="rg-selc" value={so} onChange={(e) => setSo(e.target.value)} aria-label="Sort tasks">
             <option value="priority">sort: priority</option><option value="name">sort: name</option><option value="fail">sort: most failures</option></select></label>
         </div>
+        <p className="rg-small rg-dim" data-el="repeat-coverage">{repeats.coverage}</p>
         <div className="rg-row rg-wrap rg-small rg-an-legend" data-el="task-legend">
           <span className="rg-row rg-an-lg"><Verdict v={true} /> pass</span><span className="rg-row rg-an-lg"><Verdict v={false} /> fail</span>
           <span className="rg-row rg-an-lg"><Verdict v={null} /> unknown (never counted as fail)</span><Tag>{oracle}-test grades</Tag><span><span className="rg-amb">◆</span> probe task</span>
@@ -1440,7 +1441,7 @@ function TaskExplorer({ spec, args }) {
             )}
           </>) : (
             <div className="rg-pnl-b"><Empty title="No task matches these filters." actions={[{ label: 'Clear filters', onClick: clear, primary: true }]}>
-              {qf !== 'all' ? `No task in this condition has ${qf === 'mixed' ? 'mixed outcomes' : 'a recorded failure'}${q || pf !== 'all' || mf !== 'all' ? ' under the other filters' : ''}.` : 'The search and filters exclude every task.'}
+              {qf === 'mixed' && repeats.rate == null ? 'Repeat comparison unavailable: no task has at least two known grades in this suite. All attempts remain available under All.' : qf !== 'all' ? `No task in this condition has ${qf === 'mixed' ? 'mixed outcomes' : 'a recorded failure'}${q || pf !== 'all' || mf !== 'all' ? ' under the other filters' : ''}.` : 'The search and filters exclude every task.'}
             </Empty></div>
           )}
         </div>

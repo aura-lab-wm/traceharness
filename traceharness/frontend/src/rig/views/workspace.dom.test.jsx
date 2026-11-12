@@ -492,7 +492,7 @@ describe('guide and package', () => {
     expect(specs[0]).toBe('home')
     expect(specs).toContain('q:mini')
     expect(specs).toContain('run:20260101-000000-a00003')      // alpha-1/baseline t2 rep 1: cut off
-    expect(g.textContent).toContain('1 task of 2 has both passing and failing repeats')
+    expect(g.textContent).toContain('1 task of 2 eligible tasks has both passing and failing repeats')
     expect(g.textContent).toContain('cut off · no patch')
     expect(container.textContent).toContain('Student Lab is off')
   })
@@ -504,4 +504,12 @@ describe('guide and package', () => {
     expect(p.textContent).toContain('Captured coding sessions (except one curated sample) and capture watcher state')
     expect(within(p).getByRole('button', { name: /t2/ }).getAttribute('data-spec')).toBe('task:mini:alpha-1:baseline:t2')
   })
+})
+
+it('reading guide does not claim no task is mixed without comparable grades', () => {
+  const fixture = rigFixture()
+  fixture['/results/mini/runs'] = [{ ...fixture['/results/mini/runs'][0], hidden_pass: null }]
+  const { container } = renderRig('#/rig/guide', { data: fixture })
+  expect(el(container, 'start-here').textContent).toContain('Repeat comparison unavailable')
+  expect(el(container, 'start-here').textContent).not.toContain('No task is mixed')
 })
