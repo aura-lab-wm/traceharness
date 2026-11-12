@@ -1,5 +1,7 @@
 # Account and execution release verification
 
+This records the earlier release. The later [reviewed approval release](ACCOUNT_APPROVAL_RELEASE_2026_11_12.md) adds request inspection, guarded approval UI, database cutover checks and updated verification evidence.
+
 Fresh production execution is now verified for four native Codex jobs on the unchanged v17 runner. The account/security page and staged administrator console are live. The complete proposed account platform is **not finished**: its production database migration and additional lifecycle enforcement are not active.
 
 ## What passed in production

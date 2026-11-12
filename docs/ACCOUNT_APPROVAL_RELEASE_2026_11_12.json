@@ -1,0 +1,279 @@
+{
+  "date": "2026-11-12",
+  "site_commit": "e86fa1b39e77af3fda6e90a114d51c3db59d8078",
+  "worker_deployments": [
+    {
+      "at": "2026-11-12T12:26:58.989245+00:00",
+      "site_commit": "341d85ee68694e3b59ceb5ed2d05b85517c72ce3",
+      "exit_code": 0,
+      "version_id": "5d0b8fec-cefb-41f2-bc50-53febaf918b7",
+      "last_10_log_lines": [
+        "Total Upload: 400.50 KiB / gzip: 93.26 KiB",
+        "Worker Startup Time: 2 ms",
+        "Your Worker has access to the following bindings:",
+        "Binding                                                  Resource                  ",
+        "env.SNAPSHOT (8a74dd2fba124b1a8d82e6eeff5ba3ae)          KV Namespace              ",
+        "env.ADMIN_EMAILS (\"amastropaolo@wm.edu\")                 Environment Variable      ",
+        "",
+        "Uploaded traceharness-platform (2.66 sec)",
+        "No deploy targets for traceharness-platform (0.99 sec)",
+        "Current Version ID: 5d0b8fec-cefb-41f2-bc50-53febaf918b7"
+      ],
+      "production_sql_applied": false,
+      "kv_written": false,
+      "new_authority_or_invitation_flags_enabled": false
+    },
+    {
+      "at": "2026-11-12T12:33:37.569980+00:00",
+      "site_commit": "e86fa1b39e77af3fda6e90a114d51c3db59d8078",
+      "exit_code": 0,
+      "version_id": "1b9060c5-7bae-4bc9-9911-a64283b3c689",
+      "last_10_log_lines": [
+        "Total Upload: 402.88 KiB / gzip: 93.87 KiB",
+        "Worker Startup Time: 2 ms",
+        "Your Worker has access to the following bindings:",
+        "Binding                                                  Resource                  ",
+        "env.SNAPSHOT (8a74dd2fba124b1a8d82e6eeff5ba3ae)          KV Namespace              ",
+        "env.ADMIN_EMAILS (\"amastropaolo@wm.edu\")                 Environment Variable      ",
+        "",
+        "Uploaded traceharness-platform (3.80 sec)",
+        "No deploy targets for traceharness-platform (0.75 sec)",
+        "Current Version ID: 1b9060c5-7bae-4bc9-9911-a64283b3c689"
+      ],
+      "production_sql_applied": false,
+      "kv_written": false,
+      "new_authority_or_invitation_flags_enabled": false
+    }
+  ],
+  "local_tests": {
+    "worker": {
+      "passed": 398,
+      "failed": 0,
+      "skipped": 0
+    },
+    "postgres": {
+      "passed": 22,
+      "failed": 0,
+      "environment": "isolated local cluster"
+    },
+    "chrome_fixture": {
+      "approval": "passed",
+      "uncertain_acknowledgement_reconciliation": "passed",
+      "network": "local synthetic stub; external network disabled"
+    }
+  },
+  "production_http": {
+    "at": "2026-11-12T12:33:58.617972+00:00",
+    "stage": "after",
+    "anonymous_checks": [
+      {
+        "path": "/app",
+        "status": 302,
+        "location": "/login"
+      },
+      {
+        "path": "/app/shallow",
+        "status": 302,
+        "location": "/login"
+      },
+      {
+        "path": "/link",
+        "status": 302,
+        "location": "/login"
+      },
+      {
+        "path": "/app/account",
+        "status": 302,
+        "location": "/login"
+      },
+      {
+        "path": "/app/admin",
+        "status": 302,
+        "location": "/login"
+      },
+      {
+        "path": "/api/shallow/jobs",
+        "hostile_origin": false,
+        "status": 401
+      },
+      {
+        "path": "/api/shallow/jobs",
+        "hostile_origin": true,
+        "status": 401
+      },
+      {
+        "path": "/api/account",
+        "hostile_origin": false,
+        "status": 401
+      },
+      {
+        "path": "/api/account",
+        "hostile_origin": true,
+        "status": 401
+      },
+      {
+        "path": "/api/account/security",
+        "hostile_origin": false,
+        "status": 401
+      },
+      {
+        "path": "/api/account/security",
+        "hostile_origin": true,
+        "status": 401
+      },
+      {
+        "path": "/api/admin/accounts",
+        "hostile_origin": false,
+        "status": 401
+      },
+      {
+        "path": "/api/admin/accounts",
+        "hostile_origin": true,
+        "status": 401
+      },
+      {
+        "path": "/api/admin/account-requests",
+        "hostile_origin": false,
+        "status": 401
+      },
+      {
+        "path": "/api/admin/account-requests",
+        "hostile_origin": true,
+        "status": 401
+      },
+      {
+        "path": "/api/admin/account-requests/11111111-1111-4111-8111-111111111111",
+        "hostile_origin": false,
+        "status": 401
+      },
+      {
+        "path": "/api/admin/account-requests/11111111-1111-4111-8111-111111111111",
+        "hostile_origin": true,
+        "status": 401
+      }
+    ],
+    "real_member_checks": [
+      {
+        "path": "/app/account",
+        "status": 200,
+        "cache_control": "no-store",
+        "bytes": 19845,
+        "body_sha256": "1200828df9bf05b9166e7f25c9758e4b1ac97b0933d2318b8cc1a82866f48225",
+        "hostile_origin_status": 403
+      },
+      {
+        "path": "/app/admin",
+        "status": 200,
+        "cache_control": "no-store",
+        "bytes": 35866,
+        "body_sha256": "cad78220f4c80c292c7d66bae895866393d34bcb398e894dea7913e489fe2914",
+        "hostile_origin_status": 403
+      },
+      {
+        "path": "/api/account",
+        "status": 200,
+        "cache_control": "no-store",
+        "source": "supabase_profile_legacy",
+        "schema_status": "legacy",
+        "capabilities": {
+          "directory": false,
+          "edit_profile": false,
+          "account_requests": false,
+          "role_management": false,
+          "suspension": false,
+          "session_management": false,
+          "mfa_management": false,
+          "invitations": false
+        },
+        "role": "admin",
+        "email_verified": true,
+        "hostile_origin_status": 403
+      },
+      {
+        "path": "/api/account/security",
+        "status": 200,
+        "cache_control": "no-store",
+        "factor_count": 0,
+        "assurance": "aal1",
+        "source": "supabase_auth",
+        "hostile_origin_status": 403
+      },
+      {
+        "path": "/api/admin/accounts",
+        "status": 503,
+        "cache_control": "no-store",
+        "available": false,
+        "hostile_origin_status": 403
+      },
+      {
+        "path": "/api/admin/audit",
+        "status": 503,
+        "cache_control": "no-store",
+        "available": false,
+        "hostile_origin_status": 403
+      },
+      {
+        "path": "/api/admin/account-requests",
+        "status": 503,
+        "cache_control": "no-store",
+        "available": false,
+        "hostile_origin_status": 403
+      },
+      {
+        "path": "/api/runner/catalog",
+        "status": 200,
+        "runner_available": true,
+        "runtime_count": 3,
+        "task_count": 8,
+        "execution_available": true,
+        "model_requests": 0
+      }
+    ],
+    "writes": "Normal password sign-in only; no account, MFA, SQL or invitation mutation",
+    "production_migration_applied": false
+  },
+  "runner_candidate": {
+    "candidate_image": "registry.fly.io/traceharness-runner@sha256:5d2a22cbfe2033195cdfe5f67b516b277113dc15c4f43a1fb2a671a87ebfe7a5",
+    "base_image": "registry.fly.io/traceharness-runner@sha256:9c3331292fe6c85de7fc2cdb1db2f41e188a123601368ad260cd8fdfca2d9d6d",
+    "build_exit_code": 0,
+    "offline_probe": {
+      "candidate_init_sha256": "d427d21c86bba882e60a295026ca3f4f99fc1e2c92526432f53408ef5ff4f409",
+      "checks": [
+        "fresh provider import excludes ASGI dependencies",
+        "actual spawn preserves authored HTTP429 and suppresses response text",
+        "actual spawn deadline kills and joins stalled child without retries",
+        "unchanged uvicorn legacy factory path resolves original create_app",
+        "offline ASGI lifecycle, anonymous401, signed unavailable catalog and nonce replay refusal",
+        "controller transport/executor/service/registry source hashes unchanged from v17"
+      ],
+      "model_requests": 0,
+      "offline_probe_passed": true,
+      "public_server_started": false,
+      "stalled_child_elapsed_seconds": 0.2537228260000006,
+      "unchanged_module_sha256": {
+        "execution.py": "1f174a62f72219a7baba5217ea0a053ccb90b55366cfcfe491ebbba219760d8d",
+        "provider.py": "923b4919ccc531547464da185a112a64264ac1453e2dbbd4c87b9b8c3d2beb62",
+        "registry.py": "c06c27d2ede5bf9393e18fa7dc80d380cab6057b91a6769917f4bbafc0f28166",
+        "service.py": "d88a11d174bc94c0104ff0313d681a9a7688ae77f102ba0dba5ed2152bb2f0b1"
+      }
+    },
+    "deployment_performed": false,
+    "reason": "Current runner shutdown cancels active jobs; a proven admission and drain boundary is required before replacing it. A Worker-only pause does not fence old in-flight versions or direct trusted HMAC callers.",
+    "production_execution_evidence": "Earlier four successful native Codex trials remain v17 evidence. No new model requests made for this candidate.",
+    "performance_improvement": "UNVERIFIED"
+  },
+  "production_sql_applied": false,
+  "account_approval_enabled": false,
+  "runner_pause_activated": false,
+  "kv_written": false,
+  "fresh_production_browser_review": "UNVERIFIED: native computer-use stageManagerProcessNotRunning and browser access host unavailable",
+  "unfinished": [
+    "Production account migration and guarded activation",
+    "Invitation delivery and activation canary",
+    "Session inventory/revocation and refresh management",
+    "Role management and last-owner protection",
+    "Cross-plane suspension and lost-factor recovery",
+    "Race-free backend drain for runner replacement"
+  ],
+  "performance_improvement": "UNVERIFIED"
+}
