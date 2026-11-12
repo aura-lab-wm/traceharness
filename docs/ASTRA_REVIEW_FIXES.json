@@ -1,0 +1,163 @@
+{
+  "disposition": "Seven findings repaired; production capture explicitly unavailable pending service and atomic-store provisioning",
+  "public_code_commit": "03b249f6a2e243025d7aca0233a07afb255911f6",
+  "site_code_commit": "32b8d991207da6bd96b9efffddde21e81d8fdafb",
+  "worker_version_id": "e9805314-b341-427b-be1c-541e56dbed31",
+  "checks": {
+    "python_run": 1329,
+    "python_passed": 1262,
+    "python_skipped": 67,
+    "frontend_passed": 1093,
+    "worker_passed": 266,
+    "real_local_postgres_passed": 12,
+    "headless_fixture_browser_passed": 40,
+    "installed_cli_entrypoints": 6,
+    "fresh_live_anonymous_cases": 8,
+    "real_member_checks_complete": true,
+    "new_traceharness_jobs": 0
+  },
+  "artifact": {
+    "source_commit": "03b249f6a2e243025d7aca0233a07afb255911f6",
+    "base_html_sha256": "77e550efb1c311a09ce9169e0c06943b987a538c7d0a23d698d8bfd2568abc21",
+    "html": {
+      "path": "/Users/amastro/Documents/TraceHarness-review-fixes-2026-11-11/app-review-fixes.html",
+      "sha256": "5c254fac4a76ad017c9d0dece8f8da75d91baec1d445711ced0e1fa518b740fd",
+      "bytes": 21109777
+    },
+    "gzip": {
+      "path": "/Users/amastro/Documents/TraceHarness-review-fixes-2026-11-11/app-review-fixes.html.gz",
+      "sha256": "ba814c8707f27efc72bd8cee045f8c9dfbf7588dbb02ec94c64400d2617b0027",
+      "bytes": 15295622
+    },
+    "encoded_recorded_data_unchanged": true,
+    "encoded_recorded_data_sha256": "f15ee7595f1630cef32c32265fd6e0b1667dc6bd80549a032b2d43d284f9a5f3",
+    "datasets": [
+      "captured_claude_code",
+      "demo_mock",
+      "families_mock",
+      "live",
+      "llma4se_live",
+      "prerecorded_mock",
+      "prerecorded_mock_weak",
+      "real_swe_agent_500"
+    ],
+    "runs": 3453,
+    "audio_chapters": 5,
+    "build_source": {
+      "sha256": "432927b6d1547cdc8b29405e8562a89f80c242d513e623a364ac25e09731e42a",
+      "files": 103
+    },
+    "new_asset": "/assets/index-D9ZUlB0y.js"
+  },
+  "production_sql_applied": false,
+  "capture_available_live": false,
+  "live_snapshot_observations": [
+    {
+      "attempt": 1,
+      "status": 200,
+      "html_sha256": "77e550efb1c311a09ce9169e0c06943b987a538c7d0a23d698d8bfd2568abc21"
+    },
+    {
+      "attempt": 2,
+      "status": 200,
+      "html_sha256": "77e550efb1c311a09ce9169e0c06943b987a538c7d0a23d698d8bfd2568abc21"
+    },
+    {
+      "attempt": 3,
+      "status": 200,
+      "html_sha256": "77e550efb1c311a09ce9169e0c06943b987a538c7d0a23d698d8bfd2568abc21"
+    },
+    {
+      "attempt": 4,
+      "status": 200,
+      "html_sha256": "77e550efb1c311a09ce9169e0c06943b987a538c7d0a23d698d8bfd2568abc21"
+    },
+    {
+      "attempt": 5,
+      "status": 200,
+      "html_sha256": "77e550efb1c311a09ce9169e0c06943b987a538c7d0a23d698d8bfd2568abc21"
+    },
+    {
+      "attempt": 6,
+      "status": 200,
+      "html_sha256": "5c254fac4a76ad017c9d0dece8f8da75d91baec1d445711ced0e1fa518b740fd"
+    }
+  ],
+  "skip_reasons": {
+    "requires the full checkout: solutions/reference/ (instructor solutions are not part of the school replication package)": 2,
+    "requires the full checkout: tools/capture_census.py": 4,
+    "requires the full checkout: tools/census_cursor.py": 8,
+    "requires the full checkout: tools/census_gemini.py": 6,
+    "requires the full checkout: tools/census_qwen.py": 7,
+    "requires the full checkout: macos/CaptureMenubar": 16,
+    "requires the full checkout: docs/capture.md": 3,
+    "requires the full checkout: traceharness/frontend/README.md": 1,
+    "requires the full checkout: traceharness/README.md": 2,
+    "inspect_ai not installed (pip install --break-system-packages inspect_ai)": 4,
+    "inspect_ai not installed": 1,
+    "inspect_ai is an optional extra: pip install 'traceharness[inspect]'": 4,
+    "pyarrow is installed with the [real] extra": 1,
+    "requires the full checkout: traceharness/data/models/real_swe_agent_500.json (the school package ships only the mock_prerecorded sentinel)": 1,
+    "SQLite connection ResourceWarning requires Python 3.13+": 1,
+    "requires the full checkout: web/src": 5,
+    "requires the full checkout: web/index.html": 1
+  },
+  "evidence": [
+    {
+      "file": "artifact.json",
+      "sha256": "4ce6bae1435cfe2f4d15a88fadca8643f839efae0322f8ff5460919faa1b3d86"
+    },
+    {
+      "file": "worker-deploy.json",
+      "sha256": "03e51682908cb108c82a3088eebf05218cea558b59d6884b17dd29ed2e781e2a"
+    },
+    {
+      "file": "kv-upload.json",
+      "sha256": "9eded409525d7bedf31eb4ad6d9e684c9e6c2094cdbc74c72902eb9cb2d542a2"
+    },
+    {
+      "file": "live-final.json",
+      "sha256": "a2dc9232700452282ea78bfffaf1c86674c41a224c83000eb68e1a7f98981f9a"
+    },
+    {
+      "file": "anonymous-live.json",
+      "sha256": "a7957151fda9e69d3f21927ef20c0070fb2110394c0f1dce042448b6e274f4fc"
+    },
+    {
+      "file": "offline.json",
+      "sha256": "a1d2b6c7090eef34e61bd780954e76ca74ffaca86d6cb2b1591c3089bd2b85a6"
+    },
+    {
+      "file": "wheel-final.json",
+      "sha256": "c2dd3a5746972781e350766159b1684b25c0c7016fa3f72f375ffdccdba10315"
+    },
+    {
+      "file": "python-final-summary.json",
+      "sha256": "64044413830e447295c9c92660599a7f3abf79e107fa263ab51a3e7b8f82bea6"
+    },
+    {
+      "file": "python-final-merged.log",
+      "sha256": "e707be09830ebc2553afb5ca0baa73971cad796ea5583a17f76888c594785438"
+    },
+    {
+      "file": "frontend-final.log",
+      "sha256": "c9f79ef18b149831ab032788ed58852c2d1381225240ca167bb9a4a15c63b6c7"
+    },
+    {
+      "file": "worker-final.log",
+      "sha256": "23681ea939079d0716d30bec555ed57da9dc55190d21d4780f4f478651d77432"
+    },
+    {
+      "file": "postgres-base.log",
+      "sha256": "24671a257dc857d7919c37c6242058c5504a66d35d6ea9c2b5d67cff1afbbc1f"
+    },
+    {
+      "file": "postgres-adversarial.log",
+      "sha256": "5a081cc4182a27259e8428c0aed2e462f01285db2fc758db16b7324675aa52ac"
+    },
+    {
+      "file": "browser/summary.json",
+      "sha256": "84fc722d2155defb1674b0740e4f9ee9914e010eb6715a2196e01d38a59d9e41"
+    }
+  ]
+}

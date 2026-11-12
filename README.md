@@ -30,6 +30,8 @@ the grader, not the model, is broken (see `docs/STUDENT_GUIDE.md`, section 13).
 
 **Comprehensive verification:** [current live workflows, regression coverage and explicit remaining blocks](docs/COMPREHENSIVE_VERIFICATION.md).
 
+**Astra review repairs:** [seven repaired findings, current test evidence and production capture availability](docs/ASTRA_REVIEW_FIXES.md).
+
 **First visit and help:** [narrated tour and Ask Buddy workflow guidance](docs/VOICE_TOUR_AND_BUDDY.md), with transcripts, real control navigation and current runner availability.
 
 ## Run the dashboard
