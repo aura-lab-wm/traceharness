@@ -465,7 +465,7 @@ export default function RigApp() {
           <button type="button" className="rg-cmd" aria-label="Open command palette" onClick={() => setPalette(true)}><Icon name="search" size={15} /><span className="rg-cmd-ph">Search datasets, runs, tasks and views…</span><span className="rg-cmd-k"><Kbd>{MOD}</Kbd><Kbd>K</Kbd></span></button>
           <div className="rg-tb-r">
             <GettingStarted onGuide={topic => showGuidance(topic, focusCtx)} />
-            {IS_MEMBER && <a className="rg-tbtn" href="/login" data-el="member-account">Account</a>}
+            {IS_MEMBER && <a className="rg-tbtn" href="/app/account" data-el="member-account">Account</a>}
             <button type="button" className={`rg-tbtn${route.dock === 'buddy' ? ' on' : ''}`} data-el="buddy-launcher" aria-label="Ask Buddy" aria-pressed={route.dock === 'buddy'} onClick={() => toggleDock('buddy')}><Icon name="buddy" size={16} /><span className="lbl-d">Ask Buddy</span></button>
             <span className="rg-tb-sep rg-hide-sm" aria-hidden="true" />
             <button type="button" className={`rg-tbtn ico rg-hide-sm${panes.length > 1 ? ' on' : ''}`} aria-label="Toggle split view" aria-pressed={panes.length > 1} title={`Split view (${MOD}+\\)`} onClick={toggleSplit}><Icon name="split" size={16} /></button>

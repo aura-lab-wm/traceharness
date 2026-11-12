@@ -95,6 +95,7 @@ describe('hosted workbench navigation', () => {
     for (const name of ['Fixed harnesses', 'Minimal harness', 'Build a harness']) expect(rail.queryByRole('button', { name })).toBeNull()
     expect(container.querySelector('[data-el="runtime-status"]').textContent).toContain('recorded snapshot · member harness saves')
     expect(screen.getByRole('link', { name: 'Simple harness editor' }).getAttribute('href')).toBe('/app/shallow')
+    expect(screen.getByRole('link', { name: 'Account', exact: true }).getAttribute('href')).toBe('/app/account')
     expect(container.querySelector('[data-el="load-trajectories-cta"]')).toBeNull()
     fireEvent.click(screen.getByRole('button', { name: 'Ask Buddy' }))
     expect(container.querySelector('[data-el="buddy-local-only"]')).toBeTruthy()

@@ -1,0 +1,345 @@
+{
+  "verified_at_utc": "2026-11-12T10:30:26.362930+00:00",
+  "initial_source_commit": "b9344f6a25bdb23362f064093c9b6f38c7926c82",
+  "production_runner": {
+    "release_version": 17,
+    "image": "registry.fly.io/traceharness-runner@sha256:9c3331292fe6c85de7fc2cdb1db2f41e188a123601368ad260cd8fdfca2d9d6d",
+    "machine": "8e64d7b7d01e68",
+    "state": "started",
+    "check": "passing",
+    "module_sha256": "1f174a62f72219a7baba5217ea0a053ccb90b55366cfcfe491ebbba219760d8d",
+    "registry_sha256": "2d90f0f7a9710890c2aedad0e972ac6d1f1a52ecebec4848d195793370496d10",
+    "verification": "Read-only fly status and ssh hash checks before paid dispatch"
+  },
+  "runtime_pins": {
+    "runtime_id": "native-codex",
+    "runtime_version": "0.167.1",
+    "image_digest": "sha256:e1e4ef84997e7c17acdb210ef55679b3d637fb590cdf469614fc6ab60459f2b0",
+    "model_id": "openai/gpt-5.1-codex-mini",
+    "task_id": "requests-unicode-length",
+    "task_revision": "f6707042d8b18d2a3737380bf58ff020872fb07b",
+    "environment_digest": "sha256:e1e4ef84997e7c17acdb210ef55679b3d637fb590cdf469614fc6ab60459f2b0",
+    "grader_image_digest": "sha256:b6bc5bf5a8a16225ffe35975f1ee30c6a5b86ceee5fae5a001e9221face4dded",
+    "task_content_sha256": "4a98a5b8095eab35a956c9972675ff53242d844854aac0a1af3ef6738f59dbef"
+  },
+  "native_inventory_pins": {
+    "runtime_id": "native-codex",
+    "runtime_version": "0.167.1",
+    "image_digest": "sha256:e1e4ef84997e7c17acdb210ef55679b3d637fb590cdf469614fc6ab60459f2b0",
+    "binary_sha256": "dd5bfdf19d794dcc6fb482d2d5a2d9fb31d11f6caa44b303bb72890d461e8a02",
+    "inventory_sha256": "9592e2f237bfed2ea7702f0a88499d342631d4893ca276186abf8b173361b4b7",
+    "taxonomy_sha256": "6064ebcb6693a1dd7b3e50fbfbcc94ff959f7957ac184188fd91744900a429a3",
+    "materializer_sha256": "8a1ee9f8fba86a80c057f7712d4aeddb02096ec17f3c22451ecaf5ded9c1c185"
+  },
+  "budget": {
+    "maximum_new_jobs": 4,
+    "actual_new_jobs": 4,
+    "per_job_model_ceiling_usd": 0.15,
+    "aggregate_model_ceiling_usd": 0.6,
+    "confirmed_reported_model_cost_usd": 0.0356464,
+    "unknown_cost_trials": 0,
+    "automatic_retries": false,
+    "provider_connections_revoked": 2
+  },
+  "plans": {
+    "initial_sha256": "8fbddfea59d50592f9de929b1837b16a5515a50ff72ddf50e8375ca29ec64fea",
+    "observed_fragment_sha256": "4375c49bc8d558f8f34f7d8703e1b35fb0d8717422789521aa7be4ff2b5656ac",
+    "schedule_seed": 20261112,
+    "seed_controls_native_sampling": false,
+    "initial_schedule_completed": false,
+    "initial_schedule_executed_trials": 3,
+    "initial_schedule_last_trial_not_submitted": true,
+    "execution_order": [
+      "conditional edited",
+      "baseline",
+      "baseline",
+      "observed edited"
+    ],
+    "observed_pair_treatment_selected_adaptively": true,
+    "observed_pair_baseline_precedes_second_plan_freeze": true,
+    "server_experiment_started": false,
+    "dispatch": "Individually guarded exact-manifest jobs; no dispatch after unknown cost or uncertain acknowledgement"
+  },
+  "trials": [
+    {
+      "index": 1,
+      "pair": "conditional-fragment",
+      "arm": "edited",
+      "job_id": "66ec8632423a42512506a8048567a98fd3c7d56de7221449",
+      "status": "succeeded",
+      "task_grade": "passed",
+      "native_turn_completed": true,
+      "native_trace_events": 20,
+      "usage": {
+        "requests": 8,
+        "input_tokens": 71539,
+        "output_tokens": 1579,
+        "cost_usd": 0.01220051
+      },
+      "server_created_to_updated_seconds": 50,
+      "observed_controller_elapsed_seconds": 50.158061625028495,
+      "manifest_sha256": "86d83808ac17132fd7b61452883dda02235ae5f162d765d3aa450568b98e5fe6",
+      "native_prompt_profile_sha256": "fe828bebde7081d27965658f4af0aa822511d308dadada53307ed89aed2e831f",
+      "binary_readback_verified": true,
+      "changed_source_occurrences": 1,
+      "target_literal": "replacement",
+      "target_literal_observed_returned_requests": 0,
+      "artifacts": [
+        {
+          "name": "manifest.json",
+          "bytes": 2578,
+          "sha256": "54f9cb2cf37b2141ec86f015a84613758ec59a52269e9bab3cdac7a3c82e6c5c"
+        },
+        {
+          "name": "grade.json",
+          "bytes": 21,
+          "sha256": "878982568e5e39420f9fc8fca5caaade78f526a402b42f08357919732d5a1cd5"
+        },
+        {
+          "name": "trace.jsonl",
+          "bytes": 15300,
+          "sha256": "8708c27fc006696d059538ac84bbab87e4e56c54c596f673b4c13b4ddca70c8f"
+        },
+        {
+          "name": "patch.diff",
+          "bytes": 421,
+          "sha256": "02235a9b56e226e68f5abe120415d6759a8a67e380bac681bf876ccc8036981f"
+        },
+        {
+          "name": "native-prompt-profile.json",
+          "bytes": 932,
+          "sha256": "fe828bebde7081d27965658f4af0aa822511d308dadada53307ed89aed2e831f"
+        },
+        {
+          "name": "native-prompt-application.json",
+          "bytes": 1524,
+          "sha256": "d235e6a09726b535e438950bf975df002d5e9f405dfec9dfc02b074a8dbf3483"
+        },
+        {
+          "name": "native-prompt-observations.json",
+          "bytes": 15362,
+          "sha256": "69114f337949e757e91189e0190b4db4e49a3ce075ff22c0539a04b28c047aab"
+        }
+      ]
+    },
+    {
+      "index": 2,
+      "pair": "conditional-fragment",
+      "arm": "baseline",
+      "job_id": "527644f35f8190aa75648736d765fdb29504d1aead3b7b40",
+      "status": "succeeded",
+      "task_grade": "passed",
+      "native_turn_completed": true,
+      "native_trace_events": 24,
+      "usage": {
+        "requests": 9,
+        "input_tokens": 81145,
+        "output_tokens": 1560,
+        "cost_usd": 0.00803089
+      },
+      "server_created_to_updated_seconds": 52,
+      "observed_controller_elapsed_seconds": 54.88680670800386,
+      "manifest_sha256": "2880399d9cfef2407a2a5e325c630825f118d46662c6bb4eb1db4d1a30b07c6a",
+      "native_prompt_profile_sha256": "544c3097e1b13796a22b3b1fa17a4682c0649c1c07c603f938dc2006ca8708f3",
+      "binary_readback_verified": true,
+      "changed_source_occurrences": 0,
+      "target_literal": "baseline",
+      "target_literal_observed_returned_requests": 0,
+      "artifacts": [
+        {
+          "name": "manifest.json",
+          "bytes": 2184,
+          "sha256": "620eb5e1657dc23bc70ee3bf6bfb391544110ef3d37068de10eb46b16954e6d9"
+        },
+        {
+          "name": "grade.json",
+          "bytes": 21,
+          "sha256": "878982568e5e39420f9fc8fca5caaade78f526a402b42f08357919732d5a1cd5"
+        },
+        {
+          "name": "trace.jsonl",
+          "bytes": 16050,
+          "sha256": "6460d78f0d3953f78c17059eb18e4e04844401f88b50f5ad9495a42dfbb96f3a"
+        },
+        {
+          "name": "patch.diff",
+          "bytes": 421,
+          "sha256": "02235a9b56e226e68f5abe120415d6759a8a67e380bac681bf876ccc8036981f"
+        },
+        {
+          "name": "native-prompt-profile.json",
+          "bytes": 547,
+          "sha256": "544c3097e1b13796a22b3b1fa17a4682c0649c1c07c603f938dc2006ca8708f3"
+        },
+        {
+          "name": "native-prompt-application.json",
+          "bytes": 1046,
+          "sha256": "a418214a96cacb948c63b827a24389dd1324024836fd454b5c1a2b4da9a7aca4"
+        },
+        {
+          "name": "native-prompt-observations.json",
+          "bytes": 17215,
+          "sha256": "91fb2f383711d561947797a6f018835e9cd8f68560e06b487cb3d5a2903cf008"
+        }
+      ]
+    },
+    {
+      "index": 3,
+      "pair": "observed-fragment",
+      "arm": "baseline",
+      "job_id": "10e9ef78fdfe5345c3db0eeb873824b487238b2d9adf3503",
+      "status": "succeeded",
+      "task_grade": "passed",
+      "native_turn_completed": true,
+      "native_trace_events": 20,
+      "usage": {
+        "requests": 8,
+        "input_tokens": 70756,
+        "output_tokens": 1153,
+        "cost_usd": 0.00904076
+      },
+      "server_created_to_updated_seconds": 45,
+      "observed_controller_elapsed_seconds": null,
+      "manifest_sha256": "2880399d9cfef2407a2a5e325c630825f118d46662c6bb4eb1db4d1a30b07c6a",
+      "native_prompt_profile_sha256": "544c3097e1b13796a22b3b1fa17a4682c0649c1c07c603f938dc2006ca8708f3",
+      "binary_readback_verified": true,
+      "changed_source_occurrences": 0,
+      "target_literal": "baseline",
+      "target_literal_observed_returned_requests": 8,
+      "artifacts": [
+        {
+          "name": "manifest.json",
+          "bytes": 2184,
+          "sha256": "620eb5e1657dc23bc70ee3bf6bfb391544110ef3d37068de10eb46b16954e6d9"
+        },
+        {
+          "name": "grade.json",
+          "bytes": 21,
+          "sha256": "878982568e5e39420f9fc8fca5caaade78f526a402b42f08357919732d5a1cd5"
+        },
+        {
+          "name": "trace.jsonl",
+          "bytes": 14218,
+          "sha256": "9d151661f011cbc2f353c3bf3440bfd88a61277686d20c6ed7978b14aa1e6650"
+        },
+        {
+          "name": "patch.diff",
+          "bytes": 421,
+          "sha256": "02235a9b56e226e68f5abe120415d6759a8a67e380bac681bf876ccc8036981f"
+        },
+        {
+          "name": "native-prompt-profile.json",
+          "bytes": 547,
+          "sha256": "544c3097e1b13796a22b3b1fa17a4682c0649c1c07c603f938dc2006ca8708f3"
+        },
+        {
+          "name": "native-prompt-application.json",
+          "bytes": 1046,
+          "sha256": "a418214a96cacb948c63b827a24389dd1324024836fd454b5c1a2b4da9a7aca4"
+        },
+        {
+          "name": "native-prompt-observations.json",
+          "bytes": 15362,
+          "sha256": "a9def7fa8e71eaa7bdd457496a9079c424c14fed8e73c6ae9c7f703ba21843dc"
+        }
+      ]
+    },
+    {
+      "index": 4,
+      "pair": "observed-fragment",
+      "arm": "edited",
+      "job_id": "74c0df662dabbe8589bff95fcab7a7946a44cb8bee288533",
+      "status": "succeeded",
+      "task_grade": "passed",
+      "native_turn_completed": true,
+      "native_trace_events": 20,
+      "usage": {
+        "requests": 8,
+        "input_tokens": 69960,
+        "output_tokens": 933,
+        "cost_usd": 0.00637424
+      },
+      "server_created_to_updated_seconds": 45,
+      "observed_controller_elapsed_seconds": 47.41215954202926,
+      "manifest_sha256": "b6721878c5ace0acbf7306a9436506d53e374aed1e6ff6bec4f971258290ae0c",
+      "native_prompt_profile_sha256": "38d8be2485aec8ce4e248aee8b5ef85e5667bb8becdb95b57e4dc9d170874e46",
+      "binary_readback_verified": true,
+      "changed_source_occurrences": 1,
+      "target_literal": "replacement",
+      "target_literal_observed_returned_requests": 8,
+      "artifacts": [
+        {
+          "name": "manifest.json",
+          "bytes": 2608,
+          "sha256": "20052d192e074c12e78be0f9a01fb4650d4903e7b65e83f816b9ce5e6f632ca7"
+        },
+        {
+          "name": "grade.json",
+          "bytes": 21,
+          "sha256": "878982568e5e39420f9fc8fca5caaade78f526a402b42f08357919732d5a1cd5"
+        },
+        {
+          "name": "trace.jsonl",
+          "bytes": 13769,
+          "sha256": "7fdb1a58a641e609014006b5969e0a8d0d42fa0a5deaf2638e3f228a028c4d69"
+        },
+        {
+          "name": "patch.diff",
+          "bytes": 421,
+          "sha256": "02235a9b56e226e68f5abe120415d6759a8a67e380bac681bf876ccc8036981f"
+        },
+        {
+          "name": "native-prompt-profile.json",
+          "bytes": 962,
+          "sha256": "38d8be2485aec8ce4e248aee8b5ef85e5667bb8becdb95b57e4dc9d170874e46"
+        },
+        {
+          "name": "native-prompt-application.json",
+          "bytes": 1492,
+          "sha256": "d9661cff434569a96e5a0dd50527d08031019cb67dcb6d641bce84f6d2b8fd83"
+        },
+        {
+          "name": "native-prompt-observations.json",
+          "bytes": 15410,
+          "sha256": "512107a3fa6989c927588002cc82841b625d3fad91af630427670fb68829e674"
+        }
+      ]
+    }
+  ],
+  "interpretation": {
+    "fresh_v17_execution_verified": true,
+    "all_four_task_grades_passed": true,
+    "all_four_native_turns_completed": true,
+    "conditional_pair_model_facing_treatment_verified": false,
+    "observed_pair_model_facing_treatment_verified": true,
+    "performance_improvement_established": false,
+    "causal_effect_established": false,
+    "historical_unknown_costs_resolved": false,
+    "whole_native_prompt_coverage_established": false,
+    "other_runtime_model_task_combinations_verified": false
+  },
+  "local_repair": {
+    "deployed": false,
+    "files": [
+      "traceharness/runner_service/__init__.py",
+      "tests_agentlab/runner_service/test_import_boundary.py"
+    ],
+    "cause": "Eager package export imported FastAPI/controller routes in deadline-bound spawned provider workers.",
+    "result": "create_app remains available through lazy attribute lookup; provider imports avoid ASGI dependencies.",
+    "red_to_green_regression": true,
+    "full_runner_suite": {
+      "passed": 316,
+      "skipped": 9,
+      "subtests_passed": 554,
+      "warnings": 1
+    },
+    "warning": "Existing Starlette/httpx test-client deprecation."
+  },
+  "final_idle_check": {
+    "active_or_needs_attention": 0,
+    "containers": 0,
+    "controller_module_sha256": "1f174a62f72219a7baba5217ea0a053ccb90b55366cfcfe491ebbba219760d8d",
+    "registry_sha256": "2d90f0f7a9710890c2aedad0e972ac6d1f1a52ecebec4848d195793370496d10",
+    "method": "Read-only Fly SSH after final terminal trial and credential revocation."
+  }
+}
