@@ -78,9 +78,9 @@ python -m traceharness
 TraceHarness opens on **Datasets**: every trajectory set in `data/runs/`, recorded agents and mock controls. If
 `real_swe_agent_500` is listed, you already have the first 500 runs of the dataset you load next.
 
-![The Datasets page listing eight trajectory sets](img/guide/datasets.png)
+![The Datasets page listing ten trajectory sets](img/guide/datasets.png)
 
-*Datasets: four recorded agents and four mock controls. Open any of them to see its questions already
+*Datasets: six recorded sets and four mock controls. Open any of them to see its questions already
 answered.*
 
 ---
@@ -116,7 +116,7 @@ it is written to `data/runs/real_swe_agent_1000`.
 Click **Download SWE-agent sample**, then **Download & import** to confirm. The server downloads one 85 MB file
 from Hugging Face, then writes the 1,000 runs. It usually takes under a minute (6 seconds in our test).
 
-<img src="img/guide/download-progress.png" width="600" alt="The download in progress, counting megabytes">
+<img src="img/guide/download-progress.png" width="600" alt="The download in progress, writing the runs">
 
 *Progress first counts megabytes from Hugging Face, then the runs being written.*
 
