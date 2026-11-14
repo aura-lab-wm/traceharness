@@ -1,0 +1,293 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 460" width="1200" height="460" role="img" aria-labelledby="hero-title hero-desc">
+  <title id="hero-title">TraceHarness — Treating the Agent Harness as a Controlled Experimental Variable</title>
+  <desc id="hero-desc">Dark evaluation console banner. The matrix is an illustrative slice of llma4se_live (5 models by 6 harnesses by 8 tasks, 1,632 real runs). Oxide cells mark a cell opened for reading, not a measured result.</desc>
+
+  <!-- Ground and outer 1px border -->
+  <rect width="1200" height="460" fill="#101417"/>
+  <rect x="0.5" y="0.5" width="1199" height="459" fill="none" stroke="#919da4" stroke-opacity="0.24"/>
+
+  <!-- Top instrument bar -->
+  <rect x="1" y="1" width="1198" height="63" fill="#0d1114"/>
+  <line x1="0" y1="64.5" x2="1200" y2="64.5" stroke="#919da4" stroke-opacity="0.22"/>
+
+  <!-- Four-bar mark echoed from favicon.svg (last bar taller), recolored in #e5e9e8 and #7daecc -->
+  <rect x="32.5" y="16.5" width="31" height="31" rx="6" fill="#101417" stroke="#919da4" stroke-opacity="0.28"/>
+  <rect x="38" y="26" width="4" height="12" fill="#e5e9e8" fill-opacity="0.38"/>
+  <rect x="44" y="26" width="4" height="12" fill="#e5e9e8" fill-opacity="0.62"/>
+  <rect x="50" y="26" width="4" height="12" fill="#e5e9e8"/>
+  <rect x="56" y="24" width="3" height="16" fill="#7daecc"/>
+
+  <text x="78" y="37" font-family="ui-monospace, monospace" font-size="13" font-weight="600" letter-spacing="1.2" fill="#e5e9e8">TRACEHARNESS</text>
+  <line x1="196.5" y1="24" x2="196.5" y2="41" stroke="#919da4" stroke-opacity="0.26"/>
+  <text x="210" y="37" font-family="ui-monospace, monospace" font-size="12" fill="#919da4">v0.3.0 · REPLICATION PACKAGE</text>
+  <text x="1168" y="37" text-anchor="end" font-family="ui-monospace, monospace" font-size="12" fill="#919da4"><tspan fill="#7daecc">2,709</tspan> / 3,453 REAL RUNS · OFFLINE REPLAY</text>
+
+  <!-- Left column: title thesis and included study shape -->
+  <text x="36" y="108" font-family="ui-monospace, monospace" font-size="11" letter-spacing="1.4" fill="#7daecc">CODING-AGENT TRAJECTORY EVALUATION</text>
+
+  <text x="36" y="152" font-family="ui-sans-serif, system-ui, sans-serif" font-size="36" font-weight="600" letter-spacing="-0.5" fill="#e5e9e8">Treat the agent harness</text>
+  <text x="36" y="196" font-family="ui-sans-serif, system-ui, sans-serif" font-size="36" font-weight="600" letter-spacing="-0.5" fill="#e5e9e8">as a controlled</text>
+  <text x="36" y="240" font-family="ui-sans-serif, system-ui, sans-serif" font-size="36" font-weight="600" letter-spacing="-0.5" fill="#e5e9e8">experimental variable.</text>
+
+  <text x="36" y="278" font-family="ui-sans-serif, system-ui, sans-serif" font-size="15" fill="#919da4">Measure coding agents from their recorded action</text>
+  <text x="36" y="300" font-family="ui-sans-serif, system-ui, sans-serif" font-size="15" fill="#919da4">trajectories across harnesses, models, and tasks.</text>
+
+  <!-- Included llma4se_live study shape specification -->
+  <rect x="36.5" y="326.5" width="475" height="101" rx="3" fill="#151a1e" stroke="#919da4" stroke-opacity="0.24"/>
+  <rect x="37" y="327" width="474" height="30" fill="#0d1114"/>
+  <line x1="36.5" y1="357.5" x2="511.5" y2="357.5" stroke="#919da4" stroke-opacity="0.2"/>
+  <rect x="50" y="338" width="7" height="7" fill="#e8a078"/>
+  <text x="65" y="346" font-family="ui-monospace, monospace" font-size="11" fill="#e8a078">INCLUDED DATASET · llma4se_live</text>
+  <text x="497" y="346" text-anchor="end" font-family="ui-monospace, monospace" font-size="11" fill="#919da4">STUDY SHAPE</text>
+  <text x="50" y="386" font-family="ui-monospace, monospace" font-size="13.5" font-weight="600" fill="#e5e9e8">5 models × <tspan fill="#7daecc">6 harnesses</tspan> × 8 tasks = 1,632 real runs</text>
+  <text x="50" y="410" font-family="ui-monospace, monospace" font-size="11" fill="#919da4">Collected via OpenRouter · replayed from disk with no API key</text>
+
+  <!-- Column separator -->
+  <line x1="536.5" y1="88" x2="536.5" y2="428" stroke="#919da4" stroke-opacity="0.16"/>
+
+  <!-- Right column: designed factorial matrix instrument (llma4se_live) -->
+  <rect x="560.5" y="88.5" width="607" height="339" rx="3" fill="#151a1e" stroke="#919da4" stroke-opacity="0.24"/>
+  <rect x="561" y="89" width="606" height="31" fill="#0d1114"/>
+  <line x1="560.5" y1="120.5" x2="1167.5" y2="120.5" stroke="#919da4" stroke-opacity="0.2"/>
+  <text x="576" y="109" font-family="ui-monospace, monospace" font-size="11" fill="#e5e9e8">INCLUDED MATRIX · llma4se_live</text>
+  <text x="1152" y="109" text-anchor="end" font-family="ui-monospace, monospace" font-size="11" fill="#919da4">ILLUSTRATIVE SLICE</text>
+
+  <!-- 8-task slice selector rail -->
+  <line x1="560.5" y1="152.5" x2="1167.5" y2="152.5" stroke="#919da4" stroke-opacity="0.18"/>
+  <text x="576" y="140" font-family="ui-monospace, monospace" font-size="10.5" fill="#919da4">8 TASKS</text>
+  <rect x="656.5" y="127.5" width="90" height="18" rx="2" fill="#1b2227" stroke="#7daecc"/>
+  <text x="701.5" y="140" text-anchor="middle" font-family="ui-monospace, monospace" font-size="10" fill="#7daecc">t01_slugify</text>
+  <rect x="752.5" y="127.5" width="52" height="18" rx="2" fill="#0d1114" stroke="#919da4" stroke-opacity="0.18"/>
+  <text x="778.5" y="140" text-anchor="middle" font-family="ui-monospace, monospace" font-size="10" fill="#919da4">02</text>
+  <rect x="810.5" y="127.5" width="52" height="18" rx="2" fill="#0d1114" stroke="#919da4" stroke-opacity="0.18"/>
+  <text x="836.5" y="140" text-anchor="middle" font-family="ui-monospace, monospace" font-size="10" fill="#919da4">03</text>
+  <rect x="868.5" y="127.5" width="52" height="18" rx="2" fill="#0d1114" stroke="#919da4" stroke-opacity="0.18"/>
+  <text x="894.5" y="140" text-anchor="middle" font-family="ui-monospace, monospace" font-size="10" fill="#919da4">04</text>
+  <rect x="926.5" y="127.5" width="52" height="18" rx="2" fill="#0d1114" stroke="#919da4" stroke-opacity="0.18"/>
+  <text x="952.5" y="140" text-anchor="middle" font-family="ui-monospace, monospace" font-size="10" fill="#919da4">05</text>
+  <rect x="984.5" y="127.5" width="52" height="18" rx="2" fill="#0d1114" stroke="#919da4" stroke-opacity="0.18"/>
+  <text x="1010.5" y="140" text-anchor="middle" font-family="ui-monospace, monospace" font-size="10" fill="#919da4">06</text>
+  <rect x="1042.5" y="127.5" width="52" height="18" rx="2" fill="#0d1114" stroke="#919da4" stroke-opacity="0.18"/>
+  <text x="1068.5" y="140" text-anchor="middle" font-family="ui-monospace, monospace" font-size="10" fill="#919da4">07</text>
+  <rect x="1100.5" y="127.5" width="52" height="18" rx="2" fill="#0d1114" stroke="#919da4" stroke-opacity="0.18"/>
+  <text x="1126.5" y="140" text-anchor="middle" font-family="ui-monospace, monospace" font-size="10" fill="#919da4">08</text>
+
+  <!-- Matrix axis headers: 5 models (rows) x 6 harnesses (columns) -->
+  <text x="576" y="175" font-family="ui-monospace, monospace" font-size="10" fill="#919da4">5 MODELS \ 6 HARNESSES</text>
+  <rect x="750.5" y="160.5" width="62" height="20" rx="2" fill="#0d1114" stroke="#919da4" stroke-opacity="0.18"/>
+  <text x="781.5" y="174" text-anchor="middle" font-family="ui-monospace, monospace" font-size="10.5" fill="#919da4">H1</text>
+  <rect x="818.5" y="160.5" width="62" height="20" rx="2" fill="#0d1114" stroke="#919da4" stroke-opacity="0.18"/>
+  <text x="849.5" y="174" text-anchor="middle" font-family="ui-monospace, monospace" font-size="10.5" fill="#919da4">H2</text>
+  <rect x="886.5" y="160.5" width="62" height="20" rx="2" fill="#0d1114" stroke="#919da4" stroke-opacity="0.18"/>
+  <text x="917.5" y="174" text-anchor="middle" font-family="ui-monospace, monospace" font-size="10.5" fill="#919da4">H3</text>
+  <rect x="954.5" y="160.5" width="62" height="20" rx="2" fill="#1b2227" stroke="#7daecc"/>
+  <text x="985.5" y="174" text-anchor="middle" font-family="ui-monospace, monospace" font-size="10.5" font-weight="600" fill="#7daecc">H4</text>
+  <rect x="1022.5" y="160.5" width="62" height="20" rx="2" fill="#0d1114" stroke="#919da4" stroke-opacity="0.18"/>
+  <text x="1053.5" y="174" text-anchor="middle" font-family="ui-monospace, monospace" font-size="10.5" fill="#919da4">H5</text>
+  <rect x="1090.5" y="160.5" width="62" height="20" rx="2" fill="#0d1114" stroke="#919da4" stroke-opacity="0.18"/>
+  <text x="1121.5" y="174" text-anchor="middle" font-family="ui-monospace, monospace" font-size="10.5" fill="#919da4">H6</text>
+
+  <!-- Row 1: DeepSeek V4 Flash -->
+  <text x="576" y="208" font-family="ui-monospace, monospace" font-size="11" fill="#e5e9e8">DeepSeek V4 Flash</text>
+  <!-- H1 ruled -->
+  <rect x="750.5" y="188.5" width="62" height="32" rx="2" fill="#0d1114" stroke="#919da4" stroke-opacity="0.16"/>
+  <rect x="767" y="200" width="4" height="10" fill="#e5e9e8" fill-opacity="0.28"/>
+  <rect x="775" y="200" width="4" height="10" fill="#e5e9e8" fill-opacity="0.42"/>
+  <rect x="783" y="200" width="4" height="10" fill="#e5e9e8" fill-opacity="0.62"/>
+  <rect x="791" y="197" width="3" height="13" fill="#7daecc" fill-opacity="0.7"/>
+  <!-- H2 filled -->
+  <rect x="818.5" y="188.5" width="62" height="32" rx="2" fill="#1b2227" stroke="#7daecc"/>
+  <rect x="835" y="200" width="4" height="10" fill="#e5e9e8" fill-opacity="0.45"/>
+  <rect x="843" y="200" width="4" height="10" fill="#e5e9e8" fill-opacity="0.65"/>
+  <rect x="851" y="200" width="4" height="10" fill="#e5e9e8"/>
+  <rect x="859" y="197" width="3" height="13" fill="#7daecc"/>
+  <!-- H3 ruled -->
+  <rect x="886.5" y="188.5" width="62" height="32" rx="2" fill="#0d1114" stroke="#919da4" stroke-opacity="0.16"/>
+  <rect x="903" y="200" width="4" height="10" fill="#e5e9e8" fill-opacity="0.28"/>
+  <rect x="911" y="200" width="4" height="10" fill="#e5e9e8" fill-opacity="0.42"/>
+  <rect x="919" y="200" width="4" height="10" fill="#e5e9e8" fill-opacity="0.62"/>
+  <rect x="927" y="197" width="3" height="13" fill="#7daecc" fill-opacity="0.7"/>
+  <!-- H4 filled -->
+  <rect x="954.5" y="188.5" width="62" height="32" rx="2" fill="#1b2227" stroke="#7daecc"/>
+  <rect x="971" y="200" width="4" height="10" fill="#e5e9e8" fill-opacity="0.45"/>
+  <rect x="979" y="200" width="4" height="10" fill="#e5e9e8" fill-opacity="0.65"/>
+  <rect x="987" y="200" width="4" height="10" fill="#e5e9e8"/>
+  <rect x="995" y="197" width="3" height="13" fill="#7daecc"/>
+  <!-- H5 ruled -->
+  <rect x="1022.5" y="188.5" width="62" height="32" rx="2" fill="#0d1114" stroke="#919da4" stroke-opacity="0.16"/>
+  <rect x="1039" y="200" width="4" height="10" fill="#e5e9e8" fill-opacity="0.28"/>
+  <rect x="1047" y="200" width="4" height="10" fill="#e5e9e8" fill-opacity="0.42"/>
+  <rect x="1055" y="200" width="4" height="10" fill="#e5e9e8" fill-opacity="0.62"/>
+  <rect x="1063" y="197" width="3" height="13" fill="#7daecc" fill-opacity="0.7"/>
+  <!-- H6 ruled -->
+  <rect x="1090.5" y="188.5" width="62" height="32" rx="2" fill="#0d1114" stroke="#919da4" stroke-opacity="0.16"/>
+  <rect x="1107" y="200" width="4" height="10" fill="#e5e9e8" fill-opacity="0.28"/>
+  <rect x="1115" y="200" width="4" height="10" fill="#e5e9e8" fill-opacity="0.42"/>
+  <rect x="1123" y="200" width="4" height="10" fill="#e5e9e8" fill-opacity="0.62"/>
+  <rect x="1131" y="197" width="3" height="13" fill="#7daecc" fill-opacity="0.7"/>
+
+  <!-- Row 2: Gemini 2.5 Flash-Lite -->
+  <text x="576" y="246" font-family="ui-monospace, monospace" font-size="11" fill="#e5e9e8">Gemini 2.5 Flash-Lite</text>
+  <!-- H1 ruled -->
+  <rect x="750.5" y="226.5" width="62" height="32" rx="2" fill="#0d1114" stroke="#919da4" stroke-opacity="0.16"/>
+  <rect x="767" y="238" width="4" height="10" fill="#e5e9e8" fill-opacity="0.28"/>
+  <rect x="775" y="238" width="4" height="10" fill="#e5e9e8" fill-opacity="0.42"/>
+  <rect x="783" y="238" width="4" height="10" fill="#e5e9e8" fill-opacity="0.62"/>
+  <rect x="791" y="235" width="3" height="13" fill="#7daecc" fill-opacity="0.7"/>
+  <!-- H2 ruled -->
+  <rect x="818.5" y="226.5" width="62" height="32" rx="2" fill="#0d1114" stroke="#919da4" stroke-opacity="0.16"/>
+  <rect x="835" y="238" width="4" height="10" fill="#e5e9e8" fill-opacity="0.28"/>
+  <rect x="843" y="238" width="4" height="10" fill="#e5e9e8" fill-opacity="0.42"/>
+  <rect x="851" y="238" width="4" height="10" fill="#e5e9e8" fill-opacity="0.62"/>
+  <rect x="859" y="235" width="3" height="13" fill="#7daecc" fill-opacity="0.7"/>
+  <!-- H3 ruled -->
+  <rect x="886.5" y="226.5" width="62" height="32" rx="2" fill="#0d1114" stroke="#919da4" stroke-opacity="0.16"/>
+  <rect x="903" y="238" width="4" height="10" fill="#e5e9e8" fill-opacity="0.28"/>
+  <rect x="911" y="238" width="4" height="10" fill="#e5e9e8" fill-opacity="0.42"/>
+  <rect x="919" y="238" width="4" height="10" fill="#e5e9e8" fill-opacity="0.62"/>
+  <rect x="927" y="235" width="3" height="13" fill="#7daecc" fill-opacity="0.7"/>
+  <!-- H4 filled (divergent oxide trace) -->
+  <rect x="954.5" y="226.5" width="62" height="32" rx="2" fill="#1b2227" stroke="#bc5633"/>
+  <rect x="971" y="238" width="4" height="10" fill="#e5e9e8" fill-opacity="0.45"/>
+  <rect x="979" y="238" width="4" height="10" fill="#e8a078" fill-opacity="0.75"/>
+  <rect x="987" y="241" width="4" height="7" fill="#bc5633"/>
+  <rect x="995" y="235" width="3" height="13" fill="#bc5633"/>
+  <!-- H5 ruled -->
+  <rect x="1022.5" y="226.5" width="62" height="32" rx="2" fill="#0d1114" stroke="#919da4" stroke-opacity="0.16"/>
+  <rect x="1039" y="238" width="4" height="10" fill="#e5e9e8" fill-opacity="0.28"/>
+  <rect x="1047" y="238" width="4" height="10" fill="#e5e9e8" fill-opacity="0.42"/>
+  <rect x="1055" y="238" width="4" height="10" fill="#e5e9e8" fill-opacity="0.62"/>
+  <rect x="1063" y="235" width="3" height="13" fill="#7daecc" fill-opacity="0.7"/>
+  <!-- H6 ruled -->
+  <rect x="1090.5" y="226.5" width="62" height="32" rx="2" fill="#0d1114" stroke="#919da4" stroke-opacity="0.16"/>
+  <rect x="1107" y="238" width="4" height="10" fill="#e5e9e8" fill-opacity="0.28"/>
+  <rect x="1115" y="238" width="4" height="10" fill="#e5e9e8" fill-opacity="0.42"/>
+  <rect x="1123" y="238" width="4" height="10" fill="#e5e9e8" fill-opacity="0.62"/>
+  <rect x="1131" y="235" width="3" height="13" fill="#7daecc" fill-opacity="0.7"/>
+
+  <!-- Row 3: Gemini 3.8 Flash -->
+  <text x="576" y="284" font-family="ui-monospace, monospace" font-size="11" fill="#e5e9e8">Gemini 3.8 Flash</text>
+  <!-- H1 filled (divergent oxide trace) -->
+  <rect x="750.5" y="264.5" width="62" height="32" rx="2" fill="#1b2227" stroke="#bc5633"/>
+  <rect x="767" y="276" width="4" height="10" fill="#e5e9e8" fill-opacity="0.45"/>
+  <rect x="775" y="279" width="4" height="7" fill="#e8a078"/>
+  <rect x="783" y="279" width="4" height="7" fill="#bc5633"/>
+  <rect x="791" y="273" width="3" height="13" fill="#bc5633"/>
+  <!-- H2 ruled -->
+  <rect x="818.5" y="264.5" width="62" height="32" rx="2" fill="#0d1114" stroke="#919da4" stroke-opacity="0.16"/>
+  <rect x="835" y="276" width="4" height="10" fill="#e5e9e8" fill-opacity="0.28"/>
+  <rect x="843" y="276" width="4" height="10" fill="#e5e9e8" fill-opacity="0.42"/>
+  <rect x="851" y="276" width="4" height="10" fill="#e5e9e8" fill-opacity="0.62"/>
+  <rect x="859" y="273" width="3" height="13" fill="#7daecc" fill-opacity="0.7"/>
+  <!-- H3 ruled -->
+  <rect x="886.5" y="264.5" width="62" height="32" rx="2" fill="#0d1114" stroke="#919da4" stroke-opacity="0.16"/>
+  <rect x="903" y="276" width="4" height="10" fill="#e5e9e8" fill-opacity="0.28"/>
+  <rect x="911" y="276" width="4" height="10" fill="#e5e9e8" fill-opacity="0.42"/>
+  <rect x="919" y="276" width="4" height="10" fill="#e5e9e8" fill-opacity="0.62"/>
+  <rect x="927" y="273" width="3" height="13" fill="#7daecc" fill-opacity="0.7"/>
+  <!-- H4 filled (active inspected cell) -->
+  <rect x="954.5" y="264.5" width="62" height="32" rx="2" fill="#1b2227" stroke="#e5e9e8"/>
+  <rect x="971" y="276" width="4" height="10" fill="#919da4"/>
+  <rect x="979" y="276" width="4" height="10" fill="#e8a078"/>
+  <rect x="987" y="276" width="4" height="10" fill="#e5e9e8"/>
+  <rect x="995" y="273" width="3" height="13" fill="#7daecc"/>
+  <!-- H5 ruled -->
+  <rect x="1022.5" y="264.5" width="62" height="32" rx="2" fill="#0d1114" stroke="#919da4" stroke-opacity="0.16"/>
+  <rect x="1039" y="276" width="4" height="10" fill="#e5e9e8" fill-opacity="0.28"/>
+  <rect x="1047" y="276" width="4" height="10" fill="#e5e9e8" fill-opacity="0.42"/>
+  <rect x="1055" y="276" width="4" height="10" fill="#e5e9e8" fill-opacity="0.62"/>
+  <rect x="1063" y="273" width="3" height="13" fill="#7daecc" fill-opacity="0.7"/>
+  <!-- H6 filled -->
+  <rect x="1090.5" y="264.5" width="62" height="32" rx="2" fill="#1b2227" stroke="#7daecc"/>
+  <rect x="1107" y="276" width="4" height="10" fill="#e5e9e8" fill-opacity="0.45"/>
+  <rect x="1115" y="276" width="4" height="10" fill="#e5e9e8" fill-opacity="0.65"/>
+  <rect x="1123" y="276" width="4" height="10" fill="#e5e9e8"/>
+  <rect x="1131" y="273" width="3" height="13" fill="#7daecc"/>
+
+  <!-- Row 4: GPT-5.6 Luna -->
+  <text x="576" y="322" font-family="ui-monospace, monospace" font-size="11" fill="#e5e9e8">GPT-5.6 Luna</text>
+  <!-- H1 ruled -->
+  <rect x="750.5" y="302.5" width="62" height="32" rx="2" fill="#0d1114" stroke="#919da4" stroke-opacity="0.16"/>
+  <rect x="767" y="314" width="4" height="10" fill="#e5e9e8" fill-opacity="0.28"/>
+  <rect x="775" y="314" width="4" height="10" fill="#e5e9e8" fill-opacity="0.42"/>
+  <rect x="783" y="314" width="4" height="10" fill="#e5e9e8" fill-opacity="0.62"/>
+  <rect x="791" y="311" width="3" height="13" fill="#7daecc" fill-opacity="0.7"/>
+  <!-- H2 ruled -->
+  <rect x="818.5" y="302.5" width="62" height="32" rx="2" fill="#0d1114" stroke="#919da4" stroke-opacity="0.16"/>
+  <rect x="835" y="314" width="4" height="10" fill="#e5e9e8" fill-opacity="0.28"/>
+  <rect x="843" y="314" width="4" height="10" fill="#e5e9e8" fill-opacity="0.42"/>
+  <rect x="851" y="314" width="4" height="10" fill="#e5e9e8" fill-opacity="0.62"/>
+  <rect x="859" y="311" width="3" height="13" fill="#7daecc" fill-opacity="0.7"/>
+  <!-- H3 filled (oxide-soft comparison trace) -->
+  <rect x="886.5" y="302.5" width="62" height="32" rx="2" fill="#1b2227" stroke="#e8a078"/>
+  <rect x="903" y="314" width="4" height="10" fill="#e5e9e8" fill-opacity="0.45"/>
+  <rect x="911" y="314" width="4" height="10" fill="#e5e9e8" fill-opacity="0.65"/>
+  <rect x="919" y="314" width="4" height="10" fill="#e8a078"/>
+  <rect x="927" y="311" width="3" height="13" fill="#e8a078"/>
+  <!-- H4 ruled -->
+  <rect x="954.5" y="302.5" width="62" height="32" rx="2" fill="#0d1114" stroke="#919da4" stroke-opacity="0.16"/>
+  <rect x="971" y="314" width="4" height="10" fill="#e5e9e8" fill-opacity="0.28"/>
+  <rect x="979" y="314" width="4" height="10" fill="#e5e9e8" fill-opacity="0.42"/>
+  <rect x="987" y="314" width="4" height="10" fill="#e5e9e8" fill-opacity="0.62"/>
+  <rect x="995" y="311" width="3" height="13" fill="#7daecc" fill-opacity="0.7"/>
+  <!-- H5 ruled -->
+  <rect x="1022.5" y="302.5" width="62" height="32" rx="2" fill="#0d1114" stroke="#919da4" stroke-opacity="0.16"/>
+  <rect x="1039" y="314" width="4" height="10" fill="#e5e9e8" fill-opacity="0.28"/>
+  <rect x="1047" y="314" width="4" height="10" fill="#e5e9e8" fill-opacity="0.42"/>
+  <rect x="1055" y="314" width="4" height="10" fill="#e5e9e8" fill-opacity="0.62"/>
+  <rect x="1063" y="311" width="3" height="13" fill="#7daecc" fill-opacity="0.7"/>
+  <!-- H6 ruled -->
+  <rect x="1090.5" y="302.5" width="62" height="32" rx="2" fill="#0d1114" stroke="#919da4" stroke-opacity="0.16"/>
+  <rect x="1107" y="314" width="4" height="10" fill="#e5e9e8" fill-opacity="0.28"/>
+  <rect x="1115" y="314" width="4" height="10" fill="#e5e9e8" fill-opacity="0.42"/>
+  <rect x="1123" y="314" width="4" height="10" fill="#e5e9e8" fill-opacity="0.62"/>
+  <rect x="1131" y="311" width="3" height="13" fill="#7daecc" fill-opacity="0.7"/>
+
+  <!-- Row 5: Qwen3.8 27B -->
+  <text x="576" y="360" font-family="ui-monospace, monospace" font-size="11" fill="#e5e9e8">Qwen3.8 27B</text>
+  <!-- H1 ruled -->
+  <rect x="750.5" y="340.5" width="62" height="32" rx="2" fill="#0d1114" stroke="#919da4" stroke-opacity="0.16"/>
+  <rect x="767" y="352" width="4" height="10" fill="#e5e9e8" fill-opacity="0.28"/>
+  <rect x="775" y="352" width="4" height="10" fill="#e5e9e8" fill-opacity="0.42"/>
+  <rect x="783" y="352" width="4" height="10" fill="#e5e9e8" fill-opacity="0.62"/>
+  <rect x="791" y="349" width="3" height="13" fill="#7daecc" fill-opacity="0.7"/>
+  <!-- H2 ruled -->
+  <rect x="818.5" y="340.5" width="62" height="32" rx="2" fill="#0d1114" stroke="#919da4" stroke-opacity="0.16"/>
+  <rect x="835" y="352" width="4" height="10" fill="#e5e9e8" fill-opacity="0.28"/>
+  <rect x="843" y="352" width="4" height="10" fill="#e5e9e8" fill-opacity="0.42"/>
+  <rect x="851" y="352" width="4" height="10" fill="#e5e9e8" fill-opacity="0.62"/>
+  <rect x="859" y="349" width="3" height="13" fill="#7daecc" fill-opacity="0.7"/>
+  <!-- H3 ruled -->
+  <rect x="886.5" y="340.5" width="62" height="32" rx="2" fill="#0d1114" stroke="#919da4" stroke-opacity="0.16"/>
+  <rect x="903" y="352" width="4" height="10" fill="#e5e9e8" fill-opacity="0.28"/>
+  <rect x="911" y="352" width="4" height="10" fill="#e5e9e8" fill-opacity="0.42"/>
+  <rect x="919" y="352" width="4" height="10" fill="#e5e9e8" fill-opacity="0.62"/>
+  <rect x="927" y="349" width="3" height="13" fill="#7daecc" fill-opacity="0.7"/>
+  <!-- H4 filled -->
+  <rect x="954.5" y="340.5" width="62" height="32" rx="2" fill="#1b2227" stroke="#7daecc"/>
+  <rect x="971" y="352" width="4" height="10" fill="#e5e9e8" fill-opacity="0.45"/>
+  <rect x="979" y="352" width="4" height="10" fill="#e5e9e8" fill-opacity="0.65"/>
+  <rect x="987" y="352" width="4" height="10" fill="#e5e9e8"/>
+  <rect x="995" y="349" width="3" height="13" fill="#7daecc"/>
+  <!-- H5 ruled -->
+  <rect x="1022.5" y="340.5" width="62" height="32" rx="2" fill="#0d1114" stroke="#919da4" stroke-opacity="0.16"/>
+  <rect x="1039" y="352" width="4" height="10" fill="#e5e9e8" fill-opacity="0.28"/>
+  <rect x="1047" y="352" width="4" height="10" fill="#e5e9e8" fill-opacity="0.42"/>
+  <rect x="1055" y="352" width="4" height="10" fill="#e5e9e8" fill-opacity="0.62"/>
+  <rect x="1063" y="349" width="3" height="13" fill="#7daecc" fill-opacity="0.7"/>
+  <!-- H6 ruled -->
+  <rect x="1090.5" y="340.5" width="62" height="32" rx="2" fill="#0d1114" stroke="#919da4" stroke-opacity="0.16"/>
+  <rect x="1107" y="352" width="4" height="10" fill="#e5e9e8" fill-opacity="0.28"/>
+  <rect x="1115" y="352" width="4" height="10" fill="#e5e9e8" fill-opacity="0.42"/>
+  <rect x="1123" y="352" width="4" height="10" fill="#e5e9e8" fill-opacity="0.62"/>
+  <rect x="1131" y="349" width="3" height="13" fill="#7daecc" fill-opacity="0.7"/>
+
+  <!-- Instrument footer legend -->
+  <rect x="561" y="387" width="606" height="40" fill="#0d1114"/>
+  <line x1="560.5" y1="386.5" x2="1167.5" y2="386.5" stroke="#919da4" stroke-opacity="0.2"/>
+  <rect x="576.5" y="401.5" width="10" height="10" fill="#1b2227" stroke="#7daecc"/>
+  <text x="593" y="410.5" font-family="ui-monospace, monospace" font-size="10.5" fill="#919da4">recorded trace</text>
+  <rect x="698.5" y="401.5" width="10" height="10" fill="#1b2227" stroke="#bc5633"/>
+  <text x="715" y="410.5" font-family="ui-monospace, monospace" font-size="10.5" fill="#919da4">open cell</text>
+  <text x="1152" y="410.5" text-anchor="end" font-family="ui-monospace, monospace" font-size="10.5" fill="#919da4">llma4se_live · <tspan fill="#e5e9e8">1,632 REAL RUNS</tspan></text>
+</svg>
