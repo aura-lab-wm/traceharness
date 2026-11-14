@@ -109,7 +109,7 @@ class TestRecordedAnalysisScope(unittest.TestCase):
         rows = [r for r in self.rows['llma4se_live'] if r['harness_id'] == 'baseline']
         card = payload['card']
         self.assertEqual(card['cell']['runs'], len(rows))
-        self.assertEqual(card['cell']['runs'], 272)
+        self.assertEqual(card['cell']['runs'], 208)
         self.assertTrue(card['cell']['pooled_models'])
         self.assertEqual(card['cell']['models'], sorted({r['model'] for r in rows}))
         self.assertTrue(card['cell']['model'].startswith('pooled: '))

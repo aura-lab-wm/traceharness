@@ -109,7 +109,7 @@ def _package_datasets():
 
 
 class RunCountsMatchTheData(unittest.TestCase):
-    """'2,208 runs', '1,632', '576', '500' appear in the guide, the package page and the docs."""
+    """'1,824 runs', '1,248', '576', '500' appear in the guide, the package page and the docs."""
 
     SOURCES = ["SCHOOL_PACKAGE.md", "README.md", "traceharness/school-package.json",
                "traceharness/frontend/src/rig/views/workspace.jsx"]   # the Rig's guide and package pages

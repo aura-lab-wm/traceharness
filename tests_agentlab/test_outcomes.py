@@ -65,16 +65,17 @@ class TestRoute(unittest.TestCase):
 
     def test_every_run_is_classified_once(self):
         self.assertEqual(sum(self.out["counts"].values()), len(self.out["runs"]))
-        self.assertEqual(len(self.out["runs"]), 1632)
+        self.assertEqual(len(self.out["runs"]), 1248)
 
     def test_failures_split_as_checked_by_hand(self):
         c = self.out["counts"]
         failures = sum(v for k, v in c.items() if k not in ("passed", "ungraded"))
-        self.assertEqual(failures, 227)
-        self.assertEqual(c["cutoff_no_patch"], 133)
+        self.assertEqual(failures, 204)
+        self.assertEqual(c["cutoff_no_patch"], 112)
 
-    def test_the_three_failed_t03_deepseek_runs_are_cutoffs(self):
-        for rid in ("20260909-034555-f0125f", "20260909-034622-5c8690", "20260909-034622-f74e28"):
+    def test_three_failed_t03_qwen_baseline_runs_are_cutoffs(self):
+        # each ledger ends on finish_reason "length" with no patch
+        for rid in ("20260909-034622-9c5733", "20260909-034648-2d0866", "20260909-034702-b841b3"):
             self.assertEqual(self.out["runs"][rid]["mode"], "cutoff_no_patch", rid)
 
     def test_bad_names_are_refused(self):

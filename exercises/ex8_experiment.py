@@ -1,7 +1,7 @@
 """Exercise 8: from benchmark to experiment.
 
-An 8 x 2 factorial on real recorded runs: eight models (llma4se_live + live, all through
-OpenRouter) x two harnesses (baseline, no_test_tool), eight tasks as blocks = 688 runs. Fit
+A 7 x 2 factorial on real recorded runs: seven models (llma4se_live + live, all through
+OpenRouter) x two harnesses (baseline, no_test_tool), eight tasks as blocks = 560 runs. Fit
 
     Y_ijk = mu + alpha_i(model) + beta_j(harness) + (alpha beta)_ij + u_k(task) + eps_ijk
 

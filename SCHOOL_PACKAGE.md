@@ -109,7 +109,7 @@ does. Treat the sandbox this way: fine for a classroom laptop, not something to 
 
 | Dataset | Runs | Source |
 | --- | ---: | --- |
-| `llma4se_live` | 1,632 | **Real.** Five models (DeepSeek V4 Flash, Gemini 2.5 Flash-Lite, Gemini 3.8 Flash, GPT-5.6 Luna, Qwen3.8 27B) × six harnesses × 8 tasks, collected for this lab through OpenRouter. Default for exercises 1–6 and 8. |
+| `llma4se_live` | 1,248 | **Real.** Four models (Gemini 2.5 Flash-Lite, Gemini 3.8 Flash, GPT-5.6 Luna, Qwen3.8 27B) × six harnesses × 8 tasks, collected for this lab through OpenRouter. Default for exercises 1–6 and 8. |
 | `live` | 576 | **Real.** Claude Haiku 4.5, Gemini 2.5 Flash, GPT-5-mini × eight harnesses × 8 tasks, collected for this lab through OpenRouter. Second input to exercise 8. |
 | `real_swe_agent_500` | 500 | **Real, third-party.** SWE-agent (Llama 8B / 70B) on 30 GitHub issues, from [nebius/SWE-agent-trajectories](https://huggingface.co/datasets/nebius/SWE-agent-trajectories) (CC-BY-4.0). Used by `ex7 --offline`. |
 | `prerecorded_mock` | 480 | Mock model × six harnesses × 8 tasks — for runs that must be identical on every machine. |
@@ -118,7 +118,7 @@ does. Treat the sandbox this way: fine for a classroom laptop, not something to 
 | `demo_mock` | 24 | A compact mock demonstration. |
 | `captured_claude_code` | 1 | **Real, captured.** One Claude Code session (Claude Sonnet 5, 28 steps) implementing a task in this repository: `results_scope.py` and its test, nine test runs, tested before it stopped. Recorded by the capture spine, machine paths replaced with `/workspace/traceharness`. A session nobody launched as an experiment: no oracle, one repeat, a harness you did not choose. |
 
-2,709 of the 3,453 included runs are real model runs. They are replayed from disk: reading and
+2,325 of the 3,069 included runs are real model runs. They are replayed from disk: reading and
 reanalysing them needs no API key. Only running *new* experiments against live models does.
 
 ## Reproduce the exercises

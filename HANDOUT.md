@@ -303,15 +303,15 @@ python exercises/ex8_experiment.py
 python exercises/ex8_experiment.py --results data/runs/prerecorded_mock --results2 data/runs/prerecorded_mock_weak   # 2 × 2 mock version
 ```
 
-The default design is 8 × 2 on real recorded runs: eight models (`llma4se_live` + `live`, all collected
-through OpenRouter) × two harnesses (`baseline`, `no_test_tool`), eight tasks as blocks — 688 runs, replayed
+The default design is 7 × 2 on real recorded runs: seven models (`llma4se_live` + `live`, all collected
+through OpenRouter) × two harnesses (`baseline`, `no_test_tool`), eight tasks as blocks — 560 runs, replayed
 from disk, no key needed.
 
     Y_ijk = μ + α_i(model) + β_j(harness) + (αβ)_ij + u_k(task) + ε_ijk
 
-Section 2 is the one to read. On these 688 real runs the model explains **12.2%** of the total sum of
-squares, the harness **0.1%** and their interaction 1.8%; the task block takes 12.4%, cell × task 44.8% and
-the run-to-run residual **28.8%**. Most of the variance in a resolve rate is *which task* and *which run*, not
+Section 2 is the one to read. On these 560 real runs the model explains **13.3%** of the total sum of
+squares, the harness **0.0%** and their interaction 2.0%; the task block takes 11.7%, cell × task 48.7% and
+the run-to-run residual **24.3%**. Most of the variance in a resolve rate is *which task* and *which run*, not
 which model or harness. A leaderboard reports the first two rows as though they were the whole story.
 
 Section 3 gives the harness effect paired on tasks within each model. On the real runs it is not uniform:
@@ -340,8 +340,8 @@ on more tasks, more repeats, or more cells? Defend it with the variance shares, 
 Hand in: your notes file, `report_live.md` (or `report_mock.md`), the Ochiai table from exercise 7, and
 the variance-share table from exercise 8.
 
-On the 688 real runs the shares are: model 12.2%, harness 0.1%, interaction 1.8%, task 12.4%, cell × task
-44.8%, residual 28.8%. What a leaderboard reports is the first two rows. The 2 × 2 mock version (command above)
+On the 560 real runs the shares are: model 13.3%, harness 0.0%, interaction 2.0%, task 11.7%, cell × task
+48.7%, residual 24.3%. What a leaderboard reports is the first two rows. The 2 × 2 mock version (command above)
 gives model 2.1%, harness 0.7%, interaction ≈ 0, task 18.7%, cell × task 9.2%, residual 69.4% — same lesson.
 
 Write down the sentence you would put in a paper: the cell, the paired Δ, the interval, the n. Then add your

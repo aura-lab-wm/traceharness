@@ -427,8 +427,8 @@ Buddy is an assistant that answers questions about the evidence you are looking 
 - it is never sent to the TraceHarness server
 - it is never written into files or exports
 
-Use a key with a spending limit. Pick Buddy's model in Settings. When this guide was tested,
-`deepseek/deepseek-v4.1-flash` answered a question about four runs in about 2 seconds for $0.0002.
+Use a key with a spending limit. Pick Buddy's model in Settings; a small, fast model is enough for
+questions about runs.
 Buddy's model is only the assistant and has nothing to do with the models in your experiment.
 Every number on screen is computed from the recordings, not by Buddy.
 
@@ -520,12 +520,13 @@ broke, not the model; see [Troubleshooting](#13-troubleshooting). The weaker moc
 
 ```bash
 export OPENROUTER_API_KEY=sk-or-...        # Windows PowerShell: $env:OPENROUTER_API_KEY="sk-or-..."
-python -m traceharness run --provider openrouter --model deepseek/deepseek-v4.1-flash \
+python -m traceharness run --provider openrouter --model google/gemini-2.5-flash-lite \
     --tasks t01_slugify,t03_ratelimit --repeats 2 --max-cost 1.00 --out data/runs/live_mine -v
 ```
 
-When this guide was tested, exactly this command ran 4 runs in 40 seconds, and all 4 passed. Each
-run cost $0.0006–0.0010, so the whole sweep cost under a cent.
+When this guide was tested, exactly this command ran 4 runs in 55 seconds: both `t01_slugify` runs
+passed and both `t03_ratelimit` runs failed. Each run cost $0.0004–0.0009, so the whole sweep cost
+under a cent.
 
 A few points:
 
@@ -703,7 +704,7 @@ Eight scripts in `exercises/`, one per lab block. The questions and discussion f
 Every script:
 
 - runs in **under a second**, offline, on the recorded data
-- reads **`data/runs/llma4se_live`** by default: 1,632 real runs of five models under six
+- reads **`data/runs/llma4se_live`** by default: 1,248 real runs of four models under six
   harnesses
 - takes the same options:
 
@@ -921,7 +922,7 @@ steps) or **Docker** (section 12.1). If you do use native Windows:
   - Never commit a key, and use keys with a spending limit.
 - **Cost:**
   - Mock runs, recorded data and local models are free.
-  - A small, fast model such as `deepseek/deepseek-v4.1-flash` costs under $0.001 per run. A
+  - A small, fast model such as `google/gemini-2.5-flash-lite` costs under $0.001 per run. A
     frontier model costs roughly $0.05–0.15 per run.
   - Set `--max-cost` on every real sweep.
   - Run setup shows the estimated cost before anything starts.
@@ -935,7 +936,7 @@ These were observed on 23 September 2026. None of them changes the recorded data
 
 1. **Pooled numbers under one model's name.** Some views and exercises summarise *all* models
    under a harness while a heading names one model. For example, `baseline` in `llma4se_live` has
-   272 runs, which is all five models pooled. TraceHarness labels such figures **pooled** in amber;
+   208 runs, which is all four models pooled. TraceHarness labels such figures **pooled** in amber;
    read the *n* before comparing.
 2. **Strengthened grades for `real_swe_agent_500`.** These third-party runs carry no strengthened
    grade. Parts of the judge/integrity analysis report them as 0.0 % instead of "not graded". The

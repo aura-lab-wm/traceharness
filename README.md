@@ -100,7 +100,7 @@ The local server binds to `127.0.0.1` by default and applies two request checks 
 
 | Dataset | Runs | Source |
 | --- | ---: | --- |
-| `llma4se_live` | 1,632 | **Real.** Five models (DeepSeek V4 Flash, Gemini 2.5 Flash-Lite, Gemini 3.8 Flash, GPT-5.6 Luna, Qwen3.8 27B) × six harnesses × 8 tasks, collected for this lab through OpenRouter. Default for exercises 1–6 and 8. |
+| `llma4se_live` | 1,248 | **Real.** Four models (Gemini 2.5 Flash-Lite, Gemini 3.8 Flash, GPT-5.6 Luna, Qwen3.8 27B) × six harnesses × 8 tasks, collected for this lab through OpenRouter. Default for exercises 1–6 and 8. |
 | `live` | 576 | **Real.** Claude Haiku 4.5, Gemini 2.5 Flash, GPT-5-mini × eight harnesses × 8 tasks, collected for this lab through OpenRouter. Second input to exercise 8. |
 | `real_swe_agent_500` | 500 | **Real, third-party.** SWE-agent (Llama 8B / 70B) on 30 GitHub issues, from [nebius/SWE-agent-trajectories](https://huggingface.co/datasets/nebius/SWE-agent-trajectories) (CC-BY-4.0). Used by `ex7 --offline`. |
 | `prerecorded_mock` | 480 | Mock model × six harnesses × 8 tasks — deterministic baseline identical on every machine. |
@@ -109,7 +109,7 @@ The local server binds to `127.0.0.1` by default and applies two request checks 
 | `demo_mock` | 24 | Compact mock demonstration. |
 | `captured_claude_code` | 1 | **Real, captured.** One Claude Code session (Claude Sonnet 5, 28 steps) implementing `results_scope.py` and its test in this repository (nine test runs, tested before exit). Recorded by the capture pipeline with machine paths normalized to `/workspace/traceharness`: an organic session with no oracle, one repeat, and an unchosen harness. |
 
-2,709 of the 3,453 included runs are real model runs. All included runs replay from disk with no API key; an OpenRouter key is needed only to execute new runs against live models.
+2,325 of the 3,069 included runs are real model runs. All included runs replay from disk with no API key; an OpenRouter key is needed only to execute new runs against live models.
 
 ## Reproduce the exercises
 

@@ -417,7 +417,6 @@ CURATED = [
     {"id": "openai/gpt-5.6-luna", "family": "OpenAI", "tier": "small"},
     {"id": "google/gemini-2.5-flash-lite", "family": "Google", "tier": "small"},
     {"id": "google/gemini-3.8-flash", "family": "Google", "tier": "mid"},
-    {"id": "deepseek/deepseek-v4-flash", "family": "DeepSeek", "tier": "small"},
     {"id": "qwen/qwen3.8-27b", "family": "Qwen (open weights)", "tier": "mid"},
     {"id": "z-ai/glm-5.3-flash", "family": "Zhipu (open weights)", "tier": "small"},
     {"id": "anthropic/claude-haiku-4.5", "family": "Anthropic", "tier": "small"},

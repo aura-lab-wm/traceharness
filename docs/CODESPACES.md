@@ -53,7 +53,7 @@ TraceHarness itself needs no account. Live model calls go on **your own OpenRout
 Launch runs from **Analysis → Run setup** in TraceHarness, or from the terminal:
 
 ```bash
-python -m traceharness run --provider openrouter --model deepseek/deepseek-v4-flash \
+python -m traceharness run --provider openrouter --model google/gemini-2.5-flash-lite \
   --tasks t01_slugify,t03_ratelimit --repeats 3 --out data/runs/live-mine
 ```
 

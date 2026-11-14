@@ -132,7 +132,7 @@ class TestHolds(unittest.TestCase):
         out = M.experiment(rows, holds=[("task_id", task)])
         kept = M.apply_holds(rows, [("task_id", task)])
         self.assertEqual(out["n_before"], len(rows))
-        self.assertEqual(out["n_before"], 1632)
+        self.assertEqual(out["n_before"], 1248)
         self.assertEqual(out["n_after"], len(kept))
         self.assertGreater(out["n_after"], 0)
         self.assertTrue(all(r["task_id"] == task for r in kept))
