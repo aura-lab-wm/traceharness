@@ -7,7 +7,7 @@
    panes     <pane>[|<pane>]                at most two panes (split view)
    pane      <tab>[+<tab>...]               a leading `!` marks the pane's active tab
                                             (omitted when the pane has one tab or tab 0 is active)
-   tab       a spec string, e.g. `ds:llma4se_live:deepseek-v4-flash:baseline`
+   tab       a spec string, e.g. `ds:llma4se_live:qwen3.8-27b:baseline`
    query     dock=buddy|log|capture|case    open dock tab
              pal=1                           command palette open
              sheet=tabs                      mobile tab-switcher sheet open

@@ -1,0 +1,10 @@
+{
+  "id": "t10_lru_cache",
+  "title": "LRUCache evicts a recently read key",
+  "probe": "none",
+  "suite": "extended",
+  "src_files": [
+    "lru/cache.py"
+  ],
+  "test_cmd": "python -m unittest discover -s tests -q"
+}

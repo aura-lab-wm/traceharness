@@ -739,11 +739,13 @@ function Sentinel({ spec }) {
   return (
     <div className="rg-dpad rg-ws rg-ws-doc" data-el="sentinel">
       <Head eyebrow="Sentinel · score the partial trajectory at every step" title="Block the submit when it crosses">
-        Model <span className="rg-mono">{sn.data.active || M.name || '—'}</span>, trained {String(M.trained_at || '').slice(0, 10) || '—'} on {int(M.n_runs)} runs ({int(M.n_examples)} prefixes) · {M.folds}-fold · harness filter <span className="rg-mono">{M.harness_filter || 'none'}</span> · fail rate {pct(M.fail_rate)}.
+        Model <span className="rg-mono">{sn.data.active || M.name || '—'}</span>, trained {String(M.trained_at || '').slice(0, 10) || '—'} on {int(M.n_runs)} runs ({int(M.n_examples)} prefixes) · {M.folds}-fold{M.cv_grouping ? ` by ${M.cv_grouping}` : ''} · harness filter <span className="rg-mono">{M.harness_filter || 'none'}</span> · fail rate {pct(M.fail_rate)}.
       </Head>
       <Kpis label="Sentinel model" className="rg-ws-kpis">
         <Kpi label="training AUC · all prefixes" value={fx(M.auc_all_prefixes)} hint={<span className="rg-mono">{ci ? `95% [${fx(ci[0])}, ${fx(ci[1])}] · ${M.auc_ci.bootstrap} boot` : 'no interval recorded'}</span>} />
         <Kpi label="run-weighted AUC" value={fx(M.auc_run_weighted)} hint={M.auc_baselines ? <span className="rg-mono">{`rules only ${fx(M.auc_baselines.rules_only)} · prior ${fx(M.auc_baselines.prior)}`}</span> : null} />
+        <Kpi label="AUC within task" value={M.auc_within_task != null ? fx(M.auc_within_task) : '—'} el="sentinel-within"
+          hint={M.auc_within_task != null ? <span className="rg-mono">{`same model and task · ${int(M.within_task_pairs)} pairs · steps alone ${fx(M.auc_within_task_step_baseline)}`}</span> : 'retrain to compute: needs failed and passed repeats of a task'} />
         <Kpi label="calibration ECE" value={fx(M.ece)} hint="lower is better" />
         <Kpi label="failures invisible to visible tests" value={pct(M.oracle_invisible_failure_share, 0)} hint={<span className="rg-mono">{oi ? `${oi.invisible} of ${oi.n_fail} fails` : '—'}</span>} />
       </Kpis>

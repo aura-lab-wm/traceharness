@@ -87,7 +87,7 @@ Four ideas you will meet everywhere:
 |---|---|
 | **Operating system** | macOS or Linux. On Windows, WSL2 or Docker is the safest route; see [Windows](#windows). |
 | **Python 3.10, 3.11 or 3.12** | **3.12 is recommended.** 3.9 does **not** work: installation stops with `requires a different Python`. |
-| **Disk** | About 150 MB once unzipped. The zip ships 3,453 recorded runs. |
+| **Disk** | About 150 MB once unzipped. The zip ships 3,069 recorded runs. |
 | **A browser** | Any recent Chrome, Firefox, Safari or Edge. |
 | **unzip** | Built into macOS, Windows and most Linux desktops. |
 | *Optional:* **Node.js 20+** | Only needed to run the frontend tests or change the web interface. The built interface is already included. |
@@ -137,7 +137,7 @@ From here on, every command is run **from inside `traceharness-school/`**: the f
 `README.md`, `tasks/` and `data/`.
 
 The zip holds the complete application, its built web interface, the eight tasks, the six
-harnesses, the exercises, the tests, and 3,453 recorded runs. It holds no API keys and no
+harnesses, the exercises, the tests, and 3,069 recorded runs. It holds no API keys and no
 personal data. `PACKAGE_MANIFEST.json` lists every file with its checksum.
 
 > If you were instead given access to the GitHub repository, `git clone` it and work from its top
@@ -188,7 +188,7 @@ python -m traceharness --version
 Expected output:
 
 ```
-traceharness 0.3.0
+traceharness 0.4.0
 ```
 
 Then:
@@ -281,7 +281,7 @@ This starts a local server on **http://127.0.0.1:8765** and opens your browser. 
 prints:
 
 ```
-traceharness 0.3.0 -> http://127.0.0.1:8765   (lab root: /…/traceharness; OpenRouter key: NOT set)
+traceharness 0.4.0 -> http://127.0.0.1:8765   (lab root: /…/traceharness; OpenRouter key: NOT set)
 ```
 
 "OpenRouter key: NOT set" is normal; you do not need one.
@@ -427,8 +427,8 @@ Buddy is an assistant that answers questions about the evidence you are looking 
 - it is never sent to the TraceHarness server
 - it is never written into files or exports
 
-Use a key with a spending limit. Pick Buddy's model in Settings. When this guide was tested,
-`deepseek/deepseek-v4.1-flash` answered a question about four runs in about 2 seconds for $0.0002.
+Use a key with a spending limit. Pick Buddy's model in Settings; a small, fast model such as
+`google/gemini-2.5-flash-lite` is enough for questions about your runs.
 Buddy's model is only the assistant and has nothing to do with the models in your experiment.
 Every number on screen is computed from the recordings, not by Buddy.
 
@@ -464,17 +464,23 @@ Pass task ids with `--tasks t01_slugify,t03_ratelimit`, or `--tasks all`.
 
 ### 8.2 The harnesses
 
-Six configurations in `harnesses/*.json`. Each differs from `baseline` in exactly the way the
-table says.
+Ten configurations in `harnesses/*.json`. Every variant but one differs from `baseline` in exactly
+one field; `short_context` changes two (it predates this rule, and its halves ship separately as
+`short_history` and `short_observations`). A test (`tests_agentlab/test_runner_stop_and_route.py`)
+checks each file against this table.
 
-| harness | what changes versus `baseline` |
-|---|---|
-| `baseline` | full tool surface, strict policy, full history, 20 steps |
-| `no_test_tool` | no `run_tests` and no `bash`: the agent cannot run anything |
-| `permissive` | destructive shell commands and test edits are *executed* instead of blocked (still recorded); network, privilege escalation and secret access stay blocked |
-| `short_context` | only the last 2 tool observations are kept verbatim; outputs are cut to 1,500 characters |
-| `terse_prompt` | a minimal system prompt, with no instruction to verify or to leave the tests alone |
-| `tight_budget` | six model calls, then the run is cut off |
+| harness | field changed | what changes versus `baseline` |
+|---|---|---|
+| `baseline` | — | full tool surface, strict policy, full history, 20 steps, 2,048 output tokens per reply; a reply without a tool call ends the run |
+| `no_test_tool` | `tools` | no `run_tests` and no `bash`: the agent cannot run anything |
+| `permissive` | `policy` | destructive shell commands and test edits are *executed* instead of blocked (still recorded); network, privilege escalation and secret access stay blocked |
+| `terse_prompt` | `system_prompt` | a minimal system prompt, with no instruction to verify or to leave the tests alone |
+| `tight_budget` | `max_steps` | six model calls, then the run is cut off |
+| `short_history` | `context_window` | only the last 2 tool observations are kept verbatim |
+| `short_observations` | `observation_chars` | every tool output is cut to 1,500 characters |
+| `long_output` | `max_tokens_per_call` | each reply may use 8,192 output tokens instead of 2,048 |
+| `reprompt` | `no_action_retries` | a reply that calls no tool is answered with a re-prompt (at most twice) instead of ending the run |
+| `short_context` | `context_window`, `observation_chars` | both of the above at once (kept for the recorded datasets) |
 
 **Make your own harness.** Copy `harnesses/baseline.json` to `harnesses/mine.json`. Change
 `"id"` to `"mine"` and change **one** field:
@@ -489,6 +495,7 @@ table says.
 | `observation_chars` | how much of each tool output the agent sees |
 | `temperature` | sampling temperature |
 | `max_tokens_per_call` | the output limit for **each** model reply |
+| `no_action_retries` | what happens when a reply calls no tool: `0` ends the run, `N` re-prompts up to `N` times |
 | `system_prompt` | the instructions the agent receives |
 
 Then run it next to baseline:
@@ -499,9 +506,13 @@ python -m traceharness run --provider mock --harness harnesses/mine.json,harness
 python exercises/ex2_harness.py --results data/runs/mine_mock --treatment mine
 ```
 
-> `max_tokens_per_call` matters more than it looks. In the recorded `llma4se_live` data, 133 of
-> the 227 hidden-suite failures were replies cut off at the 2,048-token per-call limit before the
-> agent made any edit. TraceHarness labels these runs **cut off · no patch**.
+> **Read a failure label as a description, not a cause.** In the recorded `llma4se_live` data, 112 of
+> the 204 hidden-suite failures ended on a reply that reached the 2,048-token limit without calling a
+> tool, before any edit. TraceHarness labels these runs **cut off · no patch**. It is tempting to
+> blame the limit, so we tested it: under `long_output` (8,192 tokens, nothing else changed) the pass
+> rate of Gemini 2.5 Flash-Lite and Qwen3.8 27B did not move, because the same replies simply ran to
+> the new limit. The rule that ends those runs is "a reply without a tool call ends the run", and
+> `reprompt` is the harness that changes exactly that.
 
 ### 8.3 Mock runs (always free, always offline)
 
@@ -520,12 +531,14 @@ broke, not the model; see [Troubleshooting](#13-troubleshooting). The weaker moc
 
 ```bash
 export OPENROUTER_API_KEY=sk-or-...        # Windows PowerShell: $env:OPENROUTER_API_KEY="sk-or-..."
-python -m traceharness run --provider openrouter --model deepseek/deepseek-v4.1-flash \
+python -m traceharness run --provider openrouter --model google/gemini-2.5-flash-lite \
     --tasks t01_slugify,t03_ratelimit --repeats 2 --max-cost 1.00 --out data/runs/live_mine -v
 ```
 
-When this guide was tested, exactly this command ran 4 runs in 40 seconds, and all 4 passed. Each
-run cost $0.0006–0.0010, so the whole sweep cost under a cent.
+When this guide was tested (November 14, 2026), exactly this command ran 4 runs in 31 seconds.
+Both `t01_slugify` runs passed; both `t03_ratelimit` runs stopped after two steps without calling a
+tool (`exit=no_action`), which is the failure the `reprompt` harness is built to study. Each run
+cost $0.0005–0.0010, so the whole sweep cost under a cent.
 
 A few points:
 
@@ -703,7 +716,7 @@ Eight scripts in `exercises/`, one per lab block. The questions and discussion f
 Every script:
 
 - runs in **under a second**, offline, on the recorded data
-- reads **`data/runs/llma4se_live`** by default: 1,632 real runs of five models under six
+- reads **`data/runs/llma4se_live`** by default: 1,248 real runs of four models under six
   harnesses
 - takes the same options:
 
@@ -800,7 +813,7 @@ python scripts/check_install.py      # or: make check  ->  All 5 checks passed
 The same steps by hand:
 
 ```bash
-python -m traceharness --version                                   # traceharness 0.3.0
+python -m traceharness --version                                   # traceharness 0.4.0
 python -m traceharness run --provider mock --tasks all --repeats 3 --price 0,0 --out data/runs/smoke
 #   -> 24 runs, 14 PASS
 python exercises/ex1_variance.py --results data/runs/smoke       # prints four sections
@@ -921,7 +934,7 @@ steps) or **Docker** (section 12.1). If you do use native Windows:
   - Never commit a key, and use keys with a spending limit.
 - **Cost:**
   - Mock runs, recorded data and local models are free.
-  - A small, fast model such as `deepseek/deepseek-v4.1-flash` costs under $0.001 per run. A
+  - A small, fast model such as `google/gemini-2.5-flash-lite` costs about $0.001 per run or less. A
     frontier model costs roughly $0.05–0.15 per run.
   - Set `--max-cost` on every real sweep.
   - Run setup shows the estimated cost before anything starts.
@@ -935,7 +948,7 @@ These were observed on 23 September 2026. None of them changes the recorded data
 
 1. **Pooled numbers under one model's name.** Some views and exercises summarise *all* models
    under a harness while a heading names one model. For example, `baseline` in `llma4se_live` has
-   272 runs, which is all five models pooled. TraceHarness labels such figures **pooled** in amber;
+   208 runs, which is all four models pooled. TraceHarness labels such figures **pooled** in amber;
    read the *n* before comparing.
 2. **Strengthened grades for `real_swe_agent_500`.** These third-party runs carry no strengthened
    grade. Parts of the judge/integrity analysis report them as 0.0 % instead of "not graded". The

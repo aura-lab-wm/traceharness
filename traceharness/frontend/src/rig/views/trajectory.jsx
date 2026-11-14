@@ -1094,7 +1094,7 @@ function CmpHead({ r, spans, tag, oracle }) {
       <div className="rg-pnl-b rg-stack rg-stack-sm">
         <div className="rg-mono rg-small rg-dim rg-break">{short(r.model)} · {r.task} · repeat {r.rep ?? '—'} · seed {spans ? (seedOf(spans) ?? '—') : '…'}</div>
         <div className="rg-cluster rg-mono rg-small rg-traj-headfacts">
-          <span>{st ? st.length : '—'} actions</span><span>{plural(r.edits ?? 0, 'edit')}</span><span>{r.bnd ? plural(r.bnd, 'boundary event') : 'no boundary events'}</span><span>{int(tokOf(r))} tok</span>
+          <span>{st ? st.length : '—'} records</span><span>{plural(r.edits ?? 0, 'edit')}</span><span>{r.bnd ? plural(r.bnd, 'boundary event') : 'no boundary events'}</span><span>{int(tokOf(r))} tok</span>
           {spans && spans.some(isCutoff) && <span className="rg-red">{spans.filter(isCutoff).length} cut off</span>}
         </div>
         <div className="rg-cluster"><FailureChip run={r} /><PinButton item={runPin(r, oracle)} /></div>
@@ -1161,15 +1161,15 @@ function CmpDoc({ spec, args }) {
       <Split sideWidth="20rem" sideLabel="First divergence" side={(
         <div className="rg-traj-stack-s">
           <div className="rg-pnl rg-traj-verdict"><div className="rg-pnl-h"><span className="rg-lbl rg-amb">First divergence</span></div>
-            <div className="rg-pnl-b"><div className="rg-fig md amb">{first < 0 ? 'no fork' : 'step ' + (first + 1)}</div>
-              <p className="rg-small rg-dim rg-traj-lede">{first < 0 ? 'The two ledgers take the same actions in the same order.' : <>Run A did <span className="rg-mono">{fa ? fa.label : 'nothing (ended)'}</span>, run B did <span className="rg-mono">{fb ? fb.label : 'nothing (ended)'}</span> — the first step where the span kind or tool name differs.</>}</p>
-              {fa && <Go spec={makeSpec('fork', A.id, fa.seq)} className="rg-btn">Fork A at this step →</Go>}</div></div>
+            <div className="rg-pnl-b"><div className="rg-fig md amb">{first < 0 ? 'no fork' : 'record ' + (first + 1)}</div>
+              <p className="rg-small rg-dim rg-traj-lede">{first < 0 ? 'The two ledgers take the same actions in the same order.' : <>Run A did <span className="rg-mono">{fa ? fa.label : 'nothing (ended)'}</span>, run B did <span className="rg-mono">{fb ? fb.label : 'nothing (ended)'}</span> — the first ledger record where the span kind or tool name differs.</>}</p>
+              {fa && <Go spec={makeSpec('fork', A.id, fa.seq)} className="rg-btn">Fork A at this record →</Go>}</div></div>
           <Note><div><b>What this pair does not license.</b> One pair is one anecdote. A claim about {cls === 'same' ? 'run-to-run variance' : 'the difference'} comes from the {int(cls === 'cross' ? pc.cross : pc.same)} pairs of this class read as a paired set, not from this pair.</div></Note>
         </div>
       )}>
-        <Panel label="Aligned steps" meta={`${xa.length} vs ${xb.length} actions`} flush>
-          <TableScroll label="Aligned steps of runs A and B" maxHeight={560} className="rg-traj-aligned"><table className="rg-tbl rg-keep"><thead><tr><th className="rg-num">step</th><th>A · {sfx(A.id)}</th><th>B · {sfx(B.id)}</th><th>aligned</th></tr></thead><tbody>{rows}</tbody></table></TableScroll>
-          <p className="rg-tiny rg-mute rg-traj-pad">Steps align by position; a step matches when its span kind and tool name match, so “same” means the same action, not the same text.</p>
+        <Panel label="Aligned records" meta={`${xa.length} vs ${xb.length} records`} flush>
+          <TableScroll label="Aligned ledger records of runs A and B" maxHeight={560} className="rg-traj-aligned"><table className="rg-tbl rg-keep"><thead><tr><th className="rg-num">record</th><th>A · {sfx(A.id)}</th><th>B · {sfx(B.id)}</th><th>aligned</th></tr></thead><tbody>{rows}</tbody></table></TableScroll>
+          <p className="rg-tiny rg-mute rg-traj-pad">Records are the replies of the model and the executions of tools, in ledger order. They align by position; a record matches when its span kind and tool name match, so “same” means the same kind of action, not the same text.</p>
         </Panel>
       </Split>
     )

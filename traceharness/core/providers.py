@@ -35,6 +35,16 @@ class ChatResponse:
     latency_ms: int = 0
     raw: dict = field(default_factory=dict)
     cost_usd: Optional[float] = None       # set when the endpoint reports the charge itself (OpenRouter)
+    # Who actually answered. A router such as OpenRouter can serve one model identifier from several
+    # upstream providers, and the same identifier can change behaviour when the route changes; without
+    # these two fields a ledger cannot tell a model effect from a serving effect. None = not reported.
+    served_by: Optional[str] = None        # upstream provider named by the endpoint (OpenRouter's `provider`)
+    response_model: Optional[str] = None   # model identifier echoed by the endpoint (may carry a snapshot date)
+    # The sampling parameters that were actually SENT on this call. A harness can ask for
+    # temperature 0, but a reasoning model that rejects the parameter runs at its own default;
+    # recording what went over the wire keeps the ledger from claiming a setting it never applied.
+    sent_temperature: Optional[float] = None   # None = not sent (the endpoint used its default)
+    sent_seed: Optional[int] = None            # None = not sent
 
 
 # USD per million tokens (input, output). Edit freely; prices change.
@@ -55,16 +65,6 @@ PRICES = {
     "gemini-3.8-flash": (0.75, 3.75),
     "qwen3.8-27b": (0.42, 3.0),
     "gpt-5.6-sol": (1.25, 10.0),
-    "deepseek-v4-pro": (0.55, 2.2),
-    "deepseek-v4-flash": (0.089, 0.177),
-    "glm-5.3-flash": (0.075, 0.25),
-    "glm-5.3": (0.6, 2.2),
-    "glm-5.2": (0.4, 1.6),
-    "gemini-3.7-flash": (0.3, 2.5),
-    "qwen3.8-max": (0.8, 3.2),
-    "kimi-k3": (0.6, 2.5),
-    "grok-4.6": (3.0, 15.0),
-    "mock-weak": (0.0, 0.0),
     "gpt-5.4-mini": (0.75, 4.5),
     "gpt-5-mini": (0.25, 2.0),
     "gpt-5": (1.25, 10.0),
@@ -72,8 +72,6 @@ PRICES = {
     "gpt-4.1": (2.0, 8.0),
     "gpt-4o-mini": (0.15, 0.6),
     "gpt-4o": (2.5, 10.0),
-    "deepseek-v4-pro": (1.04, 2.08),
-    "deepseek-v4-flash": (0.09, 0.18),
     "glm-5.3-flash": (0.075, 0.25),
     "glm-5.3": (1.4, 4.4),
     "glm-5.2": (0.97, 3.04),
@@ -167,13 +165,25 @@ class OpenAIProvider(Provider):
     name = "openai"
 
     def __init__(self, model: str, temperature: float = 0.0, price=None, api_key: Optional[str] = None,
-                 base_url: Optional[str] = None):
+                 base_url: Optional[str] = None, route: Optional[list] = None):
         super().__init__(model, temperature, price)
         self.base_url = (base_url or os.environ.get("OPENAI_BASE_URL") or "https://api.openai.com/v1").rstrip("/")
         self.openrouter = "openrouter.ai" in self.base_url
+        # OpenRouter only: the upstream providers a run may be served by, in order, with fallbacks
+        # to any other provider switched off. Pinning the route removes one source of run-to-run
+        # variation that has nothing to do with the model or the harness.
+        self.route = [r.strip() for r in (route or []) if r and r.strip()]
+        if self.route and not self.openrouter:
+            raise ValueError("--route pins OpenRouter's upstream provider; it has no meaning for another endpoint")
+        self.seed: Optional[int] = None
         self.api_key = api_key or (os.environ.get("OPENROUTER_API_KEY", "") if self.openrouter else "") or os.environ.get("OPENAI_API_KEY", "")
         if not self.api_key and ("api.openai.com" in self.base_url or self.openrouter):
             raise RuntimeError("OPENROUTER_API_KEY is not set" if self.openrouter else "OPENAI_API_KEY is not set")
+
+    def reseed(self, seed: Optional[int]):
+        """The run's seed, sent as the OpenAI `seed` parameter (OpenRouter forwards it to providers
+        that support it). It asks for best-effort determinism; it does not guarantee it."""
+        self.seed = None if seed is None else int(seed) % (2 ** 31)
 
     def chat(self, messages, tools, max_tokens=2048) -> ChatResponse:
         oai_msgs = []
@@ -194,12 +204,18 @@ class OpenAIProvider(Provider):
         if self.openrouter:
             payload["max_tokens"] = max_tokens
             payload["usage"] = {"include": True}          # OpenRouter returns the exact charge per call
+            if self.route:
+                payload["provider"] = {"order": list(self.route), "allow_fallbacks": False}
         else:
             payload["max_completion_tokens"] = max_tokens
         # Reasoning models reject a temperature parameter; only send it when non-default.
         bare = self.model.split("/")[-1]
+        sent_t = None
         if self.temperature not in (None, 1.0) and not bare.startswith(("o1", "o3", "o4", "gpt-5")):
             payload["temperature"] = self.temperature
+            sent_t = float(self.temperature)
+        if self.seed is not None:
+            payload["seed"] = self.seed
         headers = {"Authorization": f"Bearer {self.api_key}"}
         if self.openrouter:
             headers.update({"HTTP-Referer": "https://github.com/aura-lab-wm/traceharness", "X-Title": "traceharness"})
@@ -219,7 +235,10 @@ class OpenAIProvider(Provider):
         return ChatResponse(text=msg.get("content") or "", tool_calls=calls,
                             input_tokens=usage.get("prompt_tokens", 0), output_tokens=usage.get("completion_tokens", 0),
                             finish_reason=choice.get("finish_reason", ""), latency_ms=int((time.time() - t0) * 1000), raw=r,
-                            cost_usd=float(reported) if reported is not None else None)
+                            cost_usd=float(reported) if reported is not None else None,
+                            served_by=(r.get("provider") or None) if isinstance(r.get("provider"), str) else None,
+                            response_model=(r.get("model") or None) if isinstance(r.get("model"), str) else None,
+                            sent_temperature=sent_t, sent_seed=payload.get("seed"))
 
 
 # ----------------------------------------------------------------------------
@@ -270,7 +289,9 @@ class AnthropicProvider(Provider):
         u = r.get("usage", {})
         inp = u.get("input_tokens", 0) + u.get("cache_read_input_tokens", 0) + u.get("cache_creation_input_tokens", 0)
         return ChatResponse(text="\n".join(text), tool_calls=calls, input_tokens=inp, output_tokens=u.get("output_tokens", 0),
-                            finish_reason=r.get("stop_reason", ""), latency_ms=int((time.time() - t0) * 1000), raw=r)
+                            finish_reason=r.get("stop_reason", ""), latency_ms=int((time.time() - t0) * 1000), raw=r,
+                            served_by="anthropic", response_model=r.get("model") if isinstance(r.get("model"), str) else None,
+                            sent_temperature=float(self.temperature) if self.temperature is not None else None)
 
 
 # ----------------------------------------------------------------------------
@@ -279,6 +300,9 @@ def make_provider(kind: str, model: str, temperature: float = 0.0, price=None, s
     if kind == "openrouter":
         kw.setdefault("base_url", "https://openrouter.ai/api/v1")
         return OpenAIProvider(model, temperature, price, **kw)
+    if kw.get("route") and kind != "openrouter":
+        raise ValueError("--route pins OpenRouter's upstream provider; use it with --provider openrouter")
+    kw = {k: v for k, v in kw.items() if not (k == "route" and not v)}
     if kind == "openai":
         return OpenAIProvider(model, temperature, price, **kw)
     if kind == "anthropic":

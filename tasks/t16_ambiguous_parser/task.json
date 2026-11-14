@@ -1,0 +1,10 @@
+{
+  "id": "t16_ambiguous_parser",
+  "title": "flag parsing treats 'off ' as true (bug location unspecified)",
+  "probe": "ambiguous_target",
+  "suite": "extended",
+  "src_files": [
+    "flags/parse.py"
+  ],
+  "test_cmd": "python -m unittest discover -s tests -q"
+}

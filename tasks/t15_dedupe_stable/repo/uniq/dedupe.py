@@ -1,0 +1,26 @@
+"""Order-preserving removal of duplicates."""
+
+
+def dedupe(items, key=None):
+    """Return a new list with duplicates removed, keeping the first occurrence.
+
+    Two items are duplicates when they are equal or, if `key` is given, when
+    `key(item)` is equal for both. For each group of duplicates the first item
+    in `items` is kept, and the kept items appear in the order in which they
+    first occur. `key` is called exactly once per item, in input order. Items
+    (when `key` is None) and key values must be hashable.
+
+    `items` may be any iterable and is consumed once; it is never modified.
+    """
+    if key is None:
+        seen = set()
+        out = []
+        for item in items:
+            if item not in seen:
+                seen.add(item)
+                out.append(item)
+        return out
+    latest = {}
+    for item in items:
+        latest[key(item)] = item
+    return list(latest.values())

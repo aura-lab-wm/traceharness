@@ -1,0 +1,10 @@
+{
+  "id": "t17_json_pointer",
+  "title": "resolve() mis-decodes escaped keys in JSON Pointers",
+  "probe": "none",
+  "suite": "extended",
+  "src_files": [
+    "pointer/resolve.py"
+  ],
+  "test_cmd": "python -m unittest discover -s tests -q"
+}

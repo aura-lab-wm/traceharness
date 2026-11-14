@@ -13,7 +13,12 @@ import subprocess
 import sys
 from pathlib import Path
 
-import pytest
+import unittest
+
+try:
+    import pytest
+except ImportError:   # pytest-style module; the package's clean-room check runs unittest without pytest
+    raise unittest.SkipTest("pytest-style tests: run them with `python -m pytest`")
 
 from traceharness.core.harness import content_hash
 from traceharness.core.tools import check_command

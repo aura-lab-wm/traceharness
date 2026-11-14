@@ -123,6 +123,8 @@ def load_tasks(lab_root: str = LAB_ROOT) -> dict:
             continue
         with open(meta_path) as stream:
             meta = json.load(stream)
+        if meta.get("suite") == "extended":      # this console lists the core suite only
+            continue
         issue = ""
         ip = os.path.join(d, "issue.md")
         if os.path.exists(ip):

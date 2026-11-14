@@ -22,7 +22,7 @@ sys.path.insert(0, LAB_ROOT)
 
 from traceharness.core.harness import HarnessConfig, run_task              # noqa: E402
 from traceharness.core.providers import make_provider, PRICES, price_for    # noqa: E402
-from traceharness.core.grader import load_task                              # noqa: E402
+from traceharness.core.grader import load_task, list_task_ids, task_suite, SUITES   # noqa: E402
 from traceharness.core.analysis import load_index                           # noqa: E402
 from traceharness.core.ledger import new_run_id                             # noqa: E402
 from . import metrics as M                                         # noqa: E402
@@ -119,13 +119,16 @@ def list_harnesses():
     return out
 
 
-def list_tasks():
+def list_tasks(suite: str = "core"):
+    """Tasks of one suite (see traceharness.core.grader.SUITES). The default is the core suite, so a
+    client that does not know about suites sees the eight tasks it always saw."""
     out = []
-    for tid in sorted(os.listdir(TASK_DIR)):
+    for tid in list_task_ids(TASK_DIR, suite):
         p = os.path.join(TASK_DIR, tid)
-        if os.path.isdir(p) and not tid.startswith("_") and os.path.exists(os.path.join(p, "task.json")):
+        if os.path.exists(os.path.join(p, "task.json")):
             t = load_task(p)
-            out.append({"id": tid, "title": t.get("title"), "probe": t.get("probe"), "issue": t.get("issue"), "src_files": t.get("src_files")})
+            out.append({"id": tid, "title": t.get("title"), "probe": t.get("probe"), "issue": t.get("issue"),
+                        "src_files": t.get("src_files"), "suite": task_suite(p)})
     return out
 
 
@@ -135,8 +138,10 @@ def harnesses():
 
 
 @app.get("/api/tasks")
-def tasks():
-    return list_tasks()
+def tasks(suite: str = "core"):
+    if suite not in SUITES:
+        raise HTTPException(400, f"unknown task suite {suite!r}; expected one of {', '.join(SUITES)}")
+    return list_tasks(suite)
 
 
 # --------------------------------------------------------------------------- results & metrics
@@ -417,7 +422,6 @@ CURATED = [
     {"id": "openai/gpt-5.6-luna", "family": "OpenAI", "tier": "small"},
     {"id": "google/gemini-2.5-flash-lite", "family": "Google", "tier": "small"},
     {"id": "google/gemini-3.8-flash", "family": "Google", "tier": "mid"},
-    {"id": "deepseek/deepseek-v4-flash", "family": "DeepSeek", "tier": "small"},
     {"id": "qwen/qwen3.8-27b", "family": "Qwen (open weights)", "tier": "mid"},
     {"id": "z-ai/glm-5.3-flash", "family": "Zhipu (open weights)", "tier": "small"},
     {"id": "anthropic/claude-haiku-4.5", "family": "Anthropic", "tier": "small"},

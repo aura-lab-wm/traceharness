@@ -1,7 +1,8 @@
 """List account copies and skip a corrupt file. Never touch data/runs."""
 import json
-
-import pytest
+import tempfile
+import unittest
+from pathlib import Path
 
 from traceharness.shallow.store import FileStore, MemoryStore, StoreError
 
@@ -22,8 +23,12 @@ def test_memory_list_is_sorted_copied_and_scoped():
 
 
 def test_file_list_skips_corrupt_and_foreign_rows(tmp_path):
-    with pytest.raises(StoreError):
+    try:
         FileStore(tmp_path / "data" / "runs")
+    except StoreError:
+        pass
+    else:
+        raise AssertionError("a store under data/runs must be refused")
     store = FileStore(tmp_path / "account")
     assert store.list_harnesses("member@wm.edu") == []
     store.save_harness("member@wm.edu", {"id": "claude", "lane": "fixed", "prompt": "kept"})
@@ -44,3 +49,14 @@ def test_file_list_skips_corrupt_and_foreign_rows(tmp_path):
     rows = store.list_harnesses("member@wm.edu")
     assert [row["id"] for row in rows] == ["claude"]
     assert rows[0]["prompt"] == "kept"
+
+
+class TestShallowStoreList(unittest.TestCase):
+    """The same checks under unittest, which the package's clean-room verification runs without pytest."""
+
+    def test_memory_list_is_sorted_copied_and_scoped(self):
+        test_memory_list_is_sorted_copied_and_scoped()
+
+    def test_file_list_skips_corrupt_and_foreign_rows(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            test_file_list_skips_corrupt_and_foreign_rows(Path(tmp))

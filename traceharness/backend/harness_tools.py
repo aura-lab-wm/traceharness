@@ -90,6 +90,7 @@ KNOBS = {
     "observation_chars": "Truncation limit on every tool result. Too small and the agent never sees the traceback that would have told it what broke.",
     "temperature": "Sampling temperature. Drives the flip rate (same task, different outcome) more than it drives pass@1.",
     "max_tokens_per_call": "Output cap per model call. Too small truncates long patches mid-edit.",
+    "no_action_retries": "What happens when a reply invokes no tool. 0 ends the run (exit no_action); N re-prompts the model up to N times, each costing a step.",
     "include_file_listing": "Whether the repository listing is pasted into the first user message. Free orientation, or an extra 1k tokens of noise.",
     "sentinel": "The early-warning hook: part of the harness, not an observer. If it nudges or blocks, it changed the trajectory.",
     "id": "Name only — excluded from the content hash.",
@@ -538,10 +539,9 @@ def _short(v, n=48):
 
 
 def _all_task_ids() -> list[str]:
-    if not os.path.isdir(TASK_DIR):
-        return []
-    return sorted(t for t in os.listdir(TASK_DIR)
-                  if not t.startswith("_") and os.path.exists(os.path.join(TASK_DIR, t, "task.json")))
+    """The core suite: what a sweep runs when no task is named (see traceharness.core.grader.SUITES)."""
+    from traceharness.core.grader import list_task_ids
+    return [t for t in list_task_ids(TASK_DIR, "core") if os.path.exists(os.path.join(TASK_DIR, t, "task.json"))]
 
 
 def _observed_cost_per_run() -> dict:

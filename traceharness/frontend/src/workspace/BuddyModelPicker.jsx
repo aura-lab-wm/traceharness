@@ -12,7 +12,7 @@ import { Mark } from './WorkspaceUI'
 // reader selection to the experiment model or to credential storage.
 const candidates = new Map([
  ['google/gemini-3.8-flash','Try for everyday trajectory explanations and run comparisons.'],
- ['deepseek/deepseek-v4.1-flash','Try for repeated code and reasoning checks.'],
+ ['google/gemini-2.5-flash-lite','Try for quick, low-cost questions about a single run.'],
  ['openai/gpt-6-sol','Try for detailed patch review and evidence synthesis.'],
  ['anthropic/claude-opus-5.5','Try for difficult failures and multi-step code review.'],
  ['anthropic/claude-fable-5.1','Try for complex code changes and concise explanations.'],

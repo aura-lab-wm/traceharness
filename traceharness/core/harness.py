@@ -5,7 +5,8 @@ A HarnessConfig fixes
   - the tool surface (which tools exist)
   - the permission policy (strict blocks flagged actions; permissive records them and lets some through)
   - context management (full history, or only the last N tool observations)
-  - the stopping rule (submit tool, step cap, token budget)
+  - the stopping rule (submit tool, step cap, token budget, and what happens when a reply
+    invokes no tool: end the run, or re-prompt up to `no_action_retries` times)
 
 Change any of these and you have a different measurement cell, even with the
 same model. That is the whole point of exercise 2.
@@ -39,6 +40,11 @@ class HarnessConfig:
     temperature: float = 0.0
     max_tokens_per_call: int = 2048
     include_file_listing: bool = True
+    # What the loop does when a reply invokes no tool. 0 (the behaviour of every run recorded before
+    # this field existed) ends the run with exit_reason "no_action". N > 0 answers such a reply with
+    # NO_ACTION_PROMPT and lets the model continue, at most N times per run; each re-prompt costs one
+    # step of max_steps. It is a harness field like any other: change only this and you can measure it.
+    no_action_retries: int = 0
     notes: str = ""
     sentinel: dict = field(default_factory=dict)   # early-warning module config; part of the cell (see traceharness/backend/sentinel.py)
 
@@ -61,6 +67,15 @@ class HarnessConfig:
 # differ only here are the same measurement cell, so they get the same hash.
 HASH_EXCLUDE = ("id", "notes")
 
+# Fields added after runs had already been recorded. A config that leaves such a field at its
+# default behaves exactly as it did before the field existed, so the field is left out of the hash
+# payload at that value and every harness_hash already written to an index stays valid.
+HASH_OMIT_AT_DEFAULT = {"no_action_retries": 0}
+
+#: What the model is told when a reply invokes no tool and the harness allows a re-prompt.
+NO_ACTION_PROMPT = ("Your last reply did not call any tool, so nothing happened. "
+                    "Continue by calling one of the tools; call `submit` when the task is done.")
+
 
 def content_hash(cfg) -> str:
     """sha256 (first 12 hex chars) over the canonical JSON of the behaviour-bearing HarnessConfig fields.
@@ -77,7 +92,8 @@ def content_hash(cfg) -> str:
         cfg = asdict(cfg)
     known = {f.name for f in dc_fields(HarnessConfig)}
     norm = asdict(HarnessConfig(**{k: v for k, v in cfg.items() if k in known}))
-    payload = {k: v for k, v in norm.items() if k not in HASH_EXCLUDE}
+    payload = {k: v for k, v in norm.items() if k not in HASH_EXCLUDE
+               and not (k in HASH_OMIT_AT_DEFAULT and v == HASH_OMIT_AT_DEFAULT[k])}
     payload["tools"] = sorted(payload.get("tools") or [])
     blob = json.dumps(payload, sort_keys=True, separators=(",", ":"), ensure_ascii=False)
     return hashlib.sha256(blob.encode("utf-8")).hexdigest()[:12]
@@ -151,12 +167,18 @@ def run_task(task: dict, harness: HarnessConfig, provider: Provider, out_root: s
             summary.cost_usd += call_cost
             ledger.record("chat", **{"gen_ai.operation.name": "chat", "gen_ai.usage.input_tokens": resp.input_tokens,
                                      "gen_ai.usage.output_tokens": resp.output_tokens, "gen_ai.response.finish_reasons": [resp.finish_reason],
+                                     "served_by": getattr(resp, "served_by", None), "gen_ai.response.model": getattr(resp, "response_model", None),
+                                     "gen_ai.request.temperature": getattr(resp, "sent_temperature", None),
+                                     "gen_ai.request.seed": getattr(resp, "sent_seed", None),
                                      "duration_ms": resp.latency_ms or int((time.time() - t0) * 1000), "cost_usd": call_cost,   # never rounded: the bill of materials reconciles spans against
                                      # the summary, and rounding each call to 6dp made them miss by
                                      # up to 5e-7 a call -- an accounting gap in a document meant as evidence
                                      
                                      "step": step, "text": resp.text[:2000],
                                      "tool_calls": [{"name": tc.name, "arguments": {k: (v if len(str(v)) < 300 else str(v)[:300] + "...") for k, v in tc.arguments.items()}} for tc in resp.tool_calls]})
+            who = getattr(resp, "served_by", None)
+            if who and who not in summary.served_by:
+                summary.served_by.append(who)
             if verbose:
                 print(f"  step {step}: {resp.text[:80]!r} -> {[tc.name for tc in resp.tool_calls]}")
             messages.append({"role": "assistant", "content": resp.text,
@@ -196,6 +218,14 @@ def run_task(task: dict, harness: HarnessConfig, provider: Provider, out_root: s
                     continue
 
             if not resp.tool_calls:
+                if summary.reprompts < max(0, int(harness.no_action_retries or 0)):
+                    # the harness, not the sentinel, re-prompts: recorded so the ledger shows that the
+                    # run continued because of this field and at which reply
+                    summary.reprompts += 1
+                    ledger.record("reprompt", step=step, attempt=summary.reprompts,
+                                  finish_reason=resp.finish_reason, text=NO_ACTION_PROMPT)
+                    messages.append({"role": "user", "content": NO_ACTION_PROMPT})
+                    continue
                 summary.exit_reason = "no_action"
                 break
 

@@ -17,7 +17,7 @@
     "families_mock": "Mock models (mock, mock-b) under four harnesses, across 5 tasks — a small model × harness grid for trying the Experiment step.",
     "prerecorded_mock": "Mock model, for exercises that must behave identically on every machine: the mock model under all six harnesses, across all 8 task probes.",
     "prerecorded_mock_weak": "A second, weaker model (mock-weak) under two harnesses, across the same 8 tasks — pairs with prerecorded_mock for the exercise-8 factorial.",
-    "llma4se_live": "Real, collected for this lab through OpenRouter: 1,632 runs of five current models (DeepSeek V4 Flash, Gemini 2.5 Flash-Lite, Gemini 3.8 Flash, GPT-5.6 Luna, Qwen3.8 27B) under six harnesses, across all 8 task probes.",
+    "llma4se_live": "Real, collected for this lab through OpenRouter: 1,248 runs of four current models (Gemini 2.5 Flash-Lite, Gemini 3.8 Flash, GPT-5.6 Luna, Qwen3.8 27B) under six harnesses, across all 8 task probes.",
     "live": "Real, collected for this lab through OpenRouter: 576 runs of Claude Haiku 4.5, Gemini 2.5 Flash and GPT-5-mini under eight harnesses (including the sentinel variants), across all 8 task probes.",
     "real_swe_agent_500": "Real, third-party: 500 SWE-agent trajectories (Llama 8B and 70B) on 30 GitHub-issue tasks, streamed from nebius/SWE-agent-trajectories (CC-BY-4.0), each with its resolved/unresolved label."
   },

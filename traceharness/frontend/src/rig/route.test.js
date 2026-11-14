@@ -14,7 +14,7 @@ describe('rig hash grammar', () => {
       base({ panes: [{ tabs: ['home', 'ds:x:m:h', 'q:x:grader'], active: 2 }, { tabs: ['run:c95aff~q:x:grader'], active: 0 }], focus: 1 }),
       base({ dock: 'case', pal: true, oracle: 'strengthened', theme: 'light' }),
       base({ sheet: 'tabs', dock: 'buddy', oracle: 'visible', theme: 'system' }),
-      base({ cond: { dir: 'llma4se_live', model: 'deepseek/deepseek-v4-flash', harness: 'baseline' } }),
+      base({ cond: { dir: 'llma4se_live', model: 'qwen/qwen3.8-27b', harness: 'baseline' } }),
       base({ cond: { dir: 'x', model: 'glm-5.2:cloud', harness: 'a+b' } }),
       base({ lab: true }), base({ lab: false }),
       base({ max: true }), base({ max: true, panes: [{ tabs: ['home'], active: 0 }, { tabs: ['run:abc'], active: 0 }], focus: 1, dock: 'log' }),
@@ -39,7 +39,7 @@ describe('rig hash grammar', () => {
 
 describe('tab specs', () => {
   it('escapes only the grammar characters, keeping / readable', () => {
-    expect(makeSpec('ds', 'llma4se_live', 'deepseek/deepseek-v4-flash', 'baseline')).toBe('ds:llma4se_live:deepseek/deepseek-v4-flash:baseline')
+    expect(makeSpec('ds', 'llma4se_live', 'qwen/qwen3.8-27b', 'baseline')).toBe('ds:llma4se_live:qwen/qwen3.8-27b:baseline')
     const s = makeSpec('ds', 'x', 'glm-5.2:cloud', 'a+b|c')
     expect(s).toBe('ds:x:glm-5.2%3Acloud:a%2Bb%7Cc')
     expect(parseSpec(s)).toEqual({ kind: 'ds', args: ['x', 'glm-5.2:cloud', 'a+b|c'], chain: null })

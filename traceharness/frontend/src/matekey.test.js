@@ -104,14 +104,14 @@ describe('where the narrator key lives', () => {
 describe('the slug and the consent are stored on opposite lifetimes', () => {
   it('keeps the slug on the machine, since it is not a secret', () => {
     const s = stores()
-    expect(writeModel(s, ' deepseek/deepseek-chat ')).toBe('deepseek/deepseek-chat')
-    expect(s.local.bag.get(MODEL_SLOT)).toBe('deepseek/deepseek-chat')
+    expect(writeModel(s, ' qwen/qwen3.8-flash ')).toBe('qwen/qwen3.8-flash')
+    expect(s.local.bag.get(MODEL_SLOT)).toBe('qwen/qwen3.8-flash')
     expect(s.session.bag.size).toBe(0)
-    expect(readMate(s).model).toBe('deepseek/deepseek-chat')
+    expect(readMate(s).model).toBe('qwen/qwen3.8-flash')
   })
   it('an emptied slug falls back to the shipped default', () => {
     const s = stores()
-    writeModel(s, 'deepseek/deepseek-chat')
+    writeModel(s, 'qwen/qwen3.8-flash')
     expect(writeModel(s, '')).toBe(DEFAULT_MODEL)
     expect(s.local.bag.has(MODEL_SLOT)).toBe(false)
   })

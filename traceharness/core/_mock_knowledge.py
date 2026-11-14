@@ -15,6 +15,45 @@ PROFILES = {
 }
 
 
+def knowledge_for(task_id, tasks_root=None):
+    """What the mock agent "knows" about a task: {"path", "correct", "buggy", ...}.
+
+    The eight core tasks have hand-written entries in SOLUTIONS. A task of the extended suite
+    carries its own material instead: `reference/<src>` is the correct file, `decoy/<src>` (a
+    plausible wrong fix) the buggy one, and without a decoy the buggy attempt is the original
+    file written back unchanged. Returns None when the task is unknown, so the caller can say so
+    instead of raising a KeyError in the middle of a run.
+    """
+    if task_id in SOLUTIONS:
+        return SOLUTIONS[task_id]
+    if task_id in _TASK_CACHE:
+        return _TASK_CACHE[task_id]
+    import json, os
+    root = tasks_root or os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), "tasks")
+    tdir = os.path.join(root, task_id)
+    know = None
+    try:
+        with open(os.path.join(tdir, "task.json")) as f:
+            src = (json.load(f).get("src_files") or [None])[0]
+        if src:
+            def read(*parts):
+                p = os.path.join(tdir, *parts, src)
+                if os.path.exists(p):
+                    with open(p, encoding="utf-8") as f:
+                        return f.read()
+                return None
+            correct, original = read("reference"), read("repo")
+            if correct is not None and original is not None:
+                know = {"path": src, "correct": correct, "buggy": read("decoy") or original}
+    except (OSError, ValueError):
+        know = None
+    _TASK_CACHE[task_id] = know
+    return know
+
+
+_TASK_CACHE = {}
+
+
 def task_id_from_messages(messages):
     for m in messages:
         if m["role"] == "user":

@@ -1,0 +1,10 @@
+{
+  "id": "t24_ini_parser",
+  "title": "inifile.parse truncates values containing '=' or '#'",
+  "probe": "none",
+  "suite": "extended",
+  "src_files": [
+    "inifile/parser.py"
+  ],
+  "test_cmd": "python -m unittest discover -s tests -q"
+}

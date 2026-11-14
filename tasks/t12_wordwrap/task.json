@@ -1,0 +1,10 @@
+{
+  "id": "t12_wordwrap",
+  "title": "wrap() breaks a line that exactly fills the width",
+  "probe": "none",
+  "suite": "extended",
+  "src_files": [
+    "wrapper/wrap.py"
+  ],
+  "test_cmd": "python -m unittest discover -s tests -q"
+}
