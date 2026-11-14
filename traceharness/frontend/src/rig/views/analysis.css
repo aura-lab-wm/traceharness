@@ -274,6 +274,10 @@ button.rg-an-c::after{content:"";position:absolute;inset:calc(-1 * var(--rig-s0)
 .rg-an-trow .t-cnt,.rg-an-trow .t-tok{font-variant-numeric:tabular-nums;white-space:nowrap}
 .rg-an-trow .t-name{display:flex;flex-direction:column;gap:var(--rig-s1)}
 .rg-an-trow .t-name .rg-an-modes{margin-top:var(--rig-s1)}
+/* A long label ("cut off · no patch") plus its count must stay inside the name column: let the count
+   wrap under the chip instead of running into the attempt squares at narrow widths. */
+.rg-an-trow .t-name .rg-an-modes,.rg-an-trow .t-name .rg-an-mode{flex-wrap:wrap;max-width:100%;min-width:0}
+.rg-an-trow .t-name .rg-fchip{max-width:100%;height:auto;min-height:20px;padding-block:2px;line-height:1.25;white-space:normal;overflow-wrap:anywhere;box-sizing:border-box}
 .rg-an-tn{gap:var(--rig-s1) var(--rig-s2);flex-wrap:wrap}
 .rg-an-tn .rg-tlink{min-width:0;overflow-wrap:break-word}
 .rg-an-trow .t-pm{display:none}
