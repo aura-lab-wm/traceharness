@@ -8,6 +8,10 @@ tests, run shell commands, and submit. Its final workspace is then graded by thr
 - **hidden**: `repo/tests/` + `hidden_tests/*.py` (the benchmark oracle; the agent never sees them)
 - **strong**: hidden + `hidden_tests_strong/*.py` (a strengthened oracle)
 
+The eight core tasks (`t01`–`t08`) use the same layout: each carries `reference/`, and six of them
+also carry the mock agent's wrong attempt as `decoy/` (t03, t04, t05, t07) or `shallow/` (t06, t08).
+`python scripts/validate_task.py tasks/t*` checks all 24 tasks against their three tiers.
+
 You are writing NEW tasks in exactly the same format as the three examples in this folder
 (`example_t02_intervals`, `example_t05_leaky_duration`, `example_t08_ambiguous_handler`). Read all
 three completely before writing anything.
