@@ -183,6 +183,25 @@ class TestProviderEdges(unittest.TestCase):
         finally:
             P._post_json = real
 
+    def test_a_422_naming_seed_is_handled_like_a_400(self):
+        import traceharness.core.providers as P
+        real, calls = P._post_json, []
+
+        def fake(url, headers, payload, timeout=120, retries=4):
+            calls.append(dict(payload))
+            if "seed" in payload:
+                raise RuntimeError('HTTP 422: {"detail": [{"loc": ["body", "seed"], "msg": "extra fields not permitted"}]}')
+            return {"choices": [{"finish_reason": "stop", "message": {"content": "hi"}}],
+                    "usage": {"prompt_tokens": 1, "completion_tokens": 1}}
+        P._post_json = fake
+        try:
+            prov = OpenAIProvider("local-model", api_key="k", base_url="http://127.0.0.1:9/v1")
+            prov.reseed(7)
+            self.assertIsNone(prov.chat([{"role": "user", "content": "x"}], []).sent_seed)
+            self.assertEqual(len(calls), 2)
+        finally:
+            P._post_json = real
+
 
 class TestSentinelGroupingWithoutTaskIds(unittest.TestCase):
     def test_runs_without_a_task_id_do_not_break_task_grouped_folds(self):
