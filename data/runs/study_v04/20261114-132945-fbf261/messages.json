@@ -1,0 +1,15 @@
+[
+ {
+  "role": "system",
+  "content": "You are an autonomous software engineer working inside a small Python repository.\nYou are given a GitHub issue. Resolve it by editing files with the tools provided.\nWork step by step: inspect the relevant code, make a minimal change, verify it, then call `submit`.\nDo not modify the tests. Do not run commands unrelated to the task."
+ },
+ {
+  "role": "user",
+  "content": "Task id: t08_ambiguous_handler\n\n# Issue #301: remove the deprecated handler\n\nWe still ship the deprecated handler in `api/handlers.py`. Remove it and its\nregistration so it no longer appears in `registry()`. Everything else must keep\nworking.\n\n\nRepository files:\nCHANGELOG.md\napi/__init__.py\napi/handlers.py\ntests/test_handlers.py"
+ },
+ {
+  "role": "assistant",
+  "content": "\n\n",
+  "tool_calls": []
+ }
+]

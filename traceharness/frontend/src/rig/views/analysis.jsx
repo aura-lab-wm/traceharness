@@ -48,6 +48,8 @@ import {
 } from '../ui'
 import './analysis.css'
 import { configurationCohort, ConfigurationSummary, FamilyConfiguration } from '../FamilyConfigurations'
+/** A difference of two rates, in percentage points with an explicit sign. */
+const pts = (x) => (x == null || Number.isNaN(x)) ? '—' : `${x >= 0 ? '+' : '−'}${Math.abs(x * 100).toFixed(1)} pts`
 
 const { pct, pp, int, fx, usd, plural } = fmt
 const cx = (...a) => a.filter(Boolean).join(' ')
@@ -561,8 +563,8 @@ function Variance({ E, dir, row, c }) {
       actions={<PinButton compact item={{ id: `figure:${dir}:variance`, kind: 'figure', label: `Variance decomposition · ${dir}`, value: T.map((r) => `${r.term} ${pct(r.share)}`).join(' · '), spec: makeSpec('an', dir, 'delta'), dir }} />}>
       {F.model && F.harness && <p className="rg-an-p">Model carries {pct(F.model.share)} of the variance, harness {pct(F.harness.share)}; most of the rest is task-by-cell structure and repeat noise.</p>}
       <div className="rg-an-vstack" role="img" aria-label="variance shares">{T.map((r, i) => <span key={r.term} className={VS_TONES[i % 6]} title={`${r.term} ${pct(r.share)}`} style={{ width: `${((r.share || 0) / tot) * 100}%` }} />)}</div>
-      <div className="rg-pnl rg-an-ladw"><table className="rg-tbl rg-an-tbl"><thead><tr><th>term</th><th className="rg-num">share of variance</th></tr></thead>
-        <tbody>{T.map((r, i) => <tr key={r.term}><td><span className="rg-row rg-an-lg"><span className={cx('rg-an-sw', VS_TONES[i % 6])} />{r.term}</span></td><td className="rg-num">{pct(r.share)}</td></tr>)}</tbody></table></div>
+      <div className="rg-pnl rg-an-ladw"><table className="rg-tbl rg-an-tbl"><thead><tr><th>term</th><th className="rg-num">share of variance</th><th className="rg-num" title="percentile interval from a bootstrap over tasks">95% CI · tasks</th></tr></thead>
+        <tbody>{T.map((r, i) => <tr key={r.term}><td><span className="rg-row rg-an-lg"><span className={cx('rg-an-sw', VS_TONES[i % 6])} />{r.term}</span></td><td className="rg-num">{pct(r.share)}</td><td className="rg-num rg-mono rg-small" data-el="share-ci">{(r.share_ci95 && r.share_ci95.length === 2 ? `${pct(r.share_ci95[0])} – ${pct(r.share_ci95[1])}` : '—')}</td></tr>)}</tbody></table></div>
     </Sec>
   )
 }
@@ -909,8 +911,8 @@ function Fit({ spec, dir, row, c }) {
         </Kpis>
         <Sec title="ANOVA · sums of squares" meta={`SS total ${fx(X.anova.ss_total, 1)}`}
           actions={<PinButton compact item={{ id: `figure:${dir}:fit`, kind: 'figure', label: `Two-factor fit · ${dir}`, value: `model ${pct(F.model.share)} · harness ${pct(F.harness.share)} · interaction ${pct(F.interaction_share)}`, spec: makeSpec('an', dir, 'fit'), dir }} />}>
-          <div className="rg-pnl rg-an-measure"><TableScroll label="ANOVA table"><table className="rg-tbl rg-an-tbl"><thead><tr><th>term</th><th className="rg-num">SS</th><th className="rg-num">df</th><th className="rg-num rg-cq-hide-sm">MS</th><th className="rg-num rg-cq-hide-sm">F</th><th className="rg-num">share</th></tr></thead>
-            <tbody>{T.map((r) => <tr key={r.term}><td className="rg-mono rg-nw">{r.term}</td><td className="rg-num">{fx(r.SS, 2)}</td><td className="rg-num">{r.df ?? '—'}</td><td className="rg-num rg-cq-hide-sm">{fx(r.MS, 3)}</td><td className="rg-num rg-cq-hide-sm">{r.F == null ? '—' : fx(r.F, 1)}</td><td className="rg-num">{pct(r.share)}</td></tr>)}</tbody></table></TableScroll></div>
+          <div className="rg-pnl rg-an-measure"><TableScroll label="ANOVA table"><table className="rg-tbl rg-an-tbl"><thead><tr><th>term</th><th className="rg-num">SS</th><th className="rg-num">df</th><th className="rg-num rg-cq-hide-sm">MS</th><th className="rg-num rg-cq-hide-sm">F</th><th className="rg-num">share</th><th className="rg-num" title="percentile interval from a bootstrap over tasks">95% CI</th></tr></thead>
+            <tbody>{T.map((r) => <tr key={r.term}><td className="rg-mono rg-nw">{r.term}</td><td className="rg-num">{fx(r.SS, 2)}</td><td className="rg-num">{r.df ?? '—'}</td><td className="rg-num rg-cq-hide-sm">{fx(r.MS, 3)}</td><td className="rg-num rg-cq-hide-sm">{r.F == null ? '—' : fx(r.F, 1)}</td><td className="rg-num">{pct(r.share)}</td><td className="rg-num rg-mono rg-small">{(r.share_ci95 && r.share_ci95.length === 2 ? `${pct(r.share_ci95[0])} – ${pct(r.share_ci95[1])}` : '—')}</td></tr>)}</tbody></table></TableScroll></div>
         </Sec>
       </>)}
     </div>
@@ -1059,6 +1061,8 @@ function Setup({ spec, dir, row, c }) {
   const [selT, setSelT] = useTabState(spec, 't', null)
   const [rep, setRep] = useTabState(spec, 'rep', 3)
   const [par, setPar] = useTabState(spec, 'par', 3)
+  const [routeTxt, setRouteTxt] = useTabState(spec, 'route', '')
+  const route = routeTxt.split(',').map((s) => s.trim()).filter(Boolean)
   const [out, setOut] = useTabState(spec, 'out', dir)
   const [msg, setMsg] = useState(null)
   if (Mo.error) return <ErrorState error={Mo.error} onRetry={Mo.reload} what="/api/models" />
@@ -1092,7 +1096,7 @@ function Setup({ spec, dir, row, c }) {
   const launch = async () => {
     setMsg(null)
     try {
-      const job = await api('/jobs', { method: 'POST', body: { out, models: mS, harnesses: hS, tasks: tS, repeats: rep, parallel: par, sentinel_ab: false } })
+      const job = await api('/jobs', { method: 'POST', body: { out, models: mS, harnesses: hS, tasks: tS, repeats: rep, parallel: par, sentinel_ab: false, ...(route.length ? { route } : {}) } })
       setMsg({ ok: true, text: `Launched ${job && job.id ? job.id : 'the job'}: ${int(n)} runs → data/runs/${out}.`, out })
       invalidate(paths.jobs()); invalidate(paths.status())
     } catch (e) { setMsg({ ok: false, text: e.message }) }
@@ -1118,12 +1122,17 @@ function Setup({ spec, dir, row, c }) {
       </div>
       <div className="rg-col rg-an-setside">
         <Panel label="Tasks · repeats" meta={`${tS.length} of ${Tk.length}`}>
+          {Tk.some((t) => t.suite === 'extended') && <div className="rg-row rg-wrap rg-an-suites" role="group" aria-label="Select a task suite">{[['core', 'core'], ['extended', 'extended'], ['full', 'all']].map(([s, l]) => {
+            const ids = Tk.filter((t) => s === 'full' || (t.suite || 'core') === s).map((t) => t.id)
+            return <button key={s} type="button" className="rg-btn" data-el={`suite-${s}`} onClick={() => setSelT(ids)}>{l} · {ids.length}</button>
+          })}</div>}
           <div className="rg-row rg-wrap rg-an-tchips">{Tk.map((t) => (
-            <label key={t.id} className={cx('rg-tag rg-an-tchip', tS.includes(t.id) ? 'acc' : 'dash')} title={t.title}><input type="checkbox" className="sr-only" checked={tS.includes(t.id)} onChange={() => toggle(tS, setSelT, t.id)} />{t.id.split('_')[0]}</label>))}</div>
+            <label key={t.id} className={cx('rg-tag rg-an-tchip', tS.includes(t.id) ? 'acc' : 'dash')} title={`${t.title || t.id}${t.suite === 'extended' ? ' · extended suite' : ''}`}><input type="checkbox" className="sr-only" checked={tS.includes(t.id)} onChange={() => toggle(tS, setSelT, t.id)} />{t.id.split('_')[0]}</label>))}</div>
           <div className="rg-grid rg-an-knobs">
             <label className="rg-fld">Repeats<input className="rg-inp" type="number" min="1" max="20" value={rep} onChange={(e) => setRep(Math.max(1, Math.min(20, +e.target.value || 1)))} /></label>
             <label className="rg-fld">Parallelism<input className="rg-inp" type="number" min="1" max="12" value={par} onChange={(e) => setPar(Math.max(1, Math.min(12, +e.target.value || 1)))} /></label>
             <label className="rg-fld rg-an-span2">Output dir · data/runs/<input className="rg-inp" value={out} placeholder="e.g. my_sweep" onChange={(e) => setOut(e.target.value.replace(/[^a-zA-Z0-9_-]/g, ''))} aria-label="Output directory" /></label>
+            <label className="rg-fld rg-an-span2" title="OpenRouter hosts to pin, in order, with fallbacks off (same as run --route). Leave empty to let OpenRouter choose; the ledger records the host either way.">Pin hosts · OpenRouter<input className="rg-inp" value={routeTxt} placeholder="e.g. Nebius, Parasail (empty = any host)" onChange={(e) => setRouteTxt(e.target.value.replace(/[^A-Za-z0-9 ,._-]/g, '').slice(0, 300))} aria-label="OpenRouter hosts to pin" data-el="run-route" /></label>
           </div>
         </Panel>
         <Panel label="Estimate" el="run-estimate">
@@ -1198,7 +1207,7 @@ function Features({ spec, dir, c }) {
   const top = att[0]
   const lead = !d.unresolved || !top
     ? <>All {int(d.n)} runs resolved their issue, so there is no failure to attribute.</>
-    : <>{int(d.unresolved)} of {int(d.n)} runs did not resolve their issue. The feature that goes with failure most is <b>{featLabel(top.feature)}</b> (Ochiai {fx(top.ochiai)}): {pct(top.rate_in_failures, 0)} of failed runs show it, against {pct(top.rate_in_successes, 0)} of resolved ones.</>
+    : <>{int(d.unresolved)} of {int(d.n)} runs did not resolve their issue. The feature that goes with failure most is <b>{featLabel(top.feature)}</b> (Ochiai {fx(top.ochiai)}): {pct(top.rate_in_failures, 0)} of failed runs show it, against {pct(top.rate_in_successes, 0)} of resolved ones.{top.risk_difference != null && <> Runs with it fail {pts(top.risk_difference)} more often{top.stratified_difference != null ? <>, and {pts(top.stratified_difference)} more often when compared within the same model and task</> : null}.</>}</>
   const pin = top && <PinButton item={{ id: `figure:${dir}:features`, kind: 'figure', label: `Trajectory features · ${dir}`, value: `${featLabel(top.feature)} · Ochiai ${fx(top.ochiai)} · ${pct(top.rate_in_failures, 0)} of failed vs ${pct(top.rate_in_successes, 0)} of resolved`, spec: makeSpec('an', dir, 'features'), dir }} />
   const exits = Object.entries(d.exit_status || {})
   const mix = d.action_mix || {}
@@ -1207,11 +1216,12 @@ function Features({ spec, dir, c }) {
     {head(lead, pin, <>
       <p>Spectrum-based fault localisation, applied to runs instead of statements. Each run is a row, each yes/no trajectory feature a column, and a run that did not resolve its issue plays the failing test: Ochiai = e<sub>f</sub> / √(F · (e<sub>f</sub> + e<sub>p</sub>)), where e<sub>f</sub> and e<sub>p</sub> count the failed and resolved runs that show the feature and F counts the failed runs.</p>
       <p>Read the two rate columns, not only the score. A feature common in failures and in successes ranks high from its base rate alone; that is SBFL's coincidental-coverage weakness, and the score is a correlation, not a cause. Open the example runs to see the behaviour behind a row.</p>
+      <p><b>Δ fail</b> is the failure rate of runs with the feature minus that of runs without it. <b>Δ within task</b> is the same difference computed only between runs of the same model on the same task (Mantel-Haenszel weights): it removes the part of the association that comes from the feature occurring on harder tasks. When the two disagree, trust the second.</p>
       <p>Features come from SWE-agent's command language (view, search, edit, run, submit); file paths are not recoverable from it, so read-before-write is not measured. For the bundled sample, exercise 7 prints the same numbers: <CopyCmd cmd={EX7_CMD} /></p>
     </>)}
     <Sec title="Failure attribution · Ochiai" meta={`${plural(att.length, 'feature')} · ${int(d.unresolved)} failed · ${int(d.resolved)} resolved`} el="feature-attribution">
       <div className="rg-pnl rg-an-measure-lg"><TableScroll label="Failure attribution by trajectory feature"><table className="rg-tbl rg-an-ft">
-        <thead><tr><th>feature</th><th className="rg-num">Ochiai</th><th>in failed runs</th><th>in resolved runs</th><th>open a run</th></tr></thead>
+        <thead><tr><th>feature</th><th className="rg-num">Ochiai</th><th>in failed runs</th><th>in resolved runs</th><th className="rg-num">Δ fail</th><th className="rg-num">Δ within task</th><th>open a run</th></tr></thead>
         <tbody>{att.map((a) => {
           const xf = a.examples_fail || [], xp = a.examples_pass || []
           return (
@@ -1220,6 +1230,8 @@ function Features({ spec, dir, c }) {
               <td className="rg-num">{fx(a.ochiai)}</td>
               <td><div className="rg-an-ftr"><Rate v={a.rate_in_failures} tone="red" /><span className="rg-mono rg-small">{pct(a.rate_in_failures, 0)}</span><span className="rg-tiny rg-mute rg-mono">{int(a.ef)} runs</span></div></td>
               <td><div className="rg-an-ftr"><Rate v={a.rate_in_successes} tone="sky" /><span className="rg-mono rg-small">{pct(a.rate_in_successes, 0)}</span><span className="rg-tiny rg-mute rg-mono">{int(a.ep)} runs</span></div></td>
+              <td className="rg-num rg-mono" data-el="feature-rd">{a.risk_difference != null ? pts(a.risk_difference) : '—'}</td>
+              <td className="rg-num rg-mono" data-el="feature-srd" title={a.strata_used ? `${a.strata_used} model-task strata, ${a.strata_runs} runs` : 'no stratum has runs with and without this feature'}>{a.stratified_difference != null ? pts(a.stratified_difference) : '—'}</td>
               <td><div className="rg-row rg-wrap rg-an-ftx">
                 {xf.map((id, k) => <Go key={id} spec={makeSpec('run', id)} className="rg-chip bad" title={id} label={`Open failed run ${k + 1} with this feature: ${id}`}>× {k + 1}</Go>)}
                 {xp.map((id, k) => <Go key={id} spec={makeSpec('run', id)} className="rg-chip ok" title={id} label={`Open resolved run ${k + 1} with this feature: ${id}`}>✓ {k + 1}</Go>)}

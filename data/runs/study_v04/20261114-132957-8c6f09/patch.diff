@@ -1,0 +1,20 @@
+--- a/search/lookup.py
++++ b/search/lookup.py
+@@ -11,12 +11,15 @@
+     lo, hi = 0, len(sorted_list) - 1
+     while lo <= hi:
+         mid = (lo + hi) // 2
+-        if sorted_list[mid] == target:
+-            return mid
+         if sorted_list[mid] < target:
+             lo = mid + 1
+         else:
++            # sorted_list[mid] >= target: the first occurrence (if any)
++            # is at mid or to its left, so keep searching left.
+             hi = mid - 1
++    # lo is the first index where sorted_list[lo] >= target (or len).
++    if lo < len(sorted_list) and sorted_list[lo] == target:
++        return lo
+     return -1
+ 
+ 

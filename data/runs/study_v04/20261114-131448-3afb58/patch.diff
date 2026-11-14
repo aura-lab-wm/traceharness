@@ -1,0 +1,103 @@
+--- a/lru/cache.py
++++ b/lru/cache.py
+@@ -1,45 +1,64 @@
+-"""A small least-recently-used cache."""
++class LRUCache:
++    def __init__(self, capacity: int):
++        self.capacity = capacity
++        self.cache = {}  # Stores key -> Node
++        self.head = Node(0, 0)  # Dummy head
++        self.tail = Node(0, 0)  # Dummy tail
++        self.head.next = self.tail
++        self.tail.prev = self.head
+ 
++    def _remove(self, node):
++        prev = node.prev
++        next = node.next
++        prev.next = next
++        next.prev = prev
+ 
+-class LRUCache:
+-    """Cache holding at most `capacity` entries.
++    def _add(self, node):
++        node.prev = self.head
++        node.next = self.head.next
++        self.head.next.prev = node
++        self.head.next = node
+ 
+-    Both get() (on a hit) and put() count as a use of the key. When a new key
+-    is added to a full cache, the least recently used key is evicted first.
+-    Updating the value of an existing key never evicts anything.
+-    """
++    def get(self, key, default=None) -> int:
++        if key in self.cache:
++            node = self.cache[key]
++            self._remove(node)
++            self._add(node)
++            return node.value
++        return default
+ 
+-    def __init__(self, capacity):
+-        if capacity < 1:
+-            raise ValueError("capacity must be at least 1")
+-        self.capacity = capacity
+-        self._data = {}  # insertion order is recency order, oldest first
++    def put(self, key: int, value: int) -> None:
++        if key in self.cache:
++            node = self.cache[key]
++            node.value = value
++            self._remove(node)
++            self._add(node)
++        else:
++            if len(self.cache) >= self.capacity:
++                lru_node = self.tail.prev
++                self._remove(lru_node)
++                del self.cache[lru_node.key]
++            new_node = Node(key, value)
++            self.cache[key] = new_node
++            self._add(new_node)
+ 
+-    def get(self, key, default=None):
+-        """Return the value for key and mark it most recently used.
++    def __len__(self):
++        return len(self.cache)
+ 
+-        A miss returns `default` and leaves the cache unchanged.
+-        """
+-        if key not in self._data:
+-            return default
+-        return self._data[key]
+-
+-    def put(self, key, value):
+-        """Store value under key and mark key most recently used."""
+-        if key in self._data:
+-            del self._data[key]
+-        elif len(self._data) >= self.capacity:
+-            oldest = next(iter(self._data))
+-            del self._data[oldest]
+-        self._data[key] = value
++    def __contains__(self, key):
++        return key in self.cache
+ 
+     def keys(self):
+-        """Return the keys as a list, least recently used first."""
+-        return list(self._data)
++        keys_list = []
++        current = self.tail.prev
++        while current != self.head:
++            keys_list.append(current.key)
++            current = current.prev
++        return keys_list
+ 
+-    def __contains__(self, key):
+-        """Membership test; it does not count as a use."""
+-        return key in self._data
+-
+-    def __len__(self):
+-        return len(self._data)
++class Node:
++    def __init__(self, key, value):
++        self.key = key
++        self.value = value
++        self.prev = None
++        self.next = None

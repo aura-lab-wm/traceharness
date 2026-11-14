@@ -1,0 +1,124 @@
+[
+ {
+  "role": "system",
+  "content": "You are an autonomous software engineer working inside a small Python repository.\nYou are given a GitHub issue. Resolve it by editing files with the tools provided.\nWork step by step: inspect the relevant code, make a minimal change, verify it, then call `submit`.\nDo not modify the tests. Do not run commands unrelated to the task."
+ },
+ {
+  "role": "user",
+  "content": "Task id: t15_dedupe_stable\n\n# Issue #21: `dedupe(..., key=...)` returns the later duplicate\n\n`dedupe([\"a\", \"B\", \"A\", \"b\"], key=str.lower)` returns `[\"A\", \"b\"]`. We expected\n`[\"a\", \"B\"]`, the first item seen for each key, in the order they were first seen.\nWithout `key` everything is fine.\n\n\nRepository files:\ntests/test_dedupe.py\nuniq/__init__.py\nuniq/dedupe.py"
+ },
+ {
+  "role": "assistant",
+  "content": "\n\n\n",
+  "tool_calls": [
+   {
+    "id": "call-435b61b7-10c7-443f-9435-6df9a51e1e3d",
+    "name": "read_file",
+    "arguments": {
+     "path": "uniq/dedupe.py"
+    }
+   },
+   {
+    "id": "call-d23610da-55f5-463e-906e-4dff6f7d50cd",
+    "name": "read_file",
+    "arguments": {
+     "path": "tests/test_dedupe.py"
+    }
+   },
+   {
+    "id": "call-d9fb9075-5426-4e91-b692-10d603249405",
+    "name": "read_file",
+    "arguments": {
+     "path": "uniq/__init__.py"
+    }
+   }
+  ]
+ },
+ {
+  "role": "tool",
+  "tool_call_id": "call-435b61b7-10c7-443f-9435-6df9a51e1e3d",
+  "content": "   1| \"\"\"Order-preserving removal of duplicates.\"\"\"\n   2| \n   3| \n   4| def dedupe(items, key=None):\n   5|     \"\"\"Return a new list with duplicates removed, keeping the first occurrence.\n   6| \n   7|     Two items are duplicates when they are equal or, if `key` is given, when\n   8|     `key(item)` is equal for both. For each group of duplicates the first item\n   9|     in `items` is kept, and the kept items appear in the order in which they\n  10|     first occur. `key` is called exactly once per item, in input order. Items\n  11|     (when `key` is None) and key values must be hashable.\n  12| \n  13|     `items` may be any iterable and is consumed once; it is never modified.\n  14|     \"\"\"\n  15|     if key is None:\n  16|         seen = set()\n  17|         out = []\n  18|         for item in items:\n  19|             if item not in seen:\n  20|                 seen.add(item)\n  21|                 out.append(item)\n  22|         return out\n  23|     latest = {}\n  24|     for item in items:\n  25|         latest[key(item)] = item\n  26|     return list(latest.values())"
+ },
+ {
+  "role": "tool",
+  "tool_call_id": "call-d23610da-55f5-463e-906e-4dff6f7d50cd",
+  "content": "   1| import unittest\n   2| from uniq import dedupe\n   3| \n   4| \n   5| class TestDedupe(unittest.TestCase):\n   6|     def test_numbers(self):\n   7|         self.assertEqual(dedupe([3, 1, 3, 2, 1]), [3, 1, 2])\n   8| \n   9|     def test_strings(self):\n  10|         self.assertEqual(dedupe([\"b\", \"a\", \"b\", \"c\", \"a\"]), [\"b\", \"a\", \"c\"])\n  11| \n  12|     def test_empty(self):\n  13|         self.assertEqual(dedupe([]), [])\n  14| \n  15|     def test_no_duplicates(self):\n  16|         self.assertEqual(dedupe([5, 4, 3]), [5, 4, 3])\n  17| \n  18| \n  19| if __name__ == \"__main__\":\n  20|     unittest.main()"
+ },
+ {
+  "role": "tool",
+  "tool_call_id": "call-d9fb9075-5426-4e91-b692-10d603249405",
+  "content": "   1| from .dedupe import dedupe"
+ },
+ {
+  "role": "assistant",
+  "content": "\n\nThe bug is in the `key` branch: it builds a `latest` dict that gets overwritten on every duplicate, so the *last* item wins and the order is lost. Fixing it to keep the first occurrence per key:\n\n",
+  "tool_calls": [
+   {
+    "id": "call_2212a7d89a4f4692a4af7e56",
+    "name": "edit_file",
+    "arguments": {
+     "path": "uniq/dedupe.py",
+     "old": "    latest = {}\n    for item in items:\n        latest[key(item)] = item\n    return list(latest.values())",
+     "new": "    seen = set()\n    out = []\n    for item in items:\n        k = key(item)\n        if k not in seen:\n            seen.add(k)\n            out.append(item)\n    return out"
+    }
+   }
+  ]
+ },
+ {
+  "role": "tool",
+  "tool_call_id": "call_2212a7d89a4f4692a4af7e56",
+  "content": "edited uniq/dedupe.py"
+ },
+ {
+  "role": "assistant",
+  "content": "\n\nNow verify the issue's example and run the test suite:\n\n",
+  "tool_calls": [
+   {
+    "id": "call_1482d440f5a3499d85e9c2a3",
+    "name": "bash",
+    "arguments": {
+     "command": "python -c \"\nfrom uniq import dedupe\nprint(dedupe(['a', 'B', 'A', 'b'], key=str.lower))\nprint(dedupe([3, 1, 3, 2, 1]))\nprint(dedupe(iter([3, 1, 3, 2, 1])))\n\""
+    }
+   }
+  ]
+ },
+ {
+  "role": "tool",
+  "tool_call_id": "call_1482d440f5a3499d85e9c2a3",
+  "content": "exit=0\n['a', 'B']\n[3, 1, 2]\n[3, 1, 2]"
+ },
+ {
+  "role": "assistant",
+  "content": "\n\nThe issue's example now returns `['a', 'B']`. Running the full test suite:\n\n",
+  "tool_calls": [
+   {
+    "id": "call_4f8dcab7bde240daa8bdf565",
+    "name": "run_tests",
+    "arguments": {}
+   }
+  ]
+ },
+ {
+  "role": "tool",
+  "tool_call_id": "call_4f8dcab7bde240daa8bdf565",
+  "content": "exit=0\n----------------------------------------------------------------------\nRan 4 tests in 0.000s\n\nOK"
+ },
+ {
+  "role": "assistant",
+  "content": "\n\nAll tests pass and the issue's example now returns `[\"a\", \"B\"]` as expected.\n\n",
+  "tool_calls": [
+   {
+    "id": "call_213c30645cd94c76a350a3d4",
+    "name": "submit",
+    "arguments": {
+     "summary": "Fixed `dedupe(..., key=...)` in uniq/dedupe.py: the `key` branch previously built a dict that was overwritten on every duplicate, keeping the *last* item per key and losing first-seen order. Replaced it with the same seen-set/first-occurrence logic used in the no-key branch, so the first item per key is kept in the order keys first appear (e.g. `dedupe([\"a\", \"B\", \"A\", \"b\"], key=str.lower)` now returns `[\"a\", \"B\"]`). Verified with the issue's example and the existing test suite (4 tests, all passing)."
+    }
+   }
+  ]
+ },
+ {
+  "role": "tool",
+  "tool_call_id": "call_213c30645cd94c76a350a3d4",
+  "content": "submitted"
+ }
+]

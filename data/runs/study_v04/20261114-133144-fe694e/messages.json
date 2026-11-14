@@ -1,0 +1,89 @@
+[
+ {
+  "role": "system",
+  "content": "You are an autonomous software engineer working inside a small Python repository.\nYou are given a GitHub issue. Resolve it by editing files with the tools provided.\nWork step by step: inspect the relevant code, make a minimal change, verify it, then call `submit`.\nDo not modify the tests. Do not run commands unrelated to the task."
+ },
+ {
+  "role": "user",
+  "content": "Task id: t23_dedup_window\n\n# Issue #77: Deduper swallows an event that arrives exactly one window after the previous one\n\nWith `Deduper(10)`, `seen(\"job-1\", 0)` returns `False` and then `seen(\"job-1\", 10)`\nreturns `True`. The window is 10 seconds, and the second event is 10 seconds after\nthe first, so it should be reported as new. We also noticed the process memory\ngrowing on a long-running consumer that sees millions of distinct keys.\nFix `events/dedup.py`.\n\n\nRepository files:\nevents/__init__.py\nevents/dedup.py\ntests/test_dedup.py"
+ },
+ {
+  "role": "assistant",
+  "content": "\n\n\n\n",
+  "tool_calls": [
+   {
+    "id": "call_bc549af6734047db9eb0b374",
+    "name": "read_file",
+    "arguments": {
+     "path": "events/dedup.py"
+    }
+   },
+   {
+    "id": "call_e4cc35ff42f14a1895a48e88",
+    "name": "read_file",
+    "arguments": {
+     "path": "tests/test_dedup.py"
+    }
+   },
+   {
+    "id": "call_4b3588657e3446bb95af186e",
+    "name": "read_file",
+    "arguments": {
+     "path": "events/__init__.py"
+    }
+   }
+  ]
+ },
+ {
+  "role": "tool",
+  "tool_call_id": "call_bc549af6734047db9eb0b374",
+  "content": "   1| \"\"\"Suppress repeated events that carry the same key.\"\"\"\n   2| \n   3| \n   4| class Deduper:\n   5|     \"\"\"Report whether an event key was already seen recently.\n   6| \n   7|     A sighting of ``key`` at time ``t`` (reported as new by ``seen``) suppresses\n   8|     every later sighting of the same key at times ``now`` with\n   9|     ``now - t < window_seconds``. The window is half open: a sighting exactly\n  10|     ``window_seconds`` after ``t`` is new again and starts a fresh window.\n  11|     Suppressed sightings do not extend the window.\n  12| \n  13|     Timestamps are numbers supplied by the caller and never decrease from one\n  14|     call to the next. ``len(deduper)`` is the number of keys whose window is\n  15|     still open as of the most recent call to ``seen``; keys whose window has\n  16|     ended must not be kept in memory.\n  17|     \"\"\"\n  18| \n  19|     def __init__(self, window_seconds):\n  20|         if window_seconds <= 0:\n  21|             raise ValueError(\"window_seconds must be positive\")\n  22|         self.window = window_seconds\n  23|         self._last = {}\n  24| \n  25|     def seen(self, key, now):\n  26|         \"\"\"Return True if ``key`` is a duplicate at time ``now``, else False.\n  27|         A False result records ``now`` as the key's latest new sighting.\"\"\"\n  28|         last = self._last.get(key)\n  29|         if last is not None and now - last <= self.window:\n  30|             return True\n  31|         self._last[key] = now\n  32|         return False\n  33| \n  34|     def __len__(self):\n  35|         return len(self._last)"
+ },
+ {
+  "role": "tool",
+  "tool_call_id": "call_e4cc35ff42f14a1895a48e88",
+  "content": "   1| import unittest\n   2| from events import Deduper\n   3| \n   4| \n   5| class TestDeduper(unittest.TestCase):\n   6|     def test_first_sighting_is_new(self):\n   7|         self.assertFalse(Deduper(10).seen(\"a\", 0))\n   8| \n   9|     def test_repeat_inside_window(self):\n  10|         d = Deduper(10)\n  11|         d.seen(\"a\", 0)\n  12|         self.assertTrue(d.seen(\"a\", 4))\n  13| \n  14|     def test_exactly_one_window_later_is_new(self):\n  15|         d = Deduper(10)\n  16|         d.seen(\"a\", 0)\n  17|         self.assertFalse(d.seen(\"a\", 10))\n  18| \n  19| \n  20| if __name__ == \"__main__\":\n  21|     unittest.main()"
+ },
+ {
+  "role": "tool",
+  "tool_call_id": "call_4b3588657e3446bb95af186e",
+  "content": "   1| from .dedup import Deduper"
+ },
+ {
+  "role": "assistant",
+  "content": "\n\nI found two bugs in `events/dedup.py`:\n\n1. **Off-by-one**: `now - last <= self.window` treats an event that arrives exactly one window later as a duplicate. The docstring says the window is half-open (`now - t < window_seconds`), so it should be `<`.\n2. **Memory leak**: `self._last` never evicts keys whose window has closed, so it grows unboundedly with the number of distinct keys.\n\nI'll fix both: use a strict `<` comparison, and maintain a time-ordered deque so that expired keys can be evicted in amortized O(1) per call (since timestamps never decrease).\n\n",
+  "tool_calls": [
+   {
+    "id": "call_f996694da5c54f82b15ed301",
+    "name": "write_file",
+    "arguments": {
+     "path": "events/dedup.py",
+     "content": "\"\"\"Suppress repeated events that carry the same key.\"\"\"\n\nfrom collections import deque\n\n\nclass Deduper:\n    \"\"\"Report whether an event key was already seen recently.\n\n    A sighting of ``key`` at time ``t`` (reported as new by ``seen``) suppresses\n    every later sighting of the same key at times ``now`` with\n    ``now - t < window_seconds``. The window is half open: a sighting exactly\n    ``window_seconds`` after ``t`` is new again and starts a fresh window.\n    Suppressed sightings do not extend the window.\n\n    Timestamps are numbers supplied by the caller and never decrease from one\n    call to the next. ``len(deduper)`` is the number of keys whose window is\n    still open as of the most recent call to ``seen``; keys whose window has\n    ended must not be kept in memory.\n    \"\"\"\n\n    def __init__(self, window_seconds):\n        if window_seconds <= 0:\n            raise ValueError(\"window_seconds must be positive\")\n        self.window = window_seconds\n        self._last = {}\n        # (key, time) pairs in non-decreasing time order, used to evict\n        # expired keys in amortized O(1) per call.\n        self._order = deque()\n\n    def seen(self, key, now):\n        \"\"\"Return True if ``key`` is a duplicate at time ``now``, else False.\n        A False result records ``now`` as the key's latest new sighting.\"\"\"\n        # Drop keys whose window has ended as of ``now``.\n        while self._order and now - self._order[0][1] >= self.window:\n            old_key, old_time = self._order.popleft()\n            if self._last.get(old_key) == old_time:\n                del self._last[old_key]\n        last = self._last.get(key)\n        if last is not None:\n            return True\n        self._last[key] = now\n        self._order.append((key, now))\n        return False\n\n    def __len__(self):\n        return len(self._last)\n"
+    }
+   }
+  ]
+ },
+ {
+  "role": "tool",
+  "tool_call_id": "call_f996694da5c54f82b15ed301",
+  "content": "wrote events/dedup.py (1837 bytes)"
+ },
+ {
+  "role": "assistant",
+  "content": "\n\nThe fix is in place. Let me verify the logic against the tests and the docstring contract:\n\n1. **`test_first_sighting_is_new`**: `seen(\"a\", 0)` → deque empty, no eviction, `last is None` → records and returns `False`. ✓\n2. **`test_repeat_inside_window`**: `seen(\"a\", 4)` → `4 - 0 = 4 < 10`, no eviction, `last = 0` → returns `True` (suppressed sightings don't append to the deque, so the window isn't extended). ✓\n3. **`test_exactly_one_window_later_is_new`**: `seen(\"a\", 10)` → eviction loop pops `(a, 0)` since `10 - 0 >= 10` (half-open window), removes it from `_last`, then records the fresh sighting and returns `False`. ✓\n\nMemory behavior: the deque holds one `(key, time)` entry per open window, and since timestamps never decrease, expired entries are always at the front and get popped in amortized O(1) per call — so `len(deduper)` matches the number of keys with open windows and stale keys are no longer retained. The `self._last.get(old_key) == old_time` guard makes eviction safe even if a key were ever re-recorded.\n\n",
+  "tool_calls": [
+   {
+    "id": "call_3511582e5b614b1bb4bf1148",
+    "name": "submit",
+    "arguments": {
+     "summary": "Fixed events/dedup.py: (1) changed the duplicate check from `now - last <= self.window` to a half-open window so an event exactly one window after the previous sighting is reported as new (eviction now uses `now - t >= window`); (2) added a time-ordered deque of (key, time) entries so keys whose window has ended are evicted in amortized O(1) per call, preventing unbounded memory growth on long-running consumers with many distinct keys. Suppressed sightings still do not extend the window, and `__len__` now reflects only keys with open windows as of the most recent call."
+    }
+   }
+  ]
+ },
+ {
+  "role": "tool",
+  "tool_call_id": "call_3511582e5b614b1bb4bf1148",
+  "content": "submitted"
+ }
+]

@@ -1,0 +1,39 @@
+--- a/cfg/loader.py
++++ b/cfg/loader.py
+@@ -1,5 +1,35 @@
++
++import os
++
+ def load_config(defaults: dict, env: dict) -> dict:
+     """Return a copy of `defaults` where any env var APP_<KEY> overrides the
+-    value for key <key> (lowercased), coerced to the type of the default."""
++    value for key <key> (lowercased), coerced to the type of the default.
++    """
+     cfg = dict(defaults)
++    for key, value in env.items():
++        if key.startswith("APP_"):
++            config_key = key[4:].lower()
++            if config_key in cfg:
++                default_value = cfg[config_key]
++                try:
++                    if isinstance(default_value, bool):
++                        # Special handling for booleans: 'true'/'false' (case-insensitive)
++                        if value.lower() == 'true':
++                            cfg[config_key] = True
++                        elif value.lower() == 'false':
++                            cfg[config_key] = False
++                        else:
++                            # If not 'true' or 'false', try to cast to bool directly
++                            # This might raise ValueError for invalid boolean strings
++                            cfg[config_key] = bool(value)
++                    elif isinstance(default_value, int):
++                        cfg[config_key] = int(value)
++                    elif isinstance(default_value, float):
++                        cfg[config_key] = float(value)
++                    else: # Assume string
++                        cfg[config_key] = str(value)
++                except ValueError:
++                    # If coercion fails, keep the default value and log a warning (optional)
++                    # For now, we'll just ignore the override if coercion fails
++                    pass
+     return cfg

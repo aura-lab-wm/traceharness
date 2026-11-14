@@ -1,0 +1,13 @@
+--- a/money/split.py
++++ b/money/split.py
+@@ -19,9 +19,8 @@
+         raise ValueError("total_cents must be >= 0")
+     if people < 1:
+         raise ValueError("people must be >= 1")
+-    share = round(total_cents / people)
++    share, leftover = divmod(total_cents, people)
+     shares = [share] * people
+-    leftover = total_cents - share * people
+     for i in range(leftover):
+         shares[i] += 1
+     return shares

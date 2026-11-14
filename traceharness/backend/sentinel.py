@@ -712,7 +712,8 @@ def build_training_examples(results_dirs: list[str], harness_filter: Optional[st
                     before = [e for e in events if e["step"] < k]
                     pending = [{"name": e["tool"]} for e in events if e["step"] == k and e["tool"]]
                     f = prefix_features(before, harness, tokens, pending=pending, step=k)
-                    examples.append({"run_id": row["run_id"], "task_id": row["task_id"], "harness_id": row["harness_id"], "step": k,
+                    examples.append({"run_id": row["run_id"], "task_id": row["task_id"], "harness_id": row["harness_id"],
+                                     "model": row.get("model"), "step": k,
                                      "step_frac": f["step_frac"], "features": f, "label": label, "total_steps": len(steps)})
     return examples
 
@@ -741,16 +742,38 @@ def _fit(tr: list[dict], names, epochs, lr, l2) -> "RiskModel":
 
 
 def train(results_dirs: list[str], epochs: int = 400, lr: float = 0.2, l2: float = 1e-3, seed: int = 0,
-          harness_filter: Optional[str] = None, folds: int = 5, bootstrap: int = 200) -> tuple[RiskModel, dict]:
-    """Fit the risk model and evaluate it with run-level k-fold cross-validation (a run's prefixes never
-    straddle train and test). Returns the model fitted on all data plus the CV report."""
+          harness_filter: Optional[str] = None, folds: int = 5, bootstrap: int = 200,
+          group_by: str = "task") -> tuple[RiskModel, dict]:
+    """Fit the risk model and evaluate it with k-fold cross-validation. Returns the model fitted on all
+    data plus the CV report.
+
+    Folds are grouped by TASK by default: every run of a task, and therefore every prefix of those
+    runs, is in the same fold, so the model is always scored on tasks it never saw. Grouping by run
+    (group_by="run", the behaviour before 0.4) lets runs of the same task sit on both sides of the
+    split, and the score then mostly measures how well the model recognises a hard task. With fewer
+    distinct tasks than folds, the grouping falls back to runs and the report says so.
+
+    Besides the pooled AUC, the report carries `auc_within_task`: the same out-of-fold maximum risk,
+    compared only between a failed and a passed run of the same model on the same task. That is the
+    discrimination an early warning needs in order to be useful on a run in progress."""
     ex = build_training_examples(results_dirs, harness_filter)
     if len(ex) < 20:
         raise ValueError(f"not enough examples to train ({len(ex)}); need finished runs with hidden_pass labels")
     rng = random.Random(seed)
     runs = sorted({e["run_id"] for e in ex})
-    rng.shuffle(runs)
-    fold_of = {r: i % folds for i, r in enumerate(runs)}
+    # A run without a task id (an imported or legacy run) is its own group, so it can never share a
+    # fold boundary with itself; only real task ids count towards the task-grouping threshold.
+    task_of = {e["run_id"]: (e.get("task_id") or "\0run:" + e["run_id"]) for e in ex}
+    tasks = sorted(set(task_of.values()))
+    real_tasks = [t for t in tasks if not t.startswith("\0run:")]
+    grouping = "task" if group_by == "task" and len(real_tasks) >= folds else "run"
+    if grouping == "task":
+        rng.shuffle(tasks)
+        fold_of_task = {t: i % folds for i, t in enumerate(tasks)}
+        fold_of = {r: fold_of_task[task_of[r]] for r in runs}
+    else:
+        rng.shuffle(runs)
+        fold_of = {r: i % folds for i, r in enumerate(runs)}
     names = list(FEATURE_NAMES)
     cv_pred = {}                        # (run_id, step) -> out-of-fold risk
     for k in range(folds):
@@ -872,8 +895,32 @@ def train(results_dirs: list[str], epochs: int = 400, lr: float = 0.2, l2: float
                             oi["invisible" if vp is True else "visible_fail" if vp is False else "unknown"] += 1
     nf = oi["n_fail"] or 1
     oi.update(invisible_share=oi["invisible"] / nf, visible_fail_share=oi["visible_fail"] / nf, unknown_share=oi["unknown"] / nf)
+    # ---- within (model, task): the failed-vs-passed pairs an early warning has to separate ----------
+    run_max = {r: max(p for _, p in v) for r, v in by_run.items()}
+    run_steps = {r: len(v) for r, v in by_run.items()}
+    run_label = {r: v[0][0]["label"] for r, v in by_run.items()}
+    model_of = {e["run_id"]: e.get("model") for e in ex}
+    cells = {}
+    for r in run_max:
+        cells.setdefault((model_of.get(r), task_of.get(r)), []).append(r)
+
+    def _pairs_auc(score):
+        won = total = 0.0
+        for rs in cells.values():
+            pos = [score[r] for r in rs if run_label[r]]
+            neg = [score[r] for r in rs if not run_label[r]]
+            for a in pos:
+                for b in neg:
+                    total += 1
+                    won += 1.0 if a > b else 0.5 if a == b else 0.0
+        return (won / total if total else None), int(total), sum(1 for rs in cells.values() if any(run_label[r] for r in rs) and not all(run_label[r] for r in rs))
+
+    within, within_pairs, within_cells = _pairs_auc(run_max)
+    within_steps, _, _ = _pairs_auc(run_steps)
     report = {
-        "n_examples": len(ex), "n_runs": len(runs), "folds": folds,
+        "n_examples": len(ex), "n_runs": len(runs), "folds": folds, "cv_grouping": grouping,
+        "auc_within_task": within, "auc_within_task_step_baseline": within_steps,
+        "within_task_pairs": within_pairs, "within_task_cells": within_cells,
         "fail_rate": round(sum(e["label"] for e in ex) / len(ex), 3),
         "auc_all_prefixes": _auc(S_model, Y),
         "auc_final_prefix": _auc([p for _, p in final.values()], [e["label"] for e, _ in final.values()]),

@@ -1,0 +1,35 @@
+--- a/events/dedup.py
++++ b/events/dedup.py
+@@ -1,4 +1,6 @@
+ """Suppress repeated events that carry the same key."""
++
++from collections import deque
+ 
+ 
+ class Deduper:
+@@ -21,14 +23,24 @@
+             raise ValueError("window_seconds must be positive")
+         self.window = window_seconds
+         self._last = {}
++        # Timestamps are nondecreasing, so this queue lets us discard expired
++        # keys without scanning every key on each call.
++        self._expirations = deque()
+ 
+     def seen(self, key, now):
+         """Return True if ``key`` is a duplicate at time ``now``, else False.
+         A False result records ``now`` as the key's latest new sighting."""
++        while self._expirations and self._expirations[0][0] + self.window <= now:
++            last, expired_key = self._expirations.popleft()
++            # A key may have been seen as new again since this entry was added.
++            if self._last.get(expired_key) == last:
++                del self._last[expired_key]
++
+         last = self._last.get(key)
+-        if last is not None and now - last <= self.window:
++        if last is not None and now - last < self.window:
+             return True
+         self._last[key] = now
++        self._expirations.append((now, key))
+         return False
+ 
+     def __len__(self):

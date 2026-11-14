@@ -1,0 +1,106 @@
+[
+ {
+  "role": "system",
+  "content": "You are an autonomous software engineer working inside a small Python repository.\nYou are given a GitHub issue. Resolve it by editing files with the tools provided.\nWork step by step: inspect the relevant code, make a minimal change, verify it, then call `submit`.\nDo not modify the tests. Do not run commands unrelated to the task."
+ },
+ {
+  "role": "user",
+  "content": "Task id: t17_json_pointer\n\n# Issue #112: pointers to keys containing \"~\" or \"/\" do not resolve\n\nGiven `doc = {\"~1\": \"tilde-one\", \"a/b\": \"slash\"}`, `resolve(doc, \"/~01\")` raises `KeyError`,\nalthough `\"~01\"` is the RFC 6901 encoding of the key `\"~1\"`. Keys that contain a slash\n(`\"/a~1b\"`) are also affected in some combinations. Plain keys and list indexes work fine.\n\n\nRepository files:\npointer/__init__.py\npointer/resolve.py\ntests/test_resolve.py"
+ },
+ {
+  "role": "assistant",
+  "content": "",
+  "tool_calls": [
+   {
+    "id": "call_rDt4rjo6TQHTtgKeZhoYUNXx",
+    "name": "read_file",
+    "arguments": {
+     "path": "pointer/resolve.py"
+    }
+   },
+   {
+    "id": "call_qSDDNaYj56ikA2qLtRV8oWyg",
+    "name": "read_file",
+    "arguments": {
+     "path": "pointer/__init__.py"
+    }
+   },
+   {
+    "id": "call_WDzPH4nHHSKnWVV2aurnzNFD",
+    "name": "read_file",
+    "arguments": {
+     "path": "tests/test_resolve.py"
+    }
+   }
+  ]
+ },
+ {
+  "role": "tool",
+  "tool_call_id": "call_rDt4rjo6TQHTtgKeZhoYUNXx",
+  "content": "   1| \"\"\"JSON Pointer (RFC 6901) lookups on documents made of dicts and lists.\"\"\"\n   2| \n   3| \n   4| def _decode(token):\n   5|     \"\"\"Decode one reference token: '~1' stands for '/' and '~0' for '~'.\n   6| \n   7|     Escapes are decoded left to right as in the RFC, so '~01' is the two\n   8|     characters '~1' (a tilde followed by a one), never '/'.\n   9|     \"\"\"\n  10|     return token.replace(\"~0\", \"~\").replace(\"~1\", \"/\")\n  11| \n  12| \n  13| def split(pointer):\n  14|     \"\"\"Split a pointer into its decoded tokens.\n  15| \n  16|     '' is the whole document (no tokens); '/' is one empty token. Any other\n  17|     pointer must start with '/', otherwise ValueError is raised.\n  18|     \"\"\"\n  19|     if pointer == \"\":\n  20|         return []\n  21|     if not pointer.startswith(\"/\"):\n  22|         raise ValueError(\"pointer must start with '/': %r\" % (pointer,))\n  23|     return [_decode(t) for t in pointer[1:].split(\"/\")]\n  24| \n  25| \n  26| def _step(node, token):\n  27|     if isinstance(node, dict):\n  28|         if token not in node:\n  29|             raise KeyError(token)\n  30|         return node[token]\n  31|     if isinstance(node, list):\n  32|         # array indexes are plain decimals without leading zeros\n  33|         if not (token.isascii() and token.isdigit()) or (len(token) > 1 and token[0] == \"0\"):\n  34|             raise KeyError(token)\n  35|         if int(token) >= len(node):\n  36|             raise KeyError(token)\n  37|         return node[int(token)]\n  38|     raise KeyError(token)\n  39| \n  40| \n  41| def resolve(document, pointer):\n  42|     \"\"\"Return the value that `pointer` designates inside `document`.\n  43| \n  44|     Raises KeyError if the pointer does not lead to a value (missing key,\n  45|     bad or out-of-range array index, descending into a scalar) and\n  46|     ValueError if the pointer itself is malformed. The document is not modified.\n  47|     \"\"\"\n  48|     node = document\n  49|     for token in split(pointer):\n  50|         node = _step(node, token)\n  51|     return node"
+ },
+ {
+  "role": "tool",
+  "tool_call_id": "call_qSDDNaYj56ikA2qLtRV8oWyg",
+  "content": "   1| from .resolve import resolve, split"
+ },
+ {
+  "role": "tool",
+  "tool_call_id": "call_WDzPH4nHHSKnWVV2aurnzNFD",
+  "content": "   1| import unittest\n   2| from pointer import resolve\n   3| \n   4| \n   5| DOC = {\"users\": [{\"name\": \"ann\", \"tags\": [\"x\", \"y\"]}, {\"name\": \"bob\"}], \"count\": 2}\n   6| \n   7| \n   8| class TestResolve(unittest.TestCase):\n   9|     def test_whole_document(self):\n  10|         self.assertIs(resolve(DOC, \"\"), DOC)\n  11| \n  12|     def test_nested_dict_and_list(self):\n  13|         self.assertEqual(resolve(DOC, \"/users/0/name\"), \"ann\")\n  14|         self.assertEqual(resolve(DOC, \"/users/0/tags/1\"), \"y\")\n  15| \n  16|     def test_missing_and_malformed(self):\n  17|         with self.assertRaises(KeyError):\n  18|             resolve(DOC, \"/users/5\")\n  19|         with self.assertRaises(ValueError):\n  20|             resolve(DOC, \"users\")\n  21| \n  22| \n  23| if __name__ == \"__main__\":\n  24|     unittest.main()"
+ },
+ {
+  "role": "assistant",
+  "content": "",
+  "tool_calls": [
+   {
+    "id": "call_ukSVEqmZ2EmMaqLSEMMtyx9a",
+    "name": "edit_file",
+    "arguments": {
+     "path": "pointer/resolve.py",
+     "old": "    return token.replace(\"~0\", \"~\").replace(\"~1\", \"/\")",
+     "new": "    # Decode ~1 first so that the ~1 produced by decoding ~0 is not\n    # interpreted as another escape (for example, ~01 must become ~1).\n    return token.replace(\"~1\", \"/\").replace(\"~0\", \"~\")"
+    }
+   }
+  ]
+ },
+ {
+  "role": "tool",
+  "tool_call_id": "call_ukSVEqmZ2EmMaqLSEMMtyx9a",
+  "content": "edited pointer/resolve.py"
+ },
+ {
+  "role": "assistant",
+  "content": "",
+  "tool_calls": [
+   {
+    "id": "call_MfAuAAwpZqemxa4rtHzFZCSW",
+    "name": "run_tests",
+    "arguments": {}
+   }
+  ]
+ },
+ {
+  "role": "tool",
+  "tool_call_id": "call_MfAuAAwpZqemxa4rtHzFZCSW",
+  "content": "exit=0\n----------------------------------------------------------------------\nRan 3 tests in 0.000s\n\nOK"
+ },
+ {
+  "role": "assistant",
+  "content": "",
+  "tool_calls": [
+   {
+    "id": "call_XjdYfc2r3kI6k9rH8rfYHjr9",
+    "name": "submit",
+    "arguments": {
+     "summary": "Fixed JSON Pointer token decoding by applying the RFC escapes in the required order: decode ~1 before ~0, preserving ~1 in encoded tokens such as ~01 while still decoding slash-containing keys correctly. Existing tests pass."
+    }
+   }
+  ]
+ },
+ {
+  "role": "tool",
+  "tool_call_id": "call_XjdYfc2r3kI6k9rH8rfYHjr9",
+  "content": "submitted"
+ }
+]

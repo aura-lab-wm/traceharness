@@ -1,0 +1,37 @@
+--- a/events/dedup.py
++++ b/events/dedup.py
+@@ -21,15 +21,33 @@
+             raise ValueError("window_seconds must be positive")
+         self.window = window_seconds
+         self._last = {}
++        self._now = None
++        self._last_prune = None
++
++    def _prune(self, now):
++        """Drop keys whose window has ended as of ``now``."""
++        expired = [k for k, t in self._last.items() if now - t >= self.window]
++        for k in expired:
++            del self._last[k]
+ 
+     def seen(self, key, now):
+         """Return True if ``key`` is a duplicate at time ``now``, else False.
+         A False result records ``now`` as the key's latest new sighting."""
++        self._now = now
++        # Timestamps never decrease, so a full sweep is only needed once per
++        # window of time; this keeps memory bounded even if len() is never
++        # called.
++        if self._last_prune is None or now - self._last_prune >= self.window:
++            self._prune(now)
++            self._last_prune = now
+         last = self._last.get(key)
+-        if last is not None and now - last <= self.window:
++        if last is not None and now - last < self.window:
+             return True
+         self._last[key] = now
+         return False
+ 
+     def __len__(self):
++        # Drop keys whose window has ended as of the most recent call.
++        if self._now is not None:
++            self._prune(self._now)
+         return len(self._last)

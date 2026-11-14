@@ -1,0 +1,10 @@
+{
+  "id": "t09_paginate",
+  "title": "paginate reports an extra empty page when items divide evenly",
+  "probe": "none",
+  "suite": "extended",
+  "src_files": [
+    "pager/paginate.py"
+  ],
+  "test_cmd": "python -m unittest discover -s tests -q"
+}

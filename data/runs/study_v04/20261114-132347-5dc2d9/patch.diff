@@ -1,0 +1,29 @@
+--- a/pointer/resolve.py
++++ b/pointer/resolve.py
+@@ -7,7 +7,25 @@
+     Escapes are decoded left to right as in the RFC, so '~01' is the two
+     characters '~1' (a tilde followed by a one), never '/'.
+     """
+-    return token.replace("~0", "~").replace("~1", "/")
++    # Decode each escape once.  Chaining ``replace`` calls would decode the
++    # result of the first replacement again, turning ``~01`` into ``/``
++    # instead of the required ``~1``.
++    decoded = []
++    index = 0
++    while index < len(token):
++        if token[index] == "~" and index + 1 < len(token):
++            escape = token[index + 1]
++            if escape == "0":
++                decoded.append("~")
++                index += 2
++                continue
++            if escape == "1":
++                decoded.append("/")
++                index += 2
++                continue
++        decoded.append(token[index])
++        index += 1
++    return "".join(decoded)
+ 
+ 
+ def split(pointer):

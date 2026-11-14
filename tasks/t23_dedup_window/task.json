@@ -1,0 +1,10 @@
+{
+  "id": "t23_dedup_window",
+  "title": "Deduper drops events exactly one window apart and never forgets keys",
+  "probe": "none",
+  "suite": "extended",
+  "src_files": [
+    "events/dedup.py"
+  ],
+  "test_cmd": "python -m unittest discover -s tests -q"
+}

@@ -1,0 +1,124 @@
+[
+ {
+  "role": "system",
+  "content": "You are an autonomous software engineer working inside a small Python repository.\nYou are given a GitHub issue. Resolve it by editing files with the tools provided.\nWork step by step: inspect the relevant code, make a minimal change, verify it, then call `submit`.\nDo not modify the tests. Do not run commands unrelated to the task."
+ },
+ {
+  "role": "user",
+  "content": "Task id: t16_ambiguous_parser\n\n# Issue #47: flag parsing treats \"off \" as true\n\nA setting written as `off ` with a trailing space ends up enabled. This showed up\nwhen reading feature switches from the environment. Please fix the flag parsing.\n\n\nRepository files:\nflags/__init__.py\nflags/parse.py\ntests/test_parse.py"
+ },
+ {
+  "role": "assistant",
+  "content": "",
+  "tool_calls": [
+   {
+    "id": "chatcmpl-tool-82d3ce1e055af456",
+    "name": "list_files",
+    "arguments": {}
+   },
+   {
+    "id": "chatcmpl-tool-8297335827652f68",
+    "name": "read_file",
+    "arguments": {
+     "path": "flags/parse.py"
+    }
+   }
+  ]
+ },
+ {
+  "role": "tool",
+  "tool_call_id": "chatcmpl-tool-82d3ce1e055af456",
+  "content": "flags/__init__.py\nflags/parse.py\ntests/test_parse.py"
+ },
+ {
+  "role": "tool",
+  "tool_call_id": "chatcmpl-tool-8297335827652f68",
+  "content": "   1| \"\"\"Parsing of on/off switches from configuration text.\"\"\"\n   2| \n   3| _FALSE_WORDS = frozenset({\"0\", \"false\", \"no\", \"off\"})\n   4| \n   5| \n   6| def parse_flag(text):\n   7|     \"\"\"Interpret one switch word as a bool.\n   8| \n   9|     Matching is case-insensitive and ignores whitespace around the word.\n  10|     \"0\", \"false\", \"no\" and \"off\" are False; any other non-empty word is True.\n  11|     Raises ValueError if the text is empty or only whitespace.\n  12|     \"\"\"\n  13|     word = text.lower()\n  14|     if not word:\n  15|         raise ValueError(\"empty flag\")\n  16|     return word not in _FALSE_WORDS\n  17| \n  18| \n  19| def parse_flags(text):\n  20|     \"\"\"Parse a comma-separated list of switch words into a list of bools.\n  21| \n  22|     Each item is interpreted with `parse_flag`. Items that are empty or only\n  23|     whitespace are skipped, so \"\" gives [] and \"on,,off\" gives [True, False].\n  24|     \"\"\"\n  25|     return [parse_flag(part) for part in text.split(\",\") if part.strip()]"
+ },
+ {
+  "role": "assistant",
+  "content": "",
+  "tool_calls": [
+   {
+    "id": "chatcmpl-tool-859f7728f6885b6d",
+    "name": "read_file",
+    "arguments": {
+     "path": "tests/test_parse.py"
+    }
+   },
+   {
+    "id": "chatcmpl-tool-97f4da4f408884af",
+    "name": "read_file",
+    "arguments": {
+     "path": "flags/__init__.py"
+    }
+   }
+  ]
+ },
+ {
+  "role": "tool",
+  "tool_call_id": "chatcmpl-tool-859f7728f6885b6d",
+  "content": "   1| import unittest\n   2| from flags import parse_flag, parse_flags\n   3| \n   4| \n   5| class TestFlags(unittest.TestCase):\n   6|     def test_words(self):\n   7|         self.assertTrue(parse_flag(\"on\"))\n   8|         self.assertTrue(parse_flag(\"YES\"))\n   9|         self.assertFalse(parse_flag(\"off\"))\n  10|         self.assertFalse(parse_flag(\"False\"))\n  11| \n  12|     def test_list(self):\n  13|         self.assertEqual(parse_flags(\"on,off,yes\"), [True, False, True])\n  14| \n  15|     def test_list_with_spaces(self):\n  16|         self.assertEqual(parse_flags(\"on, off ,yes\"), [True, False, True])\n  17| \n  18| \n  19| if __name__ == \"__main__\":\n  20|     unittest.main()"
+ },
+ {
+  "role": "tool",
+  "tool_call_id": "chatcmpl-tool-97f4da4f408884af",
+  "content": "   1| from .parse import parse_flag, parse_flags"
+ },
+ {
+  "role": "assistant",
+  "content": "\n\nThe bug is clear: `parse_flag`'s docstring promises that it \"ignores whitespace around the word,\" but the code only lowercases and doesn't strip. So `\"off \"` (with a trailing space) doesn't match `_FALSE_WORDS` and ends up being treated as `True`. Also, whitespace-only strings don't raise `ValueError` as documented. The fix is to strip before lowercasing:\n\n",
+  "tool_calls": [
+   {
+    "id": "chatcmpl-tool-84e23a48d945236f",
+    "name": "edit_file",
+    "arguments": {
+     "path": "flags/parse.py",
+     "old": "    word = text.lower()",
+     "new": "    word = text.strip().lower()"
+    }
+   }
+  ]
+ },
+ {
+  "role": "tool",
+  "tool_call_id": "chatcmpl-tool-84e23a48d945236f",
+  "content": "edited flags/parse.py"
+ },
+ {
+  "role": "assistant",
+  "content": "\n\nLet me verify the final state of the file:\n\n",
+  "tool_calls": [
+   {
+    "id": "chatcmpl-tool-82c772b187de7f60",
+    "name": "read_file",
+    "arguments": {
+     "path": "flags/parse.py"
+    }
+   }
+  ]
+ },
+ {
+  "role": "tool",
+  "tool_call_id": "chatcmpl-tool-82c772b187de7f60",
+  "content": "   1| \"\"\"Parsing of on/off switches from configuration text.\"\"\"\n   2| \n   3| _FALSE_WORDS = frozenset({\"0\", \"false\", \"no\", \"off\"})\n   4| \n   5| \n   6| def parse_flag(text):\n   7|     \"\"\"Interpret one switch word as a bool.\n   8| \n   9|     Matching is case-insensitive and ignores whitespace around the word.\n  10|     \"0\", \"false\", \"no\" and \"off\" are False; any other non-empty word is True.\n  11|     Raises ValueError if the text is empty or only whitespace.\n  12|     \"\"\"\n  13|     word = text.strip().lower()\n  14|     if not word:\n  15|         raise ValueError(\"empty flag\")\n  16|     return word not in _FALSE_WORDS\n  17| \n  18| \n  19| def parse_flags(text):\n  20|     \"\"\"Parse a comma-separated list of switch words into a list of bools.\n  21| \n  22|     Each item is interpreted with `parse_flag`. Items that are empty or only\n  23|     whitespace are skipped, so \"\" gives [] and \"on,,off\" gives [True, False].\n  24|     \"\"\"\n  25|     return [parse_flag(part) for part in text.split(\",\") if part.strip()]"
+ },
+ {
+  "role": "assistant",
+  "content": "\n\nThe fix is complete. Tracing through the behavior:\n\n- **Bug case**: `parse_flag(\"off \")` → `\"off\"` after strip → in `_FALSE_WORDS` → `False` ✓ (previously `\"off \"` wasn't in the set → `True`)\n- **Existing tests**: `parse_flag(\"on\")` → `True`, `parse_flag(\"YES\")` → `True`, `parse_flag(\"off\")` → `False`, `parse_flag(\"False\")` → `False`; `parse_flags(\"on,off,yes\")` → `[True, False, True]`; `parse_flags(\"on, off ,yes\")` → `[True, False, True]` — all still pass\n- **Bonus consistency**: whitespace-only input like `\"   \"` now correctly raises `ValueError`, matching the docstring's promise\n\nThe change is a single line: `text.lower()` → `text.strip().lower()`, which makes the implementation match the documented behavior (\"ignores whitespace around the word\").\n\n",
+  "tool_calls": [
+   {
+    "id": "chatcmpl-tool-899c98c32ac33ae7",
+    "name": "submit",
+    "arguments": {
+     "summary": "Fixed the flag parsing bug in flags/parse.py where a value like \"off \" (trailing space) was treated as True. The parse_flag function only lowercased the input without stripping whitespace, so \"off \" didn't match the _FALSE_WORDS set. Changed `word = text.lower()` to `word = text.strip().lower()`, which makes the code match its documented behavior of ignoring surrounding whitespace and also correctly raises ValueError for whitespace-only input. All existing tests remain satisfied."
+    }
+   }
+  ]
+ },
+ {
+  "role": "tool",
+  "tool_call_id": "chatcmpl-tool-899c98c32ac33ae7",
+  "content": "submitted"
+ }
+]

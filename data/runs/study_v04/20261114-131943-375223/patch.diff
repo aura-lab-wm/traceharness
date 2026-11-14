@@ -1,0 +1,29 @@
+--- a/search/lookup.py
++++ b/search/lookup.py
+@@ -8,16 +8,19 @@
+     This is a binary search: it only uses len() and indexing, and looks at
+     O(log n) elements. The sequence is not modified.
+     """
+-    lo, hi = 0, len(sorted_list) - 1
+-    while lo <= hi:
++    lo, hi = 0, len(sorted_list)
++    while lo < hi:
+         mid = (lo + hi) // 2
+-        if sorted_list[mid] == target:
+-            return mid
+         if sorted_list[mid] < target:
+             lo = mid + 1
+-        else:
+-            hi = mid - 1
+-    return -1
++        else: # sorted_list[mid] >= target
++            hi = mid
++    # After the loop, lo is the first index where sorted_list[lo] >= target
++    # Check if lo is within bounds and if the element at lo is indeed the target
++    if lo < len(sorted_list) and sorted_list[lo] == target:
++        return lo
++    else:
++        return -1
+ 
+ 
+ def count(sorted_list, target):

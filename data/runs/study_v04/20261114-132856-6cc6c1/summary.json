@@ -1,0 +1,42 @@
+{
+  "run_id": "20261114-132856-6cc6c1",
+  "task_id": "t21_money_round",
+  "harness_id": "long_output",
+  "model": "qwen/qwen3.8-27b",
+  "provider": "openai",
+  "repeat_index": 1,
+  "started_at": "2026-11-14T18:28:56Z",
+  "finished_at": "2026-11-14T18:29:27Z",
+  "exit_reason": "submitted",
+  "sentinel_interventions": 0,
+  "sentinel_max_risk": 0.0,
+  "sentinel_cost_usd": 0.0,
+  "steps": 4,
+  "tool_calls": 7,
+  "edits": 1,
+  "lines_added": 2,
+  "lines_removed": 2,
+  "files_touched": [
+    "money/split.py"
+  ],
+  "boundary_events": 0,
+  "boundary_kinds": [],
+  "tests_run_by_agent": 1,
+  "ran_tests_before_submit": true,
+  "input_tokens": 7075,
+  "output_tokens": 1211,
+  "cost_usd": 0.00209806,
+  "wall_ms": 30476,
+  "visible_pass": true,
+  "hidden_pass": true,
+  "strong_pass": true,
+  "tests_modified": false,
+  "patch_bytes": 446,
+  "error": "",
+  "served_by": [
+    "Near AI",
+    "Tenstorrent"
+  ],
+  "reprompts": 0,
+  "harness_hash": "24922721a6a4"
+}

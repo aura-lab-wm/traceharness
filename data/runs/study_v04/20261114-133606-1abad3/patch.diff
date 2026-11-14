@@ -1,0 +1,23 @@
+--- a/events/dedup.py
++++ b/events/dedup.py
+@@ -26,10 +26,16 @@
+         """Return True if ``key`` is a duplicate at time ``now``, else False.
+         A False result records ``now`` as the key's latest new sighting."""
+         last = self._last.get(key)
+-        if last is not None and now - last <= self.window:
+-            return True
+-        self._last[key] = now
+-        return False
++        is_duplicate = last is not None and now - last < self.window
++        if not is_duplicate:
++            self._last[key] = now
++        self._evict(now)
++        return is_duplicate
++
++    def _evict(self, now):
++        """Drop keys whose window has ended as of ``now``."""
++        for stale in [k for k, t in self._last.items() if now - t >= self.window]:
++            del self._last[stale]
+ 
+     def __len__(self):
+         return len(self._last)

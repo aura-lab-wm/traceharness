@@ -1,0 +1,82 @@
+[
+ {
+  "role": "system",
+  "content": "You are an autonomous software engineer working inside a small Python repository.\nYou are given a GitHub issue. Resolve it by editing files with the tools provided.\nWork step by step: inspect the relevant code, make a minimal change, verify it, then call `submit`.\nDo not modify the tests. Do not run commands unrelated to the task."
+ },
+ {
+  "role": "user",
+  "content": "Task id: t12_wordwrap\n\n# Issue #19: wrap() leaves lines one character short\n\n`wrap(\"aaa bbb\", 7)` returns `[\"aaa\", \"bbb\"]`, but \"aaa bbb\" is exactly 7 characters\nand should stay on one line. In longer paragraphs every line comes out a little\nnarrower than the width we asked for, so our receipts print on twice as many lines\nas they should. Overlong words are still split correctly. Code is in `wrapper/wrap.py`.\n\n\nRepository files:\ntests/test_wrap.py\nwrapper/__init__.py\nwrapper/wrap.py"
+ },
+ {
+  "role": "assistant",
+  "content": "The user wants me to fix a bug in the `wrap` function in `wrapper/wrap.py`.\nThe bug is that the function leaves lines one character short.\nI need to examine the `wrapper/wrap.py` file and identify the issue.\nThen I will make the necessary changes and run the tests to verify the fix.\n\nFirst, I'll read the `wrapper/wrap.py` file to understand the current implementation.",
+  "tool_calls": [
+   {
+    "id": "tool_read_file_NxWvugKvWWaQYO77dl87",
+    "name": "read_file",
+    "arguments": {
+     "path": "wrapper/wrap.py"
+    }
+   }
+  ]
+ },
+ {
+  "role": "tool",
+  "tool_call_id": "tool_read_file_NxWvugKvWWaQYO77dl87",
+  "content": "   1| \"\"\"Greedy word wrapping for plain text.\"\"\"\n   2| \n   3| \n   4| def wrap(text, width):\n   5|     \"\"\"Wrap text into a list of lines of at most `width` characters.\n   6| \n   7|     Words are the runs of non-whitespace characters in text; any run of spaces,\n   8|     tabs or newlines between words counts as one separator. Words are packed\n   9|     greedily: a word joins the current line, separated by one space, whenever\n  10|     the line stays at most `width` characters long (a line may be exactly\n  11|     `width` long). Otherwise it starts a new line.\n  12| \n  13|     A word longer than `width` always starts on a new line and is cut into\n  14|     pieces of exactly `width` characters; the last piece (which may be shorter)\n  15|     is\n... [138 chars truncated by harness] ...\ndth < 1.\n  18|     \"\"\"\n  19|     if width < 1:\n  20|         raise ValueError(\"width must be at least 1\")\n  21|     lines = []\n  22|     current = \"\"\n  23|     for word in text.split():\n  24|         while len(word) > width:\n  25|             if current:\n  26|                 lines.append(current)\n  27|                 current = \"\"\n  28|             lines.append(word[:width])\n  29|             word = word[width:]\n  30|         if not current:\n  31|             current = word\n  32|         elif len(current) + 1 + len(word) < width:\n  33|             current += \" \" + word\n  34|         else:\n  35|             lines.append(current)\n  36|             current = word\n  37|     if current:\n  38|         lines.append(current)\n  39|     return lines"
+ },
+ {
+  "role": "assistant",
+  "content": "The issue seems to be in lines 32-33: `elif len(current) + 1 + len(word) < width:`.\nThis condition checks if adding the new word (plus a space) is *strictly less than* the width.\nIf the total length is exactly equal to the width, it incorrectly starts a new line (lines 34-36).\nTo fix this, I should change the condition to `len(current) + 1 + len(word) <= width`.\n\nLet's apply this change.",
+  "tool_calls": [
+   {
+    "id": "tool_edit_file_TUfaS1PBsCEDEk90hByc",
+    "name": "edit_file",
+    "arguments": {
+     "path": "wrapper/wrap.py",
+     "old": "elif len(current) + 1 + len(word) < width:",
+     "new": "elif len(current) + 1 + len(word) <= width:"
+    }
+   }
+  ]
+ },
+ {
+  "role": "tool",
+  "tool_call_id": "tool_edit_file_TUfaS1PBsCEDEk90hByc",
+  "content": "edited wrapper/wrap.py"
+ },
+ {
+  "role": "assistant",
+  "content": "Now I will run the tests to make sure the fix works and doesn't break anything else.",
+  "tool_calls": [
+   {
+    "id": "tool_run_tests_LvI1v0aHUfzlYwAEMd3Y",
+    "name": "run_tests",
+    "arguments": {}
+   }
+  ]
+ },
+ {
+  "role": "tool",
+  "tool_call_id": "tool_run_tests_LvI1v0aHUfzlYwAEMd3Y",
+  "content": "exit=0\n----------------------------------------------------------------------\nRan 3 tests in 0.000s\n\nOK"
+ },
+ {
+  "role": "assistant",
+  "content": "The tests passed. I can now submit the changes.",
+  "tool_calls": [
+   {
+    "id": "tool_submit_ScBoGvwLY7FRoTx352wg",
+    "name": "submit",
+    "arguments": {
+     "summary": "Fixed the word wrap bug where lines were one character short. The condition `len(current) + 1 + len(word) < width` was changed to `len(current) + 1 + len(word) <= width` to ensure lines can be exactly `width` characters long."
+    }
+   }
+  ]
+ },
+ {
+  "role": "tool",
+  "tool_call_id": "tool_submit_ScBoGvwLY7FRoTx352wg",
+  "content": "submitted"
+ }
+]

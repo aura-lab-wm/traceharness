@@ -228,7 +228,7 @@ describe('run, span, event log', () => {
 })
 
 describe('compare and fork', () => {
-  it('compare: pair class with counts, both headers, first divergence and aligned steps', () => {
+  it('compare: pair class with counts, both headers, first divergence and aligned records', () => {
     const { container } = renderRig(`#/rig/cmp:${ID3}:${ID2}`, { data: data() })
     const pc = q(container, 'pair-class')
     expect(within(pc).getByRole('button', { name: 'repeat of same cell · 8' }).getAttribute('aria-pressed')).toBe('true')
@@ -238,7 +238,7 @@ describe('compare and fork', () => {
     // the aligned-steps header row names the runs, so the whole row keeps case (ids are case-sensitive)
     expect(container.querySelectorAll('.rg-traj-aligned table.rg-keep th')).toHaveLength(4)
     const dv = q(container, 'divergence')
-    expect(dv.textContent).toContain('step 4')                        // reply → read,read / read / read match; then reply(no call) vs reply → edit_file
+    expect(dv.textContent).toContain('record 4')                      // reply → read,read / read / read match; then reply(no call) vs reply → edit_file
     expect(dv.querySelector('tr.sel').textContent).toContain('reply · no tool call · length')
     act(() => { fireEvent.click(within(pc).getByRole('button', { name: '⇄ Swap' })) })
     expect(location.hash).toBe(`#/rig/cmp:${ID2}:${ID3}`)

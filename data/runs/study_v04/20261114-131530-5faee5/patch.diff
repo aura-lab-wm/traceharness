@@ -1,0 +1,9 @@
+--- a/inifile/parser.py
++++ b/inifile/parser.py
+@@ -37,5 +37,5 @@
+         key = parts[0].strip()
+         if not key:
+             raise ValueError(f"line {number}: empty key")
+-        result[section][key] = parts[1].split("#")[0].strip()
++        result[section][key] = parts[1].strip()
+     return result

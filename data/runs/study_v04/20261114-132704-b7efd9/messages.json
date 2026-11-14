@@ -1,0 +1,136 @@
+[
+ {
+  "role": "system",
+  "content": "You are an autonomous software engineer working inside a small Python repository.\nYou are given a GitHub issue. Resolve it by editing files with the tools provided.\nWork step by step: inspect the relevant code, make a minimal change, verify it, then call `submit`.\nDo not modify the tests. Do not run commands unrelated to the task."
+ },
+ {
+  "role": "user",
+  "content": "Task id: t23_dedup_window\n\n# Issue #77: Deduper swallows an event that arrives exactly one window after the previous one\n\nWith `Deduper(10)`, `seen(\"job-1\", 0)` returns `False` and then `seen(\"job-1\", 10)`\nreturns `True`. The window is 10 seconds, and the second event is 10 seconds after\nthe first, so it should be reported as new. We also noticed the process memory\ngrowing on a long-running consumer that sees millions of distinct keys.\nFix `events/dedup.py`.\n\n\nRepository files:\nevents/__init__.py\nevents/dedup.py\ntests/test_dedup.py"
+ },
+ {
+  "role": "assistant",
+  "content": "",
+  "tool_calls": [
+   {
+    "id": "chatcmpl-tool-9150e70b2e5dd040",
+    "name": "read_file",
+    "arguments": {
+     "path": "events/dedup.py"
+    }
+   },
+   {
+    "id": "chatcmpl-tool-b1de82e95235d47f",
+    "name": "read_file",
+    "arguments": {
+     "path": "tests/test_dedup.py"
+    }
+   },
+   {
+    "id": "chatcmpl-tool-9d6049235b9ce0d7",
+    "name": "read_file",
+    "arguments": {
+     "path": "events/__init__.py"
+    }
+   }
+  ]
+ },
+ {
+  "role": "tool",
+  "tool_call_id": "chatcmpl-tool-9150e70b2e5dd040",
+  "content": "   1| \"\"\"Suppress repeated events that carry the same key.\"\"\"\n   2| \n   3| \n   4| class Deduper:\n   5|     \"\"\"Report whether an event key was already seen recently.\n   6| \n   7|     A sighting of ``key`` at time ``t`` (reported as new by ``seen``) suppresses\n   8|     every later sighting of the same key at times ``now`` with\n   9|     ``now - t < window_seconds``. The window is half open: a sighting exactly\n  10|     ``window_seconds`` after ``t`` is new again and starts a fresh window.\n  11|     Suppressed sightings do not extend the window.\n  12| \n  13|     Timestamps are numbers supplied by the caller and never decrease from one\n  14|     call to the next. ``len(deduper)`` is the number of keys whose window is\n  15|     still open as of the most recent call to ``seen``; keys whose window has\n  16|     ended must not be kept in memory.\n  17|     \"\"\"\n  18| \n  19|     def __init__(self, window_seconds):\n  20|         if window_seconds <= 0:\n  21|             raise ValueError(\"window_seconds must be positive\")\n  22|         self.window = window_seconds\n  23|         self._last = {}\n  24| \n  25|     def seen(self, key, now):\n  26|         \"\"\"Return True if ``key`` is a duplicate at time ``now``, else False.\n  27|         A False result records ``now`` as the key's latest new sighting.\"\"\"\n  28|         last = self._last.get(key)\n  29|         if last is not None and now - last <= self.window:\n  30|             return True\n  31|         self._last[key] = now\n  32|         return False\n  33| \n  34|     def __len__(self):\n  35|         return len(self._last)"
+ },
+ {
+  "role": "tool",
+  "tool_call_id": "chatcmpl-tool-b1de82e95235d47f",
+  "content": "   1| import unittest\n   2| from events import Deduper\n   3| \n   4| \n   5| class TestDeduper(unittest.TestCase):\n   6|     def test_first_sighting_is_new(self):\n   7|         self.assertFalse(Deduper(10).seen(\"a\", 0))\n   8| \n   9|     def test_repeat_inside_window(self):\n  10|         d = Deduper(10)\n  11|         d.seen(\"a\", 0)\n  12|         self.assertTrue(d.seen(\"a\", 4))\n  13| \n  14|     def test_exactly_one_window_later_is_new(self):\n  15|         d = Deduper(10)\n  16|         d.seen(\"a\", 0)\n  17|         self.assertFalse(d.seen(\"a\", 10))\n  18| \n  19| \n  20| if __name__ == \"__main__\":\n  21|     unittest.main()"
+ },
+ {
+  "role": "tool",
+  "tool_call_id": "chatcmpl-tool-9d6049235b9ce0d7",
+  "content": "   1| from .dedup import Deduper"
+ },
+ {
+  "role": "assistant",
+  "content": "\n\nThe bug is clear: line 29 uses `<=` instead of `<` (the docstring says the window is half-open), and expired keys are never evicted, so memory grows unboundedly. Let me fix both.\n\n",
+  "tool_calls": [
+   {
+    "id": "chatcmpl-tool-896941fc3b301676",
+    "name": "edit_file",
+    "arguments": {
+     "path": "events/dedup.py",
+     "old": "    def seen(self, key, now):\n        \"\"\"Return True if ``key`` is a duplicate at time ``now``, else False.\n        A False result records ``now`` as the key's latest new sighting.\"\"\"\n        last = self._last.get(key)\n        if last is not None and now - last <= self.window:\n            return True\n        self._last[key] = now\n        return False",
+     "new": "    def seen(self, key, now):\n        \"\"\"Return True if ``key`` is a duplicate at time ``now``, else False.\n        A False result records ``now`` as the key's latest new sighting.\"\"\"\n        last = self._last.get(key)\n        is_duplicate = last is not None and now - last < self.window\n        if not is_duplicate:\n            self._last[key] = now\n        # Drop keys whose window has ended as of ``now`` so that long-running\n        # consumers do not accumulate stale entries in memory.\n        for stale_key in [k for k, t in self._last.items() if now - t >= self.window]:\n            del self._last[stale_key]\n        return is_duplicate"
+    }
+   }
+  ]
+ },
+ {
+  "role": "tool",
+  "tool_call_id": "chatcmpl-tool-896941fc3b301676",
+  "content": "edited events/dedup.py"
+ },
+ {
+  "role": "assistant",
+  "content": "\n\nNow let me verify the final file and run the tests:\n\n\n",
+  "tool_calls": [
+   {
+    "id": "chatcmpl-tool-b0a2398c5a476ee2",
+    "name": "read_file",
+    "arguments": {
+     "path": "events/dedup.py"
+    }
+   },
+   {
+    "id": "chatcmpl-tool-93ad7d27572da249",
+    "name": "run_tests",
+    "arguments": {}
+   }
+  ]
+ },
+ {
+  "role": "tool",
+  "tool_call_id": "chatcmpl-tool-b0a2398c5a476ee2",
+  "content": "   1| \"\"\"Suppress repeated events that carry the same key.\"\"\"\n   2| \n   3| \n   4| class Deduper:\n   5|     \"\"\"Report whether an event key was already seen recently.\n   6| \n   7|     A sighting of ``key`` at time ``t`` (reported as new by ``seen``) suppresses\n   8|     every later sighting of the same key at times ``now`` with\n   9|     ``now - t < window_seconds``. The window is half open: a sighting exactly\n  10|     ``window_seconds`` after ``t`` is new again and starts a fresh window.\n  11|     Suppressed sightings do not extend the window.\n  12| \n  13|     Timestamps are numbers supplied by the caller and never decrease from one\n  14|     call to the next. ``len(deduper)`` is the number of keys whose window is\n  15|     still open as of the most recent call to ``seen``; keys whose window has\n  16|     ended must not be kept in memory.\n  17|     \"\"\"\n  18| \n  19|     def __init__(self, window_seconds):\n  20|         if window_seconds <= 0:\n  21|             raise ValueError(\"window_seconds must be positive\")\n  22|         self.window = window_seconds\n  23|         self._last = {}\n  24| \n  25|     def seen(self, key, now):\n  26|         \"\"\"Return True if ``key`` is a duplicate at time ``now``, else False.\n  27|         A False result records ``now`` as the key's latest new sighting.\"\"\"\n  28|         last = self._last.get(key)\n  29|         is_duplicate = last is not None and now - last < self.window\n  30|         if not is_duplicate:\n  31|             self._last[key] = now\n  32|         # Drop keys whose window has ended as of ``now`` so that long-running\n  33|         # consumers do not accumulate stale entries in memory.\n  34|         for stale_key in [k for k, t in self._last.items() if now - t >= self.window]:\n  35|             del self._last[stale_key]\n  36|         return is_duplicate\n  37| \n  38|     def __len__(self):\n  39|         return len(self._last)"
+ },
+ {
+  "role": "tool",
+  "tool_call_id": "chatcmpl-tool-93ad7d27572da249",
+  "content": "exit=0\n----------------------------------------------------------------------\nRan 3 tests in 0.000s\n\nOK"
+ },
+ {
+  "role": "assistant",
+  "content": "\n\nAll tests pass. Let me run a quick sanity check on the memory-growth fix and edge cases:\n\n",
+  "tool_calls": [
+   {
+    "id": "chatcmpl-tool-bb7ad17ef3841681",
+    "name": "bash",
+    "arguments": {
+     "command": "python -c \"\nfrom events import Deduper\n\n# Issue scenario\nd = Deduper(10)\nassert d.seen('job-1', 0) is False\nassert d.seen('job-1', 10) is False, 'exactly one window later must be new'\n\n# Suppressed sightings do not extend the window\nd = Deduper(10)\nassert d.seen('a', 0) is False\nassert d.seen('a', 9) is True\nassert d.seen('a', 10) is False\n\n# Memory: expired keys are evicted\nd = Deduper(10)\nfor i in range(1000):\n    d.seen(f'k{i}', 0)\nassert len(d) == 1000\nd.seen('new', 10)  # time advances past the window\nassert len(d) == 1, f'expected 1, got {len(d)}'\n\n# Boundary: window still open at now - t == window - epsilon\nd = Deduper(10)\nassert d.seen('a', 0) is False\nassert d.seen('a', 9.999) is True\nassert d.seen('a', 10) is False\n\n# len counts only open windows as of the most recent call\nd = Deduper(10)\nd.seen('a', 0)\nd.seen('b', 5)\nassert len(d) == 2\nd.seen('c', 10)  # a expired (10-0>=10), b open (10-5<10), c new\nassert len(d) == 2\n\nprint('all sanity checks passed')\n\""
+    }
+   }
+  ]
+ },
+ {
+  "role": "tool",
+  "tool_call_id": "chatcmpl-tool-bb7ad17ef3841681",
+  "content": "exit=0\nall sanity checks passed"
+ },
+ {
+  "role": "assistant",
+  "content": "\n\nAll checks pass. The fix is complete:\n\n1. **Off-by-one bug**: `now - last <= self.window` → `now - last < self.window`, so an event exactly one window after the previous sighting is reported as new (half-open window, matching the docstring).\n2. **Memory growth**: `seen` now evicts keys whose window has ended as of `now`, so `len(deduper)` reflects only keys with open windows and the dict no longer accumulates stale entries on long-running consumers.\n\n",
+  "tool_calls": [
+   {
+    "id": "chatcmpl-tool-88299833a120b9bd",
+    "name": "submit",
+    "arguments": {
+     "summary": "Fixed events/dedup.py: (1) changed the duplicate check from `now - last <= self.window` to `now - last < self.window` so an event arriving exactly one window after the previous sighting is reported as new (half-open window, per the docstring); (2) added eviction of keys whose window has ended as of the current timestamp in `seen`, so `len(deduper)` counts only keys with open windows and memory no longer grows unboundedly on long-running consumers. All existing tests pass, plus sanity checks for the boundary case, non-extending suppressed sightings, and eviction behavior."
+    }
+   }
+  ]
+ },
+ {
+  "role": "tool",
+  "tool_call_id": "chatcmpl-tool-88299833a120b9bd",
+  "content": "submitted"
+ }
+]

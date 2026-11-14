@@ -1,0 +1,118 @@
+[
+ {
+  "role": "system",
+  "content": "You are an autonomous software engineer working inside a small Python repository.\nYou are given a GitHub issue. Resolve it by editing files with the tools provided.\nWork step by step: inspect the relevant code, make a minimal change, verify it, then call `submit`.\nDo not modify the tests. Do not run commands unrelated to the task."
+ },
+ {
+  "role": "user",
+  "content": "Task id: t03_ratelimit\n\n# Issue #112: bucket exceeds capacity after idle period\n\nAfter the bucket sits idle for a while, `allow()` lets through more requests than\n`capacity`. Refill must be capped at `capacity`. There is also a second bug: the\nvery first call after construction should succeed even if `now()` returns 0.\nFix `limiter/bucket.py`.\n\n\nRepository files:\nlimiter/__init__.py\nlimiter/bucket.py\ntests/test_bucket.py"
+ },
+ {
+  "role": "assistant",
+  "content": "",
+  "tool_calls": [
+   {
+    "id": "chatcmpl-tool-85e60d41a3969e74",
+    "name": "read_file",
+    "arguments": {
+     "path": "limiter/bucket.py"
+    }
+   },
+   {
+    "id": "chatcmpl-tool-9a9f969d436afae1",
+    "name": "read_file",
+    "arguments": {
+     "path": "tests/test_bucket.py"
+    }
+   },
+   {
+    "id": "chatcmpl-tool-a4e9a788cb97ddf7",
+    "name": "read_file",
+    "arguments": {
+     "path": "limiter/__init__.py"
+    }
+   }
+  ]
+ },
+ {
+  "role": "tool",
+  "tool_call_id": "chatcmpl-tool-85e60d41a3969e74",
+  "content": "   1| import time\n   2| \n   3| class TokenBucket:\n   4|     \"\"\"Classic token bucket. `rate` tokens are added per second up to `capacity`.\n   5|     `allow()` consumes one token and returns True, or returns False if empty.\"\"\"\n   6| \n   7|     def __init__(self, capacity: int, rate: float, now=time.monotonic):\n   8|         self.capacity = capacity\n   9|         self.rate = rate\n  10|         self._now = now\n  11|         self._tokens = float(capacity)\n  12|         self._last = None\n  13| \n  14|     def _refill(self):\n  15|         t = self._now()\n  16|         if self._last:\n  17|             self._tokens += (t - self._last) * self.rate\n  18|         self._last = t\n  19| \n  20|     def allow(self) -> bool:\n  21|         self._refill()\n  22|         if self._tokens >= 1:\n  23|             self._tokens -= 1\n  24|             return True\n  25|         return False"
+ },
+ {
+  "role": "tool",
+  "tool_call_id": "chatcmpl-tool-9a9f969d436afae1",
+  "content": "   1| import unittest\n   2| from limiter import TokenBucket\n   3| \n   4| class FakeClock:\n   5|     def __init__(self, t=0.0): self.t = t\n   6|     def __call__(self): return self.t\n   7| \n   8| class TestBucket(unittest.TestCase):\n   9|     def test_capacity(self):\n  10|         clock = FakeClock(1.0)\n  11|         b = TokenBucket(capacity=3, rate=1.0, now=clock)\n  12|         self.assertEqual([b.allow() for _ in range(4)], [True, True, True, False])\n  13|     def test_no_overfill(self):\n  14|         clock = FakeClock(1.0)\n  15|         b = TokenBucket(capacity=3, rate=1.0, now=clock)\n  16|         for _ in range(3): b.allow()\n  17|         clock.t += 100\n  18|         self.assertEqual([b.allow() for _ in range(4)], [True, True, True, False])\n  19| \n  20| if __name__ == \"__main__\":\n  21|     unittest.main()"
+ },
+ {
+  "role": "tool",
+  "tool_call_id": "chatcmpl-tool-a4e9a788cb97ddf7",
+  "content": "   1| from .bucket import TokenBucket"
+ },
+ {
+  "role": "assistant",
+  "content": "\n\nLooking at the code, I can identify both bugs:\n\n1. **Overfill bug**: `_refill()` adds `(t - self._last) * self.rate` tokens without capping at `capacity`, so after a long idle period the bucket can exceed `capacity`.\n2. **Zero-clock bug**: `if self._last:` treats a timestamp of `0.0` as falsy. If `now()` returns 0, `_last` becomes `0.0`, and all subsequent refill checks (`if self._last:`) are skipped — the bucket never refills. The check should be `is not None`.\n\nLet me apply the fix:\n\n",
+  "tool_calls": [
+   {
+    "id": "chatcmpl-tool-9127ff88d047ba6e",
+    "name": "edit_file",
+    "arguments": {
+     "path": "limiter/bucket.py",
+     "old": "    def _refill(self):\n        t = self._now()\n        if self._last:\n            self._tokens += (t - self._last) * self.rate\n        self._last = t",
+     "new": "    def _refill(self):\n        t = self._now()\n        if self._last is not None:\n            self._tokens = min(self.capacity, self._tokens + (t - self._last) * self.rate)\n        self._last = t"
+    }
+   }
+  ]
+ },
+ {
+  "role": "tool",
+  "tool_call_id": "chatcmpl-tool-9127ff88d047ba6e",
+  "content": "edited limiter/bucket.py"
+ },
+ {
+  "role": "assistant",
+  "content": "\n\nNow let me verify the fix by running the tests and a quick sanity check for the zero-clock scenario:\n\n\n",
+  "tool_calls": [
+   {
+    "id": "chatcmpl-tool-b60635925d202e9a",
+    "name": "run_tests",
+    "arguments": {}
+   },
+   {
+    "id": "chatcmpl-tool-a62e542cf39ca65f",
+    "name": "bash",
+    "arguments": {
+     "command": "python -c \"\nfrom limiter import TokenBucket\n\nclass FakeClock:\n    def __init__(self, t=0.0): self.t = t\n    def __call__(self): return self.t\n\n# Zero-clock scenario: first call at t=0 must succeed, and refill must work afterwards\nclock = FakeClock(0.0)\nb = TokenBucket(capacity=3, rate=1.0, now=clock)\nprint('at t=0:', [b.allow() for _ in range(4)])\nclock.t += 100\nprint('at t=100:', [b.allow() for _ in range(4)])\nassert b._tokens <= 3, 'overfill!'\nprint('OK: no overfill, zero-clock works')\n\""
+    }
+   }
+  ]
+ },
+ {
+  "role": "tool",
+  "tool_call_id": "chatcmpl-tool-b60635925d202e9a",
+  "content": "exit=0\n----------------------------------------------------------------------\nRan 2 tests in 0.000s\n\nOK"
+ },
+ {
+  "role": "tool",
+  "tool_call_id": "chatcmpl-tool-a62e542cf39ca65f",
+  "content": "exit=0\nat t=0: [True, True, True, False]\nat t=100: [True, True, True, False]\nOK: no overfill, zero-clock works"
+ },
+ {
+  "role": "assistant",
+  "content": "\n\nBoth bugs are fixed and verified:\n\n1. **Overfill fix**: `_refill()` now caps tokens at `capacity` with `min(self.capacity, ...)`, so after a long idle period the bucket holds at most `capacity` tokens.\n2. **Zero-clock fix**: The guard changed from `if self._last:` to `if self._last is not None:`, so a timestamp of `0.0` is no longer treated as \"no previous time\" — the first call at `t=0` succeeds and subsequent refills work correctly.\n\nTest suite passes (2/2), and the manual check confirms: at `t=0` the bucket allows exactly 3 requests, and after a 100-second idle it allows exactly 3 more (capped at capacity).\n\n",
+  "tool_calls": [
+   {
+    "id": "chatcmpl-tool-97842babb806c11f",
+    "name": "submit",
+    "arguments": {
+     "summary": "Fixed both bugs in limiter/bucket.py's _refill(): (1) capped token refill at capacity using min(self.capacity, self._tokens + (t - self._last) * self.rate) so the bucket can no longer exceed capacity after an idle period; (2) changed the guard from `if self._last:` to `if self._last is not None:` so a clock reading of 0.0 is no longer treated as falsy, ensuring the first call succeeds when now() returns 0 and refills continue to work. Verified with the existing test suite (2/2 passing) and a manual zero-clock scenario."
+    }
+   }
+  ]
+ },
+ {
+  "role": "tool",
+  "tool_call_id": "chatcmpl-tool-97842babb806c11f",
+  "content": "submitted"
+ }
+]

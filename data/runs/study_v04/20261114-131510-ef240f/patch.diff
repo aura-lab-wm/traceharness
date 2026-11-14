@@ -1,0 +1,11 @@
+--- a/flags/parse.py
++++ b/flags/parse.py
+@@ -10,7 +10,7 @@
+     "0", "false", "no" and "off" are False; any other non-empty word is True.
+     Raises ValueError if the text is empty or only whitespace.
+     """
+-    word = text.lower()
++    word = text.lower().strip()
+     if not word:
+         raise ValueError("empty flag")
+     return word not in _FALSE_WORDS

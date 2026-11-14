@@ -1,0 +1,10 @@
+{
+  "id": "t21_money_round",
+  "title": "split_bill loses or invents cents",
+  "probe": "none",
+  "suite": "extended",
+  "src_files": [
+    "money/split.py"
+  ],
+  "test_cmd": "python -m unittest discover -s tests -q"
+}

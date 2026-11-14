@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "traceharness"
-version = "0.3.0"
+version = "0.4.0"
 description = "Measure coding agents, not just score them: a harness you can vary, a ledger of every consequential action, and a platform that intervenes on trajectories while they run."
 readme = "README.md"
 requires-python = ">=3.10"

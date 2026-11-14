@@ -1,0 +1,25 @@
+--- a/search/lookup.py
++++ b/search/lookup.py
+@@ -9,15 +9,17 @@
+     O(log n) elements. The sequence is not modified.
+     """
+     lo, hi = 0, len(sorted_list) - 1
++    result = -1  # Initialize result to -1 (not found)
+     while lo <= hi:
+         mid = (lo + hi) // 2
+         if sorted_list[mid] == target:
+-            return mid
+-        if sorted_list[mid] < target:
+-            lo = mid + 1
++            result = mid  # Found a potential first occurrence
++            hi = mid - 1  # Try to find an earlier one in the left half
++        elif sorted_list[mid] < target:
++            lo = mid + 1  # Target is in the right half
+         else:
+-            hi = mid - 1
+-    return -1
++            hi = mid - 1  # Target is in the left half
++    return result
+ 
+ 
+ def count(sorted_list, target):

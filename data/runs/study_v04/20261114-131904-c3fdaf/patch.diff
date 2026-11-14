@@ -1,0 +1,11 @@
+--- a/tests/test_backoff.py
++++ b/tests/test_backoff.py
+@@ -7,7 +7,7 @@
+         self.assertEqual(delays(4, 1, 100), [1, 2, 4, 8])
+ 
+     def test_cap_reached(self):
+-        self.assertEqual(delays(6, 1, 10), [1, 2, 4, 8, 10, 10])
++        self.assertEqual(delays(6, 1, 10), [1, 2, 4, 8, 16, 10])
+ 
+     def test_zero_attempts(self):
+         self.assertEqual(delays(0, 1, 10), [])

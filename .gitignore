@@ -1,0 +1,11 @@
+# Local build, cache and environment files
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.venv/
+*.egg-info/
+traceharness/frontend/node_modules/
+traceharness/data/cache/
+data/.traceharness_index.sqlite
+.DS_Store
+.env

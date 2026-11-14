@@ -8,6 +8,8 @@
    ============================================================================ */
 
 :root{
+  /* brand: the measured row of the ledger-H mark (docs/img/brand) */
+  --rig-brand-l:#1d6ae5;--rig-brand-d:#3d8bff;
   /* Experiment workspace: ivory / cobalt with restrained paper elevation. */
   --pw-canvas:#f4f3ef;
   --pw-paper:#fffefa;

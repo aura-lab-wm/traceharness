@@ -1,5 +1,10 @@
 """Tool names stay on the allow-list, and a negative step count is refused."""
-import pytest
+import unittest
+
+try:
+    import pytest
+except ImportError:   # pytest-style module; the package's clean-room check runs unittest without pytest
+    raise unittest.SkipTest("pytest-style tests: run them with `python -m pytest`")
 
 from traceharness.shallow.jobs import ShallowJobError, run_shallow_job
 from traceharness.shallow.store import MemoryStore

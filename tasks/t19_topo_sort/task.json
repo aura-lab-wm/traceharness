@@ -1,0 +1,10 @@
+{
+  "id": "t19_topo_sort",
+  "title": "order() returns a partial order instead of detecting a cycle",
+  "probe": "none",
+  "suite": "extended",
+  "src_files": [
+    "deps/graph.py"
+  ],
+  "test_cmd": "python -m unittest discover -s tests -q"
+}

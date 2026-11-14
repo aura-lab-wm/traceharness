@@ -16,6 +16,7 @@ HOOK = os.path.join(LAB, "integrations", "claude-code", "hooks", "session_end.py
 ROOT = os.path.dirname(LAB) if False else LAB
 
 
+@unittest.skipUnless(os.path.exists(HOOK), "the Claude Code plugin (integrations/claude-code) is not part of this package")
 class TestPlugin(unittest.TestCase):
     def setUp(self):
         self.tmp = tempfile.mkdtemp(prefix="th-plugin-")

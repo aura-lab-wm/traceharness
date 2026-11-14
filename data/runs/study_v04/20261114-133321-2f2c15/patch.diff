@@ -1,0 +1,19 @@
+--- a/grid/spiral.py
++++ b/grid/spiral.py
+@@ -27,10 +27,12 @@
+             out.append(matrix[top][col])
+         for row in range(top + 1, bottom + 1):
+             out.append(matrix[row][right])
+-        for col in range(right - 1, left - 1, -1):
+-            out.append(matrix[bottom][col])
+-        for row in range(bottom - 1, top, -1):
+-            out.append(matrix[row][left])
++        if bottom != top:
++            for col in range(right - 1, left - 1, -1):
++                out.append(matrix[bottom][col])
++        if left != right:
++            for row in range(bottom - 1, top, -1):
++                out.append(matrix[row][left])
+         top += 1
+         bottom -= 1
+         left += 1

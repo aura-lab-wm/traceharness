@@ -1,0 +1,15 @@
+[
+ {
+  "role": "system",
+  "content": "You are an autonomous software engineer working inside a small Python repository.\nYou are given a GitHub issue. Resolve it by editing files with the tools provided.\nWork step by step: inspect the relevant code, make a minimal change, verify it, then call `submit`.\nDo not modify the tests. Do not run commands unrelated to the task."
+ },
+ {
+  "role": "user",
+  "content": "Task id: t24_ini_parser\n\n# Issue #19: values are cut short when they contain `=` or `#`\n\nGiven\n\n    [server]\n    url = http://localhost:8000/?debug=1\n    color = #ff8800\n\n`parse(text)[\"server\"][\"url\"]` is `http://localhost:8000/?debug` and\n`[\"color\"]` is an empty string. Both values should come back exactly as written\n(minus surrounding whitespace). Fix `inifile/parser.py`.\n\n\nRepository files:\ninifile/__init__.py\ninifile/parser.py\ntests/test_parser.py"
+ },
+ {
+  "role": "assistant",
+  "content": "\n\n",
+  "tool_calls": []
+ }
+]

@@ -1,0 +1,136 @@
+[
+ {
+  "role": "system",
+  "content": "You are an autonomous software engineer working inside a small Python repository.\nYou are given a GitHub issue. Resolve it by editing files with the tools provided.\nWork step by step: inspect the relevant code, make a minimal change, verify it, then call `submit`.\nDo not modify the tests. Do not run commands unrelated to the task."
+ },
+ {
+  "role": "user",
+  "content": "Task id: t15_dedupe_stable\n\n# Issue #21: `dedupe(..., key=...)` returns the later duplicate\n\n`dedupe([\"a\", \"B\", \"A\", \"b\"], key=str.lower)` returns `[\"A\", \"b\"]`. We expected\n`[\"a\", \"B\"]`, the first item seen for each key, in the order they were first seen.\nWithout `key` everything is fine.\n\n\nRepository files:\ntests/test_dedupe.py\nuniq/__init__.py\nuniq/dedupe.py"
+ },
+ {
+  "role": "assistant",
+  "content": "",
+  "tool_calls": [
+   {
+    "id": "chatcmpl-tool-8657901902b4c8db",
+    "name": "read_file",
+    "arguments": {
+     "path": "uniq/dedupe.py"
+    }
+   },
+   {
+    "id": "chatcmpl-tool-981dad8d64d96d1c",
+    "name": "read_file",
+    "arguments": {
+     "path": "tests/test_dedupe.py"
+    }
+   },
+   {
+    "id": "chatcmpl-tool-85a642bd50025ad3",
+    "name": "read_file",
+    "arguments": {
+     "path": "uniq/__init__.py"
+    }
+   }
+  ]
+ },
+ {
+  "role": "tool",
+  "tool_call_id": "chatcmpl-tool-8657901902b4c8db",
+  "content": "   1| \"\"\"Order-preserving removal of duplicates.\"\"\"\n   2| \n   3| \n   4| def dedupe(items, key=None):\n   5|     \"\"\"Return a new list with duplicates removed, keeping the first occurrence.\n   6| \n   7|     Two items are duplicates when they are equal or, if `key` is given, when\n   8|     `key(item)` is equal for both. For each group of duplicates the first item\n   9|     in `items` is kept, and the kept items appear in the order in which they\n  10|     first occur. `key` is called exactly once per item, in input order. Items\n  11|     (when `key` is None) and key values must be hashable.\n  12| \n  13|     `items` may be any iterable and is consumed once; it is never modified.\n  14|     \"\"\"\n  15|     if key is None:\n  16|         seen = set()\n  17|         out = []\n  18|         for item in items:\n  19|             if item not in seen:\n  20|                 seen.add(item)\n  21|                 out.append(item)\n  22|         return out\n  23|     latest = {}\n  24|     for item in items:\n  25|         latest[key(item)] = item\n  26|     return list(latest.values())"
+ },
+ {
+  "role": "tool",
+  "tool_call_id": "chatcmpl-tool-981dad8d64d96d1c",
+  "content": "   1| import unittest\n   2| from uniq import dedupe\n   3| \n   4| \n   5| class TestDedupe(unittest.TestCase):\n   6|     def test_numbers(self):\n   7|         self.assertEqual(dedupe([3, 1, 3, 2, 1]), [3, 1, 2])\n   8| \n   9|     def test_strings(self):\n  10|         self.assertEqual(dedupe([\"b\", \"a\", \"b\", \"c\", \"a\"]), [\"b\", \"a\", \"c\"])\n  11| \n  12|     def test_empty(self):\n  13|         self.assertEqual(dedupe([]), [])\n  14| \n  15|     def test_no_duplicates(self):\n  16|         self.assertEqual(dedupe([5, 4, 3]), [5, 4, 3])\n  17| \n  18| \n  19| if __name__ == \"__main__\":\n  20|     unittest.main()"
+ },
+ {
+  "role": "tool",
+  "tool_call_id": "chatcmpl-tool-85a642bd50025ad3",
+  "content": "   1| from .dedupe import dedupe"
+ },
+ {
+  "role": "assistant",
+  "content": "\n\nThe bug is in the `key` branch: it builds a dict that gets overwritten on each duplicate, so the **last** item per key wins. The fix is to keep the first occurrence, mirroring the `key is None` branch but using the key value for the seen-set.\n\n",
+  "tool_calls": [
+   {
+    "id": "call-8986b971-3433-4020-a0b8-4361571e313a",
+    "name": "edit_file",
+    "arguments": {
+     "old": "latest = {}\n    for item in items:\n        latest[key(item)] = item\n    return list(latest.values())",
+     "path": "uniq/dedupe.py",
+     "new": "seen = set()\n    out = []\n    for item in items:\n        k = key(item)\n        if k not in seen:\n            seen.add(k)\n            out.append(item)\n    return out"
+    }
+   }
+  ]
+ },
+ {
+  "role": "tool",
+  "tool_call_id": "call-8986b971-3433-4020-a0b8-4361571e313a",
+  "content": "edited uniq/dedupe.py"
+ },
+ {
+  "role": "assistant",
+  "content": "\n\nLet me verify the file — I need to check the indentation of the first line of the replacement.\n\n",
+  "tool_calls": [
+   {
+    "id": "call-b5077bcd-03f7-440b-a450-0bb4478da6c0",
+    "name": "read_file",
+    "arguments": {
+     "path": "uniq/dedupe.py"
+    }
+   }
+  ]
+ },
+ {
+  "role": "tool",
+  "tool_call_id": "call-b5077bcd-03f7-440b-a450-0bb4478da6c0",
+  "content": "   1| \"\"\"Order-preserving removal of duplicates.\"\"\"\n   2| \n   3| \n   4| def dedupe(items, key=None):\n   5|     \"\"\"Return a new list with duplicates removed, keeping the first occurrence.\n   6| \n   7|     Two items are duplicates when they are equal or, if `key` is given, when\n   8|     `key(item)` is equal for both. For each group of duplicates the first item\n   9|     in `items` is kept, and the kept items appear in the order in which they\n  10|     first occur. `key` is called exactly once per item, in input order. Items\n  11|     (when `key` is None) and key values must be hashable.\n  12| \n  13|     `items` may be any iterable and is consumed once; it is never modified.\n  14|     \"\"\"\n  15|     if key is None:\n  16|         seen = set()\n  17|         out = []\n  18|         for item in items:\n  19|             if item not in seen:\n  20|                 seen.add(item)\n  21|                 out.append(item)\n  22|         return out\n  23|     seen = set()\n  24|     out = []\n  25|     for item in items:\n  26|         k = key(item)\n  27|         if k not in seen:\n  28|             seen.add(k)\n  29|             out.append(item)\n  30|     return out"
+ },
+ {
+  "role": "assistant",
+  "content": "\n\nThe file looks correct. Now let me run the tests and verify the exact example from the issue.\n\n\n",
+  "tool_calls": [
+   {
+    "id": "call-bf7621d7-a0bb-4bfd-9125-0bd287fe7ade",
+    "name": "run_tests",
+    "arguments": {}
+   },
+   {
+    "id": "call-6bb21135-e67e-4702-aa90-be508fee94b5",
+    "name": "bash",
+    "arguments": {
+     "command": "python -c \"\nfrom uniq import dedupe\nprint(dedupe(['a', 'B', 'A', 'b'], key=str.lower))\nprint(dedupe([3, 1, 3, 2, 1]))\nprint(dedupe(iter(['x', 'y', 'x']), key=lambda s: s[0]))\n\""
+    }
+   }
+  ]
+ },
+ {
+  "role": "tool",
+  "tool_call_id": "call-bf7621d7-a0bb-4bfd-9125-0bd287fe7ade",
+  "content": "exit=0\n----------------------------------------------------------------------\nRan 4 tests in 0.000s\n\nOK"
+ },
+ {
+  "role": "tool",
+  "tool_call_id": "call-6bb21135-e67e-4702-aa90-be508fee94b5",
+  "content": "exit=0\n['a', 'B']\n[3, 1, 2]\n['x', 'y']"
+ },
+ {
+  "role": "assistant",
+  "content": "\n\nAll tests pass and the issue's example now returns `['a', 'B']` as expected.\n\n**Summary of the fix:** In `uniq/dedupe.py`, the `key` branch was building a dict (`latest[key(item)] = item`) that gets overwritten on every duplicate, so the *last* item per key survived. I replaced it with the same first-occurrence pattern used in the `key is None` branch: a `seen` set of key values plus an `out` list, appending an item only when its key hasn't been seen. This keeps the first item for each key in first-seen order, calls `key` exactly once per item in input order, and works with any iterable.\n\n",
+  "tool_calls": [
+   {
+    "id": "call-3a98496c-4914-4d58-adf4-7019f2cd78d1",
+    "name": "submit",
+    "arguments": {
+     "summary": "Fixed dedupe(..., key=...) in uniq/dedupe.py: the key branch previously stored items in a dict that was overwritten on each duplicate, so the last item per key was returned. Replaced it with a seen-set of key values and an output list that keeps the first item for each key in first-seen order (mirroring the key=None branch). Verified: dedupe([\"a\", \"B\", \"A\", \"b\"], key=str.lower) now returns [\"a\", \"B\"], and all existing tests pass."
+    }
+   }
+  ]
+ },
+ {
+  "role": "tool",
+  "tool_call_id": "call-3a98496c-4914-4d58-adf4-7019f2cd78d1",
+  "content": "submitted"
+ }
+]

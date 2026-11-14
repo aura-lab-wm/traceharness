@@ -475,6 +475,7 @@ def harness_from_fingerprint(harness_id: str, fp: dict, notes: str = "") -> dict
         "temperature": float(fp["temperature"]) if isinstance(fp.get("temperature"), (int, float)) else 0.0,
         "max_tokens_per_call": 0,
         "include_file_listing": False,
+        "no_action_retries": 0,                    # an external harness's stop rule is not observable from its log
         "notes": notes,
         "sentinel": {},
         "fingerprint": fp,

@@ -1,0 +1,10 @@
+{
+  "id": "t20_bisect_left",
+  "title": "first_index returns an arbitrary match when values repeat",
+  "probe": "none",
+  "suite": "extended",
+  "src_files": [
+    "search/lookup.py"
+  ],
+  "test_cmd": "python -m unittest discover -s tests -q"
+}

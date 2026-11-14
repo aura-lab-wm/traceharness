@@ -1,0 +1,106 @@
+[
+ {
+  "role": "system",
+  "content": "You are an autonomous software engineer working inside a small Python repository.\nYou are given a GitHub issue. Resolve it by editing files with the tools provided.\nWork step by step: inspect the relevant code, make a minimal change, verify it, then call `submit`.\nDo not modify the tests. Do not run commands unrelated to the task."
+ },
+ {
+  "role": "user",
+  "content": "Task id: t23_dedup_window\n\n# Issue #77: Deduper swallows an event that arrives exactly one window after the previous one\n\nWith `Deduper(10)`, `seen(\"job-1\", 0)` returns `False` and then `seen(\"job-1\", 10)`\nreturns `True`. The window is 10 seconds, and the second event is 10 seconds after\nthe first, so it should be reported as new. We also noticed the process memory\ngrowing on a long-running consumer that sees millions of distinct keys.\nFix `events/dedup.py`.\n\n\nRepository files:\nevents/__init__.py\nevents/dedup.py\ntests/test_dedup.py"
+ },
+ {
+  "role": "assistant",
+  "content": "",
+  "tool_calls": [
+   {
+    "id": "call_QpSgCWEjjQM2u8iYrjPDJGMO",
+    "name": "read_file",
+    "arguments": {
+     "path": "events/dedup.py"
+    }
+   },
+   {
+    "id": "call_KmTtGviuJJAPHs7hQvPwfzXY",
+    "name": "read_file",
+    "arguments": {
+     "path": "tests/test_dedup.py"
+    }
+   },
+   {
+    "id": "call_K3cn1e7AcmFaZI8eSdu4S4x9",
+    "name": "read_file",
+    "arguments": {
+     "path": "events/__init__.py"
+    }
+   }
+  ]
+ },
+ {
+  "role": "tool",
+  "tool_call_id": "call_QpSgCWEjjQM2u8iYrjPDJGMO",
+  "content": "   1| \"\"\"Suppress repeated events that carry the same key.\"\"\"\n   2| \n   3| \n   4| class Deduper:\n   5|     \"\"\"Report whether an event key was already seen recently.\n   6| \n   7|     A sighting of ``key`` at time ``t`` (reported as new by ``seen``) suppresses\n   8|     every later sighting of the same key at times ``now`` with\n   9|     ``now - t < window_seconds``. The window is half open: a sighting exactly\n  10|     ``window_seconds`` after ``t`` is new again and starts a fresh window.\n  11|     Suppressed sightings do not extend the window.\n  12| \n  13|     Timestamps are numbers supplied by the caller and never decrease from one\n  14|     call to the next. ``len(deduper)`` is the number of keys whose window is\n  15|     still open as of the most recent call to ``seen``; keys whose window has\n  16|     ended must not be kept in memory.\n  17|     \"\"\"\n  18| \n  19|     def __init__(self, window_seconds):\n  20|         if window_seconds <= 0:\n  21|             raise ValueError(\"window_seconds must be positive\")\n  22|         self.window = window_seconds\n  23|         self._last = {}\n  24| \n  25|     def seen(self, key, now):\n  26|         \"\"\"Return True if ``key`` is a duplicate at time ``now``, else False.\n  27|         A False result records ``now`` as the key's latest new sighting.\"\"\"\n  28|         last = self._last.get(key)\n  29|         if last is not None and now - last <= self.window:\n  30|             return True\n  31|         self._last[key] = now\n  32|         return False\n  33| \n  34|     def __len__(self):\n  35|         return len(self._last)"
+ },
+ {
+  "role": "tool",
+  "tool_call_id": "call_KmTtGviuJJAPHs7hQvPwfzXY",
+  "content": "   1| import unittest\n   2| from events import Deduper\n   3| \n   4| \n   5| class TestDeduper(unittest.TestCase):\n   6|     def test_first_sighting_is_new(self):\n   7|         self.assertFalse(Deduper(10).seen(\"a\", 0))\n   8| \n   9|     def test_repeat_inside_window(self):\n  10|         d = Deduper(10)\n  11|         d.seen(\"a\", 0)\n  12|         self.assertTrue(d.seen(\"a\", 4))\n  13| \n  14|     def test_exactly_one_window_later_is_new(self):\n  15|         d = Deduper(10)\n  16|         d.seen(\"a\", 0)\n  17|         self.assertFalse(d.seen(\"a\", 10))\n  18| \n  19| \n  20| if __name__ == \"__main__\":\n  21|     unittest.main()"
+ },
+ {
+  "role": "tool",
+  "tool_call_id": "call_K3cn1e7AcmFaZI8eSdu4S4x9",
+  "content": "   1| from .dedup import Deduper"
+ },
+ {
+  "role": "assistant",
+  "content": "",
+  "tool_calls": [
+   {
+    "id": "call_isFPCUs31ML7zSdft6YHHyrZ",
+    "name": "edit_file",
+    "arguments": {
+     "path": "events/dedup.py",
+     "old": "        last = self._last.get(key)\n        if last is not None and now - last <= self.window:\n            return True\n        self._last[key] = now\n        return False\n",
+     "new": "        # Expired keys must be removed as time advances; otherwise a long-lived\n        # consumer retains every key it has ever seen.  The comparison is strict\n        # because the window is half open: an event exactly one window later is\n        # new.\n        expired = [stored_key for stored_key, last in self._last.items()\n                   if now - last >= self.window]\n        for stored_key in expired:\n            del self._last[stored_key]\n\n        last = self._last.get(key)\n        if last is not None and now - last < self.window:\n            return True\n        self._last[key] = now\n        return False\n"
+    }
+   }
+  ]
+ },
+ {
+  "role": "tool",
+  "tool_call_id": "call_isFPCUs31ML7zSdft6YHHyrZ",
+  "content": "edited events/dedup.py"
+ },
+ {
+  "role": "assistant",
+  "content": "",
+  "tool_calls": [
+   {
+    "id": "call_UUqm8HFU2xUO4tsNzJCgswNH",
+    "name": "run_tests",
+    "arguments": {}
+   }
+  ]
+ },
+ {
+  "role": "tool",
+  "tool_call_id": "call_UUqm8HFU2xUO4tsNzJCgswNH",
+  "content": "exit=0\n----------------------------------------------------------------------\nRan 3 tests in 0.000s\n\nOK"
+ },
+ {
+  "role": "assistant",
+  "content": "",
+  "tool_calls": [
+   {
+    "id": "call_Xb9ppVJvJsmO2Nm0rEWCYSEF",
+    "name": "submit",
+    "arguments": {
+     "summary": "Fixed Deduper's half-open window semantics by treating sightings exactly window_seconds apart as new, and added expiration cleanup on each call so keys whose windows have ended are removed instead of accumulating indefinitely. Existing tests pass."
+    }
+   }
+  ]
+ },
+ {
+  "role": "tool",
+  "tool_call_id": "call_Xb9ppVJvJsmO2Nm0rEWCYSEF",
+  "content": "submitted"
+ }
+]

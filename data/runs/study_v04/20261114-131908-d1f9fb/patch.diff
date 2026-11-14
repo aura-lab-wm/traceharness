@@ -1,0 +1,10 @@
+--- a/deps/graph.py
++++ b/deps/graph.py
+@@ -38,6 +38,6 @@
+             pending[nxt] -= 1
+             if pending[nxt] == 0:
+                 heapq.heappush(ready, nxt)
+-    if len(result) < len(graph):
++    if len(result) < len(deps):
+         raise CycleError("dependency cycle among %s" % sorted(set(deps) - set(result)))
+     return result

@@ -1,0 +1,134 @@
+[
+ {
+  "role": "system",
+  "content": "You are an autonomous software engineer working inside a small Python repository.\nYou are given a GitHub issue. Resolve it by editing files with the tools provided.\nWork step by step: inspect the relevant code, make a minimal change, verify it, then call `submit`.\nDo not modify the tests. Do not run commands unrelated to the task."
+ },
+ {
+  "role": "user",
+  "content": "Task id: t16_ambiguous_parser\n\n# Issue #47: flag parsing treats \"off \" as true\n\nA setting written as `off ` with a trailing space ends up enabled. This showed up\nwhen reading feature switches from the environment. Please fix the flag parsing.\n\n\nRepository files:\nflags/__init__.py\nflags/parse.py\ntests/test_parse.py"
+ },
+ {
+  "role": "assistant",
+  "content": "\n\n",
+  "tool_calls": [
+   {
+    "id": "call_b0e1950a48824a5c8a6d85b3",
+    "name": "list_files",
+    "arguments": {}
+   }
+  ]
+ },
+ {
+  "role": "tool",
+  "tool_call_id": "call_b0e1950a48824a5c8a6d85b3",
+  "content": "flags/__init__.py\nflags/parse.py\ntests/test_parse.py"
+ },
+ {
+  "role": "assistant",
+  "content": "\n\n\n\n",
+  "tool_calls": [
+   {
+    "id": "call_b4cf22f7877d47a78bcb5d6b",
+    "name": "read_file",
+    "arguments": {
+     "path": "flags/parse.py"
+    }
+   },
+   {
+    "id": "call_06a54e01f4af4f198927ed45",
+    "name": "read_file",
+    "arguments": {
+     "path": "flags/__init__.py"
+    }
+   },
+   {
+    "id": "call_dfdfb496c5aa4dedb31aa278",
+    "name": "read_file",
+    "arguments": {
+     "path": "tests/test_parse.py"
+    }
+   }
+  ]
+ },
+ {
+  "role": "tool",
+  "tool_call_id": "call_b4cf22f7877d47a78bcb5d6b",
+  "content": "   1| \"\"\"Parsing of on/off switches from configuration text.\"\"\"\n   2| \n   3| _FALSE_WORDS = frozenset({\"0\", \"false\", \"no\", \"off\"})\n   4| \n   5| \n   6| def parse_flag(text):\n   7|     \"\"\"Interpret one switch word as a bool.\n   8| \n   9|     Matching is case-insensitive and ignores whitespace around the word.\n  10|     \"0\", \"false\", \"no\" and \"off\" are False; any other non-empty word is True.\n  11|     Raises ValueError if the text is empty or only whitespace.\n  12|     \"\"\"\n  13|     word = text.lower()\n  14|     if not word:\n  15|         raise ValueError(\"empty flag\")\n  16|     return word not in _FALSE_WORDS\n  17| \n  18| \n  19| def parse_flags(text):\n  20|     \"\"\"Parse a comma-separated list of switch words into a list of bools.\n  21| \n  22|     Each item is interpreted with `parse_flag`. Items that are empty or only\n  23|     whitespace are skipped, so \"\" gives [] and \"on,,off\" gives [True, False].\n  24|     \"\"\"\n  25|     return [parse_flag(part) for part in text.split(\",\") if part.strip()]"
+ },
+ {
+  "role": "tool",
+  "tool_call_id": "call_06a54e01f4af4f198927ed45",
+  "content": "   1| from .parse import parse_flag, parse_flags"
+ },
+ {
+  "role": "tool",
+  "tool_call_id": "call_dfdfb496c5aa4dedb31aa278",
+  "content": "   1| import unittest\n   2| from flags import parse_flag, parse_flags\n   3| \n   4| \n   5| class TestFlags(unittest.TestCase):\n   6|     def test_words(self):\n   7|         self.assertTrue(parse_flag(\"on\"))\n   8|         self.assertTrue(parse_flag(\"YES\"))\n   9|         self.assertFalse(parse_flag(\"off\"))\n  10|         self.assertFalse(parse_flag(\"False\"))\n  11| \n  12|     def test_list(self):\n  13|         self.assertEqual(parse_flags(\"on,off,yes\"), [True, False, True])\n  14| \n  15|     def test_list_with_spaces(self):\n  16|         self.assertEqual(parse_flags(\"on, off ,yes\"), [True, False, True])\n  17| \n  18| \n  19| if __name__ == \"__main__\":\n  20|     unittest.main()"
+ },
+ {
+  "role": "assistant",
+  "content": "\n\nThe bug is clear: `parse_flag` documents that it ignores surrounding whitespace, but it never calls `strip()`. So `\"off \"` stays `\"off \"` after lowercasing, isn't in `_FALSE_WORDS`, and returns `True`. The fix is to strip before the empty check and the lookup.\n\n",
+  "tool_calls": [
+   {
+    "id": "call_fd771d337c3448bd94a25126",
+    "name": "edit_file",
+    "arguments": {
+     "path": "flags/parse.py",
+     "old": "    word = text.lower()\n    if not word:\n        raise ValueError(\"empty flag\")\n    return word not in _FALSE_WORDS",
+     "new": "    word = text.strip().lower()\n    if not word:\n        raise ValueError(\"empty flag\")\n    return word not in _FALSE_WORDS"
+    }
+   }
+  ]
+ },
+ {
+  "role": "tool",
+  "tool_call_id": "call_fd771d337c3448bd94a25126",
+  "content": "edited flags/parse.py"
+ },
+ {
+  "role": "assistant",
+  "content": "\n\nNow let me verify with the test suite and a quick check of the reported case:\n\n\n",
+  "tool_calls": [
+   {
+    "id": "call_56f594958b4446729d260f79",
+    "name": "run_tests",
+    "arguments": {}
+   },
+   {
+    "id": "call_e78e76f4487c482ebd191d85",
+    "name": "bash",
+    "arguments": {
+     "command": "python -c \"\nfrom flags import parse_flag, parse_flags\nassert parse_flag('off ') is False\nassert parse_flag('  OFF\\t') is False\nassert parse_flag('on') is True\nassert parse_flag(' yes ') is True\nassert parse_flags('on, off ,yes') == [True, False, True]\ntry:\n    parse_flag('   ')\n    raise AssertionError('should have raised')\nexcept ValueError:\n    pass\nprint('all checks passed')\n\""
+    }
+   }
+  ]
+ },
+ {
+  "role": "tool",
+  "tool_call_id": "call_56f594958b4446729d260f79",
+  "content": "exit=0\n----------------------------------------------------------------------\nRan 3 tests in 0.000s\n\nOK"
+ },
+ {
+  "role": "tool",
+  "tool_call_id": "call_e78e76f4487c482ebd191d85",
+  "content": "exit=0\nall checks passed"
+ },
+ {
+  "role": "assistant",
+  "content": "\n\nAll tests pass and the reported case is fixed.\n\n",
+  "tool_calls": [
+   {
+    "id": "call_821cd41a0f4d427c81e11134",
+    "name": "submit",
+    "arguments": {
+     "summary": "Fixed flag parsing in flags/parse.py: parse_flag now strips whitespace before lowercasing (word = text.strip().lower()), so \"off \" with a trailing space correctly parses as False instead of True, matching the documented behavior of ignoring surrounding whitespace. The empty/whitespace-only ValueError check now also works for whitespace-only input. Verified with the existing test suite and manual checks."
+    }
+   }
+  ]
+ },
+ {
+  "role": "tool",
+  "tool_call_id": "call_821cd41a0f4d427c81e11134",
+  "content": "submitted"
+ }
+]

@@ -58,9 +58,13 @@ function testsPassed(s) {
 }
 export function spanKind(s) {
   const k = s && s.span
-  return k === 'chat' ? 'chat' : k === 'execute_tool' ? 'tool' : k === 'edit' ? 'edit' : k === 'grade' ? 'grade' : k === 'boundary_event' ? 'bnd' : k === 'sentinel' ? 'sent' : 'agent'
+  return k === 'chat' ? 'chat' : k === 'execute_tool' ? 'tool' : k === 'edit' ? 'edit' : k === 'grade' ? 'grade' : k === 'boundary_event' ? 'bnd' : k === 'sentinel' ? 'sent' : k === 'reprompt' ? 'rep' : 'agent'
 }
-const KIND_WORD = { chat: 'model call', tool: 'tool call', edit: 'edit', grade: 'grade', bnd: 'boundary event', sent: 'sentinel', agent: 'run marker' }
+const KIND_WORD = { chat: 'model call', tool: 'tool call', edit: 'edit', grade: 'grade', bnd: 'boundary event', sent: 'sentinel', rep: 're-prompt', agent: 'run marker' }
+/** Distinct upstream hosts named on the chat spans, in order of first use ([] = none reported). */
+export const servedByOf = (spans) => [...new Set((spans || []).filter((s) => s.span === 'chat' && s.served_by).map((s) => s.served_by))]
+const sentOf = (spans, key) => { const c = (spans || []).find((s) => s.span === 'chat'); return c ? c[key] : undefined }
+const sentText = (v) => (v === undefined ? '—' : v == null ? 'not sent' : String(v))
 /** seq -> 1-based reply number, for every chat span. */
 export function replyNumbers(spans) {
   const m = new Map(); let n = 0
@@ -88,6 +92,7 @@ export function spanDesc(s, n) {
   if (s.span === 'grade') return `grade · visible ${glyph(s.visible)} hidden ${glyph(s.hidden)} strengthened ${glyph(s.strong)}`
   if (s.span === 'boundary_event') return `boundary · ${s.kind || '—'}${s.tool ? ' · ' + s.tool : ''}${s.status ? ' · ' + s.status : ''}`
   if (s.span === 'sentinel') return `sentinel · risk ${s.risk != null ? (+s.risk).toFixed(2) : '—'} · ${s.action || 'none'}`
+  if (s.span === 'reprompt') return `re-prompt #${s.attempt ?? '—'} · the reply invoked no tool, so the harness asked again`
   return s.span || 'span'
 }
 function spanTech(s) {
@@ -874,6 +879,7 @@ function RunDoc({ spec, args }) {
     ['Usage', [[isSweRun(run) ? 'estimated tokens in / out' : 'tokens in / out', run.in != null ? `${int(run.in)} / ${int(run.out)}` : '—'], ['cost', run.cost != null ? usd(run.cost, 5) : '—'], ['wall', run.wall != null ? (run.wall / 1000).toFixed(1) + ' s' : '—']]],
     ['Behaviour', [['calls · tools · edits', `${run.steps ?? '—'} · ${run.tools ?? '—'} · ${run.edits ?? '—'}`], ['boundary', `${run.bnd ?? 0}${run.bkinds && run.bkinds.length ? ' · ' + run.bkinds.join(', ') : ''}`], ['exit reason', run.exit || '—']]],
     [isSweRun(run) ? 'Importer-reconstructed setup' : 'Recorded setup', [['seed', det.data ? (seedOf(spans) ?? '—') : '…'], ['max tokens / call', cfg && cfg.max_tokens_per_call != null ? int(cfg.max_tokens_per_call) : '—'], ['max steps', cfg && cfg.max_steps != null ? int(cfg.max_steps) : '—']]],
+    ['Serving', [['served by', det.data ? (servedByOf(spans).join(', ') || 'not reported') : '…'], ['temperature · seed sent', det.data ? `${sentText(sentOf(spans, 'gen_ai.request.temperature'))} · ${sentText(sentOf(spans, 'gen_ai.request.seed'))}` : '…'], ['re-prompts', det.data ? int(spans.filter((s) => s.span === 'reprompt').length) : '…']]],
   ]
   const onSel = (s) => { setSel(s); requestAnimationFrame(() => { const e = listRef.current && listRef.current.querySelector('[data-el="run-console"]'); if (e && e.scrollIntoView) e.scrollIntoView({ block: 'nearest' }) }) }
   return (
@@ -949,6 +955,8 @@ function SpanDoc({ spec, args }) {
   if (s.span === 'boundary_event') fields.push(['boundary kind', s.kind || '—'], ['tool', s.tool || '—'], ['status', s.status || '—'])
   if (s.span === 'invoke_agent') fields.push(['status', s.status || '—'], ...(s.status === 'start' ? [['seed', s.seed ?? '—'], ['harness hash', s.harness_hash || '—'], ['repeat', s.repeat_index ?? '—']] : [['exit', s.exit_reason || '—'], ['total tokens', int(s.total_tokens)], ['cost', isSweRun(run) ? '— not supplied' : usd(s.cost_usd, 6)]]))
   if (s.span === 'sentinel') fields.push(['step', s.step ?? '—'], ['risk', s.risk != null ? (+s.risk).toFixed(3) : '—'], ['action', s.action || 'none'], ['patterns', (s.patterns || []).join(', ') || '—'], ['layer', s.layer || '—'])
+  if (s.span === 'chat' && !isSweRun(run)) fields.push(['served by', s.served_by || 'not reported'], ['model echoed', s['gen_ai.response.model'] || '—'], ['temperature sent', sentText(s['gen_ai.request.temperature'])], ['seed sent', sentText(s['gen_ai.request.seed'])])
+  if (s.span === 'reprompt') fields.push(['attempt', s.attempt ?? '—'], ['model step', s.step ?? '—'])
   const fr = finishOf(s)
   const cut = isCutoff(s)
   const payload = { ...s }
@@ -1094,7 +1102,7 @@ function CmpHead({ r, spans, tag, oracle }) {
       <div className="rg-pnl-b rg-stack rg-stack-sm">
         <div className="rg-mono rg-small rg-dim rg-break">{short(r.model)} · {r.task} · repeat {r.rep ?? '—'} · seed {spans ? (seedOf(spans) ?? '—') : '…'}</div>
         <div className="rg-cluster rg-mono rg-small rg-traj-headfacts">
-          <span>{st ? st.length : '—'} actions</span><span>{plural(r.edits ?? 0, 'edit')}</span><span>{r.bnd ? plural(r.bnd, 'boundary event') : 'no boundary events'}</span><span>{int(tokOf(r))} tok</span>
+          <span>{st ? st.length : '—'} records</span><span>{plural(r.edits ?? 0, 'edit')}</span><span>{r.bnd ? plural(r.bnd, 'boundary event') : 'no boundary events'}</span><span>{int(tokOf(r))} tok</span>
           {spans && spans.some(isCutoff) && <span className="rg-red">{spans.filter(isCutoff).length} cut off</span>}
         </div>
         <div className="rg-cluster"><FailureChip run={r} /><PinButton item={runPin(r, oracle)} /></div>
@@ -1161,15 +1169,15 @@ function CmpDoc({ spec, args }) {
       <Split sideWidth="20rem" sideLabel="First divergence" side={(
         <div className="rg-traj-stack-s">
           <div className="rg-pnl rg-traj-verdict"><div className="rg-pnl-h"><span className="rg-lbl rg-amb">First divergence</span></div>
-            <div className="rg-pnl-b"><div className="rg-fig md amb">{first < 0 ? 'no fork' : 'step ' + (first + 1)}</div>
-              <p className="rg-small rg-dim rg-traj-lede">{first < 0 ? 'The two ledgers take the same actions in the same order.' : <>Run A did <span className="rg-mono">{fa ? fa.label : 'nothing (ended)'}</span>, run B did <span className="rg-mono">{fb ? fb.label : 'nothing (ended)'}</span> — the first step where the span kind or tool name differs.</>}</p>
-              {fa && <Go spec={makeSpec('fork', A.id, fa.seq)} className="rg-btn">Fork A at this step →</Go>}</div></div>
+            <div className="rg-pnl-b"><div className="rg-fig md amb">{first < 0 ? 'no fork' : 'record ' + (first + 1)}</div>
+              <p className="rg-small rg-dim rg-traj-lede">{first < 0 ? 'The two ledgers take the same actions in the same order.' : <>Run A did <span className="rg-mono">{fa ? fa.label : 'nothing (ended)'}</span>, run B did <span className="rg-mono">{fb ? fb.label : 'nothing (ended)'}</span> — the first ledger record where the span kind or tool name differs.</>}</p>
+              {fa && <Go spec={makeSpec('fork', A.id, fa.seq)} className="rg-btn">Fork A at this record →</Go>}</div></div>
           <Note><div><b>What this pair does not license.</b> One pair is one anecdote. A claim about {cls === 'same' ? 'run-to-run variance' : 'the difference'} comes from the {int(cls === 'cross' ? pc.cross : pc.same)} pairs of this class read as a paired set, not from this pair.</div></Note>
         </div>
       )}>
-        <Panel label="Aligned steps" meta={`${xa.length} vs ${xb.length} actions`} flush>
-          <TableScroll label="Aligned steps of runs A and B" maxHeight={560} className="rg-traj-aligned"><table className="rg-tbl rg-keep"><thead><tr><th className="rg-num">step</th><th>A · {sfx(A.id)}</th><th>B · {sfx(B.id)}</th><th>aligned</th></tr></thead><tbody>{rows}</tbody></table></TableScroll>
-          <p className="rg-tiny rg-mute rg-traj-pad">Steps align by position; a step matches when its span kind and tool name match, so “same” means the same action, not the same text.</p>
+        <Panel label="Aligned records" meta={`${xa.length} vs ${xb.length} records`} flush>
+          <TableScroll label="Aligned ledger records of runs A and B" maxHeight={560} className="rg-traj-aligned"><table className="rg-tbl rg-keep"><thead><tr><th className="rg-num">record</th><th>A · {sfx(A.id)}</th><th>B · {sfx(B.id)}</th><th>aligned</th></tr></thead><tbody>{rows}</tbody></table></TableScroll>
+          <p className="rg-tiny rg-mute rg-traj-pad">Records are the replies of the model and the executions of tools, in ledger order. They align by position; a record matches when its span kind and tool name match, so “same” means the same kind of action, not the same text.</p>
         </Panel>
       </Split>
     )

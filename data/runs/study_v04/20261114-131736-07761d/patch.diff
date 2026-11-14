@@ -1,0 +1,18 @@
+--- a/pager/paginate.py
++++ b/pager/paginate.py
+@@ -1,5 +1,4 @@
+ """Split a sequence into numbered pages."""
+-
+ 
+ def page_count(total_items, per_page):
+     """Return the number of pages needed to show total_items, per_page at a time.
+@@ -7,8 +6,7 @@
+     The last page may be shorter than per_page. An empty collection still has
+     one (empty) page, so the result is always at least 1. per_page must be >= 1.
+     """
+-    return total_items // per_page + 1
+-
++        return (total_items + per_page - 1) // per_page if total_items else 1
+ 
+ def paginate(items, page, per_page):
+     """Return one page of items as a dict.

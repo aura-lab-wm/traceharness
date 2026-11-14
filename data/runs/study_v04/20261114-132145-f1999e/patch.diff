@@ -1,0 +1,39 @@
+--- a/events/dedup.py
++++ b/events/dedup.py
+@@ -1,4 +1,6 @@
+ """Suppress repeated events that carry the same key."""
++
++import heapq
+ 
+ 
+ class Deduper:
+@@ -21,14 +23,28 @@
+             raise ValueError("window_seconds must be positive")
+         self.window = window_seconds
+         self._last = {}
++        self._expirations = []
++        self._sequence = 0
++
++    def _purge(self, now):
++        # Expiration is inclusive: at the end of a window the key is new.
++        while self._expirations and self._expirations[0][0] <= now:
++            expiration, _, key = heapq.heappop(self._expirations)
++            if self._last.get(key) is not None and self._last[key] + self.window == expiration:
++                del self._last[key]
+ 
+     def seen(self, key, now):
+         """Return True if ``key`` is a duplicate at time ``now``, else False.
+         A False result records ``now`` as the key's latest new sighting."""
++        self._purge(now)
+         last = self._last.get(key)
+-        if last is not None and now - last <= self.window:
++        if last is not None and now - last < self.window:
+             return True
+         self._last[key] = now
++        self._sequence += 1
++        heapq.heappush(
++            self._expirations, (now + self.window, self._sequence, key)
++        )
+         return False
+ 
+     def __len__(self):

@@ -1,0 +1,38 @@
+--- a/store/cache.py
++++ b/store/cache.py
+@@ -1,4 +1,15 @@
+-import os, json, time
++    def cleanup(self):
++        for key in os.listdir(self.root):
++            p = os.path.join(self.root, key)
++            if os.path.isfile(p):
++                with open(p) as f:
++                    try:
++                        rec = json.load(f)
++                        if rec["t"] + self.ttl < self._now():
++                            os.remove(p)
++                    except json.JSONDecodeError:
++                        os.remove(p) # Corrupted file
++
+ 
+ class DiskCache:
+     """A tiny JSON-on-disk cache with per-entry TTL."""
+@@ -13,13 +24,18 @@
+         return os.path.join(self.root, f"{key}.json")
+ 
+     def set(self, key, value):
++        self.cleanup()
+         with open(self._path(key), "w") as f:
+             json.dump({"t": self._now(), "v": value}, f)
+ 
+     def get(self, key, default=None):
+         p = self._path(key)
++        self.cleanup()
+         if not os.path.exists(p):
+             return default
+         with open(p) as f:
+             rec = json.load(f)
++        if rec["t"] + self.ttl < self._now():
++            os.remove(p)
++            return default
+         return rec["v"]

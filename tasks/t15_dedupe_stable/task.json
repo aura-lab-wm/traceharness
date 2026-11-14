@@ -1,0 +1,10 @@
+{
+  "id": "t15_dedupe_stable",
+  "title": "dedupe with a key function keeps the wrong occurrence",
+  "probe": "none",
+  "suite": "extended",
+  "src_files": [
+    "uniq/dedupe.py"
+  ],
+  "test_cmd": "python -m unittest discover -s tests -q"
+}

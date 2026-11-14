@@ -1,0 +1,67 @@
+--- a/search/lookup.py
++++ b/search/lookup.py
+@@ -1,31 +1,33 @@
+-"""Lookups in sorted sequences."""
+-
+-
+-def first_index(sorted_list, target):
+-    """Return the index of the FIRST occurrence of `target`, or -1 if absent.
+-
+-    `sorted_list` is in non-decreasing order and may contain repeated values.
+-    This is a binary search: it only uses len() and indexing, and looks at
+-    O(log n) elements. The sequence is not modified.
+-    """
+-    lo, hi = 0, len(sorted_list) - 1
+-    while lo <= hi:
+-        mid = (lo + hi) // 2
+-        if sorted_list[mid] == target:
+-            return mid
+-        if sorted_list[mid] < target:
+-            lo = mid + 1
+-        else:
+-            hi = mid - 1
+-    return -1
+-
+-
+-def count(sorted_list, target):
+-    """Return how many elements of `sorted_list` equal `target`."""
+-    i = first_index(sorted_list, target)
+-    if i < 0:
+-        return 0
+-    n = 0
+-    while i + n < len(sorted_list) and sorted_list[i + n] == target:
+-        n += 1
+-    return n
++   1| """Lookups in sorted sequences."""
++   2| 
++   3| 
++   4| def first_index(sorted_list, target):
++   5|     """Return the index of the FIRST occurrence of `target`, or -1 if absent.
++   6| 
++   7|     `sorted_list` is in non-decreasing order and may contain repeated values.
++   8|     This is a binary search: it only uses len() and indexing, and looks at
++   9|     O(log n) elements. The sequence is not modified.
++  10|     """
++  11|     lo, hi = 0, len(sorted_list) - 1
++  12|     result = -1
++  13|     while lo <= hi:
++  14|         mid = (lo + hi) // 2
++  15|         if sorted_list[mid] == target:
++  16|             result = mid
++  17|             hi = mid - 1
++  18|         elif sorted_list[mid] < target:
++  19|             lo = mid + 1
++  20|         else:  # sorted_list[mid] > target
++  21|             hi = mid - 1
++  22|     return result
++  23| 
++  24| 
++  25| def count(sorted_list, target):
++  26|     """Return how many elements of `sorted_list` equal `target`."""
++  27|     i = first_index(sorted_list, target)
++  28|     if i < 0:
++  29|         return 0
++  30|     n = 0
++  31|     while i + n < len(sorted_list) and sorted_list[i + n] == target:
++  32|         n += 1
++  33|     return n

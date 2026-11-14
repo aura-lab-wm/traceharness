@@ -1,0 +1,23 @@
+--- a/grid/spiral.py
++++ b/grid/spiral.py
+@@ -27,10 +27,16 @@
+             out.append(matrix[top][col])
+         for row in range(top + 1, bottom + 1):
+             out.append(matrix[row][right])
+-        for col in range(right - 1, left - 1, -1):
+-            out.append(matrix[bottom][col])
+-        for row in range(bottom - 1, top, -1):
+-            out.append(matrix[row][left])
++        # The bottom row is the same as the top row when only one row
++        # remains, and likewise the left column is the same as the right
++        # column when only one column remains.  Only traverse those edges
++        # when they have not already been consumed above.
++        if top < bottom:
++            for col in range(right - 1, left - 1, -1):
++                out.append(matrix[bottom][col])
++        if left < right:
++            for row in range(bottom - 1, top, -1):
++                out.append(matrix[row][left])
+         top += 1
+         bottom -= 1
+         left += 1

@@ -1,0 +1,11 @@
+--- a/versions/compare.py
++++ b/versions/compare.py
+@@ -45,7 +45,7 @@
+     """
+     ra, pa = parse(a)
+     rb, pb = parse(b)
+-    for x, y in zip_longest(ra, rb, fillvalue="0"):
++    for x, y in zip_longest(map(int, ra), map(int, rb), fillvalue=0):
+         if x != y:
+             return -1 if x < y else 1
+     if pa == pb:

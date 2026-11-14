@@ -603,14 +603,14 @@ function RailButton({ spec, icon, label, on, el, onGo }) {
       onClick={(e) => onGo(spec, { side: e.metaKey || e.ctrlKey })}><Icon name={icon} size={18} /><span className="lbl">{label}</span><span className="tip">{label}</span></button>
   )
 }
-/** The TraceHarness mark: four bars of a trace, the last one the accent (same SVG as traceharness.dev). */
+/** The TraceHarness mark: an H drawn as five ledger rows, the middle (measured) row in the accent.
+ *  Same geometry as docs/img/brand/mark-*.svg and traceharness.dev. */
 function BrandMark() {
   return (
     <span className="mk" aria-hidden="true">
-      <svg className="rg-mark" viewBox="0 0 22 14" width="22" height="14">
-        <rect x="0" y="3" width="3" height="8" className="m1" /><rect x="5" y="3" width="3" height="8" className="m1" />
-        <rect x="10" y="3" width="3" height="8" className="m2" /><rect x="15" y="3" width="3" height="8" className="m3" />
-        <rect x="20" y="1" width="2" height="12" className="m4" />
+      <svg className="rg-mark" viewBox="0 0 64 64" width="18" height="18">
+        {[6, 17, 39, 50].map((y) => <g key={y}><rect x="7" y={y} width="16" height="8" rx="2" className="m1" /><rect x="41" y={y} width="16" height="8" rx="2" className="m1" /></g>)}
+        <rect x="7" y="28" width="50" height="8" rx="2" className="m4" />
       </svg>
     </span>
   )

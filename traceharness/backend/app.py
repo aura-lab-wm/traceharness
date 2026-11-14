@@ -6,7 +6,7 @@ Serves the analysis API, launches live runs (mock or any OpenRouter model) with 
 every ledger span to the browser over SSE, trains and evaluates the sentinel, and serves the built UI.
 """
 from __future__ import annotations
-import asyncio, json, os, queue, sys, threading, time, traceback, uuid, zlib
+import asyncio, json, os, queue, re, sys, threading, time, traceback, uuid, zlib
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import asdict
 from typing import Optional
@@ -22,7 +22,7 @@ sys.path.insert(0, LAB_ROOT)
 
 from traceharness.core.harness import HarnessConfig, run_task              # noqa: E402
 from traceharness.core.providers import make_provider, PRICES, price_for    # noqa: E402
-from traceharness.core.grader import load_task                              # noqa: E402
+from traceharness.core.grader import load_task, list_task_ids, task_suite, SUITES   # noqa: E402
 from traceharness.core.analysis import load_index                           # noqa: E402
 from traceharness.core.ledger import new_run_id                             # noqa: E402
 from . import metrics as M                                         # noqa: E402
@@ -104,7 +104,7 @@ async def events(request: Request):
 @app.get("/api/overview")
 def overview():
     model = S.load_model()
-    return {"results": M.results_dirs(), "harnesses": list_harnesses(), "tasks": list_tasks(),
+    return {"results": M.results_dirs(), "harnesses": list_harnesses(), "tasks": list_tasks("full"),
             "sentinel": {"meta": model.meta, "patterns": S.PATTERNS, "default_config": S.DEFAULT_SENTINEL},
             "key_present": bool(SETTINGS["openrouter_key"]), "jobs": [job_public(j) for j in JOBS.values()]}
 
@@ -119,13 +119,17 @@ def list_harnesses():
     return out
 
 
-def list_tasks():
+def list_tasks(suite: str = "full"):
+    """Tasks of one suite (see traceharness.core.grader.SUITES), each tagged with its suite. The
+    console lists every task by default, since a recorded dataset can hold runs on any of them
+    (study_v04 covers all 24); the runner, not this catalog, defaults to the core suite."""
     out = []
-    for tid in sorted(os.listdir(TASK_DIR)):
+    for tid in list_task_ids(TASK_DIR, suite):
         p = os.path.join(TASK_DIR, tid)
-        if os.path.isdir(p) and not tid.startswith("_") and os.path.exists(os.path.join(p, "task.json")):
+        if os.path.exists(os.path.join(p, "task.json")):
             t = load_task(p)
-            out.append({"id": tid, "title": t.get("title"), "probe": t.get("probe"), "issue": t.get("issue"), "src_files": t.get("src_files")})
+            out.append({"id": tid, "title": t.get("title"), "probe": t.get("probe"), "issue": t.get("issue"),
+                        "src_files": t.get("src_files"), "suite": task_suite(p)})
     return out
 
 
@@ -135,8 +139,10 @@ def harnesses():
 
 
 @app.get("/api/tasks")
-def tasks():
-    return list_tasks()
+def tasks(suite: str = "full"):
+    if suite not in SUITES:
+        raise HTTPException(400, f"unknown task suite {suite!r}; expected one of {', '.join(SUITES)}")
+    return list_tasks(suite)
 
 
 # --------------------------------------------------------------------------- results & metrics
@@ -502,8 +508,10 @@ class JobIn(BaseModel):
     max_cost_usd: Optional[float] = None      # stop submitting work once the job's ledger cost reaches this
     api_key: Optional[str] = None             # caller's own key for this job; never returned
     harness_inline: Optional[dict] = None     # built_<hash> -> HarnessConfig, for the block builder
+    route: Optional[list[str]] = None         # OpenRouter hosts to pin, in order, fallbacks off (= `run --route`)
 
 
+_ROUTE_NAME = re.compile(r"[A-Za-z0-9][A-Za-z0-9 ._-]*")
 JOBS: dict[str, dict] = {}
 _INDEX_LOCK = threading.Lock()
 _EXEC = ThreadPoolExecutor(max_workers=8)
@@ -578,7 +586,8 @@ def _run_one(job: dict, cell: dict, task: dict, harness: HarnessConfig, repeat: 
         provider = make_provider("mock", cell["model"], temperature=harness.temperature, seed=seed)
     else:
         provider = make_provider("openai", cell["model"], temperature=harness.temperature, price=job.get("price"),
-                                 api_key=job.get("_api_key") or SETTINGS["openrouter_key"], base_url=SETTINGS["base_url"])
+                                 api_key=job.get("_api_key") or SETTINGS["openrouter_key"], base_url=SETTINGS["base_url"],
+                                 route=job.get("route") or None)
     BUS.publish("run_start", job=job["id"], run_id=run_id, task=task["id"], harness=harness.id, model=cell["model"], repeat=repeat)
     job["running"].append(run_id)
 
@@ -657,6 +666,13 @@ def create_job(j: JobIn):
         raise HTTPException(400, "This run calls a live model. Paste your own LLM key. The lab does not keep one for you.")
     if not j.out or "/" in j.out or j.out.startswith("."):
         raise HTTPException(400, "bad results dir name")
+    route = [r.strip() for r in (j.route or []) if r and r.strip()]
+    if route:
+        if len(route) > 8 or any(len(r) > 64 or not _ROUTE_NAME.fullmatch(r) for r in route):
+            raise HTTPException(400, "route: up to 8 host names of letters, digits, spaces, '.', '_' or '-'")
+        if "openrouter.ai" not in SETTINGS["base_url"]:
+            raise HTTPException(400, "route pins OpenRouter hosts; the lab's endpoint is not OpenRouter")
+    raw["route"] = route or None
     jid = uuid.uuid4().hex[:8]
     job = {"id": jid, "status": "queued", "created_at": time.time(), "done": 0, "total": 0, "running": [], "results": [], "errors": [],
            "_api_key": secret or None, **raw}

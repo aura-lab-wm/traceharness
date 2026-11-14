@@ -1,0 +1,11 @@
+--- a/retry/backoff.py
++++ b/retry/backoff.py
+@@ -18,7 +18,7 @@
+     delay = base
+     for _ in range(attempts):
+         out.append(delay)
+-        if delay >= cap:
++        if delay * 2 > cap:
+             delay = cap
+         else:
+             delay *= 2

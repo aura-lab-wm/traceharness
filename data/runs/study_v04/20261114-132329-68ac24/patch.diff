@@ -1,0 +1,17 @@
+--- a/uniq/dedupe.py
++++ b/uniq/dedupe.py
+@@ -20,7 +20,11 @@
+                 seen.add(item)
+                 out.append(item)
+         return out
+-    latest = {}
++    seen = set()
++    out = []
+     for item in items:
+-        latest[key(item)] = item
+-    return list(latest.values())
++        marker = key(item)
++        if marker not in seen:
++            seen.add(marker)
++            out.append(item)
++    return out

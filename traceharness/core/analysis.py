@@ -16,6 +16,7 @@ for pretty tables. Functions:
   cohen_kappa(a, b)                   -> chance-corrected agreement between two label lists
   cohens_kappa(pairs)                 -> 2x2 agreement over (a, b) bool pairs; null-safe kappa,
                                           explicit cell counts and marginal-rate denominators
+  factorial_ci(rows)                  -> task-bootstrap percentile intervals for every share of factorial()
   factor_summary(anova)               -> pure summary of factorial()'s result: leading factor,
                                           each factor's share and level range, interaction share
   comparisons_for(rows, baseline)     -> every model's paired_bootstrap comparison against
@@ -319,26 +320,64 @@ def fmt_summary(s: dict) -> str:
 
 
 # ---------------------------------------------------------------- spectrum-based attribution over trajectories
-def ochiai_attribution(feature_rows: list[dict], outcome_key: str = "resolved") -> list[dict]:
+def stratified_risk_difference(has: list, fails: list, strata: list):
+    """Failure-rate difference (with the feature minus without), averaged over strata with
+    Mantel-Haenszel weights n1*n0/n. Only strata containing runs with AND without the feature
+    contribute, so a feature that only appears on hard tasks cannot score from task difficulty.
+    Returns (difference, number of contributing strata, runs in them); (None, 0, 0) if none."""
+    groups = defaultdict(list)
+    for h, f, s in zip(has, fails, strata):
+        groups[s].append((bool(h), bool(f)))
+    num = den = 0.0
+    used = runs = 0
+    for v in groups.values():
+        a = [f for h, f in v if h]
+        b = [f for h, f in v if not h]
+        if a and b:
+            w = len(a) * len(b) / len(v)
+            num += w * (sum(a) / len(a) - sum(b) / len(b))
+            den += w
+            used += 1
+            runs += len(v)
+    return ((num / den) if den else None), used, runs
+
+
+def ochiai_attribution(feature_rows: list[dict], outcome_key: str = "resolved", strata_keys=("model", "instance_id")) -> list[dict]:
     """Spectrum-based fault localisation (Ochiai) applied to runs instead of statements.
     rows = runs, columns = binary trajectory features, 'failing' = not resolved.
     susp(feature) = ef / sqrt(F * (ef + ep)), where ef/ep = failing/passing runs that
-    exhibit the feature and F = total failing runs. Correlation, not causation."""
+    exhibit the feature and F = total failing runs. Correlation, not causation.
+
+    Ochiai grows with the overall failure rate: when most runs fail, a feature present in every run
+    scores sqrt(F/N) without separating anything. So each row also carries two base-rate-free
+    numbers: `risk_difference`, the failure rate with the feature minus without it, and
+    `stratified_difference`, the same difference within strata (by default one model on one task;
+    see stratified_risk_difference), which removes the part explained by which tasks the feature
+    happens to occur on."""
     import math
     from .real_traj import binary_features
     if not feature_rows:
         return []                     # nothing describable: not zero suspicion, no features at all
     feats = [binary_features(r) for r in feature_rows]
     fails = [not r[outcome_key] for r in feature_rows]
+    strata = [tuple(r.get(k) for k in strata_keys) for r in feature_rows]
     F = sum(fails)
     out = []
     for name in feats[0]:
         ef = sum(1 for f, x in zip(feats, fails) if f[name] and x)
         ep = sum(1 for f, x in zip(feats, fails) if f[name] and not x)
+        nf = sum(1 for f, x in zip(feats, fails) if not f[name] and x)
+        np_ = sum(1 for f, x in zip(feats, fails) if not f[name] and not x)
         susp = ef / math.sqrt(F * (ef + ep)) if F and (ef + ep) else 0.0
         rate_fail = ef / F if F else float("nan")
         rate_pass = ep / (len(fails) - F) if len(fails) - F else float("nan")
-        out.append({"feature": name, "ochiai": susp, "ef": ef, "ep": ep, "rate_in_failures": rate_fail, "rate_in_successes": rate_pass})
+        fr_with = ef / (ef + ep) if (ef + ep) else None
+        fr_without = nf / (nf + np_) if (nf + np_) else None
+        rd = (fr_with - fr_without) if fr_with is not None and fr_without is not None else None
+        srd, used, runs = stratified_risk_difference([f[name] for f in feats], fails, strata)
+        out.append({"feature": name, "ochiai": susp, "ef": ef, "ep": ep, "rate_in_failures": rate_fail, "rate_in_successes": rate_pass,
+                    "fail_rate_with": fr_with, "fail_rate_without": fr_without, "risk_difference": rd,
+                    "stratified_difference": srd, "strata_used": used, "strata_runs": runs})
     return sorted(out, key=lambda d: -d["ochiai"])
 
 
@@ -411,6 +450,44 @@ def factorial(rows: list[dict], a_key: str = "model", b_key: str = "harness_id",
             "a_key": a_key, "b_key": b_key}
 
 
+def factorial_ci(rows: list[dict], a_key: str = "model", b_key: str = "harness_id", block_key: str = "task_id",
+                 outcome: str = "hidden_pass", B: int = 1000, alpha: float = 0.05, seed: int = 0) -> dict:
+    """Percentile intervals for every share of `factorial()`, from a bootstrap over BLOCKS (tasks).
+
+    Tasks are the sampling unit (the population a share is meant to describe is "tasks like these"),
+    so each replicate draws tasks with replacement and keeps all runs of a drawn task, relabelled so
+    that a task drawn twice counts as two blocks. Returns {term: [lo, hi]} plus the replicate count.
+    The point estimates stay those of factorial(); this only says how far they move with the tasks."""
+    by_block = defaultdict(list)
+    for r in rows:                     # only the four fields factorial() reads: replicates copy rows
+        by_block[r[block_key]].append({a_key: r[a_key], b_key: r[b_key], block_key: r[block_key],
+                                       outcome: r.get(outcome)})
+    blocks = sorted(by_block)
+    if len(blocks) < 2:
+        return {"intervals": {}, "B": 0, "blocks": len(blocks)}
+    rng = random.Random(seed)
+    reps = defaultdict(list)
+    for _ in range(int(B)):
+        sample = []
+        for i in range(len(blocks)):
+            k = blocks[rng.randrange(len(blocks))]
+            sample.extend({**r, block_key: f"{k}#{i}"} for r in by_block[k])
+        try:
+            tab = factorial(sample, a_key, b_key, block_key, outcome)
+        except (ZeroDivisionError, ValueError):
+            continue
+        for term in tab["table"]:
+            if term["share"] == term["share"]:
+                reps[term["term"]].append(term["share"])
+    out = {}
+    for term, v in reps.items():
+        v.sort()
+        lo = v[int((alpha / 2) * len(v))]
+        hi = v[max(0, int((1 - alpha / 2) * len(v)) - 1)]
+        out[term] = [lo, hi]
+    return {"intervals": out, "B": len(next(iter(reps.values()), [])), "blocks": len(blocks)}
+
+
 def factor_summary(anova: dict) -> dict:
     """Pure summary of an existing `factorial()` result for the Experiment view: which named
     factor leads by sum of squares, each one's SS share and level RANGE (its highest level mean
@@ -433,12 +510,19 @@ def factor_summary(anova: dict) -> dict:
         return (max(means.values()) - min(means.values())) if means else float("nan")
 
     leading = a_name if by_term[a_term]["SS"] >= by_term[b_term]["SS"] else b_name
-    return {
+    out = {
         "leading_factor": leading,
         a_name: {"share": by_term[a_term]["share"], "range": level_range(anova.get("a_means", {}))},
         b_name: {"share": by_term[b_term]["share"], "range": level_range(anova.get("b_means", {}))},
         "interaction_share": by_term[ab_term]["share"],
     }
+    ci = anova.get("share_ci95") or {}
+    if ci:   # attached by the caller from factorial_ci(); reported, never recomputed here
+        out[a_name]["share_ci95"] = ci.get(a_term)
+        out[b_name]["share_ci95"] = ci.get(b_term)
+        out["interaction_share_ci95"] = ci.get(ab_term)
+        out["all_shares"] = {t["term"]: {"share": t["share"], "ci95": ci.get(t["term"])} for t in anova["table"]}
+    return out
 
 
 def power_n(p_a: float, p_b: float, power: float = 0.8, alpha: float = 0.05) -> float:

@@ -36,6 +36,7 @@ class MockProvider(Provider):
 
     def __init__(self, model="mock", temperature=0.0, price=None, seed=None, pace_ms=None):
         super().__init__(model, temperature, price)
+        self.seed = seed
         self.rng = random.Random(seed)
         self._plan = None      # decided once per run; keyed by conversation length == 2
         # A second "model" for factorial designs: `mock-weak` gets a correct first attempt
@@ -48,6 +49,7 @@ class MockProvider(Provider):
         self.pace_s = (float(pace_ms) if pace_ms is not None else (float(env) if env else 0.0)) / 1000.0
 
     def reseed(self, seed):
+        self.seed = seed
         self.rng = random.Random(seed)
         self._plan = None
 
@@ -84,7 +86,10 @@ class MockProvider(Provider):
             self._plan = self._decide_plan(task_id, tool_names, system_prompt)
         plan = self._plan
         names = [c[0] for c in calls]
-        knowledge = K.SOLUTIONS[task_id]
+        knowledge = K.knowledge_for(task_id)
+        if knowledge is None:
+            raise RuntimeError(f"the mock agent has no solution material for task {task_id!r} "
+                               "(a core task needs an entry in _mock_knowledge.SOLUTIONS, an extended task a reference/ folder)")
         src_path = knowledge["path"]
 
         def tc(name, **args):
@@ -98,7 +103,7 @@ class MockProvider(Provider):
             out_tok = out_tok if out_tok is not None else (len(json.dumps(call.arguments)) // 4 + 40 if call else 60)
             return ChatResponse(text=text, tool_calls=[call] if call else [], input_tokens=in_tok,
                                 output_tokens=out_tok, finish_reason="tool_calls" if call else "stop",
-                                latency_ms=max(200, latency))
+                                latency_ms=max(200, latency), sent_seed=self.seed)
 
         wrote = [c for c in calls if c[0] in ("write_file", "edit_file") and c[1].get("path") == src_path]
         test_runs = [i for i, c in enumerate(calls) if c[0] == "run_tests"]

@@ -58,3 +58,33 @@ def load_task(task_dir: str) -> dict:
         meta["issue"] = f.read()
     meta["dir"] = task_dir
     return meta
+
+
+#: The task suites. "core" is the eight tasks every exercise, recorded dataset and document of the
+#: lab is written against, and it is what `--tasks all` has always meant. "extended" holds the tasks
+#: added later (task.json carries "suite": "extended"); "full" is both. A task without a "suite"
+#: key is a core task, so nothing recorded before the key existed changes meaning.
+SUITES = ("core", "extended", "full")
+
+
+def task_suite(task_dir: str) -> str:
+    """"core" or "extended", read from task.json; "core" when the key or the file is missing."""
+    try:
+        with open(os.path.join(task_dir, "task.json")) as f:
+            return "extended" if json.load(f).get("suite") == "extended" else "core"
+    except (OSError, ValueError):
+        return "core"
+
+
+def list_task_ids(tasks_root: str, suite: str = "core") -> list:
+    """Sorted task ids under `tasks_root` that belong to `suite` (see SUITES)."""
+    if suite not in SUITES:
+        raise ValueError(f"unknown task suite {suite!r}; expected one of {', '.join(SUITES)}")
+    try:
+        names = sorted(d for d in os.listdir(tasks_root)
+                       if os.path.isdir(os.path.join(tasks_root, d)) and not d.startswith(("_", ".")))
+    except OSError:
+        return []
+    if suite == "full":
+        return names
+    return [d for d in names if task_suite(os.path.join(tasks_root, d)) == suite]

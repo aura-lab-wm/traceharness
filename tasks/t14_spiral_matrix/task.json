@@ -1,0 +1,10 @@
+{
+  "id": "t14_spiral_matrix",
+  "title": "spiral repeats elements on non-square matrices",
+  "probe": "none",
+  "suite": "extended",
+  "src_files": [
+    "grid/spiral.py"
+  ],
+  "test_cmd": "python -m unittest discover -s tests -q"
+}

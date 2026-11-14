@@ -1,0 +1,17 @@
+--- a/pointer/resolve.py
++++ b/pointer/resolve.py
+@@ -4,10 +4,11 @@
+ def _decode(token):
+     """Decode one reference token: '~1' stands for '/' and '~0' for '~'.
+ 
+-    Escapes are decoded left to right as in the RFC, so '~01' is the two
+-    characters '~1' (a tilde followed by a one), never '/'.
++    Escapes are decoded as in the RFC: first all '~1' become '/', then all
++    '~0' become '~', so '~01' is the two characters '~1' (a tilde followed
++    by a one), never '/'.
+     """
+-    return token.replace("~0", "~").replace("~1", "/")
++    return token.replace("~1", "/").replace("~0", "~")
+ 
+ 
+ def split(pointer):

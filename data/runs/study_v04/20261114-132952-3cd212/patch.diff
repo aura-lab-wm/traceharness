@@ -1,0 +1,16 @@
+--- a/retry/backoff.py
++++ b/retry/backoff.py
+@@ -15,11 +15,8 @@
+     if attempts < 0 or base <= 0 or cap <= 0:
+         raise ValueError("attempts must be >= 0 and base, cap must be > 0")
+     out = []
+-    delay = base
++    delay = min(base, cap)
+     for _ in range(attempts):
+         out.append(delay)
+-        if delay >= cap:
+-            delay = cap
+-        else:
+-            delay *= 2
++        delay = min(delay * 2, cap)
+     return out

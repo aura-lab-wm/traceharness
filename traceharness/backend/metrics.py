@@ -6,7 +6,7 @@ from collections import Counter, defaultdict
 
 from traceharness.core.analysis import (load_index, filter_rows, task_table, aggregate, bootstrap_ci, paired_bootstrap, flip_rate,
                                boundary_rate, exit_reasons, tokens_per_solve, cost_of_pass, mean, summarize, ochiai_attribution,
-                               factorial, power_n, wrong_winner, per_task_rates, tokens_of,
+                               factorial, factorial_ci, power_n, wrong_winner, per_task_rates, tokens_of,
                                cohens_kappa, comparisons_for, factor_summary)
 from traceharness.core.grader import load_task
 from traceharness.core.trajtest import load_runs
@@ -499,6 +499,10 @@ def experiment(rows: list[dict], a_key: str = "model", b_key: str = "harness_id"
         sub = [r for r in R if r[a_key] in bal_A and r[b_key] in bal_B]
         table = factorial(sub, a_key, b_key, "task_id", outcome)
         table["balanced_a"], table["balanced_b"] = bal_A, bal_B
+        ci = factorial_ci(sub, a_key, b_key, "task_id", outcome, B=400)
+        table["share_ci95"], table["share_ci_B"] = ci["intervals"], ci["B"]
+        for row in table["table"]:
+            row["share_ci95"] = ci["intervals"].get(row["term"])
         table["dropped"] = sorted((set(A) - set(bal_A)) | (set(B) - set(bal_B)))
 
     # `fit`: the pure summary of the ANOVA above (leading factor, each factor's share and level

@@ -1,0 +1,66 @@
+[
+ {
+  "role": "system",
+  "content": "You are an autonomous software engineer working inside a small Python repository.\nYou are given a GitHub issue. Resolve it by editing files with the tools provided.\nWork step by step: inspect the relevant code, make a minimal change, verify it, then call `submit`.\nDo not modify the tests. Do not run commands unrelated to the task."
+ },
+ {
+  "role": "user",
+  "content": "Task id: t12_wordwrap\n\n# Issue #19: wrap() leaves lines one character short\n\n`wrap(\"aaa bbb\", 7)` returns `[\"aaa\", \"bbb\"]`, but \"aaa bbb\" is exactly 7 characters\nand should stay on one line. In longer paragraphs every line comes out a little\nnarrower than the width we asked for, so our receipts print on twice as many lines\nas they should. Overlong words are still split correctly. Code is in `wrapper/wrap.py`.\n\n\nRepository files:\ntests/test_wrap.py\nwrapper/__init__.py\nwrapper/wrap.py"
+ },
+ {
+  "role": "assistant",
+  "content": "The user wants me to fix a bug in the `wrap()` function in `wrapper/wrap.py`.\nThe bug causes lines to be one character shorter than the specified width, leading to unnecessary line breaks.\n\nI need to:\n1. Read the `wrapper/wrap.py` file to understand the current implementation of `wrap()`.\n2. Identify the part of the code responsible for calculating line breaks and determining line length.\n3. Modify the code to ensure that lines are exactly the specified width when possible, and not one character short.\n4. Submit the changes with a summary of the fix.\n\nLet's start by reading the `wrapper/wrap.py` file.",
+  "tool_calls": [
+   {
+    "id": "tool_read_file_b4HgJ2LG5YuDuQbY9gwU",
+    "name": "read_file",
+    "arguments": {
+     "path": "wrapper/wrap.py"
+    }
+   }
+  ]
+ },
+ {
+  "role": "tool",
+  "tool_call_id": "tool_read_file_b4HgJ2LG5YuDuQbY9gwU",
+  "content": "   1| \"\"\"Greedy word wrapping for plain text.\"\"\"\n   2| \n   3| \n   4| def wrap(text, width):\n   5|     \"\"\"Wrap text into a list of lines of at most `width` characters.\n   6| \n   7|     Words are the runs of non-whitespace characters in text; any run of spaces,\n   8|     tabs or newlines between words counts as one separator. Words are packed\n   9|     greedily: a word joins the current line, separated by one space, whenever\n  10|     the line stays at most `width` characters long (a line may be exactly\n  11|     `width` long). Otherwise it starts a new line.\n  12| \n  13|     A word longer than `width` always starts on a new line and is cut into\n  14|     pieces of exactly `width` characters; the last piece (which may be shorter)\n  15|     is then treated like an ordinary word, so following words can join it.\n  16| \n  17|     Text without words gives []. Raises ValueError if width < 1.\n  18|     \"\"\"\n  19|     if width < 1:\n  20|         raise ValueError(\"width must be at least 1\")\n  21|     lines = []\n  22|     current = \"\"\n  23|     for word in text.split():\n  24|         while len(word) > width:\n  25|             if current:\n  26|                 lines.append(current)\n  27|                 current = \"\"\n  28|             lines.append(word[:width])\n  29|             word = word[width:]\n  30|         if not current:\n  31|             current = word\n  32|         elif len(current) + 1 + len(word) < width:\n  33|             current += \" \" + word\n  34|         else:\n  35|             lines.append(current)\n  36|             current = word\n  37|     if current:\n  38|         lines.append(current)\n  39|     return lines"
+ },
+ {
+  "role": "assistant",
+  "content": "The `wrap` function iterates through words and adds them to the `current` line.\nThe condition `len(current) + 1 + len(word) < width` on line 32 determines if a word can be added to the current line.\nIf adding the word (plus a space) makes the line *strictly less than* `width`, it's added. Otherwise, it starts a new line.\nThis means that if `len(current) + 1 + len(word) == width`, the word starts a new line, making the previous line one character shorter than `width`.\n\nTo fix this, I need to change the condition to `len(current) + 1 + len(word) <= width`. This will allow words to be added to the current line as long as the total length is *less than or equal to* `width`.\n\nLet's apply this change.",
+  "tool_calls": [
+   {
+    "id": "tool_edit_file_rDw8qICWh00bf9buyH8W",
+    "name": "edit_file",
+    "arguments": {
+     "path": "wrapper/wrap.py",
+     "new": "elif len(current) + 1 + len(word) <= width:",
+     "old": "elif len(current) + 1 + len(word) < width:"
+    }
+   }
+  ]
+ },
+ {
+  "role": "tool",
+  "tool_call_id": "tool_edit_file_rDw8qICWh00bf9buyH8W",
+  "content": "edited wrapper/wrap.py"
+ },
+ {
+  "role": "assistant",
+  "content": "Now that I've made the change, I should submit it.\nThe summary should explain the bug and the fix.The bug was that the `wrap()` function would leave lines one character short of the specified `width` because it only added a word to the current line if the total length was strictly less than `width`. This caused unnecessary line breaks. The fix changes the condition to allow words to be added as long as the total length is less than or equal to `width`, ensuring lines are packed more tightly and meet the specified width.",
+  "tool_calls": [
+   {
+    "id": "tool_submit_cwhJtpmgOrpphy2OQAp1",
+    "name": "submit",
+    "arguments": {
+     "summary": "Fix: The wrap() function now correctly handles line wrapping by changing the condition for adding words to a line from '< width' to '<= width'. This ensures that lines are packed to the specified width and are not one character short, resolving an issue where lines were narrower than intended, leading to excessive line breaks."
+    }
+   }
+  ]
+ },
+ {
+  "role": "tool",
+  "tool_call_id": "tool_submit_cwhJtpmgOrpphy2OQAp1",
+  "content": "submitted"
+ }
+]
