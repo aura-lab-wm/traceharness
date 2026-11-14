@@ -1,0 +1,20 @@
+--- a/versions/compare.py
++++ b/versions/compare.py
+@@ -23,7 +23,7 @@
+     for ident in pre:
+         if not (ident.isascii() and ident.replace("-", "").isalnum()):
+             raise ValueError(f"bad version: {version!r}")
+-    return parts, pre
++    return [int(part) for part in parts], pre
+ 
+ 
+ def _ident_key(ident):
+@@ -45,7 +45,7 @@
+     """
+     ra, pa = parse(a)
+     rb, pb = parse(b)
+-    for x, y in zip_longest(ra, rb, fillvalue="0"):
++    for x, y in zip_longest(ra, rb, fillvalue=0):
+         if x != y:
+             return -1 if x < y else 1
+     if pa == pb:

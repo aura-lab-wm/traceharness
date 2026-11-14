@@ -1,0 +1,17 @@
+--- a/search/lookup.py
++++ b/search/lookup.py
+@@ -11,12 +11,12 @@
+     lo, hi = 0, len(sorted_list) - 1
+     while lo <= hi:
+         mid = (lo + hi) // 2
+-        if sorted_list[mid] == target:
+-            return mid
+         if sorted_list[mid] < target:
+             lo = mid + 1
+         else:
+             hi = mid - 1
++    if lo < len(sorted_list) and sorted_list[lo] == target:
++        return lo
+     return -1
+ 
+ 

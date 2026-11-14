@@ -1,0 +1,49 @@
+--- a/.pytest_cache/.gitignore
++++ b/.pytest_cache/.gitignore
+@@ -0,0 +1,2 @@
++# Created by pytest automatically.
++*
+--- a/.pytest_cache/CACHEDIR.TAG
++++ b/.pytest_cache/CACHEDIR.TAG
+@@ -0,0 +1,4 @@
++Signature: 8a477f597d28d172789f06886806bc55
++# This file is a cache directory tag created by pytest.
++# For information about cache directory tags, see:
++#	https://bford.info/cachedir/spec.html
+--- a/.pytest_cache/README.md
++++ b/.pytest_cache/README.md
+@@ -0,0 +1,8 @@
++# pytest cache directory #
++
++This directory contains data from the pytest's cache plugin,
++which provides the `--lf` and `--ff` options, as well as the `cache` fixture.
++
++**Do not** commit this to version control.
++
++See [the docs](https://docs.pytest.org/en/stable/how-to/cache.html) for more information.
+--- a/.pytest_cache/v/cache/nodeids
++++ b/.pytest_cache/v/cache/nodeids
+@@ -0,0 +1,5 @@
++[
++  "tests/test_parser.py::TestParse::test_comments_and_blank_lines",
++  "tests/test_parser.py::TestParse::test_errors",
++  "tests/test_parser.py::TestParse::test_sections_and_keys"
++]
+--- a/inifile/parser.py
++++ b/inifile/parser.py
+@@ -31,11 +31,11 @@
+             continue
+         if section is None:
+             raise ValueError(f"line {number}: key outside of a section")
+-        parts = line.split("=")
+-        if len(parts) < 2:
++        if "=" not in line:
+             raise ValueError(f"line {number}: expected key = value")
+-        key = parts[0].strip()
++        key, value = line.split("=", 1)
++        key = key.strip()
+         if not key:
+             raise ValueError(f"line {number}: empty key")
+-        result[section][key] = parts[1].split("#")[0].strip()
++        result[section][key] = value.strip()
+     return result

@@ -1,0 +1,30 @@
+--- a/search/lookup.py
++++ b/search/lookup.py
+@@ -1,5 +1,4 @@
+ """Lookups in sorted sequences."""
+-
+ 
+ def first_index(sorted_list, target):
+     """Return the index of the FIRST occurrence of `target`, or -1 if absent.
+@@ -9,15 +8,17 @@
+     O(log n) elements. The sequence is not modified.
+     """
+     lo, hi = 0, len(sorted_list) - 1
++    result = -1  # Initialize result to -1
+     while lo <= hi:
+         mid = (lo + hi) // 2
+         if sorted_list[mid] == target:
+-            return mid
+-        if sorted_list[mid] < target:
++            result = mid  # Record the index
++            hi = mid - 1  # Try to find an earlier occurrence
++        elif sorted_list[mid] < target:
+             lo = mid + 1
+-        else:
++        else:  # sorted_list[mid] > target
+             hi = mid - 1
+-    return -1
++    return result # Return the found index or -1
+ 
+ 
+ def count(sorted_list, target):

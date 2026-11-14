@@ -1,0 +1,44 @@
+--- a/events/dedup.py
++++ b/events/dedup.py
+@@ -1,4 +1,7 @@
+ """Suppress repeated events that carry the same key."""
++
++import heapq
++import itertools
+ 
+ 
+ class Deduper:
+@@ -21,14 +24,32 @@
+             raise ValueError("window_seconds must be positive")
+         self.window = window_seconds
+         self._last = {}
++        # Keep expiry entries separately so expired keys can be removed without
++        # scanning every key on every call.  The counter also means keys need
++        # not be orderable when two expiries are equal.
++        self._expiries = []
++        self._sequence = itertools.count()
++
++    def _discard_expired(self, now):
++        while self._expiries and self._expiries[0][0] <= now:
++            _expiry, _sequence, key, timestamp = heapq.heappop(self._expiries)
++            # The timestamp check makes this safe even if an entry is stale.
++            if self._last.get(key) == timestamp:
++                del self._last[key]
+ 
+     def seen(self, key, now):
+         """Return True if ``key`` is a duplicate at time ``now``, else False.
+         A False result records ``now`` as the key's latest new sighting."""
++        self._discard_expired(now)
+         last = self._last.get(key)
+-        if last is not None and now - last <= self.window:
++        if last is not None:
+             return True
++
+         self._last[key] = now
++        heapq.heappush(
++            self._expiries,
++            (now + self.window, next(self._sequence), key, now),
++        )
+         return False
+ 
+     def __len__(self):

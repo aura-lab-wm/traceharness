@@ -1,0 +1,15 @@
+--- a/lru/cache.py
++++ b/lru/cache.py
+@@ -22,7 +22,11 @@
+         """
+         if key not in self._data:
+             return default
+-        return self._data[key]
++        value = self._data[key]
++        # Re-insert to move the key to most recently used.
++        del self._data[key]
++        self._data[key] = value
++        return value
+ 
+     def put(self, key, value):
+         """Store value under key and mark key most recently used."""

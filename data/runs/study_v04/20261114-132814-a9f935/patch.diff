@@ -1,0 +1,36 @@
+--- a/cfg/loader.py
++++ b/cfg/loader.py
+@@ -1,5 +1,33 @@
++_TRUTHY = {"1", "true", "yes", "on"}
++_FALSY = {"0", "false", "no", "off", ""}
++
++
++def _coerce(value, default):
++    """Coerce the string `value` to the type of `default`."""
++    value = str(value)
++    if isinstance(default, bool):
++        v = value.strip().lower()
++        if v in _TRUTHY:
++            return True
++        if v in _FALSY:
++            return False
++        raise ValueError("cannot parse %r as bool" % (value,))
++    if isinstance(default, int):
++        return int(value)
++    if isinstance(default, float):
++        return float(value)
++    return value
++
++
+ def load_config(defaults: dict, env: dict) -> dict:
+     """Return a copy of `defaults` where any env var APP_<KEY> overrides the
+     value for key <key> (lowercased), coerced to the type of the default."""
+     cfg = dict(defaults)
++    for key, value in env.items():
++        if not key.startswith("APP_"):
++            continue
++        name = key[4:].lower()
++        if name not in defaults:
++            continue
++        cfg[name] = _coerce(value, defaults[name])
+     return cfg

@@ -1,0 +1,70 @@
+--- a/events/dedup.py
++++ b/events/dedup.py
+@@ -1,35 +1,34 @@
+-"""Suppress repeated events that carry the same key."""
++class Deduper:
++    def __init__(self, window):
++        self.window = window
++        self._seen = {}  # Stores {key: last_seen_timestamp}
+ 
++    def seen(self, key, timestamp):
++        # Remove old entries
++        keys_to_remove = []
++        for k, last_seen_ts in self._seen.items():
++            # If an event is older than the window, remove it.
++            # An event exactly 'window' seconds ago should NOT be removed yet.
++            # So, if timestamp - last_seen_ts > window, it's too old.
++            if timestamp - last_seen_ts > self.window:
++                keys_to_remove.append(k)
++        for k in keys_to_remove:
++            del self._seen[k]
+ 
+-class Deduper:
+-    """Report whether an event key was already seen recently.
+-
+-    A sighting of ``key`` at time ``t`` (reported as new by ``seen``) suppresses
+-    every later sighting of the same key at times ``now`` with
+-    ``now - t < window_seconds``. The window is half open: a sighting exactly
+-    ``window_seconds`` after ``t`` is new again and starts a fresh window.
+-    Suppressed sightings do not extend the window.
+-
+-    Timestamps are numbers supplied by the caller and never decrease from one
+-    call to the next. ``len(deduper)`` is the number of keys whose window is
+-    still open as of the most recent call to ``seen``; keys whose window has
+-    ended must not be kept in memory.
+-    """
+-
+-    def __init__(self, window_seconds):
+-        if window_seconds <= 0:
+-            raise ValueError("window_seconds must be positive")
+-        self.window = window_seconds
+-        self._last = {}
+-
+-    def seen(self, key, now):
+-        """Return True if ``key`` is a duplicate at time ``now``, else False.
+-        A False result records ``now`` as the key's latest new sighting."""
+-        last = self._last.get(key)
+-        if last is not None and now - last <= self.window:
+-            return True
+-        self._last[key] = now
+-        return False
+-
+-    def __len__(self):
+-        return len(self._last)
++        # Check if the current key is a duplicate
++        if key not in self._seen:
++            self._seen[key] = timestamp
++            return False # New event
++        
++        last_seen = self._seen[key]
++        
++        # If the event arrived exactly one window later, it should be considered new.
++        # This means if timestamp - last_seen == window, it's new.
++        # So, if timestamp - last_seen < window, it's a duplicate.
++        if timestamp - last_seen < self.window:
++            # It's a duplicate if it arrived strictly *before* the window expired.
++            return True # Duplicate event
++        else:
++            # It's new if it arrived exactly at the window or after.
++            self._seen[key] = timestamp # Update timestamp
++            return False # New event

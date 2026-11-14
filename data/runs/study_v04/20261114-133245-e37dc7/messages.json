@@ -1,0 +1,124 @@
+[
+ {
+  "role": "system",
+  "content": "You are an autonomous software engineer working inside a small Python repository.\nYou are given a GitHub issue. Resolve it by editing files with the tools provided.\nWork step by step: inspect the relevant code, make a minimal change, verify it, then call `submit`.\nDo not modify the tests. Do not run commands unrelated to the task."
+ },
+ {
+  "role": "user",
+  "content": "Task id: t12_wordwrap\n\n# Issue #19: wrap() leaves lines one character short\n\n`wrap(\"aaa bbb\", 7)` returns `[\"aaa\", \"bbb\"]`, but \"aaa bbb\" is exactly 7 characters\nand should stay on one line. In longer paragraphs every line comes out a little\nnarrower than the width we asked for, so our receipts print on twice as many lines\nas they should. Overlong words are still split correctly. Code is in `wrapper/wrap.py`.\n\n\nRepository files:\ntests/test_wrap.py\nwrapper/__init__.py\nwrapper/wrap.py"
+ },
+ {
+  "role": "assistant",
+  "content": "\n\n\n\n",
+  "tool_calls": [
+   {
+    "id": "call_d6df7f61239d4c09acfe43ca",
+    "name": "read_file",
+    "arguments": {
+     "path": "wrapper/wrap.py"
+    }
+   },
+   {
+    "id": "call_d0c1e5fd3f8d436cae0e7e22",
+    "name": "read_file",
+    "arguments": {
+     "path": "tests/test_wrap.py"
+    }
+   },
+   {
+    "id": "call_9a64e8e86c3741e18ccecc83",
+    "name": "read_file",
+    "arguments": {
+     "path": "wrapper/__init__.py"
+    }
+   }
+  ]
+ },
+ {
+  "role": "tool",
+  "tool_call_id": "call_d6df7f61239d4c09acfe43ca",
+  "content": "   1| \"\"\"Greedy word wrapping for plain text.\"\"\"\n   2| \n   3| \n   4| def wrap(text, width):\n   5|     \"\"\"Wrap text into a list of lines of at most `width` characters.\n   6| \n   7|     Words are the runs of non-whitespace characters in text; any run of spaces,\n   8|     tabs or newlines between words counts as one separator. Words are packed\n   9|     greedily: a word joins the current line, separated by one space, whenever\n  10|     the line stays at most `width` characters long (a line may be exactly\n  11|     `width` long). Otherwise it starts a new line.\n  12| \n  13|     A word longer than `width` always starts on a new line and is cut into\n  14|     pieces of exactly `width` characters; the last piece (which may be shorter)\n  15|     is then treated like an ordinary word, so following words can join it.\n  16| \n  17|     Text without words gives []. Raises ValueError if width < 1.\n  18|     \"\"\"\n  19|     if width < 1:\n  20|         raise ValueError(\"width must be at least 1\")\n  21|     lines = []\n  22|     current = \"\"\n  23|     for word in text.split():\n  24|         while len(word) > width:\n  25|             if current:\n  26|                 lines.append(current)\n  27|                 current = \"\"\n  28|             lines.append(word[:width])\n  29|             word = word[width:]\n  30|         if not current:\n  31|             current = word\n  32|         elif len(current) + 1 + len(word) < width:\n  33|             current += \" \" + word\n  34|         else:\n  35|             lines.append(current)\n  36|             current = word\n  37|     if current:\n  38|         lines.append(current)\n  39|     return lines"
+ },
+ {
+  "role": "tool",
+  "tool_call_id": "call_d0c1e5fd3f8d436cae0e7e22",
+  "content": "   1| import unittest\n   2| from wrapper import wrap\n   3| \n   4| \n   5| class TestWrap(unittest.TestCase):\n   6|     def test_simple(self):\n   7|         self.assertEqual(wrap(\"the quick brown fox\", 10), [\"the quick\", \"brown fox\"])\n   8| \n   9|     def test_line_exactly_fills_width(self):\n  10|         self.assertEqual(wrap(\"aaa bbb\", 7), [\"aaa bbb\"])\n  11|         self.assertEqual(wrap(\"aaa bbb ccc\", 7), [\"aaa bbb\", \"ccc\"])\n  12| \n  13|     def test_long_word_is_split(self):\n  14|         self.assertEqual(wrap(\"abcdefghij\", 4), [\"abcd\", \"efgh\", \"ij\"])\n  15| \n  16| \n  17| if __name__ == \"__main__\":\n  18|     unittest.main()"
+ },
+ {
+  "role": "tool",
+  "tool_call_id": "call_9a64e8e86c3741e18ccecc83",
+  "content": "   1| from .wrap import wrap"
+ },
+ {
+  "role": "assistant",
+  "content": "\n\nThe bug is on line 32: the comparison uses `< width` instead of `<= width`, so lines that would fill exactly to `width` are rejected.\n\n",
+  "tool_calls": [
+   {
+    "id": "call_fa73a2affcf842aa8710cce9",
+    "name": "edit_file",
+    "arguments": {
+     "path": "wrapper/wrap.py",
+     "old": "        elif len(current) + 1 + len(word) < width:",
+     "new": "        elif len(current) + 1 + len(word) <= width:"
+    }
+   }
+  ]
+ },
+ {
+  "role": "tool",
+  "tool_call_id": "call_fa73a2affcf842aa8710cce9",
+  "content": "edited wrapper/wrap.py"
+ },
+ {
+  "role": "assistant",
+  "content": "\n\nThe docstring already states lines may be exactly `width` long, so `<=` matches the intended behavior. Let me verify:\n\n",
+  "tool_calls": [
+   {
+    "id": "call_5ded415caf224b7ea7486446",
+    "name": "run_tests",
+    "arguments": {}
+   }
+  ]
+ },
+ {
+  "role": "tool",
+  "tool_call_id": "call_5ded415caf224b7ea7486446",
+  "content": "exit=0\n----------------------------------------------------------------------\nRan 3 tests in 0.000s\n\nOK"
+ },
+ {
+  "role": "assistant",
+  "content": "\n\nAll tests pass. Quick sanity check on the issue's example:\n\n",
+  "tool_calls": [
+   {
+    "id": "chatcmpl-tool-ba3c14644e7d6c58",
+    "name": "bash",
+    "arguments": {
+     "command": "python -c \"from wrapper import wrap; print(wrap('aaa bbb', 7)); print(wrap('abcdefghij', 4)); print(wrap('the quick brown fox', 10))\""
+    }
+   }
+  ]
+ },
+ {
+  "role": "tool",
+  "tool_call_id": "chatcmpl-tool-ba3c14644e7d6c58",
+  "content": "exit=0\n['aaa bbb']\n['abcd', 'efgh', 'ij']\n['the quick', 'brown fox']"
+ },
+ {
+  "role": "assistant",
+  "content": "",
+  "tool_calls": [
+   {
+    "id": "chatcmpl-tool-896f9b6f34cee93a",
+    "name": "submit",
+    "arguments": {
+     "summary": "Fixed the off-by-one in wrapper/wrap.py: the greedy packing condition used `len(current) + 1 + len(word) < width`, which rejected lines that would fill exactly to `width`. Changed it to `<= width` (matching the docstring, which says a line may be exactly `width` long). Now `wrap(\"aaa bbb\", 7)` returns `[\"aaa bbb\"]`, long-word splitting still works, and all tests pass."
+    }
+   }
+  ]
+ },
+ {
+  "role": "tool",
+  "tool_call_id": "chatcmpl-tool-896f9b6f34cee93a",
+  "content": "submitted"
+ }
+]

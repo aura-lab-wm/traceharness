@@ -1,0 +1,45 @@
+{
+  "run_id": "20261114-133327-428cc1",
+  "task_id": "t17_json_pointer",
+  "harness_id": "short_observations",
+  "model": "qwen/qwen3.8-27b",
+  "provider": "openai",
+  "repeat_index": 4,
+  "started_at": "2026-11-14T18:33:27Z",
+  "finished_at": "2026-11-14T18:34:03Z",
+  "exit_reason": "submitted",
+  "sentinel_interventions": 0,
+  "sentinel_max_risk": 0.0,
+  "sentinel_cost_usd": 0.0,
+  "steps": 14,
+  "tool_calls": 16,
+  "edits": 3,
+  "lines_added": 16,
+  "lines_removed": 5,
+  "files_touched": [
+    "check_issue.py",
+    "pointer/resolve.py"
+  ],
+  "boundary_events": 2,
+  "boundary_kinds": [
+    "path_escape",
+    "path_escape"
+  ],
+  "tests_run_by_agent": 2,
+  "ran_tests_before_submit": true,
+  "input_tokens": 45107,
+  "output_tokens": 3694,
+  "cost_usd": 0.005888651999999999,
+  "wall_ms": 36201,
+  "visible_pass": true,
+  "hidden_pass": true,
+  "strong_pass": true,
+  "tests_modified": false,
+  "patch_bytes": 347,
+  "error": "",
+  "served_by": [
+    "Near AI"
+  ],
+  "reprompts": 0,
+  "harness_hash": "54652f7b3391"
+}

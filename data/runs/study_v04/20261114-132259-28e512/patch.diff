@@ -1,0 +1,13 @@
+--- a/versions/compare.py
++++ b/versions/compare.py
+@@ -23,7 +23,9 @@
+     for ident in pre:
+         if not (ident.isascii() and ident.replace("-", "").isalnum()):
+             raise ValueError(f"bad version: {version!r}")
+-    return parts, pre
++    # Convert release components to integers so comparison is numeric rather
++    # than lexicographic (for example, 10 must sort after 9).
++    return [int(part) for part in parts], pre
+ 
+ 
+ def _ident_key(ident):

@@ -1,0 +1,11 @@
+--- a/versions/compare.py
++++ b/versions/compare.py
+@@ -23,7 +23,7 @@
+     for ident in pre:
+         if not (ident.isascii() and ident.replace("-", "").isalnum()):
+             raise ValueError(f"bad version: {version!r}")
+-    return parts, pre
++    return [int(part) for part in parts], pre
+ 
+ 
+ def _ident_key(ident):

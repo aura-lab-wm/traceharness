@@ -1,0 +1,187 @@
+[
+ {
+  "role": "system",
+  "content": "You are an autonomous software engineer working inside a small Python repository.\nYou are given a GitHub issue. Resolve it by editing files with the tools provided.\nWork step by step: inspect the relevant code, make a minimal change, verify it, then call `submit`.\nDo not modify the tests. Do not run commands unrelated to the task."
+ },
+ {
+  "role": "user",
+  "content": "Task id: t23_dedup_window\n\n# Issue #77: Deduper swallows an event that arrives exactly one window after the previous one\n\nWith `Deduper(10)`, `seen(\"job-1\", 0)` returns `False` and then `seen(\"job-1\", 10)`\nreturns `True`. The window is 10 seconds, and the second event is 10 seconds after\nthe first, so it should be reported as new. We also noticed the process memory\ngrowing on a long-running consumer that sees millions of distinct keys.\nFix `events/dedup.py`.\n\n\nRepository files:\nevents/__init__.py\nevents/dedup.py\ntests/test_dedup.py"
+ },
+ {
+  "role": "assistant",
+  "content": "",
+  "tool_calls": [
+   {
+    "id": "call_2a42555df3f645738205176660af23e5",
+    "name": "read_file",
+    "arguments": {
+     "path": "events/dedup.py"
+    }
+   },
+   {
+    "id": "call_c6375f057e48421e986ce4a78222dd63",
+    "name": "read_file",
+    "arguments": {
+     "path": "tests/test_dedup.py"
+    }
+   },
+   {
+    "id": "call_0d28d6c2a9d84df292d1ef0fa03db33d",
+    "name": "read_file",
+    "arguments": {
+     "path": "events/__init__.py"
+    }
+   }
+  ]
+ },
+ {
+  "role": "tool",
+  "tool_call_id": "call_2a42555df3f645738205176660af23e5",
+  "content": "   1| \"\"\"Suppress repeated events that carry the same key.\"\"\"\n   2| \n   3| \n   4| class Deduper:\n   5|     \"\"\"Report whether an event key was already seen recently.\n   6| \n   7|     A sighting of ``key`` at time ``t`` (reported as new by ``seen``) suppresses\n   8|     every later sighting of the same key at times ``now`` with\n   9|     ``now - t < window_seconds``. The window is half open: a sighting exactly\n  10|     ``window_seconds`` after ``t`` is new again and starts a fresh window.\n  11|     Suppressed sightings do not extend the window.\n  12| \n  13|     Timestamps are numbers supplied by the caller and never decrease from one\n  14|     call to the next. ``len(deduper)`` is the number of keys whose window is\n  15|     still open as of the most recent call to ``seen``; keys whose window has\n  16|     ended must not be kept in memory.\n  17|     \"\"\"\n  18| \n  19|     def __init__(self, window_seconds):\n  20|         if window_seconds <= 0:\n  21|             raise ValueError(\"window_seconds must be positive\")\n  22|         self.window = window_seconds\n  23|         self._last = {}\n  24| \n  25|     def seen(self, key, now):\n  26|         \"\"\"Return True if ``key`` is a duplicate at time ``now``, else False.\n  27|         A False result records ``now`` as the key's latest new sighting.\"\"\"\n  28|         last = self._last.get(key)\n  29|         if last is not None and now - last <= self.window:\n  30|             return True\n  31|         self._last[key] = now\n  32|         return False\n  33| \n  34|     def __len__(self):\n  35|         return len(self._last)"
+ },
+ {
+  "role": "tool",
+  "tool_call_id": "call_c6375f057e48421e986ce4a78222dd63",
+  "content": "   1| import unittest\n   2| from events import Deduper\n   3| \n   4| \n   5| class TestDeduper(unittest.TestCase):\n   6|     def test_first_sighting_is_new(self):\n   7|         self.assertFalse(Deduper(10).seen(\"a\", 0))\n   8| \n   9|     def test_repeat_inside_window(self):\n  10|         d = Deduper(10)\n  11|         d.seen(\"a\", 0)\n  12|         self.assertTrue(d.seen(\"a\", 4))\n  13| \n  14|     def test_exactly_one_window_later_is_new(self):\n  15|         d = Deduper(10)\n  16|         d.seen(\"a\", 0)\n  17|         self.assertFalse(d.seen(\"a\", 10))\n  18| \n  19| \n  20| if __name__ == \"__main__\":\n  21|     unittest.main()"
+ },
+ {
+  "role": "tool",
+  "tool_call_id": "call_0d28d6c2a9d84df292d1ef0fa03db33d",
+  "content": "   1| from .dedup import Deduper"
+ },
+ {
+  "role": "assistant",
+  "content": "\n\nThe bug is clear: `now - last <= self.window` should be `<` (the docstring says the window is half-open), and expired keys are never evicted, so memory grows unboundedly. I'll fix the comparison and add lazy eviction via a min-heap so `__len__` and memory stay correct.\n\n",
+  "tool_calls": [
+   {
+    "id": "chatcmpl-tool-b63237aaa35918cf",
+    "name": "write_file",
+    "arguments": {
+     "path": "events/dedup.py",
+     "content": "\"\"\"Suppress repeated events that carry the same key.\"\"\"\n\nimport heapq\nimport itertools\n\n\nclass Deduper:\n    \"\"\"Report whether an event key was already seen recently.\n\n    A sighting of ``key`` at time ``t`` (reported as new by ``seen``) suppresses\n    every later sighting of the same key at times ``now`` with\n    ``now - t < window_seconds``. The window is half open: a sighting exactly\n    ``window_seconds`` after ``t`` is new again and starts a fresh window.\n    Suppressed sightings do not extend the window.\n\n    Timestamps are numbers supplied by the caller and never decrease from one\n    call to the next. ``len(deduper)`` is the number of keys whose window is\n    still open as of the most recent call to ``seen``; keys whose window has\n    ended must not be kept in memory.\n    \"\"\"\n\n    def __init__(self, window_seconds):\n        if window_seconds <= 0:\n            raise ValueError(\"window_seconds must be positive\")\n        self.window = window_seconds\n        self._last = {}\n        self._heap = []\n        self._counter = itertools.count()\n\n    def seen(self, key, now):\n        \"\"\"Return True if ``key`` is a duplicate at time ``now``, else False.\n        A False result records ``now`` as the key's latest new sighting.\"\"\"\n        self._evict(now)\n        last = self._last.get(key)\n        if last is not None and now - last < self.window:\n            return True\n        self._last[key] = now\n        heapq.heappush(self._heap, (now, next(self._counter), key))\n        return False\n\n    def _evict(self, now):\n        \"\"\"Drop keys whose window has ended as of ``now``.\"\"\"\n        while self._heap:\n            t, _, key = self._heap[0]\n            if now - t < self.window:\n                break\n            heapq.heappop(self._heap)\n            # The key may have been re-seen since this heap entry was pushed;\n            # only drop it if this entry is still its latest sighting.\n            if self._last.get(key) == t:\n                del self._last[key]\n\n    def __len__(self):\n        return len(self._last)\n"
+    }
+   }
+  ]
+ },
+ {
+  "role": "tool",
+  "tool_call_id": "chatcmpl-tool-b63237aaa35918cf",
+  "content": "wrote events/dedup.py (2037 bytes)"
+ },
+ {
+  "role": "assistant",
+  "content": "\n\nNow let me run the tests and a quick sanity check on the memory/eviction behavior:\n\n\n",
+  "tool_calls": [
+   {
+    "id": "chatcmpl-tool-a59627cf3cad0f6a",
+    "name": "run_tests",
+    "arguments": {}
+   },
+   {
+    "id": "chatcmpl-tool-8f990c755fa0b7ff",
+    "name": "bash",
+    "arguments": {
+     "command": "python - <<'EOF'\nfrom events import Deduper\n\n# Issue scenario\nd = Deduper(10)\nassert d.seen(\"job-1\", 0) is False\nassert d.seen(\"job-1\", 10) is False, \"exactly one window later must be new\"\nassert d.seen(\"job-1\", 9) is True, \"just inside window is dup\"\nassert d.seen(\"job-1\", 19) is False, \"exactly one window after t=10 is new\"\n\n# Suppressed sightings do not extend the window\nd2 = Deduper(10)\nd2.seen(\"a\", 0)\nassert d2.seen(\"a\", 5) is True\nassert d2.seen(\"a\", 10) is False, \"window anchored at t=0, not t=5\"\n\n# len reflects open windows; expired keys are evicted from memory\nd3 = Deduper(10)\nd3.seen(\"a\", 0); d3.seen(\"b\", 0)\nassert len(d3) == 2\nassert d3.seen(\"a\", 10) is False\nassert len(d3) == 2\nd3.seen(\"c\", 100)  # advances time, evicts a and b\nassert len(d3) == 1\nassert \"a\" not in d3._last and \"b\" not in d3._last\nassert len(d3._heap) == 1\n\n# millions of distinct keys: memory stays bounded\nimport sys\nd4 = Deduper(10)\nfor i in range(2_000_000):\n    d4.seen(f\"key-{i}\", i)\nassert len(d4) == 10\nassert len(d4._heap) == 10\nprint(\"all sanity checks passed\")\nEOF"
+    }
+   }
+  ]
+ },
+ {
+  "role": "tool",
+  "tool_call_id": "chatcmpl-tool-a59627cf3cad0f6a",
+  "content": "exit=0\n----------------------------------------------------------------------\nRan 3 tests in 0.000s\n\nOK"
+ },
+ {
+  "role": "tool",
+  "tool_call_id": "chatcmpl-tool-8f990c755fa0b7ff",
+  "content": "exit=1\nTraceback (most recent call last):\n  File \"<stdin>\", line 8, in <module>\nAssertionError: exactly one window after t=10 is new"
+ },
+ {
+  "role": "assistant",
+  "content": "\n\nThe test suite passed. My sanity check itself was invalid — I called `seen(\"job-1\", 9)` after `seen(\"job-1\", 10)`, which violates the documented invariant that timestamps never decrease. Let me re-run with a valid non-decreasing sequence:\n\n",
+  "tool_calls": [
+   {
+    "id": "chatcmpl-tool-9e0bfa768c3d8aed",
+    "name": "bash",
+    "arguments": {
+     "command": "python - <<'EOF'\nfrom events import Deduper\n\n# Issue scenario (non-decreasing timestamps)\nd = Deduper(10)\nassert d.seen(\"job-1\", 0) is False\nassert d.seen(\"job-1\", 9) is True, \"just inside window is dup\"\nassert d.seen(\"job-1\", 10) is False, \"exactly one window later must be new\"\nassert d.seen(\"job-1\", 18) is True, \"inside window after t=10\"\nassert d.seen(\"job-1\", 19) is False, \"exactly one window after t=10 is new\"\n\n# Suppressed sightings do not extend the window\nd2 = Deduper(10)\nd2.seen(\"a\", 0)\nassert d2.seen(\"a\", 5) is True\nassert d2.seen(\"a\", 10) is False, \"window anchored at t=0, not t=5\"\n\n# len reflects open windows; expired keys are evicted from memory\nd3 = Deduper(10)\nd3.seen(\"a\", 0); d3.seen(\"b\", 0)\nassert len(d3) == 2\nassert d3.seen(\"a\", 10) is False\nassert len(d3) == 2\nd3.seen(\"c\", 100)  # advances time, evicts a and b\nassert len(d3) == 1\nassert \"a\" not in d3._last and \"b\" not in d3._last\nassert len(d3._heap) == 1\n\n# re-seen key: stale heap entry must not evict the fresh window\nd5 = Deduper(10)\nd5.seen(\"a\", 0)\nassert d5.seen(\"a\", 10) is False   # fresh window at t=10\nassert d5.seen(\"a\", 15) is True\nassert len(d5) == 1\nd5.seen(\"b\", 20)                    # evicts stale t=0 entry, keeps t=10 window\nassert len(d5) == 2\nassert d5.seen(\"a\", 20) is True     # 20-10=10 -> not < 10 -> actually new\nassert d5.seen(\"a\", 20) is False    # now window anchored at t=20\nassert len(d5) == 2\n\n# millions of distinct keys: memory stays bounded\nd4 = Deduper(10)\nfor i in range(2_000_000):\n    d4.seen(f\"key-{i}\", i)\nassert len(d4) == 10\nassert len(d4._heap) == 10\nprint(\"all sanity checks passed\")\nEOF"
+    }
+   }
+  ]
+ },
+ {
+  "role": "tool",
+  "tool_call_id": "chatcmpl-tool-9e0bfa768c3d8aed",
+  "content": "exit=1\nTraceback (most recent call last):\n  File \"<stdin>\", line 9, in <module>\nAssertionError: exactly one window after t=10 is new"
+ },
+ {
+  "role": "assistant",
+  "content": "\n\nMy sanity script had arithmetic errors (19−10=9, not 10; and at t=20 the window from t=10 has just closed). The code is correct — let me fix the script:\n\n",
+  "tool_calls": [
+   {
+    "id": "chatcmpl-tool-8d0d0b602c5d6597",
+    "name": "bash",
+    "arguments": {
+     "command": "python - <<'EOF'\nfrom events import Deduper\n\n# Issue scenario (non-decreasing timestamps)\nd = Deduper(10)\nassert d.seen(\"job-1\", 0) is False\nassert d.seen(\"job-1\", 9) is True,   \"9-0=9 < 10 -> dup\"\nassert d.seen(\"job-1\", 10) is False, \"10-0=10 -> new (the reported bug)\"\nassert d.seen(\"job-1\", 18) is True,  \"18-10=8 < 10 -> dup\"\nassert d.seen(\"job-1\", 19) is True,  \"19-10=9 < 10 -> dup\"\nassert d.seen(\"job-1\", 20) is False, \"20-10=10 -> new\"\n\n# Suppressed sightings do not extend the window\nd2 = Deduper(10)\nd2.seen(\"a\", 0)\nassert d2.seen(\"a\", 5) is True\nassert d2.seen(\"a\", 10) is False, \"window anchored at t=0, not t=5\"\n\n# len reflects open windows; expired keys are evicted from memory\nd3 = Deduper(10)\nd3.seen(\"a\", 0); d3.seen(\"b\", 0)\nassert len(d3) == 2\nassert d3.seen(\"a\", 10) is False\nassert len(d3) == 2\nd3.seen(\"c\", 100)  # advances time, evicts a and b\nassert len(d3) == 1\nassert \"a\" not in d3._last and \"b\" not in d3._last\nassert len(d3._heap) == 1\n\n# re-seen key: stale heap entry must not evict the fresh window\nd5 = Deduper(10)\nd5.seen(\"a\", 0)\nassert d5.seen(\"a\", 10) is False   # fresh window at t=10\nassert d5.seen(\"a\", 15) is True\nassert len(d5) == 1\nd5.seen(\"b\", 20)                    # 20-10=10 -> a's window closed, evicted\nassert len(d5) == 1\nassert d5.seen(\"a\", 20) is False    # a is new again\nassert d5.seen(\"a\", 20) is True     # same instant -> dup\nassert len(d5) == 2\n\n# millions of distinct keys: memory stays bounded\nd4 = Deduper(10)\nfor i in range(2_000_000):\n    d4.seen(f\"key-{i}\", i)\nassert len(d4) == 10\nassert len(d4._heap) == 10\nprint(\"all sanity checks passed\")\nEOF"
+    }
+   }
+  ]
+ },
+ {
+  "role": "tool",
+  "tool_call_id": "chatcmpl-tool-8d0d0b602c5d6597",
+  "content": "exit=1\nTraceback (most recent call last):\n  File \"<stdin>\", line 23, in <module>\nAssertionError"
+ },
+ {
+  "role": "assistant",
+  "content": "\n\nAgain my script's expectation was wrong: at t=10, key `b` (seen at t=0) has *also* expired, so `len` should be 1, not 2. The code is correct. Final corrected check:\n\n",
+  "tool_calls": [
+   {
+    "id": "chatcmpl-tool-bf6017a27c3e3a91",
+    "name": "bash",
+    "arguments": {
+     "command": "python - <<'EOF'\nfrom events import Deduper\n\n# Issue scenario (non-decreasing timestamps)\nd = Deduper(10)\nassert d.seen(\"job-1\", 0) is False\nassert d.seen(\"job-1\", 9) is True,   \"9-0=9 < 10 -> dup\"\nassert d.seen(\"job-1\", 10) is False, \"10-0=10 -> new (the reported bug)\"\nassert d.seen(\"job-1\", 18) is True,  \"18-10=8 < 10 -> dup\"\nassert d.seen(\"job-1\", 19) is True,  \"19-10=9 < 10 -> dup\"\nassert d.seen(\"job-1\", 20) is False, \"20-10=10 -> new\"\n\n# Suppressed sightings do not extend the window\nd2 = Deduper(10)\nd2.seen(\"a\", 0)\nassert d2.seen(\"a\", 5) is True\nassert d2.seen(\"a\", 10) is False, \"window anchored at t=0, not t=5\"\n\n# len reflects open windows; expired keys are evicted from memory\nd3 = Deduper(10)\nd3.seen(\"a\", 0); d3.seen(\"b\", 0)\nassert len(d3) == 2\nassert d3.seen(\"a\", 10) is False   # a and b windows both close at t=10\nassert len(d3) == 1                # only a's fresh window remains\nd3.seen(\"c\", 100)\nassert len(d3) == 1\nassert \"a\" not in d3._last and \"b\" not in d3._last\nassert len(d3._heap) == 1\n\n# re-seen key: stale heap entry must not evict the fresh window\nd5 = Deduper(10)\nd5.seen(\"a\", 0)\nassert d5.seen(\"a\", 10) is False   # fresh window at t=10\nassert d5.seen(\"a\", 15) is True\nassert len(d5) == 1\nd5.seen(\"b\", 20)                    # 20-10=10 -> a's window closed, evicted\nassert len(d5) == 1\nassert d5.seen(\"a\", 20) is False    # a is new again\nassert d5.seen(\"a\", 20) is True     # same instant -> dup\nassert len(d5) == 2\n\n# millions of distinct keys: memory stays bounded\nd4 = Deduper(10)\nfor i in range(2_000_000):\n    d4.seen(f\"key-{i}\", i)\nassert len(d4) == 10\nassert len(d4._heap) == 10\nprint(\"all sanity checks passed\")\nEOF"
+    }
+   }
+  ]
+ },
+ {
+  "role": "tool",
+  "tool_call_id": "chatcmpl-tool-bf6017a27c3e3a91",
+  "content": "exit=0\nall sanity checks passed"
+ },
+ {
+  "role": "assistant",
+  "content": "\n\nAll checks pass. Final confirmation of the official test suite:\n\n",
+  "tool_calls": [
+   {
+    "id": "chatcmpl-tool-92a06e2da94734d1",
+    "name": "run_tests",
+    "arguments": {}
+   }
+  ]
+ },
+ {
+  "role": "tool",
+  "tool_call_id": "chatcmpl-tool-92a06e2da94734d1",
+  "content": "exit=0\n----------------------------------------------------------------------\nRan 3 tests in 0.000s\n\nOK"
+ },
+ {
+  "role": "assistant",
+  "content": "",
+  "tool_calls": [
+   {
+    "id": "chatcmpl-tool-bb73e753d926cc2f",
+    "name": "submit",
+    "arguments": {
+     "summary": "Fixed both problems in events/dedup.py. (1) Off-by-one: the duplicate check used `now - last <= self.window`, so an event exactly one window after the previous sighting was wrongly suppressed; changed to `now - last < self.window`, matching the documented half-open window (so `seen(\"job-1\", 10)` after `seen(\"job-1\", 0)` with window 10 now returns False). (2) Unbounded memory: the `_last` dict was never pruned, so millions of distinct keys accumulated forever. Added a min-heap of (time, counter, key) entries pushed on each new sighting, and a lazy `_evict(now)` step at the start of `seen` that pops entries whose window has ended, deleting the key from `_last` only if the entry is still that key's latest sighting (so a re-seen key's fresh window is never evicted by a stale heap entry). `__len__` now correctly reports only keys with open windows, and memory stays bounded by the number of keys active within the window. All existing tests pass, plus sanity checks for the issue scenario, non-extension by suppressed sightings, eviction correctness, and a 2M-key run where both the dict and heap stay at 10 entries."
+    }
+   }
+  ]
+ },
+ {
+  "role": "tool",
+  "tool_call_id": "chatcmpl-tool-bb73e753d926cc2f",
+  "content": "submitted"
+ }
+]

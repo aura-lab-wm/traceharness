@@ -1,0 +1,53 @@
+--- a/.pytest_cache/.gitignore
++++ b/.pytest_cache/.gitignore
+@@ -0,0 +1,2 @@
++# Created by pytest automatically.
++*
+--- a/.pytest_cache/CACHEDIR.TAG
++++ b/.pytest_cache/CACHEDIR.TAG
+@@ -0,0 +1,4 @@
++Signature: 8a477f597d28d172789f06886806bc55
++# This file is a cache directory tag created by pytest.
++# For information about cache directory tags, see:
++#	https://bford.info/cachedir/spec.html
+--- a/.pytest_cache/README.md
++++ b/.pytest_cache/README.md
+@@ -0,0 +1,8 @@
++# pytest cache directory #
++
++This directory contains data from the pytest's cache plugin,
++which provides the `--lf` and `--ff` options, as well as the `cache` fixture.
++
++**Do not** commit this to version control.
++
++See [the docs](https://docs.pytest.org/en/stable/how-to/cache.html) for more information.
+--- a/.pytest_cache/v/cache/nodeids
++++ b/.pytest_cache/v/cache/nodeids
+@@ -0,0 +1,5 @@
++[
++  "tests/test_dedup.py::TestDeduper::test_exactly_one_window_later_is_new",
++  "tests/test_dedup.py::TestDeduper::test_first_sighting_is_new",
++  "tests/test_dedup.py::TestDeduper::test_repeat_inside_window"
++]
+--- a/events/dedup.py
++++ b/events/dedup.py
+@@ -25,11 +25,18 @@
+     def seen(self, key, now):
+         """Return True if ``key`` is a duplicate at time ``now``, else False.
+         A False result records ``now`` as the key's latest new sighting."""
++        self._expire(now)
+         last = self._last.get(key)
+-        if last is not None and now - last <= self.window:
++        if last is not None and now - last < self.window:
+             return True
+         self._last[key] = now
+         return False
+ 
++    def _expire(self, now):
++        """Drop keys whose window has ended as of ``now``."""
++        expired = [key for key, last in self._last.items() if now - last >= self.window]
++        for key in expired:
++            del self._last[key]
++
+     def __len__(self):
+         return len(self._last)

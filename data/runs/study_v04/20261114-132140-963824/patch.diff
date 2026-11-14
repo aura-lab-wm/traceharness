@@ -1,0 +1,54 @@
+--- a/.pytest_cache/.gitignore
++++ b/.pytest_cache/.gitignore
+@@ -0,0 +1,2 @@
++# Created by pytest automatically.
++*
+--- a/.pytest_cache/CACHEDIR.TAG
++++ b/.pytest_cache/CACHEDIR.TAG
+@@ -0,0 +1,4 @@
++Signature: 8a477f597d28d172789f06886806bc55
++# This file is a cache directory tag created by pytest.
++# For information about cache directory tags, see:
++#	https://bford.info/cachedir/spec.html
+--- a/.pytest_cache/README.md
++++ b/.pytest_cache/README.md
+@@ -0,0 +1,8 @@
++# pytest cache directory #
++
++This directory contains data from the pytest's cache plugin,
++which provides the `--lf` and `--ff` options, as well as the `cache` fixture.
++
++**Do not** commit this to version control.
++
++See [the docs](https://docs.pytest.org/en/stable/how-to/cache.html) for more information.
+--- a/.pytest_cache/v/cache/lastfailed
++++ b/.pytest_cache/v/cache/lastfailed
+@@ -0,0 +1,3 @@
++{
++  "tests/test_handlers.py": true
++}
+--- a/.pytest_cache/v/cache/nodeids
++++ b/.pytest_cache/v/cache/nodeids
+@@ -0,0 +1 @@
++[]
+--- a/api/handlers.py
++++ b/api/handlers.py
+@@ -2,10 +2,6 @@
+ 
+ def ping(payload):
+     return {"ok": True}
+-
+-def legacy_export(payload):
+-    # DEPRECATED since 1.2: replaced by export_v2. Kept for old clients.
+-    return {"format": "csv", "rows": payload.get("rows", [])}
+ 
+ def export_v2(payload):
+     return {"format": payload.get("format", "json"), "rows": payload.get("rows", [])}
+@@ -16,7 +12,6 @@
+ 
+ _REGISTRY = {
+     "ping": ping,
+-    "legacy_export": legacy_export,
+     "export_v2": export_v2,
+     "stats": stats,
+ }

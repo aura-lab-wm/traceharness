@@ -1,0 +1,41 @@
+--- a/store/cache.py
++++ b/store/cache.py
+@@ -1,3 +1,5 @@
++
++
+ import os, json, time
+ 
+ class DiskCache:
+@@ -13,13 +15,28 @@
+         return os.path.join(self.root, f"{key}.json")
+ 
+     def set(self, key, value):
++        self.cleanup()
+         with open(self._path(key), "w") as f:
+             json.dump({"t": self._now(), "v": value}, f)
+ 
+-    def get(self, key, default=None):
+-        p = self._path(key)
+-        if not os.path.exists(p):
+-            return default
++    def cleanup(self):
++        for filename in os.listdir(self.root):
++            p = os.path.join(self.root, filename)
++            if os.path.isfile(p):
++                try:
++                    with open(p, 'r') as f:
++                        rec = json.load(f)
++                        if rec["t"] + self.ttl < self._now():
++                            os.remove(p)
++                except (IOError, OSError, json.JSONDecodeError):
++                    # If file is corrupted or cannot be read, remove it.
++                    try:
++                        os.remove(p)
++                    except (IOError, OSError):
++                        pass # Ignore errors during removal of corrupted file
+         with open(p) as f:
+             rec = json.load(f)
++        if rec["t"] + self.ttl < self._now():
++            os.remove(p)
++            return default
+         return rec["v"]

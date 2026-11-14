@@ -1,0 +1,67 @@
+--- a/lru/cache.py
++++ b/lru/cache.py
+@@ -1,45 +1,28 @@
+-"""A small least-recently-used cache."""
+-
++from collections import OrderedDict
+ 
+ class LRUCache:
+-    """Cache holding at most `capacity` entries.
++    def __init__(self, capacity: int):
++        self.capacity = capacity
++        self.cache = OrderedDict() # Use OrderedDict for LRU behavior
+ 
+-    Both get() (on a hit) and put() count as a use of the key. When a new key
+-    is added to a full cache, the least recently used key is evicted first.
+-    Updating the value of an existing key never evicts anything.
+-    """
+-
+-    def __init__(self, capacity):
+-        if capacity < 1:
+-            raise ValueError("capacity must be at least 1")
+-        self.capacity = capacity
+-        self._data = {}  # insertion order is recency order, oldest first
+-
+-    def get(self, key, default=None):
+-        """Return the value for key and mark it most recently used.
+-
+-        A miss returns `default` and leaves the cache unchanged.
+-        """
+-        if key not in self._data:
++    def get(self, key, default=None): # Added default parameter
++        if key not in self.cache:
+             return default
+-        return self._data[key]
++        self.cache.move_to_end(key) # Mark as recently used
++        return self.cache[key]
+ 
+     def put(self, key, value):
+-        """Store value under key and mark key most recently used."""
+-        if key in self._data:
+-            del self._data[key]
+-        elif len(self._data) >= self.capacity:
+-            oldest = next(iter(self._data))
+-            del self._data[oldest]
+-        self._data[key] = value
++        if key in self.cache:
++            self.cache.move_to_end(key) # Mark as recently used
++        elif len(self.cache) >= self.capacity:
++            self.cache.popitem(last=False) # Remove the least recently used item
++        self.cache[key] = value
+ 
+-    def keys(self):
+-        """Return the keys as a list, least recently used first."""
+-        return list(self._data)
++    def __contains__(self, key): # Implemented __contains__
++        return key in self.cache
+ 
+-    def __contains__(self, key):
+-        """Membership test; it does not count as a use."""
+-        return key in self._data
++    def __len__(self): # Implemented __len__
++        return len(self.cache)
+ 
+-    def __len__(self):
+-        return len(self._data)
++    def keys(self): # Implemented keys()
++        return list(self.cache.keys())

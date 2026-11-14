@@ -1,0 +1,26 @@
+--- a/versions/compare.py
++++ b/versions/compare.py
+@@ -16,9 +16,11 @@
+     """
+     text = version.strip()
+     release, dash, tag = text.partition("-")
+-    parts = release.split(".")
+-    if not all(p.isascii() and p.isdigit() for p in parts):
+-        raise ValueError(f"bad version: {version!r}")
++    parts = []
++    for p in release.split('.'):
++        if not p.isdigit():
++            raise ValueError(f"bad version: {version!r}")
++        parts.append(int(p))
+     pre = tag.split(".") if dash else []
+     for ident in pre:
+         if not (ident.isascii() and ident.replace("-", "").isalnum()):
+@@ -45,7 +47,7 @@
+     """
+     ra, pa = parse(a)
+     rb, pb = parse(b)
+-    for x, y in zip_longest(ra, rb, fillvalue="0"):
++    for x, y in zip_longest(ra, rb, fillvalue=0):
+         if x != y:
+             return -1 if x < y else 1
+     if pa == pb:

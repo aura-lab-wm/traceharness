@@ -1,0 +1,15 @@
+[
+ {
+  "role": "system",
+  "content": "You are an autonomous software engineer working inside a small Python repository.\nYou are given a GitHub issue. Resolve it by editing files with the tools provided.\nWork step by step: inspect the relevant code, make a minimal change, verify it, then call `submit`.\nDo not modify the tests. Do not run commands unrelated to the task."
+ },
+ {
+  "role": "user",
+  "content": "Task id: t14_spiral_matrix\n\n# Issue #12: `spiral` repeats elements for some rectangular matrices\n\n`spiral([[1, 2, 3]])` returns `[1, 2, 3, 2, 1]` instead of `[1, 2, 3]`, and\n`spiral([[1, 2, 3, 4], [5, 6, 7, 8], [9, 10, 11, 12]])` returns more than twelve\nvalues. Square matrices look fine. Every element should appear exactly once.\n\n\nRepository files:\ngrid/__init__.py\ngrid/spiral.py\ntests/test_spiral.py"
+ },
+ {
+  "role": "assistant",
+  "content": "\n\n",
+  "tool_calls": []
+ }
+]

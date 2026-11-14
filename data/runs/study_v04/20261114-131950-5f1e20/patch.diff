@@ -1,0 +1,21 @@
+--- a/events/dedup.py
++++ b/events/dedup.py
+@@ -25,8 +25,17 @@
+     def seen(self, key, now):
+         """Return True if ``key`` is a duplicate at time ``now``, else False.
+         A False result records ``now`` as the key's latest new sighting."""
++        # Expired keys must be removed as time advances; otherwise a long-lived
++        # consumer retains every key it has ever seen.  The comparison is strict
++        # because the window is half open: an event exactly one window later is
++        # new.
++        expired = [stored_key for stored_key, last in self._last.items()
++                   if now - last >= self.window]
++        for stored_key in expired:
++            del self._last[stored_key]
++
+         last = self._last.get(key)
+-        if last is not None and now - last <= self.window:
++        if last is not None and now - last < self.window:
+             return True
+         self._last[key] = now
+         return False

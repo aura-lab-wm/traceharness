@@ -1,0 +1,18 @@
+--- a/inifile/parser.py
++++ b/inifile/parser.py
+@@ -31,11 +31,11 @@
+             continue
+         if section is None:
+             raise ValueError(f"line {number}: key outside of a section")
+-        parts = line.split("=")
+-        if len(parts) < 2:
++        key, sep, value = line.partition("=")
++        if not sep:
+             raise ValueError(f"line {number}: expected key = value")
+-        key = parts[0].strip()
++        key = key.strip()
+         if not key:
+             raise ValueError(f"line {number}: empty key")
+-        result[section][key] = parts[1].split("#")[0].strip()
++        result[section][key] = value.strip()
+     return result

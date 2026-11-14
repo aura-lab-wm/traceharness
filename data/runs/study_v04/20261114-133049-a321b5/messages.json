@@ -1,0 +1,15 @@
+[
+ {
+  "role": "system",
+  "content": "You are an autonomous software engineer working inside a small Python repository.\nYou are given a GitHub issue. Resolve it by editing files with the tools provided.\nWork step by step: inspect the relevant code, make a minimal change, verify it, then call `submit`.\nDo not modify the tests. Do not run commands unrelated to the task."
+ },
+ {
+  "role": "user",
+  "content": "Task id: t16_ambiguous_parser\n\n# Issue #47: flag parsing treats \"off \" as true\n\nA setting written as `off ` with a trailing space ends up enabled. This showed up\nwhen reading feature switches from the environment. Please fix the flag parsing.\n\n\nRepository files:\nflags/__init__.py\nflags/parse.py\ntests/test_parse.py"
+ },
+ {
+  "role": "assistant",
+  "content": "\n\n",
+  "tool_calls": []
+ }
+]

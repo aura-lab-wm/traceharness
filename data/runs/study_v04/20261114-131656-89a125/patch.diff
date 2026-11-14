@@ -1,0 +1,102 @@
+--- a/deps/graph.py
++++ b/deps/graph.py
+@@ -1,43 +1,62 @@
+-"""Dependency ordering for build steps."""
+-import heapq
+ 
+-
+-class CycleError(ValueError):
+-    """Raised when the dependency graph contains a cycle."""
+-
++class CycleError(Exception):
++    """Raised when a dependency cycle is detected."""
++    pass
+ 
+ def order(graph):
+-    """Return every node of `graph` so that each node comes after its dependencies.
++    """
++    Performs a topological sort on the given dependency graph.
+ 
+-    `graph` maps a node name to an iterable of the names it depends on. A name
+-    that only appears as a dependency is a node too (with no dependencies of
+-    its own) and is part of the result. Among the nodes that are ready at the
+-    same time the alphabetically smallest comes first, so the result is
+-    deterministic. A node that depends on itself is a cycle.
++    Args:
++        graph: A dictionary where keys are module names and values are lists of
++               module names that the key module depends on.
+ 
+-    Raises CycleError if the graph contains a cycle; `graph` is not modified.
++    Returns:
++        A list of module names in topological order.
++
++    Raises:
++        CycleError: If a cycle is detected in the graph.
+     """
+-    deps = {}
+-    for node, needs in graph.items():
+-        deps.setdefault(node, set()).update(needs)
+-        for need in needs:
+-            deps.setdefault(need, set())
+-    dependents = {node: [] for node in deps}
+-    pending = {}
+-    for node, needs in deps.items():
+-        pending[node] = len(needs)
+-        for need in needs:
+-            dependents[need].append(node)
+-    ready = [node for node, count in pending.items() if count == 0]
+-    heapq.heapify(ready)
+-    result = []
+-    while ready:
+-        node = heapq.heappop(ready)
+-        result.append(node)
+-        for nxt in dependents[node]:
+-            pending[nxt] -= 1
+-            if pending[nxt] == 0:
+-                heapq.heappush(ready, nxt)
+-    if len(result) < len(graph):
+-        raise CycleError("dependency cycle among %s" % sorted(set(deps) - set(result)))
+-    return result
++    # Implementation of Kahn's algorithm
++    in_degree = {node: 0 for node in graph}
++    # Also account for nodes that are only dependencies and not keys
++    all_nodes = set(graph.keys())
++    for dependencies in graph.values():
++        for dep in dependencies:
++            all_nodes.add(dep)
++            if dep not in in_degree:
++                in_degree[dep] = 0
++
++    # Calculate in-degrees
++    for node, dependencies in graph.items():
++        for dep in dependencies:
++            if dep in in_degree:
++                in_degree[dep] += 1
++            else:
++                # This case should ideally not happen if all_nodes is populated correctly
++                # but as a safeguard:
++                in_degree[dep] = 1
++
++    # Initialize queue with nodes having in-degree 0
++    queue = [node for node in all_nodes if in_degree.get(node, 0) == 0]
++    sorted_order = []
++
++    while queue:
++        u = queue.pop(0)
++        sorted_order.append(u)
++
++        # Decrease in-degree of neighbors
++        if u in graph: # Check if u has outgoing edges
++            for v in graph[u]:
++                if v in in_degree:
++                    in_degree[v] -= 1
++                    if in_degree[v] == 0:
++                        queue.append(v)
++                # else: v is not in in_degree, which means it was not in graph.keys()
++                # and was only a dependency. This case is handled by all_nodes population.
++
++    # Check for cycles
++    if len(sorted_order) < len(all_nodes):
++        raise CycleError("Dependency cycle detected")
++
++    return sorted_order

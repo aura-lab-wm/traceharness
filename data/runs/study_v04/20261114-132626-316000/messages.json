@@ -1,0 +1,136 @@
+[
+ {
+  "role": "system",
+  "content": "You are an autonomous software engineer working inside a small Python repository.\nYou are given a GitHub issue. Resolve it by editing files with the tools provided.\nWork step by step: inspect the relevant code, make a minimal change, verify it, then call `submit`.\nDo not modify the tests. Do not run commands unrelated to the task."
+ },
+ {
+  "role": "user",
+  "content": "Task id: t15_dedupe_stable\n\n# Issue #21: `dedupe(..., key=...)` returns the later duplicate\n\n`dedupe([\"a\", \"B\", \"A\", \"b\"], key=str.lower)` returns `[\"A\", \"b\"]`. We expected\n`[\"a\", \"B\"]`, the first item seen for each key, in the order they were first seen.\nWithout `key` everything is fine.\n\n\nRepository files:\ntests/test_dedupe.py\nuniq/__init__.py\nuniq/dedupe.py"
+ },
+ {
+  "role": "assistant",
+  "content": "\n\n",
+  "tool_calls": [
+   {
+    "id": "f0f1e21ac",
+    "name": "read_file",
+    "arguments": {
+     "path": "uniq/dedupe.py"
+    }
+   },
+   {
+    "id": "2af84be0d",
+    "name": "read_file",
+    "arguments": {
+     "path": "tests/test_dedupe.py"
+    }
+   },
+   {
+    "id": "d661e8bd2",
+    "name": "read_file",
+    "arguments": {
+     "path": "uniq/__init__.py"
+    }
+   }
+  ]
+ },
+ {
+  "role": "tool",
+  "tool_call_id": "f0f1e21ac",
+  "content": "   1| \"\"\"Order-preserving removal of duplicates.\"\"\"\n   2| \n   3| \n   4| def dedupe(items, key=None):\n   5|     \"\"\"Return a new list with duplicates removed, keeping the first occurrence.\n   6| \n   7|     Two items are duplicates when they are equal or, if `key` is given, when\n   8|     `key(item)` is equal for both. For each group of duplicates the first item\n   9|     in `items` is kept, and the kept items appear in the order in which they\n  10|     first occur. `key` is called exactly once per item, in input order. Items\n  11|     (when `key` is None) and key values must be hashable.\n  12| \n  13|     `items` may be any iterable and is consumed once; it is never modified.\n  14|     \"\"\"\n  15|     if key is None:\n  16|         seen = set()\n  17|         out = []\n  18|         for item in items:\n  19|             if item not in seen:\n  20|                 seen.add(item)\n  21|                 out.append(item)\n  22|         return out\n  23|     latest = {}\n  24|     for item in items:\n  25|         latest[key(item)] = item\n  26|     return list(latest.values())"
+ },
+ {
+  "role": "tool",
+  "tool_call_id": "2af84be0d",
+  "content": "   1| import unittest\n   2| from uniq import dedupe\n   3| \n   4| \n   5| class TestDedupe(unittest.TestCase):\n   6|     def test_numbers(self):\n   7|         self.assertEqual(dedupe([3, 1, 3, 2, 1]), [3, 1, 2])\n   8| \n   9|     def test_strings(self):\n  10|         self.assertEqual(dedupe([\"b\", \"a\", \"b\", \"c\", \"a\"]), [\"b\", \"a\", \"c\"])\n  11| \n  12|     def test_empty(self):\n  13|         self.assertEqual(dedupe([]), [])\n  14| \n  15|     def test_no_duplicates(self):\n  16|         self.assertEqual(dedupe([5, 4, 3]), [5, 4, 3])\n  17| \n  18| \n  19| if __name__ == \"__main__\":\n  20|     unittest.main()"
+ },
+ {
+  "role": "tool",
+  "tool_call_id": "d661e8bd2",
+  "content": "   1| from .dedupe import dedupe"
+ },
+ {
+  "role": "assistant",
+  "content": "\n\nThe bug is in the `key` branch: it builds a dict that gets overwritten on each duplicate, so the **last** item per key wins. The fix is to keep the first occurrence, mirroring the `key is None` branch but using the key value for membership.\n\n",
+  "tool_calls": [
+   {
+    "id": "call-05481d73-b19f-46f8-9511-56b29a387255",
+    "name": "edit_file",
+    "arguments": {
+     "new": "seen = set()\n    out = []\n    for item in items:\n        k = key(item)\n        if k not in seen:\n            seen.add(k)\n            out.append(item)\n    return out",
+     "old": "latest = {}\n    for item in items:\n        latest[key(item)] = item\n    return list(latest.values())",
+     "path": "uniq/dedupe.py"
+    }
+   }
+  ]
+ },
+ {
+  "role": "tool",
+  "tool_call_id": "call-05481d73-b19f-46f8-9511-56b29a387255",
+  "content": "edited uniq/dedupe.py"
+ },
+ {
+  "role": "assistant",
+  "content": "\n\nLet me verify the file — I need to check the indentation of the first line:\n\n",
+  "tool_calls": [
+   {
+    "id": "call-0953efc5-c86e-4810-904b-a5171054997b",
+    "name": "read_file",
+    "arguments": {
+     "path": "uniq/dedupe.py"
+    }
+   }
+  ]
+ },
+ {
+  "role": "tool",
+  "tool_call_id": "call-0953efc5-c86e-4810-904b-a5171054997b",
+  "content": "   1| \"\"\"Order-preserving removal of duplicates.\"\"\"\n   2| \n   3| \n   4| def dedupe(items, key=None):\n   5|     \"\"\"Return a new list with duplicates removed, keeping the first occurrence.\n   6| \n   7|     Two items are duplicates when they are equal or, if `key` is given, when\n   8|     `key(item)` is equal for both. For each group of duplicates the first item\n   9|     in `items` is kept, and the kept items appear in the order in which they\n  10|     first occur. `key` is called exactly once per item, in input order. Items\n  11|     (when `key` is None) and key values must be hashable.\n  12| \n  13|     `items` may be any iterable and is consumed once; it is never modified.\n  14|     \"\"\"\n  15|     if key is None:\n  16|         seen = set()\n  17|         out = []\n  18|         for item in items:\n  19|             if item not in seen:\n  20|                 seen.add(item)\n  21|                 out.append(item)\n  22|         return out\n  23|     seen = set()\n  24|     out = []\n  25|     for item in items:\n  26|         k = key(item)\n  27|         if k not in seen:\n  28|             seen.add(k)\n  29|             out.append(item)\n  30|     return out"
+ },
+ {
+  "role": "assistant",
+  "content": "\n\nThe file looks correct. Now let me run the tests and verify the exact example from the issue:\n\n\n",
+  "tool_calls": [
+   {
+    "id": "call-3ea67638-cd09-4fa0-91ca-d1fdf6ad0145",
+    "name": "run_tests",
+    "arguments": {}
+   },
+   {
+    "id": "call-4f0aa8e1-98df-4528-b556-bd5718bc2734",
+    "name": "bash",
+    "arguments": {
+     "command": "python -c \"\nfrom uniq import dedupe\nprint(dedupe(['a', 'B', 'A', 'b'], key=str.lower))\nprint(dedupe([3, 1, 3, 2, 1]))\nprint(dedupe(iter([1, 2, 1, 3]), key=lambda x: x % 2))\n\""
+    }
+   }
+  ]
+ },
+ {
+  "role": "tool",
+  "tool_call_id": "call-3ea67638-cd09-4fa0-91ca-d1fdf6ad0145",
+  "content": "exit=0\n----------------------------------------------------------------------\nRan 4 tests in 0.000s\n\nOK"
+ },
+ {
+  "role": "tool",
+  "tool_call_id": "call-4f0aa8e1-98df-4528-b556-bd5718bc2734",
+  "content": "exit=0\n['a', 'B']\n[3, 1, 2]\n[1, 2]"
+ },
+ {
+  "role": "assistant",
+  "content": "\n\nAll tests pass and the issue's example now returns `['a', 'B']` as expected.\n\n**Summary of the fix:** In `uniq/dedupe.py`, the `key` branch was building a dict (`latest[key(item)] = item`) that gets overwritten on every duplicate, so the *last* item per key won. I replaced it with the same first-occurrence logic as the `key is None` branch: track seen key values in a set and append each item only when its key hasn't been seen yet. This keeps the first item for each key, in first-seen order, calls `key` exactly once per item, and works with any iterable.\n\n",
+  "tool_calls": [
+   {
+    "id": "call-dac2efbb-8ed7-474c-b822-59e8da9123fb",
+    "name": "submit",
+    "arguments": {
+     "summary": "Fixed the `key` branch of `dedupe` in uniq/dedupe.py: it previously stored items in a dict keyed by `key(item)`, so later duplicates overwrote earlier ones and the last item per key was returned. Replaced it with a `seen` set of key values plus an output list, keeping the first item for each key in first-seen order (mirroring the `key is None` branch). Verified with the existing test suite (all pass) and the issue's example, which now returns `['a', 'B']`."
+    }
+   }
+  ]
+ },
+ {
+  "role": "tool",
+  "tool_call_id": "call-dac2efbb-8ed7-474c-b822-59e8da9123fb",
+  "content": "submitted"
+ }
+]

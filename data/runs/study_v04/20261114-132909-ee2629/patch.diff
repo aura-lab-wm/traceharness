@@ -1,0 +1,51 @@
+--- a/.pytest_cache/.gitignore
++++ b/.pytest_cache/.gitignore
+@@ -0,0 +1,2 @@
++# Created by pytest automatically.
++*
+--- a/.pytest_cache/CACHEDIR.TAG
++++ b/.pytest_cache/CACHEDIR.TAG
+@@ -0,0 +1,4 @@
++Signature: 8a477f597d28d172789f06886806bc55
++# This file is a cache directory tag created by pytest.
++# For information about cache directory tags, see:
++#	https://bford.info/cachedir/spec.html
+--- a/.pytest_cache/README.md
++++ b/.pytest_cache/README.md
+@@ -0,0 +1,8 @@
++# pytest cache directory #
++
++This directory contains data from the pytest's cache plugin,
++which provides the `--lf` and `--ff` options, as well as the `cache` fixture.
++
++**Do not** commit this to version control.
++
++See [the docs](https://docs.pytest.org/en/stable/how-to/cache.html) for more information.
+--- a/.pytest_cache/v/cache/nodeids
++++ b/.pytest_cache/v/cache/nodeids
+@@ -0,0 +1,5 @@
++[
++  "tests/test_compare.py::TestCompare::test_equal",
++  "tests/test_compare.py::TestCompare::test_prerelease_is_lower",
++  "tests/test_compare.py::TestCompare::test_release_order"
++]
+--- a/versions/compare.py
++++ b/versions/compare.py
+@@ -23,7 +23,7 @@
+     for ident in pre:
+         if not (ident.isascii() and ident.replace("-", "").isalnum()):
+             raise ValueError(f"bad version: {version!r}")
+-    return parts, pre
++    return [int(p) for p in parts], pre
+ 
+ 
+ def _ident_key(ident):
+@@ -45,7 +45,7 @@
+     """
+     ra, pa = parse(a)
+     rb, pb = parse(b)
+-    for x, y in zip_longest(ra, rb, fillvalue="0"):
++    for x, y in zip_longest(ra, rb, fillvalue=0):
+         if x != y:
+             return -1 if x < y else 1
+     if pa == pb:

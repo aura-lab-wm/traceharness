@@ -1,0 +1,57 @@
+--- a/_sanity_dedup.py
++++ b/_sanity_dedup.py
+@@ -0,0 +1,33 @@
++from events import Deduper
++
++# Issue scenario
++d = Deduper(10)
++assert d.seen("job-1", 0) is False
++assert d.seen("job-1", 10) is False  # exactly one window later -> new
++
++# Suppressed sightings don't extend the window
++d = Deduper(10)
++assert d.seen("a", 0) is False
++assert d.seen("a", 9) is True
++assert d.seen("a", 10) is False
++
++# Memory: many distinct keys, then time advances past the window
++d = Deduper(10)
++for i in range(200_000):
++    d.seen(f"key-{i}", 0)
++assert len(d) == 200_000
++d.seen("other", 10)  # all previous windows ended
++assert len(d) == 1, len(d)
++
++# len stays accurate even after a suppressed call
++d = Deduper(10)
++d.seen("a", 0); d.seen("b", 0)
++assert d.seen("a", 5) is True
++assert len(d) == 1  # b expired, a still open
++
++# window boundary just inside
++d = Deduper(10)
++assert d.seen("a", 0) is False
++assert d.seen("a", 9.999) is True
++
++print("all sanity checks passed")
+--- a/events/dedup.py
++++ b/events/dedup.py
+@@ -26,10 +26,14 @@
+         """Return True if ``key`` is a duplicate at time ``now``, else False.
+         A False result records ``now`` as the key's latest new sighting."""
+         last = self._last.get(key)
+-        if last is not None and now - last <= self.window:
+-            return True
+-        self._last[key] = now
+-        return False
++        is_duplicate = last is not None and now - last < self.window
++        if not is_duplicate:
++            self._last[key] = now
++        # Timestamps never decrease, so any key whose window has ended as of
++        # ``now`` can never be a duplicate again; drop it to bound memory.
++        for expired in [k for k, t in self._last.items() if now - t >= self.window]:
++            del self._last[expired]
++        return is_duplicate
+ 
+     def __len__(self):
+         return len(self._last)

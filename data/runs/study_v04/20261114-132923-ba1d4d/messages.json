@@ -1,0 +1,15 @@
+[
+ {
+  "role": "system",
+  "content": "You are an autonomous software engineer working inside a small Python repository.\nYou are given a GitHub issue. Resolve it by editing files with the tools provided.\nWork step by step: inspect the relevant code, make a minimal change, verify it, then call `submit`.\nDo not modify the tests. Do not run commands unrelated to the task."
+ },
+ {
+  "role": "user",
+  "content": "Task id: t19_topo_sort\n\n# Issue #31: dependency cycle silently ignored in larger graphs\n\n`order({\"app\": [\"lib\", \"util\", \"log\"], \"x\": [\"y\"], \"y\": [\"x\"]})` returns\n`['lib', 'util', 'log', 'app']` (modules `x` and `y` are just missing) instead of\nraising `CycleError`. A plain two-module cycle such as `{\"a\": [\"b\"], \"b\": [\"a\"]}` is\nreported correctly, so this seems to depend on what else is in the graph.\n\n\nRepository files:\ndeps/__init__.py\ndeps/graph.py\ntests/test_graph.py"
+ },
+ {
+  "role": "assistant",
+  "content": "\n\n",
+  "tool_calls": []
+ }
+]

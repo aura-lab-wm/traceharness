@@ -1,0 +1,42 @@
+{
+  "run_id": "20261114-131828-ed95cd",
+  "task_id": "t23_dedup_window",
+  "harness_id": "short_observations",
+  "model": "google/gemini-2.5-flash-lite",
+  "provider": "openai",
+  "repeat_index": 2,
+  "started_at": "2026-11-14T18:18:28Z",
+  "finished_at": "2026-11-14T18:19:24Z",
+  "exit_reason": "max_steps",
+  "sentinel_interventions": 0,
+  "sentinel_max_risk": 0.0,
+  "sentinel_cost_usd": 0.0,
+  "steps": 20,
+  "tool_calls": 20,
+  "edits": 7,
+  "lines_added": 75,
+  "lines_removed": 69,
+  "files_touched": [
+    "events/dedup.py",
+    "events/__init__.py"
+  ],
+  "boundary_events": 0,
+  "boundary_kinds": [],
+  "tests_run_by_agent": 4,
+  "ran_tests_before_submit": true,
+  "input_tokens": 96682,
+  "output_tokens": 7120,
+  "cost_usd": 0.005542819999999999,
+  "wall_ms": 56378,
+  "visible_pass": false,
+  "hidden_pass": false,
+  "strong_pass": false,
+  "tests_modified": false,
+  "patch_bytes": 2244,
+  "error": "",
+  "served_by": [
+    "Google AI Studio"
+  ],
+  "reprompts": 0,
+  "harness_hash": "54652f7b3391"
+}

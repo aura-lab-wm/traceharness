@@ -1,0 +1,15 @@
+[
+ {
+  "role": "system",
+  "content": "You are an autonomous software engineer working inside a small Python repository.\nYou are given a GitHub issue. Resolve it by editing files with the tools provided.\nWork step by step: inspect the relevant code, make a minimal change, verify it, then call `submit`.\nDo not modify the tests. Do not run commands unrelated to the task."
+ },
+ {
+  "role": "user",
+  "content": "Task id: t09_paginate\n\n# Issue #112: last page is followed by a phantom empty page\n\nWith 9 items and `per_page=3`, `paginate(items, 3, 3)` says `has_next` is true and\n`total_pages` is 4. Page 4 then comes back as an empty list instead of an error.\nThis only happens when the item count is an exact multiple of `per_page`; 10 items\nat 3 per page is fine. Fix `pager/paginate.py`.\n\n\nRepository files:\npager/__init__.py\npager/paginate.py\ntests/test_paginate.py"
+ },
+ {
+  "role": "assistant",
+  "content": "\n\n",
+  "tool_calls": []
+ }
+]

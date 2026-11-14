@@ -1,0 +1,16 @@
+--- a/retry/backoff.py
++++ b/retry/backoff.py
+@@ -17,9 +17,9 @@
+     out = []
+     delay = base
+     for _ in range(attempts):
++        # Cap the value before adding it to the schedule.  Otherwise the
++        # first doubling past the cap would leak one over-cap delay.
++        delay = min(delay, cap)
+         out.append(delay)
+-        if delay >= cap:
+-            delay = cap
+-        else:
+-            delay *= 2
++        delay *= 2
+     return out

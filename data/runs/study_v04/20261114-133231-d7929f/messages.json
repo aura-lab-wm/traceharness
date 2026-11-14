@@ -1,0 +1,15 @@
+[
+ {
+  "role": "system",
+  "content": "You are an autonomous software engineer working inside a small Python repository.\nYou are given a GitHub issue. Resolve it by editing files with the tools provided.\nWork step by step: inspect the relevant code, make a minimal change, verify it, then call `submit`.\nDo not modify the tests. Do not run commands unrelated to the task."
+ },
+ {
+  "role": "user",
+  "content": "Task id: t20_bisect_left\n\n# Issue #19: first_index() does not return the first index for repeated values\n\n`first_index([1, 2, 2, 2, 2, 2, 3], 2)` returns `3`; the docs say it returns the index of\nthe first occurrence, which here is `1`. The same wrong answer makes `count()` too small\nfor lists with long runs of equal values. Lists without repeated values work fine.\n\n\nRepository files:\nsearch/__init__.py\nsearch/lookup.py\ntests/test_lookup.py"
+ },
+ {
+  "role": "assistant",
+  "content": "\n\n",
+  "tool_calls": []
+ }
+]

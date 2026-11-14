@@ -1,0 +1,11 @@
+--- a/isodate/dates.py
++++ b/isodate/dates.py
+@@ -11,7 +11,7 @@
+     (1900, 2100, ...), which are leap years only when divisible by 400. So 2024
+     and 2000 are leap years, while 1900 and 2100 are not.
+     """
+-    return year % 4 == 0
++    return (year % 4 == 0 and year % 100 != 0) or (year % 400 == 0)
+ 
+ 
+ def days_in_month(year, month):

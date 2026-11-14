@@ -1,0 +1,27 @@
+--- a/store/cache.py
++++ b/store/cache.py
+@@ -22,4 +22,24 @@
+             return default
+         with open(p) as f:
+             rec = json.load(f)
++        if self._now() - rec['t'] > self.ttl:
++            os.remove(p)
++            return default
+         return rec["v"]
++
++    def cleanup(self):
++        for fname in os.listdir(self.root):
++            if not fname.endswith(".json"):
++                continue
++            p = os.path.join(self.root, fname)
++            try:
++                with open(p) as f:
++                    rec = json.load(f)
++                if self._now() - rec['t'] > self.ttl:
++                    os.remove(p)
++            except (IOError, json.JSONDecodeError):
++                # If file is corrupt or unreadable, remove it.
++                try:
++                    os.remove(p)
++                except OSError:
++                    pass # Ignore errors during removal

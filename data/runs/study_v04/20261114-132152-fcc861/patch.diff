@@ -1,0 +1,28 @@
+--- a/grid/spiral.py
++++ b/grid/spiral.py
+@@ -19,6 +19,8 @@
+     width = len(matrix[0])
+     if any(len(row) != width for row in matrix):
+         raise ValueError("rows must have the same length")
++    if width == 0:
++        return []
+     top, bottom = 0, len(matrix) - 1
+     left, right = 0, width - 1
+     out = []
+@@ -27,10 +29,12 @@
+             out.append(matrix[top][col])
+         for row in range(top + 1, bottom + 1):
+             out.append(matrix[row][right])
+-        for col in range(right - 1, left - 1, -1):
+-            out.append(matrix[bottom][col])
+-        for row in range(bottom - 1, top, -1):
+-            out.append(matrix[row][left])
++        if top < bottom:
++            for col in range(right - 1, left - 1, -1):
++                out.append(matrix[bottom][col])
++        if left < right:
++            for row in range(bottom - 1, top, -1):
++                out.append(matrix[row][left])
+         top += 1
+         bottom -= 1
+         left += 1

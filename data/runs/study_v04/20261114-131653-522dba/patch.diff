@@ -1,0 +1,30 @@
+--- a/store/cache.py
++++ b/store/cache.py
+@@ -22,4 +22,27 @@
+             return default
+         with open(p) as f:
+             rec = json.load(f)
++        
++        # Check if the entry is expired
++        if rec["t"] + self.ttl < self._now():
++            os.remove(p)  # Remove expired entry
++            return default
++            
+         return rec["v"]
++
++    def cleanup(self):
++        for fname in os.listdir(self.root):
++            if not fname.endswith(".json"):
++                continue
++            p = os.path.join(self.root, fname)
++            try:
++                with open(p) as f:
++                    rec = json.load(f)
++                if rec["t"] + self.ttl < self._now():
++                    os.remove(p)
++            except (IOError, OSError, json.JSONDecodeError):
++                # If file is corrupted or cannot be read, remove it.
++                try:
++                    os.remove(p)
++                except (IOError, OSError):
++                    pass # Ignore errors during removal

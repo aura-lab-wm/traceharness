@@ -1,0 +1,30 @@
+--- a/events/dedup.py
++++ b/events/dedup.py
+@@ -21,15 +21,26 @@
+             raise ValueError("window_seconds must be positive")
+         self.window = window_seconds
+         self._last = {}
++        self._now = None
+ 
+     def seen(self, key, now):
+         """Return True if ``key`` is a duplicate at time ``now``, else False.
+         A False result records ``now`` as the key's latest new sighting."""
++        self._now = now
+         last = self._last.get(key)
+-        if last is not None and now - last <= self.window:
++        if last is not None and now - last < self.window:
+             return True
+         self._last[key] = now
+         return False
+ 
+     def __len__(self):
++        # Drop keys whose window has ended as of the most recent call.
++        if self._now is not None:
++            expired = [
++                key
++                for key, last in self._last.items()
++                if self._now - last >= self.window
++            ]
++            for key in expired:
++                del self._last[key]
+         return len(self._last)

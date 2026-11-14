@@ -1,0 +1,11 @@
+--- a/wrapper/wrap.py
++++ b/wrapper/wrap.py
+@@ -29,7 +29,7 @@
+             word = word[width:]
+         if not current:
+             current = word
+-        elif len(current) + 1 + len(word) < width:
++        elif len(current) + 1 + len(word) <= width:
+             current += " " + word
+         else:
+             lines.append(current)

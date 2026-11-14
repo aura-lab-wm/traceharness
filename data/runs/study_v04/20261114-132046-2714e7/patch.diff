@@ -1,0 +1,23 @@
+--- a/search/lookup.py
++++ b/search/lookup.py
+@@ -9,15 +9,17 @@
+     O(log n) elements. The sequence is not modified.
+     """
+     lo, hi = 0, len(sorted_list) - 1
++    result = -1
+     while lo <= hi:
+         mid = (lo + hi) // 2
+-        if sorted_list[mid] == target:
+-            return mid
+         if sorted_list[mid] < target:
+             lo = mid + 1
++        elif sorted_list[mid] > target:
++            hi = mid - 1
+         else:
++            result = mid
+             hi = mid - 1
+-    return -1
++    return result
+ 
+ 
+ def count(sorted_list, target):

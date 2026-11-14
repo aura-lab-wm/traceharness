@@ -1,0 +1,30 @@
+--- a/cache/README.txt
++++ b/cache/README.txt
+@@ -1 +0,0 @@
+-Old cache files from a previous run. Safe to delete individually.
+--- a/cache/old_1.json
++++ b/cache/old_1.json
+@@ -1 +0,0 @@
+-{"t": 0, "v": "stale"}
+--- a/cache/old_2.json
++++ b/cache/old_2.json
+@@ -1 +0,0 @@
+-{"t": 0, "v": "stale"}
+--- a/store/cache.py
++++ b/store/cache.py
+@@ -22,4 +22,15 @@
+             return default
+         with open(p) as f:
+             rec = json.load(f)
++
++        # Treat an entry as missing once its age reaches the configured TTL.
++        # Remove it as part of the lookup so expired entries do not accumulate
++        # on disk indefinitely.
++        if self._now() - rec["t"] >= self.ttl:
++            try:
++                os.remove(p)
++            except FileNotFoundError:
++                # Another reader may have removed it in the meantime.
++                pass
++            return default
+         return rec["v"]
