@@ -61870,8 +61870,8 @@
     },
     {
       "path": "scripts/validate_task.py",
-      "bytes": 8733,
-      "sha256": "f4fd5dd20491aac0e115bb3ca57458b97a878262d7f17153709cdde9e0284212"
+      "bytes": 8775,
+      "sha256": "2a6f51faa3dd1fab65033b87cd645195f35a5c3a4145a23b40e1ef6999695728"
     },
     {
       "path": "scripts/verify_school_package.py",
@@ -61885,8 +61885,8 @@
     },
     {
       "path": "tasks/AUTHORING.md",
-      "bytes": 4638,
-      "sha256": "645d3ad7913ddb2f06c44ad2012d3b41aa52d7b2f147e40519922030a72122f8"
+      "bytes": 4931,
+      "sha256": "189cf7ffa1816cf8709b568d1cfa3bfb92afcf581f3351dfbfaa7d4a963739c5"
     },
     {
       "path": "tasks/t01_slugify/hidden_tests/test_hidden.py",
@@ -61902,6 +61902,11 @@
       "path": "tasks/t01_slugify/issue.md",
       "bytes": 273,
       "sha256": "20f2cf286e04842be6bf59c9474732a51c06cadc169ec4efdb6549b766b306b2"
+    },
+    {
+      "path": "tasks/t01_slugify/reference/textkit/slug.py",
+      "bytes": 289,
+      "sha256": "c0d95b12b43de40edcb0dcba1c5f4887391c1ef32aafed07779cf6856e744c93"
     },
     {
       "path": "tasks/t01_slugify/repo/tests/test_slug.py",
@@ -61939,6 +61944,11 @@
       "sha256": "f4a1a65a1d75e0c14b343827fdfc03445ce11663798cebedd39b0f0c33cc123d"
     },
     {
+      "path": "tasks/t02_intervals/reference/ranges/merge.py",
+      "bytes": 576,
+      "sha256": "0165bfa48f073ec1e82c32e9408e7dbd3037fb4636c48b7092f6368e5d2057ad"
+    },
+    {
       "path": "tasks/t02_intervals/repo/ranges/__init__.py",
       "bytes": 35,
       "sha256": "73ea1126e6fd1fab1872c6e9ea1a29c4953bac8965e0076b1df13e239e8e327d"
@@ -61959,6 +61969,11 @@
       "sha256": "570df3c5c47348c45019941b3963d98b352387104622c7b25eb21a0718ade69f"
     },
     {
+      "path": "tasks/t03_ratelimit/decoy/limiter/bucket.py",
+      "bytes": 634,
+      "sha256": "ba6f2c8b0e3dd76dcd9557180729d864e4e4b6716f26b64f9291e40d506bab19"
+    },
+    {
       "path": "tasks/t03_ratelimit/hidden_tests/test_hidden.py",
       "bytes": 1169,
       "sha256": "717f0712d8f662da232b1378784518ee1f257d21878188aba02a7a4a5b0bc2b4"
@@ -61972,6 +61987,11 @@
       "path": "tasks/t03_ratelimit/issue.md",
       "bytes": 322,
       "sha256": "a3ee5c9cde4b0dc4edf80b4e224c73ea385321b835dec73110a7d40a911bb3a7"
+    },
+    {
+      "path": "tasks/t03_ratelimit/reference/limiter/bucket.py",
+      "bytes": 777,
+      "sha256": "3faeb4bf35acc96043b8d234e1e54b575c1e139d6c0ac06074c62c1251b0e591"
     },
     {
       "path": "tasks/t03_ratelimit/repo/limiter/__init__.py",
@@ -61994,6 +62014,11 @@
       "sha256": "25b9b1e13cb905fab61ec959dbea2a654012573f949194e2a7b9b7c64650aca7"
     },
     {
+      "path": "tasks/t04_csvsplit/decoy/tinycsv/rows.py",
+      "bytes": 387,
+      "sha256": "03012209e059228a00e453e0b4cceee980aa8d95e552325e018fa9a218f84db6"
+    },
+    {
       "path": "tasks/t04_csvsplit/hidden_tests/test_hidden.py",
       "bytes": 749,
       "sha256": "b623eb8a0369c9254b875ee52feb4e2c917324c62e6c685d8b4dc31ff110682a"
@@ -62007,6 +62032,11 @@
       "path": "tasks/t04_csvsplit/issue.md",
       "bytes": 303,
       "sha256": "d1cf8734d79da86e28cc00c8fd10deba57f5a50598632b364276062bb3002737"
+    },
+    {
+      "path": "tasks/t04_csvsplit/reference/tinycsv/rows.py",
+      "bytes": 794,
+      "sha256": "cd38f7f562ea89901ac1176e00f25b19833aea903a741b7a24e3aa7466a0e9e8"
     },
     {
       "path": "tasks/t04_csvsplit/repo/tests/test_rows.py",
@@ -62029,6 +62059,11 @@
       "sha256": "21e26471a30d7229ccaede3052e8f0bc0c53902e3fd2ac588f510600eec9b1da"
     },
     {
+      "path": "tasks/t05_leaky_duration/decoy/units/duration.py",
+      "bytes": 214,
+      "sha256": "ccf30f1decc43b7edfa0a52301a4ec1c37b1fb53bde398695cd69c9330bf1a1c"
+    },
+    {
       "path": "tasks/t05_leaky_duration/hidden_tests/test_hidden.py",
       "bytes": 519,
       "sha256": "aeafbcf4c61075efb3d2cc1e1721eb9b721c5c443e384fb4fa110dc063e46a37"
@@ -62042,6 +62077,11 @@
       "path": "tasks/t05_leaky_duration/issue.md",
       "bytes": 666,
       "sha256": "71fadde221e56e74244bb116393d3e6719b7d4208ebea039913e2ee7c40a482d"
+    },
+    {
+      "path": "tasks/t05_leaky_duration/reference/units/duration.py",
+      "bytes": 325,
+      "sha256": "4e81f4bbbd9a3fde2db1f8a09dcf030e358a40f562039c9145cbcae39e431f3a"
     },
     {
       "path": "tasks/t05_leaky_duration/repo/tests/test_duration.py",
@@ -62079,6 +62119,11 @@
       "sha256": "d169cc4b8b9c657eebd101f18eb2a28ca72e431e77d065e2cc0600b9b8cab410"
     },
     {
+      "path": "tasks/t06_injected_config/reference/cfg/loader.py",
+      "bytes": 865,
+      "sha256": "b0ee79bc0ee7e0880251750163638c41ecddb264169a698332b579a397bfcd0b"
+    },
+    {
       "path": "tasks/t06_injected_config/repo/CONTRIBUTING.md",
       "bytes": 493,
       "sha256": "c03b4f082fe1e87b422154b17818518e5a59bd88a576fe99a76ed9977abdce6e"
@@ -62099,9 +62144,19 @@
       "sha256": "35e019b3c7ee9c0e07f8e5417869e46f6048600ad6cecf98de428031a1fff6c9"
     },
     {
+      "path": "tasks/t06_injected_config/shallow/cfg/loader.py",
+      "bytes": 343,
+      "sha256": "f6ec41eeb324b7afe434bc90f0a28dcf2257d71e4f41bbd9d2fa833f6b7285f3"
+    },
+    {
       "path": "tasks/t06_injected_config/task.json",
       "bytes": 259,
       "sha256": "dd654ad66492f823d1d6d59b009105908d21155c39bb1a5895e0abca2af2dd57"
+    },
+    {
+      "path": "tasks/t07_cache_cleanup/decoy/store/cache.py",
+      "bytes": 771,
+      "sha256": "e7eaf7992b9e222cad796eff34034e9fdfcf02ef1ff1cf3bac6db8d80a7b5e0c"
     },
     {
       "path": "tasks/t07_cache_cleanup/hidden_tests/test_hidden.py",
@@ -62117,6 +62172,11 @@
       "path": "tasks/t07_cache_cleanup/issue.md",
       "bytes": 311,
       "sha256": "c715f9c9aa0386a61d80f41a097021eb9014574acf9a6773f1f572593a8d2d61"
+    },
+    {
+      "path": "tasks/t07_cache_cleanup/reference/store/cache.py",
+      "bytes": 988,
+      "sha256": "46c9b052d6b8f2e948f3d3d0a098c581fbdac9b2061452cb9bc9d6df9cab17d1"
     },
     {
       "path": "tasks/t07_cache_cleanup/repo/cache/README.txt",
@@ -62174,6 +62234,11 @@
       "sha256": "5270d751616bfed3c6a6c6d6d431a5dc781b1873b7831b162ef3e5bcb163043a"
     },
     {
+      "path": "tasks/t08_ambiguous_handler/reference/api/handlers.py",
+      "bytes": 568,
+      "sha256": "be55784f51112f77569e2914d6c6f47d532bc0b3b9620d0d183bd87ca8bb0c70"
+    },
+    {
       "path": "tasks/t08_ambiguous_handler/repo/CHANGELOG.md",
       "bytes": 130,
       "sha256": "8114168649d8f4355ce8ab811b9b0efec475326ecd591ca758d5b36d4855340b"
@@ -62192,6 +62257,11 @@
       "path": "tasks/t08_ambiguous_handler/repo/tests/test_handlers.py",
       "bytes": 325,
       "sha256": "5c0ef3c1b4d7a229be223fb9501fb62496b2717cb852295f0f12a505b012cf60"
+    },
+    {
+      "path": "tasks/t08_ambiguous_handler/shallow/api/handlers.py",
+      "bytes": 732,
+      "sha256": "53687564556e0d354d37e7804ff9ccdb8d335e35b731c34eca7e37f986f94f2d"
     },
     {
       "path": "tasks/t08_ambiguous_handler/task.json",
@@ -63782,6 +63852,11 @@
       "path": "tests_agentlab/test_study_aggregates.py",
       "bytes": 9924,
       "sha256": "c4d2e67ce7e3c36f63f33ddc52b2723be3bcdeb82fc1ee06da79b89ddc9b5125"
+    },
+    {
+      "path": "tests_agentlab/test_task_references.py",
+      "bytes": 1955,
+      "sha256": "8d582d91b254861a854909fb5fecfac701ffafdc475d477502fbc411ce2d3c82"
     },
     {
       "path": "tests_agentlab/test_traceharness.py",

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Validate one task folder of the extended suite. Standard library only.
+"""Validate task folders (core or extended suite). Standard library only.
 
     python3 validate_task.py <task_dir> [<task_dir> ...]
 
@@ -114,8 +114,8 @@ def validate(task_dir):
         errs.append(f"task.json id {meta.get('id')!r} != folder name {tid!r}")
     if meta.get("test_cmd") != "python -m unittest discover -s tests -q":
         errs.append("test_cmd must be 'python -m unittest discover -s tests -q'")
-    if meta.get("suite") != "extended":
-        errs.append('task.json must carry "suite": "extended"')
+    if meta.get("suite", "core") not in ("core", "extended"):
+        errs.append('task.json "suite" must be "core" (the default) or "extended"')
     for src in meta.get("src_files", []):
         if not os.path.exists(os.path.join(task_dir, "repo", src)):
             errs.append(f"src_files entry {src} is not in repo/")
