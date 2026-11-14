@@ -224,9 +224,9 @@ class OpenAIProvider(Provider):
         try:
             r = _post_json(f"{self.base_url}/chat/completions", headers, payload)
         except RuntimeError as e:
-            # An endpoint that does not accept `seed` answers 400 naming it. Retry once without it and
+            # An endpoint that does not accept `seed` answers 400 or 422 naming it. Retry once without it and
             # stop sending it; the span then records sent_seed=None, which is what went over the wire.
-            if "seed" not in payload or not str(e).startswith("HTTP 400") or "seed" not in str(e).lower():
+            if "seed" not in payload or not str(e).startswith(("HTTP 400", "HTTP 422")) or "seed" not in str(e).lower():
                 raise
             self.seed_supported = False
             payload.pop("seed")
