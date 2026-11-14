@@ -145,8 +145,8 @@
     },
     {
       "path": "HANDOUT.md",
-      "bytes": 24244,
-      "sha256": "0a60847673aec07ebb88d6a5ccaceddc8001d7c7396adb5b900c77662b1a6cf6"
+      "bytes": 24243,
+      "sha256": "19de0c9232c9b0ad554e2d2f1d6b045b4b966617a713774b9c42a1ffc40f6120"
     },
     {
       "path": "LAB_1H.md",
@@ -61610,8 +61610,8 @@
     },
     {
       "path": "docs/STUDENT_GUIDE.md",
-      "bytes": 46928,
-      "sha256": "8afef8dda56d80f88029f9a70c6ac4116176e44734b494020d55d6d541541d5d"
+      "bytes": 46920,
+      "sha256": "79aab870dd0c2962face12b1a49073b6445538c034e43d5c5137017a3ee643c6"
     },
     {
       "path": "docs/img/guide/compare.png",
@@ -61731,7 +61731,7 @@
     {
       "path": "exercises/_common.py",
       "bytes": 1263,
-      "sha256": "3ca1eade47bd7796c9d27f78c8d08b15ee7a05418fab138cb0ae22d888a9bd5b"
+      "sha256": "5719a757f189c3fa18a3ae919786a8a909122ea0604c121497735a9a000c8867"
     },
     {
       "path": "exercises/ex1_variance.py",
@@ -61770,8 +61770,8 @@
     },
     {
       "path": "exercises/ex8_experiment.py",
-      "bytes": 5648,
-      "sha256": "f4dfe86855b310030a8566306af12433c00efc06592686817347c797d2f5badd"
+      "bytes": 5647,
+      "sha256": "75c688872de99bbde6e763eb02b920b456f3e0f437b1cea1be4b68d2fa2a11ed"
     },
     {
       "path": "harnesses/baseline.json",
@@ -61845,8 +61845,8 @@
     },
     {
       "path": "scripts/frontier_batch.py",
-      "bytes": 5356,
-      "sha256": "8f32bc4ff1b8f7a01a16bc70c98555ab244779af25ee33e97d6e70ed0cd7c026"
+      "bytes": 5339,
+      "sha256": "9924f012509654182b310a902630c9d5b76140a14ff41a3c3bb1429679243bec"
     },
     {
       "path": "scripts/live_run_e2e.py",
@@ -63540,8 +63540,8 @@
     },
     {
       "path": "tests_agentlab/test_handout_numbers.py",
-      "bytes": 7291,
-      "sha256": "7a6e604cd38eeff9bd825f0ed43aed9b760e92b6a8ccca9e79cc01d4d3842db4"
+      "bytes": 7721,
+      "sha256": "64c6a820bee8eaadafcbc261f22d0a09baa543eefeeaf698a65404b2420654f3"
     },
     {
       "path": "tests_agentlab/test_harness_recorded_configs.py",
@@ -63640,8 +63640,8 @@
     },
     {
       "path": "tests_agentlab/test_outcomes.py",
-      "bytes": 3510,
-      "sha256": "15dd6395810d930825320c602f9ae25f65ebcf0f59d81572bda70a8147899907"
+      "bytes": 3592,
+      "sha256": "1442f644b33e518d551c9d366064d44773d76088e9cbc653ced4be96f776a2ce"
     },
     {
       "path": "tests_agentlab/test_overview_unknown_grades.py",
@@ -64244,19 +64244,19 @@
       "sha256": "f70f2d9d8d9a9cd7c3211a6216cfe90c345581b375435dad7ba7f5a17f97f276"
     },
     {
-      "path": "traceharness/frontend/dist/assets/index-Bab7jjxz.js",
-      "bytes": 2141421,
-      "sha256": "fcd05ec816d7de89f316af026c3f9f589d3fd23bd9ea0e7946b32a46ed17793f"
-    },
-    {
       "path": "traceharness/frontend/dist/assets/index-BfhfqB62.css",
       "bytes": 441784,
       "sha256": "acb1d1962e36adbff6263222991172bec487fc19e84264df0dc04fac84f2201a"
     },
     {
+      "path": "traceharness/frontend/dist/assets/index-Dpo7WnKf.js",
+      "bytes": 2141332,
+      "sha256": "620daaf085b5a3a90d76ecfe9785167cd2b9cfd29628d92b39058b3d486e0b06"
+    },
+    {
       "path": "traceharness/frontend/dist/build-source.json",
       "bytes": 97,
-      "sha256": "774307aa26ff42af2ba68f21ce5bb57e7373fb11bc4c45c436a042cb0542f0a4"
+      "sha256": "ba993b2f538d0ca768c998f6f53c3f60159b9b9e7237122d67108b7b6b9881de"
     },
     {
       "path": "traceharness/frontend/dist/design-directions/README.md",
@@ -64341,7 +64341,7 @@
     {
       "path": "traceharness/frontend/dist/index.html",
       "bytes": 4397,
-      "sha256": "b33385af80457e44120eb36a27379835ec45eea1420cf6706515a6181885a2a9"
+      "sha256": "769dae9ac5216185c7153279425d5672e63d7c65224cbda5c93340e86c927424"
     },
     {
       "path": "traceharness/frontend/index.html",
@@ -64540,8 +64540,8 @@
     },
     {
       "path": "traceharness/frontend/src/matekey.test.js",
-      "bytes": 7720,
-      "sha256": "a5a83fbffe4e7badbbafdc2266f67c8f87968cd307da7561736418e99d1a1d38"
+      "bytes": 7710,
+      "sha256": "8e174326583ffaff432c0c371c9490a7521f50c850b1f97dcf93a7333c8daaac"
     },
     {
       "path": "traceharness/frontend/src/member-api.js",
@@ -65565,8 +65565,8 @@
     },
     {
       "path": "traceharness/frontend/src/workspace/BuddyModelPicker.jsx",
-      "bytes": 7624,
-      "sha256": "358927ba0578a7abed3305455e225ecfcc569cc74a61e06c7fa06f3c1e2355f6"
+      "bytes": 7533,
+      "sha256": "d6ed205b136e8e4ac334a34955fbe3b565c428becd93b0ffbe1e4e8c6c0d3ca7"
     },
     {
       "path": "traceharness/frontend/src/workspace/WorkspaceUI.dom.test.jsx",

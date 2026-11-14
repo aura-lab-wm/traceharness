@@ -73,7 +73,8 @@ class TestRoute(unittest.TestCase):
         self.assertEqual(failures, 204)
         self.assertEqual(c["cutoff_no_patch"], 112)
 
-    def test_failed_t03_qwen_runs_are_cutoffs(self):
+    def test_three_failed_t03_qwen_baseline_runs_are_cutoffs(self):
+        # each ledger ends on finish_reason "length" with no patch
         for rid in ("20260909-034622-9c5733", "20260909-034648-2d0866", "20260909-034702-b841b3"):
             self.assertEqual(self.out["runs"][rid]["mode"], "cutoff_no_patch", rid)
 

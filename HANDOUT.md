@@ -340,7 +340,7 @@ on more tasks, more repeats, or more cells? Defend it with the variance shares, 
 Hand in: your notes file, `report_live.md` (or `report_mock.md`), the Ochiai table from exercise 7, and
 the variance-share table from exercise 8.
 
-On the 560 real runs the shares are: model 13.3%, harness ≈ 0, interaction 2.0%, task 11.7%, cell × task
+On the 560 real runs the shares are: model 13.3%, harness 0.0%, interaction 2.0%, task 11.7%, cell × task
 48.7%, residual 24.3%. What a leaderboard reports is the first two rows. The 2 × 2 mock version (command above)
 gives model 2.1%, harness 0.7%, interaction ≈ 0, task 18.7%, cell × task 9.2%, residual 69.4% — same lesson.
 

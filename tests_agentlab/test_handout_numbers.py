@@ -109,7 +109,7 @@ def _package_datasets():
 
 
 class RunCountsMatchTheData(unittest.TestCase):
-    """'2,208 runs', '1,632', '576', '500' appear in the guide, the package page and the docs."""
+    """'1,824 runs', '1,248', '576', '500' appear in the guide, the package page and the docs."""
 
     SOURCES = ["SCHOOL_PACKAGE.md", "README.md", "traceharness/school-package.json",
                "traceharness/frontend/src/rig/views/workspace.jsx"]   # the Rig's guide and package pages
@@ -134,6 +134,10 @@ class RunCountsMatchTheData(unittest.TestCase):
             for d in ("llma4se_live", "live", "real_swe_agent_500"):
                 for n in re.findall(r"`" + d + r"` \| ([\d,]+) \|", text):
                     self.assertEqual(int(n.replace(",", "")), expected[d], f"{rel}: {d} row")
+            # repository-only datasets (not in the school package) are checked against their own index
+            for d in (x for x in ("study_v04",) if os.path.isfile(os.path.join(RUNS, x, "index.jsonl"))):
+                for n in re.findall(r"`" + d + r"` \| ([\d,]+) \|", text) + re.findall(r"`" + d + r"` \(([\d,]+) runs", text):
+                    self.assertEqual(int(n.replace(",", "")), _count(d), f"{rel}: {d} count")
 
 
 if __name__ == "__main__":

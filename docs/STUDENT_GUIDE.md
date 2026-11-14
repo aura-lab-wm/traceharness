@@ -934,7 +934,7 @@ steps) or **Docker** (section 12.1). If you do use native Windows:
   - Never commit a key, and use keys with a spending limit.
 - **Cost:**
   - Mock runs, recorded data and local models are free.
-  - A small, fast model such as `google/gemini-2.5-flash-lite` costs about $0.001 per run or less. A
+  - A small, fast model such as `google/gemini-2.5-flash-lite` costs under $0.001 per run. A
     frontier model costs roughly $0.05–0.15 per run.
   - Set `--max-cost` on every real sweep.
   - Run setup shows the estimated cost before anything starts.

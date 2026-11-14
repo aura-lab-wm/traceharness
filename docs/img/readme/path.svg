@@ -73,7 +73,7 @@
   <rect x="528.5" y="213.5" width="22" height="13" fill="#b74924" fill-opacity="0.14" stroke="#b74924"/>
 
   <text x="566" y="191" font-family="ui-monospace, monospace" font-size="10.5" font-weight="600" fill="#242623">8 datasets shipped</text>
-  <text x="566" y="208" font-family="ui-monospace, monospace" font-size="10" fill="#242623" fill-opacity="0.68">2,709 / 3,453 real runs</text>
+  <text x="566" y="208" font-family="ui-monospace, monospace" font-size="10" fill="#242623" fill-opacity="0.68">2,325 / 3,069 real runs</text>
   <text x="566" y="224" font-family="ui-monospace, monospace" font-size="10" font-weight="600" fill="#b74924">no API key to replay</text>
 
   <!-- Connector 2 -> 3 -->

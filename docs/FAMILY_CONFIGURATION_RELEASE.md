@@ -6,7 +6,7 @@ The inspector follows the model filter and reports its matching-run coverage. Mu
 
 ## What the screenshot's dataset actually records
 
-`llma4se_live` contains 1,632 runs and six configurations, with 272 runs per harness across the dataset. Each configuration has a complete recorded harness snapshot, but none records a native executable identity or version. The inspector therefore displays **Agent / runtime: Not recorded**.
+`llma4se_live` contains 1,248 runs and six configurations, with 208 runs per harness across the dataset. Each configuration has a complete recorded harness snapshot, but none records a native executable identity or version. The inspector therefore displays **Agent / runtime: Not recorded**.
 
 - `baseline`: seven tools, strict policy, 20 model calls, full history, 6,000 characters per observation and a 332-byte standing prompt.
 - `no_test_tool`: removes both `run_tests` and `bash`.

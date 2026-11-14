@@ -117,7 +117,7 @@ The local server binds to `127.0.0.1` by default and applies two request checks 
 | `demo_mock` | 24 | Compact mock demonstration. |
 | `captured_claude_code` | 1 | **Real, captured.** One Claude Code session (Claude Sonnet 5, 28 steps) implementing `results_scope.py` and its test in this repository (nine test runs, tested before exit). Recorded by the capture pipeline with machine paths normalized to `/workspace/traceharness`: an organic session with no oracle, one repeat, and an unchosen harness. |
 
-5,565 of the 6,309 included runs are real model runs (2,325 of the 3,069 in the school package). All included runs replay from disk with no API key; an OpenRouter key is needed only to execute new runs against live models.
+2,325 of the 3,069 included runs are real model runs. The repository also carries `study_v04` (3,240 runs, all real), which the school package leaves out. All included runs replay from disk with no API key; an OpenRouter key is needed only to execute new runs against live models.
 
 ## Reproduce the exercises
 

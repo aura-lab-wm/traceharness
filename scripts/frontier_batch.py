@@ -21,7 +21,7 @@ from traceharness.core.harness import HarnessConfig, run_task
 from traceharness.core.providers import make_provider, price_for
 from traceharness.core.runner import all_task_ids
 
-DEFAULT_MODELS = "anthropic/claude-sonnet-5,openai/gpt-5.6-sol,qwen/qwen3.8-27b,z-ai/glm-5.3"
+DEFAULT_MODELS = "anthropic/claude-sonnet-5,openai/gpt-5.6-sol,z-ai/glm-5.3"
 DEFAULT_HARNESSES = "baseline,no_test_tool,terse_prompt"
 ASSUMED_IN, ASSUMED_OUT = 40_000, 3_000     # tokens per run, planning assumption for --estimate (8 calls, transcript re-sent)
 
