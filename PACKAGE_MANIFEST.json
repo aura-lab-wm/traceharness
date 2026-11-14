@@ -61605,123 +61605,123 @@
     },
     {
       "path": "docs/GUIDE.md",
-      "bytes": 15130,
-      "sha256": "2520d4444b8e055b05ec4186f0166e6bb091abb9004364d966cbaab7f8a97796"
+      "bytes": 15123,
+      "sha256": "d703f80a42c93549baa322dd4fbe12dcb4d7dcb3bb20395310eebe20061556a0"
     },
     {
       "path": "docs/STUDENT_GUIDE.md",
-      "bytes": 46920,
-      "sha256": "79aab870dd0c2962face12b1a49073b6445538c034e43d5c5137017a3ee643c6"
+      "bytes": 46936,
+      "sha256": "6d65c38ac8b1507398c40ba448275d05880c3f3a7b5ca6b0606c770a13bda205"
     },
     {
       "path": "docs/img/guide/compare.png",
-      "bytes": 331058,
-      "sha256": "369a391458ca0f82dee8ce9769d36c4d91fa3e533c5c3930ef1163936222edfe"
+      "bytes": 351206,
+      "sha256": "2b8bbdb795383a1d682cd73947931f089cb914ae274ca608ad59bffd474880f7"
     },
     {
       "path": "docs/img/guide/datasets.png",
-      "bytes": 307830,
-      "sha256": "64eadc291b0495d28aaa90e2d4304debbd4eba38e37c2f37cea615ded6120ecc"
+      "bytes": 345009,
+      "sha256": "627bcd585f741cf9e906ba4039b730b07910347288fb75415fa53f4cc1bc890f"
     },
     {
       "path": "docs/img/guide/download-done.png",
-      "bytes": 118219,
-      "sha256": "202bc7ac581a53c815e0ca2d9fa0a9eea546377c126fda70b0dea5fd73d950f3"
+      "bytes": 124377,
+      "sha256": "39d0d898e051ba63b4dbb0ed6f73136960ef4bd3eeab738ea39c205ab76de7fc"
     },
     {
       "path": "docs/img/guide/download-form.png",
-      "bytes": 93472,
-      "sha256": "3fc1aa55008be751e7766da842e6ce0b4332ec8a7368e48ab7a2ea14e0e48fe6"
+      "bytes": 97566,
+      "sha256": "4c10a5812593c2c067a792dfd7f44df253babb9771a34e77826ffd7597c7f953"
     },
     {
       "path": "docs/img/guide/download-progress.png",
-      "bytes": 101178,
-      "sha256": "8059b6f4ac3a51a0a31835e922ba97e62971a29952d9c5a25ad4ebb00a665426"
+      "bytes": 104863,
+      "sha256": "02315060a5aa1246319a6da48499c67ccd51a8e60f70321a8d125c4cacb0f9c4"
     },
     {
       "path": "docs/img/guide/outcomes.png",
-      "bytes": 352354,
-      "sha256": "ef98b6dfa292c856afcb1fe479bdd75586dbedf839481ef41fb2fd4d04587123"
+      "bytes": 384196,
+      "sha256": "9578e7805a94735ebf69e210190cff6fc69baedc5319c6d41f6e61bc2f6d9c9a"
     },
     {
       "path": "docs/img/guide/overview.png",
-      "bytes": 445130,
-      "sha256": "0cf7c641c6e36e4720019cf3d674edd4d1e138375186ab1426013936a485c9ef"
+      "bytes": 424439,
+      "sha256": "e5fc00955862b7d00c55bc9e268d2af06aa47035d8cf0c6c1ff0e5021608804f"
     },
     {
       "path": "docs/img/guide/report.png",
-      "bytes": 368834,
-      "sha256": "d4900beebd468d1e60aff8e063f2aa604187f01dd94779fa0366bc112803cb60"
+      "bytes": 368612,
+      "sha256": "6535f39f1c14e31d36213e7398589e77655235d3ad2faeee346fe4fc28737f0e"
     },
     {
       "path": "docs/img/guide/run-console.png",
-      "bytes": 228808,
-      "sha256": "4a4cc9a297fc6c113fa538931ef993ccd07227982a5ab9299e78705a371ec75f"
+      "bytes": 245666,
+      "sha256": "16df9d48413981f15f6b5817427057c48c65ba7bb76e6afe6185fcd1890c15b7"
     },
     {
       "path": "docs/img/guide/run.png",
-      "bytes": 352751,
-      "sha256": "664e1ddda01ac75a16cb2dda856076278539a030ceb1caecdf4dcad9cf963770"
+      "bytes": 351652,
+      "sha256": "d25fcee1aea4f5f0983ddc4c9bad989c8ec2d4473c42adec9ba4c26e9cf6e393"
     },
     {
       "path": "docs/img/guide/search.png",
-      "bytes": 536819,
-      "sha256": "654a4bb9d14b2f20ce21ba2b11b577a6dd369f2dd3448dda3284794622998f04"
+      "bytes": 474032,
+      "sha256": "78c14ee8760e2a4b7482551901e6c8e982ec396077a79111cd2767d1f7e1be50"
     },
     {
       "path": "docs/img/guide/sources.png",
-      "bytes": 289968,
-      "sha256": "f054f1b92b51f0d67a661b14c9ed490a740ad5acf7557a1697aa9a7c721604b3"
+      "bytes": 292826,
+      "sha256": "c3c85288280cace550dac4d03480e08444a8c2a825d66e765fb28acfbb67ba5a"
     },
     {
       "path": "docs/img/guide/trajectory-explorer.png",
-      "bytes": 327843,
-      "sha256": "501b2abb9ddf7c01d36245f948edcfd8edd915e38c2b3de2aafb5a28ebcbe678"
+      "bytes": 353556,
+      "sha256": "c492716a98113664538be17c397b652debbf33bf89d3145975bff0cd80b63823"
     },
     {
       "path": "docs/img/guide/trajectory-features-tables.png",
-      "bytes": 319799,
-      "sha256": "e2a8d45b35034f1f33c8a53d6f90bdefb4bb9d5d616d51bfc54e8fb9d5843ff7"
+      "bytes": 324011,
+      "sha256": "4db2af3b010182ef2ff3b4c3868bd9923af327a1904a1cdb44c731ae9539dfc7"
     },
     {
       "path": "docs/img/guide/trajectory-features.png",
-      "bytes": 391368,
-      "sha256": "eead948cd65cb7e05717760b3c7a2a797ce8c9d7106f24f6a41587e7b3404ac0"
+      "bytes": 397385,
+      "sha256": "8dbb4093ab0a5294d1265c982da6980f0882c81c3b5d2ba34037bff6fe851c48"
     },
     {
       "path": "docs/img/student-guide/dataset.png",
-      "bytes": 420936,
-      "sha256": "8f6cfe87e7cda2e868c3a7d70d680897604e34637d76d4e8724fd7dddf881d01"
+      "bytes": 442802,
+      "sha256": "0d92b0d332ad975410e744832572de7ad91b0d80e55d7dd7865ebf03fcc210f7"
     },
     {
       "path": "docs/img/student-guide/datasets.png",
-      "bytes": 307830,
-      "sha256": "64eadc291b0495d28aaa90e2d4304debbd4eba38e37c2f37cea615ded6120ecc"
+      "bytes": 345009,
+      "sha256": "627bcd585f741cf9e906ba4039b730b07910347288fb75415fa53f4cc1bc890f"
     },
     {
       "path": "docs/img/student-guide/event-log.png",
-      "bytes": 414958,
-      "sha256": "6c160de05271b705e4fa7729a63e4c55d2a69701f87c9083a485d2ecbc44cb86"
+      "bytes": 430111,
+      "sha256": "2efddeb74a114db333e20e9551388d873cb5ba3da6a206b40952f43dd2af6f15"
     },
     {
       "path": "docs/img/student-guide/run-setup.png",
-      "bytes": 317103,
-      "sha256": "830717f86bc58459ea2bb76e17c7d4fa7c787873cc9bfd6f98c0f2c984d97e0c"
+      "bytes": 339407,
+      "sha256": "52fb0cd38b55b67d5a925f080f84f91d7e353dce9990263df62ba69fb102b3ae"
     },
     {
       "path": "docs/img/student-guide/task.png",
-      "bytes": 352745,
-      "sha256": "aba6befe3c7ed16cbcba824dec10735c45589b0953362941acea6cad77aaa4f9"
+      "bytes": 354187,
+      "sha256": "2337ba5605dbdf466a0331cdb7f5b1703b53a1e650e07c65ef70da7d3fc7b34e"
     },
     {
       "path": "docs/img/student-guide/trajectories.png",
-      "bytes": 333676,
-      "sha256": "a1d16bcfae9ee2beed9fed32195370261620f34f63b6cbf284ebfc3fa7eeb52d"
+      "bytes": 332170,
+      "sha256": "f970a5ba111327aae1ec5526a8e23b7010e62013288b23a41071967075681f34"
     },
     {
       "path": "docs/img/student-guide/trajectory-features.png",
-      "bytes": 328184,
-      "sha256": "924e92e81d9f78787b7ca39a15dc85c0a3220154445a42f9514159e7f21f1889"
+      "bytes": 332871,
+      "sha256": "df7c8b6e673b20174a576a761f429d48139eeb31ac0df8b99bc98e4edcfcb634"
     },
     {
       "path": "docs/student-lab.md",

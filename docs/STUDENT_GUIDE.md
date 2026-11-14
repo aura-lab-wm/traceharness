@@ -315,7 +315,7 @@ SWE-agent trajectories and walks through the analyses below.
 The layout:
 
 - **Title bar.** The search box in the middle (**Ctrl K**, or **⌘K** on a Mac), then on the
-  right **Ask Buddy** (**Ctrl J**), the split button, the maximize button and the light/dark switch.
+  right **Voice tour**, **Ask Buddy** (**Ctrl J**), the split button, the maximize button and the light/dark switch.
 - **Sidebar.** At the top, the dataset you are working in: click it to switch. Below it,
   *Workspace* (Datasets, Analysis, Trajectories) and *Tools* (Sources & capture, Sentinel,
   Canvas), and Settings at the bottom. In Analysis the nine steps open under *Analysis*;
