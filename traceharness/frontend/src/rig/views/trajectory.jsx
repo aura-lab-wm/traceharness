@@ -58,9 +58,13 @@ function testsPassed(s) {
 }
 export function spanKind(s) {
   const k = s && s.span
-  return k === 'chat' ? 'chat' : k === 'execute_tool' ? 'tool' : k === 'edit' ? 'edit' : k === 'grade' ? 'grade' : k === 'boundary_event' ? 'bnd' : k === 'sentinel' ? 'sent' : 'agent'
+  return k === 'chat' ? 'chat' : k === 'execute_tool' ? 'tool' : k === 'edit' ? 'edit' : k === 'grade' ? 'grade' : k === 'boundary_event' ? 'bnd' : k === 'sentinel' ? 'sent' : k === 'reprompt' ? 'rep' : 'agent'
 }
-const KIND_WORD = { chat: 'model call', tool: 'tool call', edit: 'edit', grade: 'grade', bnd: 'boundary event', sent: 'sentinel', agent: 'run marker' }
+const KIND_WORD = { chat: 'model call', tool: 'tool call', edit: 'edit', grade: 'grade', bnd: 'boundary event', sent: 'sentinel', rep: 're-prompt', agent: 'run marker' }
+/** Distinct upstream hosts named on the chat spans, in order of first use ([] = none reported). */
+export const servedByOf = (spans) => [...new Set((spans || []).filter((s) => s.span === 'chat' && s.served_by).map((s) => s.served_by))]
+const sentOf = (spans, key) => { const c = (spans || []).find((s) => s.span === 'chat'); return c ? c[key] : undefined }
+const sentText = (v) => (v === undefined ? '—' : v == null ? 'not sent' : String(v))
 /** seq -> 1-based reply number, for every chat span. */
 export function replyNumbers(spans) {
   const m = new Map(); let n = 0
@@ -88,6 +92,7 @@ export function spanDesc(s, n) {
   if (s.span === 'grade') return `grade · visible ${glyph(s.visible)} hidden ${glyph(s.hidden)} strengthened ${glyph(s.strong)}`
   if (s.span === 'boundary_event') return `boundary · ${s.kind || '—'}${s.tool ? ' · ' + s.tool : ''}${s.status ? ' · ' + s.status : ''}`
   if (s.span === 'sentinel') return `sentinel · risk ${s.risk != null ? (+s.risk).toFixed(2) : '—'} · ${s.action || 'none'}`
+  if (s.span === 'reprompt') return `re-prompt #${s.attempt ?? '—'} · the reply invoked no tool, so the harness asked again`
   return s.span || 'span'
 }
 function spanTech(s) {
@@ -874,6 +879,7 @@ function RunDoc({ spec, args }) {
     ['Usage', [[isSweRun(run) ? 'estimated tokens in / out' : 'tokens in / out', run.in != null ? `${int(run.in)} / ${int(run.out)}` : '—'], ['cost', run.cost != null ? usd(run.cost, 5) : '—'], ['wall', run.wall != null ? (run.wall / 1000).toFixed(1) + ' s' : '—']]],
     ['Behaviour', [['calls · tools · edits', `${run.steps ?? '—'} · ${run.tools ?? '—'} · ${run.edits ?? '—'}`], ['boundary', `${run.bnd ?? 0}${run.bkinds && run.bkinds.length ? ' · ' + run.bkinds.join(', ') : ''}`], ['exit reason', run.exit || '—']]],
     [isSweRun(run) ? 'Importer-reconstructed setup' : 'Recorded setup', [['seed', det.data ? (seedOf(spans) ?? '—') : '…'], ['max tokens / call', cfg && cfg.max_tokens_per_call != null ? int(cfg.max_tokens_per_call) : '—'], ['max steps', cfg && cfg.max_steps != null ? int(cfg.max_steps) : '—']]],
+    ['Serving', [['served by', det.data ? (servedByOf(spans).join(', ') || 'not reported') : '…'], ['temperature · seed sent', det.data ? `${sentText(sentOf(spans, 'gen_ai.request.temperature'))} · ${sentText(sentOf(spans, 'gen_ai.request.seed'))}` : '…'], ['re-prompts', det.data ? int(spans.filter((s) => s.span === 'reprompt').length) : '…']]],
   ]
   const onSel = (s) => { setSel(s); requestAnimationFrame(() => { const e = listRef.current && listRef.current.querySelector('[data-el="run-console"]'); if (e && e.scrollIntoView) e.scrollIntoView({ block: 'nearest' }) }) }
   return (
@@ -949,6 +955,8 @@ function SpanDoc({ spec, args }) {
   if (s.span === 'boundary_event') fields.push(['boundary kind', s.kind || '—'], ['tool', s.tool || '—'], ['status', s.status || '—'])
   if (s.span === 'invoke_agent') fields.push(['status', s.status || '—'], ...(s.status === 'start' ? [['seed', s.seed ?? '—'], ['harness hash', s.harness_hash || '—'], ['repeat', s.repeat_index ?? '—']] : [['exit', s.exit_reason || '—'], ['total tokens', int(s.total_tokens)], ['cost', isSweRun(run) ? '— not supplied' : usd(s.cost_usd, 6)]]))
   if (s.span === 'sentinel') fields.push(['step', s.step ?? '—'], ['risk', s.risk != null ? (+s.risk).toFixed(3) : '—'], ['action', s.action || 'none'], ['patterns', (s.patterns || []).join(', ') || '—'], ['layer', s.layer || '—'])
+  if (s.span === 'chat' && !isSweRun(run)) fields.push(['served by', s.served_by || 'not reported'], ['model echoed', s['gen_ai.response.model'] || '—'], ['temperature sent', sentText(s['gen_ai.request.temperature'])], ['seed sent', sentText(s['gen_ai.request.seed'])])
+  if (s.span === 'reprompt') fields.push(['attempt', s.attempt ?? '—'], ['model step', s.step ?? '—'])
   const fr = finishOf(s)
   const cut = isCutoff(s)
   const payload = { ...s }

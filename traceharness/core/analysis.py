@@ -459,8 +459,9 @@ def factorial_ci(rows: list[dict], a_key: str = "model", b_key: str = "harness_i
     that a task drawn twice counts as two blocks. Returns {term: [lo, hi]} plus the replicate count.
     The point estimates stay those of factorial(); this only says how far they move with the tasks."""
     by_block = defaultdict(list)
-    for r in rows:
-        by_block[r[block_key]].append(r)
+    for r in rows:                     # only the four fields factorial() reads: replicates copy rows
+        by_block[r[block_key]].append({a_key: r[a_key], b_key: r[b_key], block_key: r[block_key],
+                                       outcome: r.get(outcome)})
     blocks = sorted(by_block)
     if len(blocks) < 2:
         return {"intervals": {}, "B": 0, "blocks": len(blocks)}

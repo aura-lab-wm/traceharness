@@ -176,6 +176,7 @@ class OpenAIProvider(Provider):
         if self.route and not self.openrouter:
             raise ValueError("--route pins OpenRouter's upstream provider; it has no meaning for another endpoint")
         self.seed: Optional[int] = None
+        self.seed_supported = True    # cleared when the endpoint rejects `seed`; later calls omit it
         self.api_key = api_key or (os.environ.get("OPENROUTER_API_KEY", "") if self.openrouter else "") or os.environ.get("OPENAI_API_KEY", "")
         if not self.api_key and ("api.openai.com" in self.base_url or self.openrouter):
             raise RuntimeError("OPENROUTER_API_KEY is not set" if self.openrouter else "OPENAI_API_KEY is not set")
@@ -214,13 +215,22 @@ class OpenAIProvider(Provider):
         if self.temperature not in (None, 1.0) and not bare.startswith(("o1", "o3", "o4", "gpt-5")):
             payload["temperature"] = self.temperature
             sent_t = float(self.temperature)
-        if self.seed is not None:
+        if self.seed is not None and self.seed_supported:
             payload["seed"] = self.seed
         headers = {"Authorization": f"Bearer {self.api_key}"}
         if self.openrouter:
             headers.update({"HTTP-Referer": "https://github.com/aura-lab-wm/traceharness", "X-Title": "traceharness"})
         t0 = time.time()
-        r = _post_json(f"{self.base_url}/chat/completions", headers, payload)
+        try:
+            r = _post_json(f"{self.base_url}/chat/completions", headers, payload)
+        except RuntimeError as e:
+            # An endpoint that does not accept `seed` answers 400 naming it. Retry once without it and
+            # stop sending it; the span then records sent_seed=None, which is what went over the wire.
+            if "seed" not in payload or not str(e).startswith("HTTP 400") or "seed" not in str(e).lower():
+                raise
+            self.seed_supported = False
+            payload.pop("seed")
+            r = _post_json(f"{self.base_url}/chat/completions", headers, payload)
         choice = r["choices"][0]
         msg = choice["message"]
         calls = []
@@ -300,7 +310,9 @@ def make_provider(kind: str, model: str, temperature: float = 0.0, price=None, s
     if kind == "openrouter":
         kw.setdefault("base_url", "https://openrouter.ai/api/v1")
         return OpenAIProvider(model, temperature, price, **kw)
-    if kw.get("route") and kind != "openrouter":
+    if kw.get("route") and kind not in ("openrouter", "openai"):
+        # kind "openai" is let through: OpenAIProvider accepts a route when base_url is OpenRouter
+        # and raises its own error for any other endpoint.
         raise ValueError("--route pins OpenRouter's upstream provider; use it with --provider openrouter")
     kw = {k: v for k, v in kw.items() if not (k == "route" and not v)}
     if kind == "openai":

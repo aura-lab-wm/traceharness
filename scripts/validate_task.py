@@ -14,10 +14,60 @@ A task passes when ALL of these hold (each is run in a fresh temporary copy):
 The tiers are built exactly as TraceHarness's grader builds them: the pristine repo/tests, plus
 hidden_tests/*.py for the hidden tier, plus hidden_tests_strong/*.py for the strong tier.
 """
-import json, os, shutil, subprocess, sys, tempfile, time
+import ast, json, os, shutil, subprocess, sys, tempfile, time
+
+TIMEOUT = 60
+# Loaded through PYTHONPATH as sitecustomize: any attempt to open a network connection while the
+# tests run raises, so a task whose tests need the network fails its tiers instead of passing.
+NET_GUARD = (
+    "import socket\n"
+    "def _blocked(*args, **kwargs):\n"
+    "    raise OSError('network access is disabled while validating a task')\n"
+    "socket.socket.connect = _blocked\n"
+    "socket.socket.connect_ex = _blocked\n"
+    "socket.create_connection = _blocked\n"
+)
+
+
+def third_party_imports(task_dir):
+    """Top-level imports that are neither standard library nor a module of the task itself."""
+    local = set()
+    for dp, dns, fns in os.walk(os.path.join(task_dir, "repo")):
+        for n in dns:
+            local.add(n)
+        for f in fns:
+            if f.endswith(".py"):
+                local.add(f[:-3])
+    for sd in ("hidden_tests", "hidden_tests_strong"):
+        for f in os.listdir(os.path.join(task_dir, sd)) if os.path.isdir(os.path.join(task_dir, sd)) else []:
+            if f.endswith(".py"):
+                local.add(f[:-3])
+    bad = set()
+    for sd in ("repo", "hidden_tests", "hidden_tests_strong", "reference", "decoy", "shallow"):
+        for dp, _, fns in os.walk(os.path.join(task_dir, sd)):
+            for f in fns:
+                if not f.endswith(".py"):
+                    continue
+                try:
+                    tree = ast.parse(open(os.path.join(dp, f), encoding="utf-8").read())
+                except SyntaxError:
+                    continue                      # a syntax error shows up as a failing tier instead
+                for node in ast.walk(tree):
+                    names = []
+                    if isinstance(node, ast.Import):
+                        names = [a.name for a in node.names]
+                    elif isinstance(node, ast.ImportFrom) and not node.level and node.module:
+                        names = [node.module]
+                    for n in names:
+                        top = n.split(".")[0]
+                        if top not in sys.stdlib_module_names and top not in local:
+                            bad.add(top)
+    return sorted(bad)
+
 
 def run_tier(task_dir, overlay, subdirs):
     tmp = tempfile.mkdtemp(prefix="vt_")
+    guard = tempfile.mkdtemp(prefix="vt_guard_")
     try:
         shutil.copytree(os.path.join(task_dir, "repo"), tmp, dirs_exist_ok=True)
         if overlay:
@@ -31,12 +81,19 @@ def run_tier(task_dir, overlay, subdirs):
                     shutil.copy(os.path.join(task_dir, sd, f), tests)
         env = {k: v for k, v in os.environ.items() if k in ("PATH", "HOME", "LANG", "LC_ALL", "TMPDIR")}
         env["PYTHONDONTWRITEBYTECODE"] = "1"
+        with open(os.path.join(guard, "sitecustomize.py"), "w") as fh:
+            fh.write(NET_GUARD)
+        env["PYTHONPATH"] = guard
         t0 = time.time()
-        r = subprocess.run([sys.executable, "-m", "unittest", "discover", "-s", "tests", "-q"], cwd=tmp,
-                           capture_output=True, text=True, timeout=60, env=env)
+        try:
+            r = subprocess.run([sys.executable, "-m", "unittest", "discover", "-s", "tests", "-q"], cwd=tmp,
+                               capture_output=True, text=True, timeout=TIMEOUT, env=env)
+        except subprocess.TimeoutExpired:
+            return False, f"timed out after {TIMEOUT} s", float(TIMEOUT)
         return r.returncode == 0, (r.stdout + r.stderr)[-1500:], time.time() - t0
     finally:
         shutil.rmtree(tmp, ignore_errors=True)
+        shutil.rmtree(guard, ignore_errors=True)
 
 TIERS = {"visible": (), "hidden": ("hidden_tests",), "strong": ("hidden_tests", "hidden_tests_strong")}
 
@@ -69,6 +126,9 @@ def validate(task_dir):
         errs.append(f"reference/ changes files outside src_files: {extra}")
     if any(f.startswith("tests") for f in ref_files):
         errs.append("reference/ must not touch tests/")
+    third = third_party_imports(task_dir)
+    if third:
+        errs.append(f"imports outside the standard library: {', '.join(third)}")
     res = {}
     for overlay in (None, "reference", "decoy", "shallow"):
         if overlay and not os.path.isdir(os.path.join(task_dir, overlay)):
@@ -79,7 +139,9 @@ def validate(task_dir):
             res[(overlay or "original", tier)] = ok1
             if ok1 != ok2:
                 errs.append(f"{overlay or 'original'}/{tier}: two runs disagree (nondeterministic tests)")
-            if secs > 20:
+            if log.startswith("timed out"):
+                errs.append(f"{overlay or 'original'}/{tier}: {log}")
+            elif secs > 20:
                 errs.append(f"{overlay or 'original'}/{tier}: took {secs:.0f}s (> 20s)")
             if overlay == "reference" and not ok1:
                 errs.append(f"reference fails the {tier} tier:\n{log}")

@@ -148,6 +148,61 @@ class TestServedBy(unittest.TestCase):
             OpenAIProvider("gpt-x", api_key="k", base_url="https://api.openai.com/v1", route=["Together"])
 
 
+class TestProviderEdges(unittest.TestCase):
+    """Edges found in review: a route through the openai kind, and endpoints that reject `seed`."""
+
+    def test_route_is_accepted_for_the_openai_kind_pointing_at_openrouter(self):
+        prov = make_provider("openai", "vendor/model", api_key="k", base_url="https://openrouter.ai/api/v1",
+                             route=["Together"])
+        self.assertEqual(prov.route, ["Together"])
+
+    def test_a_rejected_seed_is_dropped_once_and_recorded_as_not_sent(self):
+        import traceharness.core.providers as P
+        real, calls = P._post_json, []
+
+        def fake(url, headers, payload, timeout=120, retries=4):
+            calls.append(dict(payload))
+            if payload.get("messages", [{}])[0].get("content") == "boom":
+                raise RuntimeError('HTTP 400: {"error": "bad request: messages"}')
+            if "seed" in payload:
+                raise RuntimeError('HTTP 400: {"error": "Unrecognized request argument supplied: seed"}')
+            return {"choices": [{"finish_reason": "stop", "message": {"content": "hi"}}],
+                    "usage": {"prompt_tokens": 1, "completion_tokens": 1}}
+        P._post_json = fake
+        try:
+            prov = OpenAIProvider("local-model", api_key="k", base_url="http://127.0.0.1:9/v1")
+            prov.reseed(7)
+            r = prov.chat([{"role": "user", "content": "x"}], [])
+            self.assertIsNone(r.sent_seed)
+            self.assertEqual(len(calls), 2)                    # one rejected call, one retry without seed
+            prov.chat([{"role": "user", "content": "x"}], [])
+            self.assertEqual(len(calls), 3)
+            self.assertNotIn("seed", calls[-1])                # not sent again
+            with self.assertRaises(RuntimeError):              # other 400s are not swallowed
+                prov.chat([{"role": "user", "content": "boom"}], [])
+        finally:
+            P._post_json = real
+
+
+class TestSentinelGroupingWithoutTaskIds(unittest.TestCase):
+    def test_runs_without_a_task_id_do_not_break_task_grouped_folds(self):
+        import traceharness.backend.sentinel as S
+        ex = []
+        for i in range(60):
+            tid = None if i % 10 == 0 else f"t{i % 7:02d}"
+            f = {n: float((i * 7 + k) % 5) for k, n in enumerate(S.FEATURE_NAMES)}
+            f["step_frac"] = 1.0
+            ex.append({"run_id": f"r{i:03d}", "task_id": tid, "harness_id": "baseline", "model": "m",
+                       "step": 0, "step_frac": 1.0, "features": f, "label": i % 3 == 0, "total_steps": 1})
+        real = S.build_training_examples
+        S.build_training_examples = lambda dirs, harness_filter=None: ex
+        try:
+            _, report = S.train(["unused"], epochs=5, bootstrap=5)
+        finally:
+            S.build_training_examples = real
+        self.assertEqual(report["cv_grouping"], "task")
+
+
 class TestOneFieldVariants(unittest.TestCase):
     def test_each_shipped_variant_changes_what_it_says_it_changes(self):
         def read(name):
@@ -169,6 +224,33 @@ class TestOneFieldVariants(unittest.TestCase):
         self.assertEqual(seen, set(EXPECTED_DIFF))
         single = [h for h, d in EXPECTED_DIFF.items() if len(d) == 1]
         self.assertEqual(sorted(h for h in EXPECTED_DIFF if h not in single), ["short_context"])
+
+
+class TestConsoleJobRoute(unittest.TestCase):
+    """A console job carries the same host pin as `run --route`, validated before anything starts."""
+
+    def test_route_is_validated_and_stored(self):
+        from fastapi.testclient import TestClient
+        import traceharness.backend.app as A
+
+        real_run_job, real_base = A._run_job, A.SETTINGS["base_url"]
+        A._run_job = lambda job: None        # keep the job from running; only the request is under test
+        A.SETTINGS["base_url"] = "https://openrouter.ai/api/v1"
+        try:
+            c = TestClient(A.app)
+            base = {"out": "route_probe", "models": ["mock"], "harnesses": ["baseline"], "tasks": ["t01_slugify"], "repeats": 1}
+            self.assertEqual(c.post("/api/jobs", json={**base, "route": ["Nebius;drop"]}).status_code, 400)
+            self.assertEqual(c.post("/api/jobs", json={**base, "route": [f"h{i}" for i in range(9)]}).status_code, 400)
+            ok = c.post("/api/jobs", json={**base, "route": [" Nebius ", "Parasail", ""]})
+            self.assertEqual(ok.status_code, 200, ok.text)
+            self.assertEqual(ok.json()["route"], ["Nebius", "Parasail"])
+            self.assertIsNone(c.post("/api/jobs", json=base).json()["route"])
+            A.SETTINGS["base_url"] = "http://127.0.0.1:11434/v1"            # a local endpoint has no hosts to pin
+            self.assertEqual(c.post("/api/jobs", json={**base, "route": ["Nebius"]}).status_code, 400)
+        finally:
+            A._run_job, A.SETTINGS["base_url"] = real_run_job, real_base
+            for jid in [k for k, j in A.JOBS.items() if j.get("out") == "route_probe"]:
+                A.JOBS.pop(jid, None)
 
 
 if __name__ == "__main__":

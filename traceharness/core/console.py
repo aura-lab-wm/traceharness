@@ -123,8 +123,6 @@ def load_tasks(lab_root: str = LAB_ROOT) -> dict:
             continue
         with open(meta_path) as stream:
             meta = json.load(stream)
-        if meta.get("suite") == "extended":      # this console lists the core suite only
-            continue
         issue = ""
         ip = os.path.join(d, "issue.md")
         if os.path.exists(ip):
@@ -132,6 +130,7 @@ def load_tasks(lab_root: str = LAB_ROOT) -> dict:
                 issue = stream.read()
         strong = os.path.isdir(os.path.join(d, "hidden_tests_strong"))
         out[meta["id"]] = {"id": meta["id"], "title": meta.get("title", ""), "probe": meta.get("probe", "none"),
+                           "suite": "extended" if meta.get("suite") == "extended" else "core",
                            "src_files": meta.get("src_files", []), "issue": _cut(issue, 1800), "has_strong": strong}
     return out
 

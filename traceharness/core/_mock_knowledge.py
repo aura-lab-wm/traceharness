@@ -26,10 +26,11 @@ def knowledge_for(task_id, tasks_root=None):
     """
     if task_id in SOLUTIONS:
         return SOLUTIONS[task_id]
-    if task_id in _TASK_CACHE:
-        return _TASK_CACHE[task_id]
     import json, os
     root = tasks_root or os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), "tasks")
+    key = (task_id, os.path.abspath(root))      # the same id under another tasks root is another task
+    if key in _TASK_CACHE:
+        return _TASK_CACHE[key]
     tdir = os.path.join(root, task_id)
     know = None
     try:
@@ -47,7 +48,8 @@ def knowledge_for(task_id, tasks_root=None):
                 know = {"path": src, "correct": correct, "buggy": read("decoy") or original}
     except (OSError, ValueError):
         know = None
-    _TASK_CACHE[task_id] = know
+    if know is not None:                         # a miss is not cached: the material may be added later
+        _TASK_CACHE[key] = know
     return know
 
 

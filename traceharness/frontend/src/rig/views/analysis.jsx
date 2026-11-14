@@ -1061,6 +1061,8 @@ function Setup({ spec, dir, row, c }) {
   const [selT, setSelT] = useTabState(spec, 't', null)
   const [rep, setRep] = useTabState(spec, 'rep', 3)
   const [par, setPar] = useTabState(spec, 'par', 3)
+  const [routeTxt, setRouteTxt] = useTabState(spec, 'route', '')
+  const route = routeTxt.split(',').map((s) => s.trim()).filter(Boolean)
   const [out, setOut] = useTabState(spec, 'out', dir)
   const [msg, setMsg] = useState(null)
   if (Mo.error) return <ErrorState error={Mo.error} onRetry={Mo.reload} what="/api/models" />
@@ -1094,7 +1096,7 @@ function Setup({ spec, dir, row, c }) {
   const launch = async () => {
     setMsg(null)
     try {
-      const job = await api('/jobs', { method: 'POST', body: { out, models: mS, harnesses: hS, tasks: tS, repeats: rep, parallel: par, sentinel_ab: false } })
+      const job = await api('/jobs', { method: 'POST', body: { out, models: mS, harnesses: hS, tasks: tS, repeats: rep, parallel: par, sentinel_ab: false, ...(route.length ? { route } : {}) } })
       setMsg({ ok: true, text: `Launched ${job && job.id ? job.id : 'the job'}: ${int(n)} runs → data/runs/${out}.`, out })
       invalidate(paths.jobs()); invalidate(paths.status())
     } catch (e) { setMsg({ ok: false, text: e.message }) }
@@ -1120,12 +1122,17 @@ function Setup({ spec, dir, row, c }) {
       </div>
       <div className="rg-col rg-an-setside">
         <Panel label="Tasks · repeats" meta={`${tS.length} of ${Tk.length}`}>
+          {Tk.some((t) => t.suite === 'extended') && <div className="rg-row rg-wrap rg-an-suites" role="group" aria-label="Select a task suite">{[['core', 'core'], ['extended', 'extended'], ['full', 'all']].map(([s, l]) => {
+            const ids = Tk.filter((t) => s === 'full' || (t.suite || 'core') === s).map((t) => t.id)
+            return <button key={s} type="button" className="rg-btn" data-el={`suite-${s}`} onClick={() => setSelT(ids)}>{l} · {ids.length}</button>
+          })}</div>}
           <div className="rg-row rg-wrap rg-an-tchips">{Tk.map((t) => (
-            <label key={t.id} className={cx('rg-tag rg-an-tchip', tS.includes(t.id) ? 'acc' : 'dash')} title={t.title}><input type="checkbox" className="sr-only" checked={tS.includes(t.id)} onChange={() => toggle(tS, setSelT, t.id)} />{t.id.split('_')[0]}</label>))}</div>
+            <label key={t.id} className={cx('rg-tag rg-an-tchip', tS.includes(t.id) ? 'acc' : 'dash')} title={`${t.title || t.id}${t.suite === 'extended' ? ' · extended suite' : ''}`}><input type="checkbox" className="sr-only" checked={tS.includes(t.id)} onChange={() => toggle(tS, setSelT, t.id)} />{t.id.split('_')[0]}</label>))}</div>
           <div className="rg-grid rg-an-knobs">
             <label className="rg-fld">Repeats<input className="rg-inp" type="number" min="1" max="20" value={rep} onChange={(e) => setRep(Math.max(1, Math.min(20, +e.target.value || 1)))} /></label>
             <label className="rg-fld">Parallelism<input className="rg-inp" type="number" min="1" max="12" value={par} onChange={(e) => setPar(Math.max(1, Math.min(12, +e.target.value || 1)))} /></label>
             <label className="rg-fld rg-an-span2">Output dir · data/runs/<input className="rg-inp" value={out} placeholder="e.g. my_sweep" onChange={(e) => setOut(e.target.value.replace(/[^a-zA-Z0-9_-]/g, ''))} aria-label="Output directory" /></label>
+            <label className="rg-fld rg-an-span2" title="OpenRouter hosts to pin, in order, with fallbacks off (same as run --route). Leave empty to let OpenRouter choose; the ledger records the host either way.">Pin hosts · OpenRouter<input className="rg-inp" value={routeTxt} placeholder="e.g. Nebius, Parasail (empty = any host)" onChange={(e) => setRouteTxt(e.target.value.replace(/[^A-Za-z0-9 ,._-]/g, '').slice(0, 300))} aria-label="OpenRouter hosts to pin" data-el="run-route" /></label>
           </div>
         </Panel>
         <Panel label="Estimate" el="run-estimate">

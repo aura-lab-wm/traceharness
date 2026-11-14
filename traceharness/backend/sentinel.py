@@ -761,9 +761,12 @@ def train(results_dirs: list[str], epochs: int = 400, lr: float = 0.2, l2: float
         raise ValueError(f"not enough examples to train ({len(ex)}); need finished runs with hidden_pass labels")
     rng = random.Random(seed)
     runs = sorted({e["run_id"] for e in ex})
-    task_of = {e["run_id"]: e.get("task_id") for e in ex}
-    tasks = sorted({t for t in task_of.values() if t})
-    grouping = "task" if group_by == "task" and len(tasks) >= folds else "run"
+    # A run without a task id (an imported or legacy run) is its own group, so it can never share a
+    # fold boundary with itself; only real task ids count towards the task-grouping threshold.
+    task_of = {e["run_id"]: (e.get("task_id") or "\0run:" + e["run_id"]) for e in ex}
+    tasks = sorted(set(task_of.values()))
+    real_tasks = [t for t in tasks if not t.startswith("\0run:")]
+    grouping = "task" if group_by == "task" and len(real_tasks) >= folds else "run"
     if grouping == "task":
         rng.shuffle(tasks)
         fold_of_task = {t: i % folds for i, t in enumerate(tasks)}
