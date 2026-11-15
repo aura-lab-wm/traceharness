@@ -44,7 +44,13 @@ STATEMENTS = [
 class TestVersionAlignment(unittest.TestCase):
     def test_every_statement_matches_pyproject(self):
         want = project_version()
+        # the school package ships a subset of these files; in a git checkout every one is required
+        full_checkout = os.path.isdir(os.path.join(LAB, ".git")) or os.path.isfile(os.path.join(LAB, ".git"))
         for rel, pattern in STATEMENTS:
+            if not os.path.exists(os.path.join(LAB, rel)):
+                if full_checkout:
+                    self.fail(f"{rel} is missing from the checkout")
+                continue
             found = re.findall(pattern, _read(rel), re.M)
             with self.subTest(file=rel, pattern=pattern):
                 self.assertTrue(found, f"{rel}: no version statement matched {pattern!r}")

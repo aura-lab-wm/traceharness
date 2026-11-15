@@ -63910,8 +63910,8 @@
     },
     {
       "path": "tests_agentlab/test_security_server.py",
-      "bytes": 6034,
-      "sha256": "71af66dc1d592d189dd816cd7b1eb5008f27b1b0b2366c31917d434ea0269633"
+      "bytes": 7017,
+      "sha256": "d794e64b235f2a947011d2dc168bfa344e972f1fc73507d3378da569f7986677"
     },
     {
       "path": "tests_agentlab/test_sentinel_ext.py",
@@ -64020,8 +64020,8 @@
     },
     {
       "path": "tests_agentlab/test_version_alignment.py",
-      "bytes": 2595,
-      "sha256": "7710bace78a95d47d3de870d91cb1ee48b6bc467c4afcb73ec41e265ef526b9a"
+      "bytes": 2992,
+      "sha256": "7e135d7cdd1abe239311d8454f333d778607981e3cf18e368b394e721ef1d079"
     },
     {
       "path": "traceharness/__init__.py",
@@ -64135,8 +64135,8 @@
     },
     {
       "path": "traceharness/backend/importers/__init__.py",
-      "bytes": 19864,
-      "sha256": "106b83081460642823a19d78ed6b3742dc77ba2cbd4b75f5b87463669186eedc"
+      "bytes": 20169,
+      "sha256": "8e4d1f0ff3d303cd236c4ac93373527469dff3c0451752be3928b530222c6fb9"
     },
     {
       "path": "traceharness/backend/importers/agy.py",
