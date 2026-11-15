@@ -339,6 +339,22 @@ class TestTimeoutAndCancel(_Base):
         dec, who = P.wait_for_decision(rd, 0, 1, 0.15, "abort")
         self.assertEqual(who, "timeout")
 
+    @unittest.skipUnless(hasattr(os, "mkfifo"), "needs mkfifo")
+    def test_a_fifo_mailbox_cannot_block_the_waiting_run(self):
+        # the mailbox is opened non-blocking and checked with fstat, so a FIFO swapped in for
+        # decision.json is discarded instead of hanging the run on open()
+        import threading
+        rd = os.path.join(self.out, "r3")
+        os.makedirs(rd)
+        os.mkfifo(P.decision_path(rd))
+        got = {}
+        t = threading.Thread(target=lambda: got.update(r=P.wait_for_decision(rd, 0, 1, 0.3, "abort")), daemon=True)
+        t.start()
+        t.join(5)
+        self.assertFalse(t.is_alive(), "wait_for_decision blocked on a FIFO")
+        self.assertEqual(got["r"][1], "timeout")
+        self.assertFalse(os.path.exists(P.decision_path(rd)))
+
 
 class TestHashUnchanged(unittest.TestCase):
     def test_every_recorded_harness_and_the_default_hash_as_on_main(self):

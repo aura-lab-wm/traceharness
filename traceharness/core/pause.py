@@ -34,6 +34,7 @@ from __future__ import annotations
 import json
 import os
 import re
+import stat
 import time
 import unicodedata
 from typing import Callable, Optional
@@ -217,18 +218,30 @@ def _read_mailbox(run_dir: str):
     """The parsed mailbox content, or None when there is none (or it is not a plain file / not JSON).
     A symlink or an oversized file is refused so the mailbox cannot be used to read or exhaust anything."""
     path = decision_path(run_dir)
+    # Open first, then check what was opened: a check by name followed by an open by name lets a
+    # symlink or a FIFO be swapped in between (a FIFO would block the waiting run). O_NOFOLLOW refuses a
+    # symlink, O_NONBLOCK keeps a FIFO from blocking the open, fstat checks the file actually opened.
+    flags = os.O_RDONLY | getattr(os, "O_NOFOLLOW", 0) | getattr(os, "O_NONBLOCK", 0)
     try:
-        st = os.lstat(path)
+        fd = os.open(path, flags)
+    except FileNotFoundError:
+        return None
     except OSError:
-        return None
-    if not os.path.isfile(path) or os.path.islink(path) or st.st_size > MAX_FILE_BYTES:
-        _discard(path)
+        _discard(path)          # a symlink (ELOOP) or anything else that is not a plain file
         return None
     try:
-        with open(path, "rb") as f:
+        st = os.fstat(fd)
+        if not stat.S_ISREG(st.st_mode) or st.st_size > MAX_FILE_BYTES:
+            _discard(path)
+            return None
+        with os.fdopen(fd, "rb") as f:
+            fd = None
             return json.loads(f.read(MAX_FILE_BYTES).decode("utf-8"))
     except (OSError, ValueError):
         return None
+    finally:
+        if fd is not None:
+            os.close(fd)
 
 
 def _discard(path: str) -> None:
