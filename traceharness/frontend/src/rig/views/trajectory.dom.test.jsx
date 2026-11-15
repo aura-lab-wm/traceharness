@@ -238,7 +238,9 @@ describe('compare and fork', () => {
     // the aligned-steps header row names the runs, so the whole row keeps case (ids are case-sensitive)
     expect(container.querySelectorAll('.rg-traj-aligned table.rg-keep th')).toHaveLength(4)
     const dv = q(container, 'divergence')
-    expect(dv.textContent).toContain('record 4')                      // reply → read,read / read / read match; then reply(no call) vs reply → edit_file
+    expect(dv.textContent).toContain('step 2')                        // step 1 (read, read) matches; step 2 is a cut-off reply with no call vs edit_file src/a.py
+    expect(dv.textContent).toContain('Diverges in the action')
+    expect(within(dv).queryByRole('button', { name: /Fork A/ })).toBeNull()   // the compare page no longer links to the proposed fork page
     expect(dv.querySelector('tr.sel').textContent).toContain('reply · no tool call · length')
     act(() => { fireEvent.click(within(pc).getByRole('button', { name: '⇄ Swap' })) })
     expect(location.hash).toBe(`#/rig/cmp:${ID2}:${ID3}`)

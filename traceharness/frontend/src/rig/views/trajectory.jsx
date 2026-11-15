@@ -28,6 +28,7 @@ import { memberStorageKey } from '../memberStorage'
 import { RecordingProvenance } from '../RecordingProvenance'
 import { isSweRun, suiteLabel, tokenCoverage } from '../provenance'
 import { findings as checkpoints } from '../../directions/investigationFacts'
+import { compareLedgers } from '../lib/align'
 import { RunConsole } from './console'
 import { RecordedHarnessJson } from '../HarnessJson'
 import { ForkRecordedHarness } from '../RecordingFork'
@@ -1025,15 +1026,22 @@ function SpanDoc({ spec, args }) {
 function FragmentKV({ k, v }) { return <><dt>{k}</dt><dd>{v}</dd></> }
 
 /* ================================================================== compare */
-function stepsOf(spans) {
-  return (spans || []).filter((s) => ['chat', 'execute_tool', 'edit'].includes(s.span)).map((s) => {
-    if (s.span === 'chat') { const tc = callsOf(s).map(callName); return { key: 'chat:' + tc.join(','), label: tc.length ? 'reply → ' + tc.join(', ') : `reply · no tool call${isCutoff(s) ? ' · length' : ''}`, seq: s.seq } }
-    if (s.span === 'edit') return { key: 'edit', label: `edit ${s.path} +${s.lines_added ?? 0} −${s.lines_removed ?? 0}`, seq: s.seq }
-    const a = s.args || {}
-    const arg = a.path ? `path=${a.path}` : a.command ? `command=${String(a.command).slice(0, 36)}${String(a.command).length > 36 ? '…' : ''}` : ''
-    return { key: 'tool:' + s['gen_ai.tool.name'], label: `${s['gen_ai.tool.name']} ${arg}`.trim(), seq: s.seq }
-  })
+const recordCount = (spans) => (spans || []).filter((s) => ['chat', 'execute_tool', 'edit'].includes(s.span)).length
+/* One step = one model reply plus the tools it caused (see ../lib/align.js). The cell names each tool call
+   with its main argument, since two calls of one tool are different actions when their arguments differ. */
+function stepLabel(st) {
+  if (!st) return ''
+  if (!st.tools.length) return `reply · no tool call${st.cutoff ? ' · length' : ''}`
+  return st.tools.map((t) => `${t.tool}${t.args ? ' ' + t.args : ''}`).join(' · ')
 }
+const ROW_STATE = {
+  same: { cls: 'rg-mute', text: '= same' },
+  effect: { cls: 'rg-amb', text: '≠ same action, other outcome' },
+  changed: { cls: 'rg-amb', text: '≠ different action' },
+  'a-only': { cls: 'rg-amb', text: '− only in A' },
+  'b-only': { cls: 'rg-amb', text: '+ only in B' },
+}
+const LEVEL_WORD = { action: 'the action (tool or arguments)', outcome: 'the outcome (status or test result) of the same action', reply: 'only the reply text' }
 export function pairClass(A, B) {
   if (!A || !B) return 'other'
   if (A.ds === B.ds && A.model === B.model && A.harness === B.harness && A.task === B.task) return 'same'
@@ -1093,7 +1101,7 @@ function PairPicker() {
 }
 
 function CmpHead({ r, spans, tag, oracle }) {
-  const st = spans ? stepsOf(spans) : null
+  const st = spans ? recordCount(spans) : null
   return (
     <section className="rg-pnl rg-traj-head" aria-label={`Run ${tag}`}>
       <div className="rg-pnl-h"><span className={cx('rg-tag', tag === 'A' ? 'acc' : undefined)}>{tag}</span>
@@ -1102,7 +1110,7 @@ function CmpHead({ r, spans, tag, oracle }) {
       <div className="rg-pnl-b rg-stack rg-stack-sm">
         <div className="rg-mono rg-small rg-dim rg-break">{short(r.model)} · {r.task} · repeat {r.rep ?? '—'} · seed {spans ? (seedOf(spans) ?? '—') : '…'}</div>
         <div className="rg-cluster rg-mono rg-small rg-traj-headfacts">
-          <span>{st ? st.length : '—'} records</span><span>{plural(r.edits ?? 0, 'edit')}</span><span>{r.bnd ? plural(r.bnd, 'boundary event') : 'no boundary events'}</span><span>{int(tokOf(r))} tok</span>
+          <span>{st != null ? st : '—'} records</span><span>{plural(r.edits ?? 0, 'edit')}</span><span>{r.bnd ? plural(r.bnd, 'boundary event') : 'no boundary events'}</span><span>{int(tokOf(r))} tok</span>
           {spans && spans.some(isCutoff) && <span className="rg-red">{spans.filter(isCutoff).length} cut off</span>}
         </div>
         <div className="rg-cluster"><FailureChip run={r} /><PinButton item={runPin(r, oracle)} /></div>
@@ -1147,37 +1155,36 @@ function CmpDoc({ spec, args }) {
   const nx = cand.length ? cand[(cand.findIndex((r) => r.id === B.id) + 1) % cand.length] : null
   let div = null
   if (la && lb) {
-    const xa = stepsOf(la), xb = stepsOf(lb)
-    const n = Math.max(xa.length, xb.length)
-    let first = -1
-    const rows = []
-    for (let i = 0; i < n; i++) {
-      const x = xa[i], y = xb[i]
-      const same = !!(x && y && x.key === y.key)
-      if (!same && first < 0) first = i
-      rows.push(
-        <tr key={i} className={!same && i === first ? 'sel' : ''}>
+    const c = compareLedgers(la, lb)
+    const first = c.firstRow
+    const fr = first >= 0 ? c.rows[first] : null
+    const rows = c.rows.map((r, i) => {
+      const st = ROW_STATE[r.state]
+      const cell = (x, run, gone) => (x ? <Go spec={makeSpec('span', run.id, x.seq ?? 0)} className="rg-tlink rg-traj-cell">{stepLabel(x)}</Go> : <span className="rg-mute">{gone}</span>)
+      return (
+        <tr key={i} className={i === first ? 'sel' : ''}>
           <td className="rg-num rg-mono">{i + 1}</td>
-          <td className="rg-mono rg-small">{x ? <Go spec={makeSpec('span', A.id, x.seq)} className="rg-tlink rg-traj-cell">{x.label}</Go> : <span className="rg-mute">— (ended)</span>}</td>
-          <td className="rg-mono rg-small">{y ? <Go spec={makeSpec('span', B.id, y.seq)} className="rg-tlink rg-traj-cell">{y.label}</Go> : <span className="rg-mute">— (ended)</span>}</td>
-          <td>{same ? <span className="rg-small rg-mute">= same</span> : <span className="rg-small rg-amb">≠ diverged</span>}</td>
-        </tr>,
+          <td className="rg-mono rg-small">{cell(r.a, A, r.b ? '—' : '— (none)')}</td>
+          <td className="rg-mono rg-small">{cell(r.b, B, r.a ? '—' : '— (none)')}</td>
+          <td><span className={'rg-small ' + st.cls}>{st.text}</span>{r.state === 'same' && r.textDiffers && <span className="rg-small rg-mute"> · reply text differs</span>}</td>
+        </tr>
       )
-    }
-    const fa = xa[first], fb = xb[first]
+    })
     div = (
       <Split sideWidth="20rem" sideLabel="First divergence" side={(
         <div className="rg-traj-stack-s">
           <div className="rg-pnl rg-traj-verdict"><div className="rg-pnl-h"><span className="rg-lbl rg-amb">First divergence</span></div>
-            <div className="rg-pnl-b"><div className="rg-fig md amb">{first < 0 ? 'no fork' : 'record ' + (first + 1)}</div>
-              <p className="rg-small rg-dim rg-traj-lede">{first < 0 ? 'The two ledgers take the same actions in the same order.' : <>Run A did <span className="rg-mono">{fa ? fa.label : 'nothing (ended)'}</span>, run B did <span className="rg-mono">{fb ? fb.label : 'nothing (ended)'}</span> — the first ledger record where the span kind or tool name differs.</>}</p>
-              {fa && <Go spec={makeSpec('fork', A.id, fa.seq)} className="rg-btn">Fork A at this record →</Go>}</div></div>
+            <div className="rg-pnl-b"><div className="rg-fig md amb">{c.level === 'reply' ? 'text only' : first < 0 ? 'no fork' : 'step ' + (c.fork + 1)}</div>
+              <p className="rg-small rg-dim rg-traj-lede">{!c.level ? 'The two ledgers take the same actions with the same outcomes and the same reply text, step for step.'
+                : c.level === 'reply' ? <>The two runs took the same actions with the same outcomes at every step. Only the reply text differs, from step {c.textDivergence + 1}.</>
+                  : <>Diverges in {LEVEL_WORD[c.level]}. Run A did <span className="rg-mono">{fr.a ? stepLabel(fr.a) : 'no step here'}</span>, run B did <span className="rg-mono">{fr.b ? stepLabel(fr.b) : 'no step here'}</span>.{c.argDiff && c.argDiff.keys.length > 0 && <> Both called <span className="rg-mono">{c.argDiff.tool}</span>; the argument{c.argDiff.keys.length > 1 ? 's' : ''} that differ{c.argDiff.keys.length > 1 ? '' : 's'}: <span className="rg-mono">{c.argDiff.keys.join(', ')}</span>.</>}</>}</p>
+              {c.level && c.level !== 'reply' && c.textDivergence != null && c.textDivergence < c.fork && <p className="rg-small rg-dim rg-traj-lede">The reply text already differs from step {c.textDivergence + 1}, before the actions do.</p>}</div></div>
           <Note><div><b>What this pair does not license.</b> One pair is one anecdote. A claim about {cls === 'same' ? 'run-to-run variance' : 'the difference'} comes from the {int(cls === 'cross' ? pc.cross : pc.same)} pairs of this class read as a paired set, not from this pair.</div></Note>
         </div>
       )}>
-        <Panel label="Aligned records" meta={`${xa.length} vs ${xb.length} records`} flush>
-          <TableScroll label="Aligned ledger records of runs A and B" maxHeight={560} className="rg-traj-aligned"><table className="rg-tbl rg-keep"><thead><tr><th className="rg-num">record</th><th>A · {sfx(A.id)}</th><th>B · {sfx(B.id)}</th><th>aligned</th></tr></thead><tbody>{rows}</tbody></table></TableScroll>
-          <p className="rg-tiny rg-mute rg-traj-pad">Records are the replies of the model and the executions of tools, in ledger order. They align by position; a record matches when its span kind and tool name match, so “same” means the same kind of action, not the same text.</p>
+        <Panel label="Aligned steps" meta={`${c.sa.length} vs ${c.sb.length} steps`} flush>
+          <TableScroll label="Aligned steps of runs A and B" maxHeight={560} className="rg-traj-aligned"><table className="rg-tbl rg-keep"><thead><tr><th className="rg-num">step</th><th>A · {sfx(A.id)}</th><th>B · {sfx(B.id)}</th><th>aligned</th></tr></thead><tbody>{rows}</tbody></table></TableScroll>
+          <p className="rg-tiny rg-mute rg-traj-pad">A step is one model reply and the tool calls it made. Two steps match when they call the same tools with the same arguments (ids, temp paths and spacing are ignored). Steps are paired by position up to the first difference; after it, the two runs are lined up on matching steps, so a step only one run took shows as A-only or B-only instead of shifting every later row. The first divergence is the first step whose action differs, or, when actions agree, whose outcome (status, test result) differs.</p>
         </Panel>
       </Split>
     )
@@ -1198,7 +1205,7 @@ function CmpDoc({ spec, args }) {
       </div>
       <p className="rg-dim rg-traj-lede">{cls === 'same' ? 'Same task, harness and model, a different repeat: any gap here is run-to-run variance, not the harness.' : cls === 'cross' ? 'Same model and task under two harnesses.' : 'Not a paired design: a descriptive contrast only.'}</p>
       <About summary="How pairs are counted">
-        <p>Pair counts are over the {A.ds} run index. Seeds are recorded in each ledger, not in the index, so seed pairing is checked for this pair only{seedState !== 'unknown' ? ` (seeds ${sa ?? '—'} / ${sb ?? '—'})` : ''}. Steps align by position; a step matches when its span kind and tool name match.</p>
+        <p>Pair counts are over the {A.ds} run index. Seeds are recorded in each ledger, not in the index, so seed pairing is checked for this pair only{seedState !== 'unknown' ? ` (seeds ${sa ?? '—'} / ${sb ?? '—'})` : ''}. A step matches when it calls the same tools with the same arguments.</p>
       </About>
       </div>
       <div className="rg-traj-heads" data-el="pair-headers"><CmpHead r={A} spans={la} tag="A" oracle={oracle} /><CmpHead r={B} spans={lb} tag="B" oracle={oracle} /></div>
