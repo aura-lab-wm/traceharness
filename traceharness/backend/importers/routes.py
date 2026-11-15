@@ -30,6 +30,7 @@ from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 
 from . import import_path, list_sources, detect_detail, RUNS_ROOT
+from ..confine import log_error, safe_segment
 
 router = APIRouter(prefix="/api/import")
 
@@ -72,7 +73,9 @@ def _said(e: BaseException) -> str:
     """What the page shows for a failed import."""
     if type(e).__name__ == "CaptureLocked":
         return LOCKED_SENTENCE
-    return f"{type(e).__name__}: {e}"
+    # Not the exception text: it can carry absolute paths or parser internals. The detail goes to
+    # the server log under an id the page shows.
+    return f"import failed ({type(e).__name__}; error id {log_error('trace import', e)}), see the server log"
 
 
 def hoist_api_routes(app) -> None:
@@ -114,11 +117,15 @@ def start(body: ImportIn):
         if STATE["status"] == "running":
             raise HTTPException(409, "an import is already running")
         p = os.path.expanduser(body.path or "")
-        if not p or not os.path.exists(p):
+        # The import source is a local file the operator names (that is the feature); the writes go
+        # to a confined results dir name, checked below.
+        if not p or "\x00" in p or not os.path.exists(p):
             raise HTTPException(400, f"no such path: {body.path}")
         rd = (body.results_dir or "").strip()
-        if not rd or "/" in rd or rd.startswith("."):
-            raise HTTPException(400, "bad results dir name")
+        try:
+            safe_segment(rd)
+        except ValueError:
+            raise HTTPException(400, "bad results dir name") from None
         src = body.source or None
         if src is None:
             from . import detect

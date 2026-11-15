@@ -295,7 +295,7 @@ const flagged = (r) => PRED.some(p => S.preds.has(p.id) && r.an.flags[p.id] != n
 const $ = id => document.getElementById(id);
 const snap = x => Number(Number(x).toPrecision(12));   // equal numbers must print equal (66.25 is 66.3 for every system)
 const fmtP = (x, d = 1) => snap(100 * x).toFixed(d) + "%";
-const esc = s => String(s == null ? "" : s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+const esc = s => String(s == null ? "" : s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;");
 
 // ============================================================ statistics
 const mean = a => a.reduce((x, y) => x + y, 0) / (a.length || 1);
@@ -390,8 +390,8 @@ function paintFlags() {
     const key = S.oracle; const F = RUNS.filter(flagged), FP = F.filter(r => r[key]);
     const counts = Object.fromEntries(PRED.map(p => [p.id, RUNS.filter(r => r.an.flags[p.id] != null).length]));
     let last = null;
-    $("legend").innerHTML = PRED.map(p => { const hd = p.group !== last ? `<span class="grp">${p.group}</span>` : ""; last = p.group;
-      return hd + `<span class="ch ${S.preds.has(p.id) ? "" : "off"}" data-pred="${p.id}" title="${esc(p.formula)}">${esc(p.label)} <b>${counts[p.id]}</b></span>`; }).join("")
+    $("legend").innerHTML = PRED.map(p => { const hd = p.group !== last ? `<span class="grp">${esc(p.group)}</span>` : ""; last = p.group;
+      return hd + `<span class="ch ${S.preds.has(p.id) ? "" : "off"}" data-pred="${esc(p.id)}" title="${esc(p.formula)}">${esc(p.label)} <b>${esc(counts[p.id])}</b></span>`; }).join("")
       + `<span class="alpha"><i>L</i>list <i>R</i>read <i>W</i>write <i>E</i>edit <i>T</i>tests <i>B</i>bash <i>S</i>submit <i>◯</i>ring = fails a selected test</span>`;
     if (S.mode === "field") $("thesis").innerHTML = `<span class="n">${F.length}</span> of ${RUNS.length} runs fail a selected trajectory test.<br><b><span class="n">${FP.length}</span> of them pass the ${OK[key]} oracle.</b>`;
   } else if (S.mode === "field") $("thesis").innerHTML = `The runs never change. <b>Only the judge does.</b>`;
@@ -544,8 +544,8 @@ function showBOM(id) {
   const ver = lastEdit >= 0 && lastTest > lastEdit;
   const p = document.createElement("div"); p.className = "panel"; p.style.cssText = `right:18px;top:16px;width:430px;max-height:calc(100% - 60px);overflow:auto`;
   p.innerHTML = `<button class="x" data-x>×</button><h4>${esc(r.id)} <span class="tag">bill of materials</span></h4>
-    <div class="kv" style="margin-bottom:8px"><div>cell</div><div>${esc(r.sys)} × ${esc(r.t)} · rep ${r.rep}</div><div>exit</div><div>${esc(r.exit)} after ${r.st} steps</div></div>
-    <div class="bom">${rows.map(x => `<div class="r"><span class="s">${x[0]}</span><span class="k ${x[4]}">${x[1]}</span><span>${esc(x[2])}</span><span class="v">${esc(x[3])}</span></div>`).join("")}
+    <div class="kv" style="margin-bottom:8px"><div>cell</div><div>${esc(r.sys)} × ${esc(r.t)} · rep ${esc(r.rep)}</div><div>exit</div><div>${esc(r.exit)} after ${esc(r.st)} steps</div></div>
+    <div class="bom">${rows.map(x => `<div class="r"><span class="s">${esc(x[0])}</span><span class="k ${esc(x[4])}">${esc(x[1])}</span><span>${esc(x[2])}</span><span class="v">${esc(x[3])}</span></div>`).join("")}
     <div class="tot"><span>${r.tok == null && !inT && !outT ? "tokens not measured" : `${inT.toLocaleString()} in · ${outT.toLocaleString()} out`}</span><span>${r.cost == null ? "cost not measured" : "$" + r.cost.toFixed(4)}</span><span>${calls} tool calls</span><span>${edits} edit${edits === 1 ? "" : "s"}</span><span>${bnd} boundary</span>${Object.keys(files).length ? `<span>${Object.entries(files).map(([f, v]) => `${f} +${v[0]} −${v[1]}`).join(" · ")}</span>` : ""}</div></div>
     <div class="callout ${!observed ? "" : lastEdit < 0 ? "fail" : ver ? "ok" : "no"}">${!observed
       // Neither "nothing was delivered" nor "never checked this patch" can be said about a run whose
@@ -622,8 +622,8 @@ function showRun() {
   const hs = Object.keys(HARN).sort(); const pre = PRESETS[0];
   p.innerHTML = `<button class="x" data-x>×</button><h4>launch runs <span class="tag">traceharness.core.runner</span></h4>
     <div class="form">
-      <label>preset<select id="r_preset">${PRESETS.map(x => `<option value="${x.id}">${esc(x.label)}</option>`).join("")}</select></label>
-      <label>provider<select id="r_provider">${["mock", "openai", "anthropic", "openrouter"].map(x => `<option ${x === pre.provider ? "selected" : ""}>${x}</option>`).join("")}</select></label>
+      <label>preset<select id="r_preset">${PRESETS.map(x => `<option value="${esc(x.id)}">${esc(x.label)}</option>`).join("")}</select></label>
+      <label>provider<select id="r_provider">${["mock", "openai", "anthropic", "openrouter"].map(x => `<option ${x === pre.provider ? "selected" : ""}>${esc(x)}</option>`).join("")}</select></label>
       <label>model<input id="r_model" value="${esc(pre.model)}"></label>
       <label>base url<input id="r_base" value="" placeholder="OpenAI-compatible endpoint; empty for the provider default"></label>
       <label>harnesses<select id="r_harness" multiple size="${Math.min(6, Math.max(2, hs.length))}">${hs.map(h => `<option value="harnesses/${esc(h)}.json" ${h === "baseline" ? "selected" : ""}>${esc(h)}</option>`).join("")}</select></label>
