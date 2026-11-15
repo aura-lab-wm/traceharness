@@ -10,21 +10,7 @@
          so the page renders identically served, exported, or opened from
          file:// with no network at all. -->
     <link rel="icon" type="image/svg+xml" href="/favicon.svg">
-    <style>
-      /* The page before the bundle runs. It is never blank: the mark while the workbench loads,
-         and a plain explanation if it never does. React replaces #root on mount. */
-      html,body{margin:0;background:#000;color:#ededed}
-      html.hl-light,html.hl-light body{background:#fafafa;color:#171717}
-      .hl-boot{position:fixed;inset:0;display:grid;place-items:center;font:14px/1.5 "IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif}
-      .hl-boot-in{display:flex;flex-direction:column;align-items:center;gap:14px;max-width:520px;padding:24px;text-align:center}
-      .hl-mark{animation:hl-pulse 1.4s ease-in-out infinite}
-      .hl-boot b{font-weight:600;font-size:15px}
-      .hl-boot p{margin:0;opacity:.72}
-      .hl-boot code{white-space:nowrap;font:12.5px/1.5 "IBM Plex Mono",ui-monospace,Menlo,monospace;padding:2px 6px;border-radius:5px;background:rgba(127,127,127,.16)}
-      .hl-boot[data-state="failed"] .hl-mark{animation:none}
-      @keyframes hl-pulse{50%{opacity:.35}}
-      @media (prefers-reduced-motion:reduce){.hl-mark{animation:none}}
-    </style>
+    <style>html,body{color:#ededed;background:#000;margin:0}html.hl-light,html.hl-light body{color:#171717;background:#fafafa}.hl-boot{place-items:center;font:14px/1.5 IBM Plex Sans,system-ui,-apple-system,Segoe UI,sans-serif;display:grid;position:fixed;inset:0}.hl-boot-in{text-align:center;flex-direction:column;align-items:center;gap:14px;max-width:520px;padding:24px;display:flex}.hl-mark{animation:1.4s ease-in-out infinite hl-pulse}.hl-boot b{font-size:15px;font-weight:600}.hl-boot p{opacity:.72;margin:0}.hl-boot code{white-space:nowrap;background:#7f7f7f29;border-radius:5px;padding:2px 6px;font:12.5px/1.5 IBM Plex Mono,ui-monospace,Menlo,monospace}.hl-boot[data-state=failed] .hl-mark{animation:none}@keyframes hl-pulse{50%{opacity:.35}}@media (prefers-reduced-motion:reduce){.hl-mark{animation:none}}</style>
     <script>
       (function () {
         var t = null
@@ -55,8 +41,8 @@
         setTimeout(function () { if (document.getElementById('hl-boot')) fail('It did not start within 15 seconds.') }, 15000)
       })()
     </script>
-    <script type="module" crossorigin src="/assets/index-CfTMR6Lo.js"></script>
-    <link rel="stylesheet" crossorigin href="/assets/index-CxX-dc2-.css">
+    <script type="module" crossorigin src="/assets/index-mALz7WGz.js"></script>
+    <link rel="stylesheet" crossorigin href="/assets/index-DEj8a2dD.css">
   </head>
   <body>
     <div id="root"><div class="hl-boot" id="hl-boot" role="status" aria-live="polite"><div class="hl-boot-in"><svg class="hl-mark" viewBox="0 0 22 14" width="33" height="21" aria-hidden="true"><rect x="0" y="3" width="3" height="8" fill="#a8a8a8"/><rect x="5" y="3" width="3" height="8" fill="#a8a8a8"/><rect x="10" y="3" width="3" height="8" fill="#9aa0a9"/><rect x="15" y="3" width="3" height="8" fill="currentColor"/><rect x="20" y="1" width="2" height="12" fill="#0062e6"/></svg><b>TraceHarness</b><p>Loading the workbench…</p></div></div></div>
