@@ -7,6 +7,10 @@ runs that show it working on real models. `tests_agentlab/test_paper_table.py` h
 column; each runs the behaviour end to end on the offline mock agent instead of checking that a file
 exists.
 
+Recorded runs named `data/runs/...` are in the repository. `sentinel_v1`, `third_party_agents` and
+`third_party_real` are published on Hugging Face as [aura-lab-wm/traceharness-runs](https://huggingface.co/datasets/aura-lab-wm/traceharness-runs):
+copy a folder under `data/runs/` to open it in the console.
+
 A dot for another tool means its paper or documentation **describes** the feature (● described,
 ◐ partially described, ○ not described): "not described" is not "not supported". The quotes behind
 the contested cells are in the paper folder (`notes/related-tools-matrix.md`).
@@ -30,13 +34,13 @@ the contested cells are in the paper folder (`notes/related-tools-matrix.md`).
 - **Command:** `traceharness run --provider openrouter --model M --harness H.json --tasks full --repeats 5 --out DIR`; also the console's run setup.
 - **Modules:** `core/runner.py`, `core/harness.py` (the loop), `core/tools.py` (sandbox, permission policy), `core/ledger.py`.
 - **Tests:** `test_paper_table.RunsTheAgents`, `test_agentlab.py`.
-- **Runs:** `data/runs/study_v04` (3,240 runs: 3 models × 9 harnesses × 24 tasks × 5 repeats, 2026-11-14); `data/runs/sentinel_v1` (1,800 runs, 2026-11-15).
+- **Runs:** `data/runs/study_v04` (3,240 runs: 3 models × 9 harnesses × 24 tasks × 5 repeats, 2026-11-14); `sentinel_v1` (Hugging Face) (1,800 runs, 2026-11-15).
 
 ### Third-party agents
 - **Command:** `traceharness import PATH` reads the logs of ten sources (Claude Code, Codex, Cursor, Gemini CLI, Qwen Code, OpenHands, SWE-agent, mini-SWE-agent, Inspect, Trajectory v1). `traceharness agents run --agent mini-swe-agent|codex|claude-code` runs three of them in containers on the lab's tasks or on real-repository task packages.
 - **Modules:** `backend/importers/*`, `traceharness/agents/{run,broker,inside,grade}.py`.
 - **Tests:** `test_paper_table.ThirdPartyAgents`, `test_importers.py`, `test_agents_containers.py`.
-- **Runs:** `data/runs/real_swe_agent_500` (imported SWE-agent trajectories); `data/runs/third_party_agents` (mini-SWE-agent 2.4.6 with the three study models, Codex CLI 0.167.1, Claude Code 2.1.322, 24 tasks × 5 repeats, 2026-11-15); `data/runs/third_party_real` (the same five agent/model pairs on the eight real-repository packages of `deploy/runner/tasks`, 3 repeats).
+- **Runs:** `data/runs/real_swe_agent_500` (imported SWE-agent trajectories); `third_party_agents` (Hugging Face) (mini-SWE-agent 2.4.6 with the three study models, Codex CLI 0.167.1, Claude Code 2.1.322, 24 tasks × 5 repeats, 2026-11-15); `third_party_real` (Hugging Face) (the same five agent/model pairs on the eight real-repository packages of `deploy/runner/tasks`, 3 repeats).
 
 ### Compares harnesses
 - **Command:** harness files in `harnesses/` (baseline plus nine variants); `traceharness comparisons DIR --baseline baseline`; `traceharness fit DIR` (variance decomposition); the console's harness comparison.
@@ -48,7 +52,7 @@ the contested cells are in the paper folder (`notes/related-tools-matrix.md`).
 - **Command:** `--repeats N`; pass@k, flip rate and intervals in the console and in `traceharness oracle DIR`.
 - **Modules:** `core/analysis.py` (`aggregate`, `per_task_rates`, `bootstrap_ci`, `flip_rate`, `paired_bootstrap`).
 - **Tests:** `test_paper_table.RepeatsIntervals`.
-- **Runs:** `data/runs/study_v04`, `data/runs/sentinel_v1`, `data/runs/third_party_agents` (5 repeats each).
+- **Runs:** `data/runs/study_v04`, `sentinel_v1` (Hugging Face), `third_party_agents` (Hugging Face) (5 repeats each).
 
 ### Multiple graders
 - **Command:** every run is graded by three suites (visible, hidden, strengthened); `scripts/validate_task.py` checks each task's tiers against its reference patch; real-repository packages bring their own independent checks.
@@ -84,4 +88,4 @@ the contested cells are in the paper folder (`notes/related-tools-matrix.md`).
   - Runs a person steered are left out of aggregate statistics.
 - **Modules:** `backend/sentinel.py` (`hook_for`), `core/harness.py` (`step_hook`), `core/pause.py`, `backend/pause_api.py`, `frontend/src/rig/PausePanel.jsx`.
 - **Tests:** `test_paper_table.InRunIntervention`, `test_pause.py`, `test_sentinel_wiring.py`.
-- **Runs:** `data/runs/sentinel_v1` (the Sentinel as nudge, block and abort on top of `reprompt`, risk models trained without the task they monitor).
+- **Runs:** `sentinel_v1` (Hugging Face) (the Sentinel as nudge, block and abort on top of `reprompt`, risk models trained without the task they monitor).

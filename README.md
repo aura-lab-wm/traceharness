@@ -70,7 +70,7 @@ traceharness agents run --agent mini-swe-agent --model google/gemini-2.5-flash-l
     --route "Google AI Studio" --tasks full --repeats 5 --out data/runs/mini_flash_lite
 ```
 
-Each run uses separate containers. The **broker** is the only one with network access and the only place the key exists; it serves the model on a Unix socket and fixes the model, the hosts (fallbacks off), the output cap, the number of calls and the bytes sent. The **agent** container has no network, no capabilities, a read-only root and a non-root user, and works in a size-capped in-memory workspace. A separate container exports the workspace as regular files only, and the **grader** container (no network, read-only mounts) grades it. Every call's host and cost come from OpenRouter's generation records and are shown on the run page under **Model calls**. This is ordinary Docker isolation; for agents you do not trust, pass `--runtime runsc` (gVisor).
+Each run uses separate containers. The **broker** is the only one with network access and the only place the key exists; it serves the model on a Unix socket and fixes the model, the hosts (fallbacks off), the output cap, the number of calls and the bytes sent. The **agent** container has no network, no capabilities, a read-only root and a non-root user, and works in a size-capped in-memory workspace. A separate container exports the workspace as regular files only, and the **grader** container (no network, read-only mounts) grades it. Every call's host and cost come from OpenRouter's generation records and are shown on the run page under **Model calls**; `traceharness agents resolve DIR` prices calls whose record arrived late. This is ordinary Docker isolation; for agents you do not trust, pass `--runtime runsc` (gVisor).
 
 ## Record on traceharness.dev
 
@@ -129,6 +129,8 @@ The local server binds to `127.0.0.1` by default and applies two request checks 
 | `families_mock` | 80 | Two mock models × four harnesses × 5 tasks. |
 | `demo_mock` | 24 | Compact mock demonstration. |
 | `captured_claude_code` | 1 | **Real, captured.** One Claude Code session (Claude Sonnet 5, 28 steps) implementing `results_scope.py` and its test in this repository (nine test runs, tested before exit). Recorded by the capture pipeline with machine paths normalized to `/workspace/traceharness`: an organic session with no oracle, one repeat, and an unchosen harness. |
+
+The runs of the Sentinel experiment (`sentinel_v1`, 1,800) and of the third-party agents (`third_party_agents`, 600; `third_party_real`, 120) are published on Hugging Face as [aura-lab-wm/traceharness-runs](https://huggingface.co/datasets/aura-lab-wm/traceharness-runs); copy a folder under `data/runs/` to open it in the console.
 
 2,325 of the 3,069 included runs are real model runs. The repository also carries `study_v04` (3,240 runs, all real), which the school package leaves out. All included runs replay from disk with no API key; an OpenRouter key is needed only to execute new runs against live models.
 
