@@ -30,6 +30,8 @@ from collections import Counter, defaultdict
 from math import comb
 from typing import Callable, Iterable, Optional
 
+from .safe_paths import PathRefused, confine
+
 
 # ---------------------------------------------------------------- human-intervened runs
 # A run in which a person (or a timeout / cancel that changed what the agent did) decided something
@@ -94,7 +96,12 @@ def load_index(results_dir: str) -> list[dict]:
 
 
 def load_ledger(results_dir: str, run_id: str) -> list[dict]:
-    with open(os.path.join(results_dir, run_id, "ledger.jsonl")) as f:
+    # run_id arrives from an HTTP route or from index.jsonl (a foreign trace): it must stay in results_dir
+    try:
+        path = confine(results_dir, run_id, "ledger.jsonl")
+    except PathRefused as exc:
+        raise FileNotFoundError(f"no ledger for run {run_id!r}") from exc
+    with open(path) as f:
         return [json.loads(l) for l in f if l.strip()]
 
 

@@ -17,6 +17,7 @@ from typing import Optional
 from fastapi import APIRouter, HTTPException
 
 from . import metrics as M
+from .safe_paths import http_confine
 
 router = APIRouter(prefix="/api/assist", tags=["assist"])
 
@@ -42,7 +43,7 @@ def digest(results: str, harness: str = "baseline", oracle: str = "hidden_pass")
     # caller-supplied string onto RUNS_ROOT let `../../x` read any index.jsonl on the filesystem.
     if not results or os.path.basename(results) != results:
         raise HTTPException(400, "results must be a bare directory name")
-    d = os.path.join(M.RUNS_ROOT, results)
+    d = http_confine(M.RUNS_ROOT, results)
     if not os.path.exists(os.path.join(d, "index.jsonl")):
         raise HTTPException(404, f"no results dir {results}")
     rows = M.rows_for(results)

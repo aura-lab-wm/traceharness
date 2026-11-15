@@ -15,6 +15,7 @@ from typing import Optional
 
 from .analysis import load_index, load_ledger
 from .trajtest import Trajectory
+from .safe_paths import confine
 from traceharness.backend.results_scope import list_results_dirs
 
 # The engine now lives at <checkout>/traceharness/core/, one level deeper than when it was
@@ -257,7 +258,7 @@ def default_results_dirs(lab_root: str = LAB_ROOT) -> list[str]:
 
 def run_detail(results_dir: str, run_id: str) -> dict:
     """Everything about one run, untruncated: spans, patch, messages count."""
-    d = os.path.join(results_dir, run_id)
+    d = confine(results_dir, run_id)
     spans = load_ledger(results_dir, run_id)
     patch, summary = "", {}
     patch_path, summary_path = os.path.join(d, "patch.diff"), os.path.join(d, "summary.json")

@@ -19,6 +19,8 @@ from collections import Counter
 from dataclasses import dataclass, field
 from typing import Optional
 
+from .safe_paths import confine
+
 
 def _unmeasured(span: dict, key: str) -> bool:
     """True when the span says "nobody recorded this": the key is PRESENT and null.
@@ -168,7 +170,7 @@ def load_runs(results_dir: str = None, **filters) -> list[Trajectory]:
             summ = json.loads(line)
             if any(summ.get(k) != v for k, v in filters.items()):
                 continue
-            with open(os.path.join(results_dir, summ["run_id"], "ledger.jsonl")) as g:
+            with open(confine(results_dir, str(summ["run_id"]), "ledger.jsonl")) as g:   # run_id is index.jsonl data
                 spans = [json.loads(l) for l in g if l.strip()]
             out.append(Trajectory(summ["run_id"], summ["task_id"], summ["harness_id"], summ["model"], summ, spans))
     return out
