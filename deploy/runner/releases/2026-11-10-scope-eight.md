@@ -102,5 +102,5 @@ Visit your newly deployed app at https://traceharness-runner.fly.dev/
 ───────────────────
 Resource location: remote
 
-Writing the contents of /Users/amastro/Documents/TraceHarness-unified-workspace-2026-11-10/scope-eight/app-scope-eight-v2.html.gz to the key "app.html.gz" on namespace id: "8a74dd2fba124b1a8d82e6eeff5ba3ae".
+Writing the contents of ~/Documents/TraceHarness-unified-workspace-2026-11-10/scope-eight/app-scope-eight-v2.html.gz to the key "app.html.gz" on namespace id: "8a74dd2fba124b1a8d82e6eeff5ba3ae".
 ```

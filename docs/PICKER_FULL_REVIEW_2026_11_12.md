@@ -64,7 +64,7 @@ The single KV write exited **0**. **Worker version `4b0d1d11-83b1-42f4-844b-0256
 ───────────────────
 Resource location: remote 
 
-Writing the contents of /Users/amastro/Documents/TraceHarness-picker-full-review-2026-11-12/app-picker-reviewed.html.gz to the key "app.html.gz" on namespace id: "8a74dd2fba124b1a8d82e6eeff5ba3ae".
+Writing the contents of ~/Documents/TraceHarness-picker-full-review-2026-11-12/app-picker-reviewed.html.gz to the key "app.html.gz" on namespace id: "8a74dd2fba124b1a8d82e6eeff5ba3ae".
 
 ```
 

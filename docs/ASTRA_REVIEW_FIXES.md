@@ -59,7 +59,7 @@ Last available KV log lines:
 ──────────────────────────────────────────────
 Resource location: remote
 
-Writing the contents of /Users/amastro/Documents/TraceHarness-review-fixes-2026-11-11/app-review-fixes.html.gz to the key "app.html.gz" on namespace id: "8a74dd2fba124b1a8d82e6eeff5ba3ae".
+Writing the contents of ~/Documents/TraceHarness-review-fixes-2026-11-11/app-review-fixes.html.gz to the key "app.html.gz" on namespace id: "8a74dd2fba124b1a8d82e6eeff5ba3ae".
 
 ```
 

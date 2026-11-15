@@ -7044,12 +7044,12 @@
   },
   "artifact": {
     "html": {
-      "path": "/Users/amastro/Documents/TraceHarness-unified-workspace-2026-11-10/scope-eight/app-scope-eight-v2.html",
+      "path": "~/Documents/TraceHarness-unified-workspace-2026-11-10/scope-eight/app-scope-eight-v2.html",
       "bytes": 21378234,
       "sha256": "1869b56e5cc1046f4a2c201b0aa9f7cb40acf4e73a81347585186835c333e412"
     },
     "gzip": {
-      "path": "/Users/amastro/Documents/TraceHarness-unified-workspace-2026-11-10/scope-eight/app-scope-eight-v2.html.gz",
+      "path": "~/Documents/TraceHarness-unified-workspace-2026-11-10/scope-eight/app-scope-eight-v2.html.gz",
       "bytes": 15607290,
       "sha256": "03aac8d37f6a7c56ef849efd92c24601577bc73a6970827f5257d561bb728ac3"
     },
@@ -7142,7 +7142,7 @@
     "key": "app.html.gz",
     "sha256": "03aac8d37f6a7c56ef849efd92c24601577bc73a6970827f5257d561bb728ac3",
     "bytes": 15607290,
-    "candidate": "/Users/amastro/Documents/TraceHarness-unified-workspace-2026-11-10/scope-eight/app-scope-eight-v2.html.gz"
+    "candidate": "~/Documents/TraceHarness-unified-workspace-2026-11-10/scope-eight/app-scope-eight-v2.html.gz"
   },
   "local_checks": {
     "runner_passed": 175,
@@ -7273,7 +7273,7 @@
         "\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500",
         "Resource location: remote ",
         "",
-        "Writing the contents of /Users/amastro/Documents/TraceHarness-unified-workspace-2026-11-10/scope-eight/app-scope-eight-v2.html.gz to the key \"app.html.gz\" on namespace id: \"8a74dd2fba124b1a8d82e6eeff5ba3ae\"."
+        "Writing the contents of ~/Documents/TraceHarness-unified-workspace-2026-11-10/scope-eight/app-scope-eight-v2.html.gz to the key \"app.html.gz\" on namespace id: \"8a74dd2fba124b1a8d82e6eeff5ba3ae\"."
       ]
     }
   ],

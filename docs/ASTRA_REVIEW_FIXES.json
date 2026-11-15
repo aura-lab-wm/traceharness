@@ -20,12 +20,12 @@
     "source_commit": "03b249f6a2e243025d7aca0233a07afb255911f6",
     "base_html_sha256": "77e550efb1c311a09ce9169e0c06943b987a538c7d0a23d698d8bfd2568abc21",
     "html": {
-      "path": "/Users/amastro/Documents/TraceHarness-review-fixes-2026-11-11/app-review-fixes.html",
+      "path": "~/Documents/TraceHarness-review-fixes-2026-11-11/app-review-fixes.html",
       "sha256": "5c254fac4a76ad017c9d0dece8f8da75d91baec1d445711ced0e1fa518b740fd",
       "bytes": 21109777
     },
     "gzip": {
-      "path": "/Users/amastro/Documents/TraceHarness-review-fixes-2026-11-11/app-review-fixes.html.gz",
+      "path": "~/Documents/TraceHarness-review-fixes-2026-11-11/app-review-fixes.html.gz",
       "sha256": "ba814c8707f27efc72bd8cee045f8c9dfbf7588dbb02ec94c64400d2617b0027",
       "bytes": 15295622
     },

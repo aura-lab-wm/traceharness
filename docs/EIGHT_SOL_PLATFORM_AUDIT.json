@@ -124,7 +124,7 @@
       "at": "2026-11-12T03:53:20.810534+00:00",
       "exit_code": 0,
       "source_commit": "7c354b5d99f910022c93cb565709c91d14bb5a95",
-      "input_file": "/Users/amastro/Documents/TraceHarness-eight-sol-audit-2026-11-11/app-eight-sol-candidate.html.gz",
+      "input_file": "~/Documents/TraceHarness-eight-sol-audit-2026-11-11/app-eight-sol-candidate.html.gz",
       "input_sha256": "415304afe56e7dc9da1bde38f4b330dea3b4a11faa582134ba81d461f8c61ae4",
       "input_bytes": 16432241,
       "html_sha256": "993b77359850be8a94d682f2454e3cfbeb0a75ff8b5450b3ea6d0da594ae0041",
@@ -136,7 +136,7 @@
         "───────────────────",
         "Resource location: remote ",
         "",
-        "Writing the contents of /Users/amastro/Documents/TraceHarness-eight-sol-audit-2026-11-11/app-eight-sol-candidate.html.gz to the key \"app.html.gz\" on namespace id: \"8a74dd2fba124b1a8d82e6eeff5ba3ae\".",
+        "Writing the contents of ~/Documents/TraceHarness-eight-sol-audit-2026-11-11/app-eight-sol-candidate.html.gz to the key \"app.html.gz\" on namespace id: \"8a74dd2fba124b1a8d82e6eeff5ba3ae\".",
         ""
       ]
     },
@@ -556,12 +556,12 @@
       "source_parent": "7c354b5d99f910022c93cb565709c91d14bb5a95",
       "method": "Replace only the rebuilt application module in the already-verified full-corpus HTML; preserve exact bootstrap, CSS, encoded recorded data and five audio chapters",
       "html": {
-        "path": "/Users/amastro/Documents/TraceHarness-eight-sol-audit-2026-11-11/app-chrome-reviewed.html",
+        "path": "~/Documents/TraceHarness-eight-sol-audit-2026-11-11/app-chrome-reviewed.html",
         "bytes": 22602243,
         "sha256": "75b3f2d1b2651d8dcf771712b770aca65a3cc3e1895bbbee497cc7cb93057826"
       },
       "gzip": {
-        "path": "/Users/amastro/Documents/TraceHarness-eight-sol-audit-2026-11-11/app-chrome-reviewed.html.gz",
+        "path": "~/Documents/TraceHarness-eight-sol-audit-2026-11-11/app-chrome-reviewed.html.gz",
         "bytes": 16432391,
         "sha256": "280d3b9e8b1c26b9eeeb1edaf88760035bb7ab3046b764fe55a124a533df9e61"
       },
@@ -586,7 +586,7 @@
       "at": "2026-11-12T04:21:50.373638+00:00",
       "exit_code": 0,
       "source_commit": "fc1397956e28b9a6bf2f8d046170e101fba20241",
-      "input_file": "/Users/amastro/Documents/TraceHarness-eight-sol-audit-2026-11-11/app-chrome-reviewed.html.gz",
+      "input_file": "~/Documents/TraceHarness-eight-sol-audit-2026-11-11/app-chrome-reviewed.html.gz",
       "input_sha256": "280d3b9e8b1c26b9eeeb1edaf88760035bb7ab3046b764fe55a124a533df9e61",
       "input_bytes": 16432391,
       "html_sha256": "75b3f2d1b2651d8dcf771712b770aca65a3cc3e1895bbbee497cc7cb93057826",
@@ -598,7 +598,7 @@
         "──────────────────────────────────────────────",
         "Resource location: remote ",
         "",
-        "Writing the contents of /Users/amastro/Documents/TraceHarness-eight-sol-audit-2026-11-11/app-chrome-reviewed.html.gz to the key \"app.html.gz\" on namespace id: \"8a74dd2fba124b1a8d82e6eeff5ba3ae\".",
+        "Writing the contents of ~/Documents/TraceHarness-eight-sol-audit-2026-11-11/app-chrome-reviewed.html.gz to the key \"app.html.gz\" on namespace id: \"8a74dd2fba124b1a8d82e6eeff5ba3ae\".",
         ""
       ]
     },
@@ -824,12 +824,12 @@
       "source_parent": "7c354b5d99f910022c93cb565709c91d14bb5a95",
       "method": "Replace only the rebuilt application module in the already-verified full-corpus HTML; preserve exact bootstrap, CSS, encoded recorded data and five audio chapters",
       "html": {
-        "path": "/Users/amastro/Documents/TraceHarness-eight-sol-audit-2026-11-11/app-repeat-counters.html",
+        "path": "~/Documents/TraceHarness-eight-sol-audit-2026-11-11/app-repeat-counters.html",
         "bytes": 22603888,
         "sha256": "d502a0f009bd4ca176dabf2585aeaa75d28d1b3aa5a9053ccb83c1dbd083e550"
       },
       "gzip": {
-        "path": "/Users/amastro/Documents/TraceHarness-eight-sol-audit-2026-11-11/app-repeat-counters.html.gz",
+        "path": "~/Documents/TraceHarness-eight-sol-audit-2026-11-11/app-repeat-counters.html.gz",
         "bytes": 16432789,
         "sha256": "8c831e62b93a3d4644d6c8889ab5feb311bab56f2ec392caf07f484fbbaa372b"
       },
@@ -844,7 +844,7 @@
       "at": "2026-11-12T04:29:49.829531+00:00",
       "exit_code": 0,
       "source_commit": "4522f750b137cc29063ee76abacdace3fc3c5482",
-      "input_file": "/Users/amastro/Documents/TraceHarness-eight-sol-audit-2026-11-11/app-repeat-counters.html.gz",
+      "input_file": "~/Documents/TraceHarness-eight-sol-audit-2026-11-11/app-repeat-counters.html.gz",
       "input_sha256": "8c831e62b93a3d4644d6c8889ab5feb311bab56f2ec392caf07f484fbbaa372b",
       "input_bytes": 16432789,
       "html_sha256": "d502a0f009bd4ca176dabf2585aeaa75d28d1b3aa5a9053ccb83c1dbd083e550",
@@ -856,7 +856,7 @@
         "──────────────────────────────────────────────",
         "Resource location: remote ",
         "",
-        "Writing the contents of /Users/amastro/Documents/TraceHarness-eight-sol-audit-2026-11-11/app-repeat-counters.html.gz to the key \"app.html.gz\" on namespace id: \"8a74dd2fba124b1a8d82e6eeff5ba3ae\".",
+        "Writing the contents of ~/Documents/TraceHarness-eight-sol-audit-2026-11-11/app-repeat-counters.html.gz to the key \"app.html.gz\" on namespace id: \"8a74dd2fba124b1a8d82e6eeff5ba3ae\".",
         ""
       ]
     },
@@ -974,12 +974,12 @@
       "source_parent": "7c354b5d99f910022c93cb565709c91d14bb5a95",
       "method": "Replace only the rebuilt application module in the already-verified full-corpus HTML; preserve exact bootstrap, CSS, encoded recorded data and five audio chapters",
       "html": {
-        "path": "/Users/amastro/Documents/TraceHarness-eight-sol-audit-2026-11-11/app-grade-coverage.html",
+        "path": "~/Documents/TraceHarness-eight-sol-audit-2026-11-11/app-grade-coverage.html",
         "bytes": 22603895,
         "sha256": "afc9ce38a0ef7f44ee757583282ab9af935fd482fbe0651173668412e664e4c7"
       },
       "gzip": {
-        "path": "/Users/amastro/Documents/TraceHarness-eight-sol-audit-2026-11-11/app-grade-coverage.html.gz",
+        "path": "~/Documents/TraceHarness-eight-sol-audit-2026-11-11/app-grade-coverage.html.gz",
         "bytes": 16432791,
         "sha256": "e40597e8a8d6363b2654c3637c325ea9244e7c7cf35c0e8b9417f0c406ac551b"
       },
@@ -994,7 +994,7 @@
       "at": "2026-11-12T04:34:29.788185+00:00",
       "exit_code": 0,
       "source_commit": "f55c182260d7b74eded6763ff0f7c5032d50dc5b",
-      "input_file": "/Users/amastro/Documents/TraceHarness-eight-sol-audit-2026-11-11/app-grade-coverage.html.gz",
+      "input_file": "~/Documents/TraceHarness-eight-sol-audit-2026-11-11/app-grade-coverage.html.gz",
       "input_sha256": "e40597e8a8d6363b2654c3637c325ea9244e7c7cf35c0e8b9417f0c406ac551b",
       "input_bytes": 16432791,
       "html_sha256": "afc9ce38a0ef7f44ee757583282ab9af935fd482fbe0651173668412e664e4c7",
@@ -1006,7 +1006,7 @@
         "──────────────────────────────────────────────",
         "Resource location: remote ",
         "",
-        "Writing the contents of /Users/amastro/Documents/TraceHarness-eight-sol-audit-2026-11-11/app-grade-coverage.html.gz to the key \"app.html.gz\" on namespace id: \"8a74dd2fba124b1a8d82e6eeff5ba3ae\".",
+        "Writing the contents of ~/Documents/TraceHarness-eight-sol-audit-2026-11-11/app-grade-coverage.html.gz to the key \"app.html.gz\" on namespace id: \"8a74dd2fba124b1a8d82e6eeff5ba3ae\".",
         ""
       ]
     },

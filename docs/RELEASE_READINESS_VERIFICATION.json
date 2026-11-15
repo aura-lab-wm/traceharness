@@ -1411,7 +1411,7 @@
     "key": "app.html.gz",
     "namespace_id": "8a74dd2fba124b1a8d82e6eeff5ba3ae",
     "source_commit": "81eb9e5c9188898d941986d414abed082681960e",
-    "input_file": "/Users/amastro/Documents/TraceHarness-release-green-2026-11-11/app-release-green.html.gz",
+    "input_file": "~/Documents/TraceHarness-release-green-2026-11-11/app-release-green.html.gz",
     "input_sha256": "af95f8ece69391a39e8145c908e48833950d0a55942afb360effb859661bed91",
     "input_bytes": 15295616,
     "html_sha256": "43229536af3b2c13e02d133e62fb98c930229843bd2efe4fdb55dccc0ec55be6",
@@ -1424,19 +1424,19 @@
       "\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500",
       "Resource location: remote ",
       "",
-      "Writing the contents of /Users/amastro/Documents/TraceHarness-release-green-2026-11-11/app-release-green.html.gz to the key \"app.html.gz\" on namespace id: \"8a74dd2fba124b1a8d82e6eeff5ba3ae\".",
+      "Writing the contents of ~/Documents/TraceHarness-release-green-2026-11-11/app-release-green.html.gz to the key \"app.html.gz\" on namespace id: \"8a74dd2fba124b1a8d82e6eeff5ba3ae\".",
       ""
     ]
   },
   "snapshot": {
     "base_html_sha256": "5148e5521184bf96273611b321a05f7492d3a72bf21aeb856acdd8de2d93bbca",
     "html": {
-      "path": "/Users/amastro/Documents/TraceHarness-release-green-2026-11-11/app-release-green.html",
+      "path": "~/Documents/TraceHarness-release-green-2026-11-11/app-release-green.html",
       "bytes": 21109586,
       "sha256": "43229536af3b2c13e02d133e62fb98c930229843bd2efe4fdb55dccc0ec55be6"
     },
     "gzip": {
-      "path": "/Users/amastro/Documents/TraceHarness-release-green-2026-11-11/app-release-green.html.gz",
+      "path": "~/Documents/TraceHarness-release-green-2026-11-11/app-release-green.html.gz",
       "bytes": 15295616,
       "sha256": "af95f8ece69391a39e8145c908e48833950d0a55942afb360effb859661bed91"
     },

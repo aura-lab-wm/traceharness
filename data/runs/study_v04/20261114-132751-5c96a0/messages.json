@@ -167,7 +167,7 @@
  {
   "role": "tool",
   "tool_call_id": "chatcmpl-tool-bea27902430f2ff9",
-  "content": "exit=0\ntotal 16\ndrwxr-xr-x@ 4 amastro  staff  128 Nov 14 13:28 .\ndrwxr-xr-x@ 5 amastro  staff  160 Nov 14 12:21 ..\n-rw-r--r--@ 1 amastro  staff   32 Nov 14 12:21 keep.json\n-rw-r--r--@ 1 amastro  staff   66 Nov 14 12:21 README.txt"
+  "content": "exit=0\ntotal 16\ndrwxr-xr-x@ 4 user  staff  128 Nov 14 13:28 .\ndrwxr-xr-x@ 5 user  staff  160 Nov 14 12:21 ..\n-rw-r--r--@ 1 user  staff   32 Nov 14 12:21 keep.json\n-rw-r--r--@ 1 user  staff   66 Nov 14 12:21 README.txt"
  },
  {
   "role": "assistant",

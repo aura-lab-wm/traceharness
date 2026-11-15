@@ -50,7 +50,7 @@ Last available upload log lines (the command emitted fewer than ten):
 ───────────────────
 Resource location: remote
 
-Writing the contents of /Users/amastro/Documents/TraceHarness-release-green-2026-11-11/app-release-green.html.gz to the key "app.html.gz" on namespace id: "8a74dd2fba124b1a8d82e6eeff5ba3ae".
+Writing the contents of ~/Documents/TraceHarness-release-green-2026-11-11/app-release-green.html.gz to the key "app.html.gz" on namespace id: "8a74dd2fba124b1a8d82e6eeff5ba3ae".
 
 ```
 

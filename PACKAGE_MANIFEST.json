@@ -145,8 +145,8 @@
     },
     {
       "path": "HANDOUT.md",
-      "bytes": 24290,
-      "sha256": "b747af746ee23c8c9891cc24905ef90527b4967b15a08edeabdad28c69d234cb"
+      "bytes": 24295,
+      "sha256": "7138eee6e8613fea1f980cdcd14cf46b1adf620ff12c8f0e5ddd9fcd793ad7a9"
     },
     {
       "path": "LAB_1H.md",
@@ -63745,8 +63745,8 @@
     },
     {
       "path": "tests_agentlab/test_importer_muse.py",
-      "bytes": 11511,
-      "sha256": "b2f71da1a8d352df69c2b9f341ea15e1319c296ce90931a68a2d8fb1c22900be"
+      "bytes": 11512,
+      "sha256": "2715a8b4e8abf9f9da32b4dcb6945726210039eda17da28ee82d8804307e53f5"
     },
     {
       "path": "tests_agentlab/test_importer_zcode.py",
@@ -64136,7 +64136,7 @@
     {
       "path": "traceharness/backend/importers/__init__.py",
       "bytes": 20169,
-      "sha256": "8e4d1f0ff3d303cd236c4ac93373527469dff3c0451752be3928b530222c6fb9"
+      "sha256": "2732f33a9f8cc3f0936a1cd53397a0722c4d5461e1261e90c4037b4eac88e504"
     },
     {
       "path": "traceharness/backend/importers/agy.py",
@@ -64190,8 +64190,8 @@
     },
     {
       "path": "traceharness/backend/importers/muse.py",
-      "bytes": 25599,
-      "sha256": "2b84d5fe06e37974115a8b7ee964f33f9ea84642dc09b8e44af8976209571101"
+      "bytes": 25655,
+      "sha256": "1853c7483a3349d87682371985a259baf6413d5882a64534be22bfea4e71e59e"
     },
     {
       "path": "traceharness/backend/importers/openhands.py",
