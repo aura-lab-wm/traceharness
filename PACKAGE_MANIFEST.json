@@ -64574,19 +64574,19 @@
       "sha256": "f70f2d9d8d9a9cd7c3211a6216cfe90c345581b375435dad7ba7f5a17f97f276"
     },
     {
-      "path": "traceharness/frontend/dist/assets/index-CfTMR6Lo.js",
-      "bytes": 2165942,
-      "sha256": "25c15f46b01639da708b170ca784f491d1e4c59fb292eb8b7a55252b123973df"
+      "path": "traceharness/frontend/dist/assets/index-DEj8a2dD.css",
+      "bytes": 444195,
+      "sha256": "b05686be3ee7c95de8b0e6c9f33d97e8272313db6faf6e02bcec26afdd118154"
     },
     {
-      "path": "traceharness/frontend/dist/assets/index-CxX-dc2-.css",
-      "bytes": 444168,
-      "sha256": "e8a78281c348e98bb6659b99e6c0634b10cc092ecbc6f4b1a5a0bef6694b802a"
+      "path": "traceharness/frontend/dist/assets/index-mALz7WGz.js",
+      "bytes": 2194694,
+      "sha256": "4d193005c48f96f7cef801aea386b449b06fe7ebe45849f90da6ff469d96f9f1"
     },
     {
       "path": "traceharness/frontend/dist/build-source.json",
       "bytes": 97,
-      "sha256": "270b99a1fdc90842e5c86043ee547dd6dde7534defad0412051744403cf6104f"
+      "sha256": "18d256bb6fa380c7c81a0840b11809ea02cf290ea6e98a8c5a19aff3358e8985"
     },
     {
       "path": "traceharness/frontend/dist/design-directions/README.md",
@@ -64670,8 +64670,8 @@
     },
     {
       "path": "traceharness/frontend/dist/index.html",
-      "bytes": 4585,
-      "sha256": "a929da2bc7e7c23c9252fab57f534c59b9c4157fe92bad11964bbbd4b763b496"
+      "bytes": 4301,
+      "sha256": "1f568810c645385cb736fcba0344ee33331f6ae7e15c02337acc75e3bf8df7fd"
     },
     {
       "path": "traceharness/frontend/index.html",
@@ -64680,13 +64680,13 @@
     },
     {
       "path": "traceharness/frontend/package-lock.json",
-      "bytes": 112548,
-      "sha256": "3462bbfe74b6f2fff02f79745ca3f8cdeef6c48c744ea5035929528363a1f891"
+      "bytes": 101496,
+      "sha256": "fc2ba6a884a997ae47e2c11cf7e5eea01d128cf31908f203f6c5694aca39ba70"
     },
     {
       "path": "traceharness/frontend/package.json",
-      "bytes": 798,
-      "sha256": "65365252f53f632c3f97505ff6623826b1cc1598ca03fbf36de2af0b862b5af4"
+      "bytes": 797,
+      "sha256": "3aa2ae1e7d9e1b757df6571f5dae631b749d38c7fc2252a655a81ae38121071d"
     },
     {
       "path": "traceharness/frontend/public/apple-touch-icon.png",
