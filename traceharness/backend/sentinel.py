@@ -1045,13 +1045,33 @@ def score(events, harness: dict, tokens_used: int, pending, model: RiskModel, st
     pats = detect_all(f, events, harness)      # built-ins + traceharness/plugins/*
     # With an untrained prior, critical rule patterns dominate the score. A trained model keeps its own
     # calibration (the CV numbers on the Sentinel page are about *this* number); interventions on critical
-    # patterns are decided from the pattern list, not from the risk value, so nothing is lost.
+    # patterns are decided from the pattern list, not from the risk value (make_hook: block, else nudge).
     if not model.meta.get("trained"):
         if any(p["severity"] == "critical" for p in pats):
             risk = max(risk, 0.9)
         elif any(p["id"] == "submit_without_verify" for p in pats):
             risk = max(risk, 0.7)
     return {"risk": round(risk, 3), "patterns": pats, "features": f, "explain": model.explain(f)}
+
+
+def hook_for(harness, task: dict, model: RiskModel, api_key: Optional[str] = None,
+             base_url: Optional[str] = None):
+    """The step_hook a run of `harness` on `task` gets, or None when the harness has no Sentinel.
+
+    The one place both launch paths (the web app's jobs and `traceharness run`) build the hook, so a
+    harness that enables the Sentinel behaves the same from either. The CLI used to pass no hook at all:
+    its runs carried the Sentinel in their harness (and so in the cell's content hash) without a single
+    Sentinel span."""
+    cfg = getattr(harness, "sentinel", None) or {}
+    if not cfg.get("enabled"):
+        return None
+    return make_hook(cfg, model, task_issue=task.get("issue", ""), api_key=api_key, base_url=base_url)
+
+
+#: Said to the agent when the risk crosses the threshold and no rule pattern (or LLM layer) supplies a
+#: more specific message. Before it existed, such an alarm was recorded and nothing was sent.
+GENERIC_NUDGE = ("Your recent steps look unlikely to resolve the issue. Re-read the issue, check what you have "
+                 "changed so far, and run the tests before you submit.")
 
 
 def make_hook(sentinel_cfg: dict, model: RiskModel, task_issue: str = "", api_key: Optional[str] = None, on_verdict=None,
@@ -1096,10 +1116,15 @@ def make_hook(sentinel_cfg: dict, model: RiskModel, task_issue: str = "", api_ke
                 verdict.update(action="block", text=PATTERNS["submit_without_verify"]["nudge"], reason="submit without verification")
             elif verdict["risk"] >= float(cfg.get("abort_threshold", 0.97)):
                 verdict.update(action="abort", text="risk above abort threshold", reason="abort threshold")
+            elif any(p["severity"] == "critical" and p["nudge"] for p in s["patterns"]):
+                # A critical pattern that is not blocked is acted on from the pattern list, whatever the
+                # risk: a trained model keeps its own calibration and does not lift its score for it.
+                p = next(p for p in s["patterns"] if p["severity"] == "critical" and p["nudge"])
+                verdict.update(action="nudge", text=p["nudge"], reason=p["label"])
             elif verdict["risk"] >= float(cfg.get("threshold", 0.6)):
                 nudge = (verdict.get("llm") or {}).get("nudge") or next((p["nudge"] for p in s["patterns"] if p["nudge"]), "")
-                if nudge:
-                    verdict.update(action="nudge", text=nudge, reason=(s["patterns"][0]["label"] if s["patterns"] else "risk threshold"))
+                verdict.update(action="nudge", text=nudge or GENERIC_NUDGE,
+                               reason=(s["patterns"][0]["label"] if s["patterns"] else "risk threshold"))
             if verdict["action"] != "none":
                 state["interventions"] += 1
         if on_verdict:

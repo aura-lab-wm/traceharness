@@ -117,7 +117,10 @@ def binary_features(f: dict) -> dict:
     return {
         "no_test_run": f["n_run"] == 0,
         "no_search": f["n_search"] == 0,
-        "never_verified_after_edit": not f["ran_after_last_edit"],
+        # Only a run that edited can fail to verify its last edit. Counting the runs that never edited
+        # (every one of them unresolved: no patch) made the feature partly a proxy for "produced no
+        # patch" and lifted its Ochiai score on the Nebius sample from 0.666 to 0.706.
+        "never_verified_after_edit": f["n_edit"] >= 1 and not f["ran_after_last_edit"],
         "edited_tests": f["test_files_edited"] > 0,
         f"repeated_commands>{_REPEAT_THRESHOLD}": f["repeated_commands"] > _REPEAT_THRESHOLD,
         "steps>40": f["steps"] > 40,

@@ -594,8 +594,7 @@ def _run_one(job: dict, cell: dict, task: dict, harness: HarnessConfig, repeat: 
     def listener(rec):
         BUS.publish("span", job=job["id"], run_id=run_id, span=rec)
 
-    hook = S.make_hook(harness.sentinel, rmodel, task_issue=task["issue"], api_key=SETTINGS["openrouter_key"],
-                       base_url=SETTINGS["base_url"]) if harness.sentinel.get("enabled") else None
+    hook = S.hook_for(harness, task, rmodel, api_key=SETTINGS["openrouter_key"], base_url=SETTINGS["base_url"])
     try:
         s = run_task(task, harness, provider, out_dir, repeat_index=repeat, seed=seed, span_listener=listener, step_hook=hook, run_id=run_id)
         with _INDEX_LOCK:
