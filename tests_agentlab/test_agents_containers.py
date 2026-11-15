@@ -129,6 +129,9 @@ class RelayAndBrokerOverASocket(unittest.TestCase):
                 self.assertIn(b'"ok"', body)
                 self.assertEqual(sent[0][2]["model"], CFG["model"])
                 self.assertEqual(post("/v1/other", {"a": 1})[0], 404)
+                # a refused path with a large body: the broker reads it before answering, else the
+                # unread bytes reset the socket and the relay reports 502 (seen intermittently)
+                self.assertEqual([post("/v1/other", {"pad": "x" * 60000})[0] for _ in range(20)], [404] * 20)
                 self.assertEqual(post("/v1/messages?beta=true", {"messages": []})[0], 200)
                 self.assertEqual(post("/v1/responses", {"input": "x"})[0], 429, "third call: the request cap is 2")
                 c = http.client.HTTPConnection("127.0.0.1", port, timeout=10)

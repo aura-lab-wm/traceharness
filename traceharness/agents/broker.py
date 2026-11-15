@@ -165,16 +165,18 @@ def make_handler(broker: Broker):
             path = self.path
             if path.startswith("/v1/messages?"):
                 path = "/v1/messages"          # Anthropic SDKs add ?beta=true; no other query is accepted
-            protocol = PATHS.get(path)
-            if protocol is None:
-                return self.error(404, "not served by the broker")
             try:
                 size = int(self.headers.get("Content-Length") or 0)
             except ValueError:
                 size = 0
             if not 1 <= size <= MAX_BODY or self.headers.get("Transfer-Encoding"):
                 return self.error(413, "request body missing or too large")
+            # Read the (bounded) body before any other answer: closing a socket that still holds
+            # unread request bytes can reset the connection, and the client sees a 502, not our 404.
             raw = self.rfile.read(size)
+            protocol = PATHS.get(path)
+            if protocol is None:
+                return self.error(404, "not served by the broker")
             try:
                 body = json.loads(raw)
                 if not isinstance(body, dict):
