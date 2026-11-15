@@ -9,7 +9,7 @@ per-version field fallbacks INSIDE one adapter), and a DSL for control flow is a
 
 `resolve()` decides PER FILE. `importers.detect()` sums confidence over a whole tree and returns
 one winner, which is the wrong shape here: the allow-list can hold ~/.claude, ~/.codex, ~/.qwen
-~/.gemini and ~/.cursor at the same time.
+~/.gemini/antigravity-cli and ~/.cursor at the same time.
 
 This module is the ONLY registry. Nothing else in traceharness/capture/ may import an importer
 module by name.
@@ -21,7 +21,7 @@ import os
 from dataclasses import dataclass
 from typing import Any, Callable, Optional
 
-from traceharness.backend.importers import claude_code, codex, cursor, gemini_cli, qwen_code
+from traceharness.backend.importers import agy, claude_code, codex, cursor, qwen_code
 from traceharness.backend.importers.common import peek_jsonl
 
 from .allowlist import is_allowed
@@ -55,6 +55,9 @@ class CaptureAdapter:
     has_usage: bool = True            # token counts are recorded, so cost can be priced
     has_timestamps: bool = True       # every conversational event carries a clock
     policy: str = "none"              # which capture_harness policy strategy this source uses
+    jsonl: bool = True                # False: the source is a binary container (agy: SQLite). It is
+                                      # never peeked as JSON lines and has no requires/rejects gate;
+                                      # its sniff() alone decides whether a file is its own.
 
 
 REGISTRY: tuple = (
@@ -96,24 +99,30 @@ REGISTRY: tuple = (
         # captured corpus. Widen it in the same change that puts the link on the row.
         globs=("**/chats/**/*.jsonl",),
         default_roots=("~/.qwen/projects",),
-        # above gemini_cli: Qwen wraps a GEMINI message body, so on a tie the more specific
-        # descriptor -- the one whose `requires` gate the other cannot pass -- must win.
+        # Qwen wraps a GEMINI message body, so on a tie against another descriptor that reads such a
+        # body the more specific one -- the one whose `requires` gate the other cannot pass -- must win.
         precedence=60,
         requires=(("provenance", "agentId"),),
         has_call_ids=True,
         policy="qwen_decision",
     ),
     CaptureAdapter(
-        name="gemini_cli", module=gemini_cli,
-        description="Gemini CLI sessions",
-        fixture="gemini_session.jsonl", golden="gemini_session.expected.ledger.jsonl",
-        globs=("**/chats/**/*.jsonl",),
-        default_roots=("~/.gemini/tmp",),
+        name="agy", module=agy,
+        description="agy (Google Antigravity CLI) conversations",
+        fixture="agy_conversation.db", golden="agy_conversation.expected.ledger.jsonl",
+        # One SQLite file per conversation. conversation_summaries.db, which sits one level up, has
+        # no steps table and is also kept out by the glob. A conversation file is rewritten whole by
+        # whole-file regeneration like every other source; the importer opens it read-only.
+        globs=("**/conversations/*.db",),
+        default_roots=("~/.gemini/antigravity-cli",),
         precedence=50,
-        requires=("type",),
-        has_call_ids=True,
-        # a Gemini CLI session records no approval decision and no sandbox; "unknown" is the
-        # honest answer and `none` is the strategy that gives it.
+        jsonl=False,
+        # Measured on 501 real conversations plus a fresh one (see backend/importers/agy.py): every
+        # call carries a `call_<digits>` id its result joins on, every result states a status,
+        # every model request records its tokens (cache reads included), and every step has a clock.
+        has_call_ids=True, has_tool_spans=True, has_usage=True, has_timestamps=True,
+        # agy records no approval decision and no sandbox verdict per call; "unknown" is the honest
+        # answer and `none` is the strategy that gives it.
         policy="none",
     ),
     CaptureAdapter(
@@ -231,6 +240,14 @@ def _gates_pass(ad: CaptureAdapter, rows: list) -> bool:
     return True
 
 
+def _is_sqlite(path: str) -> bool:
+    try:
+        with open(path, "rb") as f:
+            return f.read(16) == b"SQLite format 3\x00"
+    except OSError:
+        return False
+
+
 def resolve(path: str, only: Optional[set] = None) -> tuple:
     """(adapter name, confidence) for ONE file. ("", 0.0) when nothing reaches MIN_CONFIDENCE.
 
@@ -238,17 +255,20 @@ def resolve(path: str, only: Optional[set] = None) -> tuple:
     whose OWN glob matched the path, so a narrow glob can exclude; called without it this stays the
     pure content question, which is what detect() and the conformance kit ask.
     """
-    try:
-        rows = peek_jsonl(path, PEEK_ROWS)
-    except OSError:
-        return "", 0.0
-    if not rows:
-        return "", 0.0
+    rows = None                      # JSON lines, read lazily: a SQLite file must never be peeked as text
+    if not _is_sqlite(path) and any(ad.jsonl for ad in REGISTRY if only is None or ad.name in only):
+        try:
+            rows = peek_jsonl(path, PEEK_ROWS)
+        except OSError:
+            return "", 0.0
     best, score, prec = "", 0.0, -1
     for ad in REGISTRY:
         if only is not None and ad.name not in only:
             continue
-        if not _gates_pass(ad, rows):
+        if ad.jsonl:
+            if not rows or not _gates_pass(ad, rows):
+                continue
+        elif not _is_sqlite(path):
             continue
         try:
             s = float(ad.module.sniff(path))

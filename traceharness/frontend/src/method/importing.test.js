@@ -8,7 +8,7 @@ import { WATCHED, arrival, importOnly, suggestResultsDir, cleanResultsDir, detec
 
 describe('the two roads a trace arrives by', () => {
   it('names the five sources the capture watcher follows on its own', () => {
-    expect([...WATCHED].sort()).toEqual(['claude_code', 'codex', 'cursor', 'gemini_cli', 'qwen_code'])
+    expect([...WATCHED].sort()).toEqual(['agy', 'claude_code', 'codex', 'cursor', 'qwen_code'])
   })
   it('sends everything else down the import road', () => {
     expect(arrival('claude_code')).toBe('capture')
@@ -21,7 +21,7 @@ describe('the two roads a trace arrives by', () => {
     expect(arrival('some_new_cli')).toBe('import')
   })
   it('splits an adapter list into the ones import is the only road for', () => {
-    const nine = ['inspect', 'swe_agent', 'qwen_code', 'gemini_cli', 'claude_code', 'codex', 'cursor',
+    const nine = ['inspect', 'swe_agent', 'qwen_code', 'agy', 'claude_code', 'codex', 'cursor',
                   'trajectory', 'openhands']
     expect(importOnly(nine)).toEqual(['inspect', 'swe_agent', 'trajectory', 'openhands'])
   })

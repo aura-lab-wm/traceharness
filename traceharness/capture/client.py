@@ -25,7 +25,7 @@ ORIGIN = "https://traceharness.dev"
 VERIFICATION_URI = ORIGIN + "/app/device"
 TOKEN = re.compile(r"thc_[A-Za-z0-9_-]{43}\Z")
 RUN_ID = re.compile(r"(?!\.{1,2}$)[A-Za-z0-9_.@-]{1,120}\Z")
-SOURCES = {"claude_code", "codex", "gemini_cli", "qwen_code", "cursor"}
+SOURCES = {"claude_code", "codex", "agy", "qwen_code", "cursor"}
 MAX_RUN_BYTES = 4 * 1024 * 1024
 
 

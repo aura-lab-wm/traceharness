@@ -79,12 +79,12 @@ describe('sources', () => {
       { name: 'claude_code', description: 'Claude Code session JSONL (~/.claude/projects/<project>/<session>.jsonl)' },
       { name: 'codex', description: 'OpenAI Codex CLI rollout JSONL (~/.codex/sessions/YYYY/MM/DD/rollout-*.jsonl)' },
       { name: 'cursor', description: 'Cursor agent transcripts (~/.cursor/projects/<project>/agent-transcripts/<id>/<id>.jsonl)' },
-      { name: 'gemini_cli', description: 'Gemini CLI session JSONL (~/.gemini/tmp/<project>/chats/*.jsonl)' },
+      { name: 'agy', description: 'agy (Google Antigravity CLI) conversation databases (~/.gemini/antigravity-cli/conversations/*.db)' },
       { name: 'inspect', description: 'Inspect AI eval log (.eval zip or .json); each sample becomes one run' },
     ]
     expect(sessionFolders(live)).toEqual([
       { source: 'claude_code', path: '~/.claude/projects/' }, { source: 'codex', path: '~/.codex/sessions/' },
-      { source: 'cursor', path: '~/.cursor/projects/' }, { source: 'gemini_cli', path: '~/.gemini/tmp/' },
+      { source: 'cursor', path: '~/.cursor/projects/' }, { source: 'agy', path: '~/.gemini/antigravity-cli/conversations/' },
     ])
   })
   it('disabled Inspect and Import say why; an unrecognised path asks for an adapter, then Import opens', async () => {
@@ -224,7 +224,7 @@ const CAPTURE = {
 }
 const CAPTURE_NONE = {
   runs_indexed: 0, open_runs: 0, open: [], totals: { input_tokens: 0, output_tokens: 0, cost_usd: 0, unmeasured_runs: 0 },
-  adapters: ['claude_code', 'codex', 'qwen_code', 'gemini_cli', 'cursor'], sniffer: { state: 'never_started', roots: 0, interval_s: 60, errors: 0, debris: 0, debris_checked_at: 0 },
+  adapters: ['claude_code', 'codex', 'qwen_code', 'agy', 'cursor'], sniffer: { state: 'never_started', roots: 0, interval_s: 60, errors: 0, debris: 0, debris_checked_at: 0 },
   cursors: { sources: 0, seeded: 0 }, control: { paused: false },
 }
 const capNone = () => ({ ...rigFixture(), 'private:/capture/status': CAPTURE_NONE, 'private:/capture/runs?limit=25': { rows: [], total: 0 }, 'private:/capture/relations': { relations: {} } })

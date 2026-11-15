@@ -20,6 +20,7 @@ Adapters
   claude_code    Claude Code session JSONL       (~/.claude/projects/<proj>/<session>.jsonl)
   codex          OpenAI Codex CLI rollout JSONL  (~/.codex/sessions/YYYY/MM/DD/rollout-*.jsonl)
   cursor         Cursor agent transcripts        (~/.cursor/projects/<proj>/agent-transcripts/**; partial)
+  agy            agy (Google Antigravity CLI)    (~/.gemini/antigravity-cli/conversations/*.db; SQLite + protobuf)
   trajectory     Letta Trajectory v1 records     (the cross-harness interchange format)
   inspect        Inspect AI eval log             (.eval / .json; scores are real verdicts)
   openhands      OpenHands events / SWE-bench output.jsonl
@@ -55,7 +56,7 @@ import os
 import threading
 from typing import Callable, Iterable, Optional
 
-from . import (claude_code, codex, cursor, gemini_cli, inspect_log, mini_swe_agent, openhands, qwen_code, swe_agent,
+from . import (agy, claude_code, codex, cursor, inspect_log, mini_swe_agent, openhands, qwen_code, swe_agent,
                trajectory_fmt)
 from .common import (Event, Session, derive_task_id, fingerprint, harness_from_fingerprint,
                      harness_id_for, map_tool, run_id_for, sha12, convert, LAB_TOOLS)
@@ -70,7 +71,7 @@ except Exception:                             # standalone fallback: .../importe
     RUNS_ROOT = os.path.join(LAB_ROOT, "data", "runs")
 
 #: adapter registry, most specific sniffers first (order only breaks ties)
-SOURCES = [inspect_log, mini_swe_agent, swe_agent, qwen_code, gemini_cli, claude_code, codex, cursor, trajectory_fmt, openhands]
+SOURCES = [inspect_log, mini_swe_agent, swe_agent, qwen_code, agy, claude_code, codex, cursor, trajectory_fmt, openhands]
 
 _ADAPTER = {m.NAME: m for m in SOURCES}
 
@@ -117,7 +118,7 @@ def _dir_scores(path: str) -> dict[str, dict]:
     for dp, dn, fn in os.walk(path):
         dn[:] = [d for d in dn if not d.startswith(".")]
         for f in sorted(fn):
-            if not f.endswith((".json", ".jsonl", ".eval", ".traj")):
+            if not f.endswith((".json", ".jsonl", ".eval", ".traj", ".db")):
                 continue
             best, score = _file_winner(_file_scores(os.path.join(dp, f)))
             if best and score >= 0.5:
