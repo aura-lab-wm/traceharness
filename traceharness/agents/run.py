@@ -494,6 +494,8 @@ def run_one(agent: str, model: str, route: list, task_id: str, repeat: int, out_
     with open(os.path.join(inp, "job.json"), "w") as f:
         json.dump({"agent": agent, "model": model, "task_text": task_text(task), "wall_s": opts.wall,
                    "max_steps": opts.max_requests}, f)
+    # These modes are for the containers' uid-10001 user, which reads /input and writes /log through bind
+    # mounts. Nothing else on the host can reach them: jobs_root above is 0o700 and owned by this user.
     os.chmod(job, 0o755)
     os.chmod(inp, 0o755)
     os.chmod(os.path.join(inp, "job.json"), 0o644)

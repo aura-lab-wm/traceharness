@@ -151,13 +151,61 @@ def cluster(seqs: list[str], k: int = 4, sample: int = 200) -> list[dict]:
 
 
 # --------------------------------------------------------------------------- queries
+MAX_QUERY_PATTERN = 300       # characters; a hunch is a short shape, not a program
+MAX_SEARCHED_ACTIONS = 5000   # characters of one action string a pattern is run against
+
+
+def _nested_unbounded(parsed) -> bool:
+    """True when an unbounded repeat sits inside another unbounded repeat ((a+)+, (a*)*, (.*a)*):
+    the shapes that backtrack exponentially. Only structure is inspected, nothing is run."""
+    import re._constants as C
+    UNB = C.MAXREPEAT
+
+    def walk(items, inside):
+        for op, av in items:
+            if op in (C.MAX_REPEAT, C.MIN_REPEAT, C.POSSESSIVE_REPEAT):
+                lo, hi, body = av
+                unbounded = hi == UNB or (hi - lo) > 64
+                if unbounded and inside:
+                    return True
+                if walk(body, inside or unbounded):
+                    return True
+            elif op == C.SUBPATTERN:
+                if walk(av[3], inside):
+                    return True
+            elif op == C.BRANCH:
+                if any(walk(b, inside) for b in av[1]):
+                    return True
+            elif op in (C.ASSERT, C.ASSERT_NOT):
+                if walk(av[1], inside):
+                    return True
+            elif op == C.ATOMIC_GROUP:
+                if walk(av, inside):
+                    return True
+        return False
+
+    return walk(list(parsed), False)
+
+
+def compile_query(pattern: str):
+    """Compile a user-written action-string regex, refusing the ones that can hang the server
+    (too long, or with nested unbounded repeats). Raises re.error with a plain reason."""
+    import re._parser as _parser
+    if len(pattern) > MAX_QUERY_PATTERN:
+        raise re.error(f"pattern longer than {MAX_QUERY_PATTERN} characters")
+    parsed = _parser.parse(pattern)
+    if _nested_unbounded(parsed):
+        raise re.error("nested repeats such as (a+)+ can take exponential time; simplify the pattern")
+    return re.compile(pattern)
+
+
 def query(runs: list, pattern: str = "", outcome: str = "hidden_pass", **filters) -> dict:
     """Runs whose action string matches a regex, versus the rest.
 
     Reports the pass rate inside and outside the match plus two association measures. This is
     how a hunch ('it fails when it edits before reading') becomes a number, and then a test."""
     try:
-        rx = re.compile(pattern) if pattern else None
+        rx = compile_query(pattern) if pattern else None
     except re.error as e:
         return {"error": f"bad regex: {e}"}
 
@@ -177,7 +225,7 @@ def query(runs: list, pattern: str = "", outcome: str = "hidden_pass", **filters
                 ok = False
         if not ok:
             continue
-        (inside if (rx and rx.search(t.action_string)) else outside).append(row)
+        (inside if (rx and rx.search(t.action_string[:MAX_SEARCHED_ACTIONS])) else outside).append(row)
 
     def rate(rs):
         return (sum(1 for r in rs if r.get(outcome)) / len(rs)) if rs else None
@@ -202,11 +250,15 @@ def as_unittest(pattern: str, name: str = "no_such_shape", max_rate: float = 0.0
     """Turn a query into an assertion for trajectory_tests/. A finding you cannot re-run is an
     anecdote; this is the step that makes it a regression test."""
     safe = re.sub(r"\W+", "_", name).strip("_") or "pattern"
+    # a raw string when the pattern is plain, a repr (which escapes quotes and newlines) otherwise,
+    # so a hostile pattern can never end the literal and add statements to the generated file
+    plain = not re.search(r'["\n\r]', pattern) and not pattern.endswith("\\")
+    literal = f'r"{pattern}"' if plain else repr(pattern)
     return f'''import unittest
 from traceharness.core.trajtest import load_runs
 
 RESULTS = "data/runs/prerecorded_mock"
-PATTERN = r"{pattern}"
+PATTERN = {literal}
 
 
 class Test{safe.title().replace("_", "")}(unittest.TestCase):

@@ -73,3 +73,13 @@ describe('tab specs', () => {
     expect(isRigHash('#/rigs')).toBe(false); expect(isRigHash('#/')).toBe(false)
   })
 })
+
+describe('hash query keys cannot reach the prototype', () => {
+  it('ignores __proto__, constructor and prototype keys', () => {
+    parseHash('#/rig/home?__proto__=1&constructor=x&prototype=y&pal=1')
+    expect(({}).pal).toBeUndefined()
+    expect(Object.prototype.pal).toBeUndefined()
+    expect(parseHash('#/rig/home?__proto__=1&pal=1').pal).toBe(true)
+    expect(Object.getPrototypeOf(({}))).toBe(Object.prototype)
+  })
+})

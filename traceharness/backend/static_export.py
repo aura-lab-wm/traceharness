@@ -497,7 +497,7 @@ await window.__TRACEHARNESS_DATA_READY__;
     html = re.sub(r'<link[^>]+fonts\.(googleapis|gstatic)\.com[^>]*>', "", html)
     html = re.sub(r'<link[^>]*rel="icon"[^>]*(href)="([^"]+)"[^>]*>', inline, html)
     html = re.sub(r'<link[^>]*rel="stylesheet"[^>]*(href)="([^"]+)"[^>]*>', inline, html)
-    html = re.sub(r'<script[^>]*(src)="([^"]+)"[^>]*></script>', inline, html)
+    html = re.sub(r'<script[^>]*(src)="([^"]+)"[^>]*></script\s*>', inline, html)
 
     banner = _data_banner(data, compress_data)
     html = html.replace("</head>", banner + "\n</head>", 1) if "</head>" in html else banner + html
