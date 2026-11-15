@@ -317,6 +317,61 @@ class WriteRun(unittest.TestCase):
         self.assertIn("model calls failed with HTTP 502", row["error"])
 
 
+class ResolveCosts(unittest.TestCase):
+    """traceharness agents resolve: a call whose generation record was late is priced afterwards."""
+
+    def _dir(self):
+        out = tempfile.mkdtemp()
+        rid = "20260101-000000-eeeeee"
+        rd = os.path.join(out, rid)
+        os.makedirs(rd)
+        calls = [{"seq": 1, "status": 200, "gen_id": "gen-a", "served_by": "Azure", "cost_usd": 0.001, "tokens_in": 10, "tokens_out": 1},
+                 {"seq": 2, "status": 200, "gen_id": "gen-b", "unresolved": True}]
+        row = {"run_id": rid, "cost_usd": None, "served_by": ["Azure"], "steps": 2, "input_tokens": 5, "output_tokens": 5}
+        with open(os.path.join(rd, "relay.jsonl"), "w") as f:
+            f.write("\n".join(json.dumps(c) for c in calls) + "\n")
+        for name, obj in (("container.json", {"harness": {}}), ("summary.json", row)):
+            with open(os.path.join(rd, name), "w") as f:
+                json.dump(obj, f)
+        with open(os.path.join(rd, "ledger.jsonl"), "w") as f:
+            f.write(json.dumps({"span": "invoke_agent", "status": "end", "cost_usd": None}) + "\n")
+        with open(os.path.join(out, "index.jsonl"), "w") as f:
+            f.write(json.dumps(row) + "\n")
+        return out, rd
+
+    def test_late_records_are_priced_everywhere(self):
+        out, rd = self._dir()
+        rec = {"provider_name": "Azure", "total_cost": 0.002, "native_tokens_prompt": 20, "native_tokens_completion": 3,
+               "native_tokens_cached": 0, "model": "m"}
+        with mock.patch.object(R, "_generation", return_value=rec) as g:
+            res = R.resolve_dir(out, "k")
+        self.assertEqual([c.args[0] for c in g.call_args_list], ["gen-b"], "only the unpriced call is looked up")
+        self.assertEqual(res, {"runs": 1, "runs_now_priced": 1, "runs_still_unpriced": 0})
+        with open(os.path.join(out, "index.jsonl")) as f:
+            row = json.loads(f.readline())
+        self.assertEqual((row["cost_usd"], row["input_tokens"], row["output_tokens"]), (0.003, 30, 4))
+        with open(os.path.join(rd, "summary.json")) as f:
+            self.assertEqual(json.load(f)["cost_usd"], 0.003)
+        with open(os.path.join(rd, "ledger.jsonl")) as f:
+            self.assertEqual(json.loads(f.readline())["cost_usd"], 0.003)
+        with open(os.path.join(rd, "relay.jsonl")) as f:
+            self.assertNotIn("unresolved", [json.loads(l) for l in f][1])
+
+    def test_still_missing_stays_unknown(self):
+        out, _ = self._dir()
+        with mock.patch.object(R, "_generation", return_value={}):
+            res = R.resolve_dir(out, "k", wait_s=0)
+        self.assertEqual(res["runs_still_unpriced"], 1)
+        with open(os.path.join(out, "index.jsonl")) as f:
+            self.assertIsNone(json.loads(f.readline())["cost_usd"])
+
+    def test_refuses_while_runs_are_in_progress(self):
+        out, _ = self._dir()
+        os.makedirs(os.path.join(out, ".jobs", "20260101-000000-ffffff"))
+        with self.assertRaises(RuntimeError):
+            R.resolve_dir(out, "k")
+
+
 class RunHelpers(unittest.TestCase):
     def test_exit_reasons(self):
         self.assertEqual([R.mini_exit_reason(x) for x in ("Submitted", "LimitsExceeded", "RepeatedFormatError", "", "Boom")],

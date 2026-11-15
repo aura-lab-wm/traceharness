@@ -25,6 +25,7 @@ into the ledger, with the real grades in its `grade` span.
     traceharness agents build
     traceharness agents run --agent codex --model openai/gpt-5.1-codex-mini --route Azure \
         --tasks full --repeats 3 --out data/runs/codex_full
+    traceharness agents resolve data/runs/codex_full     # price the calls whose record came late
 """
 from __future__ import annotations
 
@@ -193,31 +194,121 @@ def workspace_patch(before: dict, after: dict) -> tuple[str, list, bool]:
 
 
 # ---------------------------------------------------------------- OpenRouter generation stats
-def resolve_generations(records: list, key: str, wait_s: float = 45) -> None:
-    """Add `served_by`, `cost_usd`, `tokens_in`, `tokens_out`, `cached` to each logged call, in place,
-    from OpenRouter's generation endpoint (the stats appear a few seconds after the call)."""
-    deadline = time.time() + wait_s
-    for rec in records:
-        gid = rec.get("gen_id")
-        if not gid or rec.get("status") != 200:
+def _generation(gid: str, key: str, wait_s: float) -> dict:
+    """OpenRouter's record of one generation; {} if it is still not available after `wait_s`
+    (the record appears seconds after the call, later when many calls finish at once)."""
+    deadline, delay = time.time() + wait_s, 1.0
+    while True:
+        req = urllib.request.Request("https://openrouter.ai/api/v1/generation?id=" + urllib.request.quote(gid),
+                                     headers={"Authorization": "Bearer " + key})
+        try:
+            with urllib.request.urlopen(req, timeout=20) as r:
+                return json.loads(r.read()).get("data") or {}
+        except (urllib.error.URLError, ValueError, OSError):
+            if time.time() + delay > deadline:
+                return {}
+            time.sleep(delay)
+            delay = min(delay * 2, 10)
+
+
+def resolve_generations(records: list, key: str, wait_s: float = 90) -> None:
+    """Add `served_by`, `cost_usd`, `tokens_in`, `tokens_out`, `cached` to each logged call that has
+    not got them yet, in place, from OpenRouter's generation endpoint. Each call gets its own
+    `wait_s`; a call still missing afterwards is marked `unresolved` (`traceharness agents resolve`
+    retries it later from the same id)."""
+    todo = [r for r in records if r.get("gen_id") and r.get("status") == 200
+            and not isinstance(r.get("cost_usd"), (int, float))]
+    if not todo or not key:
+        for r in todo:
+            r["unresolved"] = True
+        return
+
+    def one(rec):
+        d = _generation(rec["gen_id"], key, wait_s)
+        if d:
+            rec.pop("unresolved", None)
+            rec.update(served_by=d.get("provider_name") or "", cost_usd=d.get("total_cost"),
+                       tokens_in=d.get("native_tokens_prompt"), tokens_out=d.get("native_tokens_completion"),
+                       cached=d.get("native_tokens_cached"), served_model=d.get("model"))
+        else:
+            rec["unresolved"] = True
+
+    with ThreadPoolExecutor(max_workers=4) as ex:
+        list(ex.map(one, todo))
+
+
+def apply_calls(s, calls: list) -> list:
+    """Set a run's totals from its calls: cost (None while any call is unpriced: unknown, not zero),
+    hosts in order of first use, tokens and the number of model calls. Returns the hosts."""
+    ok_calls = [c for c in calls if c.get("status") == 200]
+    costs = [c.get("cost_usd") for c in ok_calls]
+    served = []
+    for c in ok_calls:
+        if c.get("served_by") and c["served_by"] not in served:
+            served.append(c["served_by"])
+    s.served_by = served
+    s.steps = len(ok_calls)
+    s.cost_usd = round(sum(costs), 8) if all(isinstance(c, (int, float)) for c in costs) else None
+    tin = [c.get("tokens_in") for c in ok_calls]
+    tout = [c.get("tokens_out") for c in ok_calls]
+    if ok_calls and all(isinstance(x, int) for x in tin + tout):
+        s.input_tokens, s.output_tokens = sum(tin), sum(tout)
+    return served
+
+
+def resolve_dir(out_root: str, key: str, wait_s: float = 120) -> dict:
+    """Retry every unpriced call of every container run in `out_root`, and rewrite what depends on it:
+    the run's relay.jsonl, summary.json, the end span of its ledger and its index row. Refuses while
+    runs are in progress there (their rows are still being appended)."""
+    from types import SimpleNamespace
+    jobs = os.path.join(out_root, ".jobs")
+    if os.path.isdir(jobs) and os.listdir(jobs):
+        raise RuntimeError(f"{len(os.listdir(jobs))} runs are still in progress in {out_root}; resolve when they end")
+    idx = os.path.join(out_root, "index.jsonl")
+    with open(idx) as f:
+        rows = [json.loads(l) for l in f if l.strip()]
+    priced = still = 0
+    keys = ("cost_usd", "served_by", "steps", "input_tokens", "output_tokens")
+    for row in rows:
+        rd = os.path.join(out_root, row["run_id"])
+        rp = os.path.join(rd, "relay.jsonl")
+        if not (os.path.isfile(os.path.join(rd, "container.json")) and os.path.isfile(rp)):
             continue
-        delay = 1.0
-        while True:
-            req = urllib.request.Request("https://openrouter.ai/api/v1/generation?id=" + urllib.request.quote(gid),
-                                         headers={"Authorization": "Bearer " + key})
-            try:
-                with urllib.request.urlopen(req, timeout=20) as r:
-                    d = json.loads(r.read()).get("data") or {}
-                rec.update(served_by=d.get("provider_name") or "", cost_usd=d.get("total_cost"),
-                           tokens_in=d.get("native_tokens_prompt"), tokens_out=d.get("native_tokens_completion"),
-                           cached=d.get("native_tokens_cached"), served_model=d.get("model"))
-                break
-            except (urllib.error.URLError, ValueError, OSError):
-                if time.time() + delay > deadline:
-                    rec["unresolved"] = True
-                    break
-                time.sleep(delay)
-                delay = min(delay * 2, 8)
+        with open(rp) as f:
+            calls = [json.loads(l) for l in f if l.strip()]
+        if not any(c.get("status") == 200 and not isinstance(c.get("cost_usd"), (int, float)) for c in calls):
+            continue
+        resolve_generations(calls, key, wait_s)
+        s = SimpleNamespace(**row)
+        served = apply_calls(s, calls)
+        new = {k: getattr(s, k) for k in keys}
+        still += any(c.get("unresolved") for c in calls)
+        priced += new["cost_usd"] is not None
+        with open(rp, "w") as f:
+            for c in calls:
+                f.write(json.dumps(c) + "\n")
+        with open(os.path.join(rd, "summary.json")) as f:
+            summ = json.load(f)
+        summ.update(new)
+        with open(os.path.join(rd, "summary.json"), "w") as f:
+            json.dump(summ, f, ensure_ascii=False, indent=2)
+        lp = os.path.join(rd, "ledger.jsonl")
+        with open(lp) as f:
+            spans = [json.loads(l) for l in f if l.strip()]
+        for sp in spans:
+            if sp.get("span") == "invoke_agent" and sp.get("status") == "end":
+                sp.update(cost_usd=new["cost_usd"], served_by=served)
+        with open(lp, "w") as f:
+            for sp in spans:
+                f.write(json.dumps(sp, ensure_ascii=False, default=str) + "\n")
+        row.update(new)
+    tmp = idx + ".resolving"
+    with _INDEX_LOCK:
+        with open(tmp, "w") as f:
+            for row in rows:
+                f.write(json.dumps(row, default=str) + "\n")
+        os.replace(tmp, idx)
+    return {"runs": len(rows), "runs_now_priced": priced, "runs_still_unpriced": still}
 
 
 # ---------------------------------------------------------------- one run
@@ -491,29 +582,15 @@ def write_run(agent, model, route, task_id, repeat, run_id, out_root, outd, grad
                     "traceharness.core.grader in a container without network")}
     s = convert(sess, out_root, task_id, harness, model_override=model, run_id=run_id, grades=g)
 
-    ok_calls = [c for c in calls if c.get("status") == 200]
-    costs = [c.get("cost_usd") for c in ok_calls]
-    served = []
-    for c in ok_calls:
-        if c.get("served_by") and c["served_by"] not in served:
-            served.append(c["served_by"])
     s.provider = "openrouter"
     s.repeat_index = repeat
     s.started_at = started
     s.finished_at = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
     s.wall_ms = wall_ms
-    s.served_by = served
-    s.steps = len(ok_calls)
     s.files_touched = touched
     s.patch_bytes = len(patch.encode())
-    if all(isinstance(c, (int, float)) for c in costs):
-        s.cost_usd = round(sum(costs), 8)
-    else:
-        s.cost_usd = None                             # a call whose cost could not be resolved: unknown, not zero
-    tin = [c.get("tokens_in") for c in ok_calls]
-    tout = [c.get("tokens_out") for c in ok_calls]
-    if ok_calls and all(isinstance(x, int) for x in tin + tout):
-        s.input_tokens, s.output_tokens = sum(tin), sum(tout)
+    served = apply_calls(s, calls)
+    ok_calls = [c for c in calls if c.get("status") == 200]
     refused = {c.get("refused") for c in calls if c.get("refused")}
     if exit_info.get("timed_out") or error == "container wall-clock limit":
         s.exit_reason = "max_steps"
@@ -638,6 +715,13 @@ def run_cli(argv) -> int:
 
     with ThreadPoolExecutor(max_workers=max(1, a.jobs)) as ex:
         rows = [x for x in ex.map(one, cells) if x]
+    if any(r.get("cost_usd") is None for r in rows):
+        try:
+            r = resolve_dir(a.out, os.environ["OPENROUTER_API_KEY"])
+            print(f"resolved costs: {r['runs_now_priced']} runs priced now, {r['runs_still_unpriced']} still unpriced "
+                  "(retry with `traceharness agents resolve`)")
+        except (OSError, RuntimeError, ValueError) as e:
+            print(f"costs not resolved yet: {e}")
     print(f"{len(rows)} of {len(cells)} runs written to {os.path.join(a.out, 'index.jsonl')}; ${spent:.4f}"
           + (" (stopped at the spend cap)" if stop.is_set() else ""))
     return 0 if len(rows) == len(cells) else 1
@@ -660,7 +744,22 @@ def main(argv=None) -> int:
         return 0
     if cmd == "run":
         return run_cli(rest)
-    print(f"unknown agents command {cmd!r}: build, list or run", file=sys.stderr)
+    if cmd == "resolve":
+        if not rest or not os.environ.get("OPENROUTER_API_KEY"):
+            print("usage: OPENROUTER_API_KEY=... traceharness agents resolve <results dir> [...]", file=sys.stderr)
+            return 2
+        rc = 0
+        for d in rest:
+            try:
+                r = resolve_dir(d, os.environ["OPENROUTER_API_KEY"])
+            except (OSError, RuntimeError, ValueError) as e:
+                print(f"{d}: {e}", file=sys.stderr)
+                rc = 1
+                continue
+            print(f"{d}: {r['runs']} runs, {r['runs_now_priced']} priced now, {r['runs_still_unpriced']} still unpriced")
+            rc = rc or (1 if r["runs_still_unpriced"] else 0)
+        return rc
+    print(f"unknown agents command {cmd!r}: build, list, run or resolve", file=sys.stderr)
     return 2
 
 
