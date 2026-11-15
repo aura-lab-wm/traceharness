@@ -181,7 +181,11 @@ def detect_detail(path: str) -> dict:
                 s = float(m.sniff(path))
             except Exception as e:
                 s = 0.0
-                out["error"] = out["error"] or f"{m.NAME}: {type(e).__name__}: {e}"
+                # the exception text can name local paths: it goes to the server log under an id,
+                # and the response carries only the adapter, the exception type and that id
+                from ..confine import log_error
+                eid = log_error(f"detect {m.NAME}", e)
+                out["error"] = out["error"] or f"{m.NAME}: {type(e).__name__} (error id {eid})"
             if s > 0:
                 out["candidates"].append({"source": m.NAME, "confidence": round(s, 2), "files": 1})
         out["candidates"].sort(key=lambda c: -c["confidence"])
