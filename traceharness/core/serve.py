@@ -58,14 +58,73 @@ def _job_view(j: dict) -> dict:
             "elapsed_s": int(elapsed), "eta_s": int(elapsed / done * (total - done)) if done and total and rc is None else None}
 
 
+_PROVIDERS = ("mock", "openai", "anthropic", "openrouter")
+_MODEL = re.compile(r"[A-Za-z0-9][A-Za-z0-9._:@+/-]{0,119}")
+_TASKS = re.compile(r"[A-Za-z0-9][A-Za-z0-9_.,-]{0,299}")
+
+
+def _under(root: str, rel: str, what: str) -> str:
+    """`rel` (relative to LAB_ROOT) resolved to a real path inside `root`, else ValueError."""
+    if not isinstance(rel, str) or not rel or "\x00" in rel or os.path.isabs(rel) or rel.startswith("-"):
+        raise ValueError(f"bad {what}")
+    real_root = os.path.realpath(root)
+    full = os.path.realpath(os.path.join(LAB_ROOT, rel))
+    if not full.startswith(real_root + os.sep):
+        raise ValueError(f"{what} must stay inside {os.path.relpath(real_root, LAB_ROOT)}")
+    return full
+
+
+def _check_base_url(url: str) -> str:
+    """An OpenAI-compatible endpoint the runner will send the provider key to: https anywhere, or
+    plain http only to this machine or a private network (Ollama, vLLM). No credentials in the URL."""
+    import ipaddress
+    from urllib.parse import urlsplit
+    if not isinstance(url, str) or len(url) > 300 or url != url.strip() or any(c.isspace() or ord(c) < 0x20 for c in url):
+        raise ValueError("bad base_url")
+    parts = urlsplit(url)
+    host = (parts.hostname or "").lower()
+    if parts.scheme not in ("http", "https") or not host or parts.username or parts.password:
+        raise ValueError("base_url must be an http(s) URL without credentials")
+    if parts.scheme == "http":
+        try:
+            ip = ipaddress.ip_address(host)
+            private = ip.is_loopback or ip.is_private
+        except ValueError:
+            private = host == "localhost" or host.endswith(".localhost")
+        if not private:
+            raise ValueError("plain-http base_url is allowed only for localhost or a private address")
+    return url
+
+
 def launch(spec: dict) -> dict:
-    out = spec.get("out") or f"data/runs/console_{time.strftime('%H%M%S')}"
-    cmd = [sys.executable, "-m", "traceharness.core.runner", "--provider", spec.get("provider", "mock"), "--model", spec.get("model", "mock"),
-           "--tasks", spec.get("tasks", "all"), "--repeats", str(int(spec.get("repeats", 1))), "--out", out, "--seed", str(int(spec.get("seed", 0)))]
-    if spec.get("harness"):
-        cmd += ["--harness", spec["harness"]]
+    """Validate every request field against what the console sends, then spawn the runner. There is
+    no shell, so the risks are argument injection (a value that reads as another flag), a results or
+    harness path outside the lab, and a base_url that would receive the provider key."""
+    provider = spec.get("provider", "mock")
+    model = spec.get("model", "mock")
+    tasks = spec.get("tasks", "all")
+    if provider not in _PROVIDERS:
+        raise ValueError("unknown provider")
+    if not isinstance(model, str) or not _MODEL.fullmatch(model):
+        raise ValueError("bad model")
+    if not isinstance(tasks, str) or not _TASKS.fullmatch(tasks):
+        raise ValueError("bad tasks")
+    out_rel = spec.get("out") or f"data/runs/console_{time.strftime('%H%M%S')}"
+    out_full = _under(os.path.join(LAB_ROOT, "data", "runs"), out_rel, "out")
+    out = os.path.relpath(out_full, LAB_ROOT)
+    harnesses = []
+    for h in str(spec.get("harness") or "").split(","):
+        if h.strip():
+            hp = _under(os.path.join(LAB_ROOT, "harnesses"), h.strip(), "harness")
+            if not hp.endswith(".json"):
+                raise ValueError("harness must be a .json file under harnesses/")
+            harnesses.append(os.path.relpath(hp, LAB_ROOT))
+    cmd = [sys.executable, "-m", "traceharness.core.runner", "--provider", provider, "--model", model,
+           "--tasks", tasks, "--repeats", str(int(spec.get("repeats", 1))), "--out", out, "--seed", str(int(spec.get("seed", 0)))]
+    if harnesses:
+        cmd += ["--harness", ",".join(harnesses)]
     if spec.get("base_url"):
-        cmd += ["--base-url", spec["base_url"]]
+        cmd += ["--base-url", _check_base_url(spec["base_url"])]
     if spec.get("temperature") not in (None, ""):
         cmd += ["--temperature", str(float(spec["temperature"]))]
     os.makedirs(os.path.join(LAB_ROOT, "data", "jobs"), exist_ok=True)
@@ -75,9 +134,8 @@ def launch(spec: dict) -> dict:
     job = {"id": jid, "proc": proc, "log": log, "cmd_display": " ".join(cmd[2:]), "started": time.strftime("%H:%M:%S"), "out": out, "t0": time.time()}
     with JOBS_LOCK:
         JOBS.append(job)
-    full = os.path.join(LAB_ROOT, out)
-    if full not in STATE["results"]:
-        STATE["results"].append(full)
+    if out_full not in STATE["results"]:
+        STATE["results"].append(out_full)
     return _job_view(job)
 
 
@@ -124,7 +182,20 @@ class Handler(BaseHTTPRequestHandler):
     def _json(self, obj, code=200):
         self._send(code, json.dumps(obj).encode())
 
+    def _guard(self, write: bool) -> bool:
+        """Same Host / Origin / Content-Type rules as the main server (backend/guard.py): refuse a
+        foreign Host (DNS rebinding) and, on writes, a foreign Origin or a non-JSON body (CSRF)."""
+        from traceharness.backend.serve_guard import check_request
+        verdict = check_request(self.headers.get("Host"), self.headers.get("Origin"), self.headers.get("Sec-Fetch-Site"),
+                                self.headers.get("Content-Type"), write, bound_host=self.server.server_address[0])
+        if verdict:
+            self._send(verdict[0], verdict[1].encode(), "text/plain")
+            return False
+        return True
+
     def do_GET(self):
+        if not self._guard(False):
+            return
         u = urlparse(self.path)
         q = parse_qs(u.query)
         if u.path in ("/", "/index.html"):
@@ -166,6 +237,8 @@ class Handler(BaseHTTPRequestHandler):
             self._send(404, b"not found", "text/plain")
 
     def do_POST(self):
+        if not self._guard(True):
+            return
         u = urlparse(self.path)
         n = int(self.headers.get("Content-Length") or 0)
         try:
@@ -175,8 +248,11 @@ class Handler(BaseHTTPRequestHandler):
         if u.path == "/api/launch":
             try:
                 self._json(launch(body))
-            except Exception as e:  # surface the reason in the UI
+            except (ValueError, TypeError, OverflowError) as e:  # a refused field: its message names the field only
                 self._json({"error": str(e)}, 400)
+            except Exception:
+                from traceharness.backend.confine import log_error
+                self._json({"error": f"launch failed (error id {log_error('launch')})"}, 500)
         elif u.path == "/api/jobs/cancel":
             jid = body.get("id")
             with JOBS_LOCK:
@@ -187,8 +263,9 @@ class Handler(BaseHTTPRequestHandler):
                 j["cancelled"] = True
                 try:
                     j["proc"].send_signal(signal.SIGTERM)
-                except Exception as e:
-                    return self._json({"error": str(e)}, 500)
+                except Exception:
+                    from traceharness.backend.confine import log_error
+                    return self._json({"error": f"cancel failed (error id {log_error('cancel')})"}, 500)
             self._json(_job_view(j))
         elif u.path == "/api/harness":
             hid = (body.get("id") or "").strip()

@@ -737,7 +737,9 @@ def _open_tcp(url: str):
     port = parsed.port or (443 if parsed.scheme == "wss" else 80)
     sock = socket.create_connection((host, port), timeout=5)
     if parsed.scheme == "wss":
-        sock = ssl.create_default_context().wrap_socket(sock, server_hostname=host)
+        ctx = ssl.create_default_context()
+        ctx.minimum_version = ssl.TLSVersion.TLSv1_2
+        sock = ctx.wrap_socket(sock, server_hostname=host)
     return sock, parsed
 
 
