@@ -6,6 +6,10 @@ only in which tools are exposed are two different measurement cells.
 Safety note: the sandbox is a scratch copy of the task repository plus a
 command policy. It is a teaching device, not a security boundary. Run the lab
 inside a container or VM if you point a real model at it and care about the host.
+Agent commands inherit only SUBPROCESS_ENV_KEEP, so no model key reaches them
+by inheritance; a command running as the same user can still inspect the
+server process itself (e.g. /proc/<pid>/environ on Linux), which only a
+container or a separate user prevents.
 """
 from __future__ import annotations
 import difflib, os, re, shlex, shutil, subprocess, sys, tempfile, threading
@@ -55,12 +59,27 @@ def _python_runs() -> bool:
     return _PYTHON_OK
 
 
+#: The only variables an agent's commands and the grader's test runs inherit. Everything else in the
+#: server's environment stays out, above all the model keys (OPENROUTER_API_KEY reached every shell
+#: command an agent ran until this list replaced a copy of os.environ), but also cloud and VCS tokens
+#: and the lab's own settings. Locale variables (LC_*) are kept by prefix.
+SUBPROCESS_ENV_KEEP = ("PATH", "HOME", "USER", "LOGNAME", "SHELL", "TERM", "LANG", "TZ", "TMPDIR", "TMP", "TEMP",
+                       "SYSTEMROOT", "WINDIR", "COMSPEC", "PATHEXT", "USERPROFILE")
+
+
+def _allowed_env() -> dict:
+    return {k: v for k, v in os.environ.items() if k in SUBPROCESS_ENV_KEEP or k.startswith("LC_")}
+
+
 def subprocess_env() -> dict:
-    """Environment for agent/grader subprocesses. Task commands say `python`; if the host only has `python3`
-    (a plain macOS or a non-login shell), expose the running interpreter under that name via a shim directory."""
+    """Environment for agent/grader subprocesses: an allow-list of the server's environment (no keys,
+    tokens or lab settings; see SUBPROCESS_ENV_KEEP). Task commands say `python`; if the host only has
+    `python3` (a plain macOS or a non-login shell), expose the running interpreter under that name via a
+    shim directory."""
     global _SHIM_DIR
+    env = _allowed_env()
     if _python_runs():
-        return dict(os.environ)
+        return env
     shim = _SHIM_DIR
     if shim is None:
         # backend/app.py grades up to eight cells in parallel, each calling this. Build the shim
@@ -73,7 +92,7 @@ def subprocess_env() -> dict:
                 os.symlink(sys.executable, os.path.join(d, "python"))
                 _SHIM_DIR = d
             shim = _SHIM_DIR
-    return {**os.environ, "PATH": shim + os.pathsep + os.environ.get("PATH", "")}
+    return {**env, "PATH": shim + os.pathsep + os.environ.get("PATH", "")}
 from dataclasses import dataclass
 from typing import Optional
 
@@ -253,7 +272,7 @@ class Sandbox:
     def run(self, cmd: str, timeout: int = 30) -> str:
         try:
             r = subprocess.run(cmd, shell=True, cwd=self.workdir, capture_output=True, text=True, timeout=timeout,
-                               env={**subprocess_env(), "PYTHONDONTWRITEBYTECODE": "1", "OPENAI_API_KEY": "", "ANTHROPIC_API_KEY": ""})
+                               env={**subprocess_env(), "PYTHONDONTWRITEBYTECODE": "1"})
             out = (r.stdout + r.stderr).strip()
             return f"exit={r.returncode}\n{out[-6000:]}"
         except subprocess.TimeoutExpired:

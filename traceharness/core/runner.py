@@ -73,6 +73,14 @@ def main(argv=None):
     os.makedirs(args.out, exist_ok=True)
     index_path = os.path.join(args.out, "index.jsonl")
 
+    # A harness that enables the Sentinel gets the same hook the web app gives it (backend/sentinel.py
+    # hook_for), scored by the active risk model; the LLM layer, if enabled, uses the run's key.
+    rmodel = S = None
+    if any((h.sentinel or {}).get("enabled") for h in harnesses):
+        from traceharness.backend import sentinel as S
+        rmodel = S.load_model()
+        print(f"sentinel: risk model {rmodel.meta.get('name', '?')}", flush=True)
+
     total = len(task_ids) * len(harnesses) * args.repeats
     done = 0
     spent = 0.0
@@ -85,7 +93,10 @@ def main(argv=None):
             task = load_task(os.path.join(LAB_ROOT, "tasks", tid))
             for r in range(args.repeats):
                 seed = args.seed * 1_000_000 + zlib.crc32(f"{tid}|{harness.id}".encode()) % 10_000 * 100 + r
-                s = run_task(task, harness, provider, args.out, repeat_index=r, seed=seed, keep_workdir=args.keep_workdir, verbose=args.verbose)
+                hook = S.hook_for(harness, task, rmodel, api_key=os.environ.get("OPENROUTER_API_KEY") or None,
+                                  base_url=args.base_url) if S else None
+                s = run_task(task, harness, provider, args.out, repeat_index=r, seed=seed, keep_workdir=args.keep_workdir,
+                             verbose=args.verbose, step_hook=hook)
                 with open(index_path, "a") as f:
                     f.write(json.dumps(asdict(s)) + "\n")
                 done += 1

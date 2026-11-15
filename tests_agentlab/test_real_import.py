@@ -54,8 +54,8 @@ class RealImport(unittest.TestCase):
             out = RI.analysis(os.path.join(root, "sample"))
             by = {a["feature"]: a for a in out["ochiai"]}
             nv = by["never_verified_after_edit"]
-            self.assertEqual(nv["ef"], 3)                               # a run with no edit never verified one either
-            self.assertEqual(nv["examples_fail"], [ids[0], ids[2], ids[3]])   # one per task: a__a-1, b__b-2, c__c-3
+            self.assertEqual(nv["ef"], 2)                               # c__c-3 never edited, so it has no edit to verify
+            self.assertEqual(nv["examples_fail"], [ids[0], ids[2]])     # one per task: a__a-1, b__b-2
             self.assertEqual(nv["examples_pass"], [])                   # the resolved run tested after its edit
             for a in out["ochiai"]:
                 self.assertLessEqual(len(a["examples_fail"]), 3)
