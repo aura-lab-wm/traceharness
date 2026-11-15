@@ -1,0 +1,140 @@
+# Continuous integration: every pull request, every push to main, and the release workflow
+# (which calls this file through workflow_call before it builds anything).
+#
+# Security posture (this repository is public):
+#   * default token is read-only; no job here gets a write scope or a secret;
+#   * `pull_request` only (never `pull_request_target`), so a fork's code never runs with secrets;
+#   * every action is pinned to a full commit SHA (the tag is in the comment), and Dependabot
+#     keeps the pins current;
+#   * checkout does not persist the token into .git/config.
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+  workflow_call:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  python:
+    name: Python ${{ matrix.python }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        # pyproject.toml declares requires-python >= 3.10; 3.12 is what the Docker image ships
+        python: ["3.10", "3.12", "3.13"]
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version: ${{ matrix.python }}
+          cache: pip
+          cache-dependency-path: |
+            requirements.txt
+            traceharness/requirements.txt
+            pyproject.toml
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements.txt -r traceharness/requirements.txt
+      - name: Unit tests (unittest, tests_agentlab)
+        run: make test PY=python
+      - name: Install self-check (offline mock run and exercise)
+        run: make check PY=python
+
+  console:
+    name: Console (lint, tests, build)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: traceharness/frontend
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: traceharness/frontend/package-lock.json
+      - run: npm ci --no-audit --no-fund
+      - name: Lint (oxlint)
+        run: npm run lint
+      - name: Tests (vitest, 4 workers)
+        run: npm test
+      - name: Build (sanity; the committed dist/ is not compared, see Makefile school-package)
+        run: npx vite build --outDir "$RUNNER_TEMP/dist-check"
+
+  package:
+    name: Wheel and school package
+    needs: [python, console]
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: |
+            requirements.txt
+            traceharness/requirements.txt
+            pyproject.toml
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: traceharness/frontend/package-lock.json
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements.txt -r traceharness/requirements.txt
+      # School package FIRST: it ships the committed dist/ and checks the archive against what git
+      # tracks, while wheel-check rebuilds dist/ (content hashes can differ across Node versions).
+      - name: School package builds and passes its clean-room verification
+        run: make school-package PY=python
+      - name: Wheel builds, installs in a clean venv, and its CLI runs
+        run: make wheel-check PY=python
+
+  docker:
+    name: Container image builds
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
+      - uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
+        with:
+          context: .
+          push: false
+          load: true
+          tags: traceharness:ci
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+      - name: The image starts and answers
+        run: |
+          docker run -d --name th -p 127.0.0.1:8765:8765 traceharness:ci
+          for i in $(seq 1 30); do
+            if curl -fsS http://127.0.0.1:8765/ >/dev/null; then echo "up after ${i}s"; break; fi
+            sleep 1
+          done
+          curl -fsS http://127.0.0.1:8765/ >/dev/null
+          docker logs th | tail -5
+          docker rm -f th

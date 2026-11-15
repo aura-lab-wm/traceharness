@@ -7,6 +7,8 @@
 
 ![TraceHarness: treat the agent harness as a controlled experimental variable](docs/img/readme/hero.svg)
 
+[![CI](https://github.com/aura-lab-wm/traceharness/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/aura-lab-wm/traceharness/actions/workflows/ci.yml) [![CodeQL](https://github.com/aura-lab-wm/traceharness/actions/workflows/codeql.yml/badge.svg?branch=main)](https://github.com/aura-lab-wm/traceharness/actions/workflows/codeql.yml)
+
 [![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/aura-lab-wm/traceharness)
 
 **TraceHarness** measures coding agents from their trajectories and treats the harness as an experimental variable. This repository is the replication and teaching package for the evaluation lab: it bundles the local console, the session-capture CLI, recorded multi-harness datasets, and step-by-step lab exercises for loading and analysing 1,000 real SWE-agent trajectories at <https://traceharness.dev/guide/> (also in [`docs/GUIDE.md`](docs/GUIDE.md), [`docs/STUDENT_GUIDE.md`](docs/STUDENT_GUIDE.md), [`docs/CODESPACES.md`](docs/CODESPACES.md), `HANDOUT.md`, and `LAB_1H.md`). Open it directly in GitHub Codespaces with the badge above; an OpenRouter key is needed only when running new experiments against live models.
