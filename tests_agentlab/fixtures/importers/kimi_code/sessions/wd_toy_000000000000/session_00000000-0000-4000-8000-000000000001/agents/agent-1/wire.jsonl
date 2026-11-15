@@ -1,0 +1,10 @@
+{"type": "metadata", "protocol_version": "1.5", "created_at": 1786754556000, "time": 1786754557000}
+{"type": "profile.bind", "modelAlias": "kimi-code/k3", "profileName": "agent", "thinkingEffort": "high", "systemPrompt": "You are a toy coding agent.", "environmentDisclosure": {"cwd": "/work/toy", "date": {"disclosed": true, "value": {"localDate": "2026-08-14", "timeZone": "UTC"}}}, "agentsMdPaths": [], "activeToolNames": ["Read", "Edit", "Bash"], "disallowedTools": [], "time": 1786754557010}
+{"type": "llm.tools_snapshot", "hash": "t1", "tools": [{"name": "Read", "description": "", "parameters": {}}, {"name": "Edit", "description": "", "parameters": {}}, {"name": "Bash", "description": "", "parameters": {}}], "time": 1786754557011}
+{"type": "turn.prompt", "input": [{"type": "text", "text": "List the files in the project."}], "origin": {"kind": "system_trigger", "name": "subagent"}, "time": 1786754557100}
+{"type": "context.append_loop_event", "event": {"type": "step.begin", "uuid": "s-1", "turnId": "0", "step": 1}, "time": 1786754557200}
+{"type": "llm.request", "kind": "loop", "provider": "openai", "model": "k3", "modelAlias": "kimi-code/k3", "thinkingEffort": "high", "thinkingKeep": "all", "maxTokens": 4096, "toolSelect": false, "systemPromptHash": "h", "toolsHash": "t1", "messageCount": 2, "turnStep": "0.1", "time": 1786754557201}
+{"type": "context.append_loop_event", "event": {"type": "tool.call", "uuid": "s-1-c", "turnId": "0", "step": 1, "stepUuid": "s-1", "toolCallId": "tool_b1", "name": "Bash", "args": {"command": "ls"}}, "time": 1786754557202}
+{"type": "context.append_loop_event", "event": {"type": "tool.result", "parentUuid": "s-1-c", "toolCallId": "tool_b1", "result": {"output": "calc.py\ntest_calc.py\n"}}, "time": 1786754557203}
+{"type": "context.append_loop_event", "event": {"type": "step.end", "uuid": "s-1", "turnId": "0", "step": 1, "finishReason": "end_turn", "usage": {"inputOther": 50, "output": 10, "inputCacheRead": 0, "inputCacheCreation": 0}}, "time": 1786754557204}
+{"type": "turn.ended", "turnId": 0, "reason": "completed", "durationMs": 10, "time": 1786754557205}
