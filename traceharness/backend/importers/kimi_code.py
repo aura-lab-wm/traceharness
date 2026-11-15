@@ -186,6 +186,7 @@ def parse_file(path: str) -> Optional[Session]:
     n_steps = n_err = n_compactions = 0
     step_first: Optional[Event] = None       # first event of the open step
     step_call: Optional[Event] = None        # first tool_call of the open step
+    step_calls: list = []                    # every tool_call of the open step
     call_args: dict = {}
     n_result_unmatched = 0
 
@@ -259,6 +260,7 @@ def parse_file(path: str) -> Optional[Session]:
                 et = e.get("type") or ""
                 if et == "step.begin":
                     step_first = step_call = None
+                    step_calls = []
                 elif et == "content.part":
                     p = e.get("part") if isinstance(e.get("part"), dict) else {}
                     sid_ = str(e.get("stepUuid") or "")
@@ -285,6 +287,7 @@ def parse_file(path: str) -> Optional[Session]:
                     events.append(ev)
                     step_first = step_first or ev
                     step_call = step_call or ev
+                    step_calls.append(ev)
                 elif et == "tool.result":
                     res = e.get("result") if isinstance(e.get("result"), dict) else {}
                     cid = str(e.get("toolCallId") or "")
@@ -312,11 +315,17 @@ def parse_file(path: str) -> Optional[Session]:
                     carrier = step_call or step_first
                     if u and carrier is not None:
                         carrier.usage = u
+                        # the step's other calls were billed in that one model call: a RECORDED zero,
+                        # so convert does not add a length estimate on top of the real count
+                        for c in step_calls:
+                            if c is not carrier:
+                                c.usage = {"input_tokens": 0, "output_tokens": 0}
                     elif u:
                         # a step that produced no content at all (an error step) still billed tokens
                         events.append(Event("assistant", ts=ts, text="", model=cur_model, usage=u,
                                             request_id=str(e.get("uuid") or "")))
                     step_first = step_call = None
+                    step_calls = []
                 elif et not in _LOOP_KNOWN:
                     k = f"loop/{et}" if et else "loop"
                     unknown[k] = unknown.get(k, 0) + 1

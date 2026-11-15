@@ -325,7 +325,11 @@ def _import_path(path: str, results_dir_name: str, source: Optional[str] = None,
     # import must honour it too: otherwise the Import page writes "ok" execute_tool spans and zero
     # cost for a Cursor transcript that the Capture page correctly calls unknown.
     from traceharness.capture.adapters import BY_NAME as _CAPTURE, missing as _missing
-    gaps = _missing(_CAPTURE[src]) if src in _CAPTURE else frozenset()
+    # A source the capture spine does not watch declares the same thing on its module: MISSING
+    # names the capabilities (common.UNMEASURED_FIELDS keys) its logs never record, so a Copilot CLI
+    # import reports its tokens as unknown instead of the text-length estimate convert falls back on.
+    gaps = (_missing(_CAPTURE[src]) if src in _CAPTURE
+            else frozenset(getattr(_ADAPTER[src], "MISSING", ())))
 
     imported, skipped, errors = 0, 0, []
     harnesses: dict[str, dict] = {}

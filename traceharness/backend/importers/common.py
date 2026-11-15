@@ -539,6 +539,22 @@ def _exit_reason(sess: Session, submitted: bool, n_steps: int, stopped_calling_t
     return "unknown"
 
 
+def _measured(u: Optional[dict]) -> bool:
+    """True when a source RECORDED token counts here: the keys are present, even at zero."""
+    return bool(u) and ("input_tokens" in u or "output_tokens" in u)
+
+
+def _add_usage(acc: dict, u: Optional[dict]) -> dict:
+    """Sum the recorded counts of consecutive text events that belong to one pending chat span."""
+    if not _measured(u):
+        return acc
+    out = dict(acc)
+    for k in ("input_tokens", "output_tokens", "cache_read_input_tokens", "cache_creation_input_tokens"):
+        if k in u:
+            out[k] = int(out.get(k) or 0) + int(u.get(k) or 0)
+    return out
+
+
 def convert(sess: Session, out_root: str, task_id: str, harness: dict, model_override: str = "",
             missing: frozenset = frozenset(), run_id: str = "", grades: Optional[dict] = None) -> Any:
     """Write one run's four files and return its RunSummary.
@@ -594,6 +610,11 @@ def convert(sess: Session, out_root: str, task_id: str, harness: dict, model_ove
                                                       f"sha256={sha256_hex(sess.system_prompt)[:16]}…, {len(sess.system_prompt)} chars)"})
     step = -1
     pending_text = ""
+    # Usage a source recorded on a text or reasoning event (a model call that ended in prose, or a
+    # message whose usage the adapter could not pin to a tool call). It belongs to the NEXT chat span
+    # that has none of its own -- the final answer included -- instead of being dropped and replaced
+    # by a length estimate. A tool call that carries its own usage supersedes it.
+    pending_usage: dict = {}
     last_edit, last_test = -1, -1
     submitted = False
     unmatched = iter(orphan_results)
@@ -603,8 +624,10 @@ def convert(sess: Session, out_root: str, task_id: str, harness: dict, model_ove
             messages.append({"role": "user", "content": e.text[:4000]})
         elif e.kind == "reasoning":
             pending_text = (pending_text + "\n" + e.text).strip()
+            pending_usage = _add_usage(pending_usage, e.usage)
         elif e.kind == "assistant":
             pending_text = (pending_text + "\n" + e.text).strip()
+            pending_usage = _add_usage(pending_usage, e.usage)
         elif e.kind == "tool_call":
             step += 1
             tool, args = map_tool(e.name, e.args, sess.extra.get("tool_overrides"))
@@ -620,11 +643,18 @@ def convert(sess: Session, out_root: str, task_id: str, harness: dict, model_ove
                 status = "ok"
             else:
                 status = "error" if (tool != "submit" and _ERR_OBS.search(obs[:600])) else "ok"
-            if usage_known:
-                in_tok = int(e.usage.get("input_tokens") or 0)
-                out_tok = int(e.usage.get("output_tokens") or 0) or max(1, len(pending_text) // 4)
+            u = e.usage if _measured(e.usage) else pending_usage
+            if usage_known and _measured(u):
+                # recorded counts, a recorded 0 included (the second of two parallel calls the source
+                # billed once): never replaced by an estimate
+                in_tok = int(u.get("input_tokens") or 0)
+                out_tok = int(u.get("output_tokens") or 0)
+            elif usage_known:
+                in_tok, out_tok = 0, max(1, len(pending_text) // 4)
             else:
                 in_tok = out_tok = None
+            measured_call = usage_known and _measured(u)
+            pending_usage = {}
             rec("chat", ts=e.ts, **{
                 "gen_ai.operation.name": "chat",
                 "gen_ai.usage.input_tokens": in_tok,
@@ -639,7 +669,7 @@ def convert(sess: Session, out_root: str, task_id: str, harness: dict, model_ove
             pending_text = ""
             summary.steps += 1
             if usage_known:
-                summary.input_tokens += in_tok or len(obs) // 4
+                summary.input_tokens += in_tok if measured_call else (in_tok or len(obs) // 4)
                 summary.output_tokens += out_tok
             if not tools_known:
                 continue            # the request is on the chat span; its execution was never recorded
@@ -676,16 +706,21 @@ def convert(sess: Session, out_root: str, task_id: str, harness: dict, model_ove
     stopped_calling_tools = bool(pending_text.strip())
     if pending_text.strip():
         step += 1
+        final_measured = usage_known and _measured(pending_usage)
+        fin_in = int(pending_usage.get("input_tokens") or 0) if final_measured else 0
+        fin_out = (int(pending_usage.get("output_tokens") or 0) if final_measured
+                   else max(1, len(pending_text) // 4))
         rec("chat", **{"gen_ai.operation.name": "chat",
-                       "gen_ai.usage.input_tokens": 0 if usage_known else None,
-                       "gen_ai.usage.output_tokens": max(1, len(pending_text) // 4) if usage_known else None,
+                       "gen_ai.usage.input_tokens": fin_in if usage_known else None,
+                       "gen_ai.usage.output_tokens": fin_out if usage_known else None,
                        "gen_ai.response.finish_reasons": ["stop"], "duration_ms": 0,
                        "cost_usd": 0.0 if usage_known else None,
                        "step": step, "text": pending_text[:2000], "tool_calls": []})
         messages.append({"role": "assistant", "content": pending_text[:2000]})
         summary.steps += 1
         if usage_known:
-            summary.output_tokens += max(1, len(pending_text) // 4)
+            summary.input_tokens += fin_in
+            summary.output_tokens += fin_out
 
     summary.exit_reason = _exit_reason(sess, submitted, summary.steps, stopped_calling_tools)
     summary.ran_tests_before_submit = last_test >= last_edit >= 0

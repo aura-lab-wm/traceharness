@@ -50,6 +50,8 @@ from typing import Iterator, Optional
 from .common import Event, Session, hunks_from_line_counts, peek_jsonl, read_jsonl
 
 NAME = "copilot_cli"
+#: events.jsonl records no token usage at all (measured on a live-recorded session): unknown, not estimated
+MISSING = frozenset({"usage"})
 DESCRIPTION = "GitHub Copilot CLI session events (~/.copilot/session-state/<uuid>/events.jsonl)"
 PATTERNS = ["events.jsonl (records typed session.start / user.message / assistant.message)"]
 

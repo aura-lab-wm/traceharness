@@ -93,7 +93,7 @@ class TestParse(unittest.TestCase):
         self.assertEqual(calls[0].usage, {"input_tokens": 900, "output_tokens": 60,
                                           "cache_read_input_tokens": 128, "cache_creation_input_tokens": 0})
         self.assertEqual(calls[2].usage["cache_creation_input_tokens"], 64)
-        self.assertEqual(calls[3].usage, {})            # second call of step 3 carries none
+        self.assertEqual(calls[3].usage, {"input_tokens": 0, "output_tokens": 0})  # billed in call 2
         final = self.s.events[-1]
         self.assertEqual((final.kind, final.usage["output_tokens"]), ("assistant", 30))
         total = sum(e.usage.get("output_tokens", 0) for e in self.s.events)
@@ -147,10 +147,10 @@ class TestConvert(Tmp):
         self.assertEqual(summ["model"], "kimi-code/k3")
         self.assertEqual(summ["tool_calls"], 4)
         self.assertEqual(summ["edits"], 1)
-        # convert estimates a second call of the same step from its observation length (a few
-        # tokens) because only the first call carries the step's usage; the real part is exact
-        self.assertGreaterEqual(summ["input_tokens"], 900 + 150 + 120)
-        self.assertLess(summ["input_tokens"], 900 + 150 + 120 + 50)
+        # exact: every step's recorded input, the text-only final step (90) included, and a recorded
+        # zero for the second call of a step instead of a length estimate
+        self.assertEqual(summ["input_tokens"], 900 + 150 + 120 + 90)
+        self.assertEqual(summ["output_tokens"], 60 + 40 + 55 + 30)
         self.assertIsNone(summ["hidden_pass"])
         self.assertEqual(summ["provider"], "import:kimi_code")
 
