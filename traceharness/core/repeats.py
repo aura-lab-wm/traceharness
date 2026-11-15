@@ -30,6 +30,8 @@ import statistics
 import sys
 from typing import Optional
 
+from .safe_paths import PathRefused, confine
+
 # The Ochiai binary feature `"repeated_commands>N"` in real_traj.binary_features imports this
 # instead of hard-coding 3, so the threshold is a literal exactly once in the whole codebase.
 THRESHOLD = 3
@@ -276,7 +278,10 @@ def run_detail(results_dir: str, run_id: str) -> list[dict]:
     Reads only that run's ledger (not the whole directory) — the API route behind this is called
     once per opened run, and `study()` already paid for every run's series when the page loaded.
     """
-    p = os.path.join(results_dir, run_id, "ledger.jsonl")
+    try:
+        p = confine(results_dir, run_id, "ledger.jsonl")
+    except PathRefused:
+        return []
     if not os.path.exists(p):
         return []
     with open(p, encoding="utf-8") as f:

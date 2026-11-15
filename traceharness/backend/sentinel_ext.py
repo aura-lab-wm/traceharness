@@ -26,6 +26,7 @@ from pydantic import BaseModel
 
 from . import sentinel as S
 from .paths import RUNS_ROOT
+from .safe_paths import PathRefused, confine, http_confine
 
 CACHE_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "data", "cache", "leaderboard")
 TRACEHARNESS_VERSION = "0.1"
@@ -38,7 +39,7 @@ router = APIRouter(prefix="/api/sentinel")
 def _dir(name: str) -> str:
     if not name or "/" in name or name.startswith("."):
         raise HTTPException(400, "bad results dir name")
-    d = os.path.join(RUNS_ROOT, name)
+    d = http_confine(RUNS_ROOT, name)
     if not os.path.exists(os.path.join(d, "index.jsonl")):
         raise HTTPException(404, f"no results dir {name}")
     return d
@@ -75,7 +76,11 @@ def plugins(reload: bool = False):
 def _model_bundle(name: str) -> dict:
     if "/" in name or name.startswith("."):
         raise HTTPException(400, "bad model name")
-    if not os.path.exists(os.path.join(S.MODELS_DIR, name + ".json")):
+    try:
+        model_file = S._model_file(name)
+    except PathRefused as exc:
+        raise HTTPException(400, "bad model name") from exc
+    if not os.path.exists(model_file):
         raise HTTPException(404, f"no model {name} (registry: {', '.join(m['name'] for m in S.list_models()) or 'empty'})")
     m = S.load_model(name)
     meta = dict(m.meta or {})
@@ -196,11 +201,11 @@ def _prefix_table(dir_path: str, harness: Optional[str] = None, max_runs: Option
         from traceharness.core.analysis import is_human_intervened
         if is_human_intervened(row):          # a person steered this run: its label is not the model's outcome
             continue
-        p = os.path.join(dir_path, row["run_id"], "ledger.jsonl")
         try:
+            p = confine(dir_path, row["run_id"], "ledger.jsonl")     # run_id is data from index.jsonl
             with open(p) as fh:
                 spans = [json.loads(line) for line in fh if line.strip()]
-        except OSError:
+        except (OSError, PathRefused):
             continue
         hcfg = next((s.get("harness", {}) for s in spans if s.get("span") == "invoke_agent" and s.get("status") == "start"), {})
         events = S.events_from_spans(spans)

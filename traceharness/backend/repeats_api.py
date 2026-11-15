@@ -29,6 +29,7 @@ from fastapi import APIRouter, HTTPException
 from traceharness.core import repeats as R
 
 from .paths import RUNS_ROOT
+from .safe_paths import http_confine
 
 router = APIRouter(prefix="/api/repeats")
 
@@ -50,13 +51,9 @@ def _safe_name(name: str, what: str) -> None:
 
 def _dir(name: str) -> str:
     _safe_name(name, "results dir name")
-    d = os.path.join(RUNS_ROOT, name)
-    # Defense in depth: even a name that passes the segment check above (no slash, no leading dot)
-    # must still resolve to somewhere actually inside RUNS_ROOT once symlinks are followed.
-    real_root = os.path.realpath(RUNS_ROOT)
-    real_d = os.path.realpath(d)
-    if os.path.commonpath([real_root, real_d]) != real_root:
-        raise HTTPException(400, "bad results dir name")
+    # Even a name that passes the segment check above (no slash, no leading dot) must resolve to
+    # somewhere actually inside RUNS_ROOT once symlinks are followed: http_confine does that.
+    d = http_confine(RUNS_ROOT, name)
     if not os.path.exists(os.path.join(d, "index.jsonl")):
         raise HTTPException(404, f"no results dir {name}")
     return d
@@ -72,8 +69,7 @@ def repeats_study(name: str, harness: Optional[str] = None, limit: int = DEFAULT
 def repeats_run(name: str, run_id: str):
     d = _dir(name)
     _safe_name(run_id, "run_id")
-    rd = os.path.join(d, run_id)
-    real_d = os.path.realpath(d)
-    if os.path.commonpath([real_d, os.path.realpath(rd)]) != real_d or not os.path.isdir(rd):
+    rd = http_confine(d, run_id)
+    if not os.path.isdir(rd):
         raise HTTPException(404, f"no run {run_id}")
     return R.run_detail(d, run_id)

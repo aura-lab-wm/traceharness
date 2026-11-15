@@ -42,6 +42,7 @@ from typing import Iterable, Optional
 
 from .paths import INDEX_DB, RUNS_ROOT
 from .results_scope import is_private, list_results_dirs
+from .safe_paths import PathRefused, confine
 
 SCHEMA_VERSION = 3
 
@@ -186,7 +187,12 @@ def _runs_root(runs_root: Optional[str]) -> str:
 
 
 def _index_path(name: str, runs_root: Optional[str] = None) -> str:
-    return os.path.join(_runs_root(runs_root), name, "index.jsonl")
+    """index.jsonl of results dir `name`. A name that does not stay under the runs root cannot be
+    a results directory, so it is reported the way a missing one is (FileNotFoundError)."""
+    try:
+        return confine(_runs_root(runs_root), name, "index.jsonl")
+    except PathRefused as exc:
+        raise FileNotFoundError(f"no results dir {name!r}") from exc
 
 
 def _facts(run_dir: str) -> tuple:
@@ -231,7 +237,11 @@ def _ingest(cx: sqlite3.Connection, name: str, runs_root: Optional[str] = None) 
                 r = json.loads(line)
             except ValueError:
                 continue                                  # a half-written append during a live run
-            f_ = _facts(os.path.join(d, r.get("run_id", "")))
+            try:
+                run_dir = confine(d, r.get("run_id") or "")   # a run id in index.jsonl is data, not trusted
+            except PathRefused:
+                run_dir = ""                                  # _facts("") reports the run as absent
+            f_ = _facts(run_dir)
             payload.append((
                 name, r.get("run_id"), i, r.get("task_id"), r.get("harness_id"), r.get("model"),
                 _b(r.get("hidden_pass")), _b(r.get("strong_pass")), r.get("exit_reason"),
@@ -273,10 +283,10 @@ def refresh(name: Optional[str] = None, runs_root: Optional[str] = None,
     known = {r["dir"]: r for r in cx.execute("SELECT * FROM sources").fetchall()}
     done = {}
     for n in names:
-        idx = _index_path(n, runs_root)
         try:
+            idx = _index_path(n, runs_root)
             st = os.stat(idx)
-        except OSError:
+        except OSError:                            # missing, or a name outside the runs root
             with cx:
                 cx.execute("DELETE FROM runs WHERE dir = ?", (n,))
                 cx.execute("DELETE FROM sources WHERE dir = ?", (n,))
@@ -301,7 +311,10 @@ def _plain(name: str, runs_root: Optional[str] = None) -> list[dict]:
     """The uncached path: parse index.jsonl the way analysis.load_index does."""
     from traceharness.core.analysis import load_index
     root = runs_root or RUNS_ROOT
-    return load_index(os.path.join(root, name))
+    try:
+        return load_index(confine(root, name))
+    except PathRefused as exc:
+        raise FileNotFoundError(f"no results dir {name!r}") from exc
 
 
 # --------------------------------------------------------------------------- queries
@@ -341,7 +354,10 @@ def run_ids(name: str, runs_root: Optional[str] = None, db_path: Optional[str] =
 
 
 def has(name: str, runs_root: Optional[str] = None, db_path: Optional[str] = None) -> bool:
-    return os.path.exists(_index_path(name, runs_root))
+    try:
+        return os.path.exists(_index_path(name, runs_root))
+    except FileNotFoundError:                              # a name outside the runs root is not a results dir
+        return False
 
 
 def overview(runs_root: Optional[str] = None, db_path: Optional[str] = None) -> list[dict]:

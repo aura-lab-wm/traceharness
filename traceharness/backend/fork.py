@@ -26,6 +26,7 @@ from typing import Optional
 from fastapi import APIRouter, HTTPException
 
 from .paths import RUNS_ROOT
+from .safe_paths import PathRefused, confine, http_confine
 
 router = APIRouter(prefix="/api/fork")
 
@@ -52,7 +53,7 @@ def hoist_api_routes(app) -> None:
 def _dir(name: str) -> str:
     if "/" in name or name.startswith("."):
         raise HTTPException(400, "bad results dir name")
-    d = os.path.join(RUNS_ROOT, name)
+    d = http_confine(RUNS_ROOT, name)
     if not os.path.exists(os.path.join(d, "index.jsonl")):
         raise HTTPException(404, f"no results dir {name}")
     return d
@@ -76,7 +77,7 @@ _SPAN_CACHE: dict[str, tuple[float, list[dict]]] = {}
 
 def load_spans(d: str, run_id: str) -> list[dict]:
     """Parsed ledger for one run, memoised on (path, mtime). 75-step runs are ~200 spans."""
-    p = os.path.join(d, run_id, "ledger.jsonl")
+    p = http_confine(d, run_id, "ledger.jsonl")
     if not os.path.exists(p):
         raise HTTPException(404, f"no ledger for {run_id}")
     mt = os.path.getmtime(p)
@@ -99,7 +100,10 @@ def load_spans(d: str, run_id: str) -> list[dict]:
 
 def _first_line_seed(d: str, run_id: str):
     """The seed from the invoke_agent start span — read without parsing the whole ledger."""
-    p = os.path.join(d, run_id, "ledger.jsonl")
+    try:
+        p = confine(d, run_id, "ledger.jsonl")
+    except PathRefused:
+        return None
     if not os.path.exists(p):
         return None
     try:
@@ -372,8 +376,11 @@ def harness_of(spans: list[dict]) -> dict:
 def outcome_of(d: str, run_id: str, spans: list[dict], index_row: Optional[dict] = None) -> dict:
     s = index_row
     if s is None:
-        p = os.path.join(d, run_id, "summary.json")
-        if os.path.exists(p):
+        try:
+            p = confine(d, run_id, "summary.json")
+        except PathRefused:
+            p = ""
+        if p and os.path.exists(p):
             with open(p, encoding="utf-8") as f:
                 s = json.load(f)
     if s is None:

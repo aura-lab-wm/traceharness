@@ -33,6 +33,7 @@ from traceharness.core import live
 
 from .paths import RUNS_ROOT
 from .repeats_api import _safe_name
+from .safe_paths import http_confine
 from .results_scope import PRIVATE_DIRS, is_private
 
 router = APIRouter(prefix="/api")
@@ -83,10 +84,7 @@ def _run_path(dirname: str, run_id: str) -> str:
     _safe_name(run_id, "run_id")
     if is_private(RUNS_ROOT, dirname):
         raise HTTPException(403, "captured sessions are private")
-    p = os.path.join(RUNS_ROOT, dirname, run_id, "ledger.jsonl")
-    real_root = os.path.realpath(RUNS_ROOT)
-    if os.path.commonpath([real_root, os.path.realpath(p)]) != real_root:
-        raise HTTPException(400, "bad run path")
+    p = http_confine(RUNS_ROOT, dirname, run_id, "ledger.jsonl")
     if not os.path.isfile(p):
         raise HTTPException(404, f"no run {dirname}/{run_id}")
     return p
