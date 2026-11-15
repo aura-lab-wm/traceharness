@@ -67,6 +67,14 @@ class BrokerRewrite(unittest.TestCase):
         self.assertNotIn("max_tokens", B.rewrite({}, "chat", CFG))
 
 
+class BrokerErrorBody(unittest.TestCase):
+    def test_an_error_inside_a_200_is_recognised(self):
+        self.assertTrue(B.error_body("application/json", b'{"error":{"message":"Provider returned error","code":502}}'))
+        self.assertFalse(B.error_body("application/json", b'{"id":"gen-1","choices":[{"message":{}}]}'))
+        self.assertFalse(B.error_body("text/event-stream", b'data: {"error":{}}\n\n'))
+        self.assertFalse(B.error_body("application/json", b"not json"))
+
+
 class BrokerCaps(unittest.TestCase):
     def setUp(self):
         self.tmp = tempfile.mkdtemp()
@@ -364,6 +372,37 @@ class ResolveCosts(unittest.TestCase):
         self.assertEqual(res["runs_still_unpriced"], 1)
         with open(os.path.join(out, "index.jsonl")) as f:
             self.assertIsNone(json.loads(f.readline())["cost_usd"])
+
+    def test_a_call_with_no_generation_long_after_is_an_unbilled_error(self):
+        out, rd = self._dir()
+        with open(os.path.join(rd, "relay.jsonl")) as f:
+            calls = [json.loads(l) for l in f]
+        calls[1]["ts"] = 1.0                      # made long ago
+        with open(os.path.join(rd, "relay.jsonl"), "w") as f:
+            f.write("\n".join(json.dumps(c) for c in calls) + "\n")
+        with mock.patch.object(R, "_generation", return_value={"_not_found": True}):
+            res = R.resolve_dir(out, "k", wait_s=0)
+        self.assertEqual(res["runs_still_unpriced"], 0)
+        with open(os.path.join(out, "index.jsonl")) as f:
+            row = json.loads(f.readline())
+        self.assertEqual((row["cost_usd"], row["steps"]), (0.001, 1), "the failed call is free and not a model call")
+        self.assertIn("1 model calls returned an error inside HTTP 200", row["error"])
+        with mock.patch.object(R, "_generation", return_value={"_not_found": True}):
+            R.resolve_dir(out, "k", wait_s=0)
+        with open(os.path.join(out, "index.jsonl")) as f:
+            self.assertEqual(json.loads(f.readline())["error"].count("returned an error"), 1, "the note is not repeated")
+
+    def test_a_recent_not_found_is_still_pending(self):
+        out, rd = self._dir()
+        with open(os.path.join(rd, "relay.jsonl")) as f:
+            calls = [json.loads(l) for l in f]
+        import time as _t
+        calls[1]["ts"] = _t.time()
+        with open(os.path.join(rd, "relay.jsonl"), "w") as f:
+            f.write("\n".join(json.dumps(c) for c in calls) + "\n")
+        with mock.patch.object(R, "_generation", return_value={"_not_found": True}):
+            res = R.resolve_dir(out, "k", wait_s=0)
+        self.assertEqual(res["runs_still_unpriced"], 1)
 
     def test_refuses_while_runs_are_in_progress(self):
         out, _ = self._dir()

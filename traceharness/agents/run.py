@@ -194,21 +194,30 @@ def workspace_patch(before: dict, after: dict) -> tuple[str, list, bool]:
 
 
 # ---------------------------------------------------------------- OpenRouter generation stats
+#: a call whose generation is still "not found" this long after it was made produced no generation:
+#: OpenRouter answered with an error inside an HTTP 200 (e.g. the provider failed) and billed nothing
+NO_GENERATION_AFTER_S = 600
+
+
 def _generation(gid: str, key: str, wait_s: float) -> dict:
     """OpenRouter's record of one generation; {} if it is still not available after `wait_s`
-    (the record appears seconds after the call, later when many calls finish at once)."""
-    deadline, delay = time.time() + wait_s, 1.0
+    (the record appears seconds after the call, later when many calls finish at once), and
+    {"_not_found": True} when the last answer was an explicit 404 "not found"."""
+    deadline, delay, not_found = time.time() + wait_s, 1.0, False
     while True:
         req = urllib.request.Request("https://openrouter.ai/api/v1/generation?id=" + urllib.request.quote(gid),
                                      headers={"Authorization": "Bearer " + key})
         try:
             with urllib.request.urlopen(req, timeout=20) as r:
                 return json.loads(r.read()).get("data") or {}
+        except urllib.error.HTTPError as e:
+            not_found = e.code == 404
         except (urllib.error.URLError, ValueError, OSError):
-            if time.time() + delay > deadline:
-                return {}
-            time.sleep(delay)
-            delay = min(delay * 2, 10)
+            not_found = False
+        if time.time() + delay > deadline:
+            return {"_not_found": True} if not_found else {}
+        time.sleep(delay)
+        delay = min(delay * 2, 10)
 
 
 def resolve_generations(records: list, key: str, wait_s: float = 90) -> None:
@@ -216,6 +225,10 @@ def resolve_generations(records: list, key: str, wait_s: float = 90) -> None:
     not got them yet, in place, from OpenRouter's generation endpoint. Each call gets its own
     `wait_s`; a call still missing afterwards is marked `unresolved` (`traceharness agents resolve`
     retries it later from the same id)."""
+    for r in records:
+        if r.get("error_body") and r.get("status") == 200 and not isinstance(r.get("cost_usd"), (int, float)):
+            r.pop("unresolved", None)        # the broker saw an error in the 200 body: nothing was generated
+            r.update(no_generation=True, served_by="", cost_usd=0.0, tokens_in=0, tokens_out=0, cached=0)
     todo = [r for r in records if r.get("gen_id") and r.get("status") == 200
             and not isinstance(r.get("cost_usd"), (int, float))]
     if not todo or not key:
@@ -225,7 +238,11 @@ def resolve_generations(records: list, key: str, wait_s: float = 90) -> None:
 
     def one(rec):
         d = _generation(rec["gen_id"], key, wait_s)
-        if d:
+        if d.get("_not_found") and time.time() - float(rec.get("ts") or time.time()) > NO_GENERATION_AFTER_S:
+            # no generation exists long after the call: an error answered inside an HTTP 200, not billed
+            rec.pop("unresolved", None)
+            rec.update(no_generation=True, served_by="", cost_usd=0.0, tokens_in=0, tokens_out=0, cached=0)
+        elif d and not d.get("_not_found"):
             rec.pop("unresolved", None)
             rec.update(served_by=d.get("provider_name") or "", cost_usd=d.get("total_cost"),
                        tokens_in=d.get("native_tokens_prompt"), tokens_out=d.get("native_tokens_completion"),
@@ -237,10 +254,22 @@ def resolve_generations(records: list, key: str, wait_s: float = 90) -> None:
         list(ex.map(one, todo))
 
 
+def note_no_generation(s, calls: list) -> None:
+    """Name, in the run's error, the calls answered with an error and no generation (idempotent)."""
+    failed = sum(1 for c in calls if c.get("no_generation"))
+    tail = "(no generation, not billed)"
+    parts = [p for p in (getattr(s, "error", "") or "").split("; ") if p and not p.endswith(tail)]
+    if failed:
+        parts.append(f"{failed} model calls returned an error inside HTTP 200 {tail}")
+    s.error = "; ".join(parts)
+
+
 def apply_calls(s, calls: list) -> list:
     """Set a run's totals from its calls: cost (None while any call is unpriced: unknown, not zero),
-    hosts in order of first use, tokens and the number of model calls. Returns the hosts."""
-    ok_calls = [c for c in calls if c.get("status") == 200]
+    hosts in order of first use, tokens and the number of model calls. Returns the hosts. A call
+    answered with an error (no generation) is not a model call."""
+    ok_calls = [c for c in calls if c.get("status") == 200 and not c.get("no_generation")]
+    note_no_generation(s, calls)
     costs = [c.get("cost_usd") for c in ok_calls]
     served = []
     for c in ok_calls:
@@ -268,7 +297,7 @@ def resolve_dir(out_root: str, key: str, wait_s: float = 120) -> dict:
     with open(idx) as f:
         rows = [json.loads(l) for l in f if l.strip()]
     priced = still = 0
-    keys = ("cost_usd", "served_by", "steps", "input_tokens", "output_tokens")
+    keys = ("cost_usd", "served_by", "steps", "input_tokens", "output_tokens", "error")
     for row in rows:
         rd = os.path.join(out_root, row["run_id"])
         rp = os.path.join(rd, "relay.jsonl")
@@ -618,6 +647,7 @@ def write_run(agent, model, route, task_id, repeat, run_id, out_root, outd, grad
     failed = sorted({str(c.get("status")) for c in calls if c.get("status") not in (200, None) and not c.get("refused")})
     if failed:
         s.error = (s.error + "; " if s.error else "") + "model calls failed with HTTP " + ", ".join(failed)
+    note_no_generation(s, calls)
     run_dir = os.path.join(out_root, run_id)
     with open(os.path.join(run_dir, "summary.json"), "w") as f:
         f.write(s.to_json())

@@ -79,6 +79,18 @@ def rewrite(body: dict, protocol: str, cfg: dict) -> dict:
     return body
 
 
+def error_body(ctype: str, data: bytes) -> bool:
+    """True when a 200 response carries an error object instead of a completion (OpenRouter does this
+    when the provider fails after the request was accepted). Only small JSON bodies are inspected."""
+    if "json" not in (ctype or "") or len(data) > 65536:
+        return False
+    try:
+        obj = json.loads(data)
+    except ValueError:
+        return False
+    return isinstance(obj, dict) and obj.get("error") is not None and not obj.get("choices") and not obj.get("output")
+
+
 class Broker:
     def __init__(self, cfg: dict, key: str):
         self.cfg, self.key = cfg, key
@@ -183,8 +195,11 @@ def make_handler(broker: Broker):
                 broker.note({"seq": seq, "ts": t0, "path": path, "status": 502, "ms": int((time.time() - t0) * 1000),
                              "error": type(e).__name__, "req_bytes": size, "stream": bool(sent.get("stream"))})
                 return self.error(502, "model request failed in the broker")
-            broker.note({"seq": seq, "ts": t0, "path": path, "status": status, "ms": int((time.time() - t0) * 1000),
-                         "gen_id": gen, "req_bytes": size, "resp_bytes": len(data), "stream": bool(sent.get("stream"))})
+            rec = {"seq": seq, "ts": t0, "path": path, "status": status, "ms": int((time.time() - t0) * 1000),
+                   "gen_id": gen, "req_bytes": size, "resp_bytes": len(data), "stream": bool(sent.get("stream"))}
+            if status == 200 and error_body(ctype, data):
+                rec["error_body"] = True     # OpenRouter answered an error inside a 200: nothing was generated
+            broker.note(rec)
             self.reply(status, ctype, data)
 
     return Handler
