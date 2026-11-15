@@ -64,6 +64,7 @@
 .rg-traj-ki.grade{background:var(--rig-text)}
 .rg-traj-ki.bnd{background:var(--rig-red)}
 .rg-traj-ki.sent{background:none;border-color:var(--rig-sel);border-radius:var(--rig-r-full)}
+.rg-traj-ki.hum{background:none;border-color:var(--rig-amb);border-radius:var(--rig-r-sm)}
 .rg-traj-ki.rep{background:none;border-color:var(--rig-qty);border-style:dashed}
 .rg-traj-ki.agent{border-color:var(--rig-dim);transform:rotate(45deg);width:var(--rig-s2);height:var(--rig-s2)}
 .rg-tag .rg-traj-ki{width:var(--rig-s2);height:var(--rig-s2)}

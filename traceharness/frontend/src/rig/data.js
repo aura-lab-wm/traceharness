@@ -246,6 +246,8 @@ export function normRun(r, ds) {
     vis: nb(r.visible_pass), hid: nb(r.hidden_pass), str: nb(r.strong_pass),
     in: r.input_tokens ?? null, out: r.output_tokens ?? null,
     usageEstimated: r.provider === 'nebius/SWE-agent-trajectories',
+    // a person (or a timeout / cancel that changed what the agent did) decided something mid-run; rows written before the fields existed have neither
+    human: !!r.human_intervened || (r.human_interventions || 0) > 0, humanN: r.human_interventions || 0,
     cost: imported ? null : (r.cost_usd ?? null), wall: imported ? null : (r.wall_ms ?? null),
     steps: r.steps, tools: r.tool_calls, edits: r.edits, bnd: r.boundary_events, bkinds: r.boundary_kinds || [],
     tests: r.tests_run_by_agent, rtbs: nb(r.ran_tests_before_submit), started: r.started_at || '', error: r.error || '',
@@ -286,6 +288,7 @@ export const paths = {
   realAnalysis: (dir) => `/real/${E(dir)}/analysis`,
   sentinel: () => '/sentinel', tasks: () => '/tasks', models: () => '/models', settings: () => '/settings',
   status: () => '/status', jobs: () => '/jobs', judge: () => '/judge',
+  paused: () => '/paused', pauseConfig: () => '/pause/config',
 }
 
 /* ------------------------------------------------------------------ hooks */
