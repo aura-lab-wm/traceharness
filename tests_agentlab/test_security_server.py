@@ -123,3 +123,25 @@ class LegacyServerGuardTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class DetectErrorDoesNotLeakTheMessage(unittest.TestCase):
+    """GET /api/import/detect reports an adapter failure by type and error id, never its text."""
+
+    def test_adapter_exception_text_stays_in_the_log(self):
+        import tempfile
+        from unittest import mock
+        from traceharness.backend import importers as I
+        with tempfile.NamedTemporaryFile("w", suffix=".jsonl", delete=False) as f:
+            f.write("{}\n")
+        self.addCleanup(os.unlink, f.name)
+
+        class Boom:
+            NAME = "boom"
+            def sniff(self, path):
+                raise RuntimeError("secret /Users/someone/private/path")
+        with mock.patch.object(I, "SOURCES", [Boom()] + list(I.SOURCES)), self.assertLogs("traceharness.server", "ERROR"):
+            out = I.detect_detail(f.name)
+        self.assertIn("boom: RuntimeError (error id ", out["error"])
+        self.assertNotIn("secret", out["error"])
+        self.assertNotIn("/Users/someone", out["error"])

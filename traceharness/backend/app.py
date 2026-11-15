@@ -50,7 +50,8 @@ async def _lifespan(_app):
     _stop_paused_runs()
 
 
-app = FastAPI(title="traceharness", version="0.1", lifespan=_lifespan)
+from traceharness.__main__ import __version__ as _VERSION   # one version for the API docs and the package
+app = FastAPI(title="traceharness", version=_VERSION, lifespan=_lifespan)
 app.middleware("http")(private_results_guard(lambda: M.RUNS_ROOT))
 # Registered SECOND: FastAPI/Starlette wrap middleware so the most-recently-registered one runs
 # OUTERMOST (first). This must run before private_results_guard, so a request from an untrusted
