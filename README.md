@@ -63,6 +63,8 @@ Both container setups bind to `127.0.0.1` only by default. To reach the server f
 
 `traceharness agents` runs mini-SWE-agent 2.4.6, Codex CLI 0.167.1 and Claude Code 2.1.322 on the lab's tasks (or on the eight real-repository task packages in `deploy/runner/tasks`), with a pinned model and pinned hosts, and writes the same results directory as `traceharness run`. The agent's own log is turned into the ledger by the import adapters, and its workspace is graded by the same grader, so the console and every analysis treat these runs like the lab's own. Docker is required (on macOS, `colima start` gives a headless one).
 
+`traceharness import PATH` converts the logs of agents TraceHarness did not run into the same ledger: Claude Code, Codex, Cursor, agy (Antigravity CLI), Qwen Code, Kimi Code, ZCode, Grok CLI, GitHub Copilot CLI, Muse, OpenHands, SWE-agent, mini-SWE-agent, Inspect logs and Trajectory v1 files. `--detect` names the adapter it would pick. A source that does not record something (Copilot CLI records no token usage) imports it as unknown, never as an estimate.
+
 ```bash
 traceharness agents build                      # the image (add --real-repos for the task packages)
 export OPENROUTER_API_KEY=...
@@ -74,7 +76,7 @@ Each run uses separate containers. The **broker** is the only one with network a
 
 ## Record on traceharness.dev
 
-Sign in at [traceharness.dev](https://traceharness.dev), then connect the machine where your coding agents run. Local capture adapters support **Claude Code**, **Codex**, **Gemini CLI**, **Qwen Code**, and **Cursor**. These commands use the CLI without starting a local web server:
+Sign in at [traceharness.dev](https://traceharness.dev), then connect the machine where your coding agents run. Local capture adapters support **Claude Code**, **Codex**, **agy** (Antigravity CLI), **Qwen Code**, and **Cursor**. These commands use the CLI without starting a local web server:
 
 ```bash
 pipx install git+https://github.com/aura-lab-wm/traceharness

@@ -299,7 +299,7 @@ def sidecar_outcome(path: str, session_id: str) -> tuple[Optional[bool], str]:
 def hunks_from_line_counts(added: int, removed: int) -> list:
     """A `structuredPatch`-shaped hunk carrying only COUNTS.
 
-    Qwen Code and Gemini CLI report `model_added_lines` / `model_removed_lines` rather than the
+    Qwen Code reports `model_added_lines` / `model_removed_lines` rather than the
     edited lines themselves. The counts are real, so `line_counts_known` stays True; the line
     TEXT is not available and is deliberately left empty rather than invented. A source that
     ships a real unified diff should be parsed into hunks instead of coming through here.

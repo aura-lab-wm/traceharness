@@ -29,7 +29,7 @@ Choose the session directory you want to capture and an independent local lab di
 
 Repeat `--path` for more directories. With no `--path`, the command uses the existing local
 allow-list in `~/.traceharness/capture.json`; an absent or empty allow-list captures nothing.
-The watcher supports the same Claude Code, Codex, Gemini CLI, Qwen Code and Cursor adapters as
+The watcher supports the same Claude Code, Codex, agy, Qwen Code and Cursor adapters as
 local capture. It does not discover and authorize session stores on your behalf.
 
 A person must type `yes` at the terminal before sync starts. This consents to reading the chosen
