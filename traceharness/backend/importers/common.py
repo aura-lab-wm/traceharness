@@ -540,13 +540,17 @@ def _exit_reason(sess: Session, submitted: bool, n_steps: int, stopped_calling_t
 
 
 def convert(sess: Session, out_root: str, task_id: str, harness: dict, model_override: str = "",
-            missing: frozenset = frozenset()) -> Any:
+            missing: frozenset = frozenset(), run_id: str = "", grades: Optional[dict] = None) -> Any:
     """Write one run's four files and return its RunSummary.
 
     `missing` names capabilities the source does not record (see UNMEASURED_FIELDS). Without tool
     spans a tool request is kept on its chat span but no execute_tool/edit/boundary span is
     written for it; without usage no token count or cost is estimated. Either way the fields they
     would have filled are null in the summary, never zero.
+
+    `run_id` replaces the deterministic import id (traceharness/agents names the runs it launches).
+    `grades` = {"visible", "hidden", "strong", "tests_modified"} is a real grade of the final workspace
+    (traceharness/agents grades it with core.grader); it replaces the verdict-less defaults.
     """
     tools_known = "tool_spans" not in missing
     usage_known = "usage" not in missing
@@ -554,7 +558,7 @@ def convert(sess: Session, out_root: str, task_id: str, harness: dict, model_ove
 
     model = model_override or sess.model or "unknown"
     harness_id = harness["id"]
-    run_id = run_id_for(sess, task_id)
+    run_id = run_id or run_id_for(sess, task_id)
     run_dir = os.path.join(out_root, run_id)
     os.makedirs(run_dir, exist_ok=True)
 
@@ -705,18 +709,25 @@ def convert(sess: Session, out_root: str, task_id: str, harness: dict, model_ove
                     if s["span"] == "execute_tool" and "tests_passed" in s), None)
     summary.visible_pass = bool(last_tp) if last_tp is not None else None
     summary.strong_pass = None
+    if grades is not None:
+        summary.visible_pass, summary.hidden_pass, summary.strong_pass = grades.get("visible"), grades.get("hidden"), grades.get("strong")
+        summary.tests_modified = bool(grades.get("tests_modified"))
     summary.error = "" if summary.exit_reason != "error" else (sess.exit_status or "")[:200]
     summary.finished_at = next((e.ts for e in reversed(sess.events) if e.ts), "")
     if missing:
         blank_unmeasured(summary, missing)
 
-    if sess.hidden_pass is not None:
+    if grades is not None:
+        rec("grade", ts=summary.finished_at, visible=summary.visible_pass, hidden=summary.hidden_pass,
+            strong=summary.strong_pass, tests_modified=summary.tests_modified,
+            source=grades.get("source") or "traceharness.core.grader")
+    elif sess.hidden_pass is not None:
         rec("grade", visible=summary.visible_pass, hidden=summary.hidden_pass, strong=None,
             tests_modified=summary.tests_modified, source=sess.outcome_source or f"{sess.source} trace")
     rec("invoke_agent", ts=summary.finished_at, status="end", exit_reason=summary.exit_reason,
         hidden_pass=summary.hidden_pass, cost_usd=0.0 if usage_known else None,
         total_tokens=(summary.input_tokens + summary.output_tokens) if usage_known else None,
-        native_exit_status=sess.exit_status, outcome_known=sess.hidden_pass is not None,
+        native_exit_status=sess.exit_status, outcome_known=summary.hidden_pass is not None,
         unmeasured=unmeasured_fields(missing))
 
     with open(os.path.join(run_dir, "ledger.jsonl"), "w", encoding="utf-8") as f:

@@ -1,0 +1,10 @@
+# The agent image plus the pinned pure-Python dependencies of the real-repository task packages
+# (deploy/runner/tasks/*/requirements.lock, identical for all eight), so an agent can run their
+# public tests. Built by `traceharness agents build --real-repos`.
+ARG BASE
+FROM ${BASE}
+USER root
+COPY requirements.lock /opt/task-requirements.lock
+RUN /opt/mini/bin/pip install --no-cache-dir --only-binary=:all: --require-hashes --no-deps \
+        --target /usr/local/lib/python3.11/dist-packages -r /opt/task-requirements.lock
+USER agent

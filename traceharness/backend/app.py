@@ -292,9 +292,15 @@ def run_detail(name: str, run_id: str):
             return json.load(f) if js else f.read()
     spans = [json.loads(l) for l in (rd_("ledger.jsonl") or "").splitlines() if l.strip()]
     model = S.load_model()
-    return {"summary": rd_("summary.json", True), "spans": spans, "patch": rd_("patch.diff"),
-            "messages": rd_("messages.json", True), "replay": S.replay(spans, model),
-            "issue": _issue_for(spans[0]["task_id"]) if spans else ""}
+    out = {"summary": rd_("summary.json", True), "spans": spans, "patch": rd_("patch.diff"),
+           "messages": rd_("messages.json", True), "replay": S.replay(spans, model),
+           "issue": _issue_for(spans[0]["task_id"]) if spans else ""}
+    # A third-party agent run in a container (traceharness/agents): the broker's record of every model
+    # call (host, tokens, cache, cost, latency) and where the run happened (image, limits, exit).
+    if os.path.exists(os.path.join(rd, "container.json")):
+        out["container"] = rd_("container.json", True)
+        out["relay"] = [json.loads(l) for l in (rd_("relay.jsonl") or "").splitlines() if l.strip()]
+    return out
 
 
 def _issue_for(tid: str) -> str:

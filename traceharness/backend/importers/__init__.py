@@ -24,6 +24,7 @@ Adapters
   inspect        Inspect AI eval log             (.eval / .json; scores are real verdicts)
   openhands      OpenHands events / SWE-bench output.jsonl
   swe_agent      Native SWE-agent .traj
+  mini_swe_agent mini-SWE-agent .traj.json (messages + info; what `traceharness agents run` records)
 
 Public API
 ----------
@@ -54,7 +55,7 @@ import os
 import threading
 from typing import Callable, Iterable, Optional
 
-from . import (claude_code, codex, cursor, gemini_cli, inspect_log, openhands, qwen_code, swe_agent,
+from . import (claude_code, codex, cursor, gemini_cli, inspect_log, mini_swe_agent, openhands, qwen_code, swe_agent,
                trajectory_fmt)
 from .common import (Event, Session, derive_task_id, fingerprint, harness_from_fingerprint,
                      harness_id_for, map_tool, run_id_for, sha12, convert, LAB_TOOLS)
@@ -69,7 +70,7 @@ except Exception:                             # standalone fallback: .../importe
     RUNS_ROOT = os.path.join(LAB_ROOT, "data", "runs")
 
 #: adapter registry, most specific sniffers first (order only breaks ties)
-SOURCES = [inspect_log, swe_agent, qwen_code, gemini_cli, claude_code, codex, cursor, trajectory_fmt, openhands]
+SOURCES = [inspect_log, mini_swe_agent, swe_agent, qwen_code, gemini_cli, claude_code, codex, cursor, trajectory_fmt, openhands]
 
 _ADAPTER = {m.NAME: m for m in SOURCES}
 

@@ -20,6 +20,8 @@ def build_parser() -> argparse.ArgumentParser:
         description="traceharness -- the web platform over traceharness.core: run coding-agent cells, watch the "
                     "ledger live, compare harnesses, and train the sentinel.",
         epilog="subcommands: `traceharness run ...` sweeps the lab's own harnesses; "
+               "`traceharness agents build|list|run` runs third-party agents (mini-SWE-agent, Codex, Claude Code) "
+               "on the same tasks in containers without network, and grades them the same way; "
                "`traceharness watch [<dir>[/<run_id>]]` follows a run's ledger in the terminal as it "
                "is written; `traceharness paused` lists runs waiting for a human decision (harness `pause`) and "
                "`traceharness decide <run> approve|deny|edit|inject|abort` answers one; `traceharness import <path>` reads another harness's trace into the "
@@ -753,6 +755,9 @@ def main(argv: list[str] | None = None) -> int:
         from traceharness.core import runner  # noqa: E402
         sys.argv = ["traceharness run"] + argv[1:]
         return runner.main() or 0
+    if argv and argv[0] == "agents":
+        from traceharness.agents.run import main as agents_main  # noqa: E402
+        return agents_main(argv[1:])
     if argv and argv[0] == "watch":
         return watch_cli(argv[1:])
     if argv and argv[0] == "import":
