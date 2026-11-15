@@ -24,6 +24,11 @@ from test_no_dead_surface import registered_routes           # noqa: E402
 #: dropped from here is a route _urls() must cover instead -- this file's own test below fails
 #: loudly the moment that stops being true, in either direction.
 EXCLUDED_FROM_EXPORT = {
+    "/api/paused":
+        "the runs waiting for a human decision right now: live state with a decision button, "
+        "meaningless once frozen into a file",
+    "/api/pause/config":
+        "whether this server wants a pause token: a property of the running process, not of the data",
     "/api/bundle":
         "the Field's data reaches the export a different way: field.field_export() embeds the "
         "same build_bundle() payload straight into the HTML that /api/field/html hands back "
