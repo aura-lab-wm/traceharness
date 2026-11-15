@@ -52,16 +52,46 @@ MAX_COMPRESSED_DATA_BYTES = 64 * 1024 * 1024
 #: the nested copy leaks exactly as loudly as the outer one.
 REDACT = {"/settings": ("key_hint", "lab_root", "results_root", "harness_dir", "task_dir", "base_url"),
           "/import/status": ("path", "result.path")}
+#: Paths a page prints as text: the plugin panel names the folder its detector files live in, the
+#: import panel the runs folder. Live they are absolute, so from a checkout they read
+#: /Users/<name>/..., and from a temporary worktree they name the build machine's temp dir. The
+#: export keeps them relative to the lab root ("traceharness/plugins", "data/runs"), and drops one
+#: that lies outside it.
+RELATIVE = {"/sentinel/plugins": ("dir",), "/import/sources": ("runs_root",)}
+
+
+def _lab_relative(value):
+    """`value` relative to the lab root when it is an absolute path inside it, else None."""
+    if not isinstance(value, str) or not os.path.isabs(value):
+        return None
+    from .paths import LAB_ROOT
+    lab, real = os.path.realpath(LAB_ROOT), os.path.realpath(value)
+    if os.path.commonpath([lab, real]) != lab:
+        return None
+    return os.path.relpath(real, lab).replace(os.sep, "/")
 
 
 def redact(path: str, payload):
-    """`payload` without the keys REDACT names for `path`. Anything unlisted passes through.
+    """`payload` without the keys REDACT names for `path`, with the paths RELATIVE names made
+    relative to the lab root. Anything unlisted passes through.
 
     A name may be dotted (`result.path`) to drop a key from a nested object, which is left alone
     when it is absent or is not an object -- an idle import has `result: None`.
     """
+    if not isinstance(payload, dict):
+        return payload
+    relative = RELATIVE.get(path, ())
+    if relative:
+        payload = dict(payload)
+        for name in relative:
+            if name in payload:
+                rel = _lab_relative(payload[name])
+                if rel is None:
+                    del payload[name]
+                else:
+                    payload[name] = rel
     drop = REDACT.get(path)
-    if not drop or not isinstance(payload, dict):
+    if not drop:
         return payload
     nested: dict[str, set] = {}
     for name in drop:

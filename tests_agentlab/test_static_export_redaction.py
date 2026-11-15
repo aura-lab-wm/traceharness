@@ -67,13 +67,46 @@ class TestExportRedaction(unittest.TestCase):
         from fastapi.testclient import TestClient
         from traceharness.backend.app import app
         client = TestClient(app)
-        for path, names in SE.REDACT.items():
+        for path, names in [*SE.REDACT.items(), *SE.RELATIVE.items()]:
             live = client.get("/api" + path).json()
             self.assertIsInstance(live, dict, path)
             for name in names:
                 outer = name.split(".", 1)[0]
                 self.assertIn(outer, live,
                               f"redaction of {path} names {name}, which the route no longer returns")
+
+    def test_folder_names_a_page_prints_are_kept_relative_to_the_lab(self):
+        """The plugin panel prints /sentinel/plugins `dir` and the import panel /import/sources
+        `runs_root`. Exported as they are, both carried the build machine's absolute path: from a
+        checkout /Users/<name>/..., from the /app publisher its temporary worktree."""
+        from traceharness.backend.paths import LAB_ROOT
+        plugins = SE.redact("/sentinel/plugins", {"dir": os.path.join(LAB_ROOT, "traceharness", "plugins"),
+                                                  "n_builtin": 6, "detectors": []})
+        self.assertEqual(plugins["dir"], "traceharness/plugins")
+        self.assertEqual(plugins["n_builtin"], 6)
+        sources = SE.redact("/import/sources", {"runs_root": os.path.join(LAB_ROOT, "data", "runs"), "sources": []})
+        self.assertEqual(sources["runs_root"], "data/runs")
+        outside = SE.redact("/import/sources", {"runs_root": "/Users/someone/elsewhere/runs", "sources": []})
+        self.assertNotIn("runs_root", outside, "a folder outside the lab is dropped, not exported")
+        self.assertEqual(outside["sources"], [])
+
+    def test_no_global_payload_names_the_lab_root(self):
+        """Every payload the export embeds once per file, fetched from the real app and filtered as
+        build() files it: none may carry the absolute lab root, which names the machine."""
+        from fastapi.testclient import TestClient
+        from traceharness.backend.app import app
+        from traceharness.backend.paths import LAB_ROOT
+        client = TestClient(app)
+        sink, failed = {}, []
+        for url in SE._GLOBAL_URLS:
+            SE._fetch(client, url, sink, failed)
+        self.assertIn("/sentinel/plugins", sink)
+        self.assertIn("/import/sources", sink)
+        import json
+        for key, payload in sink.items():
+            text = json.dumps(payload)
+            for root in {LAB_ROOT, os.path.realpath(LAB_ROOT)}:
+                self.assertNotIn(root, text, f"{key} embeds the lab root")
 
 
 if __name__ == "__main__":
