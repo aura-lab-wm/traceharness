@@ -31,7 +31,7 @@ test-v:  ## run the unittest suite, verbose
 	cd $(CURDIR) && $(PY) -m unittest discover -s tests_agentlab -v
 
 test-js:  ## run the JavaScript suite (vitest, node environment, no browser, no network)
-	cd traceharness/frontend && npm ci --no-audit --no-fund && npx vitest run
+	cd traceharness/frontend && npm ci --no-audit --no-fund && npm test
 
 menubar-test:  ## run the Swift suite for the capture menu-bar app (macOS only, needs swift)
 	cd macos/CaptureMenubar && swift test
