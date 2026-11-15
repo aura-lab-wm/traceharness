@@ -808,8 +808,8 @@ def real_status():
 
 @app.get("/api/real/{name}/analysis")
 def real_analysis(name: str):
-    _dir(name)
-    return M._clean(RI.analysis(os.path.join(M.RUNS_ROOT, name)))
+    d = _dir(name)
+    return M._clean(RI.analysis(d))
 
 
 # --------------------------------------------------------------------------- judge (exercise 4)
