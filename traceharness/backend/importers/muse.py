@@ -314,6 +314,10 @@ def parse_file(path: str) -> Optional[Session]:
             # first tool call when it has one, else on its first event
             carrier = next((e for e in evs if e.kind == "tool_call"), evs[0])
             carrier.usage = usage
+            # the turn's other calls were billed in that one model call: a recorded zero
+            for e in evs:
+                if e.kind == "tool_call" and e is not carrier:
+                    e.usage = {"input_tokens": 0, "output_tokens": 0}
         events.extend(evs)
 
     def cur_for(run_id: str) -> dict:

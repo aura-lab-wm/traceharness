@@ -364,6 +364,10 @@ def _read_session(con: sqlite3.Connection, srow: tuple, has_usage: bool, path: s
         if u and mine:
             carrier = next((e for e in mine if e.kind == "tool_call"), mine[0])
             carrier.usage = u
+            # the message's other parallel calls were billed in this one model call: a recorded zero
+            for e in mine:
+                if e.kind == "tool_call" and e is not carrier:
+                    e.usage = {"input_tokens": 0, "output_tokens": 0}
             rt = _int((m.get("tokens") or {}).get("reasoning"))
             if rt:
                 carrier.raw["reasoning_tokens"] = rt

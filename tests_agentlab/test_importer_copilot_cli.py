@@ -37,7 +37,9 @@ class CopilotCli(unittest.TestCase):
         self.assertEqual(CP.sniff(FIXDIR), 0.0)
         # and no existing adapter claims the Copilot file
         for m in I.SOURCES:
-            self.assertLess(m.sniff(FIX), 0.5, m.NAME)
+            if m.NAME != CP.NAME:
+                self.assertLess(m.sniff(FIX), 0.5, m.NAME)
+        self.assertEqual(I.detect(FIX), CP.NAME)
 
     def test_parse(self):
         s = CP.parse_file(FIX)

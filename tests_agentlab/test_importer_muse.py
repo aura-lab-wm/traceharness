@@ -45,7 +45,8 @@ class Sniff(unittest.TestCase):
     def test_directory_is_zero_and_others_do_not_claim_it(self):
         self.assertEqual(muse.sniff(DAY), 0.0)
         for m in I.SOURCES:
-            self.assertLess(m.sniff(SESSION), 0.5, m.NAME)
+            if m.NAME != muse.NAME:
+                self.assertLess(m.sniff(SESSION), 0.5, m.NAME)
 
     def test_plain_envelope_scores_without_a_frame(self):
         d = tempfile.mkdtemp()
@@ -111,7 +112,7 @@ class Parse(unittest.TestCase):
                                                   "cache_read_input_tokens": 0, "cache_creation_input_tokens": 0})
         self.assertEqual(by["call_edit1"].usage["cache_read_input_tokens"], 1000)
         self.assertEqual(by["call_bash1"].usage["input_tokens"], 1300)
-        self.assertEqual(by["call_search1"].usage, {})   # second call of the same turn
+        self.assertEqual(by["call_search1"].usage, {"input_tokens": 0, "output_tokens": 0})   # second call of the turn: recorded 0
         final = self.s.events[-1]
         self.assertEqual((final.kind, final.usage["input_tokens"]), ("assistant", 1500))
         self.assertEqual(self.s.extra["usage_total"]["input_tokens"], 1000 + 1200 + 1300 + 1400 + 1500)
@@ -156,9 +157,9 @@ class Walk(unittest.TestCase):
         self.assertEqual(h.extra["parent_session_id"], SID)
 
     def test_detect_resolves_the_directory(self):
-        # detect() is the shared registry's walk; muse is not registered there (shared file), so
-        # check only that nothing else claims these files
-        self.assertNotIn(I.detect(SESSION), {m.NAME for m in I.SOURCES})
+        # muse is registered: the shared registry's walk resolves a session file and its day folder
+        self.assertEqual(I.detect(SESSION), muse.NAME)
+        self.assertEqual(I.detect(DAY), muse.NAME)
 
 
 class Convert(unittest.TestCase):
@@ -193,11 +194,10 @@ class Convert(unittest.TestCase):
                          ("muse-spark-1.3", "import:muse", 6, 1))
         self.assertIsNone(sm["hidden_pass"])
         self.assertTrue(sm["visible_pass"] is False or sm["visible_pass"] is True)
-        # three tool-bearing turns' input is counted by convert; usage on the final text-only
-        # turn is not (it estimates that one), see extra["usage_total"] for the true totals
-        # (convert also adds a len//4 estimate for the second call of a turn, which has no usage)
-        self.assertGreaterEqual(sm["input_tokens"], 1000 + 1200 + 1300 + 1400)
-        self.assertLess(sm["input_tokens"], 1000 + 1200 + 1300 + 1400 + 100)
+        # exact: every turn's recorded usage, the final text-only turn included, and no length
+        # estimate for the second call of a turn (it carries a recorded zero)
+        self.assertEqual(sm["input_tokens"], 1000 + 1200 + 1300 + 1400 + 1500)
+        self.assertEqual(sm["output_tokens"], 40 + 30 + 50 + 20 + 25)
         self.assertEqual(sm["files_touched"], ["calc.py"])
         with open(row) as f:
             idx = [json.loads(l) for l in f if l.strip()]

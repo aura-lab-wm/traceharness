@@ -357,6 +357,8 @@ def parse_file(path: str) -> Optional[Session]:
                     u = _usage_of(t)
                     if idxs:
                         events[idxs[-1]].usage = u
+                        for i in idxs[:-1]:          # same turn, already counted on its last call
+                            events[i].usage = {"input_tokens": 0, "output_tokens": 0}
                         placed_tools = True
                     else:
                         unplaced = _add(unplaced, u)
@@ -366,6 +368,9 @@ def parse_file(path: str) -> Optional[Session]:
             last = next((i for i in range(len(events) - 1, -1, -1) if events[i].kind == "tool_call"), None)
             if last is not None:
                 events[last].usage = _usage_of(sess_usage)
+                for e in events:                     # the session total covers every other call
+                    if e.kind == "tool_call" and e is not events[last]:
+                        e.usage = {"input_tokens": 0, "output_tokens": 0}
                 attribution = "session_total_on_last_call"
             else:
                 unplaced = _add(unplaced, _usage_of(sess_usage))
@@ -393,6 +398,9 @@ def parse_file(path: str) -> Optional[Session]:
                           "parent_session_id": str(summary.get("parent_session_id") or ""),
                           "last_turn_outcome": last_turn,
                           "usage_attribution": attribution, "usage_unplaced": unplaced,
+                          # no usage.json (or nothing placeable): tokens are UNKNOWN for this run,
+                          # never a length estimate (common.convert honours extra["unmeasured"])
+                          "unmeasured": ["usage"] if attribution == "none" else [],
                           "usage_session": {k: v for k, v in sess_usage.items() if k != "modelUsage"},
                           "git_branch": str(summary.get("head_branch") or "")})
 

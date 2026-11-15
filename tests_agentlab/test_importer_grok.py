@@ -136,7 +136,7 @@ class TestParse(unittest.TestCase):
     def test_usage_is_per_turn_on_the_last_tool_call(self):
         s = self.sess
         self.assertEqual(s.extra["usage_attribution"], "per_turn")
-        carriers = [e for e in s.events if e.usage]
+        carriers = [e for e in s.events if any(e.usage.values())]   # the other calls carry a recorded 0
         self.assertEqual(len(carriers), 1)
         self.assertEqual(carriers[0].call_id, "ws_1" if carriers[0].name == "web_search" else "call_5")
         self.assertEqual(carriers[0].call_id, "call_5")        # backend calls are not usage carriers

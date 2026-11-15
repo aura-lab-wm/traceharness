@@ -83,7 +83,9 @@ class TestSniff(Base):
 
     def test_no_other_adapter_claims_the_db(self):
         scores = I._file_scores(self.db)
-        self.assertEqual(scores, {})                      # none of the registered adapters
+        self.assertEqual(set(scores), {"zcode"})          # registered; no other adapter scores it
+        self.assertEqual(I.detect(self.db), "zcode")
+        self.assertEqual(I.detect(os.path.dirname(self.db)), "zcode")   # .sqlite in a directory walk
 
 
 class TestParse(Base):
@@ -146,7 +148,7 @@ class TestParse(Base):
         self.assertEqual(first.usage, {"input_tokens": 1200, "output_tokens": 90,
                                        "cache_read_input_tokens": 0, "cache_creation_input_tokens": 0})
         second_read = [e for e in evs if e.kind == "tool_call" and e.name == "Read"][1]
-        self.assertEqual(second_read.usage, {})
+        self.assertEqual(second_read.usage, {"input_tokens": 0, "output_tokens": 0})   # billed with the first: a recorded zero
         sh1 = next(e for e in evs if e.kind == "tool_call" and e.call_id == "call_00_sh1")
         self.assertEqual(sh1.usage["cache_read_input_tokens"], 1152)
         # a text-only final turn keeps its usage on its own event

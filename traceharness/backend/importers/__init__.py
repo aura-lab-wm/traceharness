@@ -20,6 +20,11 @@ Adapters
   claude_code    Claude Code session JSONL       (~/.claude/projects/<proj>/<session>.jsonl)
   codex          OpenAI Codex CLI rollout JSONL  (~/.codex/sessions/YYYY/MM/DD/rollout-*.jsonl)
   cursor         Cursor agent transcripts        (~/.cursor/projects/<proj>/agent-transcripts/**; partial)
+  kimi_code      Kimi Code wire journals         (~/.kimi-code/sessions/**/agents/<agent>/wire.jsonl)
+  zcode          ZCode session store             (~/.zcode/cli/db/db.sqlite)
+  grok           Grok CLI session directories    (~/.grok/sessions/<workspace>/<id>/chat_history.jsonl)
+  copilot_cli    GitHub Copilot CLI events       (~/.copilot/session-state/<id>/events.jsonl; no token usage)
+  muse           Muse CLI sessions               (~/.local/share/muse/sessions/YYYY/MM/DD/<id>/session.jsonl)
   trajectory     Letta Trajectory v1 records     (the cross-harness interchange format)
   inspect        Inspect AI eval log             (.eval / .json; scores are real verdicts)
   openhands      OpenHands events / SWE-bench output.jsonl
@@ -55,8 +60,8 @@ import os
 import threading
 from typing import Callable, Iterable, Optional
 
-from . import (claude_code, codex, cursor, gemini_cli, inspect_log, mini_swe_agent, openhands, qwen_code, swe_agent,
-               trajectory_fmt)
+from . import (claude_code, codex, copilot_cli, cursor, gemini_cli, grok, inspect_log, kimi_code, mini_swe_agent, muse,
+               openhands, qwen_code, swe_agent, trajectory_fmt, zcode)
 from .common import (Event, Session, derive_task_id, fingerprint, harness_from_fingerprint,
                      harness_id_for, map_tool, run_id_for, sha12, convert, LAB_TOOLS)
 
@@ -70,7 +75,8 @@ except Exception:                             # standalone fallback: .../importe
     RUNS_ROOT = os.path.join(LAB_ROOT, "data", "runs")
 
 #: adapter registry, most specific sniffers first (order only breaks ties)
-SOURCES = [inspect_log, mini_swe_agent, swe_agent, qwen_code, gemini_cli, claude_code, codex, cursor, trajectory_fmt, openhands]
+SOURCES = [inspect_log, mini_swe_agent, swe_agent, qwen_code, gemini_cli, kimi_code, zcode, grok, copilot_cli, muse,
+           claude_code, codex, cursor, trajectory_fmt, openhands]
 
 _ADAPTER = {m.NAME: m for m in SOURCES}
 
@@ -117,7 +123,8 @@ def _dir_scores(path: str) -> dict[str, dict]:
     for dp, dn, fn in os.walk(path):
         dn[:] = [d for d in dn if not d.startswith(".")]
         for f in sorted(fn):
-            if not f.endswith((".json", ".jsonl", ".eval", ".traj")):
+            # .db / .sqlite: agy and ZCode keep their sessions in SQLite stores
+            if not f.endswith((".json", ".jsonl", ".eval", ".traj", ".db", ".sqlite")):
                 continue
             best, score = _file_winner(_file_scores(os.path.join(dp, f)))
             if best and score >= 0.5:
@@ -348,8 +355,10 @@ def _import_path(path: str, results_dir_name: str, source: Optional[str] = None,
                 if progress:
                     progress(imported + skipped, None, f"skip {run_id}")
                 continue
+            # a session can also lack what its source usually records (a Grok session with no
+            # usage.json): the adapter names it in extra["unmeasured"], and it is unknown, not 0
             summary = convert(sess, out_root, task_id, harness, model_override=model_override or "",
-                              missing=gaps)
+                              missing=gaps | frozenset(sess.extra.get("unmeasured") or ()))
             rows.append(json.dumps(summary.__dict__, ensure_ascii=False, default=str))
             known.add(run_id)
             imported += 1
