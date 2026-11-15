@@ -155,15 +155,30 @@ MAX_QUERY_PATTERN = 300       # characters; a hunch is a short shape, not a prog
 MAX_SEARCHED_ACTIONS = 5000   # characters of one action string a pattern is run against
 
 
+def _sre():
+    """The stdlib regex parser and its constants: re._parser / re._constants on Python 3.11+,
+    sre_parse / sre_constants on 3.10 (pyproject.toml supports >= 3.10)."""
+    try:
+        import re._constants as C
+        import re._parser as P
+    except ImportError:                       # Python 3.10
+        import sre_constants as C
+        import sre_parse as P
+    return P, C
+
+
 def _nested_unbounded(parsed) -> bool:
     """True when an unbounded repeat sits inside another unbounded repeat ((a+)+, (a*)*, (.*a)*):
     the shapes that backtrack exponentially. Only structure is inspected, nothing is run."""
-    import re._constants as C
+    _, C = _sre()
     UNB = C.MAXREPEAT
+    # POSSESSIVE_REPEAT and ATOMIC_GROUP exist from Python 3.11; on 3.10 they cannot occur
+    REPEATS = tuple(op for op in (C.MAX_REPEAT, C.MIN_REPEAT, getattr(C, "POSSESSIVE_REPEAT", None)) if op is not None)
+    ATOMIC = getattr(C, "ATOMIC_GROUP", None)
 
     def walk(items, inside):
         for op, av in items:
-            if op in (C.MAX_REPEAT, C.MIN_REPEAT, C.POSSESSIVE_REPEAT):
+            if op in REPEATS:
                 lo, hi, body = av
                 unbounded = hi == UNB or (hi - lo) > 64
                 if unbounded and inside:
@@ -179,7 +194,7 @@ def _nested_unbounded(parsed) -> bool:
             elif op in (C.ASSERT, C.ASSERT_NOT):
                 if walk(av[1], inside):
                     return True
-            elif op == C.ATOMIC_GROUP:
+            elif ATOMIC is not None and op == ATOMIC:
                 if walk(av, inside):
                     return True
         return False
@@ -190,7 +205,7 @@ def _nested_unbounded(parsed) -> bool:
 def compile_query(pattern: str):
     """Compile a user-written action-string regex, refusing the ones that can hang the server
     (too long, or with nested unbounded repeats). Raises re.error with a plain reason."""
-    import re._parser as _parser
+    _parser, _ = _sre()
     if len(pattern) > MAX_QUERY_PATTERN:
         raise re.error(f"pattern longer than {MAX_QUERY_PATTERN} characters")
     parsed = _parser.parse(pattern)
