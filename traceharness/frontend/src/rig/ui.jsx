@@ -355,15 +355,23 @@ export function failureModeOf(run, oracle = 'hidden') {
   return null
 }
 /** <FailureChip run oracle?/> or <FailureChip mode dir/> — "cut off · no patch" etc.
- *  Renders nothing for a pass or an unknown grade. Tooltip + aria carry the mode's meaning. */
+ *  Renders nothing for a pass or an unknown grade (except the human-intervened mark). Tooltip + aria carry the mode's meaning. */
 export function FailureChip({ run, mode, dir, oracle }) {
   const rig = useRig()
   const o = oracle || rig.oracle
   const m = mode || failureModeOf(run, o)
   const out = useOutcomes(m && m !== 'strengthened_only' ? dir || (run && run.ds) : null)
-  if (!m || !isFailureMode(m)) return null
+  const human = run && run.human ? <HumanChip run={run} /> : null
+  if (!m || !isFailureMode(m)) return human
   const meta = m === 'strengthened_only' ? STRONG_ONLY : (out.data && out.data.byId[m]) || { label: m.replace(/_/g, ' '), meaning: '' }
-  return <span className={cx('rg-fchip', m === 'wrong_patch' || m === 'strengthened_only' ? 'wp' : m === 'harness_error' ? 'he' : 'np')} title={meta.meaning} aria-label={`${meta.label}${meta.meaning ? ': ' + meta.meaning : ''}`} data-mode={m}>{meta.label}</span>
+  return <>{human}<span className={cx('rg-fchip', m === 'wrong_patch' || m === 'strengthened_only' ? 'wp' : m === 'harness_error' ? 'he' : 'np')} title={meta.meaning} aria-label={`${meta.label}${meta.meaning ? ': ' + meta.meaning : ''}`} data-mode={m}>{meta.label}</span></>
+}
+/** <HumanChip run/> — a person steered this run, so it is not an unattended measurement. Drawn beside every verdict
+ *  (FailureChip carries it), because a pass that a reviewer edited must not read as the model's own. */
+export function HumanChip({ run }) {
+  if (!run || !run.human) return null
+  const n = run.humanN || 1
+  return <span className="rg-fchip he" data-el="human-intervened" title="A person approved, denied, edited, redirected or stopped this run, so aggregate statistics leave it out unless you opt in." aria-label={`human-intervened: ${n} decision${n === 1 ? '' : 's'}`}>human-intervened{n > 1 ? ` ×${n}` : ''}</span>
 }
 /** Summary of failure modes over runs: "3 failed: 3 cut off" (null when none failed). */
 export function failureSummary(runs, oracle = 'hidden') {

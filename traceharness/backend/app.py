@@ -6,7 +6,7 @@ Serves the analysis API, launches live runs (mock or any OpenRouter model) with 
 every ledger span to the browser over SSE, trains and evaluates the sentinel, and serves the built UI.
 """
 from __future__ import annotations
-import asyncio, json, os, queue, re, sys, threading, time, traceback, uuid, zlib
+import asyncio, contextlib, json, os, queue, re, sys, threading, time, traceback, uuid, zlib
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import asdict
 from typing import Optional
@@ -33,7 +33,23 @@ from .private_guard import private_results_guard                   # noqa: E402
 from .guard import security_guard                                  # noqa: E402
 from .repeats_api import _safe_name                                # noqa: E402  (one name rule for every route)
 
-app = FastAPI(title="traceharness", version="0.1")
+#: Set when the server shuts down. A run waiting for a human decision (HarnessConfig.pause) polls it,
+#: so shutdown ends the wait as an abort instead of leaving a worker blocked until its timeout.
+_SHUTDOWN = threading.Event()
+
+
+def _stop_paused_runs():
+    _SHUTDOWN.set()
+
+
+@contextlib.asynccontextmanager
+async def _lifespan(_app):
+    _SHUTDOWN.clear()          # a fresh start (and a test that enters the app twice) begins un-stopped
+    yield
+    _stop_paused_runs()
+
+
+app = FastAPI(title="traceharness", version="0.1", lifespan=_lifespan)
 app.middleware("http")(private_results_guard(lambda: M.RUNS_ROOT))
 # Registered SECOND: FastAPI/Starlette wrap middleware so the most-recently-registered one runs
 # OUTERMOST (first). This must run before private_results_guard, so a request from an untrusted
@@ -289,14 +305,17 @@ def _issue_for(tid: str) -> str:
 
 
 @app.get("/api/results/{name}/metrics")
-def metrics(name: str, model: Optional[str] = None, baseline: str = "baseline"):
+def metrics(name: str, model: Optional[str] = None, baseline: str = "baseline", include_human: bool = False):
+    """`include_human` (default false) counts runs a person intervened in; by default they are left out."""
     _dir(name)
     rows = M.rows_for(name, model=model)
-    return {"cells": M.cells(rows), "comparison": M.harness_comparison(rows, baseline, model), "sentinel_pairs": M.sentinel_pairs(rows)}
+    return {"cells": M.cells(rows, include_human=include_human),
+            "comparison": M.harness_comparison(rows, baseline, model, include_human=include_human),
+            "sentinel_pairs": M.sentinel_pairs(rows, include_human=include_human)}
 
 
 @app.get("/api/results/{name}/comparisons")
-def comparisons(name: str, baseline: Optional[str] = None):
+def comparisons(name: str, baseline: Optional[str] = None, include_human: bool = False):
     """Every model's per-harness paired comparison against the `baseline` HARNESS, in ONE response
     -- the attribution matrix's replacement for a round trip per model. Delegates to
     `M.comparisons`, which calls `harness_comparison`, the SAME function /metrics uses.
@@ -307,12 +326,13 @@ def comparisons(name: str, baseline: Optional[str] = None):
     _dir(name)
     rows, fp = _study_rows_stable(name)
     b = M.resolve_baseline_harness(rows, baseline)
-    return _STUDY_CACHE.get_or_compute(("comparisons", name, b), fp, lambda: M.comparisons(rows, b))
+    return _STUDY_CACHE.get_or_compute(("comparisons", name, b, include_human), fp,
+                                       lambda: M.comparisons(rows, b, include_human=include_human))
 
 
 
 @app.get("/api/results/{name}/oracle")
-def oracle(name: str):
+def oracle(name: str, include_human: bool = False):
     """The hidden-test vs. strong-suite agreement summary (Cohen's kappa, chance-corrected) over
     every run -- what judge and report used to compute by pulling the full 1.2 MB /runs payload for
     two booleans per row. Delegates to `M.oracle` (core.cohens_kappa): eligible-pair count,
@@ -321,7 +341,7 @@ def oracle(name: str):
     eligible."""
     _dir(name)
     rows, fp = _study_rows_stable(name)
-    return _STUDY_CACHE.get_or_compute(("oracle", name), fp, lambda: M.oracle(rows))
+    return _STUDY_CACHE.get_or_compute(("oracle", name, include_human), fp, lambda: M.oracle(rows, include_human=include_human))
 
 
 @app.get("/api/results/{name}/patterns")
@@ -349,7 +369,7 @@ def run_query(name: str, pattern: str = "", harness: Optional[str] = None, model
 @app.get("/api/results/{name}/experiment")
 def experiment(name: str, a: str = "model", b: str = "harness_id", outcome: str = "hidden_pass",
                a_cell: Optional[str] = None, b_cell: Optional[str] = None, also: Optional[str] = None,
-               hold: Optional[list[str]] = Query(default=None)):
+               hold: Optional[list[str]] = Query(default=None), include_human: bool = False):
     """Exercise 8 for whatever is in the filter, now also carrying `fit` -- `factor_summary(anova)`,
     the pure summary of the SAME ANOVA table this response already returned, so the Experiment view
     stops deriving it client-side (docs/superpowers/specs/2026-09-21-study-aggregates-design.md).
@@ -378,9 +398,9 @@ def experiment(name: str, a: str = "model", b: str = "harness_id", outcome: str 
         M.validate_holds(rows, holds, a, b, outcome)
     except ValueError as exc:
         raise HTTPException(400, str(exc)) from exc
-    key = ("experiment", name, a, b, outcome, a_cell, b_cell, tuple(extras), tuple(holds))
+    key = ("experiment", name, a, b, outcome, a_cell, b_cell, tuple(extras), tuple(holds), include_human)
     return _STUDY_CACHE.get_or_compute(
-        key, tuple(fps), lambda: M.experiment(rows, a, b, outcome, a_cell, b_cell, holds))
+        key, tuple(fps), lambda: M.experiment(rows, a, b, outcome, a_cell, b_cell, holds, include_human=include_human))
 
 
 @app.get("/api/sources")
@@ -407,15 +427,15 @@ def integrity(name: str, harness: str = "baseline"):
 
 
 @app.get("/api/results/{name}/report")
-def report(name: str, harness: str = "baseline", model: Optional[str] = None):
+def report(name: str, harness: str = "baseline", model: Optional[str] = None, include_human: bool = False):
     _dir(name)
-    return M.report_card(name, M.rows_for(name), harness, model)
+    return M.report_card(name, M.rows_for(name), harness, model, include_human=include_human)
 
 
 @app.get("/api/results/{name}/report.md", response_class=PlainTextResponse)
-def report_md(name: str, harness: str = "baseline", model: Optional[str] = None):
+def report_md(name: str, harness: str = "baseline", model: Optional[str] = None, include_human: bool = False):
     _dir(name)
-    return M.report_card(name, M.rows_for(name), harness, model).get("markdown", "")
+    return M.report_card(name, M.rows_for(name), harness, model, include_human=include_human).get("markdown", "")
 
 
 # --------------------------------------------------------------------------- models (OpenRouter)
@@ -596,7 +616,11 @@ def _run_one(job: dict, cell: dict, task: dict, harness: HarnessConfig, repeat: 
 
     hook = S.hook_for(harness, task, rmodel, api_key=SETTINGS["openrouter_key"], base_url=SETTINGS["base_url"])
     try:
-        s = run_task(task, harness, provider, out_dir, repeat_index=repeat, seed=seed, span_listener=listener, step_hook=hook, run_id=run_id)
+        # A run paused for a human holds this worker (the pool has 8). That is acceptable only because the
+        # wait is bounded by harness.pause["timeout_s"] and ends at once, as an abort, when the job is
+        # cancelled or the server shuts down (should_stop below).
+        s = run_task(task, harness, provider, out_dir, repeat_index=repeat, seed=seed, span_listener=listener, step_hook=hook, run_id=run_id,
+                     should_stop=lambda: bool(job.get("cancel")) or _SHUTDOWN.is_set())
         with _INDEX_LOCK:
             with open(os.path.join(out_dir, "index.jsonl"), "a") as f:
                 f.write(json.dumps(asdict(s)) + "\n")
@@ -852,6 +876,11 @@ _fork_hoist(app)
 from traceharness.backend.live_api import router as live_router
 app.include_router(live_router)
 _fork_hoist(app)   # keep /api/live and /api/runs/*/stream ahead of the SPA catch-all
+
+# --- human-in-the-loop pause: list waiting runs, post a decision ---
+from traceharness.backend.pause_api import router as pause_router
+app.include_router(pause_router)
+_fork_hoist(app)   # keep /api/paused and /api/runs/*/decision ahead of the SPA catch-all
 
 # --- harness routes ---
 from traceharness.backend.harness_tools import router as harness_router

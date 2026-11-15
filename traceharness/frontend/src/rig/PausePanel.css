@@ -1,0 +1,21 @@
+/* ====================================================================================
+   Rig · PausePanel.css — runs waiting for a human decision. Colour only via var(--rig-*).
+   ==================================================================================== */
+.rg-pause-list{display:flex;flex-direction:column;gap:var(--rig-s5);min-width:0}
+.rg-pause{display:flex;flex-direction:column;gap:var(--rig-s3);min-width:0;padding:var(--rig-s4);border:1px solid var(--rig-line2);border-left:2px solid var(--rig-amb);border-radius:var(--rig-r-md);background:var(--rig-panel)}
+.rg-pause-h{display:flex;align-items:center;flex-wrap:wrap;gap:var(--rig-s2) var(--rig-s3);min-width:0}
+.rg-pause-id{overflow-wrap:anywhere;min-width:0}
+.rg-pause-sub{margin:0;color:var(--rig-dim);overflow-wrap:anywhere}
+.rg-pause-why{display:flex;flex-wrap:wrap;gap:var(--rig-s2);margin:0;padding:0;list-style:none}
+.rg-pause-calls{display:flex;flex-direction:column;gap:var(--rig-s3);margin:0;padding:0;list-style:none}
+.rg-pause-call{padding:var(--rig-s3);border:1px solid var(--rig-line2);border-radius:var(--rig-r-sm);background:var(--rig-panel2);min-width:0}
+.rg-pause-call.on{border-color:var(--rig-sel)}
+.rg-pause-args{display:grid;gap:var(--rig-s2);margin:var(--rig-s2) 0 0;min-width:0}
+.rg-pause-args dt{font:var(--rig-fw-medium) var(--rig-fs-xs)/var(--rig-lh-snug) var(--rig-mono);color:var(--rig-mute)}
+.rg-pause-args dd{margin:0;min-width:0}
+.rg-pause-args pre{margin:0;max-height:14rem;overflow:auto;white-space:pre-wrap;overflow-wrap:anywhere;font:var(--rig-fw-regular) var(--rig-fs-sm)/var(--rig-lh-body) var(--rig-mono);color:var(--rig-text)}
+.rg-pause-acts{display:flex;flex-wrap:wrap;align-items:center;gap:var(--rig-s2)}
+.rg-pause-form{display:flex;flex-direction:column;gap:var(--rig-s3);min-width:0}
+.rg-pause-form .rg-fld{display:flex;flex-direction:column;gap:var(--rig-s1)}
+.rg-pause-form button{align-self:flex-start}
+.rg-pause-tok{gap:var(--rig-s2);margin-top:var(--rig-s2)}

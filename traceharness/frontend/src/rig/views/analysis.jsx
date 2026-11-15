@@ -30,6 +30,7 @@
    there, which would read as a measured collapse.
    Classes: rg-an-* (analysis.css). Local helpers only; nothing here is shared.
    ==================================================================================== */
+import { PausedRuns } from '../PausePanel'
 import { useEffect, useId, useMemo, useRef, useState } from 'react'
 import { makeSpec } from '../route'
 import { api, IS_STATIC, IS_MEMBER } from '../../api'
@@ -1109,6 +1110,7 @@ function Setup({ spec, dir, row, c }) {
         <p>Cost comes from each model's observed $/run (<span className="rg-mono">/api/models · observed</span>); time from the mean recorded wall time per run in {dir}; the detectable effect is the smallest difference decidable at 80% power per arm. None of it is a quote.</p>
       </>} />
     {active.length > 0 && <Note tone="acc" el="jobs-in-flight"><span className="rg-pulse" /><div><b>{plural(active.length, 'job')} in flight.</b> {active.map((j) => `${j.id} → ${j.out} (${j.done ?? 0}/${j.total ?? '?'})`).join(' · ')}</div></Note>}
+    <PausedRuns quiet />
     <div data-el="run-setup" className="rg-an-setup">
       <div className="rg-col rg-an-setmain">
       <Panel label="Models" meta={`${mS.length} selected · price per 1M tokens in / out`}>

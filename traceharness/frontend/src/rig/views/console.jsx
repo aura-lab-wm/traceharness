@@ -22,6 +22,7 @@ import { makeSpec } from '../route'
 import { useApi, useSentinel, short, sfx, fmt } from '../data'
 import { Go, Icon, PinButton } from '../ui'
 import { replyNumbers, spanDesc, finishOf, harnessOf, eventPin, TOOLCODE } from './trajectory'
+import { cleanText } from '../PausePanel'
 import './console.css'
 
 const { int } = fmt
@@ -73,6 +74,8 @@ export function consoleModel(spans, replay, verdict) {
   ;(Array.isArray(replay) ? replay : []).forEach((r, i) => { byStep.set(r.step != null ? r.step : i, i); list.push(r) })
   const rows = []
   let chat = null, pend = null, chatIdx = -1, toolsInChat = 0, hasEdits = false
+  // `pause` / `intervention` spans (core/pause.py) happen BEFORE the step's tool calls run, so they hang above the next row
+  let humans = []
   const rIdxOf = (c) => (c ? (byStep.has(c.step) ? byStep.get(c.step) : (chatIdx >= 0 && chatIdx < list.length ? chatIdx : -1)) : -1)
   // a reply with no tool call, or whose calls produced no execute_tool span (cut off / blocked at the
   // boundary), still gets a row: its risk and interventions hang off the row of the reply
@@ -84,7 +87,8 @@ export function consoleModel(spans, replay, verdict) {
     rows.push({ seq: chat.seq, span: chat, chat, reply: nos.get(chat.seq), rIdx: rIdxOf(chat),
       kind: 'x', letter: '·', name: none ? 'no tool call' : 'no result recorded',
       arg: none ? flat(chat.text, 70) : flat(calls.map((c) => (c && (c.name || c['gen_ai.tool.name'])) || 'tool').join(', '), 70),
-      chip: cut ? { tone: 'bad', text: 'cut off' } : none ? null : { tone: 'bad', text: 'not run' }, cut })
+      chip: cut ? { tone: 'bad', text: 'cut off' } : none ? null : { tone: 'bad', text: 'not run' }, cut, human: humans })
+    humans = []
   }
   // An edit span and its tool row come in either order: the native harness records the edit first,
   // a captured/imported ledger records the tool first. Pair them only within the same reply, by path
@@ -95,6 +99,7 @@ export function consoleModel(spans, replay, verdict) {
     row.arg = flat(`${ed.path || row.rawArg}${deltaOf(ed)}`, 90)
   }
   for (const s of spans || []) {
+    if (s.span === 'pause' || s.span === 'intervention') { humans.push(s); continue }
     if (s.span === 'chat') {
       flush()
       chat = s; chatIdx += 1; pend = null; toolsInChat = 0
@@ -113,13 +118,16 @@ export function consoleModel(spans, replay, verdict) {
       else if (name === 'submit' && verdict != null) chip = verdict ? { tone: 'ok', text: 'passed' } : { tone: 'bad', text: 'failed' }
       else if (s.status && s.status !== 'ok') chip = { tone: 'bad', text: s.status === 'error' ? 'error' : String(s.status) }
       const row = { seq: s.seq, span: s, chat, edit: null, reply: chat ? nos.get(chat.seq) : null, rIdx: rIdxOf(chat),
-        kind, letter, name, path: a.path, rawArg, arg: name === 'submit' ? '' : flat(rawArg, 90), chip }
+        kind, letter, name, path: a.path, rawArg, arg: name === 'submit' ? '' : flat(rawArg, 90), chip, human: humans }
+      humans = []
       if (kind === 'e' && pend && fits(pend, { ...row, chat })) attach(row, pend)
       pend = null
       rows.push(row)
     }
   }
   flush()
+  // a decision with no row after it (an abort, a denied last call) hangs below the last row
+  if (humans.length && rows.length) rows[rows.length - 1].humanAfter = humans
   rows.forEach((r, i) => { r.n = i + 1; r.risk = r.rIdx >= 0 ? num(list[r.rIdx].recorded && num(list[r.rIdx].recorded.risk) != null ? list[r.rIdx].recorded.risk : list[r.rIdx].risk) : null })
   return { hasEdits, rows, steps: list.map((r) => {
     const rec = r.recorded && typeof r.recorded === 'object' ? r.recorded : null
@@ -326,7 +334,15 @@ export function RunConsole({ run, spans, replay, sel, onSel, verdictOf }) {
             const future = !!rp && i > cur
             const iv = ivs.filter((x) => x.after === r.seq)
             const showIv = !rp || i <= cur
+            const hum = (list) => (list || []).map((h, j) => (
+              <li key={`${r.seq}h${h.seq ?? j}`} className="rg-cx-iv human" data-el={h.span === 'pause' ? 'human-pause' : 'human-intervention'}>
+                <div className="rg-cx-ivh">{spanDesc(h)}<span className="rg-cx-src">{h.span === 'pause' ? 'waiting for a person' : 'human'}</span></div>
+                {h.span === 'pause' && (h.pending || []).length > 0 && <p>{(h.pending || []).map((c) => `${cleanText(c.name)}(${Object.entries(c.arguments || {}).map(([k, v]) => `${cleanText(k)}=${cleanText(v).slice(0, 120)}`).join(', ')})`).join('; ')}</p>}
+                {h.span === 'intervention' && h.before && <p>{`${cleanText(JSON.stringify(h.before))} → ${cleanText(JSON.stringify(h.after))}`}</p>}
+                {h.span === 'intervention' && h.message && <p>{cleanText(h.message)}</p>}
+              </li>))
             return [
+              ...(!rp || i <= cur ? hum(r.human) : []),
               <li key={r.seq} className={cx('rg-cx-st', isCur && 'cur', future && 'future', r.kind === 'x' && 'none', iv.length && 'held')} data-seq={r.seq} data-n={r.n}>
                 <button type="button" className="rg-cx-rowb" tabIndex={isCur ? 0 : -1} aria-current={isCur ? 'step' : undefined} aria-expanded={on}
                   aria-label={`Step ${r.n}: ${spanDesc(r.span, r.reply)}${r.chip ? ' · ' + r.chip.text : ''}`}
@@ -345,6 +361,7 @@ export function RunConsole({ run, spans, replay, sel, onSel, verdictOf }) {
                     <span className="rg-cx-src">{x.source}</span></div>
                   <p className={x.text ? '' : 'none'}>{x.text || 'No nudge text is defined for this detector.'}</p>
                 </li>)) : []),
+              ...(!rp || i <= cur ? hum(r.humanAfter) : []),
             ]
           })}
           {!N && <li className="rg-cx-empty">No tool calls were recorded in this ledger.</li>}

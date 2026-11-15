@@ -16,6 +16,10 @@ Span kinds (the `span` field):
   grade           hidden tests executed against the final workspace
   reprompt        a reply invoked no tool and the harness asked again instead of ending the run
   sentinel        an early-warning module scored the partial trajectory (risk, patterns, action)
+  pause           the run stopped before executing a step's tool calls and is waiting for a person
+                  (core/pause.py): step, reason, the pending calls with their arguments, the deadline
+  intervention    how that wait ended: decision (approve|deny|edit|inject|abort), who (cli|console|
+                  timeout|cancel), note, and for an edit the arguments before and after
 """
 from __future__ import annotations
 import json, os, time, uuid
@@ -105,6 +109,12 @@ class RunSummary:
     served_by: Optional[list] = field(default_factory=list)   # upstream providers that answered, in order of first use ([] = not reported)
     reprompts: int = 0               # replies without a tool call that the harness answered with a re-prompt (HarnessConfig.no_action_retries)
     harness_hash: str = ""           # traceharness.core.harness.content_hash of the exact config this run used (older index rows lack it)
+    # A person (or a timeout / cancel that changed what the agent did) decided something mid-run
+    # (HarnessConfig.pause). Such a run is not an unattended measurement, so analysis leaves it out
+    # of aggregate statistics unless asked. Older summaries and index rows lack both fields; every
+    # reader uses .get() with these defaults.
+    human_interventions: int = 0
+    human_intervened: bool = False
 
     def to_json(self) -> str:
         return json.dumps(asdict(self), ensure_ascii=False, indent=2)

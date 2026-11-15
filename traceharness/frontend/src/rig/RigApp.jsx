@@ -28,6 +28,7 @@ import { AN_VIEWS } from './views/analysis.jsx'
 import GettingStarted from './GettingStarted'
 import { GUIDE_TOPICS, guideDestination } from './guidance'
 import { TaskSideNav } from './views/trajectory.jsx'
+import { usePausedCount } from './PausePanel.jsx'
 import { Icon, Kbd, MOD, NotFound, EvidenceChain, Toaster, toast as showToast, Seg, NextSteps, Menu, ScrollX, Modal } from './ui'
 
 const cx = (...a) => a.filter(Boolean).join(' ')
@@ -168,6 +169,7 @@ export default function RigApp() {
   const prefersLight = useMedia('(prefers-color-scheme: light)')
   const ov = useOverview()
   const jobs = useJobs()
+  const waiting = usePausedCount(jobs.data.running > 0)   // an idle console asks nothing; a run started from a terminal is on the Waiting tab
   const caseItems = useCaseFile()
   const cacheV = useCacheVersion()   // titles and ctx() read the cache synchronously
   const online = useConnection()
@@ -550,6 +552,7 @@ export default function RigApp() {
           {condition && condition.model && <button type="button" className="it rg-sb-p2" data-pop="cond" aria-label="Change model and harness" aria-expanded={!!pop && pop.id === 'cond'} onClick={(e) => setPop(pop && pop.id === 'cond' ? null : { id: 'cond', left: e.currentTarget.getBoundingClientRect().left })}><span className="rg-sb-t">{short(condition.model)} · {condition.harness}</span> ▾</button>}
           <button type="button" className="it rg-sb-oracle" data-el="harness-oracle-picker" aria-label="Change test suite and harness" aria-expanded={!!pop && pop.id === 'oracle'} onClick={(e) => setPop(pop && pop.id === 'oracle' ? null : { id: 'oracle', left: e.currentTarget.getBoundingClientRect().left })}><span className="rg-sb-k">oracle</span> <b className={route.oracle === 'hidden' ? '' : 'alt'}>{route.oracle}</b> ▾</button>
           {!IS_STATIC && jobs.data.running > 0 && <span className="it rg-sb-p4" title={`${jobs.data.active.length} job(s) active`}><span className="rg-dot" />{jobsWords}</span>}
+          {!IS_STATIC && waiting > 0 && <button type="button" className="it rg-sb-p4" data-el="waiting-for-you" title="A run is waiting for your decision" onClick={() => openTab('paused')}><span className="rg-dot" />{waiting} {waiting === 1 ? 'run waits' : 'runs wait'} for you</button>}
           {build.stale && <button type="button" className="it rg-sb-update" data-el="update-ready" title="TraceHarness was rebuilt on the server. Reload to use it (your tabs are kept)." onClick={() => location.reload()}>New version ready · reload</button>}
           {lab ? <button type="button" className="it lab-on rg-sb-p3" data-el="guided-indicator" onClick={() => openTab('guide')}>Guided analysis on</button>
             : <button type="button" className="it rg-sb-p3" data-el="student-lab-toggle" title="Turn on the Student Lab reading guide" onClick={() => setLab(true)}>Student Lab off</button>}
@@ -586,7 +589,7 @@ function railItems(kind, dir, lab, condition) {
   const items = [
     { group: 'Workspace', spec: 'home', icon: 'db', label: 'Datasets', on: on(['home', 'ds', 'q']), el: 'nav-datasets' },
     { group: 'Workspace', spec: dir ? makeSpec('an', dir, 'family', ...cs) : 'home', icon: 'an', label: 'Analysis', on: on(['an']) },
-    { group: 'Workspace', spec: dir ? makeSpec('field', dir, ...(condition && condition.dir === dir ? [condition.model, condition.harness] : [])) : 'home', icon: 'traj', label: 'Trajectories', on: on(['field', 'tasks', 'task', 'run', 'span', 'cmp', 'fork']) },
+    { group: 'Workspace', spec: dir ? makeSpec('field', dir, ...(condition && condition.dir === dir ? [condition.model, condition.harness] : [])) : 'home', icon: 'traj', label: 'Trajectories', on: on(['field', 'tasks', 'task', 'run', 'span', 'cmp', 'fork', 'paused']) },
     { group: 'Harnesses', spec: 'harnesses', icon: 'tabs', label: 'Harnesses', on: on(['harnesses', 'shallowCards', 'shallowApply', 'shallowWizard', 'blocks']), el: 'nav-harnesses' },
     { group: 'Tools', spec: 'sources', icon: 'src', label: 'Sources & capture', on: on(['sources', 'capture']), el: 'nav-sources' },
     { group: 'Tools', spec: 'sentinel', icon: 'sent', label: 'Sentinel', on: on(['sentinel']) },

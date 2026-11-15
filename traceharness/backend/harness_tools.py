@@ -93,6 +93,7 @@ KNOBS = {
     "no_action_retries": "What happens when a reply invokes no tool. 0 ends the run (exit no_action); N re-prompts the model up to N times, each costing a step.",
     "include_file_listing": "Whether the repository listing is pasted into the first user message. Free orientation, or an extra 1k tokens of noise.",
     "sentinel": "The early-warning hook: part of the harness, not an observer. If it nudges or blocks, it changed the trajectory.",
+    "pause": "Where the harness stops to ask a person (before named tools, at steps, before the first edit, above a Sentinel risk). A person's decision changes the trajectory, so those runs are marked and left out of aggregate statistics. {} never pauses and is left out of the content hash.",
     "id": "Name only — excluded from the content hash.",
     "notes": "Human annotation — excluded from the content hash.",
 }

@@ -145,7 +145,7 @@ function LiveBuddyDock({ ctx = {} }) {
             {ctx.model && <><dt>model · harness</dt><dd>{short(ctx.model)} · {ctx.harness}</dd></>}
             {task && <><dt>task</dt><dd>{task}</dd></>}
             {runId && <><dt>run</dt><dd className="rg-mono">{runId}</dd></>}
-            {focusRun && <><dt>verdict</dt><dd><VerdictText v={verdict(focusRun, oracle)} /></dd></>}
+            {focusRun && <><dt>verdict</dt><dd><VerdictText v={verdict(focusRun, oracle)} />{focusRun.human && <> <Tag nc title="A person steered this run; aggregate statistics leave it out.">human-intervened</Tag></>}</dd></>}
           </dl>
         ) : (
           <div className="rg-bud-sel">

@@ -30,6 +30,7 @@ import { isSweRun, suiteLabel, tokenCoverage } from '../provenance'
 import { findings as checkpoints } from '../../directions/investigationFacts'
 import { compareLedgers } from '../lib/align'
 import { RunConsole } from './console'
+import { PausedRuns, cleanText } from '../PausePanel'
 import { RecordedHarnessJson } from '../HarnessJson'
 import { ForkRecordedHarness } from '../RecordingFork'
 import './trajectory.css'
@@ -59,9 +60,9 @@ function testsPassed(s) {
 }
 export function spanKind(s) {
   const k = s && s.span
-  return k === 'chat' ? 'chat' : k === 'execute_tool' ? 'tool' : k === 'edit' ? 'edit' : k === 'grade' ? 'grade' : k === 'boundary_event' ? 'bnd' : k === 'sentinel' ? 'sent' : k === 'reprompt' ? 'rep' : 'agent'
+  return k === 'chat' ? 'chat' : k === 'execute_tool' ? 'tool' : k === 'edit' ? 'edit' : k === 'grade' ? 'grade' : k === 'boundary_event' ? 'bnd' : k === 'sentinel' ? 'sent' : k === 'reprompt' ? 'rep' : k === 'pause' || k === 'intervention' ? 'hum' : 'agent'
 }
-const KIND_WORD = { chat: 'model call', tool: 'tool call', edit: 'edit', grade: 'grade', bnd: 'boundary event', sent: 'sentinel', rep: 're-prompt', agent: 'run marker' }
+const KIND_WORD = { chat: 'model call', tool: 'tool call', edit: 'edit', grade: 'grade', bnd: 'boundary event', sent: 'sentinel', rep: 're-prompt', hum: 'human pause', agent: 'run marker' }
 /** Distinct upstream hosts named on the chat spans, in order of first use ([] = none reported). */
 export const servedByOf = (spans) => [...new Set((spans || []).filter((s) => s.span === 'chat' && s.served_by).map((s) => s.served_by))]
 const sentOf = (spans, key) => { const c = (spans || []).find((s) => s.span === 'chat'); return c ? c[key] : undefined }
@@ -93,6 +94,8 @@ export function spanDesc(s, n) {
   if (s.span === 'grade') return `grade · visible ${glyph(s.visible)} hidden ${glyph(s.hidden)} strengthened ${glyph(s.strong)}`
   if (s.span === 'boundary_event') return `boundary · ${s.kind || '—'}${s.tool ? ' · ' + s.tool : ''}${s.status ? ' · ' + s.status : ''}`
   if (s.span === 'sentinel') return `sentinel · risk ${s.risk != null ? (+s.risk).toFixed(2) : '—'} · ${s.action || 'none'}`
+  if (s.span === 'pause') return `paused · step ${s.step ?? '—'} · ${cleanText((s.reason || []).join('; ')) || 'waiting for a person'}${(s.pending || []).length ? ' · ' + s.pending.map((c) => cleanText(c.name)).join(', ') : ''}`
+  if (s.span === 'intervention') return `${cleanText(s.decision) || 'decision'} by ${cleanText(s.who) || '—'}${s.note ? ' · “' + cleanText(s.note).slice(0, 56) + '”' : ''}`
   if (s.span === 'reprompt') return `re-prompt #${s.attempt ?? '—'} · the reply invoked no tool, so the harness asked again`
   return s.span || 'span'
 }
@@ -582,7 +585,7 @@ function AttemptTile({ r, i, on, oracle, onPick }) {
   return (
     <button type="button" className={cx('rg-traj-att', k, on && 'on')} aria-pressed={on} aria-label={`Run ${i + 1}, ${vWord(rv)}`} onClick={onPick}>
       <span className="rg-traj-att-h">Run {pad2(i + 1)}<Verdict v={rv} /></span>
-      <span className="rg-traj-att-v">{failureModeOf(r, oracle) ? <FailureChip run={r} /> : <span className={cx('rg-small', rv === true ? 'rg-sky' : rv === false ? 'rg-red' : 'rg-mute')}>{rv === true ? 'Passed' : rv === false ? 'Failed' : 'Unknown grade'}</span>}</span>
+      <span className="rg-traj-att-v">{failureModeOf(r, oracle) ? <FailureChip run={r} /> : <><span className={cx('rg-small', rv === true ? 'rg-sky' : rv === false ? 'rg-red' : 'rg-mute')}>{rv === true ? 'Passed' : rv === false ? 'Failed' : 'Unknown grade'}</span>{r.human && <FailureChip run={r} />}</>}</span>
       <span className="rg-traj-att-t">{int(tokOf(r))} tok{r.hasLedger === false ? ' · no ledger' : ''}</span>
     </button>
   )
@@ -878,7 +881,7 @@ function RunDoc({ spec, args }) {
   const groups = [
     ['Grades', [['hidden', <VerdictText key="h" v={run.hid} />], ['visible', <VerdictText key="v" v={run.vis} />], ['strengthened', <VerdictText key="s" v={run.str} />]]],
     ['Usage', [[isSweRun(run) ? 'estimated tokens in / out' : 'tokens in / out', run.in != null ? `${int(run.in)} / ${int(run.out)}` : '—'], ['cost', run.cost != null ? usd(run.cost, 5) : '—'], ['wall', run.wall != null ? (run.wall / 1000).toFixed(1) + ' s' : '—']]],
-    ['Behaviour', [['calls · tools · edits', `${run.steps ?? '—'} · ${run.tools ?? '—'} · ${run.edits ?? '—'}`], ['boundary', `${run.bnd ?? 0}${run.bkinds && run.bkinds.length ? ' · ' + run.bkinds.join(', ') : ''}`], ['exit reason', run.exit || '—']]],
+    ['Behaviour', [['calls · tools · edits', `${run.steps ?? '—'} · ${run.tools ?? '—'} · ${run.edits ?? '—'}`], ['boundary', `${run.bnd ?? 0}${run.bkinds && run.bkinds.length ? ' · ' + run.bkinds.join(', ') : ''}`], ['exit reason', run.exit || '—'], ['human interventions', run.human ? `${run.humanN || 1} · left out of aggregate statistics` : 'none']]],
     [isSweRun(run) ? 'Importer-reconstructed setup' : 'Recorded setup', [['seed', det.data ? (seedOf(spans) ?? '—') : '…'], ['max tokens / call', cfg && cfg.max_tokens_per_call != null ? int(cfg.max_tokens_per_call) : '—'], ['max steps', cfg && cfg.max_steps != null ? int(cfg.max_steps) : '—']]],
     ['Serving', [['served by', det.data ? (servedByOf(spans).join(', ') || 'not reported') : '…'], ['temperature · seed sent', det.data ? `${sentText(sentOf(spans, 'gen_ai.request.temperature'))} · ${sentText(sentOf(spans, 'gen_ai.request.seed'))}` : '…'], ['re-prompts', det.data ? int(spans.filter((s) => s.span === 'reprompt').length) : '…']]],
   ]
@@ -957,6 +960,8 @@ function SpanDoc({ spec, args }) {
   if (s.span === 'invoke_agent') fields.push(['status', s.status || '—'], ...(s.status === 'start' ? [['seed', s.seed ?? '—'], ['harness hash', s.harness_hash || '—'], ['repeat', s.repeat_index ?? '—']] : [['exit', s.exit_reason || '—'], ['total tokens', int(s.total_tokens)], ['cost', isSweRun(run) ? '— not supplied' : usd(s.cost_usd, 6)]]))
   if (s.span === 'sentinel') fields.push(['step', s.step ?? '—'], ['risk', s.risk != null ? (+s.risk).toFixed(3) : '—'], ['action', s.action || 'none'], ['patterns', (s.patterns || []).join(', ') || '—'], ['layer', s.layer || '—'])
   if (s.span === 'chat' && !isSweRun(run)) fields.push(['served by', s.served_by || 'not reported'], ['model echoed', s['gen_ai.response.model'] || '—'], ['temperature sent', sentText(s['gen_ai.request.temperature'])], ['seed sent', sentText(s['gen_ai.request.seed'])])
+  if (s.span === 'pause') fields.push(['model step', s.step ?? '—'], ['why', cleanText((s.reason || []).join('; ')) || '—'], ['pending', (s.pending || []).map((c) => `${cleanText(c.name)}(${Object.entries(c.arguments || {}).map(([k, v]) => `${cleanText(k)}=${cleanText(v).slice(0, 80)}`).join(', ')})`).join('; ') || 'no tool call'], ['timeout', `${s.timeout_s ?? '—'} s → ${s.on_timeout || '—'}`])
+  if (s.span === 'intervention') fields.push(['decision', cleanText(s.decision) || '—'], ['who', cleanText(s.who) || '—'], ['model step', s.step ?? '—'], ['waited', s.waited_s != null ? `${s.waited_s} s` : '—'], ...(s.note ? [['note', cleanText(s.note)]] : []), ...(s.message ? [['message', cleanText(s.message)]] : []), ...(s.before ? [['args before', cleanText(JSON.stringify(s.before))], ['args after', cleanText(JSON.stringify(s.after))]] : []))
   if (s.span === 'reprompt') fields.push(['attempt', s.attempt ?? '—'], ['model step', s.step ?? '—'])
   const fr = finishOf(s)
   const cut = isCutoff(s)
@@ -1486,7 +1491,25 @@ function Crumbs({ parts }) {
   return <span>{parts.map((x, i) => <Fragment key={i}>{i ? '\u00a0· ' : ''}<span className="rg-nw">{x}</span></Fragment>)}</span>
 }
 
+/** The runs a harness with `pause` has stopped, waiting for a decision (backend/pause_api.py). */
+function PausedDoc() {
+  return (
+    <div className="rg-dpad rg-traj-doc rg-traj-stack">
+      <header className="rg-dh rg-traj-dh"><div className="t"><div className="rg-eyebrow">human in the loop</div><h1>Runs waiting for you</h1></div></header>
+      <p className="rg-traj-lede rg-dim">A harness with <span className="rg-mono">pause</span> set stops before a step&apos;s tool calls and waits. Approve, deny, edit one call&apos;s arguments, send the agent a message, or stop the run. The same answer can be given from a terminal with <span className="rg-mono">traceharness decide</span>. A run you steer is marked and left out of aggregate statistics unless you ask for it.</p>
+      <PausedRuns />
+    </div>
+  )
+}
+
 export const views = {
+  paused: {
+    tag: 'wait',
+    title: () => 'waiting for you',
+    crumbs: () => [['human in the loop']],
+    palette: () => [{ group: 'action', title: 'Runs waiting for a decision', detail: 'approve · deny · edit · inject · abort a paused run', spec: 'paused', keywords: 'pause human approve intervene breakpoint' }],
+    render: PausedDoc,
+  },
   task: {
     tag: 'task',
     title: (a, env) => {

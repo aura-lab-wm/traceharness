@@ -9,6 +9,7 @@ import argparse
 import os
 import re
 import sys
+import time
 
 __version__ = "0.4.0"
 
@@ -20,7 +21,8 @@ def build_parser() -> argparse.ArgumentParser:
                     "ledger live, compare harnesses, and train the sentinel.",
         epilog="subcommands: `traceharness run ...` sweeps the lab's own harnesses; "
                "`traceharness watch [<dir>[/<run_id>]]` follows a run's ledger in the terminal as it "
-               "is written; `traceharness import <path>` reads another harness's trace into the "
+               "is written; `traceharness paused` lists runs waiting for a human decision (harness `pause`) and "
+               "`traceharness decide <run> approve|deny|edit|inject|abort` answers one; `traceharness import <path>` reads another harness's trace into the "
                "ledger (`--detect` first, to see what it is); `traceharness oracle <dir>`, `traceharness patterns <dir> [--query REGEX]`, "
                "`traceharness comparisons <dir> [--baseline B]` and `traceharness fit <dir> [--hold COLUMN=VALUE]` print the "
                "same canonical study-aggregate statistics as GET /api/results/<dir>/{oracle,"
@@ -331,6 +333,117 @@ def watch_cli(argv: list[str], runs_root: str | None = None) -> int:
     return rc
 
 
+def build_paused_parser() -> argparse.ArgumentParser:
+    p = argparse.ArgumentParser(
+        prog="traceharness paused",
+        description="List the runs that are waiting for a human decision (a harness with `pause` set stops "
+                    "before a step's tool calls and waits). Decide with `traceharness decide`.")
+    p.add_argument("--out", default=None, metavar="DIR",
+                   help="the results directory a `traceharness run --out DIR` is writing (default: every results "
+                        "directory under the lab's data/runs/)")
+    p.add_argument("--json", action="store_true", help="print the rows as JSON")
+    p.add_argument("--lab", default=None, metavar="DIR", help="lab root (default: the one `traceharness serve` uses)")
+    return p
+
+
+def paused_cli(argv: list[str], runs_root: str | None = None) -> int:
+    """`traceharness paused [--out DIR]`. Exit 0 always (an empty list is a normal answer)."""
+    args = build_paused_parser().parse_args(argv)
+    if args.lab:
+        os.environ["TRACEHARNESS_LAB"] = os.path.abspath(os.path.expanduser(args.lab))
+    import json
+    from traceharness.core import pause                           # noqa: E402
+    from traceharness.backend.results_scope import PRIVATE_DIRS    # noqa: E402
+    if args.out:
+        out = os.path.abspath(os.path.expanduser(args.out))
+        rows = pause.list_paused(os.path.dirname(out), exclude=PRIVATE_DIRS, only_dir=os.path.basename(out))
+    else:
+        if runs_root is None:
+            from traceharness.backend import paths                 # noqa: E402  (after TRACEHARNESS_LAB)
+            runs_root = paths.RUNS_ROOT
+        rows = pause.list_paused(runs_root, exclude=PRIVATE_DIRS)
+    if args.json:
+        print(json.dumps(rows, indent=2))
+        return 0
+    if not rows:
+        print("no run is waiting for a decision")
+        return 0
+    for r in rows:
+        left = max(0, int((r.get("deadline_ts") or 0) - time.time()))
+        print(f"{r['dir']}/{r['run_id']}  task={r['task_id']}  harness={r['harness_id']}  step={r['step']}  "
+              f"times out in {left}s -> {r['on_timeout']}")
+        print(f"  why: {pause.clean_text('; '.join(map(str, r['reason'])), keep_newlines=False)}")
+        for c in r["pending"]:
+            args = {pause.clean_text(k, keep_newlines=False): pause.clean_text(v, keep_newlines=False)
+                    for k, v in (c.get("arguments") or {}).items()}
+            a = json.dumps(args, ensure_ascii=False)
+            print(f"  [{c.get('index')}] {pause.clean_text(str(c.get('name')), keep_newlines=False)} {a}")
+    return 0
+
+
+def build_decide_parser() -> argparse.ArgumentParser:
+    p = argparse.ArgumentParser(
+        prog="traceharness decide",
+        description="Answer a run that is waiting for a human decision: approve, deny, edit one pending call's "
+                    "arguments, inject a message, or abort. The decision goes into the run's decision.json "
+                    "mailbox; the run records it as an `intervention` span.",
+        epilog="approve runs the pending calls; deny skips them (--call N: only that one) and tells the model "
+               "a reviewer denied it, with --note; edit replaces the arguments of one call (--call, default 0) "
+               "with --args JSON -- the edited call still goes through the permission policy; inject approves "
+               "and adds --message as a user message; abort ends the run (exit_reason human_abort).")
+    p.add_argument("target", help="a run directory (the one holding ledger.jsonl) or a run id")
+    p.add_argument("decision", choices=["approve", "deny", "edit", "inject", "abort"])
+    p.add_argument("--note", default="", help="a note for the record (and, for deny, for the model)")
+    p.add_argument("--args", default=None, metavar="JSON", help="edit: the new arguments of the call, as a JSON object")
+    p.add_argument("--call", type=int, default=None, metavar="N", help="which pending call (0-based; see `traceharness paused`)")
+    p.add_argument("--message", default=None, help="inject: the user message to add")
+    p.add_argument("--out", default=None, metavar="DIR", help="where to look for a bare run id (default: the lab's data/runs/)")
+    p.add_argument("--lab", default=None, metavar="DIR", help="lab root (default: the one `traceharness serve` uses)")
+    return p
+
+
+def decide_cli(argv: list[str], runs_root: str | None = None) -> int:
+    """`traceharness decide <run_dir_or_run_id> approve|deny|edit|inject|abort ...`.
+    Exit 0 decided, 1 no such run / not waiting, 2 a bad decision."""
+    args = build_decide_parser().parse_args(argv)
+    if args.lab:
+        os.environ["TRACEHARNESS_LAB"] = os.path.abspath(os.path.expanduser(args.lab))
+    import json
+    from traceharness.core import pause                           # noqa: E402
+    roots = []
+    if args.out:
+        roots.append(os.path.abspath(os.path.expanduser(args.out)))
+    if runs_root is None:
+        from traceharness.backend import paths                     # noqa: E402  (after TRACEHARNESS_LAB)
+        runs_root = paths.RUNS_ROOT
+    roots.append(runs_root)
+    run_dir = pause.find_run_dir(args.target, roots)
+    if run_dir is None:
+        print(f"no run {args.target!r} (looked in {', '.join(roots)})", file=sys.stderr)
+        return 1
+    payload = {"decision": args.decision, "note": args.note}
+    if args.call is not None:
+        payload["call"] = args.call
+    if args.message is not None:
+        payload["message"] = args.message
+    if args.args is not None:
+        try:
+            payload["args"] = json.loads(args.args)
+        except ValueError as exc:
+            print(f"--args is not JSON: {exc}", file=sys.stderr)
+            return 2
+    try:
+        dec = pause.submit_decision(run_dir, payload, "cli")
+    except pause.NotPaused as exc:
+        print(f"{exc} ({run_dir})", file=sys.stderr)
+        return 1
+    except ValueError as exc:
+        print(f"bad decision: {exc}", file=sys.stderr)
+        return 2
+    print(f"decided: {dec['decision']} for step {dec['step']} of {run_dir}")
+    return 0
+
+
 def _study_rows_or_die(dir_name: str, runs_root: str):
     """`(rows, "")` for a results directory's index.jsonl, or `(None, message)` when there is no
     such study -- the one loader every study-aggregate subcommand below shares, so `oracle`,
@@ -342,14 +455,21 @@ def _study_rows_or_die(dir_name: str, runs_root: str):
     return load_index(d), ""
 
 
+def _add_include_human(p: argparse.ArgumentParser) -> argparse.ArgumentParser:
+    p.add_argument("--include-human", action="store_true",
+                   help="also count runs a person intervened in (human_intervened); by default the aggregate "
+                        "statistics leave them out")
+    return p
+
+
 def build_oracle_parser() -> argparse.ArgumentParser:
-    return argparse.ArgumentParser(
+    return _add_include_human(argparse.ArgumentParser(
         prog="traceharness oracle",
         description="Agreement between the hidden-test verdict and the strong-suite verdict over "
                     "every run in a results directory (Cohen's kappa, chance-corrected; null with a "
                     "reason when undefined, never NaN) -- the SAME canonical traceharness.core.analysis."
                     "cohens_kappa GET /api/results/<dir>/oracle serves, printed as JSON.",
-    )
+    ))
 
 
 def _add_dir_and_lab_args(p: argparse.ArgumentParser) -> argparse.ArgumentParser:
@@ -370,7 +490,7 @@ def oracle_cli(argv: list[str]) -> int:
     if rows is None:
         print(err, file=sys.stderr)
         return 1
-    print(json.dumps(M.oracle(rows), indent=2))
+    print(json.dumps(M.oracle(rows, include_human=args.include_human), indent=2))
     return 0
 
 
@@ -385,7 +505,7 @@ def build_comparisons_parser() -> argparse.ArgumentParser:
     p.add_argument("--baseline", default=None, metavar="HARNESS",
                    help="baseline harness id (default: 'baseline' when the study has one, else the "
                         "alphabetically first harness -- same fallback as the HTTP route)")
-    return p
+    return _add_include_human(p)
 
 
 def comparisons_cli(argv: list[str]) -> int:
@@ -401,7 +521,7 @@ def comparisons_cli(argv: list[str]) -> int:
         print(err, file=sys.stderr)
         return 1
     baseline = M.resolve_baseline_harness(rows, args.baseline)
-    print(json.dumps(M.comparisons(rows, baseline), indent=2))
+    print(json.dumps(M.comparisons(rows, baseline, include_human=args.include_human), indent=2))
     return 0
 
 
@@ -492,7 +612,7 @@ def build_fit_parser() -> argparse.ArgumentParser:
     p.add_argument("--outcome", default="hidden_pass", metavar="KEY", help="outcome column (default: hidden_pass)")
     p.add_argument("--hold", action="append", default=[], metavar="COLUMN=VALUE",
                    help="keep rows where COLUMN equals VALUE, then refit. Repeat to hold more than one column")
-    return p
+    return _add_include_human(p)
 
 
 def _fit_inspection(result: dict) -> dict:
@@ -534,7 +654,7 @@ def fit_cli(argv: list[str]) -> int:
     except ValueError as exc:
         print(str(exc), file=sys.stderr)
         return 2
-    result = M.experiment(rows, args.a_key, args.b_key, args.outcome, holds=holds)
+    result = M.experiment(rows, args.a_key, args.b_key, args.outcome, holds=holds, include_human=args.include_human)
     fit = result.get("fit") if isinstance(result.get("fit"), dict) else {}
     cells = result.get("cells") or []
     reason = fit.get("reason")
@@ -637,6 +757,10 @@ def main(argv: list[str] | None = None) -> int:
         return watch_cli(argv[1:])
     if argv and argv[0] == "import":
         return import_cli(argv[1:])
+    if argv and argv[0] == "paused":
+        return paused_cli(argv[1:])
+    if argv and argv[0] == "decide":
+        return decide_cli(argv[1:])
     if argv and argv[0] == "oracle":
         return oracle_cli(argv[1:])
     if argv and argv[0] == "comparisons":
@@ -725,6 +849,10 @@ def main(argv: list[str] | None = None) -> int:
     cs = codespaces_host()
     if cs:
         print(f"  GitHub Codespaces: open https://{cs} (the Ports tab also links it)")
+    from traceharness.backend.pause_api import startup_notice  # noqa: E402
+    notice = startup_notice()
+    if notice:
+        print(notice)
     key = "set" if os.environ.get("OPENROUTER_API_KEY") else "NOT set"
     print(f"traceharness {__version__} -> {url}   (lab root: {paths.LAB_ROOT}; OpenRouter key: {key})")
     if not paths.describe()["dist_built"]:

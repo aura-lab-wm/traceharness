@@ -76,6 +76,9 @@
 .rig .rg-cx-src{font:var(--rig-fw-medium) var(--rig-fs-2xs)/1 var(--rig-mono);color:var(--rig-cx-mute);text-transform:uppercase;letter-spacing:var(--rig-track-caps)}
 .rig .rg-cx-iv p{margin:0;font:var(--rig-fw-regular) var(--rig-fs-sm)/var(--rig-lh-body) var(--rig-mono);color:var(--rig-cx-text);overflow-wrap:anywhere}
 .rig .rg-cx-iv p::before{content:"→ agent  ";color:var(--rig-cx-mute)}
+.rig .rg-cx-iv.human{border-color:color-mix(in srgb,var(--rig-sel) 45%,transparent);background:color-mix(in srgb,var(--rig-sel) 6%,var(--rig-cx-bg))}
+.rig .rg-cx-iv.human .rg-cx-ivh{color:var(--rig-sel)}
+.rig .rg-cx-iv.human p::before{content:none}
 .rig .rg-cx-iv p.none{color:var(--rig-cx-mute)}
 .rig .rg-cx-iv p.none::before{content:none}
 .rig .rg-cx-empty{padding:var(--rig-s4);color:var(--rig-cx-mute);font:var(--rig-fw-regular) var(--rig-fs-sm)/var(--rig-lh-body) var(--rig-sans);list-style:none}
