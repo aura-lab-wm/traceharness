@@ -10,6 +10,7 @@ containers themselves are exercised by the live runs (traceharness agents run).
 import io
 import json
 import os
+import shutil
 import socket
 import sys
 import tarfile
@@ -103,7 +104,8 @@ class RelayAndBrokerOverASocket(unittest.TestCase):
     """inside.py's relay -> broker.py on a Unix socket; the upstream call is replaced."""
 
     def test_round_trip_and_log(self):
-        tmp = tempfile.mkdtemp(prefix="thb", dir="/tmp")
+        tmp = tempfile.mkdtemp(prefix="thb", dir="/tmp")     # /tmp: a Unix socket path must stay short
+        self.addCleanup(shutil.rmtree, tmp, ignore_errors=True)
         sock, log = os.path.join(tmp, "s"), os.path.join(tmp, "relay.jsonl")
         sent = []
 
