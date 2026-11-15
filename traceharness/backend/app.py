@@ -6,7 +6,7 @@ Serves the analysis API, launches live runs (mock or any OpenRouter model) with 
 every ledger span to the browser over SSE, trains and evaluates the sentinel, and serves the built UI.
 """
 from __future__ import annotations
-import asyncio, contextlib, json, os, queue, re, sys, threading, time, traceback, uuid, zlib
+import asyncio, contextlib, json, os, queue, re, sys, threading, time, uuid, zlib
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import asdict
 from typing import Optional
@@ -31,6 +31,7 @@ from . import real_import as RI                                    # noqa: E402
 from . import judge_runner as JR                                   # noqa: E402
 from .private_guard import private_results_guard                   # noqa: E402
 from .guard import security_guard                                  # noqa: E402
+from .confine import resolve_under, resolve_relative, log_error                # noqa: E402  (confined name -> path; error ids)
 from .repeats_api import _safe_name                                # noqa: E402  (one name rule for every route)
 
 #: Set when the server shuts down. A run waiting for a human decision (HarnessConfig.pause) polls it,
@@ -164,10 +165,10 @@ def tasks(suite: str = "full"):
 # --------------------------------------------------------------------------- results & metrics
 def _dir(name):
     _safe_name(name, "results dir name")
-    d = os.path.join(M.RUNS_ROOT, name)
-    real_root = os.path.realpath(M.RUNS_ROOT)
-    if os.path.commonpath([real_root, os.path.realpath(d)]) != real_root:
-        raise HTTPException(400, "bad results dir name")
+    try:
+        d = resolve_under(M.RUNS_ROOT, name)
+    except ValueError:
+        raise HTTPException(400, "bad results dir name") from None
     if not os.path.exists(os.path.join(d, "index.jsonl")):
         raise HTTPException(404, f"no results dir {name}")
     return d
@@ -246,7 +247,7 @@ _STUDY_CACHE = _StudyCache()
 
 def _study_fingerprint(name: str) -> tuple:
     """A results directory's index.jsonl identity right now. BEST-EFFORT -- see _StudyCache above."""
-    p = os.path.join(M.RUNS_ROOT, name, "index.jsonl")
+    p = os.path.join(resolve_under(M.RUNS_ROOT, name), "index.jsonl")
     st = os.stat(p)
     return (os.path.realpath(p), st.st_dev, st.st_ino, st.st_size, st.st_mtime_ns, st.st_ctime_ns)
 
@@ -257,7 +258,7 @@ def _study_rows_stable(name: str, retries: int = 3) -> tuple[list, tuple]:
     raising -- this is the documented best-effort fallback, not transactional consistency."""
     fp = _study_fingerprint(name)
     for _ in range(retries):
-        rows = load_index(os.path.join(M.RUNS_ROOT, name))
+        rows = load_index(resolve_under(M.RUNS_ROOT, name))
         fp2 = _study_fingerprint(name)
         if fp2 == fp:
             return rows, fp2
@@ -280,9 +281,11 @@ def runs(name: str, harness: Optional[str] = None, task: Optional[str] = None, m
 def run_detail(name: str, run_id: str):
     d = _dir(name)
     _safe_name(run_id, "run_id")
-    rd = os.path.join(d, run_id)
-    real_d = os.path.realpath(d)
-    if os.path.commonpath([real_d, os.path.realpath(rd)]) != real_d or not os.path.isdir(rd):
+    try:
+        rd = resolve_under(d, run_id)
+    except ValueError:
+        raise HTTPException(404) from None
+    if not os.path.isdir(rd):
         raise HTTPException(404)
     def rd_(fn, js=False):
         p = os.path.join(rd, fn)
@@ -488,7 +491,7 @@ def models(refresh: bool = False):
                 data = json.loads(r.read().decode())
             _MODEL_CACHE.update(ts=time.time(), data={m["id"]: m for m in data.get("data", [])})
         except Exception as e:
-            _MODEL_CACHE["error"] = str(e)
+            _MODEL_CACHE["error"] = f"model catalogue unavailable (error id {log_error('model catalogue fetch', e)})"
     live = _MODEL_CACHE.get("data") or {}
     out = []
     for c in CURATED:
@@ -646,7 +649,8 @@ def _run_one(job: dict, cell: dict, task: dict, harness: HarnessConfig, repeat: 
             job["running"].remove(run_id)
         err = _redact_job_secret(job, f"{task['id']}/{harness.id}/{cell['model']}: {e}")
         job["errors"].append(err)
-        BUS.publish("run_error", job=job["id"], run_id=run_id, error=err, trace=_redact_job_secret(job, traceback.format_exc()[-800:]))
+        # The traceback stays in the server log; the stream carries only an id to find it by.
+        BUS.publish("run_error", job=job["id"], run_id=run_id, error=err, error_id=log_error("run " + str(run_id)))
 
 
 def _run_job(job: dict):
@@ -746,7 +750,10 @@ def sentinel_replay_all(name: str, harness: Optional[str] = None):
     model = S.load_model()
     out = []
     for r in M.rows_for(name, harness_id=harness):
-        p = os.path.join(d, r["run_id"], "ledger.jsonl")
+        try:
+            p = os.path.join(resolve_under(d, str(r["run_id"])), "ledger.jsonl")
+        except ValueError:
+            continue
         if not os.path.exists(p):
             continue
         with open(p) as stream:
@@ -801,8 +808,8 @@ def real_status():
 
 @app.get("/api/real/{name}/analysis")
 def real_analysis(name: str):
-    _dir(name)
-    return M._clean(RI.analysis(os.path.join(M.RUNS_ROOT, name)))
+    d = _dir(name)
+    return M._clean(RI.analysis(d))
 
 
 # --------------------------------------------------------------------------- judge (exercise 4)
@@ -938,8 +945,11 @@ if os.path.isdir(DIST):
 
     @app.get("/{path:path}")
     def spa(path: str):
-        p = os.path.join(DIST, path)
-        if path and os.path.isfile(p):
+        try:
+            p = resolve_relative(DIST, path)
+        except ValueError:
+            p = ""
+        if path and p and os.path.isfile(p):
             return FileResponse(p, headers=_NO_CACHE if path in ("index.html", "build-source.json") else None)
         return FileResponse(os.path.join(DIST, "index.html"), headers=_NO_CACHE)
 else:

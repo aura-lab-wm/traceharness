@@ -18,6 +18,14 @@ from .paths import LAB_ROOT, RUNS_ROOT   # checkout or installed wheel
 from .results_scope import count_runs, list_results_dirs
 
 
+def _rd(name: str) -> str:
+    """The results directory `name` under RUNS_ROOT, through the shared path guard: routes validate
+    the name first, and this keeps every metrics read confined even for a caller that did not."""
+    from traceharness.core.safe_paths import confine
+    return confine(RUNS_ROOT, name)
+
+
+
 def _clean(x):
     """Replace NaN/inf so the JSON is valid."""
     if isinstance(x, float):
@@ -32,8 +40,8 @@ def _clean(x):
 def results_dirs() -> list[dict]:
     out = []
     for name in list_results_dirs(RUNS_ROOT):
-        idx = os.path.join(RUNS_ROOT, name, "index.jsonl")
-        rows = load_index(os.path.join(RUNS_ROOT, name))
+        idx = os.path.join(_rd(name), "index.jsonl")
+        rows = load_index(_rd(name))
         known = [r["hidden_pass"] for r in exclude_human(rows) if isinstance(r.get("hidden_pass"), bool)]   # an aggregate: unattended runs only
         out.append({"name": name, "runs": len(rows),
                     "harnesses": sorted({r["harness_id"] for r in rows}),
@@ -46,7 +54,7 @@ def results_dirs() -> list[dict]:
 
 
 def rows_for(name: str, **filters) -> list[dict]:
-    d = os.path.join(RUNS_ROOT, name)
+    d = _rd(name)
     return filter_rows(load_index(d), **{k: v for k, v in filters.items() if v})
 
 
@@ -178,7 +186,7 @@ def sentinel_pairs(rows: list[dict]) -> list[dict]:
 
 
 def leakage(name: str, rows: list[dict], harness: str) -> list[dict]:
-    d = os.path.join(RUNS_ROOT, name)
+    d = _rd(name)
     base = filter_rows(rows, harness_id=harness)
     tt = task_table(base)
     added, sim = added_lines, similarity
@@ -247,7 +255,7 @@ def weak_tests(rows: list[dict]) -> dict:
 
 
 def self_report(name: str, rows: list[dict]) -> list[dict]:
-    d = os.path.join(RUNS_ROOT, name)
+    d = _rd(name)
     traj = load_runs(d)
     out = []
     for h in sorted({r["harness_id"] for r in rows}):
@@ -265,7 +273,7 @@ def self_report(name: str, rows: list[dict]) -> list[dict]:
 
 
 def ochiai(name: str, harness: str | None) -> list[dict]:
-    d = os.path.join(RUNS_ROOT, name)
+    d = _rd(name)
     if harness:
         # ledger_rows_as_features has no harness column; re-filter through the index
         keep = {r["run_id"] for r in load_index(d) if r["harness_id"] == harness}
@@ -290,7 +298,7 @@ def ledger_rows_as_features_filtered(d: str, keep: set) -> list[dict]:
 
 @unattended_only("rows")
 def conduct(name: str, rows: list[dict], harness: str) -> dict:
-    d = os.path.join(RUNS_ROOT, name)
+    d = _rd(name)
     traj = load_runs(d, harness_id=harness)
     # Every rate below is a predicate over execute_tool spans. A run whose tool execution was never
     # captured has none, so it would vote "did not verify" and "read before writing" about a run in
@@ -309,7 +317,7 @@ def conduct(name: str, rows: list[dict], harness: str) -> dict:
 @unattended_only("rows")
 def report_card(name: str, rows: list[dict], harness: str, model: str | None = None) -> dict:
     """The exercise-6 card. Same builder and same markdown as `exercises/ex6_report_card.py`."""
-    d = os.path.join(RUNS_ROOT, name)
+    d = _rd(name)
     R = filter_rows(rows, harness_id=harness, model=model)
     if not R:
         return {"error": "no runs"}
@@ -579,7 +587,7 @@ def experiment(rows: list[dict], a_key: str = "model", b_key: str = "harness_id"
 # --------------------------------------------------------------------------- patterns & queries (exercise 3)
 def _paired(name: str, harness: str | None = None, task: str | None = None, model: str | None = None):
     """(Trajectory, index row) pairs, so pattern code can see both the spans and the outcome."""
-    d = os.path.join(RUNS_ROOT, name)
+    d = _rd(name)
     kw = {k: v for k, v in (("harness_id", harness), ("task_id", task), ("model", model)) if v}
     traj = load_runs(d, **kw)
     idx = {r["run_id"]: r for r in load_index(d)}

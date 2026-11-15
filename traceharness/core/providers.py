@@ -14,6 +14,7 @@ All providers speak the same internal message format (OpenAI chat style):
 """
 from __future__ import annotations
 import json, os, time, urllib.request, urllib.error
+from urllib.parse import urlsplit
 from dataclasses import dataclass, field
 from typing import Optional
 
@@ -168,7 +169,8 @@ class OpenAIProvider(Provider):
                  base_url: Optional[str] = None, route: Optional[list] = None):
         super().__init__(model, temperature, price)
         self.base_url = (base_url or os.environ.get("OPENAI_BASE_URL") or "https://api.openai.com/v1").rstrip("/")
-        self.openrouter = "openrouter.ai" in self.base_url
+        host = (urlsplit(self.base_url).hostname or "").lower()
+        self.openrouter = host == "openrouter.ai" or host.endswith(".openrouter.ai")
         # OpenRouter only: the upstream providers a run may be served by, in order, with fallbacks
         # to any other provider switched off. Pinning the route removes one source of run-to-run
         # variation that has nothing to do with the model or the harness.
@@ -178,7 +180,7 @@ class OpenAIProvider(Provider):
         self.seed: Optional[int] = None
         self.seed_supported = True    # cleared when the endpoint rejects `seed`; later calls omit it
         self.api_key = api_key or (os.environ.get("OPENROUTER_API_KEY", "") if self.openrouter else "") or os.environ.get("OPENAI_API_KEY", "")
-        if not self.api_key and ("api.openai.com" in self.base_url or self.openrouter):
+        if not self.api_key and (host == "api.openai.com" or self.openrouter):
             raise RuntimeError("OPENROUTER_API_KEY is not set" if self.openrouter else "OPENAI_API_KEY is not set")
 
     def reseed(self, seed: Optional[int]):

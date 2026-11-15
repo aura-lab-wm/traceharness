@@ -38,6 +38,7 @@ from fastapi import APIRouter, HTTPException
 from fastapi.responses import PlainTextResponse, Response, StreamingResponse
 
 from .paths import HARNESS_DIR, LAB_ROOT, MODELS_DIR, RUNS_ROOT, TASK_DIR
+from .safe_paths import PathRefused, confine, http_confine
 
 router = APIRouter(prefix="/api/export", tags=["export"])
 
@@ -49,7 +50,7 @@ FALLBACK_EPOCH = "1970-01-01T00:00:00.000Z"
 
 # --------------------------------------------------------------------------- small local helpers
 def _dir(name: str) -> str:
-    d = os.path.join(RUNS_ROOT, name)
+    d = http_confine(RUNS_ROOT, name)
     if not os.path.exists(os.path.join(d, "index.jsonl")):
         raise HTTPException(404, f"no results dir {name}")
     return d
@@ -66,7 +67,7 @@ def _rows(name: str) -> list[dict]:
 
 
 def _run_dir(name: str, run_id: str) -> str:
-    d = os.path.join(_dir(name), run_id)
+    d = http_confine(_dir(name), run_id)
     if not os.path.isdir(d):
         raise HTTPException(404, f"no run {run_id} in {name}")
     return d
@@ -92,8 +93,11 @@ def _summary(name: str, run_id: str) -> dict:
 
 
 def _issue_for(task_id: str) -> str:
-    p = os.path.join(TASK_DIR, task_id)
-    if task_id and os.path.exists(os.path.join(p, "task.json")):
+    try:
+        p = confine(TASK_DIR, task_id) if task_id else ""   # task_id is data from a (possibly foreign) trace
+    except PathRefused:
+        p = ""
+    if p and os.path.exists(os.path.join(p, "task.json")):
         from traceharness.core.grader import load_task
         return load_task(p)["issue"]
     return (f"(no local task definition for {task_id}: this run was imported, and the issue text "
@@ -527,8 +531,11 @@ def _bundle_bytes(name: str, include_ledgers: bool = True, include_patches: bool
 
         for r in rows:
             rid = r.get("run_id")
-            rd = os.path.join(d, rid or "")
-            if not rid or not os.path.isdir(rd):
+            try:
+                rd = confine(d, rid or "")           # a run id is data from index.jsonl, not trusted
+            except PathRefused:
+                continue
+            if not os.path.isdir(rd):
                 continue
             for fn, flag, kind in (("summary.json", True, "summary"),
                                    ("ledger.jsonl", include_ledgers, "ledger"),
@@ -540,7 +547,10 @@ def _bundle_bytes(name: str, include_ledgers: bool = True, include_patches: bool
 
         # "+sentinel" variants reuse the base harness file; dedupe so the zip has no repeats.
         for base_id in sorted({h.split("+")[0] for h in harnesses}):
-            p = os.path.join(HARNESS_DIR, f"{base_id}.json")
+            try:
+                p = confine(HARNESS_DIR, f"{base_id}.json")
+            except PathRefused:
+                continue
             if os.path.exists(p):
                 with open(p, "rb") as f:
                     put(f"{name}/harnesses/{base_id}.json", f.read(), "harness")
@@ -567,8 +577,11 @@ def _sentinel_models(name: str) -> list[str]:
         with open(p, encoding="utf-8") as f:
             active = f.read().strip()
     for cand in (name, active):
-        f = os.path.join(MODELS_DIR, f"{cand}.json")
-        if cand and os.path.exists(f) and f not in out:
+        try:
+            f = confine(MODELS_DIR, f"{cand}.json") if cand else ""
+        except PathRefused:
+            continue
+        if f and os.path.exists(f) and f not in out:
             out.append(f)
     return out
 

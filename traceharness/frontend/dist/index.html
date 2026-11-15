@@ -31,6 +31,9 @@
         try { t = localStorage.getItem('rig.theme') } catch (e) {}
         var light = t === 'light' || (t === 'system' && window.matchMedia && matchMedia('(prefers-color-scheme: light)').matches)
         if (light) document.documentElement.className += ' hl-light'
+        function esc(v) {
+          return String(v).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c] })
+        }
         function fail(why) {
           var el = document.getElementById('hl-boot')
           if (!el || el.getAttribute('data-state') === 'failed') return
@@ -38,7 +41,7 @@
           var served = location.protocol === 'http:' || location.protocol === 'https:'
           el.querySelector('.hl-boot-in').innerHTML =
             '<span class="hl-mark"></span><b>The TraceHarness interface did not load.</b>' +
-            '<p>' + why + '</p>' +
+            '<p>' + esc(why) + '</p>' +
             (served
               ? '<p>If you changed the frontend, rebuild it, then reload:<br><code>cd traceharness/frontend &amp;&amp; npm run build</code></p><p>The API is still running; your recorded runs are untouched.</p>'
               : '<p>This exported file may be incomplete. Export it again with <code>python -m traceharness --export</code>.</p>')
@@ -52,7 +55,7 @@
         setTimeout(function () { if (document.getElementById('hl-boot')) fail('It did not start within 15 seconds.') }, 15000)
       })()
     </script>
-    <script type="module" crossorigin src="/assets/index-aUsMSkBJ.js"></script>
+    <script type="module" crossorigin src="/assets/index-CfTMR6Lo.js"></script>
     <link rel="stylesheet" crossorigin href="/assets/index-CxX-dc2-.css">
   </head>
   <body>

@@ -1171,6 +1171,12 @@ ACTIVE_FILE = os.path.join(DATA_DIR, "active_model.txt")
 MODEL_PATH = os.path.join(DATA_DIR, "sentinel_model.json")   # legacy single-file location (still read as a fallback)
 
 
+def _model_file(name: str) -> str:
+    """`<MODELS_DIR>/<name>.json`, refusing (PathRefused) a name that leaves the registry directory."""
+    from .safe_paths import confine
+    return confine(MODELS_DIR, name + ".json")
+
+
 def list_models() -> list[dict]:
     out = []
     if os.path.isdir(MODELS_DIR):
@@ -1194,7 +1200,7 @@ def active_model_name() -> str:
 
 
 def set_active(name: str):
-    if not os.path.exists(os.path.join(MODELS_DIR, name + ".json")):
+    if not os.path.exists(_model_file(name)):
         raise FileNotFoundError(name)
     os.makedirs(DATA_DIR, exist_ok=True)
     with open(ACTIVE_FILE, "w") as f:
@@ -1204,7 +1210,9 @@ def set_active(name: str):
 def load_model_strict(spec: str) -> RiskModel:
     """A risk model by registry name or by path to its JSON file; FileNotFoundError when it is missing.
     Unlike load_model, never falls back to another model: an experiment must run the model it names."""
-    path = spec if spec.endswith(".json") else os.path.join(MODELS_DIR, spec + ".json")
+    # A `.json` spec is a file path the person typed on the command line (runner --risk-model); a bare
+    # name is a registry entry and is confined to MODELS_DIR.
+    path = spec if spec.endswith(".json") else _model_file(spec)
     if not os.path.isfile(path):
         raise FileNotFoundError(f"no risk model {spec!r} (looked for {path})")
     with open(path) as f:
@@ -1214,8 +1222,14 @@ def load_model_strict(spec: str) -> RiskModel:
 
 
 def load_model(name: Optional[str] = None) -> RiskModel:
+    explicit = bool(name)
     name = name or active_model_name()
-    p = os.path.join(MODELS_DIR, name + ".json") if name else MODEL_PATH
+    try:
+        p = _model_file(name) if name else MODEL_PATH
+    except ValueError:                         # PathRefused
+        if explicit:
+            raise                              # a caller-named model that leaves the registry is refused
+        p, name = MODEL_PATH, ""               # a hostile active_model.txt falls back to the legacy file
     if not os.path.exists(p) and os.path.exists(MODEL_PATH):
         p = MODEL_PATH
     if os.path.exists(p):
@@ -1229,7 +1243,7 @@ def load_model(name: Optional[str] = None) -> RiskModel:
 def save_model(model: RiskModel, name: str = "sentinel_model", activate: bool = True):
     os.makedirs(MODELS_DIR, exist_ok=True)
     model.meta["name"] = name
-    with open(os.path.join(MODELS_DIR, name + ".json"), "w") as f:
+    with open(_model_file(name), "w") as f:
         json.dump(model.to_json(), f, indent=1)
     if activate:
         set_active(name)

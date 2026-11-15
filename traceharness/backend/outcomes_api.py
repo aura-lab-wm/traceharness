@@ -33,6 +33,7 @@ from fastapi import APIRouter
 
 from . import metrics as M
 from .repeats_api import _dir
+from .safe_paths import PathRefused, confine
 
 router = APIRouter(prefix="/api/outcomes")
 
@@ -115,7 +116,11 @@ def study(name: str) -> dict:
         rid = row.get("run_id")
         if not rid:
             continue
-        finishes, seen = _finish_reasons(os.path.join(d, rid, "ledger.jsonl"))
+        try:
+            ledger = confine(d, rid, "ledger.jsonl")      # a run id in index.jsonl is data, not trusted
+        except PathRefused:
+            continue
+        finishes, seen = _finish_reasons(ledger)
         c = classify(row, finishes if seen else None)
         runs[rid] = c
         counts[c["mode"]] += 1

@@ -94,11 +94,13 @@ export function withChain(spec, chain) {
 }
 
 function parseQuery(q) {
-  const out = {}
+  const out = Object.create(null)
   for (const kv of String(q || '').split('&')) {
     if (!kv) continue
     const i = kv.indexOf('=')
-    out[i < 0 ? kv : kv.slice(0, i)] = i < 0 ? '1' : kv.slice(i + 1)
+    const key = i < 0 ? kv : kv.slice(0, i)
+    if (key === '__proto__' || key === 'constructor' || key === 'prototype') continue // a link never sets prototype keys
+    out[key] = i < 0 ? '1' : kv.slice(i + 1)
   }
   return out
 }

@@ -43,6 +43,7 @@ from traceharness.core.harness import HarnessConfig, content_hash
 from .results_scope import list_results_dirs
 
 from .paths import HARNESS_DIR, RUNS_ROOT, TASK_DIR
+from .safe_paths import PathRefused, confine, http_confine
 
 router = APIRouter(prefix="/api/harness")
 
@@ -60,7 +61,7 @@ def _clean(x):
 
 
 def _dir(name: str) -> str:
-    d = os.path.join(RUNS_ROOT, name)
+    d = http_confine(RUNS_ROOT, name)
     if not os.path.exists(os.path.join(d, "index.jsonl")):
         raise HTTPException(404, f"no results dir {name}")
     return d
@@ -128,7 +129,10 @@ def _normalise(d: dict) -> dict:
 
 def _first_span(results_dir: str, run_id: str) -> Optional[dict]:
     """The invoke_agent start span (which carries the whole harness config) without reading the ledger."""
-    p = os.path.join(results_dir, run_id, "ledger.jsonl")
+    try:
+        p = confine(results_dir, run_id, "ledger.jsonl")     # run_id comes from index.jsonl: data, not trusted
+    except PathRefused:
+        return None
     try:
         with open(p, encoding="utf-8") as f:
             line = f.readline()
@@ -205,9 +209,9 @@ def _recorded_runtime(row: dict, span: Optional[dict], cfg: Optional[dict]) -> O
 
 def _ledger_stamp(results_dir: str, run_id: str):
     try:
-        st = os.stat(os.path.join(results_dir, run_id, "ledger.jsonl"))
+        st = os.stat(confine(results_dir, run_id, "ledger.jsonl"))
         return (run_id, st.st_mtime_ns, st.st_ctime_ns, st.st_size)
-    except OSError:
+    except (OSError, PathRefused):
         return (run_id, None)
 
 
@@ -267,8 +271,11 @@ def resolve_harness(hid: str, results_dir: Optional[str] = None) -> dict:
         cfg = files[hid]["config"]
         return {"id": hid, "config": cfg, "hash": content_hash(cfg), "source": "file", "file": files[hid]["file"]}
     if results_dir:
-        # callers pass either a results-dir NAME ("demo_mock") or an absolute path; accept both
-        rd = results_dir if os.path.isdir(results_dir) else _dir(results_dir)
+        # A results-dir NAME ("demo_mock"), or the path of one already under the runs root. Any other
+        # absolute path is refused: this value can arrive in a query string.
+        root = os.path.realpath(RUNS_ROOT)
+        name = os.path.relpath(os.path.realpath(results_dir), root) if os.path.isabs(results_dir) else results_dir
+        rd = _dir(name)
         rec = _recorded_harnesses(rd).get(hid) or {}
         # the variant with the most runs is the representative one
         best = max(rec.items(), key=lambda kv: len(kv[1]["runs"]), default=None)
@@ -653,7 +660,7 @@ def ablate(a: AblateIn):
         os.makedirs(HARNESS_DIR, exist_ok=True)
         for v in p["variants"]:
             fn = f"{_safe_id(v['id'])}.json"
-            path = os.path.join(HARNESS_DIR, fn)
+            path = http_confine(HARNESS_DIR, fn)
             if os.path.exists(path):
                 skipped.append(v["id"])
                 v["saved"] = False
