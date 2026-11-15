@@ -20,6 +20,7 @@ from .ledger import Ledger, RunSummary, new_run_id
 from .tools import ALL_TOOLS, Sandbox, check_command, check_write, PERMISSIVE_ALLOWS
 from .grader import grade
 from .providers import Provider
+from . import pause as _pause
 
 DEFAULT_SYSTEM = """You are an autonomous software engineer working inside a small Python repository.
 You are given a GitHub issue. Resolve it by editing files with the tools provided.
@@ -47,6 +48,10 @@ class HarnessConfig:
     no_action_retries: int = 0
     notes: str = ""
     sentinel: dict = field(default_factory=dict)   # early-warning module config; part of the cell (see traceharness/backend/sentinel.py)
+    # Human-in-the-loop pause (core/pause.py): {} never pauses. Which runs a person intervened in is
+    # recorded per run (`human_intervened`), so this field only says WHERE the harness stops to ask;
+    # it is left out of the content hash at its default like no_action_retries.
+    pause: dict = field(default_factory=dict)
 
     @staticmethod
     def load(path: str) -> "HarnessConfig":
@@ -70,7 +75,7 @@ HASH_EXCLUDE = ("id", "notes")
 # Fields added after runs had already been recorded. A config that leaves such a field at its
 # default behaves exactly as it did before the field existed, so the field is left out of the hash
 # payload at that value and every harness_hash already written to an index stays valid.
-HASH_OMIT_AT_DEFAULT = {"no_action_retries": 0}
+HASH_OMIT_AT_DEFAULT = {"no_action_retries": 0, "pause": {}}
 
 #: What the model is told when a reply invokes no tool and the harness allows a re-prompt.
 NO_ACTION_PROMPT = ("Your last reply did not call any tool, so nothing happened. "
@@ -119,9 +124,51 @@ def _apply_context_window(messages: list[dict], keep_last: int) -> list[dict]:
     return out
 
 
+def _human_pause(ledger, run_dir: str, step: int, reasons: list, pending: list, cfg: dict, should_stop) -> dict:
+    """Stop before this step's tool calls run, record a `pause` span, wait for a decision (core/pause.py),
+    apply it and record an `intervention` span. Mutates `pending` for an edit (the arguments of one
+    call are replaced; the harness's permission checks then see the edited call like any other).
+
+    Returns {"decision", "denied": {tool_call_id: note}, "inject": text|None, "edited": bool, "counts": 0|1}.
+    `counts` says whether this resolution makes the run human-intervened: every decision a person made
+    does, and so does a timeout or cancel that changed what the agent did (anything but approve)."""
+    _pause.clear_mailbox(run_dir)                      # nothing left over from before this pause may decide it
+    t0 = time.time()
+    ledger.record("pause", step=step, reason=reasons, pending=_pause.describe_pending(pending),
+                  timeout_s=cfg["timeout_s"], on_timeout=cfg["on_timeout"], deadline_ts=t0 + cfg["timeout_s"])
+    # NOTE: the wait holds this thread -- in the web app a ThreadPoolExecutor worker (8 at most). That is
+    # acceptable only because the wait is bounded by timeout_s and ends at once when should_stop() turns true.
+    dec, who = _pause.wait_for_decision(run_dir, step, len(pending), cfg["timeout_s"], cfg["on_timeout"], should_stop)
+    kind = dec["decision"]
+    fields = {"step": step, "decision": kind, "who": who, "waited_s": round(time.time() - t0, 3)}
+    if dec.get("note"):
+        fields["note"] = dec["note"]
+    denied, inject, edited = {}, None, False
+    if kind == "deny":
+        which = dec.get("call")
+        for i, tc in enumerate(pending):
+            if which is None or which == i:
+                denied[tc.id] = dec.get("note", "")
+        fields["calls"] = [pending[i].id for i in range(len(pending)) if which is None or which == i]
+    elif kind == "edit":
+        tc = pending[dec["call"]]
+        before = dict(tc.arguments or {})
+        tc.arguments = dict(dec["args"])
+        edited = True
+        fields.update(call=dec["call"], tool_call_id=tc.id, tool=tc.name,
+                      before={str(k): _pause._trim(v) for k, v in before.items()},
+                      after={str(k): _pause._trim(v) for k, v in tc.arguments.items()})
+    elif kind == "inject":
+        inject = dec["message"]
+        fields["message"] = inject
+    ledger.record("intervention", **fields)
+    counts = 1 if (who in ("cli", "console") or kind != "approve") else 0
+    return {"decision": kind, "denied": denied, "inject": inject, "edited": edited, "counts": counts}
+
+
 def run_task(task: dict, harness: HarnessConfig, provider: Provider, out_root: str,
              repeat_index: int = 0, seed: Optional[int] = None, keep_workdir: bool = False, verbose: bool = False,
-             span_listener=None, step_hook=None, run_id: Optional[str] = None) -> RunSummary:
+             span_listener=None, step_hook=None, run_id: Optional[str] = None, should_stop=None) -> RunSummary:
     """Run one task under one harness.
 
     span_listener(rec)  optional: called for every ledger span as it is written (live streaming).
@@ -132,7 +179,11 @@ def run_task(task: dict, harness: HarnessConfig, provider: Provider, out_root: s
                           block  do not execute the pending tools; answer each with `text` instead
                           abort  stop the run (exit_reason = sentinel_abort)
                         The hook is part of the harness, so every verdict is recorded as a `sentinel` span.
+    should_stop()       optional: polled while the run waits for a human decision (HarnessConfig.pause);
+                        when it returns True the wait ends as an abort (the web app passes "job cancelled
+                        or server shutting down", so a paused run never outlives its job).
     """
+    pause_cfg = _pause.normalize(harness.pause)       # a bad pause config fails before anything is written
     run_id = run_id or new_run_id()
     run_dir = os.path.join(out_root, run_id)
     os.makedirs(run_dir, exist_ok=True)
@@ -217,6 +268,27 @@ def run_task(task: dict, harness: HarnessConfig, provider: Provider, out_root: s
                                          "content": f"BLOCKED by sentinel: {hook_verdict.get('text', '')}"})
                     continue
 
+            denied, inject_text = {}, None
+            if pause_cfg:
+                reasons = _pause.matches(pause_cfg, step, resp.tool_calls, summary.edits, hook_verdict)
+                if reasons:
+                    outcome = _human_pause(ledger, run_dir, step, reasons, resp.tool_calls, pause_cfg, should_stop)
+                    summary.human_interventions += outcome["counts"]
+                    summary.human_intervened = summary.human_interventions > 0
+                    if outcome["decision"] == "abort":
+                        summary.exit_reason = "human_abort"
+                        break
+                    denied, inject_text = outcome["denied"], outcome["inject"]
+                    if outcome["edited"]:
+                        # keep the transcript honest about what ran: the assistant message carries the edited arguments
+                        for entry in messages[-1].get("tool_calls") or []:
+                            for tc in resp.tool_calls:
+                                if entry["id"] == tc.id:
+                                    entry["arguments"] = tc.arguments
+                    if not resp.tool_calls and inject_text:
+                        messages.append({"role": "user", "content": f"[reviewer] {inject_text}"})
+                        continue
+
             if not resp.tool_calls:
                 if summary.reprompts < max(0, int(harness.no_action_retries or 0)):
                     # the harness, not the sentinel, re-prompts: recorded so the ledger shows that the
@@ -231,6 +303,14 @@ def run_task(task: dict, harness: HarnessConfig, provider: Provider, out_root: s
 
             for tc in resp.tool_calls:
                 summary.tool_calls += 1
+                if tc.id in denied:
+                    note = denied[tc.id]
+                    text = "DENIED by reviewer" + (f": {note}" if note else "")
+                    ledger.record("execute_tool", **{"gen_ai.operation.name": "execute_tool", "gen_ai.tool.name": tc.name,
+                                                     "args": {k: (v if len(str(v)) < 300 else str(v)[:300] + "...") for k, v in (tc.arguments or {}).items()},
+                                                     "status": "denied_by_reviewer", "duration_ms": 0, "result_preview": text[:400]})
+                    messages.append({"role": "tool", "tool_call_id": tc.id, "content": text})
+                    continue
                 t1 = time.time()
                 status, result, extra = "ok", "", {}
                 args = tc.arguments or {}
@@ -298,6 +378,8 @@ def run_task(task: dict, harness: HarnessConfig, provider: Provider, out_root: s
                     break
             if hook_verdict and hook_verdict.get("action") == "nudge" and not submitted:
                 messages.append({"role": "user", "content": f"[sentinel] {hook_verdict.get('text', '')}"})
+            if inject_text and not submitted:
+                messages.append({"role": "user", "content": f"[reviewer] {inject_text}"})
             if submitted:
                 summary.exit_reason = "submitted"
                 break

@@ -478,6 +478,7 @@ def harness_from_fingerprint(harness_id: str, fp: dict, notes: str = "") -> dict
         "no_action_retries": 0,                    # an external harness's stop rule is not observable from its log
         "notes": notes,
         "sentinel": {},
+        "pause": {},                               # an imported run was not paused by this lab
         "fingerprint": fp,
     }
     h["hash"] = sha12(fp)

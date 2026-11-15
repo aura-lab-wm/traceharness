@@ -9,7 +9,7 @@ the backend.
   tail(path, ...)       generator: every complete span already in the file, then each appended one
   describe(path)        identity (task, harness, model, repeat) and state from the first and the
                         last complete line only -- never the whole file
-  state_of(path)        running | finished | abandoned
+  state_of(path)        running | paused | finished | abandoned
   scan(runs_root, ...)  describe() over every run written recently, newest write first
   lanes(rec)            (agent lane, harness lane) text for one span
   render_line(rec)      one terminal line: `seq  agent │ harness` (the CLI `watch` view)
@@ -17,6 +17,8 @@ the backend.
 A run is *running* when its ledger has no `invoke_agent end` span and was written within the
 last RUNNING_GRACE_S seconds; *abandoned* when it has no end span and has been silent longer
 (the process died: a server restart, a Ctrl-C, a crash); *finished* when the end span is there.
+A run whose last span is a `pause` (core/pause.py) is *paused*, not abandoned, for as long as the
+pause's own deadline (plus a minute) has not passed: it is silent because it is waiting for a person.
 """
 from __future__ import annotations
 
@@ -24,6 +26,8 @@ import json
 import os
 import time
 from typing import Callable, Iterator, Optional
+
+from .pause import clean_text
 
 #: No end span and no write for this long -> abandoned, not running.
 RUNNING_GRACE_S = 600.0
@@ -68,6 +72,7 @@ def tail(path: str, from_seq: int = 0, poll: float = 0.25, idle_timeout: float =
     """
     line_no = 0
     partial_len = 0
+    idle = idle_timeout
     last_growth = time.monotonic()
     resumed = from_seq <= 0     # from_seq=0 is the start: every line is already "after" it
     with open(path, "rb") as f:
@@ -89,6 +94,10 @@ def tail(path: str, from_seq: int = 0, poll: float = 0.25, idle_timeout: float =
                         return                       # resumed past the end: nothing left to follow
                     continue
                 resumed = True                        # this is the first good line with seq >= from_seq (or unseqed)
+                # a run waiting on a person is silent by design: give the wait its own deadline, not the grace
+                idle = idle_timeout
+                if rec.get("span") == "pause" and isinstance(rec.get("timeout_s"), (int, float)):
+                    idle = max(idle_timeout, float(rec["timeout_s"]) + PAUSE_SLACK_S)
                 yield rec
                 if is_end(rec):
                     return
@@ -100,7 +109,7 @@ def tail(path: str, from_seq: int = 0, poll: float = 0.25, idle_timeout: float =
                     last_growth = time.monotonic()
             if stop is not None and stop():
                 return
-            if time.monotonic() - last_growth >= idle_timeout:
+            if time.monotonic() - last_growth >= idle:
                 yield {"span": "live_status", "status": "abandoned"}
                 return
             time.sleep(poll)
@@ -129,6 +138,16 @@ def _first_and_last_lines(path: str):
     return first, complete.rsplit(b"\n", 1)[-1]
 
 
+#: How long past its own deadline a pause still reads as waiting (the run polls its mailbox, so it
+#: ends the wait itself by then; a longer silence means the process is gone).
+PAUSE_SLACK_S = 60.0
+
+
+def _pause_open(rec: dict, now: float) -> bool:
+    dl = rec.get("deadline_ts")
+    return isinstance(dl, (int, float)) and now <= dl + PAUSE_SLACK_S
+
+
 def describe(path: str, now: Optional[float] = None, grace: float = RUNNING_GRACE_S) -> dict:
     """Identity and state of one run from its ledger's first and last complete line only."""
     first, last = _first_and_last_lines(path)
@@ -136,8 +155,13 @@ def describe(path: str, now: Optional[float] = None, grace: float = RUNNING_GRAC
     tail_rec = _parse(last) if last else None
     mtime = os.path.getmtime(path)
     now = time.time() if now is None else now
+    paused = None
     if tail_rec is not None and is_end(tail_rec):
         state = "finished"
+    elif tail_rec is not None and tail_rec.get("span") == "pause" and _pause_open(tail_rec, now):
+        state = "paused"
+        paused = {"step": tail_rec.get("step"), "deadline_ts": tail_rec.get("deadline_ts"),
+                  "tools": [c.get("name") for c in (tail_rec.get("pending") or []) if isinstance(c, dict)]}
     elif now - mtime < grace:
         state = "running"
     else:
@@ -148,7 +172,8 @@ def describe(path: str, now: Optional[float] = None, grace: float = RUNNING_GRAC
     return {"task_id": h.get("task_id"), "harness_id": h.get("harness_id"),
             "model": h.get("gen_ai.request.model"), "repeat_index": h.get("repeat_index"),
             "started_ts": h.get("ts"), "last_ts": t.get("ts") or h.get("ts"),
-            "last_seq": seq if isinstance(seq, int) else None, "state": state, "mtime": mtime}
+            "last_seq": seq if isinstance(seq, int) else None, "state": state, "mtime": mtime,
+            **({"pause": paused} if paused else {})}
 
 
 def state_of(path: str, now: Optional[float] = None, grace: float = RUNNING_GRACE_S) -> str:
@@ -240,6 +265,13 @@ def lanes(rec: dict):
                     f"strong={_yn(rec.get('strong'))}")
     if kind == "sentinel":
         return "", f"sentinel: {rec.get('action') or rec.get('status') or 'scored'} risk={rec.get('risk', '—')}"
+    if kind == "pause":
+        calls = "; ".join(f"{c.get('name')}({_args(c.get('arguments'), 50)})" for c in (rec.get("pending") or []) if isinstance(c, dict))
+        why = "; ".join(str(r) for r in (rec.get("reason") or []))
+        return "", _short(clean_text(f"PAUSED at step {rec.get('step')} ({why}): {calls or 'no tool call'}"), 120)
+    if kind == "intervention":
+        extra = f" · {rec.get('note')}" if rec.get("note") else ""
+        return "", _short(clean_text(f"intervention: {rec.get('decision')} by {rec.get('who')}{extra}"), 120)
     if kind == "invoke_agent":
         if rec.get("status") == "start":
             return (f"run {rec.get('run_id')} · {rec.get('task_id')} · {rec.get('harness_id')} · "
