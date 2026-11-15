@@ -696,10 +696,11 @@ const PLAIN = {
   step_frac: 'share of the step budget used', token_frac: 'share of the token budget used',
 }
 /** Train + save a sentinel from a terminal in the lab root (backend/sentinel.py train, save_model). */
-const trainCmd = (dir) => `python3 -c ${shq(`from traceharness.backend.sentinel import train, save_model; m, _ = train(["data/runs/${dir}"]); save_model(m, "${dir}")`)}`
+const trainCmd = (dir) => `python3 -c ${shq('import sys; from traceharness.backend.sentinel import train, save_model; d = sys.argv[1]; m, _ = train(["data/runs/" + d]); save_model(m, d)')} ${shq(dir)}`
 /** Evaluate one rule expression with safe_eval over the given feature values (every other feature 0),
- *  exactly as the engine does during a run (backend/sentinel.py safe_eval, rule_env). */
-const ruleCmd = (when, env) => `python3 -c ${shq(`from traceharness.backend.sentinel import safe_eval, rule_env, FEATURE_NAMES as F; print(safe_eval(${JSON.stringify(String(when))}, rule_env({**dict.fromkeys(F, 0.0), **${JSON.stringify(env)}})))`)}`
+ *  exactly as the engine does during a run (backend/sentinel.py safe_eval, rule_env). The rule and the
+ *  values travel as quoted argv, never spliced into the Python source. */
+const ruleCmd = (when, env) => `python3 -c ${shq('import sys, json; from traceharness.backend.sentinel import safe_eval, rule_env, FEATURE_NAMES as F; print(safe_eval(sys.argv[1], rule_env({**dict.fromkeys(F, 0.0), **json.loads(sys.argv[2])})))')} ${shq(String(when))} ${shq(JSON.stringify(env))}`
 
 function Sentinel({ spec }) {
   const sn = useSentinel()

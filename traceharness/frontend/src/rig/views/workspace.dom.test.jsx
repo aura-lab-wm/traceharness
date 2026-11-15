@@ -341,7 +341,7 @@ describe('sentinel', () => {
     fireEvent.change(within(t).getByLabelText('edits_since_test'), { target: { value: '3' } })
     expect(within(t).getByLabelText('steps_frac')).toBeTruthy()
     const cmd = el(u, 'rule-test-command').textContent
-    expect(cmd).toContain('safe_eval("edits_since_test >= 2 and steps_frac > 0.5"')
+    expect(cmd).toContain("'edits_since_test >= 2 and steps_frac > 0.5'")
     expect(cmd).toContain('{"edits_since_test":3,"steps_frac":0}')
     expect(within(u).getByRole('button', { name: /Copy/ })).toBeTruthy()
   })
@@ -366,7 +366,7 @@ describe('sentinel', () => {
   it('an untrained sentinel says so instead of drawing curves, and gives the command that trains one', () => {
     const { container } = renderRig('#/rig/sentinel', { data: { ...rigFixture(), '/sentinel': { models: [], model: { meta: { trained: false } } }, '/sentinel/plugins': PLUG, '/../openapi.json': { paths: {} } } })
     expect(el(container, 'sentinel').textContent).toContain('No trained model on disk')
-    expect(el(container, 'sentinel-train').textContent).toContain('train(["data/runs/mini"])')
+    expect(el(container, 'sentinel-train').textContent).toContain('train(["data/runs/" + d])')
   })
 })
 
