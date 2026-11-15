@@ -193,6 +193,9 @@ def _prefix_table(dir_path: str, harness: Optional[str] = None, max_runs: Option
             continue
         if row.get("hidden_pass") is None:
             continue
+        from traceharness.core.analysis import is_human_intervened
+        if is_human_intervened(row):          # a person steered this run: its label is not the model's outcome
+            continue
         p = os.path.join(dir_path, row["run_id"], "ledger.jsonl")
         try:
             with open(p) as fh:

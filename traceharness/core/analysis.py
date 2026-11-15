@@ -25,10 +25,62 @@ for pretty tables. Functions:
   tool_histogram(dir, rows)           -> counts of tool names across ledgers
 """
 from __future__ import annotations
-import json, math, os, random
+import contextvars, functools, inspect, json, math, os, random
 from collections import Counter, defaultdict
 from math import comb
 from typing import Callable, Iterable, Optional
+
+
+# ---------------------------------------------------------------- human-intervened runs
+# A run in which a person (or a timeout / cancel that changed what the agent did) decided something
+# mid-run (HarnessConfig.pause, core/pause.py) is not an unattended measurement of a model under a
+# harness. The aggregate statistics below leave such runs out unless the caller opts in. The rule
+# lives HERE, once: every estimator that takes rows is wrapped by `unattended_only`, so the routes,
+# the CLI and the exporters that call them inherit it, and a new caller cannot forget it.
+_INCLUDE_HUMAN = contextvars.ContextVar("traceharness_include_human", default=False)
+
+
+def is_human_intervened(row) -> bool:
+    """True for an index row of a human-intervened run. Rows written before the fields existed have
+    neither, and are not."""
+    if not isinstance(row, dict):
+        return False
+    return bool(row.get("human_intervened")) or (row.get("human_interventions") or 0) > 0
+
+
+def exclude_human(rows, include_human: bool = False) -> list:
+    """`rows` without the human-intervened runs, unless `include_human`."""
+    rows = list(rows)
+    return rows if include_human else [r for r in rows if not is_human_intervened(r)]
+
+
+def unattended_only(*row_params: str):
+    """Decorator for an estimator over run rows: drops human-intervened runs from the named row
+    parameters before computing, unless called with `include_human=True`. The choice is inherited by
+    nested calls (a context variable), so a composite such as `summarize` that calls `aggregate`
+    applies it once, and `include_human=True` reaches every layer below it."""
+    names = row_params or ("rows",)
+
+    def deco(fn):
+        sig = inspect.signature(fn)
+
+        @functools.wraps(fn)
+        def wrapper(*args, include_human=None, **kwargs):
+            inc = _INCLUDE_HUMAN.get() if include_human is None else bool(include_human)
+            token = _INCLUDE_HUMAN.set(inc)
+            try:
+                if not inc:
+                    bound = sig.bind(*args, **kwargs)
+                    for n in names:
+                        if n in bound.arguments:
+                            bound.arguments[n] = exclude_human(bound.arguments[n], False)
+                    return fn(*bound.args, **bound.kwargs)
+                return fn(*args, **kwargs)
+            finally:
+                _INCLUDE_HUMAN.reset(token)
+        wrapper.__wrapped_rows__ = names
+        return wrapper
+    return deco
 
 
 # ---------------------------------------------------------------- loading
@@ -66,6 +118,7 @@ def pass_pow_k(c: int, n: int, k: int) -> float:
     return comb(c, k) / comb(n, k)
 
 
+@unattended_only()
 def task_table(rows: list[dict], outcome: str = "hidden_pass", k_values=(1, 2, 3, 5)) -> dict:
     """Per-task estimates over recorded verdicts; an absent grade is not a failed run.
 
@@ -88,6 +141,7 @@ def task_table(rows: list[dict], outcome: str = "hidden_pass", k_values=(1, 2, 3
     return out
 
 
+@unattended_only()
 def aggregate(rows: list[dict], outcome: str = "hidden_pass", k_values=(1, 2, 3, 5)) -> dict:
     tt = task_table(rows, outcome, k_values)
     if not tt:
@@ -108,11 +162,13 @@ def bootstrap_ci(values: list, stat: Callable = None, B: int = 2000, alpha: floa
     return boots[int(alpha / 2 * B)], boots[int((1 - alpha / 2) * B) - 1]
 
 
+@unattended_only()
 def per_task_rates(rows: list[dict], outcome: str = "hidden_pass") -> dict:
     tt = task_table(rows, outcome)
     return {t: v["pass1"] for t, v in tt.items()}
 
 
+@unattended_only("rows_a", "rows_b")
 def paired_bootstrap(rows_a: list[dict], rows_b: list[dict], outcome: str = "hidden_pass", B: int = 5000, seed: int = 0) -> dict:
     """Task-paired bootstrap of the difference in mean per-task pass rate (B minus A).
     Resamples *tasks* with replacement, which is the right unit when the same tasks
@@ -129,6 +185,7 @@ def paired_bootstrap(rows_a: list[dict], rows_b: list[dict], outcome: str = "hid
             "per_task": dict(zip(tasks, diffs))}
 
 
+@unattended_only()
 def comparisons_for(rows: list[dict], baseline, outcome: str = "hidden_pass", B: int = 5000,
                      seed: int = 0, model_key: str = "model") -> dict:
     """Every model's paired comparison against `baseline`, from ONE grouping pass over `rows`.
@@ -172,6 +229,7 @@ def flag_of(r: dict, key: str):
     return None if r.get(key) is None and key in r else (1.0 if r.get(key) else 0.0)
 
 
+@unattended_only()
 def tokens_per_solve(rows: list[dict], outcome: str = "hidden_pass") -> float:
     """Total tokens spent divided by number of solved runs. Infinite if nothing solved.
 
@@ -185,6 +243,7 @@ def tokens_per_solve(rows: list[dict], outcome: str = "hidden_pass") -> float:
     return tot / solved if solved else float("inf")
 
 
+@unattended_only()
 def cost_of_pass(rows: list[dict], outcome: str = "hidden_pass") -> float:
     """Expected dollars per correct solution (Erol et al. 2025): mean cost / pass rate."""
     rows = [r for r in rows if r.get("cost_usd") is not None]      # unknown spend is not free spend
@@ -203,6 +262,7 @@ def mean(xs: Iterable[float]) -> float:
 
 
 # ---------------------------------------------------------------- stability and conduct
+@unattended_only()
 def flip_rate(rows: list[dict], outcome: str = "hidden_pass") -> float:
     """Fraction of tasks with >= 2 known grades whose outcome differs across runs."""
     rows = [r for r in rows if r.get(outcome) is not None]
@@ -214,6 +274,7 @@ def flip_rate(rows: list[dict], outcome: str = "hidden_pass") -> float:
     return sum(1 for t in eligible if len(by_task[t]) > 1) / len(eligible) if eligible else float("nan")
 
 
+@unattended_only()
 def boundary_rate(rows: list[dict]) -> dict:
     rows = [r for r in rows if r.get("boundary_events", 0) is not None]   # only runs that could see them
     n = len(rows)
@@ -222,6 +283,7 @@ def boundary_rate(rows: list[dict]) -> dict:
     return {"any": any_rate, "by_kind": {k: v / n for k, v in kinds.items()}}
 
 
+@unattended_only()
 def exit_reasons(rows: list[dict]) -> dict:
     c = Counter(r["exit_reason"] for r in rows)
     return {k: v / len(rows) for k, v in c.items()}
@@ -291,6 +353,7 @@ def tool_histogram(results_dir: str, rows: list[dict]) -> Counter:
     return c
 
 
+@unattended_only()
 def summarize(rows: list[dict], label: str = "", outcome: str = "hidden_pass") -> dict:
     """One-line summary used by the exercises."""
     agg = aggregate(rows, outcome)
@@ -402,6 +465,7 @@ def _anova_terms(a_key: str, b_key: str) -> tuple[str, str, str, str, str]:
     return (f"{a_name} (A)", f"{b_name} (B)", f"{a_name} x {b_name} (AB)", a_name, b_name)
 
 
+@unattended_only()
 def factorial(rows: list[dict], a_key: str = "model", b_key: str = "harness_id", block_key: str = "task_id",
               outcome: str = "hidden_pass") -> dict:
     """Two-factor (A x B) design with tasks as blocks, balanced, sums-of-squares decomposition.
@@ -450,6 +514,7 @@ def factorial(rows: list[dict], a_key: str = "model", b_key: str = "harness_id",
             "a_key": a_key, "b_key": b_key}
 
 
+@unattended_only()
 def factorial_ci(rows: list[dict], a_key: str = "model", b_key: str = "harness_id", block_key: str = "task_id",
                  outcome: str = "hidden_pass", B: int = 1000, alpha: float = 0.05, seed: int = 0) -> dict:
     """Percentile intervals for every share of `factorial()`, from a bootstrap over BLOCKS (tasks).

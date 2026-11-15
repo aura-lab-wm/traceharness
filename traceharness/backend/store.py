@@ -367,7 +367,11 @@ def overview(runs_root: Optional[str] = None, db_path: Optional[str] = None) -> 
         if is_private(root, name):
             continue
         agg = cx.execute(
-            "SELECT COUNT(*) n, AVG(hidden_pass) p FROM runs WHERE dir = ?",
+            # the pass rate is an aggregate: human-intervened runs (core/pause.py) are not in it, the same
+            # rule metrics.results_dirs applies. `runs` still counts every run.
+            "SELECT COUNT(*) n, AVG(CASE WHEN COALESCE(json_extract(row_json, '$.human_intervened'), 0)"
+            " OR COALESCE(json_extract(row_json, '$.human_interventions'), 0) > 0 THEN NULL ELSE hidden_pass END) p"
+            " FROM runs WHERE dir = ?",
             (name,)).fetchone()
         def distinct(col):
             return [r[0] for r in cx.execute(

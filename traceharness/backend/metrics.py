@@ -4,7 +4,7 @@ from __future__ import annotations
 import difflib, json, math, os, re, time
 from collections import Counter, defaultdict
 
-from traceharness.core.analysis import (load_index, filter_rows, task_table, aggregate, bootstrap_ci, paired_bootstrap, flip_rate,
+from traceharness.core.analysis import (unattended_only, exclude_human, load_index, filter_rows, task_table, aggregate, bootstrap_ci, paired_bootstrap, flip_rate,
                                boundary_rate, exit_reasons, tokens_per_solve, cost_of_pass, mean, summarize, ochiai_attribution,
                                factorial, factorial_ci, power_n, wrong_winner, per_task_rates, tokens_of,
                                cohens_kappa, comparisons_for, factor_summary)
@@ -34,7 +34,7 @@ def results_dirs() -> list[dict]:
     for name in list_results_dirs(RUNS_ROOT):
         idx = os.path.join(RUNS_ROOT, name, "index.jsonl")
         rows = load_index(os.path.join(RUNS_ROOT, name))
-        known = [r["hidden_pass"] for r in rows if isinstance(r.get("hidden_pass"), bool)]
+        known = [r["hidden_pass"] for r in exclude_human(rows) if isinstance(r.get("hidden_pass"), bool)]   # an aggregate: unattended runs only
         out.append({"name": name, "runs": len(rows),
                     "harnesses": sorted({r["harness_id"] for r in rows}),
                     "models": sorted({r["model"] for r in rows}),
@@ -50,6 +50,7 @@ def rows_for(name: str, **filters) -> list[dict]:
     return filter_rows(load_index(d), **{k: v for k, v in filters.items() if v})
 
 
+@unattended_only("rows")
 def cells(rows: list[dict]) -> list[dict]:
     """One summary per (model, harness) cell, plus the pass@k / pass^k curve and a task-bootstrap CI."""
     groups = defaultdict(list)
@@ -100,6 +101,7 @@ def cells(rows: list[dict]) -> list[dict]:
     return _clean(out)
 
 
+@unattended_only("rows")
 def harness_comparison(rows: list[dict], baseline: str, model: str | None = None) -> dict:
     R = filter_rows(rows, model=model) if model else rows
     base = filter_rows(R, harness_id=baseline)
@@ -112,6 +114,7 @@ def harness_comparison(rows: list[dict], baseline: str, model: str | None = None
     return _clean(out)
 
 
+@unattended_only("rows")
 def comparisons(rows: list[dict], baseline: str | None) -> dict:
     """Every model's per-HARNESS paired comparison against the `baseline` HARNESS, in one response
     -- {model: {harness: paired_bootstrap result}}.
@@ -148,6 +151,7 @@ def resolve_baseline_harness(rows: list[dict], requested: str | None) -> str | N
     return "baseline" if "baseline" in harnesses else (harnesses[0] if harnesses else None)
 
 
+@unattended_only("rows")
 def oracle(rows: list[dict]) -> dict:
     """Agreement between the hidden-test verdict and the strong-suite verdict, over every run in
     the study, via the canonical `cohens_kappa` -- the SAME null-safe agreement statistic the CLI's
@@ -156,6 +160,7 @@ def oracle(rows: list[dict]) -> dict:
     return _clean(cohens_kappa(pairs))
 
 
+@unattended_only("rows")
 def sentinel_pairs(rows: list[dict]) -> list[dict]:
     """Task-paired bootstrap of X vs X+sentinel for every (model, harness) that has a twin."""
     cells = {(r["model"], r["harness_id"]) for r in rows}
@@ -209,6 +214,7 @@ def integrity(name: str, rows: list[dict], harness: str) -> dict:
             "ochiai_harness": ochiai(name, harness), "harness": harness}
 
 
+@unattended_only("rows")
 def weak_tests(rows: list[dict]) -> dict:
     """Strong-suite survival/loss among hidden passes with a known strong verdict.
 
@@ -282,6 +288,7 @@ def ledger_rows_as_features_filtered(d: str, keep: set) -> list[dict]:
     return [f for rid, f in ledger_rows_as_features_with_ids(d) if rid in keep]
 
 
+@unattended_only("rows")
 def conduct(name: str, rows: list[dict], harness: str) -> dict:
     d = os.path.join(RUNS_ROOT, name)
     traj = load_runs(d, harness_id=harness)
@@ -299,6 +306,7 @@ def conduct(name: str, rows: list[dict], harness: str) -> dict:
     })
 
 
+@unattended_only("rows")
 def report_card(name: str, rows: list[dict], harness: str, model: str | None = None) -> dict:
     """The exercise-6 card. Same builder and same markdown as `exercises/ex6_report_card.py`."""
     d = os.path.join(RUNS_ROOT, name)
@@ -440,6 +448,7 @@ def source_catalog(runs_root: str | None = None) -> dict:
     }
 
 
+@unattended_only("rows")
 def experiment(rows: list[dict], a_key: str = "model", b_key: str = "harness_id",
                outcome: str = "hidden_pass", a_cell: str | None = None, b_cell: str | None = None,
                holds: list[tuple[str, str]] | None = None) -> dict:

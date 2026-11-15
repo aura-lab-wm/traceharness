@@ -29,6 +29,7 @@ from typing import Optional
 # keep an independent hardcoded copy of the threshold, or it silently goes stale if THRESHOLD ever
 # changes (this was the third, un-migrated copy repeats.py's own docstring claimed didn't exist).
 from traceharness.core.repeats import THRESHOLD as _REPEAT_THRESHOLD
+from traceharness.core.analysis import is_human_intervened
 
 # --------------------------------------------------------------------------- events
 # The sentinel reasons over a normalised event list, so the same code scores a live conversation
@@ -52,13 +53,15 @@ def events_from_messages(messages: list[dict]) -> list[dict]:
                 status = "blocked"
             elif res.startswith("BLOCKED by sentinel"):
                 status = "sentinel_blocked"
+            elif res.startswith("DENIED by reviewer"):
+                status = "reviewer_denied"         # a person stopped the call; it says nothing about the tests
             elif res.startswith("ERROR"):
                 status = "error"
             tp = None
             name = tc.get("name")
             cmd = (tc.get("arguments") or {}).get("command", "") if name == "bash" else ""
             if name == "run_tests" or (name == "bash" and ("pytest" in cmd or "unittest" in cmd)):
-                tp = res.startswith("exit=0")
+                tp = res.startswith("exit=0") if status != "reviewer_denied" else None
             out.append({"step": step, "tool": name, "args": tc.get("arguments") or {}, "status": status,
                         "result": res[:400], "tests_passed": tp, "text": m.get("content") or ""})
         if not m.get("tool_calls"):
@@ -693,6 +696,8 @@ def build_training_examples(results_dirs: list[str], harness_filter: Optional[st
                 if harness_filter and row["harness_id"] != harness_filter:
                     continue
                 if row.get("hidden_pass") is None:
+                    continue
+                if is_human_intervened(row):      # a person steered this run: its label is not the model's outcome
                     continue
                 run_dir = os.path.join(d, row["run_id"])
                 try:
