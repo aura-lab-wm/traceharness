@@ -194,6 +194,15 @@ class ExportBakesExactlyWhatItRequests(unittest.TestCase):
             "these URLs _urls() says the frontend requests are NOT exact keys in the baked "
             "snapshot, so an offline reader asking for them gets a network-fallback miss instead "
             "of the frozen answer:\n  " + "\n  ".join(missing))
+        # The dataset list is a global payload; it must name exactly the dirs this file embeds,
+        # never another results dir on the machine whose runs a reader could not open.
+        self.assertEqual(sorted(r["name"] for r in data["/overview"]["results"]), sorted(self.DIRS))
+
+    def test_the_dataset_list_drops_a_dir_whose_runs_were_not_baked(self):
+        data = {"/overview": {"results": [{"name": "a"}, {"name": "b"}, {"name": "c"}], "tasks": [1]},
+                "/results/a/runs": [], "/results/c/runs": []}
+        SE._list_only_exported(data, ["a", "b"])       # b was asked for but not baked; c not asked for
+        self.assertEqual(data["/overview"], {"results": [{"name": "a"}], "tasks": [1]})
 
 
 if __name__ == "__main__":
