@@ -311,7 +311,10 @@ def parse_file(path: str) -> Optional[Session]:
                 tool_counts[name] = tool_counts.get(name, 0) + 1
                 events.append(Event("tool_call", ts=ts, call_id=cid, name=name, args=_args(_text(_one(cb, 3))),
                                     model=m, record_id=f"{sid}:c{i}", request_id=rid,
-                                    usage=usage if (carrier == "call" and i == 0) else {}))
+                                    # the step's other parallel calls were billed in the same model
+                                    # call: a recorded zero, so convert adds no length estimate
+                                    usage=usage if (carrier == "call" and i == 0)
+                                    else ({"input_tokens": 0, "output_tokens": 0} if usage else {})))
             continue
 
         if stype == 132:                                                    # GENERIC: a tool result

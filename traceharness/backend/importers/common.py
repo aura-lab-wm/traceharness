@@ -352,7 +352,7 @@ def map_tool(name: str, args: dict, overrides: Optional[dict] = None) -> tuple[s
     # bash: keep the native name when it is not literally a shell
     command = cmd if cmd else (json.dumps(args, ensure_ascii=False, default=str)[:300] if args else "")
     if key not in ("bash", "shell", "local_shell", "exec", "exec_command", "execute_bash",
-                   "container.exec", "cmdrunaction"):
+                   "container.exec", "cmdrunaction", "run_command"):      # run_command: agy
         command = f"{raw}: {command}" if command else raw
     return "bash", {"command": _clip(command, 400)}
 
@@ -556,15 +556,26 @@ def _note_usage(parts: list, e: "Event") -> None:
     parts.append((e.request_id, dict(e.usage)))
 
 
-def _span_usage(parts: list, call: Optional["Event"]) -> dict:
+def _span_usage(parts: list, call: Optional["Event"], counted: set) -> dict:
     """The recorded usage of one chat span: the tool call's own (if any) plus every pending
-    text-only model call that is not that same request. Empty when nothing was recorded."""
+    text-only model call that is not that same request. Empty when nothing was recorded. A request
+    id already in `counted` contributes a recorded zero; every id used here is added to it."""
     own = call.usage if (call is not None and _measured(call.usage)) else {}
+    if own and call.request_id and call.request_id in counted:
+        own = {"input_tokens": 0, "output_tokens": 0}
     acc = dict(own)
+    if own and call.request_id and any(own.values()):    # a recorded 0 does not claim the request
+        counted.add(call.request_id)
     for rid, u in parts:
         if own and ((call.request_id and rid == call.request_id) or (not call.request_id and u == own)):
             continue                     # the same model call as the tool call: counted once
+        if rid and rid in counted:
+            continue
         acc = _add_usage(acc, u)
+        if rid and any(u.values()):
+            counted.add(rid)
+    if not acc and parts:                # every pending part was an already-counted request
+        acc = {"input_tokens": 0, "output_tokens": 0}
     return acc
 
 
@@ -639,6 +650,10 @@ def convert(sess: Session, out_root: str, task_id: str, harness: dict, model_ove
     # that has none of its own -- the final answer included -- instead of being dropped and replaced
     # by a length estimate. A tool call that carries its own usage supersedes it.
     pending_parts: list = []        # [(request_id, usage)] of text/reasoning events since the last span
+    # One model call is billed once. Sources copy a request's usage onto each of its content blocks
+    # (Claude Code: every tool_use of a parallel batch carries the same usage, measured identical on
+    # all 429 multi-block requests of 12 real sessions), so a request id already counted adds 0.
+    counted: set = set()
     last_edit, last_test = -1, -1
     submitted = False
     unmatched = iter(orphan_results)
@@ -667,7 +682,7 @@ def convert(sess: Session, out_root: str, task_id: str, harness: dict, model_ove
                 status = "ok"
             else:
                 status = "error" if (tool != "submit" and _ERR_OBS.search(obs[:600])) else "ok"
-            u = _span_usage(pending_parts, e)
+            u = _span_usage(pending_parts, e, counted)
             if usage_known and _measured(u):
                 # recorded counts, a recorded 0 included (the second of two parallel calls the source
                 # billed once): never replaced by an estimate
@@ -730,7 +745,7 @@ def convert(sess: Session, out_root: str, task_id: str, harness: dict, model_ove
     stopped_calling_tools = bool(pending_text.strip())
     if pending_text.strip():
         step += 1
-        fin_u = _span_usage(pending_parts, None)
+        fin_u = _span_usage(pending_parts, None, counted)
         final_measured = usage_known and _measured(fin_u)
         fin_in = int(fin_u.get("input_tokens") or 0) if final_measured else 0
         fin_out = (int(fin_u.get("output_tokens") or 0) if final_measured
