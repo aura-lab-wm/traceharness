@@ -1,0 +1,16 @@
+{"type": "system", "content": "You are a coding agent. (synthetic fixture prompt)"}
+{"type": "user", "content": [{"type": "text", "text": "<system-reminder>synthetic harness note</system-reminder>"}], "synthetic_reason": "system_reminder"}
+{"type": "user", "content": [{"type": "text", "text": "calc.py add() is wrong, fix it and run the tests"}], "prompt_index": 0}
+{"type": "reasoning", "id": "rs_look at the code", "summary": [{"type": "summary_text", "text": "Plan: look at the code"}], "encrypted_content": "x", "status": "completed"}
+{"type": "assistant", "content": "Let me look at the code.", "tool_calls": [{"id": "call_1", "name": "list_dir", "arguments": "{\"target_directory\": \"/tmp/calc-demo\"}"}, {"id": "call_2", "name": "read_file", "arguments": "{\"target_file\": \"/tmp/calc-demo/calc.py\"}"}], "model_id": "grok-4.7-build", "model_fingerprint": "fp_demo", "reasoning_effort": "high"}
+{"type": "tool_result", "tool_call_id": "call_1", "content": "calc.py\ntest_calc.py\n"}
+{"type": "tool_result", "tool_call_id": "call_2", "content": "1: def add(a, b):\n2:     return a - b\n"}
+{"type": "assistant", "content": "", "tool_calls": [{"id": "call_3", "name": "run_terminal_command", "arguments": "{\"command\": \"python -m pytest -q\", \"description\": \"run tests\"}"}], "model_id": "grok-4.7-build", "model_fingerprint": "fp_demo", "reasoning_effort": "high"}
+{"type": "tool_result", "tool_call_id": "call_3", "content": "F.\n1 failed, 1 passed in 0.02s\n"}
+{"type": "reasoning", "id": "rs_fix the sign", "summary": [{"type": "summary_text", "text": "Plan: fix the sign"}], "encrypted_content": "x", "status": "completed"}
+{"type": "assistant", "content": "add() subtracts; fixing.", "tool_calls": [{"id": "call_4", "name": "search_replace", "arguments": "{\"file_path\": \"/tmp/calc-demo/calc.py\", \"old_string\": \"return a - b\", \"new_string\": \"return a + b\"}"}], "model_id": "grok-4.7-build", "model_fingerprint": "fp_demo", "reasoning_effort": "high"}
+{"type": "tool_result", "tool_call_id": "call_4", "content": "Edited /tmp/calc-demo/calc.py"}
+{"type": "assistant", "content": "", "tool_calls": [{"id": "call_5", "name": "run_terminal_command", "arguments": "{\"command\": \"python -m pytest -q\", \"description\": \"re-run tests\"}"}], "model_id": "grok-4.7-build", "model_fingerprint": "fp_demo", "reasoning_effort": "high"}
+{"type": "tool_result", "tool_call_id": "call_5", "content": "..\n2 passed in 0.02s\n"}
+{"type": "backend_tool_call", "kind": {"tool_type": "web_search", "id": "ws_1", "status": "completed", "action": {"type": "search", "query": "python operator add", "sources": []}}}
+{"type": "assistant", "content": "Fixed: add() now returns a + b and both tests pass.", "model_id": "grok-4.7-build", "model_fingerprint": "fp_demo", "reasoning_effort": "high"}

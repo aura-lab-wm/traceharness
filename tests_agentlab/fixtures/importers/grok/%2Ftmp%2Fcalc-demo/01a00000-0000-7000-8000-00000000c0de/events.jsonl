@@ -1,0 +1,12 @@
+{"type": "turn_started", "ts": "2026-01-01T10:00:00.000Z", "turn_number": 1, "model_id": "grok-4.7-build"}
+{"type": "phase_changed", "ts": "2026-01-01T10:00:00.000Z", "phase": "x"}
+{"type": "tool_completed", "ts": "2026-01-01T10:00:01.500Z", "tool_call_id": "call_1", "tool_name": "t", "outcome": "success", "duration_ms": 120}
+{"type": "phase_changed", "ts": "2026-01-01T10:00:01.000Z", "phase": "x"}
+{"type": "tool_completed", "ts": "2026-01-01T10:00:02.500Z", "tool_call_id": "call_2", "tool_name": "t", "outcome": "success", "duration_ms": 120}
+{"type": "phase_changed", "ts": "2026-01-01T10:00:02.000Z", "phase": "x"}
+{"type": "tool_completed", "ts": "2026-01-01T10:00:03.500Z", "tool_call_id": "call_3", "tool_name": "t", "outcome": "error", "duration_ms": 120}
+{"type": "phase_changed", "ts": "2026-01-01T10:00:03.000Z", "phase": "x"}
+{"type": "tool_completed", "ts": "2026-01-01T10:00:04.500Z", "tool_call_id": "call_4", "tool_name": "t", "outcome": "success", "duration_ms": 120}
+{"type": "phase_changed", "ts": "2026-01-01T10:00:04.000Z", "phase": "x"}
+{"type": "tool_completed", "ts": "2026-01-01T10:00:05.500Z", "tool_call_id": "call_5", "tool_name": "t", "outcome": "success", "duration_ms": 120}
+{"type": "turn_ended", "ts": "2026-01-01T10:00:09.000Z", "outcome": "completed"}
