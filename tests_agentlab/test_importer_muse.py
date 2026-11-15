@@ -1,4 +1,4 @@
-"""Muse CLI importer: sniff, parse, join, usage, convert. Fixture is synthetic (a toy calc.py)."""
+"""Muse Code importer: sniff, parse, join, usage, convert. Fixture is synthetic (a toy calc.py)."""
 import json
 import os
 import shutil

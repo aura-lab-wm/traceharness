@@ -126,7 +126,7 @@ Exit **0**, pinned Wrangler **4.90.1**. No Worker deployment/version change. The
 ───────────────────
 Resource location: remote 
 
-Writing the contents of /Users/amastro/Documents/TraceHarness-eight-sol-audit-2026-11-11/app-eight-sol-candidate.html.gz to the key "app.html.gz" on namespace id: "8a74dd2fba124b1a8d82e6eeff5ba3ae".
+Writing the contents of ~/Documents/TraceHarness-eight-sol-audit-2026-11-11/app-eight-sol-candidate.html.gz to the key "app.html.gz" on namespace id: "8a74dd2fba124b1a8d82e6eeff5ba3ae".
 
 ```
 
@@ -157,7 +157,7 @@ Follow-up KV upload exit **0**. All available command log lines (fewer than ten)
 ──────────────────────────────────────────────
 Resource location: remote 
 
-Writing the contents of /Users/amastro/Documents/TraceHarness-eight-sol-audit-2026-11-11/app-chrome-reviewed.html.gz to the key "app.html.gz" on namespace id: "8a74dd2fba124b1a8d82e6eeff5ba3ae".
+Writing the contents of ~/Documents/TraceHarness-eight-sol-audit-2026-11-11/app-chrome-reviewed.html.gz to the key "app.html.gz" on namespace id: "8a74dd2fba124b1a8d82e6eeff5ba3ae".
 
 ```
 
@@ -183,7 +183,7 @@ Upload exit **0**; Worker and runner versions unchanged. All available upload lo
 ──────────────────────────────────────────────
 Resource location: remote 
 
-Writing the contents of /Users/amastro/Documents/TraceHarness-eight-sol-audit-2026-11-11/app-repeat-counters.html.gz to the key "app.html.gz" on namespace id: "8a74dd2fba124b1a8d82e6eeff5ba3ae".
+Writing the contents of ~/Documents/TraceHarness-eight-sol-audit-2026-11-11/app-repeat-counters.html.gz to the key "app.html.gz" on namespace id: "8a74dd2fba124b1a8d82e6eeff5ba3ae".
 
 ```
 
@@ -203,7 +203,7 @@ Upload exit **0**, source pinned to public main and temporary configuration dele
 ──────────────────────────────────────────────
 Resource location: remote 
 
-Writing the contents of /Users/amastro/Documents/TraceHarness-eight-sol-audit-2026-11-11/app-grade-coverage.html.gz to the key "app.html.gz" on namespace id: "8a74dd2fba124b1a8d82e6eeff5ba3ae".
+Writing the contents of ~/Documents/TraceHarness-eight-sol-audit-2026-11-11/app-grade-coverage.html.gz to the key "app.html.gz" on namespace id: "8a74dd2fba124b1a8d82e6eeff5ba3ae".
 
 ```
 

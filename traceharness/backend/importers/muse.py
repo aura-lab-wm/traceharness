@@ -1,4 +1,4 @@
-"""Muse CLI (Meta) session log -> lab ledger.
+"""Muse Code (Meta's terminal coding agent, public beta since 2026-08-05) session log -> lab ledger.
 
 (~/.local/share/muse/sessions/YYYY/MM/DD/<session-uuid>/session.jsonl, with `subagent/<uuid>/`,
 `approval-review/<uuid>.jsonl`, `tool-outputs/` and `cron.db` beside it.)
@@ -81,7 +81,7 @@ from typing import Iterator, Optional
 from .common import Event, Session, peek_jsonl
 
 NAME = "muse"
-DESCRIPTION = "Muse CLI session log (~/.local/share/muse/sessions/YYYY/MM/DD/<session>/session.jsonl)"
+DESCRIPTION = "Muse Code session log (~/.local/share/muse/sessions/YYYY/MM/DD/<session>/session.jsonl)"
 PATTERNS = ["session.jsonl (retained frames + records with payload_type runtime.session)"]
 
 #: every tool name in the corpus, mapped deliberately. Only the file/shell/search tools become a

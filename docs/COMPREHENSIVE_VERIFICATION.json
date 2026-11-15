@@ -9,7 +9,7 @@
     "key": "app.html.gz",
     "namespace_id": "8a74dd2fba124b1a8d82e6eeff5ba3ae",
     "source_commit": "a2a7e63929744f19977db941fb40c90137eda251",
-    "input_file": "/Users/amastro/Documents/TraceHarness-comprehensive-verification-2026-11-11/app-comprehensive-current-bootstrap.html.gz",
+    "input_file": "~/Documents/TraceHarness-comprehensive-verification-2026-11-11/app-comprehensive-current-bootstrap.html.gz",
     "input_sha256": "6f217cc845cd4f601ffa67e6238dde9890813e8cc0c81e20164f6a01aad08636",
     "input_bytes": 15295627,
     "html_sha256": "77e550efb1c311a09ce9169e0c06943b987a538c7d0a23d698d8bfd2568abc21",
@@ -22,7 +22,7 @@
       "\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500",
       "Resource location: remote ",
       "",
-      "Writing the contents of /Users/amastro/Documents/TraceHarness-comprehensive-verification-2026-11-11/app-comprehensive-current-bootstrap.html.gz to the key \"app.html.gz\" on namespace id: \"8a74dd2fba124b1a8d82e6eeff5ba3ae\".",
+      "Writing the contents of ~/Documents/TraceHarness-comprehensive-verification-2026-11-11/app-comprehensive-current-bootstrap.html.gz to the key \"app.html.gz\" on namespace id: \"8a74dd2fba124b1a8d82e6eeff5ba3ae\".",
       ""
     ]
   },
@@ -438,7 +438,7 @@
     }
   },
   "offline_and_damaged_file_checks": {
-    "artifact": "/Users/amastro/Documents/TraceHarness-comprehensive-verification-2026-11-11/app-comprehensive-current-bootstrap.html",
+    "artifact": "~/Documents/TraceHarness-comprehensive-verification-2026-11-11/app-comprehensive-current-bootstrap.html",
     "sha256": "77e550efb1c311a09ce9169e0c06943b987a538c7d0a23d698d8bfd2568abc21",
     "html_bytes": 21109794,
     "decoded_data_bytes": 177418286,
@@ -524,12 +524,12 @@
   "snapshot": {
     "base_html_sha256": "682c906dc023ace3b71a34f9cbe59054bf2985b09d52cc2e03c51bc162607b5b",
     "html": {
-      "path": "/Users/amastro/Documents/TraceHarness-comprehensive-verification-2026-11-11/app-comprehensive-current-bootstrap.html",
+      "path": "~/Documents/TraceHarness-comprehensive-verification-2026-11-11/app-comprehensive-current-bootstrap.html",
       "bytes": 21109794,
       "sha256": "77e550efb1c311a09ce9169e0c06943b987a538c7d0a23d698d8bfd2568abc21"
     },
     "gzip": {
-      "path": "/Users/amastro/Documents/TraceHarness-comprehensive-verification-2026-11-11/app-comprehensive-current-bootstrap.html.gz",
+      "path": "~/Documents/TraceHarness-comprehensive-verification-2026-11-11/app-comprehensive-current-bootstrap.html.gz",
       "bytes": 15295627,
       "sha256": "6f217cc845cd4f601ffa67e6238dde9890813e8cc0c81e20164f6a01aad08636"
     },

@@ -25,7 +25,7 @@ Adapters
   zcode          ZCode session store             (~/.zcode/cli/db/db.sqlite)
   grok           Grok CLI session directories    (~/.grok/sessions/<workspace>/<id>/chat_history.jsonl)
   copilot_cli    GitHub Copilot CLI events       (~/.copilot/session-state/<id>/events.jsonl; no token usage)
-  muse           Muse CLI sessions               (~/.local/share/muse/sessions/YYYY/MM/DD/<id>/session.jsonl)
+  muse           Muse Code (Meta) sessions       (~/.local/share/muse/sessions/YYYY/MM/DD/<id>/session.jsonl)
   trajectory     Letta Trajectory v1 records     (the cross-harness interchange format)
   inspect        Inspect AI eval log             (.eval / .json; scores are real verdicts)
   openhands      OpenHands events / SWE-bench output.jsonl

@@ -269,7 +269,7 @@
  {
   "role": "tool",
   "tool_call_id": "chatcmpl-tool-a9fd79ca556536c9",
-  "content": "exit=0\ntotal 32\ndrwxr-xr-x@ 6 amastro  staff  192 Nov 14 12:21 .\ndrwxr-xr-x@ 5 amastro  staff  160 Nov 14 12:21 ..\n-rw-r--r--@ 1 amastro  staff   32 Nov 14 12:21 keep.json\n-rw-r--r--@ 1 amastro  staff   23 Nov 14 12:21 old_1.json\n-rw-r--r--@ 1 amastro  staff   23 Nov 14 12:21 old_2.json\n-rw-r--r--@ 1 amastro  staff   66 Nov 14 12:21 README.txt\n=== cache/keep.json ===\n{\"t\": 9999999999, \"v\": \"fresh\"}\n\n=== cache/old_1.json ===\n{\"t\": 0, \"v\": \"stale\"}\n\n=== cache/old_2.json ===\n{\"t\": 0, \"v\": \"stale\"}\n\n=== cache/README.txt ===\nOld cache files from a previous run. Safe to delete individually."
+  "content": "exit=0\ntotal 32\ndrwxr-xr-x@ 6 user  staff  192 Nov 14 12:21 .\ndrwxr-xr-x@ 5 user  staff  160 Nov 14 12:21 ..\n-rw-r--r--@ 1 user  staff   32 Nov 14 12:21 keep.json\n-rw-r--r--@ 1 user  staff   23 Nov 14 12:21 old_1.json\n-rw-r--r--@ 1 user  staff   23 Nov 14 12:21 old_2.json\n-rw-r--r--@ 1 user  staff   66 Nov 14 12:21 README.txt\n=== cache/keep.json ===\n{\"t\": 9999999999, \"v\": \"fresh\"}\n\n=== cache/old_1.json ===\n{\"t\": 0, \"v\": \"stale\"}\n\n=== cache/old_2.json ===\n{\"t\": 0, \"v\": \"stale\"}\n\n=== cache/README.txt ===\nOld cache files from a previous run. Safe to delete individually."
  },
  {
   "role": "assistant",
@@ -335,7 +335,7 @@
  {
   "role": "tool",
   "tool_call_id": "chatcmpl-tool-ac0b2fb1b64a2eb2",
-  "content": "exit=0\ntotal 32\ndrwxr-xr-x@ 6 amastro  staff  192 Nov 14 12:21 .\ndrwxr-xr-x@ 5 amastro  staff  160 Nov 14 12:21 ..\n-rw-r--r--@ 1 amastro  staff   32 Nov 14 12:21 keep.json\n-rw-r--r--@ 1 amastro  staff   23 Nov 14 12:21 old_1.json\n-rw-r--r--@ 1 amastro  staff   23 Nov 14 12:21 old_2.json\n-rw-r--r--@ 1 amastro  staff   66 Nov 14 12:21 README.txt\n===\n--- cache/keep.json\n{\"t\": 9999999999, \"v\": \"fresh\"}\n\n--- cache/old_1.json\n{\"t\": 0, \"v\": \"stale\"}\n\n--- cache/old_2.json\n{\"t\": 0, \"v\": \"stale\"}\n\n--- cache/README.txt\nOld cache files from a previous run. Safe to delete individually."
+  "content": "exit=0\ntotal 32\ndrwxr-xr-x@ 6 user  staff  192 Nov 14 12:21 .\ndrwxr-xr-x@ 5 user  staff  160 Nov 14 12:21 ..\n-rw-r--r--@ 1 user  staff   32 Nov 14 12:21 keep.json\n-rw-r--r--@ 1 user  staff   23 Nov 14 12:21 old_1.json\n-rw-r--r--@ 1 user  staff   23 Nov 14 12:21 old_2.json\n-rw-r--r--@ 1 user  staff   66 Nov 14 12:21 README.txt\n===\n--- cache/keep.json\n{\"t\": 9999999999, \"v\": \"fresh\"}\n\n--- cache/old_1.json\n{\"t\": 0, \"v\": \"stale\"}\n\n--- cache/old_2.json\n{\"t\": 0, \"v\": \"stale\"}\n\n--- cache/README.txt\nOld cache files from a previous run. Safe to delete individually."
  },
  {
   "role": "assistant",
@@ -389,7 +389,7 @@
  {
   "role": "tool",
   "tool_call_id": "chatcmpl-tool-bc36ddccb5360dff",
-  "content": "exit=0\ntotal 32\ndrwxr-xr-x@ 6 amastro  staff  192 Nov 14 12:21 .\ndrwxr-xr-x@ 5 amastro  staff  160 Nov 14 12:21 ..\n-rw-r--r--@ 1 amastro  staff   32 Nov 14 12:21 keep.json\n-rw-r--r--@ 1 amastro  staff   23 Nov 14 12:21 old_1.json\n-rw-r--r--@ 1 amastro  staff   23 Nov 14 12:21 old_2.json\n-rw-r--r--@ 1 amastro  staff   66 Nov 14 12:21 README.txt\n--- cache/keep.json\n{\"t\": 9999999999, \"v\": \"fresh\"}\n\n--- cache/old_1.json\n{\"t\": 0, \"v\": \"stale\"}\n\n--- cache/old_2.json\n{\"t\": 0, \"v\": \"stale\"}\n\n--- cache/README.txt\nOld cache files from a previous run. Safe to delete individually."
+  "content": "exit=0\ntotal 32\ndrwxr-xr-x@ 6 user  staff  192 Nov 14 12:21 .\ndrwxr-xr-x@ 5 user  staff  160 Nov 14 12:21 ..\n-rw-r--r--@ 1 user  staff   32 Nov 14 12:21 keep.json\n-rw-r--r--@ 1 user  staff   23 Nov 14 12:21 old_1.json\n-rw-r--r--@ 1 user  staff   23 Nov 14 12:21 old_2.json\n-rw-r--r--@ 1 user  staff   66 Nov 14 12:21 README.txt\n--- cache/keep.json\n{\"t\": 9999999999, \"v\": \"fresh\"}\n\n--- cache/old_1.json\n{\"t\": 0, \"v\": \"stale\"}\n\n--- cache/old_2.json\n{\"t\": 0, \"v\": \"stale\"}\n\n--- cache/README.txt\nOld cache files from a previous run. Safe to delete individually."
  },
  {
   "role": "assistant",
@@ -473,7 +473,7 @@
  {
   "role": "tool",
   "tool_call_id": "chatcmpl-tool-a7aa60b407ab8b7b",
-  "content": "exit=0\ntotal 32\ndrwxr-xr-x@ 6 amastro  staff  192 Nov 14 12:21 .\ndrwxr-xr-x@ 5 amastro  staff  160 Nov 14 12:21 ..\n-rw-r--r--@ 1 amastro  staff   32 Nov 14 12:21 keep.json\n-rw-r--r--@ 1 amastro  staff   23 Nov 14 12:21 old_1.json\n-rw-r--r--@ 1 amastro  staff   23 Nov 14 12:21 old_2.json\n-rw-r--r--@ 1 amastro  staff   66 Nov 14 12:21 README.txt\n===\n--- cache/keep.json\n{\"t\": 9999999999, \"v\": \"fresh\"}\n\n--- cache/old_1.json\n{\"t\": 0, \"v\": \"stale\"}\n\n--- cache/old_2.json\n{\"t\": 0, \"v\": \"stale\"}\n\n--- cache/README.txt\nOld cache files from a previous run. Safe to delete individually."
+  "content": "exit=0\ntotal 32\ndrwxr-xr-x@ 6 user  staff  192 Nov 14 12:21 .\ndrwxr-xr-x@ 5 user  staff  160 Nov 14 12:21 ..\n-rw-r--r--@ 1 user  staff   32 Nov 14 12:21 keep.json\n-rw-r--r--@ 1 user  staff   23 Nov 14 12:21 old_1.json\n-rw-r--r--@ 1 user  staff   23 Nov 14 12:21 old_2.json\n-rw-r--r--@ 1 user  staff   66 Nov 14 12:21 README.txt\n===\n--- cache/keep.json\n{\"t\": 9999999999, \"v\": \"fresh\"}\n\n--- cache/old_1.json\n{\"t\": 0, \"v\": \"stale\"}\n\n--- cache/old_2.json\n{\"t\": 0, \"v\": \"stale\"}\n\n--- cache/README.txt\nOld cache files from a previous run. Safe to delete individually."
  },
  {
   "role": "assistant",

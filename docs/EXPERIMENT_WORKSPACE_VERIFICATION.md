@@ -54,7 +54,7 @@ Confirmed subtotal: **$0.0033288, plus one unknown charge**. The initial proof s
 
 One broad live inspector pass encountered a legacy builder read timeout. The same fixed, wizard and flexible pages passed a focused check in a fresh real session. The timeout remains recorded; this is not a claim that production reads can never fail.
 
-Private operator evidence, including candidate/API/execution receipts and deploy log tails, is under `/Users/amastro/Documents/TraceHarness-experiment-workspace-2026-11-11`. It contains no committed credential or session material.
+Private operator evidence, including candidate/API/execution receipts and deploy log tails, is under `~/Documents/TraceHarness-experiment-workspace-2026-11-11`. It contains no committed credential or session material.
 
 ## Published source
 

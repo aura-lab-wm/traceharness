@@ -37,7 +37,7 @@ the contested cells are in the paper folder (`notes/related-tools-matrix.md`).
 - **Runs:** `data/runs/study_v04` (3,240 runs: 3 models × 9 harnesses × 24 tasks × 5 repeats, 2026-11-14); `sentinel_v1` (Hugging Face) (1,800 runs, 2026-11-15).
 
 ### Third-party agents
-- **Command:** `traceharness import PATH` reads the logs of fifteen sources (Claude Code, Codex, Cursor, agy (Antigravity CLI), Qwen Code, Kimi Code, ZCode, Grok CLI, GitHub Copilot CLI, Muse, OpenHands, SWE-agent, mini-SWE-agent, Inspect, Trajectory v1). `traceharness agents run --agent mini-swe-agent|codex|claude-code` runs three of them in containers on the lab's tasks or on real-repository task packages.
+- **Command:** `traceharness import PATH` reads the logs of fifteen sources (Claude Code, Codex, Cursor, agy (Antigravity CLI), Qwen Code, Kimi Code, ZCode, Grok CLI, GitHub Copilot CLI, Muse Code, OpenHands, SWE-agent, mini-SWE-agent, Inspect, Trajectory v1). `traceharness agents run --agent mini-swe-agent|codex|claude-code` runs three of them in containers on the lab's tasks or on real-repository task packages.
 - **Modules:** `backend/importers/*`, `traceharness/agents/{run,broker,inside,grade}.py`.
 - **Tests:** `test_paper_table.ThirdPartyAgents`, `test_importers.py`, `test_agents_containers.py`.
 - **Runs:** `data/runs/real_swe_agent_500` (imported SWE-agent trajectories); `third_party_agents` (Hugging Face) (mini-SWE-agent 2.4.6 with the three study models, Codex CLI 0.167.1, Claude Code 2.1.322, 24 tasks × 5 repeats, 2026-11-15); `third_party_real` (Hugging Face) (the same five agent/model pairs on the eight real-repository packages of `deploy/runner/tasks`, 3 repeats).
