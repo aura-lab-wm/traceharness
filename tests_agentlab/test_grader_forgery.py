@@ -120,6 +120,21 @@ class TestGraderForgery(unittest.TestCase):
                  "os._exit(0)\n")
         self.assertRefused(grade(self.td, self.candidate(INIT_BUGGY + forge)))
 
+    def test_a_report_forged_with_the_runners_module_globals_is_refused(self):
+        # the nonce is a local of the runner's main(), so `import __main__` does not reach it, and the
+        # report path from sys.argv alone is not enough
+        forge = ("import json, os, sys, __main__\n"
+                 "json.dump({'nonce': getattr(__main__, '_NONCE', ''), 'testsRun': 2, 'wasSuccessful': True},"
+                 " open(sys.argv[1], 'w'))\n"
+                 "os._exit(0)\n")
+        self.assertRefused(grade(self.td, self.candidate(INIT_BUGGY + forge)), "nonce mismatch")
+
+    def test_the_lab_package_directory_is_not_importable_from_a_task(self):
+        # a task module named like a lab module (grader, tools, ...) must not resolve to traceharness/core
+        probe = INIT_FIXED + "import importlib.util\nassert importlib.util.find_spec('_grade_runner') is None\n"
+        r = grade(self.td, self.candidate(probe))
+        self.assertTrue(r["visible"] and r["hidden"] and r["strong"], r["logs"])
+
     def test_tests_that_never_run_are_refused_by_count(self):
         # a candidate that turns TestCase.run into a no-op ends "successfully" with zero tests run
         noop = INIT_BUGGY + "import unittest\nunittest.TestCase.run = lambda self, result=None: None\n"
