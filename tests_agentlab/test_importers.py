@@ -142,7 +142,7 @@ class TestDetect(Tmp):
     def test_sources_registry_is_complete(self):
         names = {s["name"] for s in I.list_sources()}
         self.assertEqual(names, {"claude_code", "codex", "trajectory", "inspect", "openhands", "swe_agent",
-                                 "mini_swe_agent", "gemini_cli", "qwen_code", "cursor",
+                                 "mini_swe_agent", "agy", "qwen_code", "cursor",
                                  "kimi_code", "zcode", "grok", "copilot_cli", "muse"})
         for s in I.list_sources():
             self.assertTrue(s["description"] and s["patterns"])

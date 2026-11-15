@@ -20,6 +20,7 @@ Adapters
   claude_code    Claude Code session JSONL       (~/.claude/projects/<proj>/<session>.jsonl)
   codex          OpenAI Codex CLI rollout JSONL  (~/.codex/sessions/YYYY/MM/DD/rollout-*.jsonl)
   cursor         Cursor agent transcripts        (~/.cursor/projects/<proj>/agent-transcripts/**; partial)
+  agy            agy (Google Antigravity CLI)    (~/.gemini/antigravity-cli/conversations/*.db; SQLite + protobuf)
   kimi_code      Kimi Code wire journals         (~/.kimi-code/sessions/**/agents/<agent>/wire.jsonl)
   zcode          ZCode session store             (~/.zcode/cli/db/db.sqlite)
   grok           Grok CLI session directories    (~/.grok/sessions/<workspace>/<id>/chat_history.jsonl)
@@ -60,7 +61,7 @@ import os
 import threading
 from typing import Callable, Iterable, Optional
 
-from . import (claude_code, codex, copilot_cli, cursor, gemini_cli, grok, inspect_log, kimi_code, mini_swe_agent, muse,
+from . import (agy, claude_code, codex, copilot_cli, cursor, grok, inspect_log, kimi_code, mini_swe_agent, muse,
                openhands, qwen_code, swe_agent, trajectory_fmt, zcode)
 from .common import (Event, Session, derive_task_id, fingerprint, harness_from_fingerprint,
                      harness_id_for, map_tool, run_id_for, sha12, convert, LAB_TOOLS)
@@ -75,7 +76,7 @@ except Exception:                             # standalone fallback: .../importe
     RUNS_ROOT = os.path.join(LAB_ROOT, "data", "runs")
 
 #: adapter registry, most specific sniffers first (order only breaks ties)
-SOURCES = [inspect_log, mini_swe_agent, swe_agent, qwen_code, gemini_cli, kimi_code, zcode, grok, copilot_cli, muse,
+SOURCES = [inspect_log, mini_swe_agent, swe_agent, qwen_code, agy, kimi_code, zcode, grok, copilot_cli, muse,
            claude_code, codex, cursor, trajectory_fmt, openhands]
 
 _ADAPTER = {m.NAME: m for m in SOURCES}

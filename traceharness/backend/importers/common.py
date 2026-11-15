@@ -544,6 +544,30 @@ def _measured(u: Optional[dict]) -> bool:
     return bool(u) and ("input_tokens" in u or "output_tokens" in u)
 
 
+def _note_usage(parts: list, e: "Event") -> None:
+    """Remember a text event's recorded usage once per model call. A source that copies one
+    request's usage onto each of its content blocks (Claude Code: thinking, text, tool_use) is
+    counted once per request id; events without an id are distinct unless their usage is equal."""
+    if not _measured(e.usage):
+        return
+    for rid, u in parts:
+        if (e.request_id and rid == e.request_id) or (not e.request_id and not rid and u == e.usage):
+            return
+    parts.append((e.request_id, dict(e.usage)))
+
+
+def _span_usage(parts: list, call: Optional["Event"]) -> dict:
+    """The recorded usage of one chat span: the tool call's own (if any) plus every pending
+    text-only model call that is not that same request. Empty when nothing was recorded."""
+    own = call.usage if (call is not None and _measured(call.usage)) else {}
+    acc = dict(own)
+    for rid, u in parts:
+        if own and ((call.request_id and rid == call.request_id) or (not call.request_id and u == own)):
+            continue                     # the same model call as the tool call: counted once
+        acc = _add_usage(acc, u)
+    return acc
+
+
 def _add_usage(acc: dict, u: Optional[dict]) -> dict:
     """Sum the recorded counts of consecutive text events that belong to one pending chat span."""
     if not _measured(u):
@@ -614,7 +638,7 @@ def convert(sess: Session, out_root: str, task_id: str, harness: dict, model_ove
     # message whose usage the adapter could not pin to a tool call). It belongs to the NEXT chat span
     # that has none of its own -- the final answer included -- instead of being dropped and replaced
     # by a length estimate. A tool call that carries its own usage supersedes it.
-    pending_usage: dict = {}
+    pending_parts: list = []        # [(request_id, usage)] of text/reasoning events since the last span
     last_edit, last_test = -1, -1
     submitted = False
     unmatched = iter(orphan_results)
@@ -624,10 +648,10 @@ def convert(sess: Session, out_root: str, task_id: str, harness: dict, model_ove
             messages.append({"role": "user", "content": e.text[:4000]})
         elif e.kind == "reasoning":
             pending_text = (pending_text + "\n" + e.text).strip()
-            pending_usage = _add_usage(pending_usage, e.usage)
+            _note_usage(pending_parts, e)
         elif e.kind == "assistant":
             pending_text = (pending_text + "\n" + e.text).strip()
-            pending_usage = _add_usage(pending_usage, e.usage)
+            _note_usage(pending_parts, e)
         elif e.kind == "tool_call":
             step += 1
             tool, args = map_tool(e.name, e.args, sess.extra.get("tool_overrides"))
@@ -643,7 +667,7 @@ def convert(sess: Session, out_root: str, task_id: str, harness: dict, model_ove
                 status = "ok"
             else:
                 status = "error" if (tool != "submit" and _ERR_OBS.search(obs[:600])) else "ok"
-            u = e.usage if _measured(e.usage) else pending_usage
+            u = _span_usage(pending_parts, e)
             if usage_known and _measured(u):
                 # recorded counts, a recorded 0 included (the second of two parallel calls the source
                 # billed once): never replaced by an estimate
@@ -654,7 +678,7 @@ def convert(sess: Session, out_root: str, task_id: str, harness: dict, model_ove
             else:
                 in_tok = out_tok = None
             measured_call = usage_known and _measured(u)
-            pending_usage = {}
+            pending_parts = []
             rec("chat", ts=e.ts, **{
                 "gen_ai.operation.name": "chat",
                 "gen_ai.usage.input_tokens": in_tok,
@@ -706,9 +730,10 @@ def convert(sess: Session, out_root: str, task_id: str, harness: dict, model_ove
     stopped_calling_tools = bool(pending_text.strip())
     if pending_text.strip():
         step += 1
-        final_measured = usage_known and _measured(pending_usage)
-        fin_in = int(pending_usage.get("input_tokens") or 0) if final_measured else 0
-        fin_out = (int(pending_usage.get("output_tokens") or 0) if final_measured
+        fin_u = _span_usage(pending_parts, None)
+        final_measured = usage_known and _measured(fin_u)
+        fin_in = int(fin_u.get("input_tokens") or 0) if final_measured else 0
+        fin_out = (int(fin_u.get("output_tokens") or 0) if final_measured
                    else max(1, len(pending_text) // 4))
         rec("chat", **{"gen_ai.operation.name": "chat",
                        "gen_ai.usage.input_tokens": fin_in if usage_known else None,

@@ -16,7 +16,7 @@
    ============================================================================ */
 
 /** The sources the capture watcher follows on its own (capture/adapters.py REGISTRY). */
-export const WATCHED = ['claude_code', 'codex', 'cursor', 'gemini_cli', 'qwen_code']
+export const WATCHED = ['agy', 'claude_code', 'codex', 'cursor', 'qwen_code']
 
 /** Which road a source arrives by. An unknown name is an import: never claim it is watched. */
 export function arrival(source) {

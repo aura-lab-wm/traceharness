@@ -147,14 +147,14 @@ if (typeof window !== 'undefined' && typeof document !== 'undefined') {
 
 /* ================================================================ SOURCES */
 /** Adapter names as people say them. Unknown names show raw. */
-const TOOL = { claude_code: 'Claude Code', codex: 'Codex', cursor: 'Cursor', gemini_cli: 'Gemini CLI', qwen_code: 'Qwen Code', inspect: 'Inspect', swe_agent: 'SWE-agent', trajectory: 'Trajectory v1', openhands: 'OpenHands' }
+const TOOL = { claude_code: 'Claude Code', codex: 'Codex', cursor: 'Cursor', agy: 'agy', qwen_code: 'Qwen Code', inspect: 'Inspect', swe_agent: 'SWE-agent', trajectory: 'Trajectory v1', openhands: 'OpenHands' }
 const tool = (n) => TOOL[n] || n
 /** The private results directory (backend/results_scope.py PRIVATE_DIRS): the only place a live
  *  session store may be imported into; it is held back from /api/results and every export. */
 const PRIVATE_DIR = 'captured'
 /** Where a tool keeps its sessions by default, as capture/adapters.py documents it (default_roots).
  *  Used only when /api/import/sources names no folder, and always to recognise a live session store. */
-const DOCUMENTED_FOLDERS = [['claude_code', '~/.claude/projects/'], ['codex', '~/.codex/sessions/'], ['cursor', '~/.cursor/projects/'], ['gemini_cli', '~/.gemini/tmp/'], ['qwen_code', '~/.qwen/projects/']].map(([source, path]) => ({ source, path }))
+const DOCUMENTED_FOLDERS = [['claude_code', '~/.claude/projects/'], ['codex', '~/.codex/sessions/'], ['cursor', '~/.cursor/projects/'], ['agy', '~/.gemini/antigravity-cli/'], ['qwen_code', '~/.qwen/projects/']].map(([source, path]) => ({ source, path }))
 /** The session folder each adapter's description names ("~/.codex/sessions/YYYY/MM/DD/rollout-*.jsonl"
  *  → "~/.codex/sessions/"): the path up to its first templated segment. */
 export function sessionFolders(adapters) {
@@ -221,7 +221,7 @@ function Sources({ spec }) {
         <ImportTrace spec={spec} datasets={all} />
         <SweAgentImport spec={spec} datasets={all} />
         <Road n={3} title="Record your own sessions" el="road-capture">
-          <p className="rg-ws-lead">Session capture follows Claude Code, Codex, Cursor, Gemini CLI and Qwen Code on this machine by itself, so nobody types a path for those.</p>
+          <p className="rg-ws-lead">Session capture follows Claude Code, Codex, Cursor, agy and Qwen Code on this machine by itself, so nobody types a path for those.</p>
           <NextSteps actions={[{ label: 'Open Session capture', spec: 'capture' }]} />
         </Road>
       </Sec>

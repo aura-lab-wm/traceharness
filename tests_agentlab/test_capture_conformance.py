@@ -1,7 +1,7 @@
 """The conformance kit (spec 6.4). Every capture adapter must pass every check here.
 
 CASES is generated from adapters.REGISTRY, so a descriptor cannot be added without a fixture and
-a golden. Plan 2 adds Codex, Qwen Code, Gemini CLI and (if its census clears) Cursor.
+a golden. Plan 2 adds Codex, Qwen Code, agy (the Antigravity CLI, a SQLite conversation database) and (if its census clears) Cursor.
 """
 import json
 import os

@@ -27,7 +27,7 @@ from typing import Iterable, Optional
 from . import allowlist, cursors, presence, remote
 from .redact import redact
 
-SOURCES = ("claude_code", "codex", "gemini_cli", "qwen_code", "cursor")
+SOURCES = ("claude_code", "codex", "agy", "qwen_code", "cursor")
 MAX_BODY = 4 * 1024 * 1024
 # Same shape the worker and captured_runs_run_id_shape accept: "." and ".." are refused there too.
 RUN_ID_RE = re.compile(r"^(?!\.{1,2}$)[A-Za-z0-9_.@-]{1,120}$")
