@@ -54,6 +54,10 @@ class TestVersionAlignment(unittest.TestCase):
         from traceharness.__main__ import __version__
         self.assertEqual(__version__, project_version())
 
+    def test_the_api_reports_the_project_version(self):
+        from traceharness.backend.app import app
+        self.assertEqual(app.version, project_version())
+
 
 if __name__ == "__main__":
     unittest.main()
