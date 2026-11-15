@@ -414,7 +414,10 @@ def run_one(agent: str, model: str, route: list, task_id: str, repeat: int, out_
             docker(["kill", box], check=False)
             error = "container wall-clock limit"
         docker(["rm", "-f", box, broker], check=False)
-        left_out = export_volumes(vol_ws, vol_out, exp, runtime)
+        try:
+            left_out = export_volumes(vol_ws, vol_out, exp, runtime)
+        except (RuntimeError, ValueError, OSError, subprocess.TimeoutExpired) as e:
+            error = error or f"reading back the workspace failed: {str(e)[:200]}"
         grades = grade_package(vol_ws, task["dir"], runtime) if task.get("package") else grade_lab(vol_ws, task, runtime)
     finally:
         docker(["rm", "-f", box, broker, hold], check=False)
@@ -511,11 +514,14 @@ def write_run(agent, model, route, task_id, repeat, run_id, out_root, outd, grad
     tout = [c.get("tokens_out") for c in ok_calls]
     if ok_calls and all(isinstance(x, int) for x in tin + tout):
         s.input_tokens, s.output_tokens = sum(tin), sum(tout)
-    refused = any(c.get("refused") == "max_requests" for c in calls)
+    refused = {c.get("refused") for c in calls if c.get("refused")}
     if exit_info.get("timed_out") or error == "container wall-clock limit":
         s.exit_reason = "max_steps"
         s.error = f"wall-clock limit of {opts.wall} s"
-    elif refused:
+    elif "max_input_bytes" in refused:
+        s.exit_reason = "budget_exceeded"
+        s.error = f"model input budget of {opts.max_input_bytes} bytes reached"
+    elif "max_requests" in refused:
         s.exit_reason = "max_steps"
         s.error = f"model request cap of {opts.max_requests} reached"
     elif error:

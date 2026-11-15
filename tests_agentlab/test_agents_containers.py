@@ -273,6 +273,50 @@ class HostSideReaders(unittest.TestCase):
         self.assertFalse(os.path.exists(os.path.join(os.path.dirname(dest), "escape.txt")))
 
 
+class WriteRun(unittest.TestCase):
+    """write_run: the summary of a container run from its grades, the broker's calls and the exit."""
+
+    def _run(self, calls, exit_info=None, error="", agent="codex"):
+        out = tempfile.mkdtemp()
+        outd = os.path.join(out, "export", "output")
+        os.makedirs(os.path.join(outd, "native"))
+        opts = mock.Mock(max_requests=50, wall=600, max_input_bytes=1000)
+        with mock.patch.object(R, "image_ref", return_value="traceharness-agents:0.5.0"):
+            row = R.write_run(agent, "openai/m", ["Azure"], "t01_slugify", 2, "20260101-000000-cccccc", out, outd,
+                              {"visible": True, "hidden": True, "strong": False}, "", [], False, calls,
+                              exit_info if exit_info is not None else {"returncode": 0}, error, "2026-01-01T00:00:00Z", 1234,
+                              "sha256:abc", opts)
+        return row, out
+
+    def test_cost_hosts_and_exit(self):
+        calls = [{"seq": 1, "status": 200, "served_by": "Azure", "cost_usd": 0.001, "tokens_in": 10, "tokens_out": 2},
+                 {"seq": 2, "status": 200, "served_by": "Azure", "cost_usd": 0.002, "tokens_in": 20, "tokens_out": 3}]
+        row, out = self._run(calls)
+        self.assertEqual((row["cost_usd"], row["served_by"], row["steps"], row["input_tokens"], row["output_tokens"]),
+                         (0.003, ["Azure"], 2, 30, 5))
+        self.assertEqual((row["exit_reason"], row["repeat_index"], row["hidden_pass"], row["strong_pass"]), ("submitted", 2, True, False))
+        with open(os.path.join(out, "index.jsonl")) as f:
+            self.assertEqual(json.loads(f.readline())["run_id"], "20260101-000000-cccccc")
+        with open(os.path.join(out, "20260101-000000-cccccc", "container.json")) as f:
+            self.assertEqual(json.load(f)["harness"]["route"], ["Azure"])
+
+    def test_unresolved_cost_is_unknown_not_zero(self):
+        row, _ = self._run([{"seq": 1, "status": 200, "served_by": "", "cost_usd": None, "unresolved": True}])
+        self.assertIsNone(row["cost_usd"])
+
+    def test_caps_name_the_exit(self):
+        row, _ = self._run([{"seq": None, "status": 429, "refused": "max_input_bytes"}])
+        self.assertEqual(row["exit_reason"], "budget_exceeded")
+        row, _ = self._run([{"seq": None, "status": 429, "refused": "max_requests"}])
+        self.assertEqual(row["exit_reason"], "max_steps")
+        row, _ = self._run([], exit_info={"returncode": 0, "timed_out": True})
+        self.assertEqual(row["exit_reason"], "max_steps")
+        row, _ = self._run([], exit_info={"returncode": 3})
+        self.assertEqual((row["exit_reason"], row["error"]), ("error", "codex exited with code 3"))
+        row, _ = self._run([{"seq": 1, "status": 502, "error": "URLError"}])
+        self.assertIn("model calls failed with HTTP 502", row["error"])
+
+
 class RunHelpers(unittest.TestCase):
     def test_exit_reasons(self):
         self.assertEqual([R.mini_exit_reason(x) for x in ("Submitted", "LimitsExceeded", "RepeatedFormatError", "", "Boom")],
