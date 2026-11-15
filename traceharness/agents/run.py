@@ -199,10 +199,11 @@ def workspace_patch(before: dict, after: dict) -> tuple[str, list, bool]:
 NO_GENERATION_AFTER_S = 600
 
 
-def _generation(gid: str, key: str, wait_s: float) -> dict:
+def _generation(gid: str, key: str, wait_s: float, age_s: float = 0.0) -> dict:
     """OpenRouter's record of one generation; {} if it is still not available after `wait_s`
     (the record appears seconds after the call, later when many calls finish at once), and
-    {"_not_found": True} when the last answer was an explicit 404 "not found"."""
+    {"_not_found": True} when the last answer was an explicit 404 "not found". For a call older than
+    NO_GENERATION_AFTER_S a first 404 is final: there is nothing left to wait for."""
     deadline, delay, not_found = time.time() + wait_s, 1.0, False
     while True:
         req = urllib.request.Request("https://openrouter.ai/api/v1/generation?id=" + urllib.request.quote(gid),
@@ -212,6 +213,8 @@ def _generation(gid: str, key: str, wait_s: float) -> dict:
                 return json.loads(r.read()).get("data") or {}
         except urllib.error.HTTPError as e:
             not_found = e.code == 404
+            if not_found and age_s > NO_GENERATION_AFTER_S:
+                return {"_not_found": True}
         except (urllib.error.URLError, ValueError, OSError):
             not_found = False
         if time.time() + delay > deadline:
@@ -237,8 +240,9 @@ def resolve_generations(records: list, key: str, wait_s: float = 90) -> None:
         return
 
     def one(rec):
-        d = _generation(rec["gen_id"], key, wait_s)
-        if d.get("_not_found") and time.time() - float(rec.get("ts") or time.time()) > NO_GENERATION_AFTER_S:
+        age = time.time() - float(rec.get("ts") or time.time())
+        d = _generation(rec["gen_id"], key, wait_s, age)
+        if d.get("_not_found") and age > NO_GENERATION_AFTER_S:
             # no generation exists long after the call: an error answered inside an HTTP 200, not billed
             rec.pop("unresolved", None)
             rec.update(no_generation=True, served_by="", cost_usd=0.0, tokens_in=0, tokens_out=0, cached=0)
@@ -287,8 +291,9 @@ def apply_calls(s, calls: list) -> list:
 
 def resolve_dir(out_root: str, key: str, wait_s: float = 120) -> dict:
     """Retry every unpriced call of every container run in `out_root`, and rewrite what depends on it:
-    the run's relay.jsonl, summary.json, the end span of its ledger and its index row. Refuses while
-    runs are in progress there (their rows are still being appended)."""
+    the run's relay.jsonl, summary.json, the end span of its ledger and its index row. The totals of
+    every container run are recomputed from its relay log, so a pass that was interrupted is finished
+    by the next one. Refuses while runs are in progress there (their rows are still being appended)."""
     from types import SimpleNamespace
     jobs = os.path.join(out_root, ".jobs")
     if os.path.isdir(jobs) and os.listdir(jobs):
@@ -305,12 +310,13 @@ def resolve_dir(out_root: str, key: str, wait_s: float = 120) -> dict:
             continue
         with open(rp) as f:
             calls = [json.loads(l) for l in f if l.strip()]
-        if not any(c.get("status") == 200 and not isinstance(c.get("cost_usd"), (int, float)) for c in calls):
-            continue
-        resolve_generations(calls, key, wait_s)
+        if any(c.get("status") == 200 and not isinstance(c.get("cost_usd"), (int, float)) for c in calls):
+            resolve_generations(calls, key, wait_s)
         s = SimpleNamespace(**row)
         served = apply_calls(s, calls)
         new = {k: getattr(s, k) for k in keys}
+        if all(row.get(k) == new[k] for k in keys):
+            continue                       # already consistent with its relay log (idempotent re-runs)
         still += any(c.get("unresolved") for c in calls)
         priced += new["cost_usd"] is not None
         with open(rp, "w") as f:
@@ -786,7 +792,7 @@ def main(argv=None) -> int:
                 print(f"{d}: {e}", file=sys.stderr)
                 rc = 1
                 continue
-            print(f"{d}: {r['runs']} runs, {r['runs_now_priced']} priced now, {r['runs_still_unpriced']} still unpriced")
+            print(f"{d}: {r['runs']} runs, {r['runs_now_priced']} priced now, {r['runs_still_unpriced']} still unpriced", flush=True)
             rc = rc or (1 if r["runs_still_unpriced"] else 0)
         return rc
     print(f"unknown agents command {cmd!r}: build, list, run or resolve", file=sys.stderr)

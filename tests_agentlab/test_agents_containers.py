@@ -404,6 +404,20 @@ class ResolveCosts(unittest.TestCase):
             res = R.resolve_dir(out, "k", wait_s=0)
         self.assertEqual(res["runs_still_unpriced"], 1)
 
+    def test_a_pass_interrupted_after_the_relay_log_is_finished_by_the_next(self):
+        out, rd = self._dir()
+        with open(os.path.join(rd, "relay.jsonl")) as f:
+            calls = [json.loads(l) for l in f]
+        calls[1].pop("unresolved")
+        calls[1].update(cost_usd=0.002, served_by="Azure", tokens_in=20, tokens_out=3)
+        with open(os.path.join(rd, "relay.jsonl"), "w") as f:
+            f.write("\n".join(json.dumps(c) for c in calls) + "\n")
+        with mock.patch.object(R, "_generation") as g:
+            R.resolve_dir(out, "k")
+        g.assert_not_called()
+        with open(os.path.join(out, "index.jsonl")) as f:
+            self.assertEqual(json.loads(f.readline())["cost_usd"], 0.003, "the stale index row is recomputed")
+
     def test_refuses_while_runs_are_in_progress(self):
         out, _ = self._dir()
         os.makedirs(os.path.join(out, ".jobs", "20260101-000000-ffffff"))
