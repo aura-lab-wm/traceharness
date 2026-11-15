@@ -36,7 +36,7 @@ python -m traceharness                       # TraceHarness: http://127.0.0.1:87
 | **Sentinel** | the early-warning model: how well it separates, what it catches at a threshold, how early, and the detectors that fire | 3, 4 |
 | Analysis → **Judge & integrity** | the oracle against a stronger one (κ), integrity flags (leakage, weak tests, over-claiming), an LLM judge checked against the suites | 4, 5 |
 | Analysis → **Experiment** | the model × harness fit, the cell grid with intervals, every within-model pairwise contrast | 8 |
-| **Sources & capture** | import runs from Claude Code, Codex, Cursor, Gemini CLI, Qwen Code, OpenHands, SWE-agent or Inspect; download real SWE-agent trajectories | 7 |
+| **Sources & capture** | import runs from Claude Code, Codex, Cursor, agy, Qwen Code, Kimi Code, ZCode, Grok CLI, GitHub Copilot CLI, Muse, OpenHands, SWE-agent or Inspect; download real SWE-agent trajectories | 7 |
 | Analysis → **Report** | the exercise-6 card for the condition in focus, exported as Markdown or JSON | 6 |
 
 Every analysis view sits under one sentence, *Asking [dataset] about [model] under [harness], graded by the

@@ -118,7 +118,7 @@ class TestCursorSniff(unittest.TestCase):
         self.assertGreaterEqual(cursor.sniff(FIXTURE), 0.5)
 
     def test_every_other_capture_fixture_is_not_cursor(self):
-        for fx in ("cc_session.jsonl", "cx_rollout.jsonl", "qwen_chat.jsonl", "gemini_session.jsonl"):
+        for fx in ("cc_session.jsonl", "cx_rollout.jsonl", "qwen_chat.jsonl", "agy_conversation.db"):
             with self.subTest(fixture=fx):
                 self.assertEqual(cursor.sniff(os.path.join(FIXDIR, fx)), 0.0)
 

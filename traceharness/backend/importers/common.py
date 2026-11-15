@@ -299,7 +299,7 @@ def sidecar_outcome(path: str, session_id: str) -> tuple[Optional[bool], str]:
 def hunks_from_line_counts(added: int, removed: int) -> list:
     """A `structuredPatch`-shaped hunk carrying only COUNTS.
 
-    Qwen Code and Gemini CLI report `model_added_lines` / `model_removed_lines` rather than the
+    Qwen Code reports `model_added_lines` / `model_removed_lines` rather than the
     edited lines themselves. The counts are real, so `line_counts_known` stays True; the line
     TEXT is not available and is deliberately left empty rather than invented. A source that
     ships a real unified diff should be parsed into hunks instead of coming through here.
@@ -352,7 +352,7 @@ def map_tool(name: str, args: dict, overrides: Optional[dict] = None) -> tuple[s
     # bash: keep the native name when it is not literally a shell
     command = cmd if cmd else (json.dumps(args, ensure_ascii=False, default=str)[:300] if args else "")
     if key not in ("bash", "shell", "local_shell", "exec", "exec_command", "execute_bash",
-                   "container.exec", "cmdrunaction"):
+                   "container.exec", "cmdrunaction", "run_command"):      # run_command: agy
         command = f"{raw}: {command}" if command else raw
     return "bash", {"command": _clip(command, 400)}
 
@@ -539,6 +539,57 @@ def _exit_reason(sess: Session, submitted: bool, n_steps: int, stopped_calling_t
     return "unknown"
 
 
+def _measured(u: Optional[dict]) -> bool:
+    """True when a source RECORDED token counts here: the keys are present, even at zero."""
+    return bool(u) and ("input_tokens" in u or "output_tokens" in u)
+
+
+def _note_usage(parts: list, e: "Event") -> None:
+    """Remember a text event's recorded usage once per model call. A source that copies one
+    request's usage onto each of its content blocks (Claude Code: thinking, text, tool_use) is
+    counted once per request id; events without an id are distinct unless their usage is equal."""
+    if not _measured(e.usage):
+        return
+    for rid, u in parts:
+        if (e.request_id and rid == e.request_id) or (not e.request_id and not rid and u == e.usage):
+            return
+    parts.append((e.request_id, dict(e.usage)))
+
+
+def _span_usage(parts: list, call: Optional["Event"], counted: set) -> dict:
+    """The recorded usage of one chat span: the tool call's own (if any) plus every pending
+    text-only model call that is not that same request. Empty when nothing was recorded. A request
+    id already in `counted` contributes a recorded zero; every id used here is added to it."""
+    own = call.usage if (call is not None and _measured(call.usage)) else {}
+    if own and call.request_id and call.request_id in counted:
+        own = {"input_tokens": 0, "output_tokens": 0}
+    acc = dict(own)
+    if own and call.request_id and any(own.values()):    # a recorded 0 does not claim the request
+        counted.add(call.request_id)
+    for rid, u in parts:
+        if own and ((call.request_id and rid == call.request_id) or (not call.request_id and u == own)):
+            continue                     # the same model call as the tool call: counted once
+        if rid and rid in counted:
+            continue
+        acc = _add_usage(acc, u)
+        if rid and any(u.values()):
+            counted.add(rid)
+    if not acc and parts:                # every pending part was an already-counted request
+        acc = {"input_tokens": 0, "output_tokens": 0}
+    return acc
+
+
+def _add_usage(acc: dict, u: Optional[dict]) -> dict:
+    """Sum the recorded counts of consecutive text events that belong to one pending chat span."""
+    if not _measured(u):
+        return acc
+    out = dict(acc)
+    for k in ("input_tokens", "output_tokens", "cache_read_input_tokens", "cache_creation_input_tokens"):
+        if k in u:
+            out[k] = int(out.get(k) or 0) + int(u.get(k) or 0)
+    return out
+
+
 def convert(sess: Session, out_root: str, task_id: str, harness: dict, model_override: str = "",
             missing: frozenset = frozenset(), run_id: str = "", grades: Optional[dict] = None) -> Any:
     """Write one run's four files and return its RunSummary.
@@ -594,6 +645,15 @@ def convert(sess: Session, out_root: str, task_id: str, harness: dict, model_ove
                                                       f"sha256={sha256_hex(sess.system_prompt)[:16]}…, {len(sess.system_prompt)} chars)"})
     step = -1
     pending_text = ""
+    # Usage a source recorded on a text or reasoning event (a model call that ended in prose, or a
+    # message whose usage the adapter could not pin to a tool call). It belongs to the NEXT chat span
+    # that has none of its own -- the final answer included -- instead of being dropped and replaced
+    # by a length estimate. A tool call that carries its own usage supersedes it.
+    pending_parts: list = []        # [(request_id, usage)] of text/reasoning events since the last span
+    # One model call is billed once. Sources copy a request's usage onto each of its content blocks
+    # (Claude Code: every tool_use of a parallel batch carries the same usage, measured identical on
+    # all 429 multi-block requests of 12 real sessions), so a request id already counted adds 0.
+    counted: set = set()
     last_edit, last_test = -1, -1
     submitted = False
     unmatched = iter(orphan_results)
@@ -603,8 +663,10 @@ def convert(sess: Session, out_root: str, task_id: str, harness: dict, model_ove
             messages.append({"role": "user", "content": e.text[:4000]})
         elif e.kind == "reasoning":
             pending_text = (pending_text + "\n" + e.text).strip()
+            _note_usage(pending_parts, e)
         elif e.kind == "assistant":
             pending_text = (pending_text + "\n" + e.text).strip()
+            _note_usage(pending_parts, e)
         elif e.kind == "tool_call":
             step += 1
             tool, args = map_tool(e.name, e.args, sess.extra.get("tool_overrides"))
@@ -620,11 +682,18 @@ def convert(sess: Session, out_root: str, task_id: str, harness: dict, model_ove
                 status = "ok"
             else:
                 status = "error" if (tool != "submit" and _ERR_OBS.search(obs[:600])) else "ok"
-            if usage_known:
-                in_tok = int(e.usage.get("input_tokens") or 0)
-                out_tok = int(e.usage.get("output_tokens") or 0) or max(1, len(pending_text) // 4)
+            u = _span_usage(pending_parts, e, counted)
+            if usage_known and _measured(u):
+                # recorded counts, a recorded 0 included (the second of two parallel calls the source
+                # billed once): never replaced by an estimate
+                in_tok = int(u.get("input_tokens") or 0)
+                out_tok = int(u.get("output_tokens") or 0)
+            elif usage_known:
+                in_tok, out_tok = 0, max(1, len(pending_text) // 4)
             else:
                 in_tok = out_tok = None
+            measured_call = usage_known and _measured(u)
+            pending_parts = []
             rec("chat", ts=e.ts, **{
                 "gen_ai.operation.name": "chat",
                 "gen_ai.usage.input_tokens": in_tok,
@@ -639,7 +708,7 @@ def convert(sess: Session, out_root: str, task_id: str, harness: dict, model_ove
             pending_text = ""
             summary.steps += 1
             if usage_known:
-                summary.input_tokens += in_tok or len(obs) // 4
+                summary.input_tokens += in_tok if measured_call else (in_tok or len(obs) // 4)
                 summary.output_tokens += out_tok
             if not tools_known:
                 continue            # the request is on the chat span; its execution was never recorded
@@ -676,16 +745,22 @@ def convert(sess: Session, out_root: str, task_id: str, harness: dict, model_ove
     stopped_calling_tools = bool(pending_text.strip())
     if pending_text.strip():
         step += 1
+        fin_u = _span_usage(pending_parts, None, counted)
+        final_measured = usage_known and _measured(fin_u)
+        fin_in = int(fin_u.get("input_tokens") or 0) if final_measured else 0
+        fin_out = (int(fin_u.get("output_tokens") or 0) if final_measured
+                   else max(1, len(pending_text) // 4))
         rec("chat", **{"gen_ai.operation.name": "chat",
-                       "gen_ai.usage.input_tokens": 0 if usage_known else None,
-                       "gen_ai.usage.output_tokens": max(1, len(pending_text) // 4) if usage_known else None,
+                       "gen_ai.usage.input_tokens": fin_in if usage_known else None,
+                       "gen_ai.usage.output_tokens": fin_out if usage_known else None,
                        "gen_ai.response.finish_reasons": ["stop"], "duration_ms": 0,
                        "cost_usd": 0.0 if usage_known else None,
                        "step": step, "text": pending_text[:2000], "tool_calls": []})
         messages.append({"role": "assistant", "content": pending_text[:2000]})
         summary.steps += 1
         if usage_known:
-            summary.output_tokens += max(1, len(pending_text) // 4)
+            summary.input_tokens += fin_in
+            summary.output_tokens += fin_out
 
     summary.exit_reason = _exit_reason(sess, submitted, summary.steps, stopped_calling_tools)
     summary.ran_tests_before_submit = last_test >= last_edit >= 0
