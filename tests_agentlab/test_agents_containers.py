@@ -67,6 +67,14 @@ class BrokerRewrite(unittest.TestCase):
         self.assertNotIn("max_tokens", B.rewrite({}, "chat", CFG))
 
 
+class BrokerErrorBody(unittest.TestCase):
+    def test_an_error_inside_a_200_is_recognised(self):
+        self.assertTrue(B.error_body("application/json", b'{"error":{"message":"Provider returned error","code":502}}'))
+        self.assertFalse(B.error_body("application/json", b'{"id":"gen-1","choices":[{"message":{}}]}'))
+        self.assertFalse(B.error_body("text/event-stream", b'data: {"error":{}}\n\n'))
+        self.assertFalse(B.error_body("application/json", b"not json"))
+
+
 class BrokerCaps(unittest.TestCase):
     def setUp(self):
         self.tmp = tempfile.mkdtemp()
@@ -121,6 +129,9 @@ class RelayAndBrokerOverASocket(unittest.TestCase):
                 self.assertIn(b'"ok"', body)
                 self.assertEqual(sent[0][2]["model"], CFG["model"])
                 self.assertEqual(post("/v1/other", {"a": 1})[0], 404)
+                # a refused path with a large body: the broker reads it before answering, else the
+                # unread bytes reset the socket and the relay reports 502 (seen intermittently)
+                self.assertEqual([post("/v1/other", {"pad": "x" * 60000})[0] for _ in range(20)], [404] * 20)
                 self.assertEqual(post("/v1/messages?beta=true", {"messages": []})[0], 200)
                 self.assertEqual(post("/v1/responses", {"input": "x"})[0], 429, "third call: the request cap is 2")
                 c = http.client.HTTPConnection("127.0.0.1", port, timeout=10)
@@ -315,6 +326,106 @@ class WriteRun(unittest.TestCase):
         self.assertEqual((row["exit_reason"], row["error"]), ("error", "codex exited with code 3"))
         row, _ = self._run([{"seq": 1, "status": 502, "error": "URLError"}])
         self.assertIn("model calls failed with HTTP 502", row["error"])
+
+
+class ResolveCosts(unittest.TestCase):
+    """traceharness agents resolve: a call whose generation record was late is priced afterwards."""
+
+    def _dir(self):
+        out = tempfile.mkdtemp()
+        rid = "20260101-000000-eeeeee"
+        rd = os.path.join(out, rid)
+        os.makedirs(rd)
+        calls = [{"seq": 1, "status": 200, "gen_id": "gen-a", "served_by": "Azure", "cost_usd": 0.001, "tokens_in": 10, "tokens_out": 1},
+                 {"seq": 2, "status": 200, "gen_id": "gen-b", "unresolved": True}]
+        row = {"run_id": rid, "cost_usd": None, "served_by": ["Azure"], "steps": 2, "input_tokens": 5, "output_tokens": 5}
+        with open(os.path.join(rd, "relay.jsonl"), "w") as f:
+            f.write("\n".join(json.dumps(c) for c in calls) + "\n")
+        for name, obj in (("container.json", {"harness": {}}), ("summary.json", row)):
+            with open(os.path.join(rd, name), "w") as f:
+                json.dump(obj, f)
+        with open(os.path.join(rd, "ledger.jsonl"), "w") as f:
+            f.write(json.dumps({"span": "invoke_agent", "status": "end", "cost_usd": None}) + "\n")
+        with open(os.path.join(out, "index.jsonl"), "w") as f:
+            f.write(json.dumps(row) + "\n")
+        return out, rd
+
+    def test_late_records_are_priced_everywhere(self):
+        out, rd = self._dir()
+        rec = {"provider_name": "Azure", "total_cost": 0.002, "native_tokens_prompt": 20, "native_tokens_completion": 3,
+               "native_tokens_cached": 0, "model": "m"}
+        with mock.patch.object(R, "_generation", return_value=rec) as g:
+            res = R.resolve_dir(out, "k")
+        self.assertEqual([c.args[0] for c in g.call_args_list], ["gen-b"], "only the unpriced call is looked up")
+        self.assertEqual(res, {"runs": 1, "runs_now_priced": 1, "runs_still_unpriced": 0})
+        with open(os.path.join(out, "index.jsonl")) as f:
+            row = json.loads(f.readline())
+        self.assertEqual((row["cost_usd"], row["input_tokens"], row["output_tokens"]), (0.003, 30, 4))
+        with open(os.path.join(rd, "summary.json")) as f:
+            self.assertEqual(json.load(f)["cost_usd"], 0.003)
+        with open(os.path.join(rd, "ledger.jsonl")) as f:
+            self.assertEqual(json.loads(f.readline())["cost_usd"], 0.003)
+        with open(os.path.join(rd, "relay.jsonl")) as f:
+            self.assertNotIn("unresolved", [json.loads(l) for l in f][1])
+
+    def test_still_missing_stays_unknown(self):
+        out, _ = self._dir()
+        with mock.patch.object(R, "_generation", return_value={}):
+            res = R.resolve_dir(out, "k", wait_s=0)
+        self.assertEqual(res["runs_still_unpriced"], 1)
+        with open(os.path.join(out, "index.jsonl")) as f:
+            self.assertIsNone(json.loads(f.readline())["cost_usd"])
+
+    def test_a_call_with_no_generation_long_after_is_an_unbilled_error(self):
+        out, rd = self._dir()
+        with open(os.path.join(rd, "relay.jsonl")) as f:
+            calls = [json.loads(l) for l in f]
+        calls[1]["ts"] = 1.0                      # made long ago
+        with open(os.path.join(rd, "relay.jsonl"), "w") as f:
+            f.write("\n".join(json.dumps(c) for c in calls) + "\n")
+        with mock.patch.object(R, "_generation", return_value={"_not_found": True}):
+            res = R.resolve_dir(out, "k", wait_s=0)
+        self.assertEqual(res["runs_still_unpriced"], 0)
+        with open(os.path.join(out, "index.jsonl")) as f:
+            row = json.loads(f.readline())
+        self.assertEqual((row["cost_usd"], row["steps"]), (0.001, 1), "the failed call is free and not a model call")
+        self.assertIn("1 model calls returned an error inside HTTP 200", row["error"])
+        with mock.patch.object(R, "_generation", return_value={"_not_found": True}):
+            R.resolve_dir(out, "k", wait_s=0)
+        with open(os.path.join(out, "index.jsonl")) as f:
+            self.assertEqual(json.loads(f.readline())["error"].count("returned an error"), 1, "the note is not repeated")
+
+    def test_a_recent_not_found_is_still_pending(self):
+        out, rd = self._dir()
+        with open(os.path.join(rd, "relay.jsonl")) as f:
+            calls = [json.loads(l) for l in f]
+        import time as _t
+        calls[1]["ts"] = _t.time()
+        with open(os.path.join(rd, "relay.jsonl"), "w") as f:
+            f.write("\n".join(json.dumps(c) for c in calls) + "\n")
+        with mock.patch.object(R, "_generation", return_value={"_not_found": True}):
+            res = R.resolve_dir(out, "k", wait_s=0)
+        self.assertEqual(res["runs_still_unpriced"], 1)
+
+    def test_a_pass_interrupted_after_the_relay_log_is_finished_by_the_next(self):
+        out, rd = self._dir()
+        with open(os.path.join(rd, "relay.jsonl")) as f:
+            calls = [json.loads(l) for l in f]
+        calls[1].pop("unresolved")
+        calls[1].update(cost_usd=0.002, served_by="Azure", tokens_in=20, tokens_out=3)
+        with open(os.path.join(rd, "relay.jsonl"), "w") as f:
+            f.write("\n".join(json.dumps(c) for c in calls) + "\n")
+        with mock.patch.object(R, "_generation") as g:
+            R.resolve_dir(out, "k")
+        g.assert_not_called()
+        with open(os.path.join(out, "index.jsonl")) as f:
+            self.assertEqual(json.loads(f.readline())["cost_usd"], 0.003, "the stale index row is recomputed")
+
+    def test_refuses_while_runs_are_in_progress(self):
+        out, _ = self._dir()
+        os.makedirs(os.path.join(out, ".jobs", "20260101-000000-ffffff"))
+        with self.assertRaises(RuntimeError):
+            R.resolve_dir(out, "k")
 
 
 class RunHelpers(unittest.TestCase):
