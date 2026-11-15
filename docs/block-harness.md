@@ -13,7 +13,7 @@ not a copy of the vendor program.
 |---|---|---|---|
 | claude_code | Claude Code | Full tools, strict policy, 40 steps | anthropic/claude-sonnet-5, from the captured session |
 | codex | Codex | Full tools, strict policy, 30 steps | openai/gpt-5.6-luna, curated list |
-| gemini_cli | Gemini CLI | Same loop shape as Codex | google/gemini-3.8-flash, curated list |
+| agy | agy | Same loop shape as Codex | google/gemini-3.8-flash, curated list |
 | qwen_code | Qwen Code | Same loop shape as Codex | qwen/qwen3.8-27b, curated list |
 | cursor | Cursor | Same loop shape as Codex | anthropic/claude-haiku-4.5, curated list |
 | openhands | OpenHands | Full tools, strict policy, 50 steps | openai/gpt-5.6-luna, curated list |
@@ -21,9 +21,8 @@ not a copy of the vendor program.
 | aider | Aider | No shell tool | openai/gpt-5.6-luna, curated list |
 | cline | Cline | Full tools, strict policy, 30 steps | anthropic/claude-sonnet-5 |
 
-`ayg` is not a harness name in this repository, and it is not on the public
-lists checked while this was written (Claude Code, Codex, Gemini CLI, Cursor,
-Qwen Code, OpenHands, SWE-agent, Aider, Cline). It has no preset.
+`ayg` is not a harness name in this repository; the Google terminal agent is `agy`
+(Antigravity CLI), which replaces Gemini CLI.
 
 Two presets that set the same knobs are the same measurement cell. The catalog
 says so in `same_loop_as`. The model is chosen per run and is not part of the

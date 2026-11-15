@@ -98,13 +98,13 @@ CATALOG = [
         "Preset. The importer reads Codex approval decisions; this cell uses policy=strict.",
     ),
     _preset(
-        "gemini_cli", "Gemini CLI",
-        "Google terminal agent. Full tools. This checkout records no approval decision, so the preset blocks flagged commands.",
+        "agy", "agy",
+        "Google's terminal agent (Antigravity CLI). Full tools. The preset blocks flagged commands.",
         _GEMINI,
-        "google/gemini-3.8-flash is the curated Google model. This checkout has no Gemini CLI session that names a model.",
+        "google/gemini-3.8-flash is the curated Google model.",
         [_prompt(DEFAULT_SYSTEM), _tools(ALL_SURFACE), _policy("strict"),
          _context(0, 6000), _stop(30), _sampling(), _listing(True)],
-        "Preset. capture adapter policy for gemini_cli is none; strict is this cell's choice.",
+        "Preset of this lab's runner, not the agy program. strict is this cell's choice.",
     ),
     _preset(
         "qwen_code", "Qwen Code",
