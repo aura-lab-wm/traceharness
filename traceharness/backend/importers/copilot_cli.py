@@ -3,58 +3,59 @@
 (~/.copilot/session-state/<session-uuid>/events.jsonl; the sibling workspace.yaml, checkpoints/index.md,
 files/ and vscode.metadata.json hold no transcript and are not read.)
 
-CORPUS CAVEAT: this was written against a VERY SMALL corpus -- 8 session directories under
-~/.copilot/session-state, of which only 4 hold an `events.jsonl` (the other 4 are bare
-workspace.yaml + an empty checkpoints/index.md + an empty files/). The 4 transcripts are 5-6 records
-each (23 records in all, 13.5 KB): one user prompt and one plain-text answer per session, three of
-them Haiku warm-up pings. They contain NO tool call, NO tool result, NO usage record and NO subagent.
-So the parts of this parser that handle tools and usage (`assistant.message.toolRequests`,
-`tool.execution_start` / `tool.execution_complete`, `assistant.usage`) are INFERRED (unproven) from
-the Copilot CLI's published event vocabulary, not measured here, and the tool mapping below is
-likewise a deliberate guess for names this corpus never emitted. Every field seen only once is read
-tolerantly (missing -> empty, never an exception), and anything unrecognised is counted in
-`extra["unknown_record_types"]` rather than dropped.
+CORPUS CAVEAT: written against a SMALL corpus -- 9 session directories under ~/.copilot/session-state,
+of which 5 hold an `events.jsonl` (the other 4 are bare workspace.yaml + an empty checkpoints/index.md
++ an empty files/). Four transcripts are warm-up pings (5-6 records each: one prompt, one text answer).
+The fifth was RECORDED LIVE with `copilot --model claude-haiku-4.5 --allow-all-tools --no-ask-user -p
+"<fix add() and run pytest>"` (CLI 0.0.400) on a toy repo, so the tool path below is observed, not
+inferred: 35 records, 7 tool calls. Fields seen only once are read tolerantly (missing -> empty, never
+an exception) and unknown record types are counted in `extra["unknown_record_types"]`.
 
-Measured on the real corpus (4 events.jsonl files, 23 records):
-  * Envelope on every record: `type`, `id`, `parentId` (null on the first record, else the previous
-    record's id), `timestamp` (ISO-8601 with ms, Z), `data` (object).
-  * Record types and counts: session.start 4, session.model_change 3, user.message 4,
-    assistant.turn_start 4, assistant.message 4, assistant.turn_end 4.
-  * session.start.data: sessionId, version (1), producer ("copilot-agent"), copilotVersion
-    (one value across all 4: 0.0.400), startTime, context.cwd.  -> agent_version and cwd are recorded.
-  * session.model_change.data.newModel: the model (a Haiku 4.5 id in all 3). The 4th session has no
-    model_change record, so its model is unknown and stays "" (convert reports "unknown").
-  * user.message.data: content, transformedContent (the prompt with injected context -- never read),
-    attachments ([]).
-  * assistant.message.data: messageId, content, toolRequests ([] in 4 of 4), reasoningText,
-    reasoningOpaque (an opaque encrypted blob, never read). Reasoning text is on 4 of 4.
-  * assistant.turn_start/turn_end.data.turnId ("0").
-  * NOT recorded in this corpus: per-call ids and tool results (no tool ever ran), token usage
-    (incl. cached), cost, a final diff, subagents, a system prompt.
-
-Inferred shapes (unproven on this corpus; tolerant reads):
-  * assistant.message.data.toolRequests = [{toolCallId, name, arguments, type}] -> one tool_call each.
-  * tool.execution_start {toolCallId, toolName, arguments}: only used when no toolRequests entry
-    already announced that id, so a call is never emitted twice.
-  * tool.execution_complete {toolCallId, success (bool), result.content | error.message} -> tool_result,
-    `ok` only from the boolean `success`.
-  * assistant.usage {model, inputTokens, outputTokens, cacheReadTokens, cacheWriteTokens} -> attached
-    to the first tool_call (else the first event) of the most recent assistant.message.
+Measured (5 events.jsonl files, 58 records):
+  * Envelope on every record: `type`, `id`, `parentId` (null on the first, else the previous id),
+    `timestamp` (ISO-8601 ms, Z), `data`.
+  * Record types: session.start 5, session.model_change 4, user.message 5, assistant.turn_start 10,
+    assistant.message 10, assistant.turn_end 10, tool.execution_start 7, tool.execution_complete 7.
+  * session.start.data: sessionId, version (1), producer ("copilot-agent"), copilotVersion (0.0.400 in
+    all 5), startTime, context.cwd, and `selectedModel` (only on the live-recorded session).
+    session.model_change.data: newModel (+ previousModel in the live session); absent in one warm-up.
+  * user.message.data: content, transformedContent (prompt + injected context: never read), attachments.
+  * assistant.message.data: messageId, content, toolRequests, reasoningText + reasoningOpaque (an
+    encrypted blob, never read; reasoning is present on some messages only). A message may carry
+    text AND several parallel toolRequests ([{toolCallId, name, arguments, type: "function"}]).
+  * Each request is followed by a tool.execution_start {toolCallId, toolName, arguments} (a duplicate of
+    the request, used only if no request announced that id) and a tool.execution_complete
+    {toolCallId, success, result: {content, detailedContent}, toolTelemetry}. Calls and results
+    join on toolCallId; a turn is bracketed by assistant.turn_start / turn_end {turnId}.
+  * Tool names seen: report_intent (bookkeeping), view (file AND directory; arg `path`), edit
+    (`path`, `old_str`, `new_str`), bash (`command`, `description`). Mapped deliberately in
+    TOOL_OVERRIDES; the rest of that table (create, glob, grep, apply_patch, task, ...) is the CLI's
+    published surface and is INFERRED (unproven).
+  * `success` is true even for a command that failed: a bash result ends `<exited with exit code N>`,
+    and N != 0 is what turns `ok` False here. `ok` is otherwise exactly `success`.
+  * An edit result's toolTelemetry.metrics has linesAdded/linesRemoved and its detailedContent is a
+    real unified diff; the diffs of a session are concatenated into Session.patch.
+  * NOT recorded: token usage (input, output, cached) or cost -- there is no usage record anywhere in
+    events.jsonl (the totals the CLI prints at exit, and the 'CompactionProcessor' context estimates in
+    logs/process-*.log, are not per-call usage and are not read), no subagents, no system prompt.
+    Downstream, `convert` therefore ESTIMATES tokens from text length unless the capture descriptor
+    names `usage` as unmeasured for this source.
 """
 from __future__ import annotations
 
 import os
+import re
 from typing import Iterator, Optional
 
-from .common import Event, Session, peek_jsonl, read_jsonl
+from .common import Event, Session, hunks_from_line_counts, peek_jsonl, read_jsonl
 
 NAME = "copilot_cli"
 DESCRIPTION = "GitHub Copilot CLI session events (~/.copilot/session-state/<uuid>/events.jsonl)"
 PATTERNS = ["events.jsonl (records typed session.start / user.message / assistant.message)"]
 
-#: native tool name -> lab tool. NONE of these names occurs in the measured corpus (no tool ran);
-#: they are the Copilot CLI's published tool surface, mapped deliberately so a call never falls
-#: into the unnamed-tool fallback by accident. INFERRED (unproven).
+#: native tool name -> lab tool. OBSERVED in the live session: bash, view, edit, report_intent.
+#: The rest is the CLI's published tool surface, mapped deliberately so a call never falls into the
+#: unnamed-tool fallback by accident; INFERRED (unproven).
 TOOL_OVERRIDES = {
     "bash": "bash", "powershell": "bash", "read_bash": "bash", "write_bash": "bash",
     "stop_bash": "bash", "list_bash": "bash",
@@ -67,8 +68,9 @@ TOOL_OVERRIDES = {
 #: record types that carry no conversation by themselves; everything else is counted.
 TRANSPORT_TYPES = frozenset({"session.start", "session.model_change", "assistant.turn_start",
                              "assistant.turn_end"})
-_KNOWN = TRANSPORT_TYPES | {"user.message", "assistant.message", "assistant.usage",
-                            "tool.execution_start", "tool.execution_complete"}
+_KNOWN = TRANSPORT_TYPES | {"user.message", "assistant.message", "tool.execution_start",
+                            "tool.execution_complete"}
+_EXIT = re.compile(r"<exited with exit code (-?\d+)>\s*$")
 
 
 def sniff(path: str) -> float:
@@ -99,12 +101,6 @@ def _i(v) -> int:
         return 0
 
 
-def _usage(d: dict) -> dict:
-    return {"input_tokens": _i(d.get("inputTokens")), "output_tokens": _i(d.get("outputTokens")),
-            "cache_read_input_tokens": _i(d.get("cacheReadTokens")),
-            "cache_creation_input_tokens": _i(d.get("cacheWriteTokens"))}
-
-
 def _result_text(d: dict) -> str:
     res = d.get("result") if isinstance(d.get("result"), dict) else {}
     if isinstance(d.get("result"), str):
@@ -129,7 +125,7 @@ def parse_file(path: str) -> Optional[Session]:
     unknown: dict = {}
     announced: set = set()
     session_id = version = cwd = model = ""
-    carrier: Optional[Event] = None      # first event of the latest assistant.message
+    diffs: list[str] = []
     for r in rows:
         if not isinstance(r, dict):
             continue
@@ -144,16 +140,16 @@ def parse_file(path: str) -> Optional[Session]:
         if rtype == "session.start":
             session_id = session_id or str(d.get("sessionId") or "")
             version = version or str(d.get("copilotVersion") or "")
+            model = model or str(d.get("selectedModel") or "")
             ctx = d.get("context") if isinstance(d.get("context"), dict) else {}
             cwd = cwd or str(ctx.get("cwd") or "")
         elif rtype == "session.model_change":
-            model = model or str(d.get("newModel") or "")
+            model = str(d.get("newModel") or "") or model      # the last switch wins
         elif rtype == "user.message":
             text = d.get("content")          # transformedContent holds injected context: not read
             if isinstance(text, str) and text.strip():
                 events.append(Event("user", ts=ts, text=text, record_id=rid))
         elif rtype == "assistant.message":
-            carrier = None
             req_id = str(d.get("messageId") or rid)
             made: list[Event] = []
             if isinstance(d.get("reasoningText"), str) and d["reasoningText"].strip():
@@ -173,20 +169,7 @@ def parse_file(path: str) -> Optional[Session]:
                                   record_id=f"{rid}:c{i}", request_id=req_id))
                 if cid:
                     announced.add(cid)
-            # one model call = one usage carrier. common.convert reads usage off the tool_call event
-            # (a text-only closing message is estimated there), so a call's usage goes on its first
-            # tool_call when it has one, else on its first event.
-            carrier = next((e for e in made if e.kind == "tool_call"), made[0] if made else None)
-            if carrier is not None and d.get("outputTokens") is not None:   # per-message count, if present
-                carrier.usage = {"input_tokens": 0, "output_tokens": _i(d.get("outputTokens")),
-                                 "cache_read_input_tokens": 0, "cache_creation_input_tokens": 0}
             events.extend(made)
-        elif rtype == "assistant.usage":
-            model = model or str(d.get("model") or "")
-            if carrier is not None:
-                carrier.usage = _usage(d)
-                carrier.model = carrier.model or str(d.get("model") or "")
-                carrier = None
         elif rtype == "tool.execution_start":
             cid = str(d.get("toolCallId") or "")
             if cid and cid not in announced:
@@ -197,9 +180,24 @@ def parse_file(path: str) -> Optional[Session]:
                 announced.add(cid)
         elif rtype == "tool.execution_complete":
             ok = d.get("success")
+            ok = ok if isinstance(ok, bool) else None
+            text = _result_text(d)
+            raw: dict = {}
+            m = _EXIT.search(text)
+            if m:                      # bash results end `<exited with exit code N>`; success stays True on N != 0
+                raw["exit_code"] = int(m.group(1))
+                if ok is not False and raw["exit_code"] != 0:
+                    ok = False
+            res = d.get("result") if isinstance(d.get("result"), dict) else {}
+            tel = d.get("toolTelemetry") if isinstance(d.get("toolTelemetry"), dict) else {}
+            met = tel.get("metrics") if isinstance(tel.get("metrics"), dict) else {}
+            if "linesAdded" in met or "linesRemoved" in met:      # present on edit results only
+                raw["structured_patch"] = hunks_from_line_counts(_i(met.get("linesAdded")), _i(met.get("linesRemoved")))
+                diff = res.get("detailedContent")
+                if isinstance(diff, str) and diff.lstrip().startswith("diff --git"):
+                    diffs.append(diff.strip() + "\n")
             events.append(Event("tool_result", ts=ts, call_id=str(d.get("toolCallId") or ""),
-                                text=_result_text(d), ok=ok if isinstance(ok, bool) else None,
-                                record_id=rid))
+                                text=text, ok=ok, record_id=rid, raw=raw))
     # a model learned only after the first messages (model_change arrives after session.start)
     for e in events:
         if e.kind in ("reasoning", "assistant", "tool_call") and not e.model:
@@ -209,6 +207,7 @@ def parse_file(path: str) -> Optional[Session]:
     return Session(source=NAME, session_id=session_id or os.path.basename(os.path.dirname(path)),
                    path=path, model=model, cwd=cwd, agent="copilot-cli", agent_version=version,
                    events=events, declared_tools=[], system_prompt="",
+                   patch="".join(diffs),
                    extra={"unknown_record_types": unknown, "tool_overrides": TOOL_OVERRIDES})
 
 

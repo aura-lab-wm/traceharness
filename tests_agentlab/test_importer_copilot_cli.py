@@ -46,25 +46,26 @@ class CopilotCli(unittest.TestCase):
         self.assertEqual(s.system_prompt, "")
         kinds = [e.kind for e in s.events]
         self.assertEqual(kinds.count("user"), 1)
-        self.assertEqual(kinds.count("tool_call"), 3)      # start records must not duplicate toolRequests
-        self.assertEqual(kinds.count("tool_result"), 3)
-        self.assertEqual([e.name for e in s.events if e.kind == "tool_call"], ["view", "edit", "bash"])
+        self.assertEqual(kinds.count("tool_call"), 7)      # tool.execution_start must not duplicate toolRequests
+        self.assertEqual(kinds.count("tool_result"), 7)
+        self.assertEqual([e.name for e in s.events if e.kind == "tool_call"],
+                         ["report_intent", "view", "view", "view", "edit", "bash", "bash"])
         user = next(e for e in s.events if e.kind == "user")
         self.assertNotIn("<ctx>", user.text)               # transformedContent is never read
-        calls = {e.call_id for e in s.events if e.kind == "tool_call"}
-        self.assertEqual(calls, {e.call_id for e in s.events if e.kind == "tool_result"})
-        self.assertTrue(all(e.ok is True for e in s.events if e.kind == "tool_result"))
+        calls = [e.call_id for e in s.events if e.kind == "tool_call"]
+        self.assertEqual(calls, [e.call_id for e in s.events if e.kind == "tool_result"])
+        res = [e for e in s.events if e.kind == "tool_result"]
+        # success is true everywhere; a nonzero `<exited with exit code N>` trailer turns ok False
+        self.assertEqual([e.ok for e in res], [True] * 5 + [False, True])
+        self.assertEqual(res[5].raw["exit_code"], 127)
+        self.assertEqual(res[4].raw["structured_patch"][0]["newLines"], 1)
+        self.assertIn("return a + b", s.patch)
         self.assertEqual(s.extra["unknown_record_types"], {"session.info": 1})
 
-    def test_usage(self):
+    def test_no_usage_recorded(self):
+        """The real file carries no token usage anywhere; nothing is invented."""
         s = CP.parse_file(FIX)
-        tot = {}
-        for e in s.events:
-            for k, v in e.usage.items():
-                tot[k] = tot.get(k, 0) + v
-        self.assertEqual(tot, {"input_tokens": 880, "output_tokens": 115,
-                               "cache_read_input_tokens": 700, "cache_creation_input_tokens": 20})
-        self.assertEqual(sum(1 for e in s.events if e.usage), 4)
+        self.assertFalse(any(e.usage for e in s.events))
 
     def test_tool_mapping(self):
         m = lambda n, a: C.map_tool(n, a, CP.TOOL_OVERRIDES)
@@ -74,6 +75,7 @@ class CopilotCli(unittest.TestCase):
         self.assertEqual(m("glob", {"pattern": "*.py"})[0], "list_files")
         self.assertEqual(m("bash", {"command": "pytest"}), ("bash", {"command": "pytest"}))
         self.assertEqual(m("report_intent", {"intent": "x"})[0], "bash")
+        self.assertEqual(m("view", {"path": "/work/toy"}), ("read_file", {"path": "/work/toy"}))
 
     def test_tolerant(self):
         p = os.path.join(self.root, "events.jsonl")
@@ -102,12 +104,12 @@ class CopilotCli(unittest.TestCase):
         self.assertEqual(summary["model"], "toy-model-1")
         self.assertEqual(summary["provider"], "import:copilot_cli")
         self.assertIsNone(summ.hidden_pass)
-        self.assertEqual([sp["gen_ai.tool.name"] for sp in tools], ["read_file", "edit_file", "bash"])
-        self.assertTrue(all(sp["status"] == "ok" for sp in tools))
-        self.assertTrue(tools[2]["tests_passed"])
-        chats = [sp for sp in spans if sp["span"] == "chat"]
-        self.assertEqual([c["gen_ai.usage.input_tokens"] for c in chats[:3]], [120, 200, 260])
-        self.assertEqual(summary["input_tokens"], 580 + 0)
+        self.assertEqual([sp["gen_ai.tool.name"] for sp in tools],
+                         ["bash", "read_file", "read_file", "read_file", "edit_file", "bash", "bash"])
+        self.assertEqual([sp["status"] for sp in tools], ["ok"] * 5 + ["error", "ok"])
+        self.assertTrue(tools[6]["tests_passed"])
+        self.assertEqual(sum(1 for sp in spans if sp["span"] == "edit"), 1)
+        self.assertEqual(summ.edits, 1)
         blob = open(os.path.join(run, "ledger.jsonl")).read()
         for needle in ("calc.py", "pytest"):
             self.assertIn(needle, blob)
