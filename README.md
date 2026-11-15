@@ -59,6 +59,19 @@ Compose bind-mounts `./data/runs` into the container so new runs persist on disk
 
 Both container setups bind to `127.0.0.1` only by default. To reach the server from another LAN host, set `TRACEHARNESS_ALLOWED_HOSTS` to the extra `Host` header(s) the backend should accept (defaults: `127.0.0.1`, `localhost`, `[::1]`).
 
+## Run third-party agents
+
+`traceharness agents` runs mini-SWE-agent 2.4.6, Codex CLI 0.167.1 and Claude Code 2.1.322 on the lab's tasks (or on the eight real-repository task packages in `deploy/runner/tasks`), with a pinned model and pinned hosts, and writes the same results directory as `traceharness run`. The agent's own log is turned into the ledger by the import adapters, and its workspace is graded by the same grader, so the console and every analysis treat these runs like the lab's own. Docker is required (on macOS, `colima start` gives a headless one).
+
+```bash
+traceharness agents build                      # the image (add --real-repos for the task packages)
+export OPENROUTER_API_KEY=...
+traceharness agents run --agent mini-swe-agent --model google/gemini-2.5-flash-lite \
+    --route "Google AI Studio" --tasks full --repeats 5 --out data/runs/mini_flash_lite
+```
+
+Each run uses separate containers. The **broker** is the only one with network access and the only place the key exists; it serves the model on a Unix socket and fixes the model, the hosts (fallbacks off), the output cap, the number of calls and the bytes sent. The **agent** container has no network, no capabilities, a read-only root and a non-root user, and works in a size-capped in-memory workspace. A separate container exports the workspace as regular files only, and the **grader** container (no network, read-only mounts) grades it. Every call's host and cost come from OpenRouter's generation records and are shown on the run page under **Model calls**. This is ordinary Docker isolation; for agents you do not trust, pass `--runtime runsc` (gVisor).
+
 ## Record on traceharness.dev
 
 Sign in at [traceharness.dev](https://traceharness.dev), then connect the machine where your coding agents run. Local capture adapters support **Claude Code**, **Codex**, **Gemini CLI**, **Qwen Code**, and **Cursor**. These commands use the CLI without starting a local web server:

@@ -72,6 +72,8 @@ zip-safe = false
 # The built UI. Absent until `npm run build` has been run in traceharness/frontend.
 "traceharness.frontend" = ["dist/*", "dist/**/*"]
 "traceharness.plugins" = ["*.json", "*.py"]
+# The image third-party agents run in (`traceharness agents build`).
+"traceharness.agents" = ["Dockerfile", "Dockerfile.pydeps"]
 "traceharness.docs" = ["*.md"]
 "traceharness.bundle.harnesses" = ["*.json"]
 "traceharness.bundle.tasks" = ["**/*.py", "**/*.json", "**/*.md", "**/*.txt"]

@@ -64,7 +64,27 @@ export function spanKind(s) {
 }
 const KIND_WORD = { chat: 'model call', tool: 'tool call', edit: 'edit', grade: 'grade', bnd: 'boundary event', sent: 'sentinel', rep: 're-prompt', hum: 'human pause', agent: 'run marker' }
 /** Distinct upstream hosts named on the chat spans, in order of first use ([] = none reported). */
-export const servedByOf = (spans) => [...new Set((spans || []).filter((s) => s.span === 'chat' && s.served_by).map((s) => s.served_by))]
+export const servedByOf = (spans) => {
+  const onChat = [...new Set((spans || []).filter((s) => s.span === 'chat' && s.served_by).map((s) => s.served_by))]
+  if (onChat.length) return onChat
+  // A container run (traceharness/agents) names its hosts on the end span, resolved from the broker's log
+  const end = (spans || []).find((s) => s.span === 'invoke_agent' && s.status === 'end' && Array.isArray(s.served_by))
+  return end ? end.served_by.filter((h) => typeof h === 'string' && h) : []
+}
+export const isContainerRun = (cfg) => !!cfg && cfg.runtime === 'container'
+/** The rows of the "Container" facts group of a third-party agent run, or null for any other run. */
+export function containerFacts(cfg, spans) {
+  if (!isContainerRun(cfg)) return null
+  const end = (spans || []).find((s) => s.span === 'invoke_agent' && s.status === 'end') || {}
+  const img = typeof cfg.image_id === 'string' ? cfg.image_id.replace(/^sha256:/, '').slice(0, 12) : ''
+  return [
+    ['agent', `${cfg.agent || '—'} ${cfg.agent_version || ''}`.trim()],
+    ['image', img ? `${cfg.image || '—'} · ${img}` : (cfg.image || '—')],
+    ['network', 'none · model through the broker'],
+    ['model calls', end.model_requests != null ? int(end.model_requests) : '—'],
+    ['hosts pinned', Array.isArray(cfg.route) && cfg.route.length ? `${cfg.route.join(', ')} · no fallbacks` : 'not pinned'],
+  ]
+}
 const sentOf = (spans, key) => { const c = (spans || []).find((s) => s.span === 'chat'); return c ? c[key] : undefined }
 const sentText = (v) => (v === undefined ? '—' : v == null ? 'not sent' : String(v))
 /** seq -> 1-based reply number, for every chat span. */
@@ -885,6 +905,9 @@ function RunDoc({ spec, args }) {
     [isSweRun(run) ? 'Importer-reconstructed setup' : 'Recorded setup', [['seed', det.data ? (seedOf(spans) ?? '—') : '…'], ['max tokens / call', cfg && cfg.max_tokens_per_call != null ? int(cfg.max_tokens_per_call) : '—'], ['max steps', cfg && cfg.max_steps != null ? int(cfg.max_steps) : '—']]],
     ['Serving', [['served by', det.data ? (servedByOf(spans).join(', ') || 'not reported') : '…'], ['temperature · seed sent', det.data ? `${sentText(sentOf(spans, 'gen_ai.request.temperature'))} · ${sentText(sentOf(spans, 'gen_ai.request.seed'))}` : '…'], ['re-prompts', det.data ? int(spans.filter((s) => s.span === 'reprompt').length) : '…']]],
   ]
+  const boxFacts = containerFacts(cfg, spans)
+  if (boxFacts) groups.splice(3, 1, ['Container', boxFacts])
+  const relay = (det.data && Array.isArray(det.data.relay)) ? det.data.relay : null
   const onSel = (s) => { setSel(s); requestAnimationFrame(() => { const e = listRef.current && listRef.current.querySelector('[data-el="run-console"]'); if (e && e.scrollIntoView) e.scrollIntoView({ block: 'nearest' }) }) }
   return (
     <div className="rg-dpad rg-traj-doc rg-traj-stack">
@@ -915,11 +938,33 @@ function RunDoc({ spec, args }) {
             <dl key={g} className="rg-traj-fg"><div className="rg-traj-fg-h">{g}</div>{fs.map(([l, x]) => <div key={l} className="rg-traj-fg-r"><dt>{l}</dt><dd className="rg-mono">{x}</dd></div>)}</dl>
           ))}</div>
         </section>
+        {relay && <ModelCalls rows={relay} />}
       </>)}
       <HarnessSection run={run} det={det} />
     </div>
   )
 }
+/** The broker's record of a container run's model calls: one row per call, as OpenRouter reported it. */
+export function ModelCalls({ rows }) {
+  const ok = rows.filter((r) => r.status === 200)
+  const total = ok.reduce((a, r) => a + (typeof r.cost_usd === 'number' ? r.cost_usd : 0), 0)
+  const refused = rows.filter((r) => r.refused).length
+  return (
+    <section className="rg-traj-stack-s" data-el="model-calls" aria-label="Model calls">
+      <h2 className="rg-traj-sh">Model calls <span className="rg-traj-h-m">{plural(ok.length, 'call')} through the broker · {usd(total, 5)}{refused ? ` · ${plural(refused, 'call')} refused by the run's caps` : ''}</span></h2>
+      <TableScroll label="Model calls of this run"><table className="rg-tbl rg-traj-calls">
+        <thead><tr><th>#</th><th>host</th><th className="rg-num">tokens in</th><th className="rg-num rg-cq-hide-sm">cached</th><th className="rg-num">tokens out</th><th className="rg-num">cost</th><th className="rg-num rg-cq-hide-sm">latency</th><th>status</th></tr></thead>
+        <tbody>{rows.map((r, i) => (
+          <tr key={i}><td className="rg-mono">{r.seq ?? '—'}</td><td>{r.served_by || (r.refused ? 'refused' : 'not reported')}</td>
+            <td className="rg-num">{r.tokens_in != null ? int(r.tokens_in) : '—'}</td><td className="rg-num rg-cq-hide-sm">{r.cached != null ? int(r.cached) : '—'}</td>
+            <td className="rg-num">{r.tokens_out != null ? int(r.tokens_out) : '—'}</td><td className="rg-num">{typeof r.cost_usd === 'number' ? usd(r.cost_usd, 6) : '—'}</td>
+            <td className="rg-num rg-cq-hide-sm">{r.ms != null ? `${int(r.ms)} ms` : '—'}</td><td className="rg-mono">{r.refused ? `429 · ${r.refused}` : (r.status ?? '—')}</td></tr>
+        ))}</tbody>
+      </table></TableScroll>
+    </section>
+  )
+}
+
 function RunActions() {
   const { toggleDock, state } = useRig()
   // rg-sb-dup: on a phone the status bar's Event log launcher does the same, so this copy is not drawn there

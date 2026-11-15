@@ -142,7 +142,7 @@ class TestDetect(Tmp):
     def test_sources_registry_is_complete(self):
         names = {s["name"] for s in I.list_sources()}
         self.assertEqual(names, {"claude_code", "codex", "trajectory", "inspect", "openhands", "swe_agent",
-                                 "gemini_cli", "qwen_code", "cursor"})
+                                 "mini_swe_agent", "gemini_cli", "qwen_code", "cursor"})
         for s in I.list_sources():
             self.assertTrue(s["description"] and s["patterns"])
 
@@ -164,7 +164,7 @@ class TestDetect(Tmp):
                                                 "about which sources are watched automatically")
         every = {s["name"] for s in I.list_sources()}
         self.assertTrue(watched < every, "a watched source that no adapter can import")
-        self.assertEqual(every - watched, {"inspect", "swe_agent", "trajectory", "openhands"})
+        self.assertEqual(every - watched, {"inspect", "swe_agent", "mini_swe_agent", "trajectory", "openhands"})
 
 
 # --------------------------------------------------------------------------- claude code
