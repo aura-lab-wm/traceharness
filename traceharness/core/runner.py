@@ -60,6 +60,8 @@ def main(argv=None):
     ap.add_argument("--max-cost", type=float, default=None, help="stop the sweep once the ledger cost reaches this many USD")
     ap.add_argument("--route", default=None, help="OpenRouter only: comma-separated upstream providers to pin, in order, "
                     "with fallbacks off (e.g. 'Together'). The provider that answered is recorded on every chat span either way.")
+    ap.add_argument("--risk-model", default=None, help="Sentinel risk model for harnesses that enable the Sentinel: a "
+                    "registry name or a path to its JSON file (default: the active model). Fails if it is missing.")
     ap.add_argument("--keep-workdir", action="store_true")
     ap.add_argument("--verbose", "-v", action="store_true")
     args = ap.parse_args(argv)
@@ -78,7 +80,7 @@ def main(argv=None):
     rmodel = S = None
     if any((h.sentinel or {}).get("enabled") for h in harnesses):
         from traceharness.backend import sentinel as S
-        rmodel = S.load_model()
+        rmodel = S.load_model_strict(args.risk_model) if args.risk_model else S.load_model()
         print(f"sentinel: risk model {rmodel.meta.get('name', '?')}", flush=True)
 
     total = len(task_ids) * len(harnesses) * args.repeats

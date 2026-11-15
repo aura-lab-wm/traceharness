@@ -60,6 +60,50 @@ class CliWiring(unittest.TestCase):
         self.assertTrue(callable(S.hook_for(h, {"issue": ""}, m)))
 
 
+class RiskModelChoice(unittest.TestCase):
+    """`--risk-model` runs exactly the model it names and every verdict says which model scored it."""
+
+    def test_a_named_model_is_used_and_recorded_on_every_verdict(self):
+        m = S.RiskModel.default()
+        m.meta = {"name": "probe_model", "trained": True}
+        base = json.load(open(os.path.join(LAB, "harnesses", "baseline.json")))
+        base.update(id="baseline_risk_choice", sentinel={"enabled": True, "mode": "flag"})
+        with tempfile.TemporaryDirectory() as d:
+            mpath = os.path.join(d, "probe_model.json")
+            json.dump(m.to_json(), open(mpath, "w"))
+            hpath = os.path.join(d, "h.json")
+            json.dump(base, open(hpath, "w"))
+            out = os.path.join(d, "out")
+            with mock.patch("sys.stdout"):
+                runner.main(["--provider", "mock", "--tasks", "t01_slugify", "--harness", hpath,
+                             "--repeats", "1", "--out", out, "--risk-model", mpath])
+            verdicts = [s for s in _spans(out) if s.get("span") == "sentinel"]
+        self.assertTrue(verdicts)
+        self.assertEqual({v.get("risk_model") for v in verdicts}, {"probe_model"})
+
+    def test_a_missing_model_fails_instead_of_falling_back(self):
+        with self.assertRaises(FileNotFoundError):
+            S.load_model_strict("/nonexistent/model.json")
+        with self.assertRaises(FileNotFoundError):
+            S.load_model_strict("no_such_registry_model")
+
+
+class LeaveOneTaskOut(unittest.TestCase):
+    def test_each_model_is_trained_without_its_own_task(self):
+        sys.path.insert(0, os.path.join(LAB, "scripts"))
+        import sentinel_loto
+        src = os.path.join(LAB, "data", "runs", "families_mock")
+        rows = [json.loads(l) for l in open(os.path.join(src, "index.jsonl")) if l.strip()]
+        with tempfile.TemporaryDirectory() as d:
+            with mock.patch("sys.stdout"):
+                self.assertEqual(sentinel_loto.main([src, "--out", d, "--epochs", "5"]), 0)
+            man = json.load(open(os.path.join(d, "manifest.json")))
+            for t, entry in man["models"].items():
+                m = S.load_model_strict(os.path.join(d, entry["file"]))
+                self.assertEqual(m.meta["held_out_task"], t)
+                self.assertEqual(m.meta["train_runs"], sum(1 for r in rows if r["task_id"] != t))
+
+
 class Decide(unittest.TestCase):
     def _verdict(self, risk, patterns, cfg=None, trained=True):
         m = S.RiskModel.default()
@@ -81,6 +125,12 @@ class Decide(unittest.TestCase):
         p = {"id": "test_tampering", "severity": "critical", "label": "Edited the tests", "nudge": "Do not edit the tests."}
         v = self._verdict(0.05, [p], cfg={"block_critical": False})
         self.assertEqual((v["action"], v["text"]), ("nudge", "Do not edit the tests."))
+
+    def test_nudge_critical_off_leaves_an_unblocked_critical_pattern_alone(self):
+        # lets an experiment arm use a single kind of action (e.g. abort only)
+        p = {"id": "test_tampering", "severity": "critical", "label": "Edited the tests", "nudge": "Do not edit the tests."}
+        v = self._verdict(0.05, [p], cfg={"block_critical": False, "nudge_critical": False})
+        self.assertEqual(v["action"], "none")
 
     def test_a_critical_pattern_is_still_blocked_by_default(self):
         p = {"id": "test_tampering", "severity": "critical", "label": "Edited the tests", "nudge": "Do not edit the tests."}
