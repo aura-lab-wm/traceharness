@@ -231,6 +231,22 @@ def _generation_fingerprint(d: str) -> tuple:
     return _study_fingerprint(d)
 
 
+def _list_only_exported(data: dict, dirs: list[str]) -> None:
+    """Keep in the dataset list (`/overview` results) only the dirs this file embeds.
+
+    /overview is a global payload, fetched once, so it names every results dir on the machine:
+    an export of two dirs listed all nine, and a reader who opened one of the other seven found
+    no runs. A dir whose runs were not baked (not asked for, or dropped by the generation check)
+    is not listed either.
+    """
+    ov = data.get("/overview")
+    if not isinstance(ov, dict) or not isinstance(ov.get("results"), list):
+        return
+    baked = {d for d in dirs if f"/results/{d}/runs" in data}
+    data["/overview"] = {**ov, "results": [r for r in ov["results"]
+                                           if isinstance(r, dict) and r.get("name") in baked]}
+
+
 def _fetch(client, url: str, sink: dict, fail_sink: list) -> None:
     """One GET, filed into `sink` (keyed the way the frontend's request-cache key is: the URL
     with the leading /api stripped) on 200, or into `fail_sink` otherwise. Shared by build()'s
@@ -430,6 +446,7 @@ def build(out_path: str, results: list[str] | None = None, n_runs: int = DEFAULT
                                f"attempts; {d}'s study-aggregate endpoints were skipped rather "
                                f"than baked from a mixed generation"))
 
+    _list_only_exported(data, dirs)
     coverage = ledger_coverage(data, dirs)
     data["__meta__"] = {"generated_at": time.strftime("%Y-%m-%d %H:%M"), "results": dirs,
                         "static": True, "runs_embedded": n_runs,
