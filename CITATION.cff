@@ -8,8 +8,8 @@ abstract: >-
   experimental factor, reports outcomes with uncertainty, replays trajectories, and intervenes on a
   run while it is still going through a sentinel hook that scores the partial trajectory.
 type: software
-version: "0.5.1"
-date-released: "2026-11-15"
+version: "0.5.2"
+date-released: "2026-11-16"
 license: MIT
 authors:
   - family-names: Mastropaolo
