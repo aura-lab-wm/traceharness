@@ -361,14 +361,14 @@ button.rg-stat:hover{background:var(--rig-panel2)}
 
 /* ---------------------------------------------------------------- phone window: content
    Gutters and a few content primitives. The chrome (bars, rail, dock, overlays) is in "shell" at the end. */
-@media (max-width:760px){
+@media (max-width:767px){
   .rg-dpad{padding:var(--rig-s5) var(--rig-gutter) var(--rig-s6)}
   .rg-state{padding:var(--rig-s4)}
   .rg-errstate{margin:var(--rig-s4);padding-left:var(--rig-s4)}
   .rg-hide-sm{display:none!important}
   .rg-kv{grid-template-columns:minmax(0,auto) minmax(0,1fr)}
 }
-@media (min-width:761px){.rg-show-sm{display:none!important}}
+@media (min-width:768px){.rg-show-sm{display:none!important}}
 
 /* ---------------------------------------------------------------- container queries: panes adapt */
 @container rgdoc (max-width:1000px){
@@ -392,8 +392,9 @@ button.rg-stat:hover{background:var(--rig-panel2)}
 }
 
 /* A wide monitor re-points the type tokens once (see "shell"); only these view widths change here. */
-@media (min-width:1800px){
-  .rg-an-split{grid-template-columns:15rem minmax(0,1fr)}
+/* (The analysis step list stays a strip above the document at every width: a 15rem column of nine short items beside a
+   document several screens tall is a full-height bar beside short content. The open sidebar lists the steps anyway.) */
+@media (min-width:1920px){
   .rg-traj-split{--rig-trajnav-w:280px}
 }
 
@@ -402,7 +403,7 @@ button.rg-stat:hover{background:var(--rig-panel2)}
    is a 1240px column centred between empty margins. Tables, panels, grids and figures use the
    width they are given; running prose keeps its own measure (the 72ch/80ch rules on paragraphs),
    so lines stay readable. Phone gutters are untouched (this block is desktop-only). */
-@media (min-width:761px){
+@media (min-width:768px){
   .rg-dpad{padding:var(--rig-s5) var(--rig-gutter) var(--rig-s7)}
   :where(.rg-dpad){max-width:none;margin-inline:0}
   .rg-dpad.rg-traj-doc,.rg-dpad.rg-traj-main,.rg-dpad.rg-ws-doc,.rg-an-report{max-width:none}
@@ -430,7 +431,7 @@ button.rg-stat:hover{background:var(--rig-panel2)}
 /* ---------------------------------------------------------------- one left navigation
    With the sidebar open, a task page's task list lives in it (under Trajectories) and the page drops
    its own column. Collapsed, the page draws its list as a strip (trajectory.css). */
-@media (min-width:761px){
+@media (min-width:768px){
   .rig[data-rig-nav="open"] .rg-traj-split{grid-template-columns:minmax(0,1fr);background:none}
   .rig[data-rig-nav="open"] .rg-traj-split>.rg-traj-nav{display:none}
 }
@@ -585,8 +586,8 @@ button.rg-stat:hover{background:var(--rig-panel2)}
   --rig-focus-ring:2px solid var(--rig-sel);--rig-focus-offset:2px;
   --rig-dur-1:120ms;--rig-dur-2:180ms;--rig-ease:cubic-bezier(.2,0,0,1);
 }
-@media (max-width:760px){.rig{--rig-gutter:var(--rig-s4)}}
-@media (max-width:760px),(pointer:coarse){.rig{--rig-h-ctl:var(--rig-h-lg);--rig-hit:var(--rig-h-lg);--rig-h-row:44px}}
+@media (max-width:767px){.rig{--rig-gutter:var(--rig-s4)}}
+@media (max-width:767px),(pointer:coarse){.rig{--rig-h-ctl:var(--rig-h-lg);--rig-hit:var(--rig-h-lg);--rig-h-row:44px}}
 
 /* ---------------------------------------------------------------- shared controls read the tokens
    Buttons, fields, segmented controls and switches are one height everywhere: --rig-h-ctl.
@@ -653,7 +654,7 @@ button.rg-btn,a.rg-btn{font:var(--rig-fw-medium) var(--rig-fs-sm)/var(--rig-lh-t
      leaving the document under 480px */
   --rig-dock-cw:clamp(320px,min(var(--rig-dock-w,420px),40vw,calc(100vw - var(--rig-nav-w) - 480px)),640px);
 }
-@media (max-width:760px),(pointer:coarse){.rig{--rig-sb-h:calc(var(--rig-h-lg) + 1px)}}
+@media (max-width:767px),(pointer:coarse){.rig{--rig-sb-h:calc(var(--rig-h-lg) + 1px)}}
 .rig[data-rig-nav="open"]{--rig-nav-w:var(--rig-side-w)}
 .rig.has-side{grid-template-columns:var(--rig-nav-w) minmax(0,1fr) var(--rig-dock-cw)}
 body.rg-resizing{cursor:col-resize;user-select:none}
@@ -708,7 +709,7 @@ body.rg-resizing{cursor:col-resize;user-select:none}
   .rg-tb-member .rg-tb-acct,.rg-tb-member .rg-tour-launcher,.rg-tb-member .rg-tb-theme{display:none}
   .rg-tb-member .rg-tb-more{display:inline-flex}
 }
-@media (max-width:899px){.rg-brand b,.rg-cmd-k{display:none}}
+@media (max-width:1023px){.rg-brand b,.rg-cmd-k{display:none}}
 
 /* ---------------------------------------------------------------- sidebar: labelled (224) or an icon rail (56) */
 .rg-rail{grid-column:1;grid-row:2/4;display:flex;flex-direction:column;min-width:0;min-height:0;padding:var(--rig-s2) calc((var(--rig-rail-w) - var(--rig-h-ctl)) / 2);background:var(--rig-panel);border-right:1px solid var(--rig-line)}
@@ -744,7 +745,7 @@ body.rg-resizing{cursor:col-resize;user-select:none}
 .rg-rail .rg-nav-sub-it .ct.bad{color:var(--rig-red-t)}
 .rg-rail .rg-nav-sub-it.rg-nav-sub-all{color:var(--rig-dim)}
 .rg-rail .rg-nav-tasks{max-height:min(52vh,35rem);overflow-y:auto;scrollbar-width:thin}
-@media (min-width:761px){
+@media (min-width:768px){
   .rig[data-rig-nav="open"] .rg-an-split{grid-template-columns:minmax(0,1fr)}
   .rig[data-rig-nav="open"] .rg-an-split>.rg-an-nav{display:none}
 }
@@ -948,7 +949,7 @@ button.rg-pop-row:hover,a.rg-pop-row:hover{background:var(--rig-panel2)}
 .rg-toast-b{flex:none}
 
 /* ---------------------------------------------------------------- tablet 761–1099: overlays instead of columns */
-@media (min-width:761px) and (max-width:1099px){
+@media (min-width:768px) and (max-width:1023px){
   /* the sidebar stays a 56px rail; opened, it lies over the document (scrim, Esc or a click closes it) */
   .rig[data-rig-nav="open"]{--rig-nav-w:var(--rig-rail-w)}
   .rig[data-rig-nav="open"] .rg-rail{position:relative;z-index:var(--rig-z-dock);width:var(--rig-side-w);box-shadow:var(--rig-shadow)}
@@ -966,7 +967,7 @@ button.rg-pop-row:hover,a.rg-pop-row:hover{background:var(--rig-panel2)}
 }
 
 /* ---------------------------------------------------------------- phone ≤760: one pane, sheets, whole-screen palette */
-@media (max-width:760px){
+@media (max-width:767px){
   .rig,.rig[data-rig-max]{grid-template-columns:minmax(0,1fr);grid-template-rows:var(--rig-tb-h) minmax(0,1fr) 0 var(--rig-sb-h)}
   .rig.has-side,.rig.has-side[data-rig-max]{grid-template-columns:minmax(0,1fr)}
   .rig[data-rig-max] .rg-sb{display:flex}
@@ -1019,7 +1020,7 @@ button.rg-pop-row:hover,a.rg-pop-row:hover{background:var(--rig-panel2)}
 }
 
 /* ---------------------------------------------------------------- wide ≥1800: one re-point of the type and the chrome */
-@media (min-width:1800px){
+@media (min-width:1920px){
   .rig{--rig-fs-sm:14px;--rig-fs-md:15px;--rig-fs-lg:17px;--rig-fs-xl:22px;--rig-fs-2xl:30px;--rig-gutter:var(--rig-s6);--rig-rail-w:64px;--rig-side-w:256px;--rig-cmd-max:680px}
 }
 

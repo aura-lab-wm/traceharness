@@ -333,7 +333,7 @@ function Blocks({ args } = {}) {
         <button type="button" className="rg-btn" onClick={() => { setPreset(''); setBasis(''); setModel('mock'); setJob(null) }}>Blank stack</button>
       </div>}
       {preset && basis && <Note>{basis}{catalog.find((r) => r.id === preset)?.same_loop_as?.length ? ` Same loop as ${catalog.find((r) => r.id === preset).same_loop_as.join(', ')}.` : ''}</Note>}
-      <div className="rg-harness-layout">
+      <div className="rg-harness-layout" data-panes>
       <div>
       <fieldset ref={editorRef} tabIndex={-1} className="rg-harness-blocks rg-blk-fs" aria-label="Harness blocks" disabled={busy}>
         {blocks.map((block, i) => (

@@ -981,7 +981,7 @@ describe('the unified member Harnesses composer', () => {
   })
 
   it('keeps mobile selections compact until editing and exposes independent clear controls when expanded', async () => {
-    const media = { matches: true, media: '(max-width: 760px)', addEventListener: vi.fn(), removeEventListener: vi.fn() }
+    const media = { matches: true, media: '(max-width: 767px)', addEventListener: vi.fn(), removeEventListener: vi.fn() }
     vi.stubGlobal('matchMedia', () => media)
     render(<Composer />)
     expect(screen.getByRole('region', { name: 'Selected configuration', exact: true })).toBeTruthy()

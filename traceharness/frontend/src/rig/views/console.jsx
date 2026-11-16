@@ -327,7 +327,7 @@ export function RunConsole({ run, spans, replay, sel, onSel, verdictOf }) {
           <span className="rg-cx-chip" data-el="console-step">{N ? `step ${row.n} / ${N}` : 'no steps'}</span>
         </span>
       </div>
-      <div className="rg-cx-body">
+      <div className="rg-cx-body" data-panes>
         <ol className="rg-cx-steps" ref={listRef} aria-label="Tool calls, in order" onKeyDown={onKey}>
           {rows.map((r, i) => {
             const isCur = i === cur, on = isCur && open && !rp

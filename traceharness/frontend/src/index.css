@@ -327,7 +327,7 @@ a:hover{color:var(--measure-2)}
 .railrow .rt{font-size:12px;font-weight:600;line-height:1.35}
 .hstat{flex:none;white-space:nowrap}
 
-@media (max-width:1240px){
+@media (max-width:1279px){
   .shell{grid-template-columns:248px minmax(0,1fr);grid-template-rows:minmax(0,1fr) auto}
   .shell > .rail{grid-column:1;grid-row:1/-1}
   .shell > main{grid-column:2;grid-row:1}
@@ -339,12 +339,12 @@ a:hover{color:var(--measure-2)}
 
 .tile{padding:12px 14px 2px 15px}
 .tile-first{padding-left:0}
-@media (max-width:760px){ .tile-first{padding-left:15px} }
+@media (max-width:767px){ .tile-first{padding-left:15px} }
 .taskgrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}
 .taskgrid > .taskcol{border-right:1px solid var(--rule-soft)}
 .taskgrid.one{grid-template-columns:minmax(0,1fr)}
 .taskgrid.one > .taskcol{border-right:0}
-@media (max-width:1180px){
+@media (max-width:1279px){
   .taskgrid{grid-template-columns:minmax(0,1fr)}
   .taskgrid > .taskcol{border-right:0}
 }
@@ -353,12 +353,12 @@ a:hover{color:var(--measure-2)}
    correct at desk widths and pushes the document sideways below ~900px.
    It wraps instead of scrolling the page, so every control stays reachable. */
 .apphead{flex-wrap:nowrap}
-@media (max-width:900px){
+@media (max-width:1023px){
   .apphead{flex-wrap:wrap;height:auto;padding-top:8px;padding-bottom:8px;row-gap:8px}
 }
 
-@media (max-width:1100px){ .hstat{display:none} .hchip-wide{display:none} }
-@media (max-width:900px){
+@media (max-width:1023px){ .hstat{display:none} .hchip-wide{display:none} }
+@media (max-width:1023px){
   .shell{display:flex;flex-direction:column;grid-template-columns:none;grid-template-rows:none}
   .shell > main{flex:1;min-height:0}
   .rail{display:none;flex:none;max-height:46vh;border-right:0;border-bottom:1px solid var(--rule-mid)}
@@ -399,13 +399,13 @@ a:hover{color:var(--measure-2)}
    the app's own 24px tap-target floor (.text-link already holds every other in-flow link to it) --
    scoped to this one paragraph so the surrounding <code> tags stay untouched. */
 .package-instructions p a{display:inline-flex;align-items:center;min-height:24px}
-@media(min-width:1550px){.dashboard-grid{grid-template-columns:minmax(0,1fr) 315px}.studies-layout{grid-template-columns:1fr}}
-@media(max-width:1250px){.dashboard-grid{grid-template-columns:minmax(0,1fr)}.dashboard-aside{display:grid;grid-template-columns:1fr 1fr}.dashboard-page{padding:28px 25px}.scope-notice{flex-wrap:wrap}.scope-notice>a{margin-left:29px}.metric-card{padding:16px}.metric-hint{font-size:10px}.study-workspace.with-assistant{grid-template-columns:minmax(0,1fr)}.study-workspace>.assist.open{grid-column:1;grid-row:3;border-top:1px solid var(--rule);border-left:0;max-height:40dvh}.package-grid{grid-template-columns:1fr}}
-@media(max-width:900px){.app-layout{grid-template-columns:190px minmax(0,1fr)}.app-sidebar{padding:24px 10px 15px}.app-brand{font-size:18px;gap:9px}.app-brand small{font-size:9px}.dashboard-metrics{grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.page-heading{align-items:flex-start;flex-direction:column;gap:17px}.study-bar-row{grid-template-columns:160px minmax(0,1fr) 45px;gap:12px}.study-bar-row small{display:none}.dashboard-topbar{padding:0 24px}.topbar-status{font-size:10px}.study-controls{padding:12px 22px;gap:12px}.study-run-count{display:none}.study-stage{padding:23px}.study-tabs{padding:0 23px}.dashboard-aside{grid-template-columns:1fr}}
-@media(max-width:680px){.app-layout{grid-template-columns:minmax(0,1fr)}.app-sidebar{display:none;position:fixed;inset:0 auto 0 0;width:230px;z-index:30}.app-sidebar.open{display:flex}.sidebar-scrim{display:block;position:fixed;inset:0;z-index:20;border:0;background:var(--scrim)}.mobile-menu{display:inline-flex;position:relative;z-index:31}.dashboard-topbar{min-height:57px;padding:0 17px;gap:10px}.breadcrumbs{gap:8px;font-size:11px}.breadcrumbs>a,.breadcrumbs>a+svg{display:none}.topbar-status{font-size:9px}.dashboard-page{padding:25px 17px 22px}.page-heading h1{font-size:27px}.page-heading p{font-size:12px}.scope-notice{font-size:11px;align-items:flex-start}.scope-notice>span{flex:1}.scope-notice>a{margin-left:28px;font-size:10px}.metric-value{font-size:28px}.metric-label{font-size:11px}.dashboard-grid{gap:17px}.panel-heading{padding:16px}.panel-heading p{font-size:11px}.table-toolbar{padding:12px}.study-bar-row{grid-template-columns:125px minmax(0,1fr) 44px;gap:10px;font-size:10px}.study-bars{padding:12px 16px}.chart-legend{display:none}.chart-note{padding:8px 16px 16px;font-size:10px}.dashboard-footer{font-size:9px;flex-wrap:wrap}.study-controls{padding:10px 16px;gap:9px}.study-controls label{flex:1;min-width:130px;flex-wrap:wrap;gap:5px}.study-controls select{min-width:0;flex:1}.study-stage{padding:24px 17px}.study-tabs{padding:0 17px;gap:20px}.analysis-links>a{align-items:flex-start;padding:16px;gap:10px}.analysis-links p{font-size:11px}.analysis-links .status-badge{font-size:9px}.package-material{padding:17px}.package-instructions{padding:16px}.package-datasets>div{grid-template-columns:1fr;row-gap:4px}.package-datasets .dataset-count{text-align:left}.dashboard-loading{grid-template-columns:1fr}.table-toolbar select{flex:1}.search-input{flex-basis:100%}}
+@media(min-width:1440px){.dashboard-grid{grid-template-columns:minmax(0,1fr) 315px}.studies-layout{grid-template-columns:1fr}}
+@media(max-width:1279px){.dashboard-grid{grid-template-columns:minmax(0,1fr)}.dashboard-aside{display:grid;grid-template-columns:1fr 1fr}.dashboard-page{padding:28px 25px}.scope-notice{flex-wrap:wrap}.scope-notice>a{margin-left:29px}.metric-card{padding:16px}.metric-hint{font-size:10px}.study-workspace.with-assistant{grid-template-columns:minmax(0,1fr)}.study-workspace>.assist.open{grid-column:1;grid-row:3;border-top:1px solid var(--rule);border-left:0;max-height:40dvh}.package-grid{grid-template-columns:1fr}}
+@media(max-width:1023px){.app-layout{grid-template-columns:190px minmax(0,1fr)}.app-sidebar{padding:24px 10px 15px}.app-brand{font-size:18px;gap:9px}.app-brand small{font-size:9px}.dashboard-metrics{grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.page-heading{align-items:flex-start;flex-direction:column;gap:17px}.study-bar-row{grid-template-columns:160px minmax(0,1fr) 45px;gap:12px}.study-bar-row small{display:none}.dashboard-topbar{padding:0 24px}.topbar-status{font-size:10px}.study-controls{padding:12px 22px;gap:12px}.study-run-count{display:none}.study-stage{padding:23px}.study-tabs{padding:0 23px}.dashboard-aside{grid-template-columns:1fr}}
+@media(max-width:767px){.app-layout{grid-template-columns:minmax(0,1fr)}.app-sidebar{display:none;position:fixed;inset:0 auto 0 0;width:230px;z-index:30}.app-sidebar.open{display:flex}.sidebar-scrim{display:block;position:fixed;inset:0;z-index:20;border:0;background:var(--scrim)}.mobile-menu{display:inline-flex;position:relative;z-index:31}.dashboard-topbar{min-height:57px;padding:0 17px;gap:10px}.breadcrumbs{gap:8px;font-size:11px}.breadcrumbs>a,.breadcrumbs>a+svg{display:none}.topbar-status{font-size:9px}.dashboard-page{padding:25px 17px 22px}.page-heading h1{font-size:27px}.page-heading p{font-size:12px}.scope-notice{font-size:11px;align-items:flex-start}.scope-notice>span{flex:1}.scope-notice>a{margin-left:28px;font-size:10px}.metric-value{font-size:28px}.metric-label{font-size:11px}.dashboard-grid{gap:17px}.panel-heading{padding:16px}.panel-heading p{font-size:11px}.table-toolbar{padding:12px}.study-bar-row{grid-template-columns:125px minmax(0,1fr) 44px;gap:10px;font-size:10px}.study-bars{padding:12px 16px}.chart-legend{display:none}.chart-note{padding:8px 16px 16px;font-size:10px}.dashboard-footer{font-size:9px;flex-wrap:wrap}.study-controls{padding:10px 16px;gap:9px}.study-controls label{flex:1;min-width:130px;flex-wrap:wrap;gap:5px}.study-controls select{min-width:0;flex:1}.study-stage{padding:24px 17px}.study-tabs{padding:0 17px;gap:20px}.analysis-links>a{align-items:flex-start;padding:16px;gap:10px}.analysis-links p{font-size:11px}.analysis-links .status-badge{font-size:9px}.package-material{padding:17px}.package-instructions{padding:16px}.package-datasets>div{grid-template-columns:1fr;row-gap:4px}.package-datasets .dataset-count{text-align:left}.dashboard-loading{grid-template-columns:1fr}.table-toolbar select{flex:1}.search-input{flex-basis:100%}}
 /* Keep visually hidden table labels inside the table's horizontal scroll boundary. */
 .study-table-scroll{position:relative}
-@media(max-width:680px){.scope-notice>span{flex:1 1 calc(100% - 35px)}.scope-notice>a{flex-basis:100%}}
+@media(max-width:767px){.scope-notice>span{flex:1 1 calc(100% - 35px)}.scope-notice>a{flex-basis:100%}}
 
 /* ============================================================================
    UI polish round 1 -- shared fixes applied at the root, not per screen.
@@ -509,7 +509,7 @@ a:hover{color:var(--measure-2)}
 .source-row .s-runs{font-size:11px;color:var(--ink-4);flex:0 0 90px;text-align:right}
 .source-row .s-model{font-size:11px;color:var(--ink-5);flex:0 0 200px;text-align:right;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .source-row .s-date{font-size:10.5px;color:var(--ink-5);flex:0 0 120px;text-align:right}
-@media(max-width:700px){
+@media(max-width:767px){
   .source-row{flex-direction:column;align-items:flex-start;gap:3px}
   /* flex-basis tracks the MAIN axis, which flex-direction:column just turned vertical --
      .s-name's desktop "flex:1 1 190px" would otherwise reserve 190px of HEIGHT, not width,
@@ -522,7 +522,7 @@ a:hover{color:var(--measure-2)}
    and the panel's own padding are subtracted -- shrinks the columns instead of auto-fit
    dropping the 5th into its own orphaned, mostly-empty row. */
 .stat-grid-5{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:0 26px}
-@media(max-width:560px){
+@media(max-width:767px){
   .stat-grid-5{grid-template-columns:repeat(2,minmax(0,1fr));row-gap:18px}
 }
 
@@ -534,7 +534,7 @@ a:hover{color:var(--measure-2)}
    phone/tablet widths so more of the model x harness grid is visible before a
    user needs to scroll, without touching the comfortable desktop spacing. */
 :root{--xp-col-min:160px}
-@media(max-width:900px){:root{--xp-col-min:118px}}
+@media(max-width:1023px){:root{--xp-col-min:118px}}
 
 /* The compound harness+sentinel column headers ("NO_TEST_TOOL+SENTINEL") still ellipsis at the
    118px floor above, recoverable via `title` on hover -- but 390px is a touch viewport with no
@@ -543,7 +543,7 @@ a:hover{color:var(--measure-2)}
    line inside its column instead; the header row's own padding grows a little there so a
    two-line header has room, while every wider breakpoint renders exactly as before. */
 .xp-header-cell{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-@media(max-width:480px){
+@media(max-width:479px){
   .xp-header-row{padding-top:12px;padding-bottom:12px}
   .xp-header-cell{white-space:normal;overflow:visible;text-overflow:clip;overflow-wrap:break-word}
 }

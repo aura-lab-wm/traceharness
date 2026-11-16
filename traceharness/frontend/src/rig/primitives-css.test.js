@@ -35,7 +35,7 @@ describe('primitives.css', () => {
 
   it('answers to the container, not the viewport', () => {
     const media = [...prim.matchAll(/@media\s*([^{]+)\{/g)].map((m) => m[1].trim())
-    expect(media).toEqual(['(max-width:760px)'])   // the dialog becomes the whole screen on a phone
+    expect(media).toEqual(['(max-width:767px)'])   // the dialog becomes the whole screen on a phone
     const queries = [...prim.matchAll(/@container\s*([^{]*)\{/g)].map((m) => m[1].trim())
     expect(queries.length).toBeGreaterThan(8)
     for (const q of queries) expect(q, 'unnamed, so the nearest pane, panel or .rg-cq answers').toMatch(/^\((max|min)-width:(480|481|640|641|900|901|1200)px\)$/)
@@ -69,7 +69,7 @@ describe('foundation tokens in rig.css', () => {
   })
   it('gives controls 36px with a mouse and 44px on a coarse pointer or a phone-width window', () => {
     expect(block).toContain('--rig-h-ctl:var(--rig-h-md)')
-    expect(block).toMatch(/@media \(max-width:760px\),\(pointer:coarse\)\{\.rig\{--rig-h-ctl:var\(--rig-h-lg\);--rig-hit:var\(--rig-h-lg\)/)
+    expect(block).toMatch(/@media \(max-width:767px\),\(pointer:coarse\)\{\.rig\{--rig-h-ctl:var\(--rig-h-lg\);--rig-hit:var\(--rig-h-lg\)/)
     expect(block).toMatch(/\.rg-btn\{min-height:var\(--rig-h-ctl\)\}/)
     expect(block).toMatch(/\.rg-inp,\.rg-selc\{height:var\(--rig-h-ctl\)\}/)
     expect(block).toMatch(/@media \(pointer:coarse\)\{/)

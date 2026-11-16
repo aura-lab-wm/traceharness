@@ -91,7 +91,7 @@ function Overview({ dir, c, row }) {
             </tr>))}</tbody></table></TableScroll>
     </Panel>
     <Panel label="Where to look next" meta="mixed first, then failures" el="where-to-look-next" flush>
-        <div className="rg-ds-nextlist">{d.next.map((x) => (
+        <div className="rg-ds-nextlist" data-panes>{d.next.map((x) => (
           <Go key={x.t} spec={makeSpec('task', ...cs, x.t)} className="rg-ds-next">
             <div className="rg-ds-nextb"><div className="rg-ds-nextt"><span className="rg-mono">{x.t}</span>{x.o.p > 0 && x.o.f > 0 && <Tag tone="amb">mixed</Tag>}</div>
               <OutcomeBar p={x.o.p} f={x.o.f} u={x.o.u} />
@@ -100,7 +100,7 @@ function Overview({ dir, c, row }) {
           </Go>))}</div>
     </Panel>
     <Panel label="How runs fail" meta="/api/outcomes · hidden suite" el="failure-mode-summary">
-      <div className="rg-grid rg-g2">
+      <div className="rg-grid rg-g2" data-panes>
         <div className="rg-ds-modes"><div className="rg-lbl">This condition</div>
           {modeRows.length ? <ul className="rg-ds-mlist">{modeRows.map(([m, n]) => <li key={m}><FailureChip mode={m} dir={dir} /><span className="rg-mono rg-small">×{n}</span></li>)}</ul>
             : <p className="rg-small rg-dim">No run in this condition failed the hidden suite.</p>}

@@ -188,7 +188,7 @@ function AnalysisDoc({ spec, args }) {
   const mem = conditionFor(dir)
   const c = resolveCondition(row, m || mem.model, h || mem.harness)
   return (
-    <div className="rg-an-split">
+    <div className="rg-an-split" data-panes>
       <AnNav dir={dir} cur={view} c={c} />
       <div className="rg-dpad rg-an-main" data-view={view}>
         <RecordingProvenance runs={R.data} />

@@ -1,7 +1,7 @@
 /* Harness composer: the configuration is the document; controls stay quiet.
    Tokens only (UI contract v1). Layout answers to the composer's own container (.rg-harness),
    never to the window, so the page holds in a split pane, beside a docked panel and on a phone. */
-.rig .rg-composer{max-width:min(100%,102.5rem);padding:var(--rig-s5) var(--rig-gutter) var(--rig-s7);margin:0 auto;width:100%;box-sizing:border-box}
+.rig .rg-composer{max-width:none;padding:var(--rig-s5) var(--rig-gutter) var(--rig-s7);margin:0;width:100%;box-sizing:border-box}
 
 /* ---- page head: title, connection state and the configuration actions on one row while they fit */
 .rg-composer-connection{display:inline-flex;align-items:center;gap:var(--rig-s2);font-size:var(--rig-fs-xs);line-height:var(--rig-lh-snug);color:var(--rig-dim)}
@@ -48,7 +48,11 @@
 .rg-composer-details strong{color:var(--rig-text);font-weight:var(--rig-fw-medium)}
 
 /* ---- editor + run configuration: rg-split rg-split-end (stacks at 900px of container) */
-.rg-composer-layout{--rig-side:300px;margin-bottom:var(--rig-s5)}
+.rg-composer-layout{--rig-side:300px;margin-bottom:var(--rig-s5);align-items:stretch}
+.rg-composer-prompt{flex:1 1 auto;display:flex;flex-direction:column}
+.rg-composer-prompt>.rg-pnl-b{flex:1 1 auto;display:flex;flex-direction:column}
+.rg-composer-prompt .rg-fld{flex:1 1 auto;display:flex;flex-direction:column}
+.rg-composer-prompt textarea.rg-inp{flex:1 1 auto}
 .rg-composer-editor{display:flex;flex-direction:column;gap:var(--rig-s4)}
 .rg-composer .rg-pnl{margin:0;border-color:var(--rig-line);border-radius:var(--rig-r-lg);overflow:hidden}
 .rg-composer .rg-pnl-h{display:flex;align-items:center;flex-wrap:wrap;gap:var(--rig-s1) var(--rig-s3);min-height:calc(var(--rig-h-ctl) + 2 * var(--rig-s2));padding:var(--rig-s2) var(--rig-s5);background:var(--rig-panel);border-bottom:1px solid var(--rig-line)}
@@ -63,11 +67,12 @@
 .rg-composer-prompt-actions [aria-expanded=true]{border-color:var(--rig-sel);color:var(--rig-sel-t);background:var(--rig-sel-bg)}
 
 /* run configuration (the side of the split): sticky beside the editor, static once stacked */
-.rg-composer-review{position:sticky;top:var(--rig-s4);max-height:calc(100dvh - 9rem);overflow:auto;scrollbar-width:thin;border:1px solid var(--rig-line);border-radius:var(--rig-r-lg);background:var(--rig-panel);padding:var(--rig-s4) var(--rig-s5) var(--rig-s5)}
+.rg-composer-review{display:flex;flex-direction:column;scrollbar-width:thin;border:1px solid var(--rig-line);border-radius:var(--rig-r-lg);background:var(--rig-panel);padding:var(--rig-s4) var(--rig-s5) var(--rig-s5)}
 .rg-composer-section-head{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:var(--rig-s2) var(--rig-s3);min-height:var(--rig-h-ctl);margin-bottom:var(--rig-s3)}
 .rig .rg-composer-section-head h2{margin:0;font-size:var(--rig-fs-lg);font-weight:var(--rig-fw-medium);line-height:var(--rig-lh-snug);letter-spacing:-.01em}
 .rg-composer-section-head>span{font-size:var(--rig-fs-xs);color:var(--rig-dim)}
 .rg-composer-review>.rg-composer-section-head .rg-ico{color:var(--rig-dim)}
+.rg-composer-review>:last-child{margin-top:auto}
 .rg-composer-review dl{display:grid;gap:var(--rig-s2);margin:0 0 var(--rig-s4)}
 .rg-composer-review dl>div{display:grid;grid-template-columns:4.5rem minmax(0,1fr);gap:var(--rig-s3);align-items:baseline}
 .rg-composer-review dt{font-size:var(--rig-fs-xs);color:var(--rig-dim)}

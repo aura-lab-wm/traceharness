@@ -364,7 +364,7 @@ function ImportTrace({ spec, datasets }) {
         </div>
         {srcs.error && <Failed what="Could not load the adapters." error={srcs.error} onRetry={srcs.reload} back={false} />}
         {found && <div className="rg-ws-found" role="status" aria-live="polite" data-el="import-detect">{found}</div>}
-        <div className="rg-ws-pair">
+        <div className="rg-ws-pair" data-panes>
           <label className="rg-fld">Adapter
             <select className="rg-selc" value={source} onChange={(e) => setSource(e.target.value)} aria-label="Adapter">
               <option value="">auto — detect from the path</option>
@@ -751,7 +751,7 @@ function Sentinel({ spec }) {
         <Kpi label="failures invisible to visible tests" value={pct(M.oracle_invisible_failure_share, 0)} hint={<span className="rg-mono">{oi ? `${oi.invisible} of ${oi.n_fail} fails` : '—'}</span>} />
       </Kpis>
       <Sec title="Threshold · operating point" meta={deployed != null ? `deployed at ${fx(deployed)}` : ''} el="sentinel-threshold">
-        {ops.length && op ? <div className="rg-ws-2up">
+        {ops.length && op ? <div className="rg-ws-2up" data-panes>
           <div className="rg-ws-col760">
           <h3 className="rg-ws-h3">Operating point</h3>
           <div className="rg-row rg-ws-thr">
@@ -781,7 +781,7 @@ function Sentinel({ spec }) {
         </div> : <Empty title="No operating points." actions={[{ label: 'Replay the models below', onClick: () => { const e = document.querySelector('[data-el~="sentinel-leaderboard"]'); if (e && e.scrollIntoView) e.scrollIntoView({ block: 'start' }) } }]}>This model was saved without an evaluated threshold sweep. Replaying it on a directory scores it on real runs.</Empty>}
       </Sec>
       <Sec title="What the model weighs" meta="logistic · standardised" el="sentinel-features">
-        <div className="rg-ws-2up">
+        <div className="rg-ws-2up" data-panes>
         <div className="rg-col rg-ws-col760">
           <h3 className="rg-ws-h3">Feature weights</h3>
           <div className="rg-col rg-ws-feats">
@@ -866,7 +866,7 @@ function RuleCheck({ spec }) {
                 <select className="rg-selc" value={r.id} onChange={(e) => { setRid(e.target.value); setRes(null) }} aria-label="Rule">{rules.map((x) => <option key={x.id} value={x.id}>{x.id}</option>)}</select>
               </label>
               <pre className="rg-pre rg-ws-when">{r.when}</pre>
-              <div className="rg-ws-pair">{names.map((n) => (
+              <div className="rg-ws-pair" data-panes>{names.map((n) => (
                 <label key={n} className="rg-fld">{n}<input className="rg-inp" type="number" step="any" value={env[n] ?? 0} placeholder="blank counts as 0" onChange={(e) => { setEnv({ ...env, [n]: e.target.value }); setRes(null) }} /></label>))}</div>
               {route && !IS_STATIC ? <div className="rg-row rg-wrap"><button type="button" className="rg-btn pri" onClick={run}>Test rule</button></div>
                 : oa.loading && !IS_STATIC ? <p className="rg-small rg-mute">Checking whether this server can test rules…</p>
@@ -1198,7 +1198,7 @@ function Settings() {
   return (
     <div className="rg-dpad rg-ws rg-ws-doc rg-ws-settings">
       <Head eyebrow="Settings" title="Preferences, keys, paths">A key is only needed to ask Buddy a question in words or to run live models. Every finding in the workbench is arithmetic over the ledger and works without one.</Head>
-      <div className="rg-ws-set">
+      <div className="rg-ws-set" data-panes>
       <Sec title="Appearance" meta="this browser" el="appearance">
         <div className="rg-ws-prefs">
           <div className="rg-ws-prow"><span className="rg-ws-pl">Theme</span><Seg label="Theme" value={rig.themePref} onChange={rig.setTheme} options={[['dark', 'dark · primary'], ['light', 'paper'], ['system', 'system']]} /></div>
@@ -1210,7 +1210,7 @@ function Settings() {
       </Sec>
       <Sec title="Learning preferences" meta={rig.lab ? <Tag tone="acc">on</Tag> : <Tag tone="dash">off</Tag>} el="student-lab-toggle">
         <Switch checked={rig.lab} onChange={toggleLab} label={<b>Student Lab · Guided Analysis</b>} />
-        <div className="rg-ws-pair">
+        <div className="rg-ws-pair" data-panes>
           <Note tone={rig.lab ? 'acc' : undefined}><div><b>When on</b><br />Reading guide, reference materials and an evidence-linked lesson beside each attempt. Prediction and intervention controls are marked as outside the guided path.</div></Note>
           <Note tone={rig.lab ? undefined : 'acc'}><div><b>When off</b><br />The professional instrument: experiment comparisons and the trajectory inspector. Teaching resources stay out of navigation.</div></Note>
         </div>
@@ -1220,10 +1220,10 @@ function Settings() {
       </Sec>
       </div>
       {/* The two key panels share their rows: key field beside key field, buttons beside buttons. */}
-      <div className="rg-ws-set rg-ws-keys">
+      <div className="rg-ws-set rg-ws-keys" data-panes>
         {IS_MEMBER ? <Sec title="Local model integrations" el="member-local-keys"><p>Connect your OpenRouter key in Harnesses for hosted runs. Configure Buddy, the narrator and local judging in your local workbench at <code>127.0.0.1:8742</code>.</p><CopyCmd cmd="python -m traceharness --host 127.0.0.1 --port 8742" /></Sec> : <><BuddyPanel /><LabKeyPanel st={st} /></>}
       </div>
-      <div className="rg-ws-set">
+      <div className="rg-ws-set" data-panes>
       {!IS_MEMBER && <NarratorPanel />}
       <Sec title="Paths in use" meta={IS_STATIC ? 'export' : 'GET /api/settings'} el="paths-in-use">
         {IS_STATIC ? <StaticNote what="The server's paths" /> : st.error ? <Failed what="Could not read the server's settings." error={st.error} onRetry={st.reload} /> : !s ? <div className="rg-skel rg-ws-sk" /> : (

@@ -14,6 +14,7 @@
    The hash is the state (route.js). Views are looked up in the registry by kind. Views talk to
    the shell only through useRig() (context.js). Nothing here writes to the backend.
    ==================================================================================== */
+import { DISPLAY_CLASSES, up, below } from './displayClasses'
 import { Component, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { IS_STATIC, IS_MEMBER, STATIC_DATA } from '../api'
 import { parseHash, toHash, parseSpec, makeSpec, withChain, specKind, isRigHash, SUITES } from './route'
@@ -39,7 +40,7 @@ const THEME_KEY = 'rig.theme'
 const NAV_KEY = 'rig.nav'
 const DOCKW_KEY = 'rig.dockW'
 /* The sidebar opens with labels on a laptop or wider; the reader's own choice wins after that. */
-const readNav = () => { try { const v = localStorage.getItem(NAV_KEY); if (v === 'open' || v === 'closed') return v === 'open' } catch { /* blocked */ } return typeof window === 'undefined' || window.innerWidth >= 1280 }
+const readNav = () => { try { const v = localStorage.getItem(NAV_KEY); if (v === 'open' || v === 'closed') return v === 'open' } catch { /* blocked */ } return typeof window === 'undefined' || window.innerWidth >= DISPLAY_CLASSES.laptop }
 const writeNav = (open) => { try { localStorage.setItem(NAV_KEY, open ? 'open' : 'closed') } catch { /* this visit only */ } }
 const DOCK_MIN = 320, DOCK_DEFAULT = 420
 const clampDock = (w) => Math.round(Math.max(DOCK_MIN, Math.min(w, (typeof window !== 'undefined' ? window.innerWidth : 1600) * 0.6)))
@@ -163,9 +164,9 @@ export default function RigApp() {
   const setNavOpen = useCallback((open) => { setNavOpenState(open); writeNav(open) }, [])
   const [dockW, setDockWState] = useState(readDockW)
   const setDockW = useCallback((w) => { const v = clampDock(w); setDockWState(v); try { localStorage.setItem(DOCKW_KEY, String(v)) } catch { /* this visit only */ } }, [])
-  const isMobile = useMedia('(max-width: 760px)')
+  const isMobile = useMedia(below('tablet'))
   // 761–1099px: the opened sidebar lies over the document instead of taking 224px from it
-  const navOverlay = useMedia('(min-width: 761px) and (max-width: 1099px)')
+  const navOverlay = useMedia(`${up('tablet')} and ${below('tablet-wide')}`)
   const prefersLight = useMedia('(prefers-color-scheme: light)')
   const ov = useOverview()
   const jobs = useJobs()
@@ -228,7 +229,7 @@ export default function RigApp() {
       const ch = chainOf(from)
       if (ch) target = withChain(target, ch)
     }
-    if (opt.side && !(typeof window !== 'undefined' && window.innerWidth <= 760)) {
+    if (opt.side && !(typeof window !== 'undefined' && window.innerWidth < DISPLAY_CLASSES.tablet)) {
       if (st.panes.length < 2) st.panes.push({ tabs: [], active: 0 })
       st.focus = st.focus === 0 ? 1 : 0
     }
@@ -529,7 +530,7 @@ export default function RigApp() {
           </div>
         </nav>
 
-        <main className="rg-work" id="rig-work">
+        <main className="rg-work" id="rig-work" data-panes>
           {panes.map((p, pi) => {
             const o = panes.length > 1 ? panes[pi ? 0 : 1] : null
             return <Pane key={pi} pi={pi} pane={p} focused={pi === focus} nPanes={panes.length} lab={lab} onSplit={toggleSplit}
