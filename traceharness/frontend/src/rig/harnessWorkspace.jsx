@@ -50,7 +50,7 @@ export function HarnessSummary({ blocks, children, title = 'Your configuration',
   return <aside className="rg-harness-summary" aria-label={title}>
     <div className="rg-harness-summary-head"><Icon name="canvas" size={20} /><h2 ref={headingRef} tabIndex={-1}>{title}</h2></div>
     <div className="rg-harness-summary-body">
-      <div className="rg-harness-label">Tools · {tools.length}</div><ToolChips tools={tools} />
+      <div className="rg-harness-summary-tools"><div className="rg-harness-label">Tools · {tools.length}</div><ToolChips tools={tools} /></div>
       <dl className="rg-harness-spec">
         <div><dt>Permission</dt><dd>{find('policy').mode || '—'}</dd></div>
         <div><dt>History</dt><dd>{find('context').window === 0 ? 'Full history' : find('context').window === '' ? 'Not set' : `${find('context').window ?? '—'} observations`}</dd></div>

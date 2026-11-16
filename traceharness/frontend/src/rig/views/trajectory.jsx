@@ -1221,7 +1221,7 @@ function CmpDoc({ spec, args }) {
       )
     })
     div = (
-      <Split fill sideWidth="20rem" sideLabel="First divergence" side={(
+      <Split follow sideWidth="20rem" sideLabel="First divergence" side={(
         <div className="rg-traj-stack-s">
           <div className="rg-pnl rg-traj-verdict"><div className="rg-pnl-h"><span className="rg-lbl rg-amb">First divergence</span></div>
             <div className="rg-pnl-b"><div className="rg-fig md amb">{c.level === 'reply' ? 'text only' : first < 0 ? 'no fork' : 'step ' + (c.fork + 1)}</div>
@@ -1308,7 +1308,7 @@ function ForkDoc({ spec, args }) {
           <p>The steps before the edit would be replayed from the recorded ledger; everything after it would be a new live run under the harness you choose.</p></div></header>
         {asked != null && String(seq) !== asked && <Note>Run {sfx(run.id)} has no model call, tool call or edit at #{asked}, so the fork starts at step #{seq} instead. Pick any step on the left.</Note>}
       </div>
-      <Split fill sideWidth="24rem" sideLabel="Steps of the run" side={(
+      <Split scroll sideWidth="24rem" sideLabel="Steps of the run" side={(
         <Panel label="Pick the step to change" meta={`${steps.length} steps`} flush className="rg-traj-forklist">
           <div className="rg-traj-evs">
             {steps.map((x) => {
