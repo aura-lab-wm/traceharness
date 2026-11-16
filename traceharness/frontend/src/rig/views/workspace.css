@@ -36,8 +36,6 @@
 .rg-ws-2up{display:grid;grid-template-columns:minmax(0,1fr);gap:var(--rig-s6)}
 @container (min-width:1201px){
   .rg-ws-2up{grid-template-columns:repeat(2,minmax(0,1fr));gap:var(--rig-s7);align-items:stretch}
-  /* panes of a row end together: the caption or last block of each pane sits on the shared bottom edge */
-  .rg-ws-2up>.rg-ws-col760>:last-child{margin-top:auto}
   .rg-ws-2up>.rg-ws-col760{max-width:none}
   .rg-ws-2up>.rg-ws-col760>.rg-ws-h3:first-child{margin-top:0}
 }
@@ -169,6 +167,9 @@
 .rg-ws-hist .b.hi{background:var(--rig-red-bg);box-shadow:inset 0 1px 0 var(--rig-red)}
 .rg-ws-hist .thr{position:absolute;top:calc(var(--rig-s1) * -1);bottom:calc(var(--rig-s1) * -1);width:2px;background:var(--rig-sel)}
 .rg-ws-feats{gap:var(--rig-s2)}
+/* the weights span the section; wide enough, they run in two columns so the section is not a short list beside nothing */
+.rg-ws-col760.rg-ws-wide{max-width:none}
+@container (min-width:1201px){.rg-ws-wide>.rg-ws-feats{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:var(--rig-s2) var(--rig-s7)}}
 .rg-ws-feat{display:grid;grid-template-columns:minmax(0,13rem) minmax(0,1fr) 3.5rem;gap:var(--rig-s3);align-items:center;min-height:var(--rig-h-xs)}
 .rg-ws-feat .nm{font:var(--rig-fw-medium) var(--rig-fs-sm)/var(--rig-lh-tight) var(--rig-sans);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--rig-dim)}
 .rg-ws-feat .bt{position:relative;height:var(--rig-s2);background:var(--rig-panel3);border-radius:var(--rig-r-xs)}
@@ -260,8 +261,6 @@
    buttons beside buttons, however long either description is. */
 .rg-ws-set{display:grid;grid-template-columns:minmax(0,1fr);gap:var(--rig-s6) var(--rig-s7);align-items:stretch;min-width:0;max-width:48rem}
 .rg-ws-set>*{min-width:0}
-/* side by side, sections end together: the last block of the shorter one sits on the shared bottom edge */
-.rg-ws-set>.rg-ws-sec>:last-child{margin-top:auto}
 .rg-ws-settings .rg-ws-form,.rg-ws-keyf,.rg-ws-settings .rg-ws-kv{max-width:36rem}
 @container (min-width:901px){.rg-ws-set{grid-template-columns:repeat(2,minmax(0,1fr));max-width:none}}
 .rg-ws-keys{row-gap:0}

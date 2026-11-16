@@ -769,7 +769,8 @@ function Sentinel({ spec }) {
             <p>Only {plural(ops.length, 'operating point')} {ops.length === 1 ? 'was' : 'were'} evaluated when the model was trained; the slider snaps to them rather than inventing points in between. The deployed threshold is the engine&apos;s config and is not changed from here.</p>
           </About>
           </div>
-          {cal.length > 0 && <div className="rg-ws-col760">
+          {(cal.length > 0 || buckets.length > 0) && <div className="rg-ws-col760">
+          {cal.length > 0 && <>
             <h3 className="rg-ws-h3">Prefix scores by calibration bin</h3>
             <div className="rg-ws-hist" role="img" aria-label={`Prefix count per score bin; ${cal.map((c) => `${c.bin}: ${c.n}`).join(', ')}`}>
               {cal.map((c) => { const lo = parseFloat(String(c.bin).split('-')[0]); return <span key={c.bin} className={cx('b', thr != null && lo >= thr - 1e-9 && 'hi')} style={{ height: `${Math.max(2, (c.n / maxn) * 100)}%` }} title={`${c.bin}: n=${c.n}, fail ${pct(c.fail_rate, 0)}`} /> })}
@@ -777,12 +778,19 @@ function Sentinel({ spec }) {
             </div>
             <div className="rg-row rg-mono rg-tiny rg-mute rg-ws-ticks"><span>0.0</span><span>score →</span><span>1.0</span></div>
             <p className="rg-small rg-mute">Bars: prefixes per bin (max n={int(maxn)}). Bins right of the blue line would be blocked (vermilion).</p>
+          </>}
+          {buckets.length > 0 && <>
+            <h3 className="rg-ws-h3">AUC by how much of the trajectory has been seen</h3>
+            <div className="rg-ws-prefix" role="img" aria-label={buckets.map((b) => `${b.bucket}: AUC ${fx(b.auc)}`).join(', ')}>
+              {buckets.map((b) => <div key={b.bucket}><span className="rg-mono rg-tiny">{fx(b.auc)}</span><i style={{ height: `${Math.max(2, (b.auc - 0.5) * 2 * 44)}px` }} /><span className="rg-mono rg-tiny rg-mute">{b.bucket}</span></div>)}
+            </div>
+            <p className="rg-small rg-mute">Bars start at 0.5 (chance). Early prefixes are the hard case.</p>
+          </>}
           </div>}
         </div> : <Empty title="No operating points." actions={[{ label: 'Replay the models below', onClick: () => { const e = document.querySelector('[data-el~="sentinel-leaderboard"]'); if (e && e.scrollIntoView) e.scrollIntoView({ block: 'start' }) } }]}>This model was saved without an evaluated threshold sweep. Replaying it on a directory scores it on real runs.</Empty>}
       </Sec>
       <Sec title="What the model weighs" meta="logistic · standardised" el="sentinel-features">
-        <div className="rg-ws-2up" data-panes>
-        <div className="rg-col rg-ws-col760">
+        <div className="rg-col rg-ws-col760 rg-ws-wide">
           <h3 className="rg-ws-h3">Feature weights</h3>
           <div className="rg-col rg-ws-feats">
             {feats.map((f) => (
@@ -794,14 +802,6 @@ function Sentinel({ spec }) {
             {!feats.length && <p className="rg-small rg-mute">The model carries no non-zero weights.</p>}
           </div>
           <p className="rg-small rg-mute"><span className="rg-red">+</span> pushes toward a bad submit · <span className="rg-sky">−</span> pulls away from one. Bias {fx(model.b)}.</p>
-        </div>
-          {buckets.length > 0 && <div className="rg-col rg-ws-col760">
-            <h3 className="rg-ws-h3">AUC by how much of the trajectory has been seen</h3>
-            <div className="rg-ws-prefix" role="img" aria-label={buckets.map((b) => `${b.bucket}: AUC ${fx(b.auc)}`).join(', ')}>
-              {buckets.map((b) => <div key={b.bucket}><span className="rg-mono rg-tiny">{fx(b.auc)}</span><i style={{ height: `${Math.max(2, (b.auc - 0.5) * 2 * 44)}px` }} /><span className="rg-mono rg-tiny rg-mute">{b.bucket}</span></div>)}
-            </div>
-            <p className="rg-small rg-mute">Bars start at 0.5 (chance). Early prefixes are the hard case.</p>
-          </div>}
         </div>
       </Sec>
       <Leaderboard spec={spec} models={sn.data.models || []} active={sn.data.active} />
@@ -1208,6 +1208,8 @@ function Settings() {
         <p className="rg-small rg-mute">Remembered in this browser. Your system&apos;s reduced-motion setting is always honoured.</p>
         {(prefFail || !probe) && <p className="rg-small rg-red">This browser blocks storage — the preference holds for this visit only.</p>}
       </Sec>
+      {IS_MEMBER ? (
+<>
       <Sec title="Learning preferences" meta={rig.lab ? <Tag tone="acc">on</Tag> : <Tag tone="dash">off</Tag>} el="student-lab-toggle">
         <Switch checked={rig.lab} onChange={toggleLab} label={<b>Student Lab · Guided Analysis</b>} />
         <div className="rg-ws-pair" data-panes>
@@ -1218,13 +1220,8 @@ function Settings() {
         {labFail && <Note tone="red"><div><b>Could not save the preference.</b> This browser blocks storage — Student Lab is {rig.lab ? 'on' : 'off'} for this visit only.</div></Note>}
         {rig.lab && <div className="rg-row rg-wrap" data-el="guidance-links"><Go spec="guide" className="rg-btn"><Icon name="guide" size={14} /> Reading guide</Go><Go spec="package" className="rg-btn"><Icon name="pkg" size={14} /> Reference materials</Go></div>}
       </Sec>
-      </div>
-      {/* The two key panels share their rows: key field beside key field, buttons beside buttons. */}
-      <div className="rg-ws-set rg-ws-keys" data-panes>
-        {IS_MEMBER ? <Sec title="Local model integrations" el="member-local-keys"><p>Connect your OpenRouter key in Harnesses for hosted runs. Configure Buddy, the narrator and local judging in your local workbench at <code>127.0.0.1:8742</code>.</p><CopyCmd cmd="python -m traceharness --host 127.0.0.1 --port 8742" /></Sec> : <><BuddyPanel /><LabKeyPanel st={st} /></>}
-      </div>
-      <div className="rg-ws-set" data-panes>
-      {!IS_MEMBER && <NarratorPanel />}
+</>
+) : (
       <Sec title="Paths in use" meta={IS_STATIC ? 'export' : 'GET /api/settings'} el="paths-in-use">
         {IS_STATIC ? <StaticNote what="The server's paths" /> : st.error ? <Failed what="Could not read the server's settings." error={st.error} onRetry={st.reload} /> : !s ? <div className="rg-skel rg-ws-sk" /> : (
           <dl className="rg-kv rg-ws-kv">
@@ -1235,6 +1232,39 @@ function Settings() {
             <dt>tasks</dt><dd>{s.task_dir} <span className="rg-mute">· {Array.isArray(tasks.data) ? tasks.data.length : '—'}</span></dd>
           </dl>)}
       </Sec>
+)}
+      </div>
+      {/* The two key panels share their rows: key field beside key field, buttons beside buttons. */}
+      <div className="rg-ws-set rg-ws-keys" data-panes>
+        {IS_MEMBER ? <Sec title="Local model integrations" el="member-local-keys"><p>Connect your OpenRouter key in Harnesses for hosted runs. Configure Buddy, the narrator and local judging in your local workbench at <code>127.0.0.1:8742</code>.</p><CopyCmd cmd="python -m traceharness --host 127.0.0.1 --port 8742" /></Sec> : <><BuddyPanel /><LabKeyPanel st={st} /></>}
+      </div>
+      <div className="rg-ws-set" data-panes>
+      {IS_MEMBER ? (
+      <Sec title="Paths in use" meta={IS_STATIC ? 'export' : 'GET /api/settings'} el="paths-in-use">
+        {IS_STATIC ? <StaticNote what="The server's paths" /> : st.error ? <Failed what="Could not read the server's settings." error={st.error} onRetry={st.reload} /> : !s ? <div className="rg-skel rg-ws-sk" /> : (
+          <dl className="rg-kv rg-ws-kv">
+            <dt>base URL</dt><dd>{s.base_url}</dd>
+            <dt>lab root</dt><dd>{s.lab_root}</dd>
+            <dt>runs root</dt><dd>{s.results_root} <span className="rg-mute">· {plural((s.results || []).length, 'directory', 'directories')}</span></dd>
+            <dt>harnesses</dt><dd>{s.harness_dir} <span className="rg-mute">· {(s.harnesses || []).length}</span></dd>
+            <dt>tasks</dt><dd>{s.task_dir} <span className="rg-mute">· {Array.isArray(tasks.data) ? tasks.data.length : '—'}</span></dd>
+          </dl>)}
+      </Sec>
+) : (
+<>
+      <Sec title="Learning preferences" meta={rig.lab ? <Tag tone="acc">on</Tag> : <Tag tone="dash">off</Tag>} el="student-lab-toggle">
+        <Switch checked={rig.lab} onChange={toggleLab} label={<b>Student Lab · Guided Analysis</b>} />
+        <div className="rg-ws-pair" data-panes>
+          <Note tone={rig.lab ? 'acc' : undefined}><div><b>When on</b><br />Reading guide, reference materials and an evidence-linked lesson beside each attempt. Prediction and intervention controls are marked as outside the guided path.</div></Note>
+          <Note tone={rig.lab ? undefined : 'acc'}><div><b>When off</b><br />The professional instrument: experiment comparisons and the trajectory inspector. Teaching resources stay out of navigation.</div></Note>
+        </div>
+        <p className="rg-small rg-mute">Off by default. Remembered in this browser (<span className="rg-mono">hs.studentLab</span>); it does not change data access.</p>
+        {labFail && <Note tone="red"><div><b>Could not save the preference.</b> This browser blocks storage — Student Lab is {rig.lab ? 'on' : 'off'} for this visit only.</div></Note>}
+        {rig.lab && <div className="rg-row rg-wrap" data-el="guidance-links"><Go spec="guide" className="rg-btn"><Icon name="guide" size={14} /> Reading guide</Go><Go spec="package" className="rg-btn"><Icon name="pkg" size={14} /> Reference materials</Go></div>}
+      </Sec>
+      <NarratorPanel />
+</>
+)}
       </div>
     </div>
   )

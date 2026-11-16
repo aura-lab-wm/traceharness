@@ -35,11 +35,12 @@ export function useSize(ref) {
  *  1200px, so neither pane drops under ~320px. `end` puts the side on the right (and after the
  *  main content when stacked); `even` makes two equal panes; `scroll` makes the side pane exactly as tall
  *  as the main one (top and bottom aligned) and scrolls it inside, for a long list beside a short card;
- *  `fill` makes the side pane as tall as the main one and sits its last block on the shared bottom edge. */
-export function Split({ side, children, sideWidth, collapse = 'md', end, even, flush, scroll, fill, sideLabel, className, el }) {
+ *  `follow` is the reverse: the SIDE pane sets the row height and the main pane (a Panel holding a table) takes exactly that height, its table
+ *  showing as many rows as fit and scrolling the rest, so a short side never leaves a gap and a long table never leaves one beside it. */
+export function Split({ side, children, sideWidth, collapse = 'md', end, even, flush, scroll, follow, sideLabel, className, el }) {
   const aside = <aside className="rg-split-side" aria-label={sideLabel}>{side}</aside>
   return (
-    <div className={cx('rg-split', collapse === 'sm' && 'rg-split-sm', collapse === 'lg' && 'rg-split-lg', end && 'rg-split-end', even && 'rg-split-even', scroll && 'rg-split-scroll', fill && 'rg-split-fill', flush && 'rg-split-flush', className)}
+    <div className={cx('rg-split', collapse === 'sm' && 'rg-split-sm', collapse === 'lg' && 'rg-split-lg', end && 'rg-split-end', even && 'rg-split-even', scroll && 'rg-split-scroll', follow && 'rg-split-follow', flush && 'rg-split-flush', className)}
       style={sideWidth ? { '--rig-side': sideWidth } : undefined} data-el={el} data-panes>
       {!end && aside}<div className="rg-split-main">{children}</div>{end && aside}
     </div>

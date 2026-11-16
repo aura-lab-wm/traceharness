@@ -39,11 +39,15 @@
 /* scroll: the main pane sets the row height (at least 24rem); the side pane takes it and scrolls inside, so a long list
    never leaves a full-height bar beside a short card. Stacked (below), the side pane is plain content again. */
 .rg-split.rg-split-scroll{align-items:stretch;grid-template-rows:minmax(min(24rem,60vh),auto)}
-.rg-split.rg-split-fill{align-items:stretch}
-.rg-split-fill>.rg-split-side{display:flex;flex-direction:column;gap:var(--rig-s4)}
-.rg-split-fill>.rg-split-side>:last-child{margin-top:auto}
-.rg-split-fill>.rg-split-side>:only-child{flex:1 1 auto;display:flex;flex-direction:column;gap:var(--rig-s4);margin-top:0}
-.rg-split-fill>.rg-split-side>:only-child>:last-child{margin-top:auto}
+/* follow: beside the side pane (default collapse, 901px+) the main Panel takes the side's height and its table scrolls inside; stacked it is plain content */
+@container (min-width:901px){
+  .rg-split.rg-split-follow{align-items:stretch;grid-template-rows:minmax(16rem,auto)}
+  .rg-split-follow>.rg-split-main{height:0;min-height:100%;display:flex;flex-direction:column}
+  .rg-split-follow>.rg-split-main>.rg-pnl{flex:1 1 0;min-height:0;display:flex;flex-direction:column}
+  .rg-split-follow>.rg-split-main>.rg-pnl>.rg-pnl-b{flex:1 1 0;min-height:0;display:flex;flex-direction:column}
+  .rg-split-follow .rg-tscroll{flex:1 1 0;min-height:0;display:flex;flex-direction:column}
+  .rg-split-follow .rg-tscroll>.rg-scrollx-v{flex:1 1 0;min-height:0;max-height:none}
+}
 .rg-split-scroll>.rg-split-side{height:0;min-height:100%;overflow:auto;overscroll-behavior:contain;scrollbar-width:thin}
 @container (max-width:1200px){.rg-split.rg-split-lg{grid-template-columns:minmax(0,1fr)}.rg-split-scroll.rg-split-lg{grid-template-rows:none}.rg-split-scroll.rg-split-lg>.rg-split-side{height:auto;min-height:0;overflow:visible}}
 @container (max-width:900px){.rg-split:not(.rg-split-sm):not(.rg-split-lg){grid-template-columns:minmax(0,1fr)}.rg-split-scroll:not(.rg-split-sm):not(.rg-split-lg){grid-template-rows:none}.rg-split-scroll:not(.rg-split-sm):not(.rg-split-lg)>.rg-split-side{height:auto;min-height:0;overflow:visible}}

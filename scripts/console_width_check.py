@@ -9,6 +9,8 @@ Playwright, and fails on:
   * side-by-side panes ([data-panes] groups; panes are the direct children, or the [data-pane] descendants)
     whose top or bottom edges differ by more than 2 px;
   * an empty band at the bottom of a side-by-side pane above both 160 px and 30% of the pane;
+  * an empty gap INSIDE a side-by-side pane (between its top padding and the first content, or between two
+    consecutive content rects: the signature of a last block pinned to the bottom) above both 160 px and 30% of the pane;
   * a [data-fill] box with an empty band right of / below its content above both 240 px and 25%
     (gated from the laptop class up, below it the cards are single-column).
 
@@ -107,20 +109,20 @@ PANES_JS = r"""() => {
   const label = e => (e.id ? '#' + e.id : e.tagName.toLowerCase() + (typeof e.className === 'string' && e.className.trim() ? '.' + e.className.trim().split(/\s+/)[0] : ''));
   // Lowest visible content in a pane: text, controls, media, tables, and a scroll box as its visible rect.
   const content = pane => {
-    const pr = pane.getBoundingClientRect(); let low = pr.top;
-    const take = (b, el) => { for (let a = el; a && a !== pane.parentElement; a = a.parentElement) { const cs = getComputedStyle(a); if (a !== pane && (cs.overflowY !== 'visible' || cs.overflowX !== 'visible')) { const ab = a.getBoundingClientRect(); b = {bottom: Math.min(b.bottom, ab.bottom), top: Math.max(b.top, ab.top), height: Math.min(b.bottom, ab.bottom) - Math.max(b.top, ab.top)}; } } if (b.height > 0.5 && b.bottom > low) low = b.bottom; };
+    const pr = pane.getBoundingClientRect(); let low = pr.top; const rects = [];
+    const take = (b, el) => { for (let a = el; a && a !== pane.parentElement; a = a.parentElement) { const cs = getComputedStyle(a); if (a !== pane && (cs.overflowY !== 'visible' || cs.overflowX !== 'visible')) { const ab = a.getBoundingClientRect(); b = {bottom: Math.min(b.bottom, ab.bottom), top: Math.max(b.top, ab.top), height: Math.min(b.bottom, ab.bottom) - Math.max(b.top, ab.top)}; } } if (b.height > 0.5) rects.push([b.top + scrollY, b.bottom + scrollY]); if (b.height > 0.5 && b.bottom > low) low = b.bottom; };
     const vis = e => { const cs = getComputedStyle(e); return cs.display !== 'none' && cs.visibility !== 'hidden' && cs.opacity !== '0'; };
     const walker = document.createTreeWalker(pane, NodeFilter.SHOW_TEXT);
     while (walker.nextNode()) { const t = walker.currentNode; const el = t.parentElement; if (!t.textContent.trim() || !el || !vis(el)) continue; const range = document.createRange(); range.selectNodeContents(t); for (const b of range.getClientRects()) if (b.width > 0.5) take(b, el); }
     for (const e of pane.querySelectorAll('img,svg,canvas,video,input,select,textarea,button,table,hr,progress,iframe')) { if (!vis(e) || (e.parentElement && e.parentElement.closest('svg'))) continue; const b = e.getBoundingClientRect(); if (b.width > 1 && b.height > 1) take(b, e); }
     for (const e of pane.querySelectorAll('*')) { const cs = getComputedStyle(e); if (e !== pane && vis(e) && (cs.overflowY === 'auto' || cs.overflowY === 'scroll') && e.scrollHeight > 0) { const b = e.getBoundingClientRect(); if (b.width > 1 && b.height > 1 && e.textContent.trim()) take(b, e); } }
-    return low;
+    return {low, rects};
   };
   const groups = [];
   for (const g of document.querySelectorAll('[data-panes]')) {
     if (!shown(g)) continue;
     const marked = [...g.querySelectorAll('[data-pane]')].filter(shown);
-    const panes = (marked.length ? marked : kids(g)).map(e => { const r = e.getBoundingClientRect(); return {n: label(e), t: r.top + scrollY, b: r.bottom + scrollY, l: r.left, r: r.right, ce: content(e) + scrollY, pb: r.bottom + scrollY - (parseFloat(getComputedStyle(e).paddingBottom) || 0)}; });
+    const panes = (marked.length ? marked : kids(g)).map(e => { const r = e.getBoundingClientRect(); const c = content(e); return {n: label(e), t: r.top + scrollY, b: r.bottom + scrollY, l: r.left, r: r.right, ce: c.low + scrollY, rects: c.rects, ct: r.top + scrollY + (parseFloat(getComputedStyle(e).paddingTop) || 0), pb: r.bottom + scrollY - (parseFloat(getComputedStyle(e).paddingBottom) || 0)}; });
     groups.push({name: label(g), panes});
   }
   // A docked detail panel is a grid column of its row, never a full-height fixed pane beside normal-flow content.
@@ -181,6 +183,21 @@ def _row_components(panes):
     return [r for r in rows.values() if len(r) > 1]
 
 
+def internal_gap(p):
+    """Largest vertical gap between consecutive content rects of a pane (and from its top padding to the first
+    content): (gap px, page y where it starts). Content = text, controls, media, tables, scroll boxes."""
+    rects = sorted(p.get("rects") or [])
+    if not rects:
+        return 0.0, p["t"]
+    best, at = rects[0][0] - p["ct"], p["ct"]
+    reach = rects[0][1]
+    for top, bottom in rects[1:]:
+        if top - reach > best:
+            best, at = top - reach, reach
+        reach = max(reach, bottom)
+    return max(best, 0.0), at
+
+
 def pane_report(groups):
     checked, bad = 0, []
     for g in groups or []:
@@ -199,6 +216,11 @@ def pane_report(groups):
                 if empty > EMPTY_PX and empty > EMPTY_FRAC * (p["b"] - p["t"]):
                     bad.append(f"pane {p['n']} of {g['name']} is {empty:.0f}px empty at the bottom "
                                f"({empty / (p['b'] - p['t']) * 100:.0f}% of its {p['b'] - p['t']:.0f}px height)")
+                gap, at = internal_gap(p)
+                height = p["b"] - p["t"]
+                if gap > EMPTY_PX and gap > EMPTY_FRAC * height:
+                    bad.append(f"pane {p['n']} of {g['name']} has a {gap:.0f}px empty gap inside it at y={at:.0f} "
+                               f"({gap / height * 100:.0f}% of its {height:.0f}px height)")
     return {"checked": checked, "bad": bad}
 
 

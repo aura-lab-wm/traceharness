@@ -75,8 +75,11 @@
 .rg-harness-preview-prompt{margin:0;white-space:pre-wrap;overflow-wrap:anywhere;font:var(--rig-fs-xs)/var(--rig-lh-code) var(--rig-mono);max-height:15rem;overflow-y:auto;background:var(--rig-panel2);padding:var(--rig-s3);border-radius:var(--rig-r-md)}
 .rg-harness-preview-prompt:focus-visible{outline:var(--rig-focus-ring);outline-offset:var(--rig-focus-offset)}
 
-/* questions + summary (wizard, blocks): the summary is the side of a split, stacked at 900px */
-.rg-harness-layout{display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:var(--rig-s5);align-items:stretch}
+/* questions + summary (wizard, blocks) */
+/* the summary is a band above the editor, not a side pane: a short card beside a tall stack either leaves a gap or
+   pins its last block to the bottom, and nothing here balances (the stack grows with every block) */
+.rg-harness-layout{display:grid;grid-template-columns:minmax(0,1fr);gap:var(--rig-s5);align-items:start}
+.rg-harness-layout>.rg-harness-summary{grid-row:1}
 .rg-harness-layout>*,.rg-harness-summary>*{min-width:0}
 .rg-harness-summary{display:flex;flex-direction:column;border:1px solid var(--rig-line);border-radius:var(--rig-r-lg);background:var(--rig-panel);overflow:auto;scrollbar-width:thin;scroll-padding:var(--rig-s4)}
 .rg-harness-summary-head{display:flex;align-items:center;gap:var(--rig-s2);min-height:calc(var(--rig-h-ctl) + 2 * var(--rig-s2));padding:var(--rig-s2) var(--rig-s4);border-bottom:1px solid var(--rig-line)}
@@ -84,9 +87,14 @@
 .rig .rg-harness-summary h2{font-size:var(--rig-fs-md);font-weight:var(--rig-fw-medium);line-height:var(--rig-lh-snug);margin:0}
 .rg-harness-summary-body{display:flex;flex-direction:column;gap:var(--rig-s3);padding:var(--rig-s4)}
 .rg-harness-summary-body>p{margin:0}
-.rg-harness-summary-body{flex:1 1 auto}
-/* the summary is as tall as the stack beside it; its last card sits on the shared bottom edge */
-.rg-harness-summary-body>:last-child{margin-top:auto}
+.rg-harness-summary-tools{display:flex;flex-direction:column;gap:var(--rig-s3);min-width:0}
+@container (min-width:901px){
+  .rg-harness-summary-body{display:grid;grid-template-columns:minmax(11rem,.8fr) minmax(18rem,1.5fr) minmax(14rem,1fr);gap:var(--rig-s3) var(--rig-s5);align-items:start}
+  .rg-harness-summary-body>.rg-harness-summary-tools{grid-column:1;grid-row:1/span 4}
+  .rg-harness-summary-body>.rg-harness-spec{grid-column:2;grid-row:1/span 4;grid-template-columns:repeat(3,minmax(0,1fr))}
+  .rg-harness-summary-body>:not(.rg-harness-summary-tools,.rg-harness-spec,.rg-hjson){grid-column:3}
+  .rg-harness-summary-body>.rg-hjson{grid-column:1/-1}
+}
 .rg-harness-spec{margin:0;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:var(--rig-s3)}
 .rg-harness-spec>div{display:flex;flex-direction:column;gap:var(--rig-s1);min-width:0;border-bottom:1px solid var(--rig-line);padding-bottom:var(--rig-s2);font-size:var(--rig-fs-xs)}
 .rg-harness-spec dt{color:var(--rig-dim)}
@@ -134,7 +142,7 @@
 
 /* container widths */
 @container (max-width:900px){
-  .rg-harness-layout{grid-template-columns:minmax(0,1fr)}
+  .rg-harness-layout>.rg-harness-summary{grid-row:auto}
   .rg-harness-blocks{grid-template-columns:minmax(0,1fr)}
 }
 @container (max-width:640px){
