@@ -67,6 +67,7 @@ pinned official source archive outside the repository. Run the local preparer:
 python deploy/runner/prepare_codex_prompt_inventory.py \
   --binary "$NATIVE_WORKSPACE/codex-pristine" \
   --source-archive "$NATIVE_WORKSPACE/codex-source.tar.gz" \
+  --image-digest "sha256:<the registered native-codex runtime image>" \
   --output "$NATIVE_WORKSPACE/codex-inventory.private.json"
 ```
 

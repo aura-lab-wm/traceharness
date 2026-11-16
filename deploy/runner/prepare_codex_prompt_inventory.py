@@ -7,6 +7,7 @@ all bodies, occurrences, capability and identities are independently recomputed.
 """
 from __future__ import annotations
 import argparse
+import re
 import json
 import os
 from pathlib import Path
@@ -19,10 +20,14 @@ from traceharness.runner_service import native_prompts_codex as codex
 
 ARCHIVE_SHA256 = "214e5017a3c519557da811fe1df8e6fa51d408df0463c08f38a572b7e30b80fe"
 BINARY_SHA256 = "dd5bfdf19d794dcc6fb482d2d5a2d9fb31d11f6caa44b303bb72890d461e8a02"
-IMAGE_DIGEST = "sha256:e1e4ef84997e7c17acdb210ef55679b3d637fb590cdf469614fc6ab60459f2b0"
+# The image digest is an explicit argument: the same pristine binary ships in each rebuilt runtime image,
+# and an inventory must bind the exact registered image (registry.py refuses any other).
+IMAGE_DIGEST_RE = re.compile(r"sha256:[0-9a-f]{64}")
 
 
-def prepare(binary, archive_path, candidate):
+def prepare(binary, archive_path, candidate, image_digest):
+    if not isinstance(image_digest, str) or not IMAGE_DIGEST_RE.fullmatch(image_digest):
+        raise ValueError("Image digest must be sha256:<64 hex>")
     if shared.digest(binary) != BINARY_SHA256:
         raise ValueError("Pristine Codex executable differs from the inspected build")
     if archive_path.is_symlink() or archive_path.stat().st_size > 100 * 1024 * 1024 or shared.digest(archive_path.read_bytes()) != ARCHIVE_SHA256:
@@ -67,7 +72,7 @@ def prepare(binary, archive_path, candidate):
                            "source_layer": "embedded-rust-source-asset", "capability": capability,
                            "baseline_sha256": shared.digest(body), "baseline_utf8": text, "occurrence_count": len(matches), "required_placeholders": []})
             anchors[bid], sources[bid] = matches, refs
-    inventory = {"schema_version": 1, "runtime_id": "native-codex", "runtime_version": "0.167.1", "image_digest": IMAGE_DIGEST,
+    inventory = {"schema_version": 1, "runtime_id": "native-codex", "runtime_version": "0.167.1", "image_digest": image_digest,
                  "binary_sha256": BINARY_SHA256, "inventory_sha256": "0" * 64, "taxonomy_sha256": shared.taxonomy_sha256(),
                  "materializer_sha256": codex.materializer_sha256(), "blocks": blocks,
                  "_private": {"schema_version": 1, "source_kind": "rust-readonly-assets", "binary_bytes": len(binary),
@@ -85,6 +90,7 @@ def prepare(binary, archive_path, candidate):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     for name in ("binary", "source-archive", "output"): parser.add_argument("--" + name, type=Path, required=True)
+    parser.add_argument("--image-digest", required=True, help="sha256:<64 hex> of the registered native-codex runtime image")
     parser.add_argument("--candidate", type=Path, default=Path(__file__).with_name("codex-source-assets-0.167.1.json"))
     parser.add_argument("--candidate-sha256", default="c6865c05c50ec8fa366a3d0a43bf985afae89bceadd7314dabb31634ecc7dead")
     args = parser.parse_args()
@@ -94,7 +100,7 @@ def main():
         raise ValueError("Preparation input exceeds its bound")
     raw = args.candidate.read_bytes()
     if shared.digest(raw) != args.candidate_sha256: raise ValueError("Candidate provenance changed")
-    inventory = prepare(args.binary.read_bytes(), args.source_archive, json.loads(raw))
+    inventory = prepare(args.binary.read_bytes(), args.source_archive, json.loads(raw), args.image_digest)
     fd = os.open(args.output, os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW, 0o600)
     with os.fdopen(fd, "wb") as stream: stream.write(shared.canonical_bytes(inventory))
     print(json.dumps({"inventory_sha256": inventory["inventory_sha256"], "materializer_sha256": inventory["materializer_sha256"],
