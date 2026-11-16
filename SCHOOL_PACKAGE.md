@@ -211,13 +211,13 @@ GitHub's **Cite this repository** button gives the same entry from `CITATION.cff
   author  = {Antonio Mastropaolo},
   title   = {{TraceHarness}: Treating the Agent Harness as a Controlled Experimental Variable},
   year    = {2026},
-  version = {0.5.2},
+  version = {0.5.3},
   url     = {https://traceharness.dev}
 }
 ```
 
 Plain text: Mastropaolo, A. (2026). *TraceHarness: Treating the agent harness as a controlled
-experimental variable* (Version 0.5.2) [Computer software]. https://traceharness.dev
+experimental variable* (Version 0.5.3) [Computer software]. https://traceharness.dev
 
 If you use the 500 runs in `data/runs/real_swe_agent_500`, also cite Nebius,
 [SWE-agent-trajectories](https://huggingface.co/datasets/nebius/SWE-agent-trajectories) (CC BY 4.0).

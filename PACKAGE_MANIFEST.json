@@ -136,7 +136,7 @@
     {
       "path": "CITATION.cff",
       "bytes": 1535,
-      "sha256": "0407d5c2a426de1a6acd534d56794bcc139e8dfa3778c22101dba41599511dca"
+      "sha256": "d372f72148f96240f61c191027ca2f7fe4113e770c5b8bb9b9852ebc970e2e60"
     },
     {
       "path": "Dockerfile",
@@ -151,7 +151,7 @@
     {
       "path": "LAB_1H.md",
       "bytes": 6595,
-      "sha256": "9c460fa77e4e8499ae643119fdd29e51a024b903d0eebad74f17b8a9bb2f53d2"
+      "sha256": "3f61a30677d60854e8e2000438a80155ff93fd0133dbeb33693e8bb3a04c1650"
     },
     {
       "path": "LICENSE",
@@ -166,12 +166,12 @@
     {
       "path": "README.md",
       "bytes": 11485,
-      "sha256": "16da9f0e8d27ed85b794ece6e3629d0e863ecef134e73d87052efba585940f46"
+      "sha256": "3da19dc1a69d6fcd4d57b5f531e1ef51922dbfeee6a93d13dccdd8ebaffc46b6"
     },
     {
       "path": "SCHOOL_PACKAGE.md",
       "bytes": 11485,
-      "sha256": "16da9f0e8d27ed85b794ece6e3629d0e863ecef134e73d87052efba585940f46"
+      "sha256": "3da19dc1a69d6fcd4d57b5f531e1ef51922dbfeee6a93d13dccdd8ebaffc46b6"
     },
     {
       "path": "data/runs/captured_claude_code/imp-claude-code-5a95de19f443/ledger.jsonl",
@@ -61596,7 +61596,7 @@
     {
       "path": "docker-compose.yml",
       "bytes": 1746,
-      "sha256": "aea606f5774b297cfa02bc645e5f675839beff187f7a811245c88223a6305716"
+      "sha256": "64cf8e2ecd16f836683d20bfe81a09d3d093883b316dc4aa1ba17d1868aa1923"
     },
     {
       "path": "docs/CODESPACES.md",
@@ -61611,7 +61611,7 @@
     {
       "path": "docs/STUDENT_GUIDE.md",
       "bytes": 46936,
-      "sha256": "b2ffddaf016e509a739f7a986136a3e264aa56f2387741dc5dda69907d1140fd"
+      "sha256": "702d19ec2a26ae11734fcd6c38d2dce0154dcf2a2830cd694f02b23c45c6a312"
     },
     {
       "path": "docs/img/guide/compare.png",
@@ -61826,7 +61826,7 @@
     {
       "path": "pyproject.toml",
       "bytes": 3207,
-      "sha256": "a4ea4740809910ab95bd74a1571d8ecaa86d39131d7907a99600354ff6332c87"
+      "sha256": "b4ccc2786339c8365b4f47de07bc03659d7b006283b96ab1d9ce123bbdc1f89c"
     },
     {
       "path": "requirements.txt",
@@ -61846,12 +61846,12 @@
     {
       "path": "scripts/check_install.py",
       "bytes": 4251,
-      "sha256": "b3f082d861fe0f8d406d3f6630e278e7d88f52da5bf20aea8f2d9d22e483f097"
+      "sha256": "93f357752a9eb1ca5c6e4e2f891b84929775866e534b58c2bb3a58034fc2bc7a"
     },
     {
       "path": "scripts/console_width_check.py",
-      "bytes": 20903,
-      "sha256": "7bfcc924a69ec11ce9534803612e29387e6ff315317f6466bd99adbd6ed7e8cc"
+      "bytes": 22260,
+      "sha256": "16f4f9c0e7ee07f15c595633353367c803ecca0e2942edab88b3098bc346a7ce"
     },
     {
       "path": "scripts/frontier_batch.py",
@@ -63669,6 +63669,11 @@
       "sha256": "effa1a30eac35ae8cdd4aee91701a322cb55760cc65630858736ed8a7acdd071"
     },
     {
+      "path": "tests_agentlab/test_console_width_gap.py",
+      "bytes": 1783,
+      "sha256": "9dfd2647f54c1d6413b98b82718984386ce8551d855f45c394adf6050a8e74ed"
+    },
+    {
       "path": "tests_agentlab/test_dist_current.py",
       "bytes": 2602,
       "sha256": "27623100b4b6533e3c50c0eaa7c3ff87b246474b2c3d39300e3308b677d58a80"
@@ -64036,7 +64041,7 @@
     {
       "path": "traceharness/__main__.py",
       "bytes": 47760,
-      "sha256": "ee8b36ac7d2d4f93ee4703ae7f33f341eeeb66a6d8426e31312d1ce6ab8afcd8"
+      "sha256": "3b76d1697c9620518e0488588025adda9aa429a698a908d2f06a5d832eb3363f"
     },
     {
       "path": "traceharness/agents/Dockerfile",
@@ -64416,7 +64421,7 @@
     {
       "path": "traceharness/capture/remote.py",
       "bytes": 12554,
-      "sha256": "5969dfd3641834623133b7085f8d89002c5a21c39e158df50ceb5483a3fa6e07"
+      "sha256": "717c6e21932f9a4e9850a727f2a6854f2203094577a157d41954b16074beb921"
     },
     {
       "path": "traceharness/capture/sniffer.py",
@@ -64579,19 +64584,19 @@
       "sha256": "f70f2d9d8d9a9cd7c3211a6216cfe90c345581b375435dad7ba7f5a17f97f276"
     },
     {
-      "path": "traceharness/frontend/dist/assets/index-Cec-m9Ah.css",
-      "bytes": 446049,
-      "sha256": "05fdcd901ecc16a040f8da83bc3180905266a77be6f5490a8086bb126b916e07"
+      "path": "traceharness/frontend/dist/assets/index-BDk9Z1dd.css",
+      "bytes": 446825,
+      "sha256": "c1bec3da645767226aed4b35ee554d810d34523aaec604dd65c7c7dc281cc56c"
     },
     {
-      "path": "traceharness/frontend/dist/assets/index-uoUfYIeB.js",
-      "bytes": 2196147,
-      "sha256": "5749391346e01d00f769554053b8b241a05bc6665c147f199c76d5c763837d2f"
+      "path": "traceharness/frontend/dist/assets/index-DkZdnI_E.js",
+      "bytes": 2198984,
+      "sha256": "80bc7dd69dabfe15850be8bfbba607cd91091a249dcc42998a26de1c1bf2dfd7"
     },
     {
       "path": "traceharness/frontend/dist/build-source.json",
       "bytes": 97,
-      "sha256": "08c0446ab690eaa95787a47bd6f2f358076e0f1d87d3a8840cb6ba56488f43bd"
+      "sha256": "35979bea21f174910c5b94d7844c2e85964798a7701bbdfcb8be2c8a2e96e715"
     },
     {
       "path": "traceharness/frontend/dist/design-directions/README.md",
@@ -64676,7 +64681,7 @@
     {
       "path": "traceharness/frontend/dist/index.html",
       "bytes": 4301,
-      "sha256": "3318d04ccddb470cbc6419f3da1a1f155cb65442492e0521299543b242a315da"
+      "sha256": "b537719b0d7134294baac554bef28c148590db00c7169a9ec7a91e7ed411c8ed"
     },
     {
       "path": "traceharness/frontend/index.html",
@@ -65215,13 +65220,13 @@
     },
     {
       "path": "traceharness/frontend/src/rig/harnessWorkspace.css",
-      "bytes": 14905,
-      "sha256": "06fee657e4e6d31eea88847337845d2c257f8120c64da6efec7248c34e639457"
+      "bytes": 15577,
+      "sha256": "ff5c0423d6828eb993f5350f10d308f95f78fb09d133c1c292b713e7326dd519"
     },
     {
       "path": "traceharness/frontend/src/rig/harnessWorkspace.jsx",
-      "bytes": 3599,
-      "sha256": "7baec05cc74a39c1a26d1dcf8ecbf539bc7087bf288e5c4d99fc8d8bba89e65a"
+      "bytes": 3647,
+      "sha256": "b81864b6f965c3fdb12223db6537266c26a0595f81a7ac9304a86b995c0b7d66"
     },
     {
       "path": "traceharness/frontend/src/rig/lib/align.fixture.json",
@@ -65555,13 +65560,13 @@
     },
     {
       "path": "traceharness/frontend/src/rig/primitives.css",
-      "bytes": 21133,
-      "sha256": "eff40c9529f9dc059cf36e8272c393983d64c9513e43d912e8b350215b39e87a"
+      "bytes": 21515,
+      "sha256": "9821d248c60d1f3fdba7c8320f04785717880eb994271ebf4632d67ad8fdc80d"
     },
     {
       "path": "traceharness/frontend/src/rig/primitives.jsx",
-      "bytes": 19743,
-      "sha256": "7d500641dcfeb038d96294a4d5ad59fc3f6bc499c27cb66831cbcf6119ab580e"
+      "bytes": 19923,
+      "sha256": "c4d37bfe44a6a898d66e44c6e110fec374b054d6c50a764a39002ceb92f7d4a3"
     },
     {
       "path": "traceharness/frontend/src/rig/provenance.js",
@@ -65875,13 +65880,13 @@
     },
     {
       "path": "traceharness/frontend/src/rig/views/trajectory.jsx",
-      "bytes": 124517,
-      "sha256": "7ef98ee81eb6ab20a7d41f725c000da0e2ddc298fc2b08998eb046ecf99caf21"
+      "bytes": 124521,
+      "sha256": "c95f4414156d8faac5128074b8c93670a4cd775a71fbe1d8f966da36e70d7803"
     },
     {
       "path": "traceharness/frontend/src/rig/views/workspace.css",
-      "bytes": 26519,
-      "sha256": "19d5043d7a2250d92897340bb6fdf52f237dc069a33519510fe396e7eeeb16d1"
+      "bytes": 26509,
+      "sha256": "2318057cd1c4b259858880119efc4d7c891868a2f3550b053509e4991694af7c"
     },
     {
       "path": "traceharness/frontend/src/rig/views/workspace.dom.test.jsx",
@@ -65890,8 +65895,8 @@
     },
     {
       "path": "traceharness/frontend/src/rig/views/workspace.jsx",
-      "bytes": 122828,
-      "sha256": "7f34fe577e368d45b80fd566fb89737249c87b076fed73eb1cc9ddda1a222809"
+      "bytes": 125176,
+      "sha256": "8a4f9c2ab9b7b335dff94312bb1b4405f1feee182b304b3ac13e54011005f2c1"
     },
     {
       "path": "traceharness/frontend/src/runner-api.js",

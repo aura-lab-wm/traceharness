@@ -11,7 +11,7 @@ import re
 import sys
 import time
 
-__version__ = "0.5.2"
+__version__ = "0.5.3"
 
 
 def build_parser() -> argparse.ArgumentParser:
