@@ -1,0 +1,443 @@
+{
+  "release": "Fly traceharness-runner v21 (0.5.1), 2026-11-16",
+  "fly_releases": {
+    "v18": "failed: registry refused native-prompt inventory bound to the old image (rolled back)",
+    "v19": "rollback to v17 image registry.fly.io/traceharness-runner@sha256:9c3331292fe6c85de7fc2cdb1db2f41e188a123601368ad260cd8fdfca2d9d6d",
+    "v20": "0.5.1 control, RUNNER_EXECUTION_ENABLED=0",
+    "v21": "0.5.1 control, RUNNER_EXECUTION_ENABLED=1"
+  },
+  "control_image": {
+    "built_id": "sha256:539fe1c1a4b5aa25d5fa1a39cb42c17b6ca5a93a13b5f5a096d421de41289216",
+    "pushed_manifest": "registry.fly.io/traceharness-runner@sha256:539fe1c1a4b5aa25d5fa1a39cb42c17b6ca5a93a13b5f5a096d421de41289216",
+    "fly_machine_image": "registry.fly.io/traceharness-runner@sha256:8b271ebb84d0ef2f4b78b5716c5b18b7620ef152420e744947150e6a309ca3f5",
+    "control_package": "traceharness 0.5.1 (/opt/traceharness/traceharness)"
+  },
+  "wheel": {
+    "file": "traceharness-0.5.1-py3-none-any.whl",
+    "sha256": "188a7bb0a78966ed32d4ddf11a045ba332edfe17651d7b1c3afc67f04b9a88f6",
+    "source": "GitHub Release v0.5.1 (ce48c1f), SLSA provenance verified"
+  },
+  "runtime_images": {
+    "traceharness": "sha256:da5b8df488700fd230a5e371d36fc5c1e7d04f2be73570fad32bde4d531fefcc",
+    "native-claude-code": "sha256:dd76f3621d1e2625137edad05921567da222d7870e82493675b359d75e4ded34",
+    "native-codex": "sha256:ebaf38d87aa74e6655fb0b3ad7f9efbdf75add2af816f20d5bcf758c26c9b3f5"
+  },
+  "grader_images_reused": [
+    "sha256:93cfd8068c7ca06cab2f5204fc9d4dd3a29d715c1a99bb7f2847897740e6fbf3",
+    "sha256:b6bc5bf5a8a16225ffe35975f1ee30c6a5b86ceee5fae5a001e9221face4dded"
+  ],
+  "registry": {
+    "path": "/data/inventory-eight-v2/registry-v051.json",
+    "sha256": "bad03fefc918167f8ac45ce320ba2022e08ddd340a8cd2992246b897bf30cc9b",
+    "previous": "/data/inventory-eight-v2/registry-native-codex-paired-v1.json (kept for rollback)"
+  },
+  "native_prompts": {
+    "native-claude-code": {
+      "inventory_file_sha256": "3fec09f71cd07b066c926bc61f2cc47ac3521b5776523d4411e9f3c555ae8bcb",
+      "inventory_sha256": "e44a6f77ef161e95bb76ea6f9eff5a15f03fbabbb0227678057a5d6e6228967f",
+      "binary_sha256": "bfb3703ad5380242328459bc62ada4bde8ae7ba57c6e1eeadb9c00e08874c478",
+      "mechanism_receipt_sha256": "911c18fa58cda94796490b680bd25fe21a492d7384d4259638fedac1f66e0bb6",
+      "offline_captures": 6,
+      "provider_calls": 0
+    },
+    "native-codex": {
+      "inventory_file_sha256": "e26446c613f9f30715ee9371028a62556f8b604c5b5324dfad151ec48edabaf1",
+      "inventory_sha256": "13bf68df9543ca2ad2e39cc8c48e8cd972bd2f49c5ad10726dbd63e299bd63c9",
+      "binary_sha256": "dd5bfdf19d794dcc6fb482d2d5a2d9fb31d11f6caa44b303bb72890d461e8a02",
+      "mechanism_receipt_sha256": "8b5a35170aa7df4b866a25a77db84b65e50758fcd181bea5eefb3a274dfc2d1a",
+      "offline_captures": 6,
+      "provider_calls": 0
+    }
+  },
+  "compatibility_runs": [
+    {
+      "runtime_id": "native-claude-code",
+      "task_id": "requests-empty-netrc",
+      "job_id": "0112190ed8bc5aca69799466aff50866011c870b37861c8a",
+      "status": "succeeded",
+      "grade": "passed",
+      "compatibility_passed": true,
+      "successful_model_responses": 8,
+      "usage": {
+        "cost_usd": 0.351889,
+        "input_tokens": 343964,
+        "output_tokens": 1585,
+        "requests": 8
+      },
+      "receipt_path": "compatibility/native-claude-code-0112190ed8bc5aca69799466aff50866011c870b37861c8a.json",
+      "receipt_sha256": "d9b03779f2ec717d423fe5d1f1418e3c81b50a702d85dd40aa44a025bbed0f1f",
+      "manifest_sha256": "5016f932159f082651adbd75ae8f7ea00aee4927f7dc82913cc5556cd24e7b9f"
+    },
+    {
+      "runtime_id": "native-claude-code",
+      "task_id": "requests-jsondecode-pickle",
+      "job_id": "1566da48411409ec4feac1c0efdd8ca2afabe0ade6143343",
+      "status": "succeeded",
+      "grade": "passed",
+      "compatibility_passed": true,
+      "successful_model_responses": 14,
+      "usage": {
+        "cost_usd": 0.526118,
+        "input_tokens": 509728,
+        "output_tokens": 3278,
+        "requests": 14
+      },
+      "receipt_path": "compatibility/native-claude-code-1566da48411409ec4feac1c0efdd8ca2afabe0ade6143343.json",
+      "receipt_sha256": "617d8f1d50dc382400ae5379c9c94cb7be62ceb6a5e271d91ce70b014ccdf256",
+      "manifest_sha256": "f080e8290e1407671dd14982191cc3a6616e66f4578ec1d908785a3de7210ab0"
+    },
+    {
+      "runtime_id": "native-claude-code",
+      "task_id": "requests-leading-slashes",
+      "job_id": "b1252b9bc7f2ebc66e2f4d83af9b45c76c7549b4e8660dc7",
+      "status": "succeeded",
+      "grade": "passed",
+      "compatibility_passed": true,
+      "successful_model_responses": 11,
+      "usage": {
+        "cost_usd": 0.435152,
+        "input_tokens": 422422,
+        "output_tokens": 2546,
+        "requests": 11
+      },
+      "receipt_path": "compatibility/native-claude-code-b1252b9bc7f2ebc66e2f4d83af9b45c76c7549b4e8660dc7.json",
+      "receipt_sha256": "9fc69a012d74489a7f7fac6eafaf605a86ba2755f0227f424ad1699ecf2c24bf",
+      "manifest_sha256": "15fae1d284309e7c37413b72ec7e83a7b27e2d3257a4d98bff768b168d3297ec"
+    },
+    {
+      "runtime_id": "native-claude-code",
+      "task_id": "requests-unicode-length",
+      "job_id": "ac99e38816986797c6f6b7b5f4c8f6ba6b3b87d6a89bc70b",
+      "status": "succeeded",
+      "grade": "passed",
+      "compatibility_passed": true,
+      "successful_model_responses": 14,
+      "usage": {
+        "cost_usd": 0.615557,
+        "input_tokens": 603537,
+        "output_tokens": 2404,
+        "requests": 14
+      },
+      "receipt_path": "compatibility/native-claude-code-ac99e38816986797c6f6b7b5f4c8f6ba6b3b87d6a89bc70b.json",
+      "receipt_sha256": "348bce5a821183e82bf065b5cbccc25bef8257b288ca39872ef076083c05f061",
+      "manifest_sha256": "5f39a05b3a898c4697d9eb2435c68ffbe2123dd08a87adead38a25e44db778ac"
+    },
+    {
+      "runtime_id": "native-codex",
+      "task_id": "requests-empty-netrc",
+      "job_id": "7b86b50b547cb24e5b24438190178094d68ea2fc4b8ce490",
+      "status": "succeeded",
+      "grade": "passed",
+      "compatibility_passed": true,
+      "successful_model_responses": 11,
+      "usage": {
+        "cost_usd": 0.0086744,
+        "input_tokens": 103952,
+        "output_tokens": 1692,
+        "requests": 11
+      },
+      "receipt_path": "compatibility/native-codex-7b86b50b547cb24e5b24438190178094d68ea2fc4b8ce490.json",
+      "receipt_sha256": "917dcb6ef853fc6675e9f115caebb41e813b08720fe3e9c6b275e3bfa5ba748f",
+      "manifest_sha256": "22e8de2f47329622588b1567a2911134cb521e3effe6b4d69af9427f5af34708"
+    },
+    {
+      "runtime_id": "native-codex",
+      "task_id": "requests-invalid-charset",
+      "job_id": "143a86011f47186acb7db4440f30cd677397468c77c3c89e",
+      "status": "succeeded",
+      "grade": "passed",
+      "compatibility_passed": true,
+      "successful_model_responses": 8,
+      "usage": {
+        "cost_usd": 0.00795792,
+        "input_tokens": 71120,
+        "output_tokens": 2312,
+        "requests": 8
+      },
+      "receipt_path": "compatibility/native-codex-143a86011f47186acb7db4440f30cd677397468c77c3c89e.json",
+      "receipt_sha256": "3fca483f56db4cb0f0cf30b24fe4b5d2ed562e9cfe008b3ca8ddaeb7d36ab46d",
+      "manifest_sha256": "cacd4c2553e2d875c671ce77d497ca1b22c5f4bbc6849a5d3aca877d0b8bd4b9"
+    },
+    {
+      "runtime_id": "native-codex",
+      "task_id": "requests-jsondecode-pickle",
+      "job_id": "428285cad32cb2c99755dcdaef315b653845f084b932c59c",
+      "status": "succeeded",
+      "grade": "passed",
+      "compatibility_passed": true,
+      "successful_model_responses": 8,
+      "usage": {
+        "cost_usd": 0.00648396,
+        "input_tokens": 70716,
+        "output_tokens": 1710,
+        "requests": 8
+      },
+      "receipt_path": "compatibility/native-codex-428285cad32cb2c99755dcdaef315b653845f084b932c59c.json",
+      "receipt_sha256": "db57b6e5a6c9badf16e39fc2eaba7fce5ffd8be3889c3702bf8a70b41de51011",
+      "manifest_sha256": "e0c3e395a435c679be39c2b240f834c373c48b79192a83c782832b66bb132821"
+    },
+    {
+      "runtime_id": "native-codex",
+      "task_id": "requests-leading-slashes",
+      "job_id": "3a45b45699b821a90ee4d29d1ca68f8046f96b4793987140",
+      "status": "succeeded",
+      "grade": "passed",
+      "compatibility_passed": true,
+      "successful_model_responses": 14,
+      "usage": {
+        "cost_usd": 0.01043239,
+        "input_tokens": 126487,
+        "output_tokens": 2021,
+        "requests": 14
+      },
+      "receipt_path": "compatibility/native-codex-3a45b45699b821a90ee4d29d1ca68f8046f96b4793987140.json",
+      "receipt_sha256": "e51a118092be0a5df6f6083d55c80aad9155ad94b132ff6ddde25130c8fc14a0",
+      "manifest_sha256": "9b6f92a554905383aa03c0935d015b05db7d99b9ee361646d350233dcee388b5"
+    },
+    {
+      "runtime_id": "native-codex",
+      "task_id": "requests-unicode-length",
+      "job_id": "77efb4d17ce9c86c4e41189f212fe0e5b928fd618e268099",
+      "status": "succeeded",
+      "grade": "passed",
+      "compatibility_passed": true,
+      "successful_model_responses": 8,
+      "usage": {
+        "cost_usd": 0.00548332,
+        "input_tokens": 71180,
+        "output_tokens": 1208,
+        "requests": 8
+      },
+      "receipt_path": "compatibility/native-codex-77efb4d17ce9c86c4e41189f212fe0e5b928fd618e268099.json",
+      "receipt_sha256": "282e49c544d3d2071c1882078ec934fcdb5d65acd974ab4c5dda9ba5b1a91684",
+      "manifest_sha256": "02f0ba33cab89f9c73072890d60c58840561eb13d66907f01873b89e2f3938ea"
+    },
+    {
+      "runtime_id": "native-codex",
+      "task_id": "urllib3-partial-gzip-read",
+      "job_id": "935387d5093f4d7bb17603855608f1a1e4447eadc3cf1c34",
+      "status": "succeeded",
+      "grade": "passed",
+      "compatibility_passed": true,
+      "successful_model_responses": 12,
+      "usage": {
+        "cost_usd": 0.01287494,
+        "input_tokens": 140286,
+        "output_tokens": 3207,
+        "requests": 12
+      },
+      "receipt_path": "compatibility/native-codex-935387d5093f4d7bb17603855608f1a1e4447eadc3cf1c34.json",
+      "receipt_sha256": "0d669646276b2db4cd4d69fcf8567da8abefcdc4d614bf52c41b12153528ba8a",
+      "manifest_sha256": "93938f575773e59205f34f4ee23300f59e044b9669070f520872b14e5db263de"
+    },
+    {
+      "runtime_id": "native-codex",
+      "task_id": "urllib3-unseekable-rewind",
+      "job_id": "ce6c7c46f2e9718cb64c9ef3c6f9bc6fd883fbd820d54986",
+      "status": "succeeded",
+      "grade": "passed",
+      "compatibility_passed": true,
+      "successful_model_responses": 9,
+      "usage": {
+        "cost_usd": 0.00631532,
+        "input_tokens": 82972,
+        "output_tokens": 1206,
+        "requests": 9
+      },
+      "receipt_path": "compatibility/native-codex-ce6c7c46f2e9718cb64c9ef3c6f9bc6fd883fbd820d54986.json",
+      "receipt_sha256": "a5f2d7d124ca92451c841c96e69b68e34c2f2a96d59854c3d060c3cf49d9174d",
+      "manifest_sha256": "cfa5a319984de066814035506f13fecce7ce06f03dd61ce91d740dc038ef45dc"
+    },
+    {
+      "runtime_id": "traceharness",
+      "task_id": "requests-empty-netrc",
+      "job_id": "6184d10af4b8d46742857d90a0fdde2a890fbdd89073ea2c",
+      "status": "succeeded",
+      "grade": "passed",
+      "compatibility_passed": true,
+      "successful_model_responses": 4,
+      "usage": {
+        "cost_usd": 0.0052408,
+        "input_tokens": 24438,
+        "output_tokens": 238,
+        "requests": 4
+      },
+      "receipt_path": "compatibility/traceharness-6184d10af4b8d46742857d90a0fdde2a890fbdd89073ea2c.json",
+      "receipt_sha256": "b57de197fd104610eca3c02ff2dc49b5aa3baff5a26d45cc7f7be6c6b631ad96",
+      "manifest_sha256": "a5e659d5abec6d4dfa06d8520d9183dacc2e2566e9b56b568f4e87c976c878ef"
+    },
+    {
+      "runtime_id": "traceharness",
+      "task_id": "requests-invalid-charset",
+      "job_id": "2825964f5165f4fec27b2f83b971a573312e1c25d482c986",
+      "status": "succeeded",
+      "grade": "passed",
+      "compatibility_passed": true,
+      "successful_model_responses": 4,
+      "usage": {
+        "cost_usd": 0.0087944,
+        "input_tokens": 41822,
+        "output_tokens": 297,
+        "requests": 4
+      },
+      "receipt_path": "compatibility/traceharness-2825964f5165f4fec27b2f83b971a573312e1c25d482c986.json",
+      "receipt_sha256": "2981c7dad2c348cb2cef5c832ef5f6be51405172b069900f34ea459f6f1aecc9",
+      "manifest_sha256": "6d665537f2c387f3f8a37d29216ff3960a6b2a6cc66fabc1b221e44b8c5f4832"
+    },
+    {
+      "runtime_id": "traceharness",
+      "task_id": "requests-jsondecode-pickle",
+      "job_id": "c352ffd5f3daa2ff1b941a19a73c096390cf771c059f078b",
+      "status": "succeeded",
+      "grade": "passed",
+      "compatibility_passed": true,
+      "successful_model_responses": 4,
+      "usage": {
+        "cost_usd": 0.0028688,
+        "input_tokens": 10768,
+        "output_tokens": 445,
+        "requests": 4
+      },
+      "receipt_path": "compatibility/traceharness-c352ffd5f3daa2ff1b941a19a73c096390cf771c059f078b.json",
+      "receipt_sha256": "1b9358f6ed329f92cb0b93f0e8788b06cf63808adb6bd8f370e33427d01f424b",
+      "manifest_sha256": "c9c8182d0e3c8ac817b741613a699156faec01bae1d38c2f8930934a33eaa2c9"
+    },
+    {
+      "runtime_id": "traceharness",
+      "task_id": "requests-leading-slashes",
+      "job_id": "bff495232fb29a70c4db42d2b7f20348e2161f16efbb5115",
+      "status": "succeeded",
+      "grade": "passed",
+      "compatibility_passed": true,
+      "successful_model_responses": 4,
+      "usage": {
+        "cost_usd": 0.0046456,
+        "input_tokens": 21438,
+        "output_tokens": 232,
+        "requests": 4
+      },
+      "receipt_path": "compatibility/traceharness-bff495232fb29a70c4db42d2b7f20348e2161f16efbb5115.json",
+      "receipt_sha256": "ba6eb0b11a0192bc82ca27cd4f1a8d6eea07bce13ebaa1e64fb25f0bc7dd9760",
+      "manifest_sha256": "be345e7edadcbc74e3c6cf093cba4c1fd8b8a82a789f906a1d981e5e44434533"
+    },
+    {
+      "runtime_id": "traceharness",
+      "task_id": "requests-unicode-length",
+      "job_id": "81e1317641606e0f2e4b036263c9b9db13d473d1a2301d37",
+      "status": "succeeded",
+      "grade": "passed",
+      "compatibility_passed": true,
+      "successful_model_responses": 4,
+      "usage": {
+        "cost_usd": 0.0050644,
+        "input_tokens": 23861,
+        "output_tokens": 200,
+        "requests": 4
+      },
+      "receipt_path": "compatibility/traceharness-81e1317641606e0f2e4b036263c9b9db13d473d1a2301d37.json",
+      "receipt_sha256": "312ede7dd45909098c1ac0b1d844805d008e8b2738028f12996aea404491d76b",
+      "manifest_sha256": "76ceaf396c50b3f1b6b7bb386c3c6162111ab253eebc52125f65ca8387d4af0d"
+    },
+    {
+      "runtime_id": "traceharness",
+      "task_id": "urllib3-invalid-fingerprint",
+      "job_id": "38710b176e3e6a0d5f36f4070c53118cdc2545ddf41187e9",
+      "status": "succeeded",
+      "grade": "passed",
+      "compatibility_passed": true,
+      "successful_model_responses": 5,
+      "usage": {
+        "cost_usd": 0.0070976,
+        "input_tokens": 37484,
+        "output_tokens": 321,
+        "requests": 5
+      },
+      "receipt_path": "compatibility/traceharness-38710b176e3e6a0d5f36f4070c53118cdc2545ddf41187e9.json",
+      "receipt_sha256": "3681ee3b715b9ec9e7e73ab51bee2ea5260eeb077507ecd8350e745bf638e6a3",
+      "manifest_sha256": "25d2f45b4d8feb99c75a9658454da952a9f6dad6c4ce177b04ec17ee99bc519e"
+    },
+    {
+      "runtime_id": "traceharness",
+      "task_id": "urllib3-partial-gzip-read",
+      "job_id": "dd622cc9b472ea8c3561e1f3923e524998db2c99567e2dfd",
+      "status": "succeeded",
+      "grade": "passed",
+      "compatibility_passed": true,
+      "successful_model_responses": 4,
+      "usage": {
+        "cost_usd": 0.010344,
+        "input_tokens": 50040,
+        "output_tokens": 267,
+        "requests": 4
+      },
+      "receipt_path": "compatibility/traceharness-dd622cc9b472ea8c3561e1f3923e524998db2c99567e2dfd.json",
+      "receipt_sha256": "bc39cade0fd997da437bd79588895a4a6ab9aa7fbb24241f989342511a4ffd68",
+      "manifest_sha256": "973610a298ee26b8816691e4462f77cafa08a5198291360548661599bbda441c"
+    },
+    {
+      "runtime_id": "traceharness",
+      "task_id": "urllib3-unseekable-rewind",
+      "job_id": "305c02d900de95fc2670688cee0363a75a91486a97321de2",
+      "status": "succeeded",
+      "grade": "passed",
+      "compatibility_passed": true,
+      "successful_model_responses": 4,
+      "usage": {
+        "cost_usd": 0.0047416,
+        "input_tokens": 21210,
+        "output_tokens": 373,
+        "requests": 4
+      },
+      "receipt_path": "compatibility/traceharness-305c02d900de95fc2670688cee0363a75a91486a97321de2.json",
+      "receipt_sha256": "3db95055db6460a0a4b048faff702be23851149aa98393eab3678e9f495c9974",
+      "manifest_sha256": "35d4453b2d33f451c65e368b1708d751e8709f0a2fe10a10263349d9dde7dd9a"
+    }
+  ],
+  "member_proofs": [
+    {
+      "job_id": "b73dd5993e43b64fb100fb7355491ff7d279ca5e0cff0ecb",
+      "runtime": "native-claude-code",
+      "model": "anthropic/claude-haiku-4.5",
+      "task": "requests-unicode-length",
+      "cap_usd": 0.35,
+      "status": "failed",
+      "grade": "passed",
+      "issue": "next-request reservation $0.216760 exceeded remaining allowance $0.190193 of the $0.35 cap",
+      "usage": {
+        "requests": 4,
+        "cost_usd": 0.159807
+      },
+      "native_replacement_observed": true,
+      "hostile_origin_refused": true,
+      "credential_revoked": true
+    },
+    {
+      "job_id": "5fc294c69df788f305b8b8a50ca02184602e91b99aa0360b",
+      "runtime": "native-claude-code",
+      "model": "anthropic/claude-haiku-4.5",
+      "task": "requests-unicode-length",
+      "cap_usd": 1.0,
+      "status": "succeeded",
+      "grade": "passed",
+      "usage": {
+        "requests": 8,
+        "input_tokens": 331756,
+        "output_tokens": 2003,
+        "cost_usd": 0.341771
+      },
+      "native_application_verified": true,
+      "native_replacement_observed": true,
+      "hostile_origin_refused": true,
+      "credential_revoked": true
+    }
+  ],
+  "anonymous": {
+    "prove_anon_exit": 0,
+    "pass_lines": 13,
+    "direct_unsigned_runner_api_status": 401
+  },
+  "reported_cost_usd": {
+    "compatibility": 2.035735,
+    "member": 0.501578
+  }
+}
