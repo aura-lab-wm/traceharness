@@ -136,7 +136,7 @@
     {
       "path": "CITATION.cff",
       "bytes": 1535,
-      "sha256": "b1ba8e4a95d68034c1ea1f0abfeba137213a8aecb19eba6ca3c31fa3ad21a6bc"
+      "sha256": "f8aee7087169d07e3ac90311c9a19f7f855d07e14d07361712bd7423cda72f70"
     },
     {
       "path": "Dockerfile",
@@ -151,7 +151,7 @@
     {
       "path": "LAB_1H.md",
       "bytes": 6595,
-      "sha256": "f2cebfd41c01dcfde3c4c80cf22c840b3ee28be105cd0e3b2b42ed6c2fdb9e66"
+      "sha256": "a24b3a4e873721154ed3031e6e8a164fffeaf190d7cb4510a42c82d96e7ccfa2"
     },
     {
       "path": "LICENSE",
@@ -166,12 +166,12 @@
     {
       "path": "README.md",
       "bytes": 11485,
-      "sha256": "f2eeb7463c23009a1d3c7b2ba046e1c8c8a4ccbda7b0355047566d31d8a674e2"
+      "sha256": "522ab9f69fcd7f04aa23b01de5914fabdb16c3e7995db2ac85cfaf6b7a695135"
     },
     {
       "path": "SCHOOL_PACKAGE.md",
       "bytes": 11485,
-      "sha256": "f2eeb7463c23009a1d3c7b2ba046e1c8c8a4ccbda7b0355047566d31d8a674e2"
+      "sha256": "522ab9f69fcd7f04aa23b01de5914fabdb16c3e7995db2ac85cfaf6b7a695135"
     },
     {
       "path": "data/runs/captured_claude_code/imp-claude-code-5a95de19f443/ledger.jsonl",
@@ -61596,7 +61596,7 @@
     {
       "path": "docker-compose.yml",
       "bytes": 1746,
-      "sha256": "fb061bd6356b072ddb4b2a700daebd517a3944f98b0ad99b1608ef9e11a1b8bf"
+      "sha256": "43fa349b776324a952b7c45dee3644fa11c3f8099d9081a50f6a5a456c372ce4"
     },
     {
       "path": "docs/CODESPACES.md",
@@ -61611,7 +61611,7 @@
     {
       "path": "docs/STUDENT_GUIDE.md",
       "bytes": 46936,
-      "sha256": "10c591f78a270947683912413f1e9305d2a0206f7f1eaa36b0e0fc0192c87861"
+      "sha256": "dfd52c73f07cf0ec3a8d1fb6eb7010580767340b9265434c4cfff686c0a68973"
     },
     {
       "path": "docs/img/guide/compare.png",
@@ -61826,7 +61826,7 @@
     {
       "path": "pyproject.toml",
       "bytes": 3207,
-      "sha256": "c4a31b5142003c88d444c9b7d852e86cbf8b448d5d2c6b179c1a2d179b7a1a39"
+      "sha256": "de0b6a9e3bb60ef36ff1ed83a315be8c488485080c382bdc4dce2915ee2fb628"
     },
     {
       "path": "requirements.txt",
@@ -61846,7 +61846,7 @@
     {
       "path": "scripts/check_install.py",
       "bytes": 4251,
-      "sha256": "e7b5a0b8bdc3fbaa34d0cf932a10ad8d9651946244c4402a8d5f3add3de017aa"
+      "sha256": "c8e1255d608e39a14cda7b32290db22f0645398ebfc1e06e87b44e6e1993b114"
     },
     {
       "path": "scripts/frontier_batch.py",
@@ -64031,7 +64031,7 @@
     {
       "path": "traceharness/__main__.py",
       "bytes": 47760,
-      "sha256": "15b6fb5ff7ac655a484181591974ee7f4dccbe8b5603afa1b3dff396c515c23f"
+      "sha256": "0b9902cbcda63818460896a6edc7007caec6812fb8edbbca92d78e877d4a619b"
     },
     {
       "path": "traceharness/agents/Dockerfile",
@@ -64411,7 +64411,7 @@
     {
       "path": "traceharness/capture/remote.py",
       "bytes": 12554,
-      "sha256": "cbf4aef647a02fc75eb31205504bb69771e26feaaf65f3985151f207b9b08ed0"
+      "sha256": "2f6d875bed4fda7829b03e3dec1906c08bb30a9f0970e4e6dab3cabb418c6dd6"
     },
     {
       "path": "traceharness/capture/sniffer.py",
