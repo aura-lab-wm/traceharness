@@ -49,7 +49,7 @@ function Home({ spec }) {
           <p>{fmt.plural(all.length, 'trajectory set')}. Recorded agents appear first; scripted mock controls stay labeled. Open a dataset to examine its analysis, then follow a result into its run evidence.</p></div>
         {!IS_STATIC && <Go spec="sources" className="rg-btn pri lg" el="load-trajectories-cta">Load trajectories</Go>}
       </div>
-      <section className="rg-card rg-home-design" data-el="harness-workflow" aria-label="Design from the evidence">
+      <section className="rg-card rg-home-design" data-fill data-el="harness-workflow" aria-label="Design from the evidence">
         <div className="rg-home-design-t">
           <h2>Design from the evidence</h2>
           <p>Open a run and choose Design a harness to keep a link back to it. {IS_MEMBER ? 'Choose a harness, compatible model and registered task in Harnesses. Save to your account, review the full configuration, then start a hosted run.' : 'Or begin with a fixed shell, six questions, or a block stack.'}</p>
@@ -68,12 +68,13 @@ function Home({ spec }) {
           <Seg el="dataset-filter" label="Dataset kind" value={f} onChange={setF}
             options={[['all', `All ${cnt('all')}`], ['recorded', `Recorded agents ${cnt('recorded')}`], ['mock', `Mock controls ${cnt('mock')}`]]} />
         </Toolbar>
-        <div className="rg-pnl rg-home-list" data-el="dataset-list">
+        <div className="rg-pnl rg-home-list" data-fill data-el="dataset-list">
           {list.length ? (
             <TableScroll label="Datasets" stickyCol={false}><table className="rg-tbl rg-home-tbl">
               <thead><tr><th>dataset</th><th className="rg-num">runs</th>
                 <th className="rg-num rg-home-pass" title="Known hidden-suite grades, every condition pooled; ungraded runs are excluded"><span className="rg-cq-hide-sm">pass (index)</span><span className="rg-cq-show-sm">pass</span></th>
                 <th className="rg-num rg-cq-hide-sm">tasks</th><th className="rg-num rg-cq-hide-md">harnesses</th><th className="rg-num rg-cq-hide-md">models</th>
+                <th className="rg-home-xl">harness names</th><th className="rg-home-xl">task names</th><th className="rg-home-xxl">runs per model</th>
                 <th className="rg-cq-hide-sm">updated</th><th className="rg-home-go rg-cq-hide-xs"><span className="sr-only">Open</span></th></tr></thead>
               <tbody>{list.map((r) => (
                 /* the whole row is a mouse target; the keyboard reaches the dataset through its name button,
@@ -91,6 +92,9 @@ function Home({ spec }) {
                     ? <span className="rg-home-ng">Not graded</span>
                     : <span className="rg-home-pr"><span className="rg-home-prt" aria-hidden="true"><i style={{ width: `${Math.max(0, Math.min(1, r.pass_rate)) * 100}%` }} /></span><span>{fmt.pct(r.pass_rate)}</span></span>}</td>
                   <td className="rg-num rg-cq-hide-sm">{r.tasks.length}</td><td className="rg-num rg-cq-hide-md">{r.harnesses.length}</td><td className="rg-num rg-cq-hide-md">{r.models.length}</td>
+                  <td className="rg-home-xl rg-home-list-cell" title={r.harnesses.join(', ')}>{r.harnesses.join(' · ')}</td>
+                  <td className="rg-home-xl rg-home-list-cell" title={r.tasks.join(', ')}>{r.tasks.slice(0, 4).join(' · ')}{r.tasks.length > 4 ? ` · +${r.tasks.length - 4}` : ''}</td>
+                  <td className="rg-home-xxl rg-home-list-cell" title={Object.entries(r.model_runs || {}).map(([m, n]) => `${m} ${n}`).join(', ')}>{Object.entries(r.model_runs || {}).map(([m, n]) => `${short(m)} ${fmt.int(n)}`).join(' · ')}</td>
                   <td className="rg-mono rg-cq-hide-sm rg-home-date">{String(r.updated || '').slice(0, 10) || 'not recorded'}</td>
                   <td className="rg-home-go rg-cq-hide-xs"><Go spec={makeSpec('ds', r.name)} className="rg-rowgo" el="dataset-open" label={`Open ${r.name}`}><Icon name="right" size={16} /></Go></td>
                 </tr>))}</tbody>

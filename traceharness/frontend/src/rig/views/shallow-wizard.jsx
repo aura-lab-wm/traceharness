@@ -77,7 +77,7 @@ function ShallowWizard({ args } = {}) {
       <EvidenceOrigin args={args} />
       <div className="rg-harness-toolbar"><span className="rg-small">Start with the recommended answers, then review your configuration.</span><button type="button" className="rg-btn pri" onClick={() => focusWorkspaceSection(summaryRef)}>Review configuration</button></div>
       {storageError && <p role="alert">{storageError}</p>}
-      <div className="rg-harness-layout">
+      <div className="rg-harness-layout" data-panes>
       <div ref={questionsRef} tabIndex={-1} className="rg-harness-questions" role="group" aria-label="Wizard answers">
         {QUESTIONS.map((row, index) => (
           <fieldset key={row.id} className="rg-harness-question" data-question={row.id} role="radiogroup" aria-label={row.prompt}>

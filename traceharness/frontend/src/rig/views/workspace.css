@@ -35,7 +35,9 @@
 /* Control and its chart side by side once the document is wide enough for both; stacked below that. */
 .rg-ws-2up{display:grid;grid-template-columns:minmax(0,1fr);gap:var(--rig-s6)}
 @container (min-width:1201px){
-  .rg-ws-2up{grid-template-columns:repeat(2,minmax(0,1fr));gap:var(--rig-s7);align-items:start}
+  .rg-ws-2up{grid-template-columns:repeat(2,minmax(0,1fr));gap:var(--rig-s7);align-items:stretch}
+  /* panes of a row end together: the caption or last block of each pane sits on the shared bottom edge */
+  .rg-ws-2up>.rg-ws-col760>:last-child{margin-top:auto}
   .rg-ws-2up>.rg-ws-col760{max-width:none}
   .rg-ws-2up>.rg-ws-col760>.rg-ws-h3:first-child{margin-top:0}
 }
@@ -45,7 +47,7 @@
 .rg-ws-kv dd{overflow-wrap:anywhere;min-width:0}
 /* a narrow box: each term above its value, so a long path wraps over the full width */
 @container (max-width:480px){.rg-ws .rg-ws-kv{grid-template-columns:minmax(0,1fr);row-gap:0}.rg-ws .rg-ws-kv dd{margin-bottom:var(--rig-s2)}}
-.rg-ws-kpis{--rig-col-min:13rem;max-width:72rem}
+.rg-ws-kpis{--rig-col-min:13rem}
 
 /* disclosure: long explanations sit behind "About …"; the summary is a full-height target */
 .rg-ws-about{max-width:var(--rig-measure);min-width:0}
@@ -256,8 +258,10 @@
    so between 640 and 1200 nothing stretches to a 760px field (HA-10). Fields keep a form measure.
    The two key panels (.rg-ws-keys) share their rows through subgrid: key field beside key field,
    buttons beside buttons, however long either description is. */
-.rg-ws-set{display:grid;grid-template-columns:minmax(0,1fr);gap:var(--rig-s6) var(--rig-s7);align-items:start;min-width:0;max-width:48rem}
+.rg-ws-set{display:grid;grid-template-columns:minmax(0,1fr);gap:var(--rig-s6) var(--rig-s7);align-items:stretch;min-width:0;max-width:48rem}
 .rg-ws-set>*{min-width:0}
+/* side by side, sections end together: the last block of the shorter one sits on the shared bottom edge */
+.rg-ws-set>.rg-ws-sec>:last-child{margin-top:auto}
 .rg-ws-settings .rg-ws-form,.rg-ws-keyf,.rg-ws-settings .rg-ws-kv{max-width:36rem}
 @container (min-width:901px){.rg-ws-set{grid-template-columns:repeat(2,minmax(0,1fr));max-width:none}}
 .rg-ws-keys{row-gap:0}

@@ -33,12 +33,14 @@ export function useSize(ref) {
 /** <Split side={<nav/>} sideWidth="280px" collapse="sm|md|lg" end? even? flush? sideLabel?>main</Split>
  *  Side + main. Stacks to one column when its container is narrower than 640 / 900 (default) /
  *  1200px, so neither pane drops under ~320px. `end` puts the side on the right (and after the
- *  main content when stacked); `even` makes two equal panes. */
-export function Split({ side, children, sideWidth, collapse = 'md', end, even, flush, sideLabel, className, el }) {
+ *  main content when stacked); `even` makes two equal panes; `scroll` makes the side pane exactly as tall
+ *  as the main one (top and bottom aligned) and scrolls it inside, for a long list beside a short card;
+ *  `fill` makes the side pane as tall as the main one and sits its last block on the shared bottom edge. */
+export function Split({ side, children, sideWidth, collapse = 'md', end, even, flush, scroll, fill, sideLabel, className, el }) {
   const aside = <aside className="rg-split-side" aria-label={sideLabel}>{side}</aside>
   return (
-    <div className={cx('rg-split', collapse === 'sm' && 'rg-split-sm', collapse === 'lg' && 'rg-split-lg', end && 'rg-split-end', even && 'rg-split-even', flush && 'rg-split-flush', className)}
-      style={sideWidth ? { '--rig-side': sideWidth } : undefined} data-el={el}>
+    <div className={cx('rg-split', collapse === 'sm' && 'rg-split-sm', collapse === 'lg' && 'rg-split-lg', end && 'rg-split-end', even && 'rg-split-even', scroll && 'rg-split-scroll', fill && 'rg-split-fill', flush && 'rg-split-flush', className)}
+      style={sideWidth ? { '--rig-side': sideWidth } : undefined} data-el={el} data-panes>
       {!end && aside}<div className="rg-split-main">{children}</div>{end && aside}
     </div>
   )
@@ -230,7 +232,7 @@ export function ActionBar({ actions, label = 'Actions', moreLabel = 'More', clas
  *  that wraps to as many rows as it needs with a hairline between tiles and no empty cell.
  *  A missing value is drawn as an em dash, never as zero. `lead` marks the one large figure. */
 export function Kpis({ label, className, el, children }) {
-  return <div className={cx('rg-kpis', className)} role="group" aria-label={label} data-el={el}>{children}</div>
+  return <div className={cx('rg-kpis', className)} data-panes role="group" aria-label={label} data-el={el}>{children}</div>
 }
 export function Kpi({ label, value, unit, hint, lead, tone, el, children }) {
   return (

@@ -739,7 +739,7 @@ function TaskDoc({ spec, args }) {
   else body = <ChooseAttempt att={att} idx={idx} oracle={oracle} runs={R.data} />
   const exportWhy = det.error ? 'Needs the ledger, which did not load. Retry above.' : 'Waiting for the ledger to load.'
   return (
-    <div className="rg-traj-split">
+    <div className="rg-traj-split" data-panes>
       <aside className="rg-traj-nav" data-el="task-nav" aria-label="Tasks">
         <div className="rg-traj-nav-top">
           <Go spec={makeSpec('tasks', ...b)} className="rg-btn ghost rg-traj-back" el="back-to-tasks">← All task outcomes</Go>
@@ -1029,7 +1029,7 @@ function SpanDoc({ spec, args }) {
         </ActionBar>
       </header>
       <RecordingProvenance runs={[run]} />
-      <Split end sideWidth="22rem" sideLabel="All events" side={(
+      <Split end scroll sideWidth="22rem" sideLabel="All events" side={(
         <Panel label="All events" meta={`${spans.length} spans`} flush className="rg-traj-spanlist">
           <div className="rg-traj-evs">
             {spans.map((x) => (
@@ -1221,7 +1221,7 @@ function CmpDoc({ spec, args }) {
       )
     })
     div = (
-      <Split sideWidth="20rem" sideLabel="First divergence" side={(
+      <Split fill sideWidth="20rem" sideLabel="First divergence" side={(
         <div className="rg-traj-stack-s">
           <div className="rg-pnl rg-traj-verdict"><div className="rg-pnl-h"><span className="rg-lbl rg-amb">First divergence</span></div>
             <div className="rg-pnl-b"><div className="rg-fig md amb">{c.level === 'reply' ? 'text only' : first < 0 ? 'no fork' : 'step ' + (c.fork + 1)}</div>
@@ -1308,7 +1308,7 @@ function ForkDoc({ spec, args }) {
           <p>The steps before the edit would be replayed from the recorded ledger; everything after it would be a new live run under the harness you choose.</p></div></header>
         {asked != null && String(seq) !== asked && <Note>Run {sfx(run.id)} has no model call, tool call or edit at #{asked}, so the fork starts at step #{seq} instead. Pick any step on the left.</Note>}
       </div>
-      <Split sideWidth="24rem" sideLabel="Steps of the run" side={(
+      <Split fill sideWidth="24rem" sideLabel="Steps of the run" side={(
         <Panel label="Pick the step to change" meta={`${steps.length} steps`} flush className="rg-traj-forklist">
           <div className="rg-traj-evs">
             {steps.map((x) => {

@@ -1,4 +1,5 @@
 import { useEffect, useId, useMemo, useRef, useState } from 'react'
+import { below } from '../displayClasses'
 import { api, IS_MEMBER } from '../../api'
 import { requireStored, encodeMemberJSON } from '../../member-api'
 import { runnerRequest, runnerCatalog, decodeRunnerArtifact, RUNNER_ARTIFACT_NAMES, UNAVAILABLE_RUNNER } from '../../runner-api'
@@ -85,7 +86,7 @@ export function HarnessComposer({ args = [] }) {
   const [expandedPrompt, setExpandedPrompt] = useState(false)
   const [checkpointData, setCheckpointData] = useState(loadCheckpoints)
   const [showCheckpoints, setShowCheckpoints] = useState(false)
-  const [mobileSetup, setMobileSetup] = useState(() => window.matchMedia?.('(max-width: 760px)').matches || false)
+  const [mobileSetup, setMobileSetup] = useState(() => window.matchMedia?.(below('tablet')).matches || false)
   const [setupExpanded, setSetupExpanded] = useState(false)
   const [comparedCheckpoint, setComparedCheckpoint] = useState('')
   const [deletedCheckpoint, setDeletedCheckpoint] = useState(null)
@@ -199,7 +200,7 @@ export function HarnessComposer({ args = [] }) {
 
 
   useEffect(() => {
-    const media = window.matchMedia?.('(max-width: 760px)')
+    const media = window.matchMedia?.(below('tablet'))
     if (!media) return
     const changed = () => setMobileSetup(media.matches)
     media.addEventListener('change', changed)
@@ -665,7 +666,7 @@ export function HarnessComposer({ args = [] }) {
     {saved && saved.key === harnessContentKey(configuration.harness.blocks) && <p role="status">{saved.message}</p>}{error && <p role="alert">{error}{error.includes('account changed') && <> <a href="/login">Account</a></>}</p>}
     {mobileSetup && <section className="rg-composer-setup-summary" aria-label="Selected configuration"><dl><div><dt>Harness</dt><dd>{harnessOptions.find((row) => row.value === state.selection)?.label || state.selection}</dd></div><div><dt>Model</dt><dd>{model?.name || state.model_id || 'Not selected'}</dd></div><div><dt>Task</dt><dd>{task?.title || state.task_id || 'Not selected'}</dd></div></dl><button type="button" className="rg-btn" aria-expanded={setupExpanded} aria-controls={instanceId + '-selections'} onClick={() => setSetupExpanded((value) => !value)}>{setupExpanded ? 'Done selecting' : 'Edit selections'}</button></section>}
     <div id={instanceId + '-selections'} className="rg-composer-setup" hidden={mobileSetup && !setupExpanded}>
-    <div className="rg-composer-selectors">
+    <div className="rg-composer-selectors" data-panes data-fill>
       <HarnessPicker label="Harness" step="01" value={state.selection} options={harnessOptions} onChange={chooseHarness} disabled={editLocked} searchPlaceholder="Search presets, saved harnesses and native agents" hint={native ? 'Native runtime · ' + (runtime?.version || 'version not connected') : fixed ? 'TraceHarness preset. This is not the vendor runtime.' : 'Your own tools, instructions and limits.'} />
       <HarnessPicker label="Model" step="02" value={state.model_id} options={modelOptions} onChange={(model_id) => setState((s) => ({ ...s, model_id }))} disabled={editLocked} loading={catalogLoading} placeholder={catalog.models.length ? 'Choose an OpenRouter model' : 'Model catalog unavailable'} searchPlaceholder="Search models or providers" emptyMessage="No models match this search" hint={model ? `${model.id} · ${units(model.pricing?.prompt)} in / ${units(model.pricing?.completion)} out per 1M tokens` : 'Search by model name or provider.'} />
       <HarnessPicker label="Task" step="03" value={state.task_id} options={taskOptions} onChange={(task_id) => setState((s) => ({ ...s, task_id }))} disabled={editLocked} loading={catalogLoading} placeholder={catalog.tasks.length ? 'Choose a task package' : 'No runnable task packages connected'} searchPlaceholder="Search tasks or repositories" emptyMessage={catalog.tasks.length ? 'No tasks match this search' : 'No runnable task packages connected. A task needs source code, a pinned revision and a grading environment.'} hint={task ? `${task.repository || task.id} · ${task.revision || 'revision not verified'}` : 'Use a registered repository task with a pinned revision and grader.'} />
@@ -676,7 +677,7 @@ export function HarnessComposer({ args = [] }) {
     {configNotice && <div className="rg-note rg-composer-import-status" role="status"><p>{configNotice}</p>{undoConfiguration && <button className="rg-btn" disabled={editLocked} onClick={undoEditorChange}>Undo configuration change</button>}</div>}
     {(model || task) && <details className="rg-composer-details"><summary>Selection details</summary><dl>{model && <><div><dt>Model</dt><dd>{model.id}</dd></div>{Number.isFinite(model.context_length) && <div><dt>Context window</dt><dd>{model.context_length.toLocaleString()} tokens</dd></div>}<div><dt>Task/runtime compatibility</dt><dd>{selectedModelAllowed ? 'Verified for this task and runtime' : !task ? 'Choose a task to check this model' : compatibility.status}</dd></div></>}{task && <><div><dt>Repository</dt><dd>{task.repository || 'Not supplied'}</dd></div><div><dt>Revision</dt><dd>{task.revision || 'Not verified'}</dd></div>{(task.environment_digests?.[configuration.runtime_id] || task.environment_digest) && <div><dt>Environment</dt><dd>{task.environment_digests?.[configuration.runtime_id] || task.environment_digest}</dd></div>}{Array.isArray(task.runtime_ids) && <div><dt>Task runtimes</dt><dd>{task.runtime_ids.join(', ') || 'None registered'}</dd></div>}{task.reason && <div><dt>Task status</dt><dd>{task.reason}</dd></div>}</>}</dl></details>}
     {(storageError || accountError) && <div className="rg-note" role="alert">{storageError || accountError}{accountError && <><button className="rg-btn" onClick={() => setAccountRevision((n) => n + 1)}>Retry account data</button><a href="/login">Account</a></>}</div>}
-    <div className="rg-split rg-split-end rg-composer-layout">
+    <div className="rg-split rg-split-end rg-composer-layout" data-panes>
       <section className="rg-split-main rg-composer-editor" aria-label="Configuration editor">
         <section className={`rg-pnl rg-composer-prompt${expandedPrompt ? ' is-expanded' : ''}`}><div className="rg-pnl-h"><h2>{native && configuration.prompt_mode === 'append' ? 'Additional instructions' : 'Standing prompt'}</h2><span className="meta">{native ? configuration.prompt_mode === 'append' ? 'Appended to native instructions' : 'Runtime prompt override' : fixed ? 'Fixed shell · prompt only' : 'TraceHarness instructions'}</span></div><div className="rg-pnl-b">
           <div className="rg-row rg-wrap rg-composer-prompt-actions"><button className="rg-btn ghost" aria-expanded={expandedPrompt} onClick={() => setExpandedPrompt((value) => !value)}>{expandedPrompt ? 'Reduce editor' : 'Expand editor'}</button>{fixed && card && <button className="rg-btn" disabled={editLocked || prompt === card.prompt} onClick={resetFixedPrompt}>Reset prompt</button>}
