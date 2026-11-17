@@ -250,3 +250,20 @@ it('exports CSV with one row per trial and Markdown with the caveats', async () 
   expect(markdown).toContain('## Caveats')
   expect(markdown).toContain('does not show that an intervention improves task performance')
 })
+
+it('labels an experiment from its frozen arm manifests when trial job summaries carry none', async () => {
+  const build = (verified) => {
+    const record = exp(); record.status = 'completed'; record.trial_count = 2
+    record.plan = { ...record.plan, arms: record.plan.arms.map((arm) => ({ ...arm, manifest_sha256: 'c'.repeat(64), manifest: { runtime_id: 'traceharness', verified: arm.id === 'variant' ? verified : true } })) }
+    record.trials = [{ id: 'one', repeat: 1, arm_id: 'control', status: 'succeeded', issues: [], job: { grade: 'passed', usage: {}, issues: [] } }, { id: 'two', repeat: 1, arm_id: 'variant', status: 'succeeded', issues: [], job: { grade: 'passed', usage: {}, issues: [] } }]
+    return record
+  }
+  for (const [verified, text] of [[false, 'Not verified on this machine'], [true, 'Verified']]) {
+    const record = build(verified)
+    runnerRequest.mockImplementation(async (path) => path === '/experiments' ? { experiments: [record] } : { experiment: record })
+    const view = render(<PairedExperiments configuration={configuration()} available lease={{ current: false }} />)
+    await open(); fireEvent.click(await screen.findByRole('button', { name: /aaaaaaaa · completed/ }))
+    await waitFor(() => expect(document.querySelector('[data-el="paired-verified"]')?.textContent).toBe(text))
+    view.unmount()
+  }
+})

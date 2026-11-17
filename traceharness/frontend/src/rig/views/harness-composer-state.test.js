@@ -277,6 +277,16 @@ describe('consent to run without a receipt', () => {
     expect(configurationFor(state({ unverified_ok: true }), {}).unverified_ok).toBe(true)
     expect(initialComposer([]).unverified_ok).toBe(false)
   })
+  it('does not travel with an in-process task (run.local), but does with a container or native one', () => {
+    const consent = state({ unverified_ok: true })
+    const inProcess = { id: 't01', ready: true, runtime_ids: ['traceharness'] }
+    const container = { id: 'reg', ready: true, runtime_ids: ['traceharness'], environment_digests: { traceharness: 'sha256:' + 'a'.repeat(64) } }
+    expect(configurationFor(consent, { task: inProcess })).not.toHaveProperty('unverified_ok')
+    expect(configurationFor(consent, { task: container }).unverified_ok).toBe(true)
+    // The transition: same consent state, container task chosen, then an in-process task.
+    expect(configurationFor(consent, { task: container }).unverified_ok).toBe(true)
+    expect(configurationFor(consent, { task: inProcess })).not.toHaveProperty('unverified_ok')
+  })
   it('round-trips through export and import, and rejects a non-boolean', () => {
     const withConsent = configurationFor(state({ unverified_ok: true }), {})
     const parsed = parseConfiguration(configurationText(withConsent))

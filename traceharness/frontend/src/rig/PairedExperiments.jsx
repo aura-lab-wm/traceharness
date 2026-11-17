@@ -11,7 +11,7 @@ import { copyText, downloadText } from './native/ui/download'
 import { experimentNameStorage, readExperimentNames, rememberExperimentName } from './native/ui/experiment-names'
 import { formatDate, formatKiB, plural } from './native/ui/format'
 import { pendingPairing, subscribePairing, takePairing } from './native/ui/pairing-bus'
-import { UNVERIFIED_LABEL, needsReceiptConsent, verificationLabel, withUnverified } from '../runner-compatibility'
+import { UNVERIFIED_LABEL, experimentVerification, needsReceiptConsent, withUnverified } from '../runner-compatibility'
 import { ResultsMatrix, readableExperiment, roleWords } from './native/ui/ResultsMatrix'
 import './PairedExperiments.css'
 
@@ -301,7 +301,7 @@ export function PairedExperiments({ configuration, credential, credentialRequire
           {!experiment && <p className="rg-pe-note">Freeze a reviewed plan, or open a saved experiment below, to run it and read its results here.</p>}
           {experiment && <section aria-label="Experiment results">
             <div className="rg-pe-result-head"><h4>{experiment.plan.name}</h4><strong>{String(experiment.status).replaceAll('_', ' ')}</strong></div>
-            {(() => { const manifests = experiment.trials.map((trial) => trial.job?.manifest).filter(Boolean); const label = manifests.some((m) => m.verified === false) ? 'Not verified on this machine' : manifests.length && manifests.every((m) => verificationLabel(m) === 'Verified') ? 'Verified' : ''; return label && <p className="rg-pe-note" data-el="paired-verified">{label}</p> })()}
+            {(() => { const label = experimentVerification(experiment); return label && <p className="rg-pe-note" data-el="paired-verified">{label}</p> })()}
             <p className="rg-pe-note">Plan <Id value={experiment.plan_sha256} max={24} head={12} tail={8} /></p>
             <ActionBar label="Experiment actions" actions={runControls} moreLabel="Export" />
             {credentialRequired && !credential && ['ready', 'paused'].includes(experiment.status) && <p>Connect OpenRouter above before starting.</p>}
