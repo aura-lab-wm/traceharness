@@ -8,7 +8,7 @@ import { planBudget } from './native/budget'
 import { experimentCsv, experimentMarkdown } from './native/experiment-stats'
 import { canonicalJSON, sha256HexSync } from './native/profile-model'
 import { copyText, downloadText } from './native/ui/download'
-import { experimentNameScope as memberScope, experimentNameStorage, readExperimentNames, rememberExperimentName } from './native/ui/experiment-names'
+import { experimentNameStorage, readExperimentNames, rememberExperimentName } from './native/ui/experiment-names'
 import { formatDate, formatKiB, plural } from './native/ui/format'
 import { pendingPairing, subscribePairing, takePairing } from './native/ui/pairing-bus'
 import { ResultsMatrix, readableExperiment, roleWords } from './native/ui/ResultsMatrix'
@@ -59,7 +59,7 @@ function scheduleRounds(plan) {
   return [...rounds.entries()].sort((left, right) => left[0] - right[0])
 }
 
-export function PairedExperiments({ configuration, credential, available, disabled, lease }) {
+export function PairedExperiments({ configuration, credential, credentialRequired = true, available, disabled, lease }) {
   const [open, setOpen] = useState(false)
   const [name, setName] = useState('Native prompt comparison')
   const [label, setLabel] = useState('Control')
@@ -77,7 +77,7 @@ export function PairedExperiments({ configuration, credential, available, disabl
   const [busTick, setBusTick] = useState(0)
   const [focusArms, setFocusArms] = useState(0)
   const [storage] = useState(experimentNameStorage)
-  const [names, setNames] = useState(() => readExperimentNames(storage, memberScope()))
+  const [names, setNames] = useState(() => readExperimentNames(storage))
   const pendingCreate = useRef(null)
   const uncertainStart = useRef(null)
   const mounted = useRef(true)
@@ -141,7 +141,7 @@ export function PairedExperiments({ configuration, credential, available, disabl
   const changed = (setter) => (event) => { generation.current++; setter(event.target.value); setReview(null); setBusy(false) }
   const editArms = (next) => { generation.current++; setArms(next); setReview(null); setBusy(false) }
   function remember(next) {
-    if (rememberExperimentName(storage, memberScope(), next.id, next.plan?.name)) setNames(readExperimentNames(storage, memberScope()))
+    if (rememberExperimentName(storage, next.id, next.plan?.name)) setNames(readExperimentNames(storage))
   }
   function prepare(variantLabel, includeNoneIncluded, origin) {
     try {
@@ -185,7 +185,7 @@ export function PairedExperiments({ configuration, credential, available, disabl
   }) }
   function control(operation) { action(async (request) => {
     if (operation === 'start') { lease.reserve?.(experiment.id); uncertainStart.current = experiment.id; lease.current = true }
-    const body = operation === 'start' ? { credential_id: credential.credential_id, plan_sha256: experiment.plan_sha256 } : {}
+    const body = operation === 'start' ? { ...(credentialRequired ? { credential_id: credential.credential_id } : {}), plan_sha256: experiment.plan_sha256 } : {}
     try {
       const data = await runnerRequest('/experiments/' + experiment.id + '/' + operation, { method: 'POST', body })
       const next = checkedExperiment(data.experiment, experiment.id)
@@ -226,7 +226,7 @@ export function PairedExperiments({ configuration, credential, available, disabl
   }
   const armSummary = (arm) => armProfileSummary(arm)
   const runControls = experiment && [
-    { label: experiment.status === 'paused' ? 'Resume experiment' : 'Start experiment', primary: true, onClick: () => control('start'), disabled: busy || !credential || !['ready', 'paused'].includes(experiment.status) },
+    { label: experiment.status === 'paused' ? 'Resume experiment' : 'Start experiment', primary: true, onClick: () => control('start'), disabled: busy || (credentialRequired && !credential) || !['ready', 'paused'].includes(experiment.status) },
     { label: 'Refresh experiment', onClick: () => load(experiment.id), disabled: busy },
     { label: 'Cancel experiment', onClick: () => control('cancel'), disabled: busy || ['completed', 'cancelled'].includes(experiment.status) },
     { label: 'Export experiment results', onClick: () => exportAs('json'), title: 'The whole experiment as JSON', more: true },
@@ -300,7 +300,7 @@ export function PairedExperiments({ configuration, credential, available, disabl
             <div className="rg-pe-result-head"><h4>{experiment.plan.name}</h4><strong>{String(experiment.status).replaceAll('_', ' ')}</strong></div>
             <p className="rg-pe-note">Plan <Id value={experiment.plan_sha256} max={24} head={12} tail={8} /></p>
             <ActionBar label="Experiment actions" actions={runControls} moreLabel="Export" />
-            {!credential && ['ready', 'paused'].includes(experiment.status) && <p>Connect OpenRouter above before starting.</p>}
+            {credentialRequired && !credential && ['ready', 'paused'].includes(experiment.status) && <p>Connect OpenRouter above before starting.</p>}
             {experiment.issues.map((issue, index) => <p role="alert" key={index}>{issue}</p>)}
             <p className="rg-pe-note">{experiment.summary.finalized_trials} finalized · {experiment.summary.pending_trials} pending · {experiment.summary.active_trials} active</p>
             <p className="rg-pe-note">Confirmed cost subtotal: {money(experiment.summary.confirmed_cost_usd)} · {plural(experiment.summary.cost_unknown_trials, 'trial')} with unconfirmed cost</p>

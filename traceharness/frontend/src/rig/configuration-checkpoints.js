@@ -1,4 +1,4 @@
-import { encodeMemberJSON } from '../member-api'
+import { encodeJSON } from '../json'
 import { configurationText, parseConfiguration } from './views/harness-composer-state'
 import { draftKey, readDraft, writeDraft } from './views/shallow-drafts'
 
@@ -16,7 +16,7 @@ const configurationCopy = (configuration) => parseConfiguration(typeof configura
 // the loopback draft helper uses JSON.stringify instead of the member encoder.
 const storedRecord = (row) => ({ ...row, configuration: configurationText(row.configuration) })
 const envelope = (checkpoints) => ({ version: 1, checkpoints: checkpoints.map(storedRecord) })
-const emptyBytes = bytes(encodeMemberJSON(envelope([])))
+const emptyBytes = bytes(encodeJSON(envelope([])))
 
 function checkedName(value) {
   if (typeof value !== 'string' || /[\p{Cc}\p{Cf}\p{Cs}]/u.test(value)) fail('Use a checkpoint name without control or invisible formatting characters.')
@@ -46,7 +46,7 @@ function checkedCollection(checkpoints) {
       .some((descriptor) => !descriptor || !Object.hasOwn(descriptor, 'value'))) fail('The checkpoint list contains missing records or unsupported fields.')
   const checked = checkpoints.map(checkedRecord)
   if (new Set(checked.map((row) => row.id)).size !== checked.length) fail('Checkpoint identities must be unique.')
-  if (bytes(encodeMemberJSON(envelope(checked))) > CHECKPOINT_MAX_BYTES) fail('Checkpoints exceed this tab’s 2 MiB limit. Delete a checkpoint or export a configuration first.')
+  if (bytes(encodeJSON(envelope(checked))) > CHECKPOINT_MAX_BYTES) fail('Checkpoints exceed this tab’s 2 MiB limit. Delete a checkpoint or export a configuration first.')
   return checked
 }
 
@@ -72,7 +72,7 @@ export function loadCheckpoints() {
     if (checkpoints.length === CHECKPOINT_LIMIT) break
     try {
       const record = checkedRecord(candidate)
-      const nextSize = size + bytes(encodeMemberJSON(storedRecord(record))) + (checkpoints.length ? 1 : 0)
+      const nextSize = size + bytes(encodeJSON(storedRecord(record))) + (checkpoints.length ? 1 : 0)
       if (ids.has(record.id) || nextSize > CHECKPOINT_MAX_BYTES) continue
       checkpoints.push(record); ids.add(record.id); size = nextSize
     } catch { /* Reject the record without echoing potentially secret content. */ }

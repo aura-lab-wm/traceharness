@@ -1,5 +1,6 @@
 import { useEffect, useId, useMemo, useRef, useState } from 'react'
 import { runnerRequest } from '../runner-api'
+import { isolationLabel } from '../isolation'
 import { ActionBar, Field, Icon } from './ui'
 import { expiryTime } from './views/harness-composer-state'
 import {
@@ -91,6 +92,7 @@ function describeTrialIdentity(trial, arm) {
   }
 
   return {
+    isolation: isolationLabel(manifest),
     runtimeLine: `${runtimeId}${runtimeVersion} · ${modelId}`,
     taskLine: `${taskId}${taskRevision}${mode ? ' · ' + mode : ''}`,
   }
@@ -144,6 +146,7 @@ export function ExperimentWorkspace({
   configuration,
   catalog,
   credential = null,
+  credentialRequired = true,
   available = false,
   disabled = false,
   lease,
@@ -205,7 +208,7 @@ export function ExperimentWorkspace({
     return () => window.clearTimeout(timer)
   }, [credentialExpiresAtMs])
 
-  const credentialReady = Boolean(credential?.credential_id)
+  const credentialReady = !credentialRequired || Boolean(credential?.credential_id)
     && (credential.expires_at === undefined || (Number.isFinite(credentialExpiresAtMs) && credentialExpiresAtMs > nowMs))
 
   const modelOptions = useMemo(() => {
@@ -523,7 +526,7 @@ export function ExperimentWorkspace({
       const response = await runnerRequest(`/experiments/${targetId}/start`, {
         method: 'POST',
         body: {
-          credential_id: credential.credential_id,
+          ...(credentialRequired ? { credential_id: credential.credential_id } : {}),
           plan_sha256: experiment.plan_sha256,
         },
       })
@@ -1093,7 +1096,7 @@ export function ExperimentWorkspace({
               />
 
               {uncertainStart && <p role="status" className="rg-matrix-issue">Start outcome is unconfirmed. Refresh the experiment before taking another start action.</p>}
-              {!credentialReady && ['ready', 'paused'].includes(experiment.status) && (
+              {credentialRequired && !credentialReady && ['ready', 'paused'].includes(experiment.status) && (
                 <p className="rg-matrix-hint">
                   Connect an active OpenRouter key above before starting or resuming this frozen experiment.
                 </p>
@@ -1161,7 +1164,7 @@ export function ExperimentWorkspace({
                           </td>
                           <td className="rg-matrix-id">
                             <div className="rg-matrix-identity">
-                              <span>{identity.runtimeLine}</span>
+                              <span>{identity.runtimeLine}</span>{identity.isolation && <span data-el="trial-isolation">{identity.isolation}</span>}
                               <span>{identity.taskLine}</span>
                               <code title={trial.manifest_sha256}>{trial.manifest_sha256}</code>
                             </div>

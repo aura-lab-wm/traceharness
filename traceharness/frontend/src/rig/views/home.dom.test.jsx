@@ -53,14 +53,14 @@ describe('home · dataset library', () => {
   it('labels where each dataset is available, from the row\'s availability (SPEC 4.8)', () => {
     const data = rigFixture()
     const [mini, mock] = data['/overview'].results
-    mini.availability = ['hosted', 'school']
+    mini.availability = ['school']
     mock.availability = []
     const { container } = renderRig('#/rig/home', { data })
     const rows = [...container.querySelectorAll('[data-el="dataset-list"] tbody tr')]
     const chips = (row) => [...row.querySelectorAll('[data-el="dataset-availability"]')].map((c) => c.textContent)
-    expect(chips(rows[0])).toEqual(['on traceharness.dev', 'school package'])
+    expect(chips(rows[0])).toEqual(['school package'])
     expect(chips(rows[1])).toEqual(['this computer only'])
-    // the local console lists every directory it has; nothing is "not in this snapshot"
+    // the local console lists every directory it has; nothing is "not in this export"
     expect(container.querySelector('[data-el="datasets-not-here"]')).toBeNull()
   })
   it('shows no availability chip when the server did not say (an older server or snapshot)', () => {

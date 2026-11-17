@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 /* Every view in every mode (SPEC 4.2, §5 WP2 step 6).
 
-   For each mode the console runs in (local, export, member) the modules are loaded fresh with that
+   For each mode the console runs in (local, export) the modules are loaded fresh with that
    mode's window globals, and every view kind in the registry, the nine analysis steps (AN_VIEWS) and
    the four dock panels are rendered through test/rig-testing.jsx on its small fixture. Each must:
      - render without throwing (no shell crash, no per-tab "this view failed" boundary);
@@ -18,8 +18,7 @@ import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest'
 const NOT_RENDERED = {}
 /** Views owned by the harness package: rendered, not asserted on (their findings are printed). */
 const HARNESS_VIEWS = new Set(['blocks', 'harnesses', 'shallowApply', 'shallowCards', 'shallowWizard'])
-const MODES = ['local', 'export', 'member']
-const SCOPE = '9'.repeat(24)
+const MODES = ['local', 'export']
 const M1 = 'alpha-1', H = 'baseline', RUN = 'a00000', RUN2 = 'a00001'
 
 /** One spec per registered kind, on the fixture's "mini" dataset. */
@@ -32,16 +31,13 @@ const SPECS = {
 const DOCKS = ['buddy', 'log', 'capture', 'case']
 
 function setMode(mode) {
-  delete window.__TRACEHARNESS_MEMBER__
   delete window.__TRACEHARNESS_DATA__
   if (mode !== 'local') window.__TRACEHARNESS_DATA__ = {}
-  if (mode === 'member') window.__TRACEHARNESS_MEMBER__ = { version: 1, scope: SCOPE }
 }
 
 const report = { rendered: {}, notRendered: NOT_RENDERED, harnessFindings: [] }
 
 afterAll(() => {
-  delete window.__TRACEHARNESS_MEMBER__
   delete window.__TRACEHARNESS_DATA__
 })
 

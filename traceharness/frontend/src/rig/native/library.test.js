@@ -24,8 +24,8 @@ beforeEach(() => vi.stubGlobal('crypto', webcrypto))
 afterEach(() => vi.unstubAllGlobals())
 
 describe('library keys', () => {
-  it('uses one key per member scope and refuses a scope that is not storage-safe', () => {
-    expect(libraryKey(SCOPE)).toBe('traceharness.native.member.0123456789abcdef01234567.library.v1')
+  it('uses one key per scope and refuses a scope that is not storage-safe', () => {
+    expect(libraryKey(SCOPE)).toBe('traceharness.native.scope.0123456789abcdef01234567.library.v1')
     expect(libraryKey(null)).toBe('traceharness.native.library.v1')
     expect(libraryKey('')).toBe('traceharness.native.library.v1')
     for (const scope of ['a.b', '../x', '__proto__.x', 'x'.repeat(65), 7, 'space here']) expect(() => libraryKey(scope)).toThrow('storage-safe')

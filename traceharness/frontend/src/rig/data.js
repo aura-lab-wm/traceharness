@@ -16,7 +16,7 @@
    * Normalised shapes (same names the prototype's D used):
        Dataset row  { name, runs, harnesses[], models[], tasks[], pass_rate, updated,
                       kind: 'recorded'|'mock',
-                      availability,           // subset of ['hosted', 'school'] (SPEC 4.8), or null
+                      availability,           // subset of ['school'] (SPEC 4.8), or null
                                               //   when the server did not say (never guessed)
                       updated_source }        // 'runs' | 'unknown' (SPEC 4.7), or null; an empty
                                               //   `updated` is shown as "not recorded" 
@@ -232,7 +232,7 @@ function once(obj, tag, fn) {
 }
 
 /** Where a dataset is published besides this computer (SPEC 4.8). Unknown words are dropped. */
-const PLACES = ['hosted', 'school']
+const PLACES = ['school']
 const placesOf = (a) => (Array.isArray(a) ? PLACES.filter((p) => a.includes(p)) : null)
 const DATE_SOURCES = ['runs', 'unknown']
 

@@ -1,4 +1,4 @@
-import { encodeMemberJSON } from '../member-api'
+import { encodeJSON } from '../json'
 import { checkedNativeProfile } from '../native-prompts-contract'
 import { taskCompatibility } from '../runner-compatibility'
 import { fieldIssues, numberIssue } from './harnessFields'
@@ -58,7 +58,7 @@ const keysMatch = (value, required, optional = []) => plain(value)
 const utf8Bytes = (text) => new TextEncoder().encode(text).length
 const roundUsd = (value) => Math.round(value * 1e8) / 1e8
 const hasControls = (value) => /[\p{Cc}\p{Cf}\p{Cs}]/u.test(value)
-const cloneConfiguration = (value) => JSON.parse(encodeMemberJSON(value))
+const cloneConfiguration = (value) => JSON.parse(encodeJSON(value))
 
 function checkUnicode(text) {
   for (let i = 0; i < text.length; i++) {
@@ -427,7 +427,7 @@ export function matrixPlanDraft({ name, seed, repeats, budgetUsd, cells }) {
     budget_usd: parsedBudget,
     arms,
   }
-  const bytes = utf8Bytes(encodeMemberJSON(plan))
+  const bytes = utf8Bytes(encodeJSON(plan))
   if (bytes > MAX_PLAN_BYTES) {
     fail(`Experiment plan is ${(bytes / 1024).toFixed(1)} KiB, exceeding the 768 KiB limit. Shorten prompts or reduce matrix arms.`)
   }

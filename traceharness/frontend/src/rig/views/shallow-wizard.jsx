@@ -1,8 +1,8 @@
 /* Door 2. Six questions, recommended answer first. MCP stays off. */
 import { useEffect, useRef, useState } from 'react'
-import { api, IS_MEMBER } from '../../api'
+import { api } from '../../api'
 import { HAS_LIBRARY, LIBRARY } from '../../environment'
-import { requireStored } from '../../member-api'
+import { requireStored } from '../../json'
 import { Go } from '../ui'
 import { EvidenceOrigin, evidenceOrigin, withEvidenceOrigin } from '../shallowEvidence'
 import { QUESTIONS, blocksFromAnswers } from './shallow-data.js'
@@ -109,10 +109,10 @@ function ShallowWizard({ args } = {}) {
       {HAS_LIBRARY && !preview && !error && <p role="status" className="rg-small">Checking configuration…</p>}
       {preview && <p className="rg-small">Cell {preview.harness.id}</p>}
       {(preview?.warnings || []).map((warning) => <p key={warning} role="status" className="rg-harness-warning">{warning}</p>)}
-      {error && <p role="alert">{error}{IS_MEMBER && error.includes('account changed') && <> <a href="/login">Account</a></>}</p>}
+      {error && <p role="alert">{error}</p>}
       {HAS_LIBRARY && error && !preview && <button type="button" className="rg-btn" onClick={() => setPreviewRevision((n) => n + 1)}>Retry preview</button>}
       {saved && <p role="status">{saved}</p>}
-      {accountError && <p role="alert">{accountError} <button type="button" className="rg-btn" onClick={() => setAccountRevision((n) => n + 1)}>Retry saved harnesses</button>{IS_MEMBER && <> <a href="/login">Account</a></>}</p>}
+      {accountError && <p role="alert">{accountError} <button type="button" className="rg-btn" onClick={() => setAccountRevision((n) => n + 1)}>Retry saved harnesses</button></p>}
       {HAS_LIBRARY && <button type="button" className="rg-btn pri" disabled={!accountLoaded || busy || !preview?.ok} onClick={save}>{busy ? 'Saving…' : 'Save minimal harness'}</button>}
       <Go spec={withEvidenceOrigin('blocks', evidenceOrigin(args), 'customize')} className="rg-btn" el="customize-spec">Customize</Go>
       <p className="rg-small" data-el="wizard-summary">{matches ? "Matches min_099dc52e693e." : "The selection diverges from the recommended cell."} MCP is off.</p>

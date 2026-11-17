@@ -27,7 +27,6 @@ function environmentFor(mode) {
 
 async function loadViews(mode) {
   vi.resetModules()
-  delete window.__TRACEHARNESS_MEMBER__
   if (mode === 'export') window.__TRACEHARNESS_DATA__ = { '/overview': { results: [] }, '/blocks/palette': PALETTE }
   else delete window.__TRACEHARNESS_DATA__
   vi.doMock('../../environment', () => environmentFor(mode))
@@ -70,7 +69,7 @@ beforeEach(() => {
 })
 afterEach(() => {
   cleanup(); vi.unstubAllGlobals(); vi.doUnmock('../../environment'); vi.resetModules()
-  delete window.__TRACEHARNESS_DATA__; delete window.__TRACEHARNESS_MEMBER__
+  delete window.__TRACEHARNESS_DATA__
 })
 
 describe('local console: harnesses save to this computer', () => {

@@ -45,11 +45,11 @@ describe('the shared sources compiled into the console', () => {
     expect(SHARED_SHA256).toBe(createHash('sha256').update(canonical(body), 'utf8').digest('hex'))
   })
 
-  // The site's runner contract checks import member-api.js straight from this folder with plain
-  // Node, outside any bundler, so every module it pulls in must load there too.
+  // Node tooling may import json.js straight from this folder, outside any bundler, so every module
+  // it pulls in must load there too.
   it('loads in plain Node, outside a bundler', () => {
-    const file = fileURLToPath(new URL('../member-api.js', import.meta.url))
-    const code = `const m = await import(${JSON.stringify(pathToFileURL(file).href)}); if (typeof m.encodeMemberJSON !== 'function') process.exit(3)`
+    const file = fileURLToPath(new URL('../json.js', import.meta.url))
+    const code = `const m = await import(${JSON.stringify(pathToFileURL(file).href)}); if (typeof m.encodeJSON !== 'function') process.exit(3)`
     const out = spawnSync(process.execPath, ['--input-type=module', '-e', code], { encoding: 'utf8' })
     expect(out.status, out.stderr).toBe(0)
   })

@@ -1,9 +1,9 @@
 /* Door 1. The six actual shells. Prompt-only changes save wherever this console keeps a library:
-   this computer (local console) or the member's account; the read-only export saves nothing. */
+   this computer (local console); the read-only export saves nothing. */
 import { useEffect, useState } from 'react'
-import { api, IS_MEMBER } from '../../api'
+import { api } from '../../api'
 import { HAS_LIBRARY, LIBRARY } from '../../environment'
-import { libraryPlace, requireStored } from '../../member-api'
+import { libraryPlace, requireStored } from '../../json'
 import { readDraft, writeDraft } from './shallow-drafts'
 import { HarnessJson } from '../HarnessJson'
 import { ErrorState, Go, Loading } from '../ui'
@@ -32,9 +32,9 @@ function clipUtf8(text, capBytes) {
 const SAVED = `Saved to ${LIBRARY.label}.`
 
 function ShallowCards({ args } = {}) {
-  // The member snapshot waits for the Worker's catalog. Elsewhere the six cards are compiled in
+  // The six cards are compiled in
   // (shallow-data.js equals the shared bundle), so they render at once and saved copies merge in.
-  const [cards, setCards] = useState(IS_MEMBER ? null : CARDS)
+  const [cards, setCards] = useState(CARDS)
   const [prompts, setPrompts] = useState(() => Object.fromEntries(CARDS.map((row) => [row.id, row.prompt])))
   const [drafts, setDrafts] = useState({})
   const [loadError, setLoadError] = useState(null)
@@ -56,8 +56,8 @@ function ShallowCards({ args } = {}) {
       const saved = new Map(library.harnesses.filter((row) => row.lane === 'fixed').map((row) => [row.id, row]))
       const rows = catalog.harnesses.map((row) => ({ ...row,
         ...(saved.has(row.id) ? { prompt: saved.get(row.id).prompt, hash: saved.get(row.id).hash } : {}),
-        memberSaved: saved.has(row.id) && !(library.unconfirmed || []).includes(row.id),
-        memberUnconfirmed: (library.unconfirmed || []).includes(row.id),
+        savedHere: saved.has(row.id) && !(library.unconfirmed || []).includes(row.id),
+        saveUnconfirmed: (library.unconfirmed || []).includes(row.id),
       }))
       const restored = readDraft('fixed') || {}
       const stock = new Map(catalog.harnesses.map((row) => [row.id, row]))
@@ -83,8 +83,8 @@ function ShallowCards({ args } = {}) {
     if (!HAS_LIBRARY) return
     setDrafts((cur) => {
       const next = { ...cur, [row.id]: { prompt: value, baseHash: cur[row.id]?.baseHash || row.hash,
-        basePresent: cur[row.id]?.basePresent ?? row.memberSaved } }
-      if (value === row.prompt && accountLoaded && !row.memberUnconfirmed) delete next[row.id]
+        basePresent: cur[row.id]?.basePresent ?? row.savedHere } }
+      if (value === row.prompt && accountLoaded && !row.saveUnconfirmed) delete next[row.id]
       setStorageError(writeDraft('fixed', next))
       return next
     })
@@ -98,10 +98,10 @@ function ShallowCards({ args } = {}) {
     try {
       const result = requireStored(await api('/shallow/harnesses', { method: 'POST', body: {
         id: row.id, prompt: submitted,
-        ...((drafts[row.id]?.basePresent ?? row.memberSaved)
+        ...((drafts[row.id]?.basePresent ?? row.savedHere)
           ? { if_hash: drafts[row.id]?.baseHash || row.hash } : { if_absent: true }),
       } }))
-      setCards((cur) => cur.map((card) => card.id === row.id ? { ...card, prompt: result.harness.prompt, hash: result.harness.hash, memberSaved: true, memberUnconfirmed: false } : card))
+      setCards((cur) => cur.map((card) => card.id === row.id ? { ...card, prompt: result.harness.prompt, hash: result.harness.hash, savedHere: true, saveUnconfirmed: false } : card))
       setDrafts((cur) => {
         const next = { ...cur }
         delete next[row.id]
@@ -124,7 +124,7 @@ function ShallowCards({ args } = {}) {
     setRevision((n) => n + 1)
   }
 
-  if (loadError && !cards) return <><ErrorState error={loadError} what="Your fixed harnesses" onRetry={() => setRevision((n) => n + 1)} />{IS_MEMBER && <p><a href="/login">Account</a> · Sign back into the original account to keep working on its draft.</p>}</>
+  if (loadError && !cards) return <><ErrorState error={loadError} what="Your fixed harnesses" onRetry={() => setRevision((n) => n + 1)} /></>
   if (!cards) return <Loading label="Reading your fixed harnesses…" />
   return (
     <div className="rg-dpad rg-harness" data-el="shallow-cards">
@@ -141,8 +141,8 @@ function ShallowCards({ args } = {}) {
         <span className="rg-harness-label">6 shells · prompt editing</span>
         <Go spec={withEvidenceOrigin('shallowApply', evidenceOrigin(args))} className="rg-btn" el="preview-six-shells">Preview one prompt across six shells</Go>
       </div>
-      {HAS_LIBRARY && !accountLoaded && !libraryLoading && <p role="alert">{loadError ? loadError.message + ' ' : ''}Your harnesses saved to {LIBRARY.label} have not loaded. Saving is unavailable. <button type="button" className="rg-btn" onClick={() => setRevision((n) => n + 1)}>Retry saved harnesses</button>{IS_MEMBER && <> <a href="/login">Account</a></>}</p>}
-      <details className="rg-harness-rules"><summary>Permissions and saving</summary><p className="rg-harness-note">{PERMISSION} {HAS_LIBRARY && accountLoaded ? `Drafts stay in this tab until you save them to ${LIBRARY.label}.${IS_MEMBER ? ' The plain editor shares your account saves and the drafts kept in this tab.' : ''} Saving does not run a model.` : 'Nothing on this screen is saved, and nothing here calls a model.'}</p></details>
+      {HAS_LIBRARY && !accountLoaded && !libraryLoading && <p role="alert">{loadError ? loadError.message + ' ' : ''}Your harnesses saved to {LIBRARY.label} have not loaded. Saving is unavailable. <button type="button" className="rg-btn" onClick={() => setRevision((n) => n + 1)}>Retry saved harnesses</button></p>}
+      <details className="rg-harness-rules"><summary>Permissions and saving</summary><p className="rg-harness-note">{PERMISSION} {HAS_LIBRARY && accountLoaded ? `Drafts stay in this tab until you save them to ${LIBRARY.label}. Saving does not run a model.` : 'Nothing on this screen is saved, and nothing here calls a model.'}</p></details>
       <div className="rg-harness-grid">
         {storageError && <p role="alert">{storageError}</p>}
         {cards.map((row) => {
@@ -152,14 +152,14 @@ function ShallowCards({ args } = {}) {
           const dropsVerify = !clipped.includes("verify") || !clipped.includes("modify the tests")
           return (
             <article key={row.id} className="rg-harness-card" data-agent={row.id}>
-              <div className="rg-harness-card-head"><div><div className="rg-harness-label">{row.max_steps} steps · strict policy</div><h2>{row.name}</h2></div><span className={`rg-harness-tag${drafts[row.id] || value !== row.prompt ? ' draft' : ''}`}>{drafts[row.id] || value !== row.prompt ? 'Draft' : row.memberSaved && accountLoaded ? `Saved to ${LIBRARY.label}` : 'Fixed shell'}</span></div>
+              <div className="rg-harness-card-head"><div><div className="rg-harness-label">{row.max_steps} steps · strict policy</div><h2>{row.name}</h2></div><span className={`rg-harness-tag${drafts[row.id] || value !== row.prompt ? ' draft' : ''}`}>{drafts[row.id] || value !== row.prompt ? 'Draft' : row.savedHere && accountLoaded ? `Saved to ${LIBRARY.label}` : 'Fixed shell'}</span></div>
               <div className="rg-harness-card-body">
                 <ToolChips tools={row.tools} />
                 <label className="rg-fld">Standing prompt for {row.name}
                   <textarea className="rg-inp" rows={8} value={value} disabled={!!busy[row.id]} onChange={(e) => edit(row, e.target.value)} spellCheck={false} />
                 </label>
                 <ByteMeter used={used} cap={row.cap_bytes} name={row.name} />
-                <HarnessJson source={value !== row.prompt ? 'Current prompt draft' : row.memberSaved ? `Preset saved to ${LIBRARY.label}` : 'Stock preset'} description="Every supplied preset field and the current prompt. This is not the vendor’s native runtime configuration."
+                <HarnessJson source={value !== row.prompt ? 'Current prompt draft' : row.savedHere ? `Preset saved to ${LIBRARY.label}` : 'Stock preset'} description="Every supplied preset field and the current prompt. This is not the vendor’s native runtime configuration."
                   documents={[{ id: 'preset', label: 'Preset configuration', value: { ...row, prompt: value }, filename: `harness-${row.id}.json` }]} />
                 {used > row.cap_bytes || dropsVerify ? <p className="rg-harness-warning">This prompt is over the byte cap, or the clipped text drops verify and modify the tests.</p> : null}
                 <div className="rg-harness-actions">
@@ -167,7 +167,7 @@ function ShallowCards({ args } = {}) {
                   {value !== row.prompt ? <button type="button" className="rg-btn" disabled={!!busy[row.id]} onClick={() => edit(row, row.prompt)}>Reset prompt</button> : null}
                   {drafts[row.id] && <><span className="rg-small">{drafts[row.id].restored ? 'Restored unsaved draft from this tab' : 'Unsaved draft'}</span><button type="button" className="rg-btn" disabled={Object.values(busy).some(Boolean)} onClick={() => discardAndReload(row.id)}>Discard draft and reload saved prompt</button></>}
                 </div>
-                {messages[row.id] && <p role={messages[row.id] === SAVED ? 'status' : 'alert'} className="rg-harness-status">{messages[row.id]}{IS_MEMBER && messages[row.id].includes('account changed') && <> <a href="/login">Account</a></>}</p>}
+                {messages[row.id] && <p role={messages[row.id] === SAVED ? 'status' : 'alert'} className="rg-harness-status">{messages[row.id]}</p>}
               </div>
             </article>
           )

@@ -17,7 +17,7 @@ const config = (prompt = 'Inspect the real repository and return evidence.') => 
 const add = (rows, name = 'Checkpoint', configuration = config(), n = rows.length + 1) => addCheckpoint(rows, name, configuration, { id: id(n), createdAt })
 const clone = (value) => JSON.parse(JSON.stringify(value))
 
-beforeEach(() => { sessionStorage.clear(); vi.restoreAllMocks(); vi.unstubAllGlobals(); delete window.__TRACEHARNESS_MEMBER__ })
+beforeEach(() => { sessionStorage.clear(); vi.restoreAllMocks(); vi.unstubAllGlobals() })
 
 describe('bounded configuration checkpoints', () => {
   it('persists and compares native profile identities, defaults and replacement hashes', () => {
@@ -187,18 +187,6 @@ describe('account-scoped tab storage', () => {
     expect(result.dropped).toBe(88)
   })
 
-  it('isolates member scopes through the existing draft key mechanism', async () => {
-    vi.resetModules(); window.__TRACEHARNESS_MEMBER__ = { version: 1, scope: 'a'.repeat(24) }
-    const accountA = await import('./configuration-checkpoints')
-    const rowsA = accountA.addCheckpoint([], 'Account A tab', config(), { id: id(1), createdAt })
-    expect(accountA.persistCheckpoints(rowsA)).toBe('')
-    vi.resetModules(); window.__TRACEHARNESS_MEMBER__ = { version: 1, scope: 'b'.repeat(24) }
-    const accountB = await import('./configuration-checkpoints')
-    expect(accountB.loadCheckpoints().checkpoints).toEqual([])
-    expect(accountA.loadCheckpoints().checkpoints[0].name).toBe('Account A tab')
-    expect(sessionStorage.getItem('traceharness.shallow.member.' + 'a'.repeat(24) + '.configuration-checkpoints')).not.toBeNull()
-    expect(sessionStorage.getItem(storageKey)).toBeNull()
-  })
 })
 
 describe('bounded semantic comparison', () => {

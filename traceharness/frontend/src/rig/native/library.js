@@ -1,9 +1,9 @@
-// Named snapshots and saved profiles, kept in ONE browser storage key per member scope.
-// This is local authoring data: it is not in the member's account, and anyone using the
+// Named snapshots and saved profiles, kept in ONE browser storage key per optional scope.
+// This is local authoring data kept in this browser, and anyone using the
 // same browser profile can read it. The caller passes the Storage, so a host that objects
 // to localStorage can pass sessionStorage with no other change.
 //
-// What is stored: profiles (ids, digests and member-written replacement text) and named
+// What is stored: profiles (ids, digests and user-written replacement text) and named
 // sets of ids. Inventory baseline text is never stored (rule R5); library.test.js asserts
 // that against the fixture text.
 import { checkedNativeProfile } from '../../native-prompts-contract'
@@ -22,11 +22,11 @@ const isObject = (value) => value !== null && typeof value === 'object' && !Arra
 const exactKeys = (value, keys) => isObject(value) && Object.keys(value).length === keys.length && keys.every((key) => Object.hasOwn(value, key))
 const clone = (value) => JSON.parse(JSON.stringify(value))
 
-/** 'traceharness.native.member.<scope>.library.v1', or 'traceharness.native.library.v1' without a member scope. */
+/** 'traceharness.native.scope.<scope>.library.v1', or 'traceharness.native.library.v1' without a scope. */
 export function libraryKey(scope) {
   if (scope === null || scope === undefined || scope === '') return 'traceharness.native.library.v1'
-  if (typeof scope !== 'string' || !/^[A-Za-z0-9_-]{1,64}$/.test(scope)) throw new Error('The member scope is not a storage-safe identifier.')
-  return `traceharness.native.member.${scope}.library.v1`
+  if (typeof scope !== 'string' || !/^[A-Za-z0-9_-]{1,64}$/.test(scope)) throw new Error('The storage scope is not a storage-safe identifier.')
+  return `traceharness.native.scope.${scope}.library.v1`
 }
 
 /** '' when `note` is acceptable: at most 500 characters, line feeds allowed, no other control characters, no credential shape. */

@@ -19,7 +19,7 @@ import { clearLibrary, deleteLibraryEntry, readLibrary, saveLibraryEntry } from 
 import { canonicalJSON, canonicalProfile, orderedProfile, rebaseProfile, sha256HexSync } from '../profile-model'
 import { searchInventory } from '../search'
 import { utf8Bytes } from '../text-metrics'
-import { browserStorage, memberScope } from './browser-storage'
+import { browserStorage } from './browser-storage'
 import { copyText, downloadText } from './download'
 import { isDisplayed, plural, promptDisplay } from './format'
 import { requestPairing } from './pairing-bus'
@@ -62,7 +62,7 @@ export function useWorkbench({ runtime, response, draft = null, disabled = false
   const [busy, setBusy] = useState('')
   const [report, setReport] = useState(null)
   const [storage] = useState(browserStorage)
-  const [library, setLibrary] = useState(() => readLibrary(storage, memberScope()))
+  const [library, setLibrary] = useState(() => readLibrary(storage, null))
   const generation = useRef(0)
   const searchMs = useRef(0)
   const listRef = useRef(null), scrollRef = useRef(null), searchRef = useRef(null), inspectorRef = useRef(null), focusButtonRef = useRef(null)
@@ -343,7 +343,7 @@ export function useWorkbench({ runtime, response, draft = null, disabled = false
   }
 
   // --- library (this browser) and files -----------------------------------------------------------
-  const scope = memberScope()
+  const scope = null
   const exportable = () => profileIssue ? orderedProfile(profile) : canonicalProfile(profile, inventory)
   const edited = !!draft?.profile && (overrides.length > 0 || defaultAction !== 'keep' || !!profileIssue)
   async function saveEntry(entryName, kind = 'saved', quiet = false) {

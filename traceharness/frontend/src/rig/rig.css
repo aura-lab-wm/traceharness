@@ -702,12 +702,9 @@ body.rg-resizing{cursor:col-resize;user-select:none}
   .rg-tb{grid-template-columns:minmax(max-content,1fr) minmax(15rem,var(--rig-cmd-max)) minmax(max-content,1fr)}
   .rg-tbtn .lbl-d{display:inline}
 }
-/* below it, every action is an icon with a tooltip; a member's Account moves into the overflow menu
-   (with the tour and the theme, so the menu never repeats a visible button) */
+/* below it, every action is an icon with a tooltip */
 @media (max-width:1279px){
   .rg-tbtn:has(>.lbl-d){width:var(--rig-h-ctl);padding:0}
-  .rg-tb-member .rg-tb-acct,.rg-tb-member .rg-tour-launcher,.rg-tb-member .rg-tb-theme{display:none}
-  .rg-tb-member .rg-tb-more{display:inline-flex}
 }
 @media (max-width:1023px){.rg-brand b,.rg-cmd-k{display:none}}
 
