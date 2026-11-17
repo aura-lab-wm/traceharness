@@ -138,7 +138,7 @@ class TestBundleSources(unittest.TestCase):
         self.assertEqual(tokens["light"]["bg"], "#fafafa")
         self.assertEqual(tokens["console"]["cx-mute"], "#828288")
         self.assertFalse([k for k in (*tokens["dark"], *tokens["light"]) if k.startswith("cx-")])
-        from traceharness.capture.push import SOURCES
+        from traceharness.capture.sources import SOURCES
         self.assertEqual(self.bundle["capture_sources"], sorted(SOURCES))
         from traceharness.shallow.catalog import catalog
         from traceharness.shallow.wizard import QUESTIONS, recommended_answers

@@ -28,7 +28,6 @@ def project_version():
 STATEMENTS = [
     ("traceharness/__main__.py", r'^__version__ = "([^"]+)"'),
     ("scripts/check_install.py", r'^EXPECTED_VERSION = "([^"]+)"'),
-    ("traceharness/capture/remote.py", r'^FALLBACK_VERSION = "([^"]+)"'),
     ("CITATION.cff", r'^version: "([^"]+)"'),
     ("README.md", r"version = \{([0-9][^}]*)\}"),
     ("README.md", r"\(Version ([0-9][^)]*)\) \[Computer software\]"),

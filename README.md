@@ -76,40 +76,17 @@ traceharness agents run --agent mini-swe-agent --model google/gemini-2.5-flash-l
 
 Each run uses separate containers. The **broker** is the only one with network access and the only place the key exists; it serves the model on a Unix socket and fixes the model, the hosts (fallbacks off), the output cap, the number of calls and the bytes sent. The **agent** container has no network, no capabilities, a read-only root and a non-root user, and works in a size-capped in-memory workspace. A separate container exports the workspace as regular files only, and the **grader** container (no network, read-only mounts) grades it. Every call's host and cost come from OpenRouter's generation records and are shown on the run page under **Model calls**; `traceharness agents resolve DIR` prices calls whose record arrived late. This is ordinary Docker isolation; for agents you do not trust, pass `--runtime runsc` (gVisor).
 
-## Record on traceharness.dev
+## Capture your coding-agent sessions
 
-Sign in at [traceharness.dev](https://traceharness.dev), then connect the machine where your coding agents run. Local capture adapters support **Claude Code**, **Codex**, **agy** (Antigravity CLI), **Qwen Code**, and **Cursor**. These commands use the CLI without starting a local web server:
-
-```bash
-pipx install git+https://github.com/aura-lab-wm/traceharness
-traceharness login
-traceharness capture --watch --sync --path /path/to/chosen/session-directory
-```
-
-`traceharness login` prints a short device code and `https://traceharness.dev/app/device`. Open that URL in an already signed-in browser, verify the code, and press **Approve**. No browser opens automatically. The token is saved to `~/.traceharness/credentials.json` (mode `0600`, owner-only) and is sent exclusively in an `Authorization` header to the host you signed in to. Run `traceharness whoami` to inspect the active account. See [`docs/CAPTURE_SYNC.md`](docs/CAPTURE_SYNC.md) for setup details and verification limits.
-
-**Claude Code plugin** (requires the `pipx` install above; attempts an upload when an allowed session exits):
+Capture runs on your machine only: no account, no upload. It supports **Claude Code**, **Codex**, **agy** (Antigravity CLI), **Qwen Code**, and **Cursor**, reads only the folders you allow, and writes ledgers into the local console (the Capture page of `traceharness serve`).
 
 ```bash
-claude plugin marketplace add aura-lab-wm/traceharness
-claude plugin install traceharness-capture@traceharness
+traceharness capture --watch --path /path/to/session-directory      # follow sessions as they are written
+traceharness capture export --out sessions.zip [--source codex] [--since 2026-11-01]
+traceharness capture import sessions.zip                            # on another machine (also: traceharness import sessions.zip)
 ```
 
-On session exit, the `SessionEnd` hook (60-second hook limit; 45-second upload subprocess timeout) runs `traceharness capture push --source claude_code --session-file <transcript> --quiet`. It exits `0` with no output if `traceharness` is absent or signed out, and failed uploads do not retry automatically.
-
-- **What is recorded.** Each session's ordered action list (reads, edits, commands, test runs, model replies), a summary, and the final patch. Uploaded runs appear under *Connect this computer* at `/app/capture`, where you can inspect or delete any run.
-- **Explicit terminal consent (`type yes`).** `--watch --sync` requires a person to type `yes` at an interactive terminal and refuses `--yes` and noninteractive input. The website and linked pages cannot start capture. The optional `SessionEnd` plugin operates strictly within your local allow-list and saved login.
-- **Allow-list.** Only sessions inside folders you explicitly allow are read or sent. Persistent rules live in `~/.traceharness/capture.json` (editable from the Capture page of `traceharness serve`), while `--path DIR` authorizes one folder for a single invocation. A missing or unreadable `capture.json` allows nothing.
-- **Redaction limits.** Before upload, known API keys and tokens (Anthropic, OpenAI, OpenRouter, GitHub, AWS, Google, Slack, Supabase, Stripe, Hugging Face, npm, TraceHarness), JWTs, `Bearer` tokens, URL `user:password` segments, private-key blocks, `password=`/`secret=`/`api_key=`/`refresh_token=` values, and string values under JSON keys containing `password`, `secret`, `token`, `api key`, `authorization`, or `credential` are replaced with `[redacted:<kind>]`. Redaction is pattern-based and cannot know every secret format (a password written as plain prose, or an unusual token shape, passes through), so read a run before you share it if it may hold something unusual. Inspect outbound payloads locally with `traceharness capture push --dry-run`. Runs exceeding 4 MiB are skipped and reported.
-- **Optional outbound link.** `traceharness link --member` opens an outbound watch-only connection under your sign-in, binds no local port, refuses `--accept-commands`, and disables `run` and run-directory streaming (`live`/`tail`). Live streaming of captured sessions is unimplemented; `/app/capture` displays stored runs.
-- **Pause or revoke.**
-
-```bash
-traceharness logout            # revokes this computer's token and deletes it; sends nothing afterwards
-traceharness capture --pause   # stops the watcher and `capture push` (including the Claude Code hook); `--resume` undoes it
-```
-
-The Claude Code hook respects the allow-list, sign-in state, and `--pause`. You can also revoke tokens and delete uploaded runs from `/app/capture` at any time.
+An export is one zip of the captured sessions, redacted (known key and token shapes, `Bearer` tokens, URL passwords, private keys, secret-looking values), with a `manifest.json` that records a SHA-256 for every file. Import checks every hash and refuses archives with unsafe names, links, oversize members or an unknown version; it writes nothing unless the whole archive verifies, and runs nothing from it. Redaction is pattern-based and cannot know every secret format, so read an export before you share it. See [`docs/CAPTURE.md`](docs/CAPTURE.md).
 
 ## Local server security
 

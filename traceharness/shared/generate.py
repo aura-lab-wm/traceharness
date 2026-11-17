@@ -7,7 +7,7 @@
 The two copies are byte-identical: `traceharness/shared/shared-sources.json` ships in the wheel, and
 `traceharness/frontend/src/shared/shared-sources.json` is compiled into the console. Every value comes
 from the source that owns it: the constants from `contract`, the colour tokens from the console's
-`index.css`, the capture sources from `capture/push.py`, the fixed and minimal harnesses from
+`index.css`, the capture sources from `capture/sources.py`, the fixed and minimal harnesses from
 `shallow/`, and a SHA-256 of each compiler-oracle file. Standard library only.
 """
 from __future__ import annotations
@@ -58,9 +58,9 @@ def tokens() -> dict:
 
 
 def capture_sources() -> list[str]:
-    m = _SOURCES.search(_read("traceharness/capture/push.py"))
+    m = _SOURCES.search(_read("traceharness/capture/sources.py"))
     if not m:
-        raise RuntimeError("traceharness/capture/push.py has no `SOURCES = (...)` line")
+        raise RuntimeError("traceharness/capture/sources.py has no `SOURCES = (...)` line")
     return sorted(ast.literal_eval(m.group(1)))
 
 

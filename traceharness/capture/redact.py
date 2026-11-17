@@ -1,9 +1,9 @@
-"""Redaction for anything that leaves this machine (remote-capture contract 3a).
+"""Redaction for anything that leaves this machine (``traceharness capture export``).
 
-Every string in a run's summary, ledger and patch passes through ``redact_text`` before upload; a
-dict key in ``remote_link.FORBIDDEN`` has its whole value replaced. Matches become
-``[redacted:<kind>]``. The rules err toward redacting: a false positive costs a few characters of
-a stored copy, a miss puts a credential on a server.
+Every string in a run's summary, ledger and patch passes through ``redact_text`` before it is
+written to an export archive; a dict key in ``FORBIDDEN_KEYS`` has its whole value replaced. Matches
+become ``[redacted:<kind>]``. The rules err toward redacting: a false positive costs a few characters
+of an exported copy, a miss puts a credential in a file that gets shared.
 
 Standard library only.
 """
@@ -11,11 +11,12 @@ from __future__ import annotations
 
 import re
 
-#: Same set the live link refuses to carry (traceharness.backend.remote_link.FORBIDDEN); copied
-#: rather than imported so this module stays free of the server path. A test pins the two together.
 FORBIDDEN_KEYS = frozenset({
     "api_key", "apikey", "key", "authorization", "token", "password", "secret", "access_token",
 })
+
+#: Bumped whenever the rules change what they redact; written into every export manifest.
+REDACTION_VERSION = 1
 
 _MARK = "[redacted:{}]"
 
