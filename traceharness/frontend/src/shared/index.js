@@ -1,8 +1,10 @@
 /* The shared sources (SPEC 4.1), compiled into the console: the one port, the limits, the canonical
    words, the datasets and the draft keys. shared-sources.json is generated from the Python package
    (python -m traceharness.shared.generate) and is byte-identical to the copy the site vendors, so
-   these values are the same in every mode and on traceharness.dev. Never edit the JSON by hand. */
-import data from './shared-sources.json'
+   these values are the same in every mode and on traceharness.dev. Never edit the JSON by hand.
+   The import attribute keeps this module loadable in plain Node as well as in the bundler: the
+   site's runner contract checks import member-api.js from this folder without building it. */
+import data from './shared-sources.json' with { type: 'json' }
 
 function deepFreeze(value) {
   if (value && typeof value === 'object' && !Object.isFrozen(value)) {

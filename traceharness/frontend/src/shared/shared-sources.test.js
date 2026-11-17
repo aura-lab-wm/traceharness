@@ -1,3 +1,5 @@
+import { spawnSync } from 'node:child_process'
+import { fileURLToPath, pathToFileURL } from 'node:url'
 import { describe, expect, it } from 'vitest'
 import { createHash } from 'node:crypto'
 import { DATASETS, DRAFTS, LABELS, LIMITS, LOCAL_APP, PORT, RETIRED, SHARED, SHARED_SHA256 } from './index.js'
@@ -41,5 +43,14 @@ describe('the shared sources compiled into the console', () => {
     expect(RETIRED.map((r) => r.phrase)).toContain('8742')
     const body = Object.fromEntries(Object.entries(SHARED).filter(([k]) => k !== 'content_sha256'))
     expect(SHARED_SHA256).toBe(createHash('sha256').update(canonical(body), 'utf8').digest('hex'))
+  })
+
+  // The site's runner contract checks import member-api.js straight from this folder with plain
+  // Node, outside any bundler, so every module it pulls in must load there too.
+  it('loads in plain Node, outside a bundler', () => {
+    const file = fileURLToPath(new URL('../member-api.js', import.meta.url))
+    const code = `const m = await import(${JSON.stringify(pathToFileURL(file).href)}); if (typeof m.encodeMemberJSON !== 'function') process.exit(3)`
+    const out = spawnSync(process.execPath, ['--input-type=module', '-e', code], { encoding: 'utf8' })
+    expect(out.status, out.stderr).toBe(0)
   })
 })
