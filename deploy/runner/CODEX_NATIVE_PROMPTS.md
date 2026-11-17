@@ -64,7 +64,7 @@ Export the pristine executable from the exact registered image and retain the
 pinned official source archive outside the repository. Run the local preparer:
 
 ```sh
-python deploy/runner/prepare_codex_prompt_inventory.py \
+python traceharness/runner/assets/native/prepare_codex_prompt_inventory.py \
   --binary "$NATIVE_WORKSPACE/codex-pristine" \
   --source-archive "$NATIVE_WORKSPACE/codex-source.tar.gz" \
   --image-digest "sha256:<the registered native-codex runtime image>" \

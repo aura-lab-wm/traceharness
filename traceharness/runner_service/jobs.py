@@ -293,7 +293,14 @@ class Jobs:
                 if row["job"]["id"] != path.parent.name:
                     self.blocked_reason = "Invalid runner state requires operator reconciliation."
                     continue
-                if row["job"]["status"] not in TERMINAL:
+                if settings.local and (row["job"]["status"] == "needs_attention" or row["job"]["status"] not in TERMINAL):
+                    # A restart is the local runner's reconciliation: leftover job containers are removed at
+                    # start (executor.reconcile_startup), so an earlier session's unfinished or flagged job
+                    # is recorded as failed rather than blocking every later run.
+                    row["job"].update(status="failed", issues=[*row["job"].get("issues", []),
+                                      "The console restarted before this job finished; its containers were removed."],
+                                      updated_at=int(clock()))
+                elif row["job"]["status"] not in TERMINAL:
                     row["job"].update(status="needs_attention", issues=["Runner restarted. Inspect prior execution before starting another run."], updated_at=int(clock()))
                 self.rows[path.parent.name] = row
                 self.idempotency[(row["owner"], row["idempotency_key"])] = path.parent.name

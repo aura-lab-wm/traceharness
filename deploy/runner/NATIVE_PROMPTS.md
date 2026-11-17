@@ -97,7 +97,7 @@ shape without private anchors, not permission to publish proprietary source.
 2. Run the static parser with explicit files and exact dependency hashes:
 
    ```sh
-   node deploy/runner/prepare_native_prompt_inventory.mjs \
+   node traceharness/runner/assets/native/prepare_native_prompt_inventory.mjs \
      "$NATIVE_WORKSPACE/source-graph.bin" \
      "$NATIVE_WORKSPACE/source-layout.json" \
      "$NATIVE_CATALOG" "$PINNED_ACORN_MODULE" \
@@ -114,7 +114,7 @@ shape without private anchors, not permission to publish proprietary source.
 3. Finalize the inventory against the original executable:
 
    ```sh
-   python deploy/runner/finalize_native_prompt_inventory.py \
+   python traceharness/runner/assets/native/finalize_native_prompt_inventory.py \
      --binary "$NATIVE_WORKSPACE/claude-pristine" \
      --binary-sha256 bfb3703ad5380242328459bc62ada4bde8ae7ba57c6e1eeadb9c00e08874c478 \
      --candidates "$NATIVE_WORKSPACE/parsed-candidates.json" \

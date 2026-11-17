@@ -280,7 +280,7 @@ no server and select no fixture executor. Run the isolated suite with
 
 ## Build the offline grader separately
 
-Use `deploy/runner/grader.Dockerfile` with a reviewed build context containing
+Use `traceharness/runner/assets/grader.Dockerfile` with a reviewed build context containing
 `requirements.lock` and `grader/grade.py`. It pins the same Python base and
 hash-checked task dependencies while omitting Node, native agent CLIs, and the
 control service. Those tools belong in the runtime and control images; the

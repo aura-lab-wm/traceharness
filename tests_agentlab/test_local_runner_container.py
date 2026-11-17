@@ -276,6 +276,7 @@ class NoKeyInContainerTests(unittest.TestCase):
 
                 def __init__(self, args, **kwargs):
                     seen.append((list(args), kwargs.get("env"), kwargs))
+                    self.stdout = __import__("io").BytesIO(b'{"outcome": "failed"}')
 
                 def poll(self):
                     return 0
@@ -309,10 +310,38 @@ class NoKeyInContainerTests(unittest.TestCase):
                                  "no credential-named variable is passed on the command line")
                 passed = [args[i + 1] for i, a in enumerate(args) if a == "--env"]
                 self.assertTrue(all(p.split("=", 1)[0] in {"HOME", "PYTHONDONTWRITEBYTECODE"} for p in passed), passed)
+            # the grader (the last container) writes to its own root-owned tmpfs, not to a host directory,
+            # and the per-job socket directory is short enough for an AF_UNIX path
+            grader = next(a for a, _e, _k in seen if "--entrypoint" in a and a[a.index("--entrypoint") + 1] == "sh")
+            self.assertIn("/output:rw,nosuid,nodev,size=16m,mode=0755", " ".join(grader))
+            self.assertFalse(any(m.endswith("dst=/output") for m in grader))
+            runtime = next(a for a, _e, _k in seen if "--entrypoint" in a and a[a.index("--entrypoint") + 1] == "python")
+            gateway = next(m for m in runtime if m.endswith("dst=/gateway,readonly"))
+            self.assertLess(len(gateway.split("src=")[1].split(",")[0] + "/runner.sock"), 100, gateway)
             # and nothing the job directory holds contains it either
             for path in job.rglob("*"):
                 if path.is_file():
                     self.assertNotIn(KEY.encode(), path.read_bytes(), str(path))
+
+
+class RestartTests(unittest.TestCase):
+    def test_a_restart_records_an_unfinished_local_job_as_failed_and_does_not_block_the_runner(self):
+        from traceharness.runner_service.credentials import CredentialVault
+        from traceharness.runner_service.jobs import Jobs
+        with tempfile.TemporaryDirectory() as t:
+            root = Path(t)
+            jid = "f" * 48
+            (root / "jobs" / jid).mkdir(parents=True)
+            row = {"owner": "local", "idempotency_key": "k" * 16, "fingerprint": "x",
+                   "job": {"id": jid, "status": "running", "created_at": 1, "updated_at": 1, "usage": {"requests": 0}, "issues": [], "artifacts": []}}
+            (root / "jobs" / jid / "job.json").write_text(json.dumps(row))
+            jobs = Jobs(local_settings(root), CredentialVault(), FixtureProvider(), LocalExecutor())
+            self.assertEqual(jobs.get("local", jid)["status"], "failed")
+            self.assertIsNone(jobs.blocked_reason)
+            jobs.close()
+            hosted = Jobs(Settings(state_dir=root / "jobs"), CredentialVault(), FixtureProvider(), LocalExecutor())
+            self.assertEqual(hosted.get("local", jid)["status"], "failed")        # already settled on disk by the first start
+            hosted.close()
 
 
 class VaultTests(unittest.TestCase):

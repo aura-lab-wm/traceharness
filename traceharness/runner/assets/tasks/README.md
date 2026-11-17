@@ -49,8 +49,8 @@ The source archive is pinned to revision `96b22fa18c00831656ee4b286bf1c9062459b0
 Use Python 3.10 or later from the repository root. Choose an output outside the tracked `data/runs`; the builder refuses to replace an existing directory.
 
 ```sh
-python scripts/package_runner_task.py \
-  deploy/runner/tasks/requests-jsondecode-pickle/recipe.json \
+python -m traceharness.runner.package_task \
+  traceharness/runner/assets/tasks/requests-jsondecode-pickle/recipe.json \
   --output /srv/traceharness-inventory/tasks/requests-jsondecode-pickle-6628
 ```
 
@@ -98,14 +98,14 @@ Download the four pure Python dependency wheels on the operator's build machine 
 
 ```sh
 python -m pip download --only-binary=:all: --platform any --no-deps \
-  --require-hashes -r deploy/runner/tasks/requests-jsondecode-pickle/requirements.lock \
+  --require-hashes -r traceharness/runner/assets/tasks/requests-jsondecode-pickle/requirements.lock \
   --dest /srv/traceharness-build/task-wheels
 python -m pip install --no-index --find-links /srv/traceharness-build/task-wheels \
   --require-hashes --no-deps \
-  -r deploy/runner/tasks/requests-jsondecode-pickle/requirements.lock
+  -r traceharness/runner/assets/tasks/requests-jsondecode-pickle/requirements.lock
 ```
 
-Use the reviewed image recipe to copy executable `deploy/runner/tasks/grade.py` to `/opt/traceharness-grade`. The executor invokes this path in a separate network-none isolated grader container. This wrapper is not a host sandbox and must not be used to grade untrusted candidate code directly on a host.
+Use the reviewed image recipe to copy executable `traceharness/runner/assets/tasks/grade.py` to `/opt/traceharness-grade`. The executor invokes this path in a separate network-none isolated grader container. This wrapper is not a host sandbox and must not be used to grade untrusted candidate code directly on a host.
 
 Production grading requires the root result writer with only SETUID/SETGID container capabilities. `/output` belongs to root and is not group/other writable; `/workspace` and `/task` are read-only. The wrapper reconstructs a pristine repository in bounded container `/tmp`, rejects changed protected files and overlays only permitted Python source. It launches the candidate tests as UID/GID10002 with supplementary groups cleared, no-new-privileges and an environment allowlist. Python isolated mode ignores inherited PYTHONPATH, user site and workspace startup hooks. The candidate process group is terminated before root creates `grade.json` with exclusive/no-follow creation. No provider socket or credentials are mounted in this grader.
 
