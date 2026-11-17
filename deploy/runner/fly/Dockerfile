@@ -16,8 +16,8 @@ RUN python -m pip install --no-cache-dir --only-binary=:all: --require-hashes -r
 FROM dependencies AS runtime
 ARG RUNTIME_ID
 ARG RUNTIME_VERSION
-COPY traceharness-0.5.1-py3-none-any.whl /opt/traceharness-0.5.1-py3-none-any.whl
-RUN python -m pip install --no-deps /opt/traceharness-0.5.1-py3-none-any.whl && rm /opt/traceharness-0.5.1-py3-none-any.whl
+COPY traceharness-0.5.4-py3-none-any.whl /opt/traceharness-0.5.4-py3-none-any.whl
+RUN python -m pip install --no-deps /opt/traceharness-0.5.4-py3-none-any.whl && rm /opt/traceharness-0.5.4-py3-none-any.whl
 ENV PYTHONDONTWRITEBYTECODE=1
 LABEL org.traceharness.runtime="${RUNTIME_ID}" org.traceharness.version="${RUNTIME_VERSION}"
 USER 10001:10001
