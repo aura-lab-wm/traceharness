@@ -103,6 +103,8 @@ class Cli(Lab):
 class Api(Lab):
     def setUp(self):
         super().setUp()
+        from traceharness.backend import hf_api
+        hf_api._PREVIEW_CACHE.clear()
         self.client = TestClient(app, base_url=BASE, client=PEER)
 
     def post(self, body, **headers):
