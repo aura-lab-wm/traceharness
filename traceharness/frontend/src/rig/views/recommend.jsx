@@ -92,6 +92,12 @@ function Card({ label, tone, card, el }) {
         {sub.demoted && <> <Tag tone="amb">smaller than the sizing asks for</Tag></>}
       </p>
       <Estimate est={card.estimate} />
+      {card.command && (
+        <p className="rg-rec-import" data-el="rec-import">
+          Import it: <code className="rg-mono rg-rec-cmd">{card.command}</code>
+          {typeof card.sources_view === 'string' && card.sources_view.startsWith('#/rig/') && <> · <a href={card.sources_view}>Open the Sources view</a></>}
+        </p>
+      )}
       <h3 className="rg-rec-h">Reasons</h3>
       <ul className="rg-rec-reasons" data-el="rec-reasons">
         {card.reasons.length === 0 && <li className="rg-rec-why">No rule fired for this dataset.</li>}

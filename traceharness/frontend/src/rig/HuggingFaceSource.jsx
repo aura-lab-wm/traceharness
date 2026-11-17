@@ -48,7 +48,7 @@ function Preview({ dataset }) {
   )
 }
 
-function ImportForm({ spec, dataset }) {
+function ImportForm({ spec, dataset, defaults }) {
   const [n, setN] = useTabState(spec, 'hf.n', DEFAULT_ROWS)
   const [seed, setSeed] = useTabState(spec, 'hf.seed', 0)
   const [name, setName] = useTabState(spec, 'hf.name', '')
@@ -68,7 +68,7 @@ function ImportForm({ spec, dataset }) {
   const valid = isDatasetId(dataset) && isResultsName(target)
   const go = async () => {
     setMsg('')
-    try { await hfImport({ dataset, n, seed, name: name || undefined }); setPollOn(true); st.reload() } catch (e) { setMsg(errText(e)) }
+    try { await hfImport({ dataset, config: defaults && defaults.config, split: defaults && defaults.split, n, seed, name: name || undefined }); setPollOn(true); st.reload() } catch (e) { setMsg(errText(e)) }
   }
   const prov = mine && s.status === 'done' && s.result ? s.result.provenance : null
   const skipped = prov && Array.isArray(s.result.skipped) ? s.result.skipped : []
@@ -79,6 +79,7 @@ function ImportForm({ spec, dataset }) {
         <label className="rg-fld">Seed<input className="rg-inp" type="number" value={seed} onChange={(e) => setSeed(Math.trunc(Number(e.target.value)) || 0)} /></label>
         <label className="rg-fld">Results directory (optional)<input className="rg-inp" value={name} spellCheck={false} placeholder={defaultName(dataset)} onChange={(e) => setName(cleanName(e.target.value))} /></label>
       </div>
+      {defaults && <p className="rg-small rg-dim" data-el="hf-default-split">Default split: <span className="rg-mono">{defaults.config} / {defaults.split}</span>, the one this console has imported from.</p>}
       <p className="rg-small rg-dim">Reads {int(n)} random rows (seed {seed}) from the public dataset and writes <span className="rg-mono">data/runs/{target}</span> with a <span className="rg-mono">provenance.json</span>. An existing directory is never replaced.</p>
       <div className="rg-row rg-wrap rg-ws-acts rg-ws-quiet">
         <ConfirmAction label={running ? 'Importing…' : 'Import a sample'} confirmLabel="Import" disabled={running || !valid}
@@ -124,7 +125,7 @@ export function HuggingFaceSource({ spec }) {
         <thead><tr><th>dataset</th><th className="rg-num">rows</th><th>license</th><th>access</th><th><span className="sr-only">Preview</span></th></tr></thead>
         <tbody>{rows.map((d) => (
           <tr key={d.id} className={picked === d.id ? 'hov on' : 'hov'} data-id={d.id}>
-            <td><b className="rg-mono rg-break">{d.id}</b><div className="rg-dim rg-small">{d.summary}</div></td>
+            <td><b className="rg-mono rg-break">{d.id}</b>{d.hf_adapter && <> <Tag tone="acc" el="hf-importable" title={`TraceHarness can import it: traceharness hf import ${d.id}`}>importable</Tag></>}<div className="rg-dim rg-small">{d.summary}</div></td>
             <td className="rg-num rg-mono">{d.rows == null ? '—' : int(d.rows)}</td>
             <td className="rg-mono rg-small">{licenseText(d.license)}</td>
             <td>{d.gated ? <Tag tone="amb" title="Needs an accepted agreement and a token, which this console does not use">gated</Tag> : <Tag>open</Tag>}</td>
@@ -134,7 +135,7 @@ export function HuggingFaceSource({ spec }) {
           </tr>))}</tbody>
       </table></div></div>
       {!local && <Unavailable capability="data.import" what="Importing from Hugging Face" />}
-      {local && entry && <><Preview dataset={entry.id} /><ImportForm spec={spec} dataset={entry.id} /></>}
+      {local && entry && <><Preview dataset={entry.id} /><ImportForm spec={spec} dataset={entry.id} defaults={entry.hf_adapter ? entry.hf_import : null} /></>}
       {local && !entry && <p className="rg-small rg-dim">Pick a dataset to see its columns and first rows before importing.</p>}
     </div>
   )

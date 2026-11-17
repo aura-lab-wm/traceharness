@@ -23,9 +23,10 @@
 .rg-rec-score{text-transform:none;letter-spacing:0;font-weight:var(--rig-fw-medium);color:var(--rig-mute)}
 .rig .rg-rec-title{margin:0;font:var(--rig-fw-medium) var(--rig-fs-xl)/var(--rig-lh-snug) var(--rig-sans);color:var(--rig-text);overflow-wrap:anywhere}
 .rg-rec-id{font-size:var(--rig-fs-xs);color:var(--rig-mute);overflow-wrap:anywhere}
-.rg-rec-sub,.rg-rec-est,.rg-rec-none{margin:0;font-size:var(--rig-fs-sm);line-height:var(--rig-lh-body);color:var(--rig-text)}
+.rg-rec-sub,.rg-rec-est,.rg-rec-none,.rg-rec-import{margin:0;font-size:var(--rig-fs-sm);line-height:var(--rig-lh-body);color:var(--rig-text)}
 .rg-rec-calc{display:block;margin-top:var(--rig-s1);font-size:var(--rig-fs-xs);color:var(--rig-mute);overflow-wrap:anywhere}
 p.rg-rec-calc{margin:0}
+.rg-rec-cmd{font-size:var(--rig-fs-xs);overflow-wrap:anywhere}
 .rig .rg-rec-h{margin:var(--rig-s2) 0 0;font:var(--rig-fw-medium) var(--rig-fs-sm)/var(--rig-lh-snug) var(--rig-sans);color:var(--rig-dim)}
 .rg-rec-reasons{display:flex;flex-direction:column;gap:var(--rig-s2);margin:0;padding:0;list-style:none;flex:1 1 auto}
 .rg-rec-why{display:grid;grid-template-columns:5ch minmax(0,1fr);gap:var(--rig-s2);font-size:var(--rig-fs-sm);line-height:var(--rig-lh-body);color:var(--rig-text);overflow-wrap:anywhere}

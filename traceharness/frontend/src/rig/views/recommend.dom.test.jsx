@@ -42,6 +42,21 @@ function stub(body = RESULT) {
   return { calls, fetchImpl }
 }
 
+describe('recommend view: an importable dataset', () => {
+  it('shows the import command with the recommended --n and links to the Sources view', async () => {
+    const importable = { ...RESULT, pick: card('n/traj', 'Traj', { command: 'traceharness hf import n/traj --n 120', sources_view: '#/rig/sources',
+      reasons: [{ rule: 'readable-by-importer', text: 'TraceHarness can import it: traceharness hf import n/traj', weight: 12, method: 'm' }] }) }
+    const { fetchImpl } = stub(importable)
+    const { container } = renderRig('#/rig/recommend', { data: rigFixture(), fetchImpl })
+    await waitFor(() => expect(el(container, 'rec-cards')).not.toBeNull())
+    const box = el(el(container, 'rec-pick'), 'rec-import')
+    expect(box.textContent).toContain('traceharness hf import n/traj --n 120')
+    const link = within(box).getByRole('link', { name: /Sources/ })
+    expect(link.getAttribute('href')).toBe('#/rig/sources')
+    expect(el(el(container, 'rec-runner-up'), 'rec-import')).toBeNull()
+  })
+})
+
 describe('recommend view', () => {
   it('asks with the defaults and shows three cards, each with subset, estimate and reasons', async () => {
     const { calls, fetchImpl } = stub()

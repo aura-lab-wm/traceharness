@@ -12,6 +12,7 @@ const CAT = {
   datasets: [
     { id: 'nebius/SWE-agent-trajectories', kind: 'trajectories', title: 'SWE-agent trajectories', summary: 'Recorded SWE-agent runs.', rows: 80036, license: 'cc-by-4.0', gated: false },
     { id: 'SALT-NLP/SWE-chat', kind: 'trajectories', title: 'SWE-chat', summary: 'Chats.', rows: 6000, license: null, gated: true },
+    { id: 'SWE-bench/SWE-smith-trajectories', kind: 'trajectories', title: 'SWE-smith trajectories', summary: 'Recorded runs.', rows: 24100, license: 'mit', gated: false, hf_adapter: 'messages', hf_import: { config: 'default', split: 'tool' } },
     { id: 'acme/no-license', kind: 'trajectories', title: 'No license', summary: 'No license stated.', rows: null, license: null, gated: false },
     { id: 'princeton-nlp/SWE-bench_Verified', kind: 'benchmark', title: 'SWE-bench Verified', summary: 'Tasks.', rows: 500, license: 'mit', gated: false },
   ],
@@ -49,14 +50,30 @@ describe('Hugging Face panel (local)', () => {
     const { container } = renderRig('#/rig/sources', { data: data() })
     const box = el(container, 'hf-catalog')
     const rows = [...box.querySelectorAll('tbody tr')]
-    expect(rows.map((r) => r.getAttribute('data-id'))).toEqual(['nebius/SWE-agent-trajectories', 'SALT-NLP/SWE-chat', 'acme/no-license'])
+    expect(rows.map((r) => r.getAttribute('data-id'))).toEqual(['nebius/SWE-agent-trajectories', 'SALT-NLP/SWE-chat', 'SWE-bench/SWE-smith-trajectories', 'acme/no-license'])
     expect(rows[0].textContent).toContain('80,036')
     expect(rows[0].textContent).toContain('cc-by-4.0')
     expect(rows[1].textContent).toContain('license not stated')
     expect(rows[1].textContent).toContain('gated')
-    expect(rows[2].textContent).toContain('license not stated')
+    expect(rows[3].textContent).toContain('license not stated')
     expect(box.textContent).not.toContain('SWE-bench_Verified')
     expect(within(rows[1]).queryByRole('button', { name: /Preview/ })).toBeNull()
+  })
+
+  it('marks the datasets the console can import and sends their default split', async () => {
+    const { calls, fetchImpl } = stub([IDLE])
+    const { container } = renderRig('#/rig/sources', { data: data(), fetchImpl })
+    const rows = [...el(container, 'hf-catalog').querySelectorAll('tbody tr')]
+    const marks = rows.map((r) => r.querySelector('[data-el~="hf-importable"]'))
+    expect(marks.map((m) => m !== null)).toEqual([false, false, true, false])
+    expect(marks[2].textContent).toContain('importable')
+    fireEvent.click(within(rows[2]).getByRole('button', { name: 'Preview SWE-bench/SWE-smith-trajectories' }))
+    const form = await waitFor(() => { const x = el(container, 'hf-import'); expect(x).not.toBeNull(); return x })
+    expect(el(form, 'hf-default-split').textContent).toContain('default / tool')
+    fireEvent.click(el(form, 'hf-import-start'))
+    fireEvent.click(within(form).getByRole('button', { name: 'Import' }))
+    await waitFor(() => expect(calls.some((c) => c.url === '/api/hf/import')).toBe(true))
+    expect(calls.find((c) => c.url === '/api/hf/import').body).toEqual({ dataset: 'SWE-bench/SWE-smith-trajectories', config: 'default', split: 'tool', n: 200, seed: 0 })
   })
 
   it('previews a dataset: columns and first rows, a cell with markup shown as text and never run', async () => {
