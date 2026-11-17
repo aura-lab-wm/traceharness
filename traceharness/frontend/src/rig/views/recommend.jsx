@@ -220,7 +220,7 @@ function Recommend() {
     setError(''); setForm(f); setQuery(q.query)
   }
   return (
-    <div className="rg-rec" data-el="recommend">
+    <div className="rg-dpad rg-rec" data-el="recommend">
       <PageHeader eyebrow="Tools" title="Which benchmark?"
         lede="One pick, one runner-up and one to avoid, chosen by a visible rule table from the Hugging Face catalog and this lab's own recorded runs." />
       <Unavailable capability="run.local" what="The benchmark recommender" />
