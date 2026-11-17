@@ -33,7 +33,10 @@
 import { PausedRuns } from '../PausePanel'
 import { useEffect, useId, useMemo, useRef, useState } from 'react'
 import { makeSpec } from '../route'
-import { api, IS_STATIC, IS_MEMBER } from '../../api'
+import { api, IS_STATIC } from '../../api'
+import { can as capable } from '../../environment'
+import { LOCAL_APP } from '../../shared/index.js'
+import { Unavailable } from '../unavailable'
 import {
   useDataset, useDatasets, useOverview, useRuns, useMetrics, useComparisons, useExperiment, isCapturedDir, useOracle, useIntegrity, useReport,
   useTasks, useModels, useJobs, useApi, useRealAnalysis, usePatterns, useQuery, short, fmt, tally, repeatEvidence, tokStats, conditionRuns, resolveCondition, metricsCell,
@@ -65,7 +68,8 @@ export const AN_VIEWS = [
 ]
 const AN_LABEL = Object.fromEntries(AN_VIEWS.map(([v, l]) => [v, l]))
 const PAL_KEYWORDS = { delta: 'compare comparison delta matrix baseline', judge: 'oracle integrity leakage kappa judge', fit: 'experiment anova two-factor contrasts', outcomes: 'pass@1 pass^k flip ci', family: 'family matrix models harnesses', report: 'report card export', setup: 'launch run setup compose', features: 'features patterns sequences query regex action string ochiai attribution sbfl failure swe-agent' }
-const LIVE_CMD = IS_MEMBER ? 'python -m traceharness --host 127.0.0.1 --port 8742' : 'python -m traceharness'
+/** How to start the local console, from the shared sources (never typed here). */
+const LIVE_CMD = LOCAL_APP.command
 
 const probeLabel = (p) => String(p || '').replace(/_/g, ' ')
 function ProbeTag({ probe }) {
@@ -706,9 +710,9 @@ function LlmJudge({ canCompare }) {
         <ErrorState error={J.error} onRetry={J.reload} what="/api/judge" />
       ) : figs.length ? (
         <Kpis label="LLM judge report" className="rg-an-kpis">{figs.map(([k, v]) => <Kpi key={k} label={k.replace(/_/g, ' ')} value={fx(v, 2)} />)}</Kpis>
-      ) : IS_STATIC ? (
-        <Empty title="No judge report in this export." actions={[seeChecks]} el="empty-state read-only-export-state">
-          {IS_MEMBER ? 'The judge runs in the local workbench at 127.0.0.1:8742.' : 'This is a static export, so the judge cannot run here.'} Start the local app to run it: <CopyCmd cmd={LIVE_CMD} />
+      ) : !capable('judge.run') ? (
+        <Empty title="No judge report in this snapshot." actions={[seeChecks]} el="empty-state read-only-export-state">
+          <Unavailable capability="judge.run" what="The judge" el="judge-unavailable" /><CopyCmd cmd={LIVE_CMD} />
         </Empty>
       ) : !key ? (
         <Empty title="No judge report yet." actions={[{ label: "Set the lab's server key in Settings", spec: 'settings', primary: true }, seeChecks]}>
@@ -719,7 +723,7 @@ function LlmJudge({ canCompare }) {
           {running ? 'Its report appears here when it finishes.' : 'The lab key is set, so the judge can run now. It spends tokens on that key.'}
         </Empty>
       )}
-      {!IS_STATIC && key && !J.error && (
+      {capable('judge.run') && key && !J.error && (
         <div className="rg-row rg-wrap rg-an-mt">
           <ConfirmAction label={running ? 'Judge running…' : figs.length ? 'Run the judge again' : 'Run the judge'} confirmLabel="Start the judge" disabled={running}
             why="A judge run is in progress; its report appears here when it finishes."
@@ -1092,7 +1096,7 @@ function Setup({ spec, dir, row, c }) {
   const active = (J.data && J.data.active) || []
   const missing = [!mS.length && 'a model', !hS.length && 'a harness', !tS.length && 'a task'].filter(Boolean)
   const why = missing.length ? `Select ${missing.join(', ')} to launch.` : !out ? 'Name an output directory to launch.' : null
-  const can = !IS_STATIC && n > 0 && !!out
+  const can = capable('run.local') && n > 0 && !!out
   const outExists = !!(ov.data.results || []).find((r) => r.name === out)
   const launch = async () => {
     setMsg(null)
@@ -1142,8 +1146,8 @@ function Setup({ spec, dir, row, c }) {
             <dt>cost</dt><dd>{!n ? '—' : costKnown ? '≈ ' + usd(cost, 2) : cost ? `≥ ${usd(cost, 2)} + unpriced` : '— not observed'}</dd>
             <dt>wall time</dt><dd>{n && wall ? `≈ ${Math.max(1, Math.round(wall / par / 60000))} min${wallKnown ? '' : ' + unmeasured'}` : '—'} <span className="rg-mute">@ {par} parallel</span></dd>
             <dt>detectable</dt><dd>{mde == null ? '—' : `${(mde * 100).toFixed(1)}pp`} <span className="rg-mute">per arm n={perArm}</span></dd></dl>
-          {IS_STATIC ? (
-            <Note el="read-only-export-state"><div>{IS_MEMBER ? 'Experiments run in the local workbench at 127.0.0.1:8742.' : 'This is a static export, so runs cannot launch here.'} Start the local app to launch this cell: <CopyCmd cmd={LIVE_CMD} /></div></Note>
+          {!capable('run.local') ? (
+            <div className="rg-col"><Unavailable capability="run.local" what="Launching runs" el="read-only-export-state" /><CopyCmd cmd={LIVE_CMD} /></div>
           ) : (
             <div className="rg-an-launch">
               <ConfirmAction el="launch-runs" label={`Launch ${int(n)} runs`} confirmLabel={`Start ${int(n)} runs`} disabled={!can} why={why}

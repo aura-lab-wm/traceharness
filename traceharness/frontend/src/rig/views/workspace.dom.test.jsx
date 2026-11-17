@@ -473,6 +473,17 @@ describe('settings', () => {
     expect(k.textContent).not.toContain('— none')
     for (const i of container.querySelectorAll('[data-el="lab-key"] input, [data-el="buddy-settings"] input[type=password], [data-el="narrator-key"] input')) if (i.placeholder && !i.value) expect(i.placeholder).toMatch(/^(e\.g\. |Held: )/)
   })
+  it('Settings carries About this console: the build of this tab and of the server', async () => {
+    const { BUILD } = await import('../buildWatch')
+    const { SHARED, SHARED_SHA256 } = await import('../../shared/index.js')
+    const version = { schema: 1, component: 'package', mode: 'local', package_version: SHARED.package_version, ui_source_sha256: BUILD, shared_sources_sha256: SHARED_SHA256, compiler_oracle_sha256: SHARED.compiler_oracle.sha256 }
+    const { container } = renderRig('#/rig/settings', { data: { ...rigFixture(), ...IMPORT, '/version': version } })
+    const about = el(container, 'about-console')
+    expect(within(about).getByRole('heading', { name: 'About this console' })).toBeTruthy()
+    expect(about.textContent).toContain(SHARED_SHA256.slice(0, 12))
+    expect(about.textContent).toContain('local')
+    expect(about.querySelector('[data-el="about-drift"]')).toBeNull()
+  })
   it('paths in use, narrator and Buddy panels, and Return to work goes back to the previous tab', () => {
     const { container } = renderRig('#/rig/home+!settings', { data: { ...rigFixture(), ...IMPORT } })
     const p = el(container, 'paths-in-use').textContent

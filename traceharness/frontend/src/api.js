@@ -1,5 +1,7 @@
 import { useEffect, useRef, useState, useCallback } from 'react'
 import { IS_MEMBER, memberRequest, memberRoute } from './member-api'
+import { why } from './environment.js'
+import { SHARED } from './shared/index.js'
 export { IS_MEMBER } from './member-api'
 
 /** A file written by `python -m traceharness --export` carries every read-only response inline.
@@ -7,14 +9,18 @@ export { IS_MEMBER } from './member-api'
 export const STATIC_DATA = typeof window !== 'undefined' ? window.__TRACEHARNESS_DATA__ : undefined
 export const IS_STATIC = !!STATIC_DATA
 
+/** Why a request is refused here: the mode's sentence from environment.why(). A member marker
+ *  without its snapshot is still refused (fail closed) although environment.js reads that page as
+ *  local, so the shared "unavailable" sentence stands in when why() has nothing to say. */
+function refusal(capability, what) {
+  return why(capability, what) || SHARED.environment.messages.unavailable.replace('{what}', what)
+}
+
 export async function api(path, opts = {}) {
   const method = (opts.method || 'GET').toUpperCase()
   if (IS_MEMBER && memberRoute(path, method)) return memberRequest(path, opts)
   if (IS_STATIC || IS_MEMBER) {
-    if (method !== 'GET') {
-      if (IS_MEMBER) throw new Error('Use the Harnesses workspace for hosted runs and member harness saves. Watching, imports, capture, judging and other machine-local changes need the local app: python -m traceharness --host 127.0.0.1 --port 8742.')
-      throw new Error('This is a static export — launching runs and training need the live app.')
-    }
+    if (method !== 'GET') throw new Error(refusal('run.local', 'This action'))
     if (STATIC_DATA && Object.hasOwn(STATIC_DATA, path)) return STATIC_DATA[path]
     // Match on the normalised query, never on the bare path: a request carrying parameters the
     // snapshot does not have (a second results dir, a picked cell) must NOT quietly resolve to the
@@ -29,7 +35,7 @@ export async function api(path, opts = {}) {
     const want = norm(path)
     const hit = Object.keys(STATIC_DATA || {}).find(k => norm(k) === want)
     if (hit) return STATIC_DATA[hit]
-    throw new Error('Not in this static export — that view needs the live app (python -m traceharness).')
+    throw new Error(refusal('data.live_events', 'This view'))
   }
   const r = await fetch('/api' + path, {
     ...opts,

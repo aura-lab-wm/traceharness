@@ -50,6 +50,42 @@ describe('home · dataset library', () => {
     expect(about.open).toBe(false)
     expect(about.textContent).toContain('designed failure rates')
   })
+  it('labels where each dataset is available, from the row\'s availability (SPEC 4.8)', () => {
+    const data = rigFixture()
+    const [mini, mock] = data['/overview'].results
+    mini.availability = ['hosted', 'school']
+    mock.availability = []
+    const { container } = renderRig('#/rig/home', { data })
+    const rows = [...container.querySelectorAll('[data-el="dataset-list"] tbody tr')]
+    const chips = (row) => [...row.querySelectorAll('[data-el="dataset-availability"]')].map((c) => c.textContent)
+    expect(chips(rows[0])).toEqual(['on traceharness.dev', 'school package'])
+    expect(chips(rows[1])).toEqual(['this computer only'])
+    // the local console lists every directory it has; nothing is "not in this snapshot"
+    expect(container.querySelector('[data-el="datasets-not-here"]')).toBeNull()
+  })
+  it('shows no availability chip when the server did not say (an older server or snapshot)', () => {
+    const { container } = renderRig('#/rig/home')
+    expect(container.querySelector('[data-el="dataset-availability"]')).toBeNull()
+  })
+  it('a dataset whose date is not recorded says so in the library, the dataset header and Sources', () => {
+    const data = rigFixture()
+    data['/overview'].results[0].updated = null
+    data['/overview'].results[0].updated_source = 'unknown'
+    const { container } = renderRig('#/rig/home', { data })
+    const row = [...container.querySelectorAll('[data-el="dataset-list"] tbody tr')][0]
+    expect(row.querySelector('.rg-home-date').textContent).toBe('not recorded')
+    resetRig()
+    const ds = renderRig('#/rig/ds:mini', { data })
+    const eyebrow = ds.container.querySelector('.rg-dh .rg-eyebrow').textContent
+    expect(eyebrow).toContain('updated not recorded')
+    expect(eyebrow).not.toMatch(/null|Invalid Date|1970/)
+    resetRig()
+    const src = renderRig('#/rig/sources', { data: { ...data, '/settings': { results_root: 'data/runs', key_present: false }, '/import/sources': { sources: [] }, '/import/status': { status: 'idle', history: [] }, '/real/status': { status: 'idle' } } })
+    const disk = src.container.querySelector('[data-el="results-on-disk"]')
+    const mini = [...disk.querySelectorAll('tbody tr')].find((tr) => tr.querySelector('b').textContent === 'mini')
+    expect(mini.textContent).toContain('not recorded')
+    expect(disk.textContent).not.toMatch(/null|Invalid Date|1970/)
+  })
   it('opening a dataset adds a ds: tab and writes it to the hash', () => {
     renderRig('#/rig/home')
     act(() => { fireEvent.click(screen.getByRole('button', { name: 'Open mini' })) })

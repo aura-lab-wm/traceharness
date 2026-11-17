@@ -24,6 +24,13 @@ describe('Rig shell', () => {
     // status bar condition falls back to the biggest recorded dataset
     expect(container.querySelector('.rg-sb').textContent).toContain('ds mini')
   })
+  it('local console: no member entries (Account, Capture computers, the plain harness editor)', () => {
+    const { container } = renderRig('#/rig/')
+    for (const el of ['member-account', 'member-capture', 'member-simple-editor']) expect(container.querySelector(`[data-el="${el}"]`), el).toBeNull()
+    fireEvent.click(screen.getByRole('button', { name: 'More actions' }))
+    expect(within(screen.getByRole('menu')).queryByRole('menuitem', { name: 'Capture computers' })).toBeNull()
+    expect(screen.queryByRole('link', { name: 'Plain harness editor' })).toBeNull()
+  })
   it('never touches the classic app theme attributes', () => {
     document.documentElement.dataset.theme = 'dark'
     renderRig('#/rig/?theme=light')

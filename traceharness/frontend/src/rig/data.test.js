@@ -70,6 +70,17 @@ describe('normalisation', () => {
       model_runs: { 'swe-agent-llama-405b': 28, 'swe-agent-llama-70b': 900, 'swe-agent-llama-8b': 72 } }] })
     expect(defaultCondition(sw.results[0])).toEqual({ model: 'swe-agent-llama-70b', harness: 'swe-agent' })
   })
+  it('carries availability and the source of the date, and never invents either (SPEC 4.7, 4.8)', () => {
+    const ov = normOverview({ results: [
+      { name: 'a', models: ['z/m'], harnesses: ['x'], availability: ['hosted', 'school'], updated: '2026-03-01T10:00:00Z', updated_source: 'runs' },
+      { name: 'b', models: ['z/m'], harnesses: ['x'], availability: [], updated: null, updated_source: 'unknown' },
+      { name: 'c', models: ['z/m'], harnesses: ['x'] },
+      { name: 'd', models: ['z/m'], harnesses: ['x'], availability: ['hosted', 'elsewhere', 7], updated_source: 'guessed' },
+    ] })
+    expect(ov.results.map((r) => r.availability)).toEqual([['hosted', 'school'], [], null, ['hosted']])
+    expect(ov.results.map((r) => r.updated_source)).toEqual(['runs', 'unknown', null, null])
+    expect(ov.results.map((r) => r.updated)).toEqual(['2026-03-01T10:00:00Z', '', '', ''])
+  })
   it('short names and run handles', () => {
     expect(short('openai/gpt-5.6-luna')).toBe('gpt-5.6-luna'); expect(short('mock')).toBe('mock')
     expect(sfx('20260909-033945-c95aff')).toBe('c95aff'); expect(sfx('real-0001-x')).toBe('real-0001-x')

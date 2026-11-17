@@ -1,9 +1,10 @@
 /* Buddy has two explicit jobs: local, rule-based workflow guidance on every surface,
-   and the existing model-backed evidence interpretation in the local workbench.
+   and the existing model-backed evidence interpretation in the local console.
    The guide never calls a model or reads private prompt/evidence text. Evidence
    sharing keeps its existing allowlist, key and explicit-consent requirements. */
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { IS_MEMBER } from '../../api'
+import { can } from '../../environment'
+import { Unavailable } from '../unavailable'
 import { askBuddy, assertBuddySharing, buddyEvidence, buddySettings, redactBuddy } from '../../workspace/buddyClient'
 import BuddyModelPicker from '../../workspace/BuddyModelPicker'
 import BuddyMessage from '../../workspace/BuddyMessage'
@@ -58,18 +59,18 @@ function useEvidence(items, ctx, capturedOptIn) {
 }
 
 function BuddyDock(props) {
-  return <div className="rg-buddy-workflows"><NavigationBuddy {...props} /><h3 className="rg-buddy-evidence-title">Model interpretation &amp; pinned evidence</h3>{IS_MEMBER ? <MemberBuddyDock {...props} /> : <LiveBuddyDock {...props} />}</div>
+  return <div className="rg-buddy-workflows"><NavigationBuddy {...props} /><h3 className="rg-buddy-evidence-title">Model interpretation &amp; pinned evidence</h3>{can('assistant.model') ? <LiveBuddyDock {...props} /> : <LocalOnlyBuddyDock {...props} />}</div>
 }
 
-function MemberBuddyDock({ ctx = {} }) {
+/** Where no model may be asked (an export, a member's snapshot): the evidence stays inspectable,
+ *  and the note says, in the mode's own words, where a model can be asked. */
+function LocalOnlyBuddyDock({ ctx = {} }) {
   const items = useCaseFile()
   const { setDock, openTab } = useRig()
   return (
     <div className="rg-bud" data-el="buddy-panel">
-      <div className="rg-note" data-el="buddy-local-only"><div>
-        <b>Model interpretation runs in the local workbench.</b>
-        <p>Keep inspecting and pinning evidence here. To ask a model about it, start <code>python -m traceharness --host 127.0.0.1 --port 8742</code> and open <code>127.0.0.1:8742</code>.</p>
-      </div></div>
+      <p className="rg-small">Keep inspecting and pinning evidence here.</p>
+      <Unavailable capability="assistant.model" what="Asking a model" el="buddy-local-only" />
       {ctx.dir && <p className="rg-small">Selected dataset: <b>{ctx.dir}</b>{ctx.run && <> · run <span className="rg-mono">{ctx.run}</span></>}</p>}
       <div data-el="buddy-evidence">
         <b>{items.length} pinned item{items.length === 1 ? '' : 's'}</b>
