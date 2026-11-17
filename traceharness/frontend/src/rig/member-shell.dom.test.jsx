@@ -96,7 +96,9 @@ describe('hosted workbench navigation', () => {
     }
     for (const name of ['Fixed harnesses', 'Minimal harness', 'Build a harness']) expect(rail.queryByRole('button', { name })).toBeNull()
     expect(container.querySelector('[data-el="runtime-status"]').textContent).toContain('recorded snapshot · member harness saves')
-    expect(screen.getByRole('link', { name: 'Simple harness editor' }).getAttribute('href')).toBe('/app/shallow')
+    expect(screen.getByRole('link', { name: 'Plain harness editor' }).getAttribute('href')).toBe('/app/shallow')
+    expect(container.querySelector('[data-el="member-simple-editor"]').getAttribute('href')).toBe('/app/shallow')
+    expect(document.body.textContent).not.toMatch(/[Ss]imple harness editor/)
     expect(screen.getByRole('link', { name: 'Account', exact: true }).getAttribute('href')).toBe('/app/account')
     expect(container.querySelector('[data-el="load-trajectories-cta"]')).toBeNull()
     fireEvent.click(screen.getByRole('button', { name: 'Ask Buddy' }))
@@ -106,6 +108,35 @@ describe('hosted workbench navigation', () => {
     expect(container.querySelector('[data-el="member-local-keys"]')).toBeTruthy()
     expect(container.querySelectorAll('input[type="password"]')).toHaveLength(0)
     expect(requests).toEqual([{ url: '/api/onboarding', method: 'GET' }])
+  })
+
+  it('names the plain harness editor the same way in the status popover and the phone sheet', () => {
+    const { container } = renderRig('#/rig/home', { data })
+    fireEvent.click(container.querySelector('[data-el="runtime-status"]'))
+    const pop = screen.getByRole('dialog', { name: 'Workspace status' })
+    expect(within(pop).getByRole('link', { name: /Plain harness editor/ }).getAttribute('href')).toBe('/app/shallow')
+    fireEvent.click(screen.getByRole('button', { name: /Switch document/ }))
+    const sheet = screen.getByRole('dialog', { name: 'Open documents' })
+    const phone = sheet.querySelector('[data-el="mobile-simple-editor"]')
+    expect(phone.textContent).toBe('Open plain harness editor')
+    expect(phone.getAttribute('href')).toBe('/app/shallow')
+    expect(document.body.textContent).not.toMatch(/[Ss]imple harness editor/)
+  })
+
+  it('puts Capture computers next to Account, in the bar and in the phone menu, and opens the capture view', () => {
+    const { container } = renderRig('#/rig/home', { data })
+    const entry = container.querySelector('[data-el="member-capture"]')
+    expect(entry).not.toBeNull()
+    expect(entry.textContent).toBe('Capture computers')
+    expect(entry.getAttribute('data-spec')).toBe('capture')
+    // the Worker clones its own links in after Account and yields to this element (workbench.js)
+    expect(entry.previousElementSibling.getAttribute('data-el')).toBe('member-account')
+    fireEvent.click(screen.getByRole('button', { name: 'More actions' }))
+    const menu = screen.getByRole('menu')
+    expect(within(menu).getByRole('menuitem', { name: 'Capture computers' })).toBeTruthy()
+    fireEvent.click(entry)
+    const pane = parseHash(location.hash).panes[0]
+    expect(pane.tabs[pane.active]).toBe('capture')
   })
 
   it('returns from a reloadable harness route to the actual source ledger and retains its dataset', () => {
