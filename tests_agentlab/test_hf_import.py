@@ -159,7 +159,7 @@ class Completeness(Case):
         self.assertEqual(calls[:len(results)], results)
         self.assertTrue(all(c.startswith("toolu_") for c in calls))
 
-    def test_the_openhands_row_still_imports_unchanged(self):
+    def test_the_openhands_row_imports(self):         # content, order and pairing: test_hf_import_fidelity.OpenHands
         f = fixture("openhands_row.json")
         hub = FakeHub(dataset="nebius/oh", rows=[f["row"]] * 6, features=MSG_FEATURES)
         res = I.import_dataset("nebius/oh", n=6, name="oh", fetch=hub, runs_root=self.runs, sleep=NOSLEEP, pause=0)
@@ -177,7 +177,8 @@ class Completeness(Case):
         hub = FakeHub(dataset="acme/chat", rows=rows)
         res = I.import_dataset("acme/chat", n=30, seed=0, name="mixed", fetch=hub, runs_root=self.runs, sleep=NOSLEEP, pause=0)
         self.assertEqual(res["imported"], 29)
-        self.assertEqual(res["skipped"], [{"offset": 5, "reason": "assistant turns 3, steps parsed 1"}])
+        self.assertEqual([x["offset"] for x in res["skipped"]], [5])
+        self.assertRegex(res["skipped"][0]["reason"], "follows an assistant text turn")
         self.assertEqual(res["provenance"]["skipped"], res["skipped"])
         self.assertEqual(res["n_skipped"], 1)
         ids = {r["task_id"] for r in self.index("mixed")}

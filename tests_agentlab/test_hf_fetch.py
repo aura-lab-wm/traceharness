@@ -79,7 +79,8 @@ class Sampling(unittest.TestCase):
                 F.sample_rows("acme/data", None, None, bad, 0, fetch=hub, sleep=NOSLEEP)
         self.assertEqual(hub.rows_calls(), [])
 
-    def test_the_200_mb_budget_stops_the_import(self):
+    def test_retained_rows_over_the_limit_stop_an_import_read_through_an_injected_fetch(self):
+        # the transport-level budget is tested in test_hf_fetch_transport.py; this one covers rows kept in memory
         hub = FakeHub(rows=[swe_row(i) for i in range(30)])
         with mock.patch.object(F, "MAX_BYTES", 2000):
             with self.assertRaisesRegex(F.HFError, "200 MB"):

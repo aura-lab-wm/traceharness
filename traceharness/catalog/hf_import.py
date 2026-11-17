@@ -136,16 +136,34 @@ _PARAM = re.compile(r"<parameter=([A-Za-z0-9_.:-]+)>(.*?)</parameter>", re.S)
 def _tool_calls(m: dict) -> list:
     """The calls of one assistant message: (id, name, args) from `tool_calls` (a list, or a JSON / Python-literal string;
     OpenAI style {function: {name, arguments}} or flat {name, arguments}) -- else from `<function=NAME><parameter=KEY>..`
-    blocks in the text."""
+    blocks in the text. A `tool_calls` that is present but malformed (not a list, an entry that is not an object, an
+    entry without a name, arguments that are not an object) raises ValueError: the row is skipped, never approximated."""
     raw = m.get("tool_calls")
     if isinstance(raw, str):
         raw = _as_list(raw)
+        if raw is None:
+            raise ValueError("tool_calls is a string that is not a list")
+    elif raw is not None and not isinstance(raw, list):
+        raise ValueError("tool_calls is neither a list nor a string")
     out = []
-    for j, tc in enumerate(raw if isinstance(raw, list) else []):
+    for tc in raw or []:
         if not isinstance(tc, dict):
-            continue
+            raise ValueError("a tool_calls entry is not an object")
         fn = tc.get("function") if isinstance(tc.get("function"), dict) else tc
-        out.append((str(tc.get("id") or ""), str(fn.get("name") or "tool"), _args(fn.get("arguments", fn.get("args")))))
+        name = fn.get("name")
+        if not isinstance(name, str) or not name.strip():
+            raise ValueError("a tool_calls entry has no name")
+        args = fn.get("arguments", fn.get("args"))
+        if isinstance(args, str):
+            try:
+                args = json.loads(args) if args.strip() else {}
+            except ValueError:
+                raise ValueError("a tool call's arguments are not a JSON object") from None
+        if args is None:
+            args = {}
+        if not isinstance(args, dict):
+            raise ValueError("a tool call's arguments are not an object")
+        out.append((str(tc.get("id") or ""), name, args))
     if out:
         return out
     return [("", name, {k: v.strip("\n") for k, v in _PARAM.findall(body)}) for name, body in _FUNC.findall(_text(m.get("content")))]
@@ -176,14 +194,23 @@ def message_session(row: dict, offset: int, dataset_id: str):
     rc = _first(cols, RESOLVED_COLUMNS)
     resolved = _as_bool(row.get(rc)) if rc else None
     events, system, turns, open_calls = [], "", 0, []
+    closed = False                      # a text-only assistant turn was seen: nothing may follow it
     for k, m in enumerate(msgs):
         if not isinstance(m, dict):
-            continue
+            raise ValueError(f"message {k} is not an object")
         role, text = m.get("role"), _text(m.get("content"))
+        if closed and (role != "system"):
+            raise ValueError(f"message {k} follows an assistant text turn; a text turn is written only as the last step")
         if role == "system":
             system = system or text
         elif role == "assistant":
             calls = _tool_calls(m)
+            if open_calls:
+                raise ValueError(f"assistant turn {turns + 1} starts while a tool call still has no result")
+            if len(calls) > 1:
+                raise ValueError(f"assistant turn {turns + 1} makes {len(calls)} tool calls at once; one step is written per assistant turn")
+            if text.strip() and not calls:
+                closed = True
             if text.strip() or calls:
                 turns += 1
             visible = _FUNC.sub("", text).strip() if calls and not m.get("tool_calls") else text
@@ -194,7 +221,12 @@ def message_session(row: dict, offset: int, dataset_id: str):
                 events.append(Event("tool_call", call_id=cid, name=name, args=args, model=model))
                 open_calls.append(cid)
         elif role in ("tool", "function") or (role == "user" and open_calls):
-            ids = [i for i in _call_ids(m) if i in open_calls] or open_calls[:1]
+            if not open_calls:
+                raise ValueError(f"message {k} is a tool result that matches no open call")
+            named = _call_ids(m)
+            ids = [i for i in named if i in open_calls] or ([] if named else open_calls[:1])
+            if not ids:
+                raise ValueError(f"message {k} is a tool result that matches no open call")
             for i in ids:
                 open_calls.remove(i)
             events.append(Event("tool_result", call_id=ids[0] if ids else "", text=text))
@@ -251,7 +283,7 @@ _SAFE_ID = re.compile(r"[^A-Za-z0-9._@+=-]")
 
 
 def _write_swe_agent(rows, offsets, dataset_id, out_dir) -> dict:
-    from traceharness.core.real_traj import parse_trajectory, to_results_dir
+    from traceharness.core.real_traj import normalize_outcome, parse_trajectory, to_results_dir
     # real_traj names each run's folder after the row's instance id (only "/" replaced); a hostile id with a
     # backslash or other separator must not shape a path, so the id is cut to a plain alphabet first. The
     # Hub's real ids (owner__repo-123) are unchanged by this.
@@ -268,8 +300,9 @@ def _write_swe_agent(rows, offsets, dataset_id, out_dir) -> dict:
         else:
             good.append({**r, "instance_id": _SAFE_ID.sub("_", str(r.get("instance_id") or "row"))[:120]})
     n = to_results_dir(good, out_dir) if good else 0
+    known = sum(normalize_outcome(r.get("target")) is not None for r in good)
     return {"imported": n, "skipped": skipped, "harness_ids": ["swe-agent"], "n_tasks": len({r["instance_id"] for r in good}),
-            "outcomes_known": n, "outcomes_unknown": 0}
+            "outcomes_known": known, "outcomes_unknown": n - known}
 
 
 def _now() -> str:
