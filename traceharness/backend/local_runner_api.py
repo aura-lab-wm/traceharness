@@ -612,7 +612,6 @@ async def runner_rest(request: Request, rest: str = ""):
     if runner is None:
         raise HTTPException(404, L.NOT_FOUND)
     body = None
-    startable = True
     minted = None           # a credential handle this request created and the runner may not have taken
     if request.method in ("POST", "PUT", "PATCH", "DELETE"):
         try:
@@ -623,12 +622,9 @@ async def runner_rest(request: Request, rest: str = ""):
                 _no_secrets(body)
                 if rest.startswith("experiments/") and rest.endswith("/start") and body.get("credential_id") is None:
                     # The catalog says credential_required false, so the console omits the field: resolve
-                    # the Settings key exactly like a single-job submission. The experiment is read first; a
-                    # handle minted for a start that does not proceed (refused, or already running) is released
-                    # below, so refusals never use up the vault's capacity.
-                    current = await _read_runner(runner, "GET", "/api/runner/" + rest[:-len("/start")])
-                    state = ((current[1] or {}).get("experiment") or {}).get("status") if current and isinstance(current[1], dict) else None
-                    startable = current is None or current[0] != 200 or state in ("ready", "paused")
+                    # the Settings key exactly like a single-job submission. Whether the runner ADOPTED this
+                    # handle is decided by the runner under the experiment lock (`credential_adopted`), never
+                    # by an earlier read of the experiment's status; a handle that was not adopted is released.
                     minted = body["credential_id"] = await _handle(runner)
         except L.LibraryError as error:
             raise HTTPException(error.status, error.message) from None
@@ -638,7 +634,8 @@ async def runner_rest(request: Request, rest: str = ""):
     except BaseException:
         await _release(runner, minted)
         raise
-    if minted is not None and (status >= 400 or not startable):
+    adopted = data.pop("credential_adopted", None) if isinstance(data, dict) else None      # internal: not part of the console contract
+    if minted is not None and (status >= 400 or adopted is not True):
         await _release(runner, minted)
     return _passthrough(status, data)
 

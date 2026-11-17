@@ -16,21 +16,34 @@ def _refuse_constant(name):
     raise ValueError(name)
 
 
+MAX_DEPTH = 64          # deepest object/array nesting a stored or imported JSON document may have
+
+
 def finite(value) -> bool:
-    if isinstance(value, float):
-        return math.isfinite(value)
-    if isinstance(value, dict):
-        return all(finite(v) for v in value.values())
-    if isinstance(value, list):
-        return all(finite(v) for v in value)
+    """False when a float anywhere in `value` is not finite, or when it nests deeper than MAX_DEPTH. Iterative, so a
+    hostile document cannot exhaust the interpreter stack."""
+    stack = [(value, 0)]
+    while stack:
+        item, depth = stack.pop()
+        if isinstance(item, float):
+            if not math.isfinite(item):
+                return False
+        elif isinstance(item, (dict, list)):
+            if depth >= MAX_DEPTH:
+                return False
+            stack.extend((v, depth + 1) for v in (item.values() if isinstance(item, dict) else item))
     return True
 
 
 def loads_finite(text):
-    """json.loads that refuses NaN, Infinity, -Infinity and numbers too large for a float (1e999)."""
-    value = json.loads(text, parse_constant=_refuse_constant)
+    """json.loads that refuses NaN, Infinity, -Infinity, numbers too large for a float (1e999) and nesting deeper than
+    MAX_DEPTH. Every refusal is a ValueError (a RecursionError from the decoder included), so callers quarantine."""
+    try:
+        value = json.loads(text, parse_constant=_refuse_constant)
+    except RecursionError:
+        raise ValueError("nested too deeply") from None
     if not finite(value):
-        raise ValueError("non-finite number")
+        raise ValueError("non-finite number or nested too deeply")
     return value
 
 
@@ -92,7 +105,12 @@ _HARNESS_NUMBERS = ("max_steps", "max_total_tokens", "context_window")
 
 
 def _finite_number(v) -> bool:
-    return _num(v) and math.isfinite(v) and abs(v) < 2 ** 53
+    """Never raises: an integer is compared by magnitude (math.isfinite(10**400) raises OverflowError)."""
+    if not _num(v):
+        return False
+    if isinstance(v, int):
+        return abs(v) < 2 ** 53
+    return math.isfinite(v) and abs(v) < 2 ** 53
 
 
 def harness_problems(harness) -> list[str]:

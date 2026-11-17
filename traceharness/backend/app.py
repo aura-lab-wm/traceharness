@@ -46,6 +46,11 @@ def _stop_paused_runs():
 @contextlib.asynccontextmanager
 async def _lifespan(_app):
     _SHUTDOWN.clear()          # a fresh start (and a test that enters the app twice) begins un-stopped
+    try:                       # rows persisted before the grader-error fix, whose jobs are already purged
+        from traceharness.runner.datasets import migrate_grade_rows
+        await asyncio.to_thread(migrate_grade_rows, M.RUNS_ROOT)
+    except Exception:
+        pass                   # a migration problem never stops the console; it is retried at the next start
     yield
     _stop_paused_runs()
     RUNNER.close()             # the local runner's job pool and experiment scheduler

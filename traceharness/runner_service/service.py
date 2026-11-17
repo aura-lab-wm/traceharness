@@ -244,7 +244,8 @@ def create_app(settings: Settings, *, registry=None, provider=None, executor=Non
         body = parse(request, {"credential_id", "plan_sha256"})
         if not isinstance(body["credential_id"], str) or not HEX_ID.fullmatch(body["credential_id"]):
             raise JobError("Credential is unavailable.", 401)
-        return {"experiment": experiments.start(request.state.owner, experiment_id, body["credential_id"], body["plan_sha256"])}
+        experiment, adopted = experiments.start_adopting(request.state.owner, experiment_id, body["credential_id"], body["plan_sha256"])
+        return {"experiment": experiment, "credential_adopted": adopted}
 
     @app.post("/api/runner/experiments/{experiment_id}/cancel")
     async def cancel_experiment(request: Request, experiment_id: str):

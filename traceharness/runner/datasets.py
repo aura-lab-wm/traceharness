@@ -193,7 +193,8 @@ def _count(value):
 
 
 def _money(value):
-    return value if type(value) in (int, float) and math.isfinite(value) and value >= 0 else None
+    # same ceiling as the runner's own accounting (runner_service/jobs.py); an int is compared, never converted to float
+    return value if type(value) in (int, float) and 0 <= value <= 1000000 else None
 
 
 def build_run(row, job_dir) -> dict:
@@ -219,7 +220,7 @@ def build_run(row, job_dir) -> dict:
         try:
             parsed = loads_finite(own)
         except ValueError:
-            summary_problem = "summary.json is not finite JSON"
+            summary_problem = "summary.json is not finite, shallow JSON"
         else:
             if not isinstance(parsed, dict):
                 summary_problem, parsed = "summary.json is not an object", None
@@ -321,7 +322,7 @@ def _fsync_dir(path) -> None:
 
 def _makedirs_durable(path, mode=0o777) -> list:
     """Create `path` and any missing ancestors; returns the directories created, outermost first. Their entries are
-    not durable until each one's parent is fsynced (`_sync_created`)."""
+    not durable until each one's parent is fsynced (`_sync_chain`)."""
     path = os.path.abspath(path)
     missing = []
     probe = path
@@ -342,12 +343,19 @@ def _makedirs_durable(path, mode=0o777) -> list:
     return created
 
 
-def _sync_created(created) -> None:
-    """fsync every newly created directory and its parent, so the new entries survive a crash. Failures propagate:
-    persistence is not acknowledged unless every one succeeded."""
-    for directory in created:
+def _sync_chain(path, top) -> None:
+    """fsync `path`, every ancestor up to and including `top`, and each one's parent (so `top`'s own entry in ITS parent
+    is durable too). Run on every attempt, whether or not this attempt created the directories: an earlier attempt that
+    created them and then failed to sync has left the obligation behind, and the directories now merely exist.
+    Failures propagate: persistence is not acknowledged unless every one succeeded."""
+    directory, top = os.path.abspath(path), os.path.abspath(top)
+    while True:
         _fsync_dir(directory)
-        _fsync_dir(os.path.dirname(directory))
+        parent = os.path.dirname(directory)
+        _fsync_dir(parent)
+        if directory == top or parent == directory:
+            return
+        directory = parent
 
 
 def _quarantine(runs_root, built):
@@ -355,15 +363,14 @@ def _quarantine(runs_root, built):
     if not built["quarantined"]:
         return
     directory = os.path.join(os.path.dirname(os.path.abspath(runs_root)), "runner", "quarantine", built["run_id"])
-    created = _makedirs_durable(directory, 0o700)
+    _makedirs_durable(directory, 0o700)
     for name, body in built["quarantined"].items():
         fd = os.open(os.path.join(directory, name), os.O_WRONLY | os.O_CREAT | os.O_TRUNC | os.O_NOFOLLOW, 0o600)
         with os.fdopen(fd, "wb") as stream:
             stream.write(body or b"")
             stream.flush()
             os.fsync(stream.fileno())
-    _fsync_dir(directory)           # the file entries
-    _sync_created(created)          # the new directories' own entries, up to the first ancestor that already existed
+    _sync_chain(directory, os.path.join(os.path.dirname(os.path.abspath(runs_root)), "runner"))   # file entries, then quarantine/<id>, quarantine, runner, up to data
 
 
 def _current(final) -> bool:
@@ -385,7 +392,8 @@ def persist_job(runs_root, row, job_dir) -> bool:
     final = os.path.join(dataset, built["run_id"])
     _quarantine(runs_root, built)
     with _LOCK:
-        _sync_created(_makedirs_durable(dataset))      # a new dataset (and runs_root) is durable before anything in it
+        _makedirs_durable(dataset)
+        _sync_chain(dataset, runs_root)      # runs_root and the dataset are durable before anything in it, on every attempt
         if not (os.path.isdir(final) and _current(final)):
             stage = tempfile.mkdtemp(dir=dataset, prefix=built["run_id"] + ".tmp-")
             old = None
@@ -418,6 +426,98 @@ def persist_job(runs_root, row, job_dir) -> bool:
             finally:
                 if old is not None:
                     shutil.rmtree(old, ignore_errors=True)
+        _sync_chain(os.path.join(final, "evidence"), runs_root)    # a directory left by an earlier failed attempt is synced now
         _append_index(os.path.join(dataset, "index.jsonl"), [built["index"]])
         _fsync_dir(dataset)
     return True
+
+
+def _write_atomic(path, body: bytes) -> None:
+    temp = path + ".migrate"
+    fd = os.open(temp, os.O_WRONLY | os.O_CREAT | os.O_TRUNC | os.O_NOFOLLOW, 0o600)
+    with os.fdopen(fd, "wb") as stream:
+        stream.write(body)
+        stream.flush()
+        os.fsync(stream.fileno())
+    os.replace(temp, path)
+    _fsync_dir(os.path.dirname(path))
+
+
+def _own_grade(run_dir, provenance):
+    """The grade outcome recorded in this run's own evidence (evidence/grade.json, checked against its recorded hash),
+    or None when it cannot be established."""
+    base = os.path.join(run_dir, "evidence")
+    body = _read(os.path.join(base, "grade.json"), limit=1024 * 1024)
+    meta = (provenance.get("files") or {}).get("grade.json")
+    if body is not None and not (isinstance(meta, dict) and meta.get("sha256") not in (None, hashlib.sha256(body).hexdigest())):
+        try:
+            outcome = loads_finite(body).get("outcome")
+        except (ValueError, AttributeError):
+            outcome = None
+        if isinstance(outcome, str):
+            return outcome
+    grade = provenance.get("grade")
+    return grade if isinstance(grade, str) else None
+
+
+def migrate_grade_rows(runs_root) -> list:
+    """Rewrite persisted runs written before PERSISTED_VERSION 3 whose grade was an error or ungraded: hidden_pass was
+    false (a failed solution) and is now null, with the grader's outcome kept as grade_outcome. The grade comes from the
+    run's own evidence, so it works after the runner job is gone. Covers `runner_jobs` and every `experiment_*` dataset;
+    idempotent; a run graded passed or failed is never touched. Returns the migrated run ids."""
+    migrated = []
+    try:
+        names = sorted(n for n in os.listdir(runs_root) if n == SINGLE_DATASET or n.startswith("experiment_"))
+    except OSError:
+        return migrated
+    with _LOCK:
+        for name in names:
+            dataset = os.path.join(runs_root, name)
+            try:
+                runs = sorted(os.listdir(dataset))
+            except OSError:
+                continue
+            for run_id in runs:
+                run_dir = os.path.join(dataset, run_id)
+                try:
+                    raw = _read(os.path.join(run_dir, "evidence", "provenance.json"))
+                    provenance = json.loads(raw) if raw else None
+                    if not isinstance(provenance, dict) or type(provenance.get("persisted_version")) is int and provenance["persisted_version"] >= PERSISTED_VERSION:
+                        continue
+                    outcome = _own_grade(run_dir, provenance)
+                    if outcome is None or outcome in ("passed", "failed"):
+                        continue
+                    own = _read(os.path.join(run_dir, "summary.json"), limit=4 * 1024 * 1024)
+                    row = json.loads(own) if own else None
+                    if not isinstance(row, dict):
+                        continue
+                    row.update(hidden_pass=None, grade_outcome=outcome)
+                    _write_atomic(os.path.join(run_dir, "summary.json"), json.dumps(row, ensure_ascii=False, indent=2, allow_nan=False).encode())
+                    provenance.update(persisted_version=PERSISTED_VERSION, grade=outcome)
+                    # The index row is rewritten before the provenance version is bumped: a crash in between leaves the run
+                    # at its old version, so the next start redoes this run.
+                    _rewrite_index_rows(dataset, {row.get("run_id", run_id): row})
+                    _write_atomic(os.path.join(run_dir, "evidence", "provenance.json"), json.dumps(provenance, ensure_ascii=False, indent=2, sort_keys=True).encode())
+                    migrated.append(run_id)
+                except (OSError, ValueError):
+                    continue            # one unreadable run never stops the others
+    return migrated
+
+
+def _rewrite_index_rows(dataset, rows) -> None:
+    """Replace, in place and in order, the index.jsonl line of each run in `rows` ({run_id: row})."""
+    path = os.path.join(dataset, "index.jsonl")
+    try:
+        lines = open(path, encoding="utf-8").read().splitlines()
+    except OSError:
+        return
+    out = []
+    for line in lines:
+        try:
+            current = json.loads(line)
+        except ValueError:
+            out.append(line)
+            continue
+        replacement = rows.get(current.get("run_id")) if isinstance(current, dict) else None
+        out.append(json.dumps(replacement, ensure_ascii=False, allow_nan=False) if replacement is not None else line)
+    _write_atomic(path, ("\n".join(out) + "\n").encode())
