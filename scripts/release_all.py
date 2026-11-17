@@ -1,26 +1,23 @@
 #!/usr/bin/env python3
-"""The one release check across the package and the site (SPEC 7).
+"""The one release check for the package (SPEC 7).
 
-    python scripts/release_all.py --check [--site PATH]
-    python scripts/release_all.py --offline-gates [--site PATH]
+    python scripts/release_all.py --check
+    python scripts/release_all.py --offline-gates
 
-`--check` runs `traceharness doctor`'s local checks (package, UI build, shared sources, runner
-image) and, with --site, `site_checkout`; then the retired-phrase check and
-`tests_agentlab.test_version_alignment`. It prints one line per check, then the release steps in
-their order, and exits 1 naming every check that differs (2 when one could not run).
+`--check` runs `traceharness doctor`'s local checks (package, UI build, shared sources, local runner),
+then the retired-phrase check and `tests_agentlab.test_version_alignment`. It prints one line per
+check, then the release step, and exits 1 naming every check that differs (2 when one could not run).
 
 `--offline-gates` runs the offline test gates in order and stops at the first failure: `make test`,
-`make check`, `npm run lint` and `npm test` here, and with --site the site's offline list (the
-Worker unit tests, the offline Python suites, both runner contract scripts and the width gate).
-For each it prints the last ten lines of output and EXIT=<code>.
+`make check`, `npm run lint` and `npm test`. For each it prints the last ten lines of output and
+EXIT=<code>.
 
-Neither mode changes anything outside a test's own temporary files: the release steps that ship
-something are printed as text and never run from here.
+Neither mode changes anything outside a test's own temporary files: the release step that ships
+something is printed as text and never run from here.
 """
 from __future__ import annotations
 
 import argparse
-import glob
 import os
 import subprocess
 import sys
@@ -35,33 +32,12 @@ from traceharness.shared import doctor          # noqa: E402
 #: SPEC 7, printed after the checks. Each step starts only after the previous gate passed and the
 #: owner said go. This script runs none of them.
 RELEASE_STEPS = (
-    "1. Package: bump pyproject.toml and every statement in tests_agentlab/test_version_alignment.py; "
-    "python -m traceharness.shared.generate; make build-frontend; pull request; CI green; merge; "
-    "git tag -a vX.Y.Z && git push origin vX.Y.Z (docs/RELEASING.md). Gate: release.yml green.",
-    "2. Site sync: python3 tools/sync_shared.py --from <checkout at the tag>; pull request. "
-    "Gate: sync_shared.py --check --require-public and the node suite.",
-    "3. Runner: build the wheel at the tag, update the wheel name in deploy/runner/fly/Dockerfile, rebuild "
-    "and verify per deploy/runner/fly/README.md, then the Fly deploy. Gate: deploy/runner/verify_runtime.py, "
-    "both runner contract scripts, a dated record in deploy/runner/releases/.",
-    "4. /app snapshot: python3 auth/worker/publish_workbench.py --publish --dry-run --ref vX.Y.Z, then --publish. "
-    "Gate: every export check, both candidate checks, the KV read-back.",
-    "5. Worker: python3 -B auth/worker/release.py --state \"$STATE_FILE\" --expected-project \"$EXPECTED_PROJECT\" "
-    "--workbench-export <export> --previous-version <id> (checks only), then the same with --deploy. "
-    "Gate: PASS: release checks complete; report the last ten log lines and DEPLOY_EXIT.",
-    "6. Pages: python3 tools/extract.py && python3 tools/build.py, then the procedure in auth/pages/README.md. "
-    "Gate: the entry proof.",
-    "7. Drift: traceharness doctor --compare https://traceharness.dev -> exit 0.",
+    "1. One tag releases everything: bump pyproject.toml and every statement in "
+    "tests_agentlab/test_version_alignment.py; python -m traceharness.shared.generate; make build-frontend; "
+    "pull request; CI green; merge; git tag -a vX.Y.Z && git push origin vX.Y.Z (docs/RELEASING.md). "
+    "release.yml builds the wheel, the school package and the console container image. Gate: release.yml green.",
 )
 
-#: The site's offline Python suites (SPEC 6 step 6), run from auth/worker. The two candidate proofs
-#: are left out: they need an export built for the purpose.
-SITE_PYTHON_SUITES = (
-    "compiler-parity.py", "member-headless.py", "member-review.py", "member-recovery.py",
-    "member-live-save-unit.py", "member-live-evidence.test.py", "release-check.test.py",
-    "accounts-postgres.test.py", "account-admin-postgres.test.py", "admin-cli.test.py",
-    "publish-workbench.test.py",
-)
-SITE_CONTRACT_SCRIPTS = ("runner-service-contract.mjs", "runner-matrix-service-contract.mjs")
 GATE_TIMEOUT_S = 3600
 
 
@@ -70,13 +46,8 @@ def _env(**extra) -> dict:
 
 
 # --------------------------------------------------------------------------- --check
-def doctor_rows(site: str | None) -> list[dict]:
-    rows = doctor.local_checks(ROOT)
-    if site is None:
-        rows.append(doctor.row("site_checkout", "not_applicable", "not compared: pass --site <site checkout>"))
-    else:
-        rows.append(doctor.check_site_checkout(site, ROOT))
-    return rows
+def doctor_rows() -> list[dict]:
+    return doctor.local_checks(ROOT)
 
 
 def vocabulary_row() -> dict:
@@ -106,15 +77,15 @@ def version_alignment_row(runner=subprocess.run) -> dict:
     return doctor.row("version_alignment", "drift", (lines[0].strip() if lines else "test_version_alignment failed")[:300])
 
 
-def default_checks(site: str | None, runner=subprocess.run) -> list:
-    return [lambda: doctor_rows(site), lambda: [vocabulary_row()], lambda: [version_alignment_row(runner)]]
+def default_checks(runner=subprocess.run) -> list:
+    return [doctor_rows, lambda: [vocabulary_row()], lambda: [version_alignment_row(runner)]]
 
 
-def check(site: str | None, checks=None, runner=subprocess.run) -> int:
-    rows = [r for produce in (checks if checks is not None else default_checks(site, runner)) for r in produce()]
+def check(checks=None, runner=subprocess.run) -> int:
+    rows = [r for produce in (checks if checks is not None else default_checks(runner)) for r in produce()]
     print(doctor.table(rows))
     print()
-    print("Release steps, in order (SPEC 7; printed only, none is run from here):")
+    print("Release step (SPEC 7; printed only, never run from here):")
     for step in RELEASE_STEPS:
         print("  " + step)
     print()
@@ -127,37 +98,18 @@ def check(site: str | None, checks=None, runner=subprocess.run) -> int:
 
 
 # --------------------------------------------------------------------------- --offline-gates
-def _contract_python() -> str:
-    candidate = os.path.join(ROOT, ".venv", "bin", "python")
-    return candidate if os.path.isfile(candidate) else sys.executable
-
-
-def offline_gates(site: str | None) -> list[tuple[str, list[str], str, dict]]:
+def offline_gates() -> list[tuple[str, list[str], str, dict]]:
     """(label, argv, cwd, env) for each gate, in the order they run."""
-    gates = [
+    return [
         ("make test", ["make", "test", f"PY={sys.executable}"], ROOT, _env()),
         ("make check", ["make", "check", f"PY={sys.executable}"], ROOT, _env()),
         ("npm run lint", ["npm", "run", "lint"], FRONTEND, _env()),
         ("npm test", ["npm", "test"], FRONTEND, _env()),
     ]
-    if site is None:
-        return gates
-    worker = os.path.join(os.path.abspath(site), "auth", "worker")
-    env = _env(TRACEHARNESS_PUBLIC_REPO=ROOT)
-    units = sorted(os.path.relpath(p, worker).replace(os.sep, "/") for p in glob.glob(os.path.join(worker, "test", "*.test.mjs")))
-    gates.append(("node --test test/*.test.mjs", ["node", "--test", *units], worker, env))
-    for name in SITE_PYTHON_SUITES:
-        gates.append((f"python3 -B test/{name}", ["python3", "-B", f"test/{name}"], worker, env))
-    contract_env = {**env, "PYTHONPATH": ROOT, "RUNNER_TEST_PYTHON": _contract_python()}
-    for name in SITE_CONTRACT_SCRIPTS:
-        gates.append((f"node test/{name}", ["node", f"test/{name}"], worker, contract_env))
-    gates.append(("width gate", ["python3", "-B", "../../tools/width_gate.py", "--worker-local", "--pages", "../../dist"],
-                  worker, env))
-    return gates
 
 
-def run_gates(site: str | None, runner=subprocess.run) -> int:
-    for label, argv, cwd, env in offline_gates(site):
+def run_gates(runner=subprocess.run) -> int:
+    for label, argv, cwd, env in offline_gates():
         print(f"--- {label}  (in {cwd})", flush=True)
         try:
             done = runner(argv, cwd=cwd, env=env, capture_output=True, text=True, timeout=GATE_TIMEOUT_S)
@@ -178,15 +130,14 @@ def run_gates(site: str | None, runner=subprocess.run) -> int:
 
 def main(argv: list[str] | None = None, checks=None, runner=subprocess.run) -> int:
     p = argparse.ArgumentParser(prog="python scripts/release_all.py",
-                                description="The one release check across the package and the site (SPEC 7).")
+                                description="The one release check for the package (SPEC 7).")
     mode = p.add_mutually_exclusive_group(required=True)
     mode.add_argument("--check", action="store_true", help="name every fact that differs; exit 1 on any")
     mode.add_argument("--offline-gates", action="store_true", help="run the offline test gates in order")
-    p.add_argument("--site", metavar="PATH", help="the traceharness-site checkout")
     args = p.parse_args(argv)
     if args.check:
-        return check(args.site, checks=checks, runner=runner)
-    return run_gates(args.site, runner=runner)
+        return check(checks=checks, runner=runner)
+    return run_gates(runner=runner)
 
 
 if __name__ == "__main__":

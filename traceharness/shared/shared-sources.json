@@ -21,7 +21,7 @@
   },
   "sha256": "1a22738c915dd698d8f2592d019dd25244707f7e382a9b945c032b79c638e0a9"
  },
- "content_sha256": "722213b281d6d651f6951833d9a6d0bd95defab6fab7fef435d0115078c55eeb",
+ "content_sha256": "b2582851d962c6997d4bf3a5d8b24a4b302d9b1686a4ef01b08492a9bb4f0f23",
  "datasets": {
   "school": [
    "llma4se_live",
@@ -263,7 +263,7 @@
   "port": 8765,
   "url": "http://127.0.0.1:8765"
  },
- "package_version": "0.5.5",
+ "package_version": "0.6.0",
  "port": 8765,
  "save_protocol": {
   "fixed": "if_hash|if_absent",

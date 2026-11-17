@@ -339,7 +339,7 @@ its offset and reason in `provenance.json`, and an import where more than half t
 
 Redistribution: only a stated permissive license (mit, apache-2.0, bsd-*, cc0-1.0, cc-by-4.0) makes
 `redistributable` true. Data that is not stays out of a default `--export` and out of the school package; name the
-directory in `--export-results` to include it yourself. In an exported page and in member mode the import controls
+directory in `--export-results` to include it yourself. In an exported page the import controls
 are replaced by a note.
 
 ### Which benchmark?

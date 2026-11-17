@@ -76,6 +76,24 @@ traceharness agents run --agent mini-swe-agent --model google/gemini-2.5-flash-l
 
 Each run uses separate containers. The **broker** is the only one with network access and the only place the key exists; it serves the model on a Unix socket and fixes the model, the hosts (fallbacks off), the output cap, the number of calls and the bytes sent. The **agent** container has no network, no capabilities, a read-only root and a non-root user, and works in a size-capped in-memory workspace. A separate container exports the workspace as regular files only, and the **grader** container (no network, read-only mounts) grades it. Every call's host and cost come from OpenRouter's generation records and are shown on the run page under **Model calls**; `traceharness agents resolve DIR` prices calls whose record arrived late. This is ordinary Docker isolation; for agents you do not trust, pass `--runtime runsc` (gVisor).
 
+## Local runner (containers on your machine)
+
+Container runs of third-party agents, experiment matrices and paired native-prompt experiments happen in the
+**local runner**. It needs Docker and is optional; everything else works without it.
+
+```bash
+traceharness runner setup      # once: builds the runtime and grader images on this machine (a few GB, takes a while)
+traceharness runner status     # Docker, isolation, images, registry, compatibility receipts
+traceharness runner verify     # optional and PAID: one real isolated job that writes a compatibility receipt
+```
+
+gVisor (`runsc`) is used for isolation when `docker info` lists it; otherwise plain Docker isolation applies (no network
+except the model broker, read-only task mounts, memory, CPU and wall limits). The console shows which isolation a job
+used. Images are built from public bases and the agents' own npm packages; nothing is pulled from a registry we publish.
+Without a verified receipt a combination runs only after you confirm it as not verified on this machine. The OpenRouter
+key saved in **Settings** stays in the console's backend and never enters a container. `traceharness doctor` reports
+whether the runner is set up.
+
 ## Capture your coding-agent sessions
 
 Capture runs on your machine only: no account, no upload. It supports **Claude Code**, **Codex**, **agy** (Antigravity CLI), **Qwen Code**, and **Cursor**, reads only the folders you allow, and writes ledgers into the local console (the Capture page of `traceharness serve`).
@@ -142,7 +160,7 @@ New run directories appear on the dashboard alongside the included datasets. To 
 
 **Maintainer archive build:** run `python3 scripts/build_school_package.py --verify` (or `make school-package`) to build and clean-room verify `dist/traceharness-school.zip` (runs the four core exercises, a live mock run, the shipped tests, SHA-256 checks, and a path/secret scan; rejects symlinks, caches, hidden files, dropped tracked files, and non-zero exits). If you change frontend source, rebuild and stage `dist/` first (`cd traceharness/frontend && npm ci && npm run build && cd ../.. && git add traceharness/frontend/dist`), or restore tracked assets with `git checkout -- traceharness/frontend/dist && git clean -fdq traceharness/frontend/dist`.
 
-**Further documentation:** [`docs/EXPERIMENT_WORKSPACE.md`](docs/EXPERIMENT_WORKSPACE.md) (signed-in harness editor, forked runs, and OpenRouter sweeps), [`docs/EXECUTION_PERFORMANCE.md`](docs/EXECUTION_PERFORMANCE.md), [`docs/COMPREHENSIVE_VERIFICATION.md`](docs/COMPREHENSIVE_VERIFICATION.md), [`docs/ASTRA_REVIEW_FIXES.md`](docs/ASTRA_REVIEW_FIXES.md) (seven repaired review findings), [`docs/CAPTURE_PRODUCTION_VERIFICATION.md`](docs/CAPTURE_PRODUCTION_VERIFICATION.md) (production uploads and two-member isolation), [`docs/EIGHT_SOL_PLATFORM_AUDIT.md`](docs/EIGHT_SOL_PLATFORM_AUDIT.md) (twelve platform audit repairs), [`docs/VOICE_TOUR_AND_BUDDY.md`](docs/VOICE_TOUR_AND_BUDDY.md) (narrated tour and Ask Buddy), and [`docs/ACCOUNT_PLATFORM_DESIGN.md`](docs/ACCOUNT_PLATFORM_DESIGN.md) (undeployed account/MFA/admin design proposal).
+**Further documentation:** [`docs/EXPERIMENT_WORKSPACE.md`](docs/EXPERIMENT_WORKSPACE.md) (harness editor, forked runs and OpenRouter sweeps in the local console), [`docs/CAPTURE.md`](docs/CAPTURE.md) (capture, export and import), [`docs/RELEASING.md`](docs/RELEASING.md), and [`docs/history/`](docs/history/) (records from when TraceHarness had a hosted site, retired 2026-11-17).
 
 ## How to cite
 
@@ -153,12 +171,12 @@ If you use TraceHarness in academic work, cite the software and the version used
   author  = {Antonio Mastropaolo},
   title   = {{TraceHarness}: Treating the Agent Harness as a Controlled Experimental Variable},
   year    = {2026},
-  version = {0.5.5},
+  version = {0.6.0},
   url     = {https://traceharness.dev}
 }
 ```
 
-Plain text: Mastropaolo, A. (2026). *TraceHarness: Treating the agent harness as a controlled experimental variable* (Version 0.5.5) [Computer software]. https://traceharness.dev
+Plain text: Mastropaolo, A. (2026). *TraceHarness: Treating the agent harness as a controlled experimental variable* (Version 0.6.0) [Computer software]. https://traceharness.dev
 
 If you use the 500 runs in `data/runs/real_swe_agent_500`, also cite Nebius, [SWE-agent-trajectories](https://huggingface.co/datasets/nebius/SWE-agent-trajectories) (CC BY 4.0).
 

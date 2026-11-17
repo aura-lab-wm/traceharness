@@ -13,7 +13,7 @@ import time
 
 from traceharness.shared import contract
 
-__version__ = "0.5.5"
+__version__ = "0.6.0"
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -37,9 +37,9 @@ def build_parser() -> argparse.ArgumentParser:
                "FILE.zip`) reads one on another machine. "
                "`traceharness runner setup|status|verify` builds and checks the local runner (Docker). "
                "`traceharness native-prompts inventory|profile|experiment ...` inspects native prompt inventories and authors "
-               "profiles offline. `traceharness doctor [--site PATH] [--compare URL] [--json]` checks that the package, "
-               "the UI build, the shared sources, the runner image and the site agree (exit 0 aligned, 1 drift, 2 could "
-               "not check; --compare is its only network use).",
+               "profiles offline. `traceharness doctor [--json]` checks that the package, "
+               "the UI build and the shared sources agree and reports whether the local runner is set up (offline; exit 0 "
+               "aligned, 1 drift, 2 could not check; the runner is optional and never changes the exit code).",
     )
     p.add_argument("--host", default=os.environ.get("TRACEHARNESS_HOST", "127.0.0.1"),
                    help="interface to bind (default 127.0.0.1; use 0.0.0.0 in a container)")
