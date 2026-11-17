@@ -10,7 +10,8 @@ The real Requests task and its reproducible package builder are documented in
 [tasks/README.md](tasks/README.md). The deployed November 10 execution scope and
 separate operator/member evidence are recorded in
 [the release report](releases/2026-11-10.md). The runner moved to TraceHarness 0.5.1 on
-November 16 with the same scope re-verified; see [its release record](releases/2026-11-16-v051.md). A fresh installation still requires
+November 16 with the same scope re-verified; see [its release record](releases/2026-11-16-v051.md). It moved to TraceHarness 0.5.4 on November 17, again with the same scope re-verified; see
+[its release record](releases/2026-11-17-v054.md). A fresh installation still requires
 its own host, grading and runtime/model verification. An implementation or built
 image alone does not establish readiness.
 

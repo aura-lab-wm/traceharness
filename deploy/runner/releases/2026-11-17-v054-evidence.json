@@ -1,0 +1,369 @@
+{
+  "schema": 1,
+  "date": "2026-11-17",
+  "package_version": "0.5.4",
+  "control_image": "registry.fly.io/traceharness-runner@sha256:8dfcc63421eb82a9a25c705053dc214cce39848658cd069bc2d126f3db9bfc36",
+  "wheel_sha256": "a7c0cb410a0c9894a8517463db81616ac34cfedc9dbf76d7b7f5d5252d006dc9",
+  "runtime_images": {
+    "traceharness": "sha256:acb06ac2e6e1ccb37c1ddf3d214ec00d4b9b643bccef354cfbdd8687f13a94f7",
+    "native-claude-code": "sha256:92076c09c58fa263186f5533c34714476c5592bbd6f8b09a1eac6fed7c2c17c7",
+    "native-codex": "sha256:1059fa4319f115e825e079751de0ec2b6762a0210b3b71c879f720d6b89e0631"
+  },
+  "grader_images_reused": {
+    "traceharness-grader-eight": "sha256:93cfd8068c7ca06cab2f5204fc9d4dd3a29d715c1a99bb7f2847897740e6fbf3",
+    "traceharness-grader-x4": "sha256:b6bc5bf5a8a16225ffe35975f1ee30c6a5b86ceee5fae5a001e9221face4dded"
+  },
+  "native_binaries_unchanged": {
+    "claude": "bfb3703ad5380242328459bc62ada4bde8ae7ba57c6e1eeadb9c00e08874c478",
+    "codex": "dd5bfdf19d794dcc6fb482d2d5a2d9fb31d11f6caa44b303bb72890d461e8a02"
+  },
+  "native_prompts": {
+    "claude_inventory_sha256": "e66c23297026d609f6aa9055948524c7cdbb8ed00ea97b0096eb211bce24972c",
+    "codex_inventory_sha256": "0e9a8f1fb86ba67a8444f67f35716e1767c1b35127200337c588034c552afc2e",
+    "claude_receipt_file_sha256": "87ed4ee9a14c1e1dda0199754b1fc4f1ca3f3d09cec7910e1876ab3a55697c74",
+    "codex_receipt_file_sha256": "aaae440e6cb9bbfdf2a67954581fcc84a7a278903a2f27f06339e47f2625d2df",
+    "claude_captures": 6,
+    "provider_calls_during_captures": 0
+  },
+  "registry": "/data/inventory-eight-v2/registry-v054.json",
+  "registry_sha256_prefix": "6964e4910dde8568",
+  "compatibility_receipts": [
+    {
+      "runtime": "native-claude-code",
+      "task": "requests-empty-netrc",
+      "status": "succeeded",
+      "grade": "passed",
+      "compatibility_passed": true,
+      "requests": 13,
+      "cost_usd": 0.598478,
+      "attempts": 2
+    },
+    {
+      "runtime": "native-claude-code",
+      "task": "requests-jsondecode-pickle",
+      "status": "succeeded",
+      "grade": "passed",
+      "compatibility_passed": true,
+      "requests": 12,
+      "cost_usd": 0.457886,
+      "attempts": 1
+    },
+    {
+      "runtime": "native-claude-code",
+      "task": "requests-leading-slashes",
+      "status": "succeeded",
+      "grade": "passed",
+      "compatibility_passed": true,
+      "requests": 11,
+      "cost_usd": 0.421413,
+      "attempts": 2
+    },
+    {
+      "runtime": "native-claude-code",
+      "task": "requests-unicode-length",
+      "status": "succeeded",
+      "grade": "passed",
+      "compatibility_passed": true,
+      "requests": 10,
+      "cost_usd": 0.420229,
+      "attempts": 1
+    },
+    {
+      "runtime": "native-codex",
+      "task": "requests-empty-netrc",
+      "status": "succeeded",
+      "grade": "passed",
+      "compatibility_passed": true,
+      "requests": 10,
+      "cost_usd": 0.01402622,
+      "attempts": 3
+    },
+    {
+      "runtime": "native-codex",
+      "task": "requests-invalid-charset",
+      "status": "succeeded",
+      "grade": "passed",
+      "compatibility_passed": true,
+      "requests": 12,
+      "cost_usd": 0.00850572,
+      "attempts": 1
+    },
+    {
+      "runtime": "native-codex",
+      "task": "requests-jsondecode-pickle",
+      "status": "succeeded",
+      "grade": "passed",
+      "compatibility_passed": true,
+      "requests": 8,
+      "cost_usd": 0.00756276,
+      "attempts": 2
+    },
+    {
+      "runtime": "native-codex",
+      "task": "requests-leading-slashes",
+      "status": "succeeded",
+      "grade": "passed",
+      "compatibility_passed": true,
+      "requests": 10,
+      "cost_usd": 0.00770522,
+      "attempts": 2
+    },
+    {
+      "runtime": "native-codex",
+      "task": "requests-unicode-length",
+      "status": "succeeded",
+      "grade": "passed",
+      "compatibility_passed": true,
+      "requests": 11,
+      "cost_usd": 0.01099272,
+      "attempts": 1
+    },
+    {
+      "runtime": "native-codex",
+      "task": "urllib3-partial-gzip-read",
+      "status": "succeeded",
+      "grade": "passed",
+      "compatibility_passed": true,
+      "requests": 17,
+      "cost_usd": 0.02459441,
+      "attempts": 3
+    },
+    {
+      "runtime": "native-codex",
+      "task": "urllib3-unseekable-rewind",
+      "status": "succeeded",
+      "grade": "passed",
+      "compatibility_passed": true,
+      "requests": 11,
+      "cost_usd": 0.00849762,
+      "attempts": 1
+    },
+    {
+      "runtime": "traceharness",
+      "task": "requests-empty-netrc",
+      "status": "succeeded",
+      "grade": "passed",
+      "compatibility_passed": true,
+      "requests": 4,
+      "cost_usd": 0.0053064,
+      "attempts": 1
+    },
+    {
+      "runtime": "traceharness",
+      "task": "requests-invalid-charset",
+      "status": "succeeded",
+      "grade": "passed",
+      "compatibility_passed": true,
+      "requests": 4,
+      "cost_usd": 0.0092792,
+      "attempts": 1
+    },
+    {
+      "runtime": "traceharness",
+      "task": "requests-jsondecode-pickle",
+      "status": "succeeded",
+      "grade": "passed",
+      "compatibility_passed": true,
+      "requests": 4,
+      "cost_usd": 0.0028576,
+      "attempts": 1
+    },
+    {
+      "runtime": "traceharness",
+      "task": "requests-leading-slashes",
+      "status": "succeeded",
+      "grade": "passed",
+      "compatibility_passed": true,
+      "requests": 4,
+      "cost_usd": 0.0046936,
+      "attempts": 1
+    },
+    {
+      "runtime": "traceharness",
+      "task": "requests-unicode-length",
+      "status": "succeeded",
+      "grade": "passed",
+      "compatibility_passed": true,
+      "requests": 4,
+      "cost_usd": 0.004838,
+      "attempts": 1
+    },
+    {
+      "runtime": "traceharness",
+      "task": "urllib3-invalid-fingerprint",
+      "status": "succeeded",
+      "grade": "passed",
+      "compatibility_passed": true,
+      "requests": 5,
+      "cost_usd": 0.0071104,
+      "attempts": 1
+    },
+    {
+      "runtime": "traceharness",
+      "task": "urllib3-partial-gzip-read",
+      "status": "succeeded",
+      "grade": "passed",
+      "compatibility_passed": true,
+      "requests": 4,
+      "cost_usd": 0.0161732,
+      "attempts": 1
+    },
+    {
+      "runtime": "traceharness",
+      "task": "urllib3-unseekable-rewind",
+      "status": "succeeded",
+      "grade": "passed",
+      "compatibility_passed": true,
+      "requests": 4,
+      "cost_usd": 0.0043988,
+      "attempts": 1
+    }
+  ],
+  "unsuccessful_attempts": [
+    {
+      "attempt": "attempt1",
+      "runtime": "native-claude-code",
+      "task": "requests-empty-netrc",
+      "status": "failed",
+      "grade": "failed",
+      "requests": 1,
+      "cost_usd": null,
+      "issues": [
+        "Runtime process did not complete successfully.",
+        "OpenRouter refused the model request (HTTP 403)."
+      ]
+    },
+    {
+      "attempt": "attempt1",
+      "runtime": "native-claude-code",
+      "task": "requests-leading-slashes",
+      "status": "failed",
+      "grade": "passed",
+      "requests": 5,
+      "cost_usd": null,
+      "issues": [
+        "Runtime process did not complete successfully.",
+        "OpenRouter refused the model request (HTTP 403)."
+      ]
+    },
+    {
+      "attempt": "attempt1",
+      "runtime": "native-codex",
+      "task": "requests-empty-netrc",
+      "status": "succeeded",
+      "grade": "failed",
+      "requests": 5,
+      "cost_usd": 0.00284453,
+      "issues": [
+        "Execution finished; the trusted grader reported failed."
+      ]
+    },
+    {
+      "attempt": "attempt1",
+      "runtime": "native-codex",
+      "task": "requests-jsondecode-pickle",
+      "status": "succeeded",
+      "grade": "failed",
+      "requests": 4,
+      "cost_usd": 0.00523464,
+      "issues": [
+        "Execution finished; the trusted grader reported failed."
+      ]
+    },
+    {
+      "attempt": "attempt1",
+      "runtime": "native-codex",
+      "task": "requests-leading-slashes",
+      "status": "succeeded",
+      "grade": "failed",
+      "requests": 6,
+      "cost_usd": 0.00345826,
+      "issues": [
+        "Execution finished; the trusted grader reported failed."
+      ]
+    },
+    {
+      "attempt": "attempt1",
+      "runtime": "native-codex",
+      "task": "urllib3-partial-gzip-read",
+      "status": "failed",
+      "grade": "failed",
+      "requests": 7,
+      "cost_usd": null,
+      "issues": [
+        "Runtime process did not complete successfully.",
+        "Model transport outcome is uncertain."
+      ]
+    },
+    {
+      "attempt": "attempt2",
+      "runtime": "native-codex",
+      "task": "requests-empty-netrc",
+      "status": "succeeded",
+      "grade": "failed",
+      "requests": 3,
+      "cost_usd": 0.00482731,
+      "issues": [
+        "Execution finished; the trusted grader reported failed."
+      ]
+    },
+    {
+      "attempt": "attempt2",
+      "runtime": "native-codex",
+      "task": "urllib3-partial-gzip-read",
+      "status": "failed",
+      "grade": "passed",
+      "requests": 20,
+      "cost_usd": 0.02542369,
+      "issues": [
+        "Runtime process did not complete successfully.",
+        "Model request limit reached."
+      ]
+    }
+  ],
+  "member_proof_attempts": [
+    {
+      "status": "failed",
+      "grade": "passed",
+      "task_id": "requests-unicode-length",
+      "native_application_verified": true,
+      "native_replacement_observed": true,
+      "hostile_origin_refused": true,
+      "credential_revoked": true,
+      "issues": [
+        "Runtime process did not complete successfully.",
+        "Model request limit reached."
+      ],
+      "requests": 12,
+      "cost_usd": 0.503745,
+      "max_spend_usd": 1.0,
+      "max_steps": 12
+    },
+    {
+      "status": "succeeded",
+      "grade": "passed",
+      "task_id": "requests-unicode-length",
+      "native_application_verified": true,
+      "native_replacement_observed": true,
+      "hostile_origin_refused": true,
+      "credential_revoked": true,
+      "issues": [],
+      "requests": 11,
+      "cost_usd": 0.410463,
+      "max_spend_usd": 1.0,
+      "max_steps": 20
+    }
+  ],
+  "releases": {
+    "v22": "staging registry, disabled",
+    "v23": "registry-v054, disabled",
+    "v24": "rollback to v21 image + registry-v051, enabled (OpenRouter key limit reached)",
+    "v25": "registry-v054, disabled",
+    "v26": "registry-v054, enabled"
+  },
+  "anonymous": {
+    "prove_anon_exit": 0,
+    "unsigned_runner_api_status": 404
+  },
+  "total_reported_cost_usd": 2.9905
+}
