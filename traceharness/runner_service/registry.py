@@ -203,6 +203,12 @@ class Registry:
                     raise ValueError("Duplicate native prompt application receipt")
                 self._native_prompt_admissions[rid] = {"schema_version": 1, "receipt_sha256": receipt["sha256"],
                     "cohort": "verified_base_runtime_model_task", **{key: proof[key] for key in NATIVE_PROMPT_FIELDS}}
+            # On a user's own machine an inventory built by `traceharness runner setup` has no application
+            # receipt until `traceharness runner verify` produces one. It is admitted as unverified: a job may
+            # use it only with the explicit unverified_ok flag, and its manifest records verified: false.
+            if self.local and rid in NATIVE_PROMPT_ADAPTERS and rid not in self._native_prompt_admissions:
+                self._native_prompt_admissions[rid] = {"schema_version": 1, "receipt_sha256": None,
+                    "cohort": "unverified_local", **{key: inventory[key] for key in NATIVE_PROMPT_FIELDS}}
 
     def _pinned_json(self, reference, maximum):
         if (not isinstance(reference, dict) or set(reference) != {"path", "sha256"}
@@ -244,7 +250,9 @@ class Registry:
         return {"available": available, "execution_available": executable,
                 "mode": "embedded" if runtime_id == "native-claude-code" or available else "overlay",
                 "inventory_sha256": inventory["inventory_sha256"] if available else None,
-                "reason": "" if executable else "Native prompt application has no verified mechanism or ready base combination." if available else "Inventory unavailable for this runtime version."}
+                "reason": ("Not verified on this machine: run traceharness runner verify to prove it, or confirm running it unverified."
+                           if executable and self._native_prompt_admissions[runtime_id].get("cohort") == "unverified_local"
+                           else "" if executable else "Native prompt application has no verified mechanism or ready base combination." if available else "Inventory unavailable for this runtime version.")}
 
     def native_prompt_inventory(self, runtime_id, health):
         adapter = native_prompt_adapter(runtime_id)

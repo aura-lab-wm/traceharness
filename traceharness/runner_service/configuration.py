@@ -137,6 +137,13 @@ def preflight(configuration, registry, health: dict) -> dict:
                 native_profile, admission = registry.native_prompt_profile(runtime["id"], configuration["native_prompt_profile"])
             except (ValueError, TypeError, KeyError, UnicodeError):
                 issues.append("The native prompt profile or its application receipt is unavailable, stale or invalid.")
+            else:
+                if admission.get("cohort") == "unverified_local":
+                    if unverified_ok:
+                        verified = False
+                    else:
+                        issues.append("This native prompt profile has no application receipt on this machine."
+                                      " Set unverified_ok to run it anyway, or run traceharness runner verify.")
     if not health.get("available"):
         issues.append("The private execution service is not ready.")
     if issues:

@@ -155,6 +155,26 @@ class NativePromptProtocolTests(unittest.TestCase):
         health["runtimes"]["native-codex"] = True
         self.assertFalse(registry.native_prompt_catalog("native-codex", health)["execution_available"])
 
+    def test_local_registry_admits_an_unreceipted_inventory_only_with_unverified_ok(self):
+        self.runtime["native_prompt_receipts"] = []
+        hosted = Registry(self.root, copy.deepcopy(self.data))
+        self.assertFalse(preflight(self.config, hosted, self.health)["ok"])
+        self.assertFalse(preflight(dict(self.config, unverified_ok=True), hosted, self.health)["ok"])
+        local = Registry(self.root, copy.deepcopy(self.data), local=True)
+        refused = preflight(self.config, local, self.health)
+        self.assertFalse(refused["ok"])
+        self.assertTrue(any("unverified_ok" in issue for issue in refused["issues"]), refused)
+        answer = local.native_prompt_inventory(self.runtime["id"], self.health)
+        self.assertTrue(answer["execution_available"])
+        self.assertIn("runner verify", answer["reason"])
+        accepted = preflight(dict(self.config, unverified_ok=True), local, self.health)
+        self.assertTrue(accepted["ok"], accepted)
+        self.assertIs(accepted["manifest"]["verified"], False)
+        admission = accepted["manifest"]["native_prompt_admission"]
+        self.assertEqual(admission["cohort"], "unverified_local")
+        self.assertIsNone(admission["receipt_sha256"])
+        self.assertEqual(admission["inventory_sha256"], self.inventory["inventory_sha256"])
+
     def test_mechanism_receipt_and_inventory_are_exact_and_required(self):
         data = copy.deepcopy(self.data)
         self.runtime["native_prompt_receipts"] = []
