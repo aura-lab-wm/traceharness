@@ -393,7 +393,9 @@ class Jobs:
     def submit(self, owner, manifest, credential_id, idempotency_key, model):
         if not isinstance(idempotency_key, str) or not re.fullmatch(r"[A-Za-z0-9_-]{16,128}", idempotency_key):
             raise JobError("Supply a fresh idempotency key.")
-        fingerprint = digest({"manifest": manifest, "credential_id": credential_id})
+        # Locally a credential handle is minted per request and resolves to the same saved key, so the
+        # identity of a retried submission is its manifest alone.
+        fingerprint = digest({"manifest": manifest, "credential_id": None if self.settings.local else credential_id})
         with self.lock:
             self._purge()
             existing = self.idempotency.get((owner, idempotency_key))

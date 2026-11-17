@@ -426,6 +426,19 @@ async def _to_container(runner, configuration) -> bool:
     return isinstance(configuration.get("task_id"), str) and configuration["task_id"] in app.state.registry.tasks
 
 
+async def _existing_submission(runner, raw: dict):
+    from traceharness.runner_service.jobs import JobError
+    key, digest = raw.get("idempotency_key"), raw.get("manifest_sha256")
+    if not isinstance(key, str) or not isinstance(digest, str):
+        return None
+    jobs = (await runner.app_async()).state.jobs
+    try:
+        job = await run_in_threadpool(jobs.reconcile, "local", key, digest)
+    except JobError as error:
+        return _passthrough(error.status, {"error": str(error)})
+    return None if job is None else _passthrough(200, {"job": job})
+
+
 def _passthrough(status: int, data):
     from fastapi.responses import JSONResponse
     return JSONResponse(data, status_code=status, headers={"Cache-Control": "no-store"})
@@ -489,6 +502,11 @@ async def runner_submit(request: Request):
     if runner is not None and await _to_container(runner, raw.get("configuration")):
         credential = raw.get("credential_id")
         if credential is None:
+            # A retry of a submission the runner already holds answers with that job, before any credential
+            # handle is minted: no duplicate run, no 409 from a changed handle, no handle used up per retry.
+            adopted = await _existing_submission(runner, raw)
+            if adopted is not None:
+                return adopted
             credential = await _handle(runner)      # the key is in Settings
         return _passthrough(*await runner.call("POST", "/api/runner/jobs", {**raw, "credential_id": credential}))
     return await _call(submit, await _body(request, null_credential=True, preread=raw))
