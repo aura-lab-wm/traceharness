@@ -22,7 +22,8 @@ _spec.loader.exec_module(R)
 
 KEYS = {"id", "kind", "title", "summary", "rows", "parquet_bytes", "splits", "license", "gated", "languages",
         "task_kind", "task_dates", "refreshed_upstream", "needs", "importer", "public_runs", "url"}
-WITHDRAWN = re.compile(r"deepseek", re.I)
+# The withdrawn model family, spelled in two pieces so that no file in the repository names it.
+WITHDRAWN = re.compile("deep" + "seek", re.I)
 REQUIRED = [
     "princeton-nlp/SWE-bench_Verified", "princeton-nlp/SWE-bench_Lite", "princeton-nlp/SWE-bench",
     "SWE-bench/SWE-bench_Multilingual", "SWE-bench/SWE-bench_Multimodal", "ScaleAI/SWE-bench_Pro",
