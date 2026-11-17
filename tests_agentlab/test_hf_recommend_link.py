@@ -11,7 +11,7 @@ LAB = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, LAB)
 
 from tests_agentlab.hf_fake import FakeHub, swe_row                         # noqa: E402
-from traceharness.backend import paths                                      # noqa: E402
+from traceharness.backend import metrics, paths                                      # noqa: E402,F401   (metrics is bound before RUNS_ROOT is patched)
 from tests_agentlab.test_recommend_evidence import row                   # noqa: E402
 from traceharness.catalog import evidence as E, hf, hf_import as I, recommend as R   # noqa: E402
 
