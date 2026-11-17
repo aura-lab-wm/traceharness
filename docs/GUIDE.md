@@ -26,6 +26,7 @@ About 30 minutes · runs in your browser · no API key · data: CC BY 4.0. The s
    - [F. Outcomes](#f-outcomes)
    - [G. Report](#g-report)
 4. [Questions to explore](#4-questions-to-explore)
+   - [Hugging Face datasets and "Which benchmark?"](#4b-hugging-face-datasets-and-which-benchmark)
 5. [Troubleshooting](#5-troubleshooting)
 
 ## Before you start
@@ -304,6 +305,67 @@ same evidence.
 
 > [!TIP]
 > **Keep it.** **Pin** what you find to the **Case file**, and share the report card with **Export .md**.
+
+---
+
+## 4b. Hugging Face datasets and "Which benchmark?"
+
+### The Hugging Face panel
+
+**Sources & capture** has a **Hugging Face** panel. It lists the catalog's recorded-run datasets (id, rows, license
+or "license not stated", open or gated) and marks the ones TraceHarness can import. A row opens a preview (the
+columns and the first five rows, as text, each cut to 300 characters) and an import form (rows, seed, name). The
+same catalog is read offline by the command line:
+
+```sh
+traceharness hf list [--kind benchmark|trajectories] [--json]
+traceharness hf info <owner/name>         # includes "importable: traceharness hf import ..." when it is
+traceharness hf search <text>
+traceharness hf preview <owner/name>      # reads the Hub: size, columns, first rows, license, revision
+traceharness hf import <owner/name> --n 200 --seed 0 [--config C] [--split S] [--name N] [--force] [--json]
+```
+
+An import draws `n` distinct random rows (at most 2,000) with the seed, reads them from the public Hub without a
+token, and writes `data/runs/hf_<owner>_<name>/` like any other import. Gated datasets are refused. A dataset the
+catalog marks importable uses its default split when you name none; any other dataset is read only when its columns
+match one of the two shapes the console reads (SWE-agent trajectories, or a `messages` list), and is refused with
+its column list otherwise.
+
+`provenance.json` sits beside the runs and records `source: "huggingface"`, the dataset id, the revision sha, the
+config and split, the row offsets, the seed, `n`, the license (`null` when the Hub states none), whether the data is
+`redistributable`, and when it was fetched. **Skipped** rows are sampled rows that could not be turned into a
+complete run (for example a trajectory cut short, or a message shape the adapter does not know); each is listed with
+its offset and reason in `provenance.json`, and an import where more than half the sample is skipped writes nothing.
+
+Redistribution: only a stated permissive license (mit, apache-2.0, bsd-*, cc0-1.0, cc-by-4.0) makes
+`redistributable` true. Data that is not stays out of a default `--export` and out of the school package; name the
+directory in `--export-results` to include it yourself. In an exported page and in member mode the import controls
+are replaced by a note.
+
+### Which benchmark?
+
+**Tools, Which benchmark?** (or `traceharness recommend`) makes one call from a visible rule table: a pick, a
+runner-up and a "not this", each with reasons, a subset size and an estimate, plus a "Why these three" table of
+every catalog entry with the rules that fired and a method paragraph for a paper.
+
+```sh
+traceharness recommend --goal run --model-cutoff 2026-03 --budget 50 --hours 4 --lang python --where laptop \
+  [--model NAME] [--compare-public] [--license-required] [--detect 10] [--json]
+```
+
+Parameters: `goal` (`run` the tasks of a benchmark, or `analyse` recorded runs), `model`, `model_cutoff` (YYYY-MM),
+`budget_usd`, `hours`, `languages` (default python), `where` (`laptop` or `runner`), `compare_public`,
+`license_required`, `detect_points` (the pass-rate difference the study must detect, default 10). The API is
+`GET /api/recommend` with the same names.
+
+Cost, time and the baseline pass rate are **unknown** unless this lab has recorded runs of the same dataset: the
+console's own built-in tasks never price a real-repository benchmark, and a null in the catalog is reported as
+unknown. After `traceharness hf import <id>`, the imported runs (recognised by their `provenance.json`) set that
+dataset's baseline pass rate, while its cost stays unknown when the runs carry none. The sizing (tasks and repeats,
+two-proportion normal approximation, alpha 0.05, power 0.8) shows its arithmetic. For a dataset TraceHarness can
+import, an `analyse` card shows the import command with the recommended `--n` and a link to Sources. The rules
+(id, text, weight, condition) are data in `traceharness/catalog/recommend_rules.json`; the facts they read are in
+`traceharness/catalog/hf_datasets.json`, whose curated values are sourced in `docs/HF_CATALOG_SOURCES.md`.
 
 ---
 

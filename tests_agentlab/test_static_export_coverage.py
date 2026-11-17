@@ -24,6 +24,12 @@ from test_no_dead_surface import registered_routes           # noqa: E402
 #: dropped from here is a route _urls() must cover instead -- this file's own test below fails
 #: loudly the moment that stops being true, in either direction.
 EXCLUDED_FROM_EXPORT = {
+    "/api/recommend":
+        "the benchmark recommender reads the live lab (its recorded runs set the cost and time estimates): "
+        "an export has no lab to read and the console shows a not-available note there",
+    "/api/hf/preview":
+        "a live read of the Hugging Face Hub for the local console's import form: it needs the network and the "
+        "Hub's answer of the moment, so an export (which cannot import) has no use for it",
     "/api/hf/datasets/{owner}/{name}":
         "one entry of the catalog: /api/hf/catalog is exported whole and carries every entry",
     "/api/shallow/catalog":

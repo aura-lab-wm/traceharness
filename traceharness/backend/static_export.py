@@ -32,7 +32,7 @@ from traceharness.shared.versions import version_stamp
 
 from .paths import DIST, RUNS_ROOT
 from .private_guard import OPT_IN_HEADER
-from .results_scope import is_private, list_results_dirs
+from .results_scope import is_private, is_redistributable, list_results_dirs
 
 # How many per-run detail payloads to embed. Trajectories needs one per run it can open; all 576
 # of a live directory would make the file unwieldy, so this is a bounded, stated sample.
@@ -219,8 +219,10 @@ def _urls(client, dirs: list[str], n_runs: int) -> list[str]:
 
 
 def default_dirs() -> list[str]:
-    """Results directories a default export includes: never the private ones (see results_scope)."""
-    return list_results_dirs(RUNS_ROOT)
+    """Results directories a default export includes: never the private ones (see results_scope), and never
+    one whose provenance says its data may not be redistributed (a Hugging Face import under a license that
+    is not stated or not permissive). Naming such a directory in --export-results still includes it."""
+    return [d for d in list_results_dirs(RUNS_ROOT) if is_redistributable(RUNS_ROOT, d)]
 
 
 #: How many times build() re-reads a dir's WHOLE URL set from scratch when its index.jsonl moved
