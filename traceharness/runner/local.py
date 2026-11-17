@@ -217,6 +217,11 @@ class LocalRunner:
             settings = replace(settings, read_only=True)
         else:
             self._ownership = ownership
+            try:       # rows persisted before the grader-error fix, whose jobs are purged; only the owning process
+                from .datasets import migrate_grade_rows
+                migrate_grade_rows(Path(self.lab_root) / "data" / "runs")
+            except Exception:
+                pass   # never stops the console; retried at the next start
         try:
             scripted = scripted_selected()
             vault = LocalKeyVault(self._key, keyless=scripted)
