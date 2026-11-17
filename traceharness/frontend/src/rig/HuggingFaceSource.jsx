@@ -71,6 +71,7 @@ function ImportForm({ spec, dataset }) {
     try { await hfImport({ dataset, n, seed, name: name || undefined }); setPollOn(true); st.reload() } catch (e) { setMsg(errText(e)) }
   }
   const prov = mine && s.status === 'done' && s.result ? s.result.provenance : null
+  const skipped = prov && Array.isArray(s.result.skipped) ? s.result.skipped : []
   return (
     <div className="rg-ws-form" data-el="hf-import">
       <div className="rg-ws-trip">
@@ -90,7 +91,8 @@ function ImportForm({ spec, dataset }) {
       {mine && s.status === 'error' && !running && <div className="rg-ws-err" role="alert" data-el="hf-import-failed"><p><b>The import did not finish.</b> {s.error}</p></div>}
       {prov && (
         <div className="rg-ws-result" data-el="hf-result">
-          <p className="rg-small">Imported {int(s.result.imported)} {s.result.imported === 1 ? 'run' : 'runs'} into <span className="rg-mono">data/runs/{s.result.results_dir}</span>{s.result.skipped ? ` (${int(s.result.skipped)} rows skipped: a cell was too large for the Hub's rows service)` : ''}.</p>
+          <p className="rg-small">Imported {int(s.result.imported)} {s.result.imported === 1 ? 'run' : 'runs'} into <span className="rg-mono">data/runs/{s.result.results_dir}</span>{skipped.length ? `; ${int(skipped.length)} sampled ${skipped.length === 1 ? 'row was' : 'rows were'} skipped` : ''}.</p>
+          {skipped.length > 0 && <ul className="rg-small rg-dim" data-el="hf-skipped">{skipped.slice(0, 10).map((x) => <li key={x.offset}>row {x.offset}: {x.reason}</li>)}</ul>}
           <dl className="rg-ws-kv" data-el="hf-provenance">
             <dt>source</dt><dd className="rg-mono">{prov.source} · {prov.dataset}</dd>
             <dt>revision</dt><dd className="rg-mono rg-break">{prov.revision}</dd>

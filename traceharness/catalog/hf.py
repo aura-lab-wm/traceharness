@@ -160,8 +160,10 @@ def _hub_command(a) -> int:
     else:
         pv = res["provenance"]
         print(f"imported {res['imported']} runs into data/runs/{res['results_dir']} ({res['adapter']} rows, "
-              f"{res['skipped']} skipped, license {pv['license'] or 'not stated'}, "
+              f"{res['n_skipped']} skipped, license {pv['license'] or 'not stated'}, "
               f"{'redistributable' if pv['redistributable'] else 'NOT redistributable: left out of a default export'})")
+    for x in res["skipped"][:10]:
+        print(f"  skipped row {x['offset']}: {x['reason']}", file=sys.stderr)
     return 0
 
 

@@ -67,7 +67,7 @@ class Adapters(Case):
             with self.subTest(as_string=as_string):
                 hub = FakeHub(dataset="acme/chat", rows=[msg_row(i, as_string) for i in range(30)], features=MSG_FEATURES)
                 res = self.run_import(hub, name=f"chat_{as_string}")
-                self.assertEqual((res["adapter"], res["imported"], res["errors"]), ("messages", 10, []))
+                self.assertEqual((res["adapter"], res["imported"], res["skipped"]), ("messages", 10, []))
                 idx = self.index(f"chat_{as_string}")
                 self.assertEqual(len(idx), 10)
                 self.assertEqual({r["hidden_pass"] for r in idx}, {True, False})
@@ -91,18 +91,103 @@ class Adapters(Case):
 
     def test_a_bad_row_costs_that_row_only(self):
         rows = [msg_row(i) for i in range(30)]
-        for i in range(0, 30, 2):
+        for i in range(0, 30, 4):
             rows[i] = dict(rows[i], messages="not json")
         res = self.run_import(FakeHub(dataset="acme/chat", rows=rows), name="partial", n=30)
-        self.assertEqual(res["imported"] + len(res["errors"]), 30)
-        self.assertGreater(len(res["errors"]), 0)
+        self.assertEqual(res["imported"] + len(res["skipped"]), 30)
+        self.assertGreater(len(res["skipped"]), 0)
         self.assertEqual(len(self.index("partial")), res["imported"])
+        self.assertEqual(res["provenance"]["skipped"], res["skipped"])
 
     def test_nothing_usable_writes_nothing(self):
         rows = [dict(msg_row(i), messages="[]") for i in range(30)]
-        with self.assertRaisesRegex(F.HFError, "nothing was written"):
+        with self.assertRaisesRegex(F.HFError, "no dataset was written"):
             self.run_import(FakeHub(dataset="acme/chat", rows=rows))
         self.assertEqual(os.listdir(self.runs), [])
+
+
+def fixture(name):
+    with open(os.path.join(LAB, "tests_agentlab", "fixtures", "hf", name), encoding="utf-8") as f:
+        return json.load(f)
+
+
+class Completeness(Case):
+    """Every run written has exactly one step per assistant turn of its source; otherwise the row is skipped."""
+
+    def steps_and_turns(self, name):
+        out = []
+        for r in self.index(name):
+            with open(os.path.join(self.runs, name, r["run_id"], "ledger.jsonl"), encoding="utf-8") as f:
+                n = sum(1 for _ in f)
+            out.append((r["steps"], n))
+        return out
+
+    def test_the_two_real_swe_smith_shapes_import_with_steps_equal_to_assistant_turns(self):
+        fx = fixture("smith_rows.json")["rows"]
+        shapes = {"tool_calls": fx[0], "function_blocks": fx[1]}
+        for label, f in shapes.items():
+            with self.subTest(shape=label):
+                sess = I.message_session(f["row"], f["offset"], "SWE-bench/SWE-smith-trajectories")
+                self.assertEqual(sess.extra["assistant_turns"], f["assistant_turns"])
+                kinds = [e.kind for e in sess.events]
+                self.assertEqual(kinds.count("tool_call"), f["assistant_turns"])
+                self.assertGreaterEqual(kinds.count("tool_result"), f["assistant_turns"] - 1)
+                self.assertEqual(kinds.count("user"), 1)           # the task; "OBSERVATION:" turns are results, not user turns
+                hub = FakeHub(dataset="SWE-bench/SWE-smith-trajectories", rows=[f["row"]] * 6, features=MSG_FEATURES, split="tool")
+                res = I.import_dataset("SWE-bench/SWE-smith-trajectories", split="tool", n=6, name=f"smith_{label}", fetch=hub,
+                                       runs_root=self.runs, sleep=NOSLEEP, pause=0)
+                self.assertEqual((res["imported"], res["skipped"]), (6, []))
+                for steps, _lines in self.steps_and_turns(f"smith_{label}"):
+                    self.assertEqual(steps, f["assistant_turns"])
+
+    def test_tool_results_are_matched_to_their_calls(self):
+        f = fixture("smith_rows.json")["rows"][0]
+        sess = I.message_session(f["row"], 0, "x/y")
+        calls = [e.call_id for e in sess.events if e.kind == "tool_call"]
+        results = [e.call_id for e in sess.events if e.kind == "tool_result"]
+        self.assertEqual(calls[:len(results)], results)
+        self.assertTrue(all(c.startswith("toolu_") for c in calls))
+
+    def test_the_openhands_row_still_imports_unchanged(self):
+        f = fixture("openhands_row.json")
+        hub = FakeHub(dataset="nebius/oh", rows=[f["row"]] * 6, features=MSG_FEATURES)
+        res = I.import_dataset("nebius/oh", n=6, name="oh", fetch=hub, runs_root=self.runs, sleep=NOSLEEP, pause=0)
+        self.assertEqual((res["adapter"], res["imported"], res["skipped"]), ("messages", 6, []))
+        self.assertEqual({s for s, _ in self.steps_and_turns("oh")}, {f["assistant_turns"]})
+        self.assertEqual({r["hidden_pass"] for r in self.index("oh")}, {bool(f["row"]["resolved"])})
+
+    def test_an_unknown_message_shape_is_skipped_with_its_reason_and_nothing_is_written_for_it(self):
+        weird = dict(msg_row(1), instance_id="weird__row-1", messages=json.dumps([
+            {"role": "system", "content": "s"}, {"role": "user", "content": "task"},
+            {"role": "assistant", "content": "plan one"}, {"role": "user", "content": "ok"},
+            {"role": "assistant", "content": "plan two"}, {"role": "user", "content": "ok"}, {"role": "assistant", "content": "plan three"}]))
+        rows = [msg_row(i) for i in range(30)]
+        rows[5] = weird
+        hub = FakeHub(dataset="acme/chat", rows=rows)
+        res = I.import_dataset("acme/chat", n=30, seed=0, name="mixed", fetch=hub, runs_root=self.runs, sleep=NOSLEEP, pause=0)
+        self.assertEqual(res["imported"], 29)
+        self.assertEqual(res["skipped"], [{"offset": 5, "reason": "assistant turns 3, steps parsed 1"}])
+        self.assertEqual(res["provenance"]["skipped"], res["skipped"])
+        self.assertEqual(res["n_skipped"], 1)
+        ids = {r["task_id"] for r in self.index("mixed")}
+        self.assertNotIn("weird__row-1", ids)
+        runs = [d for d in os.listdir(os.path.join(self.runs, "mixed")) if os.path.isdir(os.path.join(self.runs, "mixed", d))]
+        self.assertEqual(len(runs), 29)
+
+    def test_more_than_half_skipped_fails_and_writes_no_directory(self):
+        weird = dict(msg_row(1), messages=json.dumps([
+            {"role": "user", "content": "task"}, {"role": "assistant", "content": "a"}, {"role": "user", "content": "ok"}, {"role": "assistant", "content": "b"}]))
+        rows = [weird] * 20 + [msg_row(i) for i in range(10)]
+        with self.assertRaisesRegex(F.HFError, "more than half"):
+            self.run_import(FakeHub(dataset="acme/chat", rows=rows), n=30, name="mostly_bad")
+        self.assertEqual(os.listdir(self.runs), [])
+
+    def test_exactly_half_skipped_still_imports(self):
+        weird = dict(msg_row(1), messages=json.dumps([
+            {"role": "user", "content": "task"}, {"role": "assistant", "content": "a"}, {"role": "user", "content": "ok"}, {"role": "assistant", "content": "b"}]))
+        rows = [weird] * 15 + [msg_row(i) for i in range(15)]
+        res = self.run_import(FakeHub(dataset="acme/chat", rows=rows), n=30, seed=0, name="half")
+        self.assertEqual(res["imported"] + res["n_skipped"], 30)
 
 
 class Provenance(Case):

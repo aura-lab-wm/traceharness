@@ -177,9 +177,11 @@ def launch(label: str, results_dir: str, source: str, work, say=None) -> None:
                 _publish("import", status="running", out=results_dir, source=source, progress=[done, total], label=what)
             res = work(prog)
             STATE.update(status="done", result=res, finished_at=time.time())
-            STATE["history"] = ([{k: res[k] for k in ("source", "results_dir", "imported", "skipped",
-                                                      "harness_ids", "n_tasks", "outcomes_known",
-                                                      "outcomes_unknown")}] + STATE["history"])[:10]
+            line = {k: res[k] for k in ("source", "results_dir", "imported", "skipped",
+                                        "harness_ids", "n_tasks", "outcomes_known", "outcomes_unknown")}
+            if isinstance(line["skipped"], list):      # a job that names its skipped rows: the history line counts them
+                line["skipped"] = len(line["skipped"])
+            STATE["history"] = ([line] + STATE["history"])[:10]
         except Exception as e:
             STATE.update(status="error", error=(say or _said)(e), finished_at=time.time())
         _publish("import", status=STATE["status"], out=results_dir, source=source, result=STATE.get("result"),

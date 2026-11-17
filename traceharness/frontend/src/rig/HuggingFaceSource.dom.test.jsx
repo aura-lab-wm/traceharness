@@ -77,7 +77,7 @@ describe('Hugging Face panel (local)', () => {
   it('imports a sample, follows its progress and shows the provenance afterwards', async () => {
     const { calls, fetchImpl } = stub([
       { ...IDLE, status: 'running', progress: [1, 3], source: 'huggingface' },
-      { ...IDLE, status: 'done', source: 'huggingface', result: { source: 'huggingface', results_dir: 'mine', imported: 3, skipped: 0, harness_ids: ['swe-agent'], n_tasks: 3, outcomes_known: 3, outcomes_unknown: 0, provenance: PROV } },
+      { ...IDLE, status: 'done', source: 'huggingface', result: { source: 'huggingface', results_dir: 'mine', imported: 3, skipped: [{ offset: 9, reason: 'assistant turns 9, steps parsed 1' }], harness_ids: ['swe-agent'], n_tasks: 3, outcomes_known: 3, outcomes_unknown: 0, provenance: PROV } },
     ])
     const { container } = renderRig('#/rig/sources', { data: data(), fetchImpl })
     fireEvent.click(within(el(container, 'hf-catalog')).getByRole('button', { name: 'Preview nebius/SWE-agent-trajectories' }))
@@ -97,12 +97,13 @@ describe('Hugging Face panel (local)', () => {
     const prov = el(container, 'hf-provenance').textContent
     for (const bit of ['huggingface', 'nebius/SWE-agent-trajectories', 'b'.repeat(40), 'default · train', 'seed 4', 'cc-by-4.0', '2026-11-17T10:00:00Z', 'may carry it'])
       expect(prov).toContain(bit)
+    expect(el(container, 'hf-skipped').textContent).toContain('row 9: assistant turns 9, steps parsed 1')
     expect(within(el(container, 'hf-result')).getByRole('button', { name: 'Open mine' })).not.toBeNull()
   }, 15000)
 
   it('says a license that is not permissive keeps the data out of a default export', async () => {
     const { fetchImpl } = stub([IDLE])
-    const { container } = renderRig('#/rig/sources', { fetchImpl, data: { ...data(), '/import/status': { ...IDLE, status: 'done', source: 'huggingface', result: { results_dir: 'x', imported: 1, skipped: 0, provenance: { ...PROV, license: null, redistributable: false } } } } })
+    const { container } = renderRig('#/rig/sources', { fetchImpl, data: { ...data(), '/import/status': { ...IDLE, status: 'done', source: 'huggingface', result: { results_dir: 'x', imported: 1, skipped: [], provenance: { ...PROV, license: null, redistributable: false } } } } })
     fireEvent.click(within(el(container, 'hf-catalog')).getByRole('button', { name: 'Preview nebius/SWE-agent-trajectories' }))
     const prov = await waitFor(() => { const x = el(container, 'hf-provenance'); expect(x).not.toBeNull(); return x })
     expect(prov.textContent).toContain('license not stated')
