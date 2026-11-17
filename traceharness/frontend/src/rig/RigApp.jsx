@@ -597,6 +597,7 @@ function railItems(kind, dir, lab, condition) {
     { group: 'Workspace', spec: dir ? makeSpec('field', dir, ...(condition && condition.dir === dir ? [condition.model, condition.harness] : [])) : 'home', icon: 'traj', label: 'Trajectories', on: on(['field', 'tasks', 'task', 'run', 'span', 'cmp', 'fork', 'paused']) },
     { group: 'Harnesses', spec: 'harnesses', icon: 'tabs', label: 'Harnesses', on: on(['harnesses', 'shallowCards', 'shallowApply', 'shallowWizard', 'blocks']), el: 'nav-harnesses' },
     { group: 'Tools', spec: 'sources', icon: 'src', label: 'Sources & capture', on: on(['sources', 'capture']), el: 'nav-sources' },
+    { group: 'Tools', spec: 'recommend', icon: 'search', label: 'Which benchmark?', on: on(['recommend']), el: 'nav-recommend' },
     { group: 'Tools', spec: 'sentinel', icon: 'sent', label: 'Sentinel', on: on(['sentinel']) },
     { group: 'Tools', spec: 'canvas', icon: 'canvas', label: 'Canvas', on: on(['canvas']) },
   ]

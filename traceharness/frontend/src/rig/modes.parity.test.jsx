@@ -26,7 +26,7 @@ const M1 = 'alpha-1', H = 'baseline', RUN = 'a00000', RUN2 = 'a00001'
 const SPECS = {
   home: 'home', ds: 'ds:mini', q: 'q:mini', an: 'an:mini:family', tasks: `tasks:mini:${M1}:${H}`, task: `task:mini:${M1}:${H}:t1`,
   run: `run:${RUN}`, span: `span:${RUN}:0`, cmp: `cmp:${RUN}:${RUN2}`, fork: `fork:${RUN}`, field: 'field:mini', paused: 'paused',
-  sources: 'sources', capture: 'capture', sentinel: 'sentinel', canvas: 'canvas', settings: 'settings', guide: 'guide', package: 'package',
+  recommend: 'recommend', sources: 'sources', capture: 'capture', sentinel: 'sentinel', canvas: 'canvas', settings: 'settings', guide: 'guide', package: 'package',
   blocks: 'blocks', harnesses: 'harnesses', shallowApply: 'shallowApply', shallowCards: 'shallowCards', shallowWizard: 'shallowWizard',
 }
 const DOCKS = ['buddy', 'log', 'capture', 'case']

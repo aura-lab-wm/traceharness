@@ -788,6 +788,9 @@ def main(argv: list[str] | None = None) -> int:
     if argv and argv[0] == "hf":
         from traceharness.catalog.hf import main as hf_main  # noqa: E402
         return hf_main(argv[1:])
+    if argv and argv[0] == "recommend":
+        from traceharness.catalog.recommend import main as recommend_main  # noqa: E402
+        return recommend_main(argv[1:])
     if argv and argv[0] == "import-swebench":
         from traceharness.importers_swebench import main as swebench_main  # noqa: E402
         return swebench_main(argv[1:])

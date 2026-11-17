@@ -90,7 +90,8 @@ class PackagedFile(unittest.TestCase):
 
     def test_the_catalog_ships_as_package_data(self):
         with open(os.path.join(LAB, "pyproject.toml"), encoding="utf-8") as f:
-            self.assertIn('"traceharness.catalog" = ["hf_datasets.json"]', f.read())
+            line = next(l for l in f.read().splitlines() if l.startswith('"traceharness.catalog" ='))
+        self.assertIn('"hf_datasets.json"', line)   # the recommender's rules ship on the same line (test_recommend)
 
     def test_module_api(self):
         self.assertEqual({d["kind"] for d in hf.datasets("benchmark")}, {"benchmark"})
