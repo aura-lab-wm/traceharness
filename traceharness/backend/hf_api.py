@@ -18,9 +18,11 @@ sits behind the same Host / Origin / Sec-Fetch-Site / Content-Type guard as ever
 from __future__ import annotations
 
 import os
+import threading
+import time
 from typing import Optional
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Request
 from pydantic import BaseModel, StrictInt
 
 from traceharness.catalog import hf
@@ -47,13 +49,53 @@ def _refuse(e: hf_fetch.HFError):
     raise HTTPException(status_code=e.status, detail=str(e)) from None
 
 
+#: a preview that is being read, and the last answers (dataset id -> (time, answer)); a short cache and one
+#: preview at a time keep a page that calls this in a loop from using the machine's bandwidth
+_PREVIEW_LOCK = threading.Lock()
+_PREVIEW_CACHE: dict = {}
+PREVIEW_TTL = 60.0
+
+
+def _same_site_only(request: Request) -> None:
+    """The preview starts requests to the Hub, so it gets the cross-site checks a write gets: an Origin that is
+    not this server, or a Sec-Fetch-Site other than same-origin / none, is refused (403). A caller that sends
+    neither header (the CLI, curl) is served; the Host allow-list already ran in the guard (400)."""
+    from traceharness.backend import guard
+    allowed = guard._allowed_hosts()
+    if guard._is_in_process_test_client(request):
+        allowed = allowed | {guard._TEST_CLIENT_HOST}
+    origin = request.headers.get("origin")
+    if origin is not None:
+        host = guard._origin_host(origin)
+        if host is None or host not in allowed:
+            raise HTTPException(status_code=403, detail="Forbidden: untrusted Origin")
+    site = request.headers.get("sec-fetch-site")
+    if site is not None and site not in ("same-origin", "none"):
+        raise HTTPException(status_code=403, detail="Forbidden: cross-site request")
+
+
 @router.get("/preview")
-def preview(dataset: str):
+def preview(dataset: str, request: Request):
     """Three read-only requests to the Hub (public datasets only, no token): never a write."""
+    _same_site_only(request)
     try:
-        return hf_fetch.preview(hf_fetch.check_id(dataset))
+        dataset_id = hf_fetch.check_id(dataset)
     except hf_fetch.HFError as e:
         _refuse(e)
+    hit = _PREVIEW_CACHE.get(dataset_id)
+    if hit and time.monotonic() - hit[0] < PREVIEW_TTL:
+        return hit[1]
+    if not _PREVIEW_LOCK.acquire(blocking=False):
+        raise HTTPException(status_code=429, detail="another preview is being read; try again in a moment")
+    try:
+        answer = hf_fetch.preview(dataset_id)
+        _PREVIEW_CACHE.clear()
+        _PREVIEW_CACHE[dataset_id] = (time.monotonic(), answer)
+        return answer
+    except hf_fetch.HFError as e:
+        _refuse(e)
+    finally:
+        _PREVIEW_LOCK.release()
 
 
 class ImportIn(BaseModel):
