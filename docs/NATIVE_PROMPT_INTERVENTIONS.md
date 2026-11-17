@@ -38,8 +38,8 @@ a third member application or replace the recorded-data workbench.
 
 `/app` is the React export served by the authenticated Worker from `app.html.gz`.
 Editing React source or agent-patcher does not update that snapshot.
-`/app/shallow` remains the separate plain-JavaScript editor. The local lab remains
-`python -m traceharness` on `127.0.0.1:8742`. See
+`/app/shallow` remains the separate Plain harness editor. The local console remains
+`python -m traceharness --host 127.0.0.1 --port 8765` (`http://127.0.0.1:8765`). See
 [One harness workspace](UNIFIED_HARNESS_WORKSPACE.md) for the surface boundaries.
 
 ## Implementation at the design baseline
@@ -60,7 +60,7 @@ The [server configuration contract](https://github.com/aura-lab-wm/traceharness/
 accepts a fixed version-1 field set. New profile fields need an explicit schema,
 Worker validation and server implementation; adding controls alone is insufficient.
 
-Agent-patcher supplies useful editing semantics, but its local workbench must
+Agent-patcher supplies useful editing semantics, but its `workbench.py` editor must
 not be treated as a version-pinned extraction service:
 
 - Its [Claude loader](https://github.com/antonio-mastropaolo/agent-patcher/blob/8d3c17099974c06f2cfb1547bb4744c05f845b56/workbench.py#L361)

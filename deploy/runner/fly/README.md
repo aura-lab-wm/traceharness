@@ -7,7 +7,7 @@ a container on a shared production Docker host. The browser continues to use
 
 The VM exposes only the HMAC-authenticated control API through Fly's HTTPS
 proxy. Uvicorn binds the VM's actual private IPv4 address, not a wildcard.
-The local lab command remains `python -m traceharness` on `127.0.0.1:8742`.
+The local console command remains `python -m traceharness --host 127.0.0.1 --port 8765`.
 This recipe does not add Cloudflare routes or expose a Docker TCP socket.
 
 ## Build inputs

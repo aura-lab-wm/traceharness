@@ -38,7 +38,9 @@ def build_parser() -> argparse.ArgumentParser:
                "`traceharness link --member` connects this account; `link --url wss://...` dials out "
                "to a console. Neither opens a port. "
                "`traceharness native-prompts inventory|profile|experiment ...` inspects native prompt inventories and authors "
-               "profiles offline.",
+               "profiles offline. `traceharness doctor [--site PATH] [--compare URL] [--json]` checks that the package, "
+               "the UI build, the shared sources, the runner image and the site agree (exit 0 aligned, 1 drift, 2 could "
+               "not check; --compare is its only network use).",
     )
     p.add_argument("--host", default=os.environ.get("TRACEHARNESS_HOST", "127.0.0.1"),
                    help="interface to bind (default 127.0.0.1; use 0.0.0.0 in a container)")
@@ -783,6 +785,9 @@ def main(argv: list[str] | None = None) -> int:
     if argv and argv[0] == "version":
         from traceharness.shared.versions import main as version_main  # noqa: E402
         return version_main(argv[1:])
+    if argv and argv[0] == "doctor":
+        from traceharness.shared.doctor import main as doctor_main  # noqa: E402
+        return doctor_main(argv[1:])
     if argv and argv[0] == "capture":
         if len(argv) > 1 and argv[1] == "push":
             from traceharness.capture.push import push_main  # noqa: E402

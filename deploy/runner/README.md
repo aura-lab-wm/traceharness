@@ -17,8 +17,9 @@ image alone does not establish readiness.
 The member continues to use `https://traceharness.dev/app`. Its runner requests
 go through the existing authenticated Worker at `/api/runner/*`. The private
 service never receives a member JWT and is not a browser-facing application.
-`python -m traceharness` remains the local lab on `127.0.0.1:8742`; this package
-does not change that command or the existing compiler.
+The local console remains `python -m traceharness --host 127.0.0.1 --port 8765`
+(`http://127.0.0.1:8765`); this package does not change that command or the
+existing compiler.
 
 ## Boundaries
 
