@@ -64390,13 +64390,18 @@
     },
     {
       "path": "tests_agentlab/test_wp5_local_runner.py",
-      "bytes": 11202,
-      "sha256": "06a4b6bd3364508b36abfc783b7c7e5d34740f59730057c3082f7b8872370262"
+      "bytes": 11262,
+      "sha256": "f8c28fd74f24aa77f772860d4e961caefad51be408bee3142d9710843793b4d7"
     },
     {
       "path": "tests_agentlab/test_wp7_runner_fixes.py",
-      "bytes": 41010,
-      "sha256": "335dfd65d6282086c05540c8cc6a368a41d525263623225c614a48ee73d41419"
+      "bytes": 41125,
+      "sha256": "ef22daaa4e47e4d7e5efb3ef30a9745c88de711d927253078f0a49840419a477"
+    },
+    {
+      "path": "tests_agentlab/test_wp9_runner_fixes.py",
+      "bytes": 26338,
+      "sha256": "d15faed7b84508d183844e31386862af3471e24c4f2bc4e0adcad421089a2833"
     },
     {
       "path": "traceharness/__init__.py",
@@ -64450,8 +64455,8 @@
     },
     {
       "path": "traceharness/backend/app.py",
-      "bytes": 48088,
-      "sha256": "41ab5e30e42388d711a1e408f699bd86ccb86b412e325682328545ab2d9a7333"
+      "bytes": 48253,
+      "sha256": "379c7405c8f9281947d5f35a7924f4462abdc09d15f303ddeb450caf3deef5bf"
     },
     {
       "path": "traceharness/backend/assist.py",
@@ -64505,8 +64510,8 @@
     },
     {
       "path": "traceharness/backend/fork.py",
-      "bytes": 32191,
-      "sha256": "4343f2d0cbc561e0287a7eab314cd0b76edb97ab59a7c92717a2c6c721b04acc"
+      "bytes": 32344,
+      "sha256": "b0a5bbb1a4ed1816c79180fa1d3abc3b04db09ddb48d3be71aa5e77a0f9ae70c"
     },
     {
       "path": "traceharness/backend/guard.py",
@@ -64635,8 +64640,8 @@
     },
     {
       "path": "traceharness/backend/local_runner_api.py",
-      "bytes": 30241,
-      "sha256": "3dbfd57a419effdfcf693fe45ca5871d4587aa24c187e45d31021f2eed15bfc2"
+      "bytes": 30540,
+      "sha256": "bc6329e99fa7aea5e3f871819f8d077f4bed0b5cff0451f2669078ee00839682"
     },
     {
       "path": "traceharness/backend/metrics.py",
@@ -64690,8 +64695,8 @@
     },
     {
       "path": "traceharness/backend/sentinel.py",
-      "bytes": 65085,
-      "sha256": "c01e602d008fa489a3a64463b64abeee9fd6674b06912834714b7796cbf31c2a"
+      "bytes": 65382,
+      "sha256": "3f7172bc02be53a6acd191f3f19e229a6e8eaad65eea3fe6c034eb8ec3ae89be"
     },
     {
       "path": "traceharness/backend/sentinel_ext.py",
@@ -64750,8 +64755,8 @@
     },
     {
       "path": "traceharness/capture/backfill.py",
-      "bytes": 16790,
-      "sha256": "c4e861873dc897d609949ec1fe85369b8a95dd9bfb4cf2ca85a06a8f4e551c6c"
+      "bytes": 17124,
+      "sha256": "74f302c81c9cbe7fc1387b3f3e4e994ae04a9d955d76e3fa369e763c7e893b40"
     },
     {
       "path": "traceharness/capture/consent.py",
@@ -64765,8 +64770,8 @@
     },
     {
       "path": "traceharness/capture/exchange.py",
-      "bytes": 27567,
-      "sha256": "68a675afffb757216a39e02d6210ac940b9ba500c19a9c98ea747a2ec1199923"
+      "bytes": 27730,
+      "sha256": "1b15b3b23e8074f15ff581faafb49b8f7c2c94259ea1a517e2237376871d476b"
     },
     {
       "path": "traceharness/capture/harness_config.py",
@@ -64990,8 +64995,8 @@
     },
     {
       "path": "traceharness/core/span_schema.py",
-      "bytes": 4542,
-      "sha256": "3d5e5dd113cef9c3aff98b8d55e82ed879b9230e169b546bed71a2e4eef92b8a"
+      "bytes": 5246,
+      "sha256": "1a0537a2eb35b1fdbb5e2a051acd25ad0566c180d8d402004da891a202f55adf"
     },
     {
       "path": "traceharness/core/tools.py",
@@ -65024,14 +65029,14 @@
       "sha256": "41242c55096524ba0b1527fe9d6f484314180dd64141888f3c234099e8208e7c"
     },
     {
-      "path": "traceharness/frontend/dist/assets/index-DW4XqWdq.js",
-      "bytes": 2235396,
-      "sha256": "3345c60800ff4ff03b8ef3ab988d3392d03b66cd6f1dd72e3240eb406822abea"
+      "path": "traceharness/frontend/dist/assets/index-DdQAijnl.js",
+      "bytes": 2236751,
+      "sha256": "22e9470ec789a97cf2afe963f4400d223f769fd18265c74c0610968492f234d2"
     },
     {
       "path": "traceharness/frontend/dist/build-source.json",
       "bytes": 97,
-      "sha256": "b6d4cd5d63ca337367233ff10c6e357fad7cd77c4eb311ea9334d32d79a8848e"
+      "sha256": "63a866abcc370bd13920789f5082bbee3234aed3a5edebdb4398d890fb6d9bab"
     },
     {
       "path": "traceharness/frontend/dist/design-directions/README.md",
@@ -65116,7 +65121,7 @@
     {
       "path": "traceharness/frontend/dist/index.html",
       "bytes": 4301,
-      "sha256": "105dc2ee732ed9af9fa7bb8aa56f2c5c999baeea49e7a751b62f2fbc39c73498"
+      "sha256": "221272bb4f5b638d51a65f006fe5527c81b9f5ace7152d4474197a4bf95961e5"
     },
     {
       "path": "traceharness/frontend/index.html",
@@ -65420,13 +65425,13 @@
     },
     {
       "path": "traceharness/frontend/src/rig/ExperimentWorkspace.dom.test.jsx",
-      "bytes": 31881,
-      "sha256": "ab124f883eb44c42f43c3a2b520d63744e3d738d4038294d8c218970b4a8d5fa"
+      "bytes": 35617,
+      "sha256": "2a3f4d609673c70d1f65aff869e8153ac7886fed43ad98e74ee68a5567514423"
     },
     {
       "path": "traceharness/frontend/src/rig/ExperimentWorkspace.jsx",
-      "bytes": 53254,
-      "sha256": "b43b1c0f653d0cfeca225882bbefcea72622179a96cf95dab9a5020f7dde22ac"
+      "bytes": 54375,
+      "sha256": "57cc92530e928014362d6ffbd7a3705a1ebfeb8532da1aba81b24f861385a2b2"
     },
     {
       "path": "traceharness/frontend/src/rig/FamilyConfigurations.jsx",
@@ -65495,13 +65500,13 @@
     },
     {
       "path": "traceharness/frontend/src/rig/PairedExperiments.dom.test.jsx",
-      "bytes": 20616,
-      "sha256": "ea4c42dd3faa29d57899e2deaa47192f938966834eda1c743ca1ca3604dc5e0d"
+      "bytes": 23507,
+      "sha256": "1b7da9c6ff029dca936604b3c0a9a93a8f66f7c7517ef4e835c444ff3ae81adf"
     },
     {
       "path": "traceharness/frontend/src/rig/PairedExperiments.jsx",
-      "bytes": 24288,
-      "sha256": "e753200b51d31ed54558a514106cd305f98e9a37e8ad543acfd55aefa15752a6"
+      "bytes": 25271,
+      "sha256": "f9da329f790c2c5686079cff2851d780039f49a6943affaf5e235aacb92b1ef0"
     },
     {
       "path": "traceharness/frontend/src/rig/PausePanel.css",
@@ -65665,8 +65670,8 @@
     },
     {
       "path": "traceharness/frontend/src/rig/experiment-matrix-state.js",
-      "bytes": 31787,
-      "sha256": "00713c9b8a89c85d076cd40331b36ccc986e4853f425135b4329f02979d93dba"
+      "bytes": 31959,
+      "sha256": "b4da9a78aa02013bc37fcd81b3cbfc29e80bc61086d911a11c773a48b6174c3c"
     },
     {
       "path": "traceharness/frontend/src/rig/experiment-matrix-state.test.js",
@@ -66265,18 +66270,18 @@
     },
     {
       "path": "traceharness/frontend/src/rig/views/harness-composer.dom.test.jsx",
-      "bytes": 103304,
-      "sha256": "c7c774addb0f52ad61f3795e0bd0e3794bda01215638e1934ba17e2fe495b17d"
+      "bytes": 103726,
+      "sha256": "0eb0065390eb513c5ad08e947c892c2bae12f2393bb992d298c3b2ff470cf865"
     },
     {
       "path": "traceharness/frontend/src/rig/views/harness-composer.jsx",
-      "bytes": 80157,
-      "sha256": "b1947e5707659b8999465ed5969fea74e0921a392bb8b90230c84cf638461be4"
+      "bytes": 80497,
+      "sha256": "ac3c25c5639be9cf58db3e848f3b0181d41bec8b1d143f15bf560a67b0e1a70c"
     },
     {
       "path": "traceharness/frontend/src/rig/views/harness-composer.local-runner.dom.test.jsx",
-      "bytes": 12498,
-      "sha256": "46cfa7e77a0a33a03e18afe8e0afaf65f5808df52113c65eab65867378b69676"
+      "bytes": 12711,
+      "sha256": "14c0e5367938b881b546d4c33abbd5aa138e3ca2711e184500afa6831fc00653"
     },
     {
       "path": "traceharness/frontend/src/rig/views/home.css",
@@ -66400,13 +66405,13 @@
     },
     {
       "path": "traceharness/frontend/src/rig/views/trajectory.dom.test.jsx",
-      "bytes": 34417,
-      "sha256": "dcc575290f0114b68f5729734156ddd8172810cd69a2cf805dec5b27475eb724"
+      "bytes": 35445,
+      "sha256": "0284086efd6631de6e6e9d154c8e78c23a52fc7e9a6376576147660cd9577750"
     },
     {
       "path": "traceharness/frontend/src/rig/views/trajectory.jsx",
-      "bytes": 124391,
-      "sha256": "4307985f8643a63443eafa56c2b65b4bed34d0bd84f7ccb77a7942eed2c38da5"
+      "bytes": 125193,
+      "sha256": "f4bdace42914b412a6eecac21654ea5f1364dfdcea81663ad5b175696a8599cb"
     },
     {
       "path": "traceharness/frontend/src/rig/views/workspace.css",
@@ -66440,8 +66445,8 @@
     },
     {
       "path": "traceharness/frontend/src/runner-compatibility.js",
-      "bytes": 4056,
-      "sha256": "f30d2492b40338b768a9a78aad6bcfab2e8183c117ccb93d204365463436198e"
+      "bytes": 4676,
+      "sha256": "23ba72279ab9d7fa4faaee18a06d6a247c0e9e90ab94934dc03729466996ef8d"
     },
     {
       "path": "traceharness/frontend/src/runner-compatibility.test.js",
@@ -66865,8 +66870,8 @@
     },
     {
       "path": "traceharness/runner/build.py",
-      "bytes": 23990,
-      "sha256": "d71208cd9a2536686905003c28748c589b1dee86e4167a22a55b2a437fcc3a55"
+      "bytes": 25240,
+      "sha256": "3bce12854416aea8f604dc41f363f8c2dd47b4c789fc5581c9174568c9297060"
     },
     {
       "path": "traceharness/runner/cli.py",
@@ -66875,8 +66880,8 @@
     },
     {
       "path": "traceharness/runner/datasets.py",
-      "bytes": 14418,
-      "sha256": "a7968552ed063f9e92ed68b6e5a8e886d7a81f64ea846d1571a2fcfe3d71bb99"
+      "bytes": 18703,
+      "sha256": "c2252073d200ee00643830c84e6ab5d87ca28a93d7dcab9127ca8ba25d99b813"
     },
     {
       "path": "traceharness/runner/keyvault.py",
@@ -66885,8 +66890,8 @@
     },
     {
       "path": "traceharness/runner/local.py",
-      "bytes": 13555,
-      "sha256": "1ed217e14e0e73e8950ce0cfb646172ba1eca9a8c7015a6f7f4971248522fb69"
+      "bytes": 13934,
+      "sha256": "b93c3087be51b4ff98c9984d997d6c68581199556f4a47a6dcc05f9db2941cb2"
     },
     {
       "path": "traceharness/runner/package_task.py",
@@ -66915,13 +66920,13 @@
     },
     {
       "path": "traceharness/runner_service/configuration.py",
-      "bytes": 11751,
-      "sha256": "6361d2364cf57f6c483329db41688b58ea96adfb09287a64a1c79f9b0c6bc5cc"
+      "bytes": 12321,
+      "sha256": "6f633ae74887f2e325105be2ea210e37b94f37071c85b188b39599efd863de5f"
     },
     {
       "path": "traceharness/runner_service/container_entrypoint.py",
-      "bytes": 10887,
-      "sha256": "e4444ffab40190cfccb9092f15de86935dc9fa002a7a0f4d4081daf6b700bb9a"
+      "bytes": 11009,
+      "sha256": "f4d7e12f5cd82faf15bba70ad9bd668478b2fcffec6eea98e2d720af4c8a4989"
     },
     {
       "path": "traceharness/runner_service/credentials.py",
@@ -66930,18 +66935,18 @@
     },
     {
       "path": "traceharness/runner_service/execution.py",
-      "bytes": 37765,
-      "sha256": "bbae3b8bc857a1eea5cc8ece19d5e64f1ec9a6c80aa8ee668a866eaddcc3fccc"
+      "bytes": 39286,
+      "sha256": "c16645b18dd10050ced307d66ae184f9c2f953e55507919346cf478cb9efc459"
     },
     {
       "path": "traceharness/runner_service/experiments.py",
-      "bytes": 30065,
-      "sha256": "af219a30921803c0d3e2e6fcd08c1f2f67dc3b4e314290e06ac6a0d2de2fbf7e"
+      "bytes": 31112,
+      "sha256": "4b85babce805e5181b87f2aa03c4c34c277c96e355295166771db08fd001a86d"
     },
     {
       "path": "traceharness/runner_service/jobs.py",
-      "bytes": 41149,
-      "sha256": "704d5bed769e40731d283b8886115488e92210b6e564aa9526601cb22174a2ef"
+      "bytes": 41657,
+      "sha256": "8ec45d35e224012ab118126a0beadb5eba24184fe3f3f0e26b3ad1baada78454"
     },
     {
       "path": "traceharness/runner_service/native_observations.py",
@@ -66995,8 +67000,8 @@
     },
     {
       "path": "traceharness/runner_service/service.py",
-      "bytes": 17030,
-      "sha256": "270b37243868c0c725a06b23ae937ccc08d6e17ce191fa9fecc57bb519abdc1f"
+      "bytes": 17111,
+      "sha256": "954976b3b8e96453465b974bdf3360e2583c0daf52e0e1f2aa1b45501d523b0a"
     },
     {
       "path": "traceharness/runner_service/settings.py",
