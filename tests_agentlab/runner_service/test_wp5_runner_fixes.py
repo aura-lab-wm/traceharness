@@ -146,5 +146,76 @@ class StartupReconciliationTests(unittest.TestCase):
             jobs.close()
 
 
+class SetupKeepsReceiptsTests(unittest.TestCase):
+    IMAGE = "sha256:" + "a" * 64
+    GRADER = "sha256:" + "b" * 64
+
+    def setUp(self):
+        self.temp = tempfile.TemporaryDirectory()
+        self.addCleanup(self.temp.cleanup)
+        self.runner = Path(self.temp.name)
+        task = self.runner / "tasks" / "fixture-task"
+        (task / "repo").mkdir(parents=True)
+        (task / "repo" / "a.txt").write_text("x")
+        (task / "issue.md").write_text("issue")
+        (task / "task.json").write_text(json.dumps({"visible_test_command": "true"}))
+        self.task_dir = task
+        self.recipe = {"id": "fixture-task", "title": "Fixture", "repository": "https://example.invalid/r", "revision": "c" * 40}
+        from traceharness.runner_service.registry import tree_hash
+        self.tree_hash = tree_hash
+        receipt = {"status": "passed", "runtime_id": "traceharness", "runtime_version": "0.6.0", "image_digest": self.IMAGE,
+                   "model_id": "fixture/model", "verified_at": "t", "run_id": "r1", "task_id": "fixture-task",
+                   "task_revision": "c" * 40, "task_content_sha256": tree_hash(task), "grader_image_digest": self.GRADER}
+        raw = json.dumps(receipt, sort_keys=True).encode()
+        (self.runner / "compatibility").mkdir()
+        (self.runner / "compatibility" / "r1.json").write_bytes(raw)
+        import hashlib
+        ref = {"path": "compatibility/r1.json", "sha256": hashlib.sha256(raw).hexdigest()}
+        self.previous = {"version": 1, "models": [{"id": "fixture/model", "name": "m"}],
+                         "runtimes": [{"id": "traceharness", "version": "0.6.0", "image_digest": self.IMAGE, "compatibility_receipts": [ref]}],
+                         "tasks": []}
+        self.ref = ref
+
+    def regenerate(self, *, image=None, grader=None):
+        from traceharness.runner import build
+        data = build.registry_data({"traceharness": {"version": "0.6.0", "image_digest": image or self.IMAGE}},
+                                   [{"recipe": self.recipe, "path": self.task_dir}], grader or self.GRADER,
+                                   previous=self.previous, runner=self.runner)
+        return data["runtimes"][0]["compatibility_receipts"], data
+
+    def test_a_receipt_whose_complete_identity_matches_survives_setup(self):
+        from traceharness.runner import build
+        kept, data = self.regenerate()
+        self.assertEqual(kept, [self.ref])
+        build.write_registry(self.runner, data)          # and the registry still validates with it
+
+    def test_a_receipt_is_dropped_when_any_part_of_its_identity_changed(self):
+        self.assertEqual(self.regenerate(image="sha256:" + "c" * 64)[0], [], "rebuilt runtime image")
+        self.assertEqual(self.regenerate(grader="sha256:" + "d" * 64)[0], [], "rebuilt grader image")
+        (self.task_dir / "issue.md").write_text("a changed issue")
+        self.assertEqual(self.regenerate()[0], [], "changed task content")
+
+    def test_a_native_prompt_receipt_survives_only_for_the_same_inventory(self):
+        import hashlib
+        from traceharness.runner import build
+        from traceharness.runner_service.registry import NATIVE_PROMPT_CHECKS, NATIVE_PROMPT_FIELDS
+        inventory = {k: "e" * 64 for k in NATIVE_PROMPT_FIELDS}
+        inventory.update(runtime_id="native-codex", runtime_version="1.0", image_digest=self.IMAGE)
+        raw_inv = json.dumps(inventory).encode()
+        (self.runner / "inv.json").write_bytes(raw_inv)
+        proof = {"schema_version": 1, "status": "operationally_verified", "verified_at": "t", "run_id": "n1",
+                 **{k: inventory[k] for k in NATIVE_PROMPT_FIELDS}, **{k: True for k in NATIVE_PROMPT_CHECKS}}
+        raw_proof = json.dumps(proof).encode()
+        (self.runner / "proof.json").write_bytes(raw_proof)
+        ref = {"path": "proof.json", "sha256": hashlib.sha256(raw_proof).hexdigest()}
+        row = {"version": "1.0", "image_digest": self.IMAGE, "native_prompt_inventory": {"path": "inv.json", "sha256": hashlib.sha256(raw_inv).hexdigest()}}
+        self.assertEqual(build._native_receipts_kept(self.runner, [ref], row), [ref])
+        changed = dict(inventory, inventory_sha256="f" * 64)
+        raw_changed = json.dumps(changed).encode()
+        (self.runner / "inv.json").write_bytes(raw_changed)
+        row["native_prompt_inventory"] = {"path": "inv.json", "sha256": hashlib.sha256(raw_changed).hexdigest()}
+        self.assertEqual(build._native_receipts_kept(self.runner, [ref], row), [])
+
+
 if __name__ == "__main__":
     unittest.main()

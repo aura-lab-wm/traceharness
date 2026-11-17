@@ -226,17 +226,67 @@ def native_inventory(runner: Path, docker: str, runtime_id: str, image: str, run
 
 
 # --------------------------------------------------------------------------- registry
-def registry_data(runtimes: dict, tasks: list[dict], grader: str, models=DEFAULT_MODELS, previous: dict | None = None) -> dict:
-    """The registry JSON. `runtimes` maps id -> {version, image_digest, [native_prompt_*]}."""
-    receipts = {}
-    for row in (previous or {}).get("runtimes", []):
-        receipts[row["id"]] = (row.get("image_digest"), row.get("compatibility_receipts", []))
-    runtime_rows = []
-    for rid, row in runtimes.items():
-        kept = receipts.get(rid)
-        # A receipt binds one exact image; a rebuilt image keeps none of them.
-        compat = kept[1] if kept and kept[0] == row["image_digest"] else []
-        runtime_rows.append({"id": rid, **row, "compatibility_receipts": compat})
+def _read_pinned(runner: Path, reference, limit: int):
+    """The JSON object a {path, sha256} reference names under the runner directory, or None."""
+    try:
+        if not isinstance(reference, dict) or set(reference) != {"path", "sha256"}:
+            return None
+        path = (runner / reference["path"]).resolve()
+        if runner.resolve() not in path.parents or not path.is_file() or path.stat().st_size > limit:
+            return None
+        raw = path.read_bytes()
+        if hashlib.sha256(raw).hexdigest() != reference["sha256"]:
+            return None
+        value = json.loads(raw)
+        return value if isinstance(value, dict) else None
+    except (OSError, ValueError, KeyError, TypeError):
+        return None
+
+
+def _compatibility_kept(runner: Path, receipts, runtime: dict, task_rows: list, model_ids: set) -> list:
+    """Receipts whose complete identity (runtime, image, model, task revision and content, grader image)
+    still matches what setup just built. Anything else is dropped, never rewritten."""
+    from traceharness.runner_service.registry import COMPATIBILITY_FIELDS, compatibility_identity
+    tasks = {t["id"]: t for t in task_rows}
+    kept = []
+    for reference in receipts if isinstance(receipts, list) else []:
+        proof = _read_pinned(runner, reference, 64 * 1024)
+        task = tasks.get((proof or {}).get("task_id"))
+        if (proof and task and proof.get("status") == "passed" and proof.get("model_id") in model_ids
+                and runtime["id"] in task["runtime_ids"] and proof.get("verified_at") and proof.get("run_id")
+                and tuple(proof.get(k) for k in COMPATIBILITY_FIELDS) == compatibility_identity(runtime, task, proof["model_id"])):
+            kept.append(reference)
+    return kept
+
+
+def _native_receipts_kept(runner: Path, receipts, row: dict) -> list:
+    """Native prompt application receipts that bind the inventory setup just generated, exactly."""
+    from traceharness.runner_service.registry import NATIVE_PROMPT_CHECKS, NATIVE_PROMPT_FIELDS
+    inventory = _read_pinned(runner, row.get("native_prompt_inventory"), 16 * 1024 * 1024)
+    if inventory is None or not isinstance(receipts, list):
+        return []
+    required = {"schema_version", "status", "verified_at", "run_id", *NATIVE_PROMPT_FIELDS, *NATIVE_PROMPT_CHECKS}
+    kept = []
+    for reference in receipts:
+        proof = _read_pinned(runner, reference, 64 * 1024)
+        if (proof and set(proof) == required and proof["schema_version"] == 1 and proof["status"] == "operationally_verified"
+                and all(proof.get(k) == inventory.get(k) for k in NATIVE_PROMPT_FIELDS)
+                and all(proof.get(k) is True for k in NATIVE_PROMPT_CHECKS)
+                and row.get("image_digest") == proof["image_digest"] and row.get("version") == proof["runtime_version"]):
+            kept.append(reference)
+    return kept[:1]        # the registry admits one application receipt per runtime
+
+
+def registry_data(runtimes: dict, tasks: list[dict], grader: str, models=DEFAULT_MODELS, previous: dict | None = None,
+                  runner: Path | None = None) -> dict:
+    """The registry JSON. `runtimes` maps id -> {version, image_digest, [native_prompt_*]}.
+
+    With `runner` (the runner directory) the previous registry's receipts are kept when their complete
+    identity still matches the rebuilt images, task packages and inventories, and dropped otherwise."""
+    previous_rows = {row["id"]: row for row in (previous or {}).get("runtimes", []) if isinstance(row, dict) and "id" in row}
+    kept_models = list((previous or {}).get("models", []))
+    known = {m["id"] for m in kept_models}
+    kept_models += [{"id": m, "name": m} for m in models if m not in known]
     task_rows = []
     for item in tasks:
         recipe = item["recipe"]
@@ -244,9 +294,19 @@ def registry_data(runtimes: dict, tasks: list[dict], grader: str, models=DEFAULT
                           "revision": recipe["revision"], "path": "tasks/" + recipe["id"],
                           "content_sha256": tree_hash(item["path"]), "grader_image_digest": grader,
                           "runtime_ids": list(runtimes), "environment_digests": {rid: r["image_digest"] for rid, r in runtimes.items()}})
-    kept_models = list((previous or {}).get("models", []))
-    known = {m["id"] for m in kept_models}
-    kept_models += [{"id": m, "name": m} for m in models if m not in known]
+    runtime_rows = []
+    for rid, row in runtimes.items():
+        old = previous_rows.get(rid, {})
+        # A receipt binds one exact image; a rebuilt image keeps none of them.
+        same_image = old.get("image_digest") == row["image_digest"]
+        compat = old.get("compatibility_receipts", []) if same_image else []
+        native = old.get("native_prompt_receipts", []) if same_image else []
+        full = {"id": rid, **row, "compatibility_receipts": compat}
+        if runner is not None:
+            full["compatibility_receipts"] = _compatibility_kept(runner, compat, full, task_rows, {m["id"] for m in kept_models})
+            if "native_prompt_inventory" in row:
+                full["native_prompt_receipts"] = _native_receipts_kept(runner, native, full)
+        runtime_rows.append(full)
     return {"version": 1, "models": kept_models, "runtimes": runtime_rows, "tasks": task_rows}
 
 
@@ -323,7 +383,7 @@ def setup(lab_root, *, log=print, run=subprocess.run, stream=_stream, package=No
             previous = json.loads(existing.read_text())
         except ValueError:
             previous = None
-    data = registry_data(images, tasks, grader, previous=previous)
+    data = registry_data(images, tasks, grader, previous=previous, runner=runner)
     path = write_registry(runner, data)
     shutil.rmtree(context, ignore_errors=True)
     log(f"Registry written: {path}")
