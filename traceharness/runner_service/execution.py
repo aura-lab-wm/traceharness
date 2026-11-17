@@ -288,7 +288,13 @@ class DockerExecutor:
                 path.mkdir(mode=0o700)
                 # The agent runs as this host user; a differently-owned agent (10001, under a root console)
                 # needs its workspace and output open. The grader writes to its own tmpfs, never here.
-                path.chmod(0o777 if name != "grading" and self._agent_user() == "10001:10001" else 0o755)
+                if name != "grading" and self._agent_user() == "10001:10001":
+                    # A root console: the agent (10001) must own its workspace and output, or copying the task
+                    # into /workspace fails on the directory's own copystat. Owned and 0700, never world-writable.
+                    os.chown(path, 10001, 10001)
+                    path.chmod(0o700)
+                else:
+                    path.chmod(0o755)
             yield
         finally:
             for name in names:

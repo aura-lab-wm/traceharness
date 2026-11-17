@@ -204,7 +204,7 @@ class Registry:
                 self._native_prompt_admissions[rid] = {"schema_version": 1, "receipt_sha256": receipt["sha256"],
                     "cohort": "verified_base_runtime_model_task", **{key: proof[key] for key in NATIVE_PROMPT_FIELDS}}
             # On a user's own machine an inventory built by `traceharness runner setup` has no application
-            # receipt until `traceharness runner verify` produces one. It is admitted as unverified: a job may
+            # receipt (`traceharness runner verify` writes compatibility receipts only, never one of these). It is admitted as unverified: a job may
             # use it only with the explicit unverified_ok flag, and its manifest records verified: false.
             if self.local and rid in NATIVE_PROMPT_ADAPTERS and rid not in self._native_prompt_admissions:
                 self._native_prompt_admissions[rid] = {"schema_version": 1, "receipt_sha256": None,
@@ -250,7 +250,7 @@ class Registry:
         return {"available": available, "execution_available": executable,
                 "mode": "embedded" if runtime_id == "native-claude-code" or available else "overlay",
                 "inventory_sha256": inventory["inventory_sha256"] if available else None,
-                "reason": ("Not verified on this machine: run traceharness runner verify to prove it, or confirm running it unverified."
+                "reason": ("Not verified on this machine: this profile runs only with your confirmation and is recorded as not verified. (traceharness runner verify writes compatibility receipts only; it does not prove the profile is applied.)"
                            if executable and self._native_prompt_admissions[runtime_id].get("cohort") == "unverified_local"
                            else "" if executable else "Native prompt application has no verified mechanism or ready base combination." if available else "Inventory unavailable for this runtime version.")}
 

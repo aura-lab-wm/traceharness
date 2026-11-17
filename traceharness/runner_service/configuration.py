@@ -143,7 +143,7 @@ def preflight(configuration, registry, health: dict) -> dict:
                         verified = False
                     else:
                         issues.append("This native prompt profile has no application receipt on this machine."
-                                      " Set unverified_ok to run it anyway, or run traceharness runner verify.")
+                                      " Set unverified_ok to run it anyway; the run is recorded as not verified.")
     if not health.get("available"):
         issues.append("The private execution service is not ready.")
     if issues:

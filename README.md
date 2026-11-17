@@ -92,7 +92,21 @@ except the model broker, read-only task mounts, memory, CPU and wall limits). Th
 used. Images are built from public bases and the agents' own npm packages; nothing is pulled from a registry we publish.
 Without a verified receipt a combination runs only after you confirm it as not verified on this machine. The OpenRouter
 key saved in **Settings** stays in the console's backend and never enters a container. `traceharness doctor` reports
-whether the runner is set up.
+whether the runner is set up (it only reads: it never touches a running job or a container).
+
+Storage limits are a budget, not an exact per-job quota. A job's workspace and output directories are scanned
+(2 GiB, 200,000 entries), and the filesystem holding the job directories is measured with `statvfs` at job start and
+while it runs, which also counts files the job opened and then unlinked. A job is stopped when the free space or free
+inodes fall by more than its budget, or when the filesystem drops below 1 GiB or 20,000 inodes free; a new job does not
+start below those floors. On a filesystem shared with other writers, their writes count against the running job, so the
+guard can stop a job early; it cannot give each job its own quota. Each manifest records which enforcement applied
+(`limits.storage_enforcement`). A second console on the same data directory serves recorded jobs read-only and does not
+restart or remove anything: one process owns the runner state at a time.
+
+Finished jobs are written to `data/runs/<dataset>/<run_id>/` with an `evidence/` folder (the finalized manifest, grade,
+raw trace, native prompt files and a `provenance.json` with each file's sha256), so a result outlives the 24-hour job
+retention. A runtime artifact that is not finite JSON or not a ledger the console can read is kept out of the dataset,
+under `data/runner/quarantine/<job id>/`.
 
 ## Capture your coding-agent sessions
 

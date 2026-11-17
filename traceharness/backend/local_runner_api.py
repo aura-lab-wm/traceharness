@@ -577,6 +577,27 @@ async def runner_artifact(job_id: str, name: str):
     return answered if answered is not None else await _call(artifact, job_id, name)
 
 
+@router.get("/experiments")
+async def runner_experiments():
+    """Saved experiments are read from what the runner recorded: no Docker needed, like job reads."""
+    runner = await _container_reader()
+    answer = await _read_runner(runner, "GET", "/api/runner/experiments") if runner is not None else None
+    if answer is None:
+        raise HTTPException(404, L.NOT_FOUND)
+    return _passthrough(*answer)
+
+
+@router.get("/experiments/{experiment_id}")
+async def runner_experiment(experiment_id: str):
+    runner = await _container_reader()
+    if runner is None or not JOB_ID.fullmatch(experiment_id):
+        raise HTTPException(404, L.NOT_FOUND)
+    answer = await _read_runner(runner, "GET", f"/api/runner/experiments/{experiment_id}")
+    if answer is None:
+        raise HTTPException(404, L.NOT_FOUND)
+    return _passthrough(*answer)
+
+
 # Registered last: experiments, credentials, prompt inventories and every other path under /api/runner
 # go to the container runner when it is ready (it answers its own 404 for what it lacks); otherwise,
 # and for the bare prefix, a JSON 404 here, never the console's HTML.

@@ -441,5 +441,254 @@ class UntrustedRuntimeJsonTests(unittest.TestCase):
                 self.assertEqual(json.loads((run / "evidence" / "provenance.json").read_text())["trace"], "quarantined")
 
 
+class UnverifiedJobEndToEnd(unittest.TestCase):
+    """A combination with no receipt, submitted through the backend API, persisted, and read back."""
+
+    def setUp(self):
+        from fastapi.testclient import TestClient
+        from traceharness.backend.app import app
+        from tests_agentlab.test_wp5_local_runner import DatasetRunner
+        from tests_agentlab.test_local_runner_container import LocalExecutor, local_settings as container_settings
+        from tests_agentlab.runner_service.test_runner import KEY
+
+        class WritingExecutor(LocalExecutor):
+            """Leaves what the real executor leaves: manifest.json and grade.json (its own persist_artifacts)."""
+            def execute(self, job_id, manifest, directory, cancel, forward):
+                artifacts, _ = DockerExecutor(container_settings(directory.parent), None).persist_artifacts(directory, manifest, grade="passed")
+                return {"grade": "passed", "issues": [], "artifacts": artifacts}
+
+        class Runner(DatasetRunner):
+            def build_app(self):
+                from traceharness.runner_service import create_app
+                from traceharness.runner.keyvault import LocalKeyVault
+                built = create_app(container_settings(self.root), registry=self.registry, provider=self.provider,
+                                   executor=WritingExecutor(), vault=LocalKeyVault(self.key_getter),
+                                   persist=self.dataset_hook())
+                return built
+        self.temp = tempfile.TemporaryDirectory()
+        self.root = Path(self.temp.name)
+        self.runner = Runner(self.root, lambda: KEY)
+        self.previous = L.active_runner()
+        L.activate(self.runner)
+        self.client = TestClient(app)
+
+    def tearDown(self):
+        self.runner.close()
+        L.activate(self.previous)
+        self.temp.cleanup()
+
+    def test_an_unverified_job_is_recorded_unverified_in_the_job_the_artifact_and_the_dataset(self):
+        import base64
+        from tests_agentlab.runner_service.test_runner import configuration
+        from traceharness.core import analysis
+        cfg = {**configuration(), "model_id": "other/model", "unverified_ok": True}
+        review = self.client.post("/api/runner/preflight", json={"configuration": cfg}).json()
+        self.assertTrue(review["ok"], review)
+        posted = self.client.post("/api/runner/jobs", json={"configuration": cfg, "credential_id": None, "idempotency_key": "wp7-unverified-0001",
+                                                            "manifest_sha256": review["manifest_sha256"]})
+        self.assertEqual(posted.status_code, 200, posted.text)
+        jid = posted.json()["job"]["id"]
+        deadline = time.time() + 5
+        while time.time() < deadline and self.client.get(f"/api/runner/jobs/{jid}").json()["job"]["status"] != "succeeded":
+            time.sleep(0.05)
+        detail = self.client.get(f"/api/runner/jobs/{jid}").json()["job"]
+        self.assertEqual(detail["status"], "succeeded")
+        self.assertIs(detail["manifest"]["verified"], False)
+        listed = [j for j in self.client.get("/api/runner/jobs").json()["jobs"] if j["id"] == jid]
+        self.assertEqual(len(listed), 1)
+        artifact = self.client.get(f"/api/runner/jobs/{jid}/artifacts/manifest.json")
+        self.assertEqual(artifact.status_code, 200, artifact.text)
+        self.assertIs(json.loads(base64.b64decode(artifact.json()["content"]))["verified"], False)
+        dataset = self.root / "data" / "runs" / "runner_jobs"
+        deadline = time.time() + 5
+        while time.time() < deadline and not (dataset / "index.jsonl").exists():
+            time.sleep(0.05)
+        row = next(r for r in analysis.load_index(str(dataset)) if r["run_id"] == jid)
+        self.assertIs(row["verified"], False, "persisted and read back through the dataset reader")
+        evidence = json.loads((dataset / jid / "evidence" / "manifest.json").read_text())
+        self.assertIs(evidence["verified"], False)
+
+
+class RegistryReloadSubmitTests(unittest.TestCase):
+    """A replaced registry.json is used by the next submission; a job already running keeps its inputs."""
+
+    def setUp(self):
+        from tests_agentlab.runner_service.test_runner import KEY
+        self.temp = tempfile.TemporaryDirectory()
+        self.root = Path(self.temp.name)
+        self.base = L.runner_dir(self.root)
+        self.base.mkdir(parents=True)
+        self.registry, self.data = fixture_registry(self.base)
+        self.path = self.base / "registry.json"
+        self.path.write_text(json.dumps(self.data))
+        self.release = threading.Event()
+        self.started = threading.Event()
+        self.docker = patch.object(L, "find_docker", return_value="/usr/bin/docker")
+        self.docker.start()
+        outer = self
+
+        class Runner(L.LocalRunner):
+            def build_app(self):
+                from traceharness.runner.keyvault import LocalKeyVault
+                from traceharness.runner_service import create_app
+                from traceharness.runner_service.registry import Registry
+                from tests_agentlab.test_local_runner_container import TwoModels
+                settings = local_settings(outer.base)
+                registry = Registry.load(settings.registry_path, local=True)
+                executor = DockerExecutor(settings, registry, command=RecordingDocker())
+                executor.reconcile_startup = lambda: True
+                executor.health = lambda: {"available": True, "runtimes": {"traceharness": True}, "tasks": {t: True for t in registry.tasks},
+                                           "isolation_runtime": "runc"}
+
+                def run(args, name, cancel, deadline, **kw):
+                    if not name.endswith("-grade"):
+                        outer.started.set()
+                        outer.release.wait(10)
+                        return b""
+                    return b'{"outcome": "passed"}'
+                executor._run = run
+                return create_app(settings, registry=registry, provider=TwoModels(), executor=executor,
+                                  vault=LocalKeyVault(lambda: KEY), persist=lambda row, d: True)
+            is_ready = lambda self: True          # noqa: E731
+        self.runner = Runner(str(self.root), lambda: KEY)
+        from fastapi.testclient import TestClient
+        from traceharness.backend.app import app
+        self.previous = L.active_runner()
+        L.activate(self.runner)
+        self.client = TestClient(app)
+
+    def tearDown(self):
+        self.release.set()
+        self.runner.close()
+        L.activate(self.previous)
+        self.docker.stop()
+        self.temp.cleanup()
+
+    def submit(self, key, cfg):
+        review = self.client.post("/api/runner/preflight", json={"configuration": cfg}).json()
+        self.assertTrue(review["ok"], review)
+        posted = self.client.post("/api/runner/jobs", json={"configuration": cfg, "credential_id": None, "idempotency_key": key,
+                                                            "manifest_sha256": review["manifest_sha256"]})
+        self.assertEqual(posted.status_code, 200, posted.text)
+        return posted.json()["job"]["id"], review["manifest"]
+
+    def wait(self, jid, status="succeeded"):
+        deadline = time.time() + 8
+        while time.time() < deadline:
+            job = self.client.get(f"/api/runner/jobs/{jid}").json()["job"]
+            if job["status"] == status:
+                return job
+            time.sleep(0.05)
+        self.fail(f"{jid} did not reach {status}: {job['status']} {job.get('issues')}")
+
+    def test_new_submissions_use_the_new_registry_and_the_active_job_keeps_its_pinned_inputs(self):
+        from tests_agentlab.runner_service.test_runner import configuration
+        from traceharness.runner_service.registry import tree_hash
+        cfg = {**configuration(), "unverified_ok": True}
+        first_id, first_manifest = self.submit("wp7-reload-000000001", cfg)
+        self.assertTrue(self.started.wait(5), "the first job is running")
+        old_hash = first_manifest["task_content_sha256"]
+        # `traceharness runner setup` / `verify` replaces the task package and registry while a job runs
+        package = self.base / "package"
+        (package / "issue.md").write_text("A different, re-reviewed issue text.")
+        from traceharness.runner_service.configuration import canonical
+        import hashlib
+        receipt = json.loads((self.base / "receipt.json").read_text())
+        receipt["task_content_sha256"] = tree_hash(package)
+        raw = canonical(receipt)
+        (self.base / "receipt.json").write_bytes(raw)
+        self.data["runtimes"][0]["compatibility_receipts"][0]["sha256"] = hashlib.sha256(raw).hexdigest()
+        self.data["tasks"][0]["content_sha256"] = tree_hash(package)
+        self.data["tasks"][0]["title"] = "Re-reviewed task"
+        self.path.write_text(json.dumps(self.data))
+        os.utime(self.path, ns=(time.time_ns() + 10**9, time.time_ns() + 10**9))
+        catalog = self.client.get("/api/runner/catalog").json()          # the next request adopts the new file
+        self.assertEqual(next(t for t in catalog["tasks"] if t["id"] == "fixture-task")["title"], "Re-reviewed task")
+        # a submission after the reload is built from the NEW registry
+        second_id, second_manifest = self.submit("wp7-reload-000000002", cfg)
+        self.assertNotEqual(second_manifest["task_content_sha256"], old_hash)
+        self.assertEqual(second_manifest["task_content_sha256"], tree_hash(package))
+        # the running job's record still carries what it was reviewed with
+        running = self.client.get(f"/api/runner/jobs/{first_id}").json()["job"]
+        self.assertEqual(running["manifest"]["task_content_sha256"], old_hash)
+        # and an executor asked to start a job reviewed against the old package refuses (pinned inputs)
+        from traceharness.runner_service.execution import ExecutionError
+        executor = self.runner.app.state.executor
+        with self.assertRaises(ExecutionError) as caught:
+            executor._execute_bounded("a" * 48, first_manifest, self.base / "scratch", threading.Event(), lambda *a, **k: None)
+        self.assertIn("changed after review", str(caught.exception))
+        self.release.set()
+        self.assertEqual(self.wait(first_id)["manifest"]["task_content_sha256"], old_hash)
+        self.assertEqual(self.wait(second_id)["manifest"]["task_content_sha256"], tree_hash(package))
+
+
+class ExperimentReadsWithoutDockerTests(unittest.TestCase):
+    def test_saved_experiments_list_and_open_while_docker_is_stopped(self):
+        from fastapi.testclient import TestClient
+        from traceharness.backend.app import app
+        from traceharness.runner_service.experiments import Experiments, review_plan
+        from tests_agentlab.runner_service import test_experiments as E
+        from tests_agentlab.runner_service.test_runner import KEY
+        with tempfile.TemporaryDirectory() as t, patch.object(L, "find_docker", return_value="/usr/bin/docker"):
+            root = Path(t)
+            base = L.runner_dir(root)
+            base.mkdir(parents=True)
+            _, data = fixture_registry(base)
+            (base / "registry.json").write_text(json.dumps(data))
+            # an experiment saved by an earlier run
+            engine = Experiments(local_settings(base), E.FakeJobs(), CredentialVault(), E.review, poll_interval=.01)
+            checked = review_plan(E.draft(), E.review)
+            saved = engine.create("local", checked["plan"], checked["plan_sha256"], "wp7-experiment-read-0001")
+            engine.close()
+            stopped = lambda args, **kw: SimpleNamespace(returncode=1, stdout=b"", stderr=b"")   # noqa: E731
+            runner = L.LocalRunner(str(root), lambda: KEY, command=stopped)
+            previous = L.active_runner()
+            L.activate(runner)
+            try:
+                client = TestClient(app)
+                self.assertFalse(runner.is_ready(), "Docker does not answer")
+                listed = client.get("/api/runner/experiments")
+                self.assertEqual(listed.status_code, 200, listed.text)
+                self.assertIn(saved["id"], [e["id"] for e in listed.json()["experiments"]])
+                detail = client.get("/api/runner/experiments/" + saved["id"])
+                self.assertEqual(detail.status_code, 200, detail.text)
+                self.assertEqual(detail.json()["experiment"]["id"], saved["id"])
+                self.assertEqual(client.get("/api/runner/experiments/" + "0" * 48).status_code, 404)
+                self.assertEqual(client.get("/api/runner/experiments/not-an-id").status_code, 404)
+            finally:
+                runner.close()
+                L.activate(previous)
+
+
+class RootConsoleStorageOwnershipTests(unittest.TestCase):
+    def test_a_root_console_hands_workspace_and_output_to_the_agent_user_not_the_world(self):
+        chowned = []
+        with tempfile.TemporaryDirectory() as t:
+            directory = Path(t)
+            ex = DockerExecutor(local_settings(t), SimpleNamespace(), command=lambda *a, **k: SimpleNamespace(returncode=0, stdout=b""))
+            with patch.object(os, "getuid", return_value=0), \
+                    patch.object(os, "chown", side_effect=lambda path, uid, gid: chowned.append((Path(path).name, uid, gid))):
+                self.assertEqual(ex._agent_user(), "10001:10001")
+                with ex.local_storage(directory):
+                    for name in ("workspace", "output"):
+                        mode = (directory / name).stat().st_mode & 0o777
+                        self.assertEqual(mode, 0o700, name)
+                        self.assertFalse(mode & 0o002)
+                    self.assertEqual(sorted(chowned), [("output", 10001, 10001), ("workspace", 10001, 10001)])
+                    self.assertEqual((directory / "grading").stat().st_mode & 0o777, 0o755)
+                    (directory / "workspace" / "f").write_text("x")
+                for name in ("workspace", "output", "grading"):          # cleanup still removes everything
+                    self.assertFalse((directory / name).exists())
+
+    def test_a_non_root_console_keeps_the_directories_as_before(self):
+        with tempfile.TemporaryDirectory() as t:
+            directory = Path(t)
+            ex = DockerExecutor(local_settings(t), SimpleNamespace(), command=lambda *a, **k: None)
+            with patch.object(os, "getuid", return_value=501), patch.object(os, "getgid", return_value=20), \
+                    patch.object(os, "chown", side_effect=AssertionError("no chown off root")):
+                with ex.local_storage(directory):
+                    self.assertEqual((directory / "workspace").stat().st_mode & 0o777, 0o755)
+
+
 if __name__ == "__main__":
     unittest.main()
