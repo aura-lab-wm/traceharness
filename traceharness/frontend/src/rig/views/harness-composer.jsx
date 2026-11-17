@@ -149,7 +149,7 @@ export function HarnessComposer({ args = [] }) {
   const nativeCounts = inventoryForRuntime?.inventory && nativeDraft?.enabled && !promptProfileIssue
     ? promptCounts(inventoryForRuntime.inventory.blocks, nativeDraft.profile.overrides, [], nativeDraft.profile.default_action) : null
   const fixedPrompt = card ? fixedDrafts[card.id]?.prompt ?? card.prompt : ''
-  const configuration = configurationFor(state, { card, runtime, fixedPrompt })
+  const configuration = configurationFor(state, { card, runtime, fixedPrompt, task: catalog.tasks.find((t) => t.id === state.task_id) })
   const configurationKey = jsonKey(configuration)
   const currentConfiguration = useRef(null)
   currentConfiguration.current = { key: configurationKey, catalog, revision: catalogRevision, nativeInventoryRevision }
@@ -167,6 +167,8 @@ export function HarnessComposer({ args = [] }) {
   const compatibility = taskCompatibility(task, runtime, state.model_id)
   // Each task needs only what it really uses: an in-process task runs with run.local alone.
   const neededCapability = capabilityFor({ native, task })
+  // Consent belongs to a container/native run; an in-process task has nothing to waive, so the box clears.
+  useEffect(() => { if (state.unverified_ok === true && task && neededCapability === 'run.local') setState((s) => s.unverified_ok === true ? { ...s, unverified_ok: false } : s) }, [state.unverified_ok, task, neededCapability])
   const availableModelIds = task?.model_ids_by_runtime ? compatibility.modelIds : runtime?.model_ids
   const models = catalog.models.filter((m) => !runtime?.available || !Array.isArray(availableModelIds) || availableModelIds.includes(m.id))
   const selectedRuntimeModelAllowed = Array.isArray(runtime?.model_ids) && runtime.model_ids.includes(state.model_id)
@@ -409,7 +411,7 @@ export function HarnessComposer({ args = [] }) {
       const drafts = s.selection === 'custom' || s.selection.startsWith('saved:') ? { ...s.harness_drafts, [s.selection]: s.blocks } : s.harness_drafts
       let blocks = drafts[selection] || (selection.startsWith('saved:') && row ? blocksFromHarness(row) : s.blocks)
       if (carry && !selection.startsWith('native:') && !selection.startsWith('fixed:')) blocks = blocks.map((b) => b.type === 'prompt' ? { ...b, text: prompt } : b)
-      return { ...s, selection, blocks, harness_drafts: drafts,
+      return { ...s, selection, blocks, harness_drafts: drafts, ...(selection !== s.selection ? { unverified_ok: false } : {}),
         native_prompts: selection.startsWith('native:') && carry ? { ...s.native_prompts, [selection.slice(7)]: prompt } : s.native_prompts }
     })
   }
@@ -706,8 +708,8 @@ export function HarnessComposer({ args = [] }) {
     <div id={instanceId + '-selections'} className="rg-composer-setup" hidden={mobileSetup && !setupExpanded}>
     <div className="rg-composer-selectors" data-panes data-fill>
       <HarnessPicker label="Harness" step="01" value={state.selection} options={harnessOptions} onChange={chooseHarness} disabled={editLocked} searchPlaceholder="Search presets, saved harnesses and native agents" hint={native ? 'Native runtime · ' + (runtime?.version || 'version not connected') : fixed ? 'TraceHarness preset. This is not the vendor runtime.' : 'Your own tools, instructions and limits.'} />
-      <HarnessPicker label="Model" step="02" value={state.model_id} options={modelOptions} onChange={(model_id) => setState((s) => ({ ...s, model_id }))} disabled={editLocked} loading={catalogLoading} placeholder={catalog.models.length ? 'Choose an OpenRouter model' : 'Model catalog unavailable'} searchPlaceholder="Search models or providers" emptyMessage="No models match this search" hint={model ? `${model.id} · ${units(model.pricing?.prompt)} in / ${units(model.pricing?.completion)} out per 1M tokens` : 'Search by model name or provider.'} />
-      <HarnessPicker label="Task" step="03" value={state.task_id} options={taskOptions} onChange={(task_id) => setState((s) => ({ ...s, task_id }))} disabled={editLocked} loading={catalogLoading} placeholder={catalog.tasks.length ? 'Choose a task package' : 'No runnable task packages connected'} searchPlaceholder="Search tasks or repositories" emptyMessage={catalog.tasks.length ? 'No tasks match this search' : 'No runnable task packages connected. A task needs source code, a pinned revision and a grading environment.'} hint={task ? `${task.repository || task.id} · ${task.revision || 'revision not verified'}` : 'Use a registered repository task with a pinned revision and grader.'} />
+      <HarnessPicker label="Model" step="02" value={state.model_id} options={modelOptions} onChange={(model_id) => setState((s) => ({ ...s, model_id, ...(model_id !== s.model_id ? { unverified_ok: false } : {}) }))} disabled={editLocked} loading={catalogLoading} placeholder={catalog.models.length ? 'Choose an OpenRouter model' : 'Model catalog unavailable'} searchPlaceholder="Search models or providers" emptyMessage="No models match this search" hint={model ? `${model.id} · ${units(model.pricing?.prompt)} in / ${units(model.pricing?.completion)} out per 1M tokens` : 'Search by model name or provider.'} />
+      <HarnessPicker label="Task" step="03" value={state.task_id} options={taskOptions} onChange={(task_id) => setState((s) => ({ ...s, task_id, ...(task_id !== s.task_id ? { unverified_ok: false } : {}) }))} disabled={editLocked} loading={catalogLoading} placeholder={catalog.tasks.length ? 'Choose a task package' : 'No runnable task packages connected'} searchPlaceholder="Search tasks or repositories" emptyMessage={catalog.tasks.length ? 'No tasks match this search' : 'No runnable task packages connected. A task needs source code, a pinned revision and a grading environment.'} hint={task ? `${task.repository || task.id} · ${task.revision || 'revision not verified'}` : 'Use a registered repository task with a pinned revision and grader.'} />
     </div>
     {(state.model_id || state.task_id) && <div className="rg-row rg-wrap rg-composer-selection-actions">{state.model_id && <button className="rg-btn ghost" disabled={editLocked} onClick={() => setState((s) => ({ ...s, model_id: '' }))}>Clear model</button>}{state.task_id && <button className="rg-btn ghost" disabled={editLocked} onClick={() => setState((s) => ({ ...s, task_id: '' }))}>Clear task</button>}</div>}
     <div className="rg-composer-switch-policy"><label><input type="checkbox" checked={!!state.preserve_prompt} disabled={editLocked} onChange={(event) => setState((s) => ({ ...s, preserve_prompt: event.target.checked }))} />Keep prompt when switching harnesses</label><span>Each harness keeps its own draft. Tools and permissions stay with the selected engine.</span></div>

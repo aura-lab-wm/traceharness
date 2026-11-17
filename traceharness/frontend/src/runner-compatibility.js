@@ -41,3 +41,16 @@ const RECEIPT_TEXT = /compatibility receipt|application receipt|not verified on 
 export const needsReceiptConsent = (...texts) => texts.flat().some((text) => typeof text === 'string' && RECEIPT_TEXT.test(text))
 /** "Verified" or "Not verified on this machine" from a manifest's `verified`; '' when it is not recorded. */
 export const verificationLabel = (manifest) => manifest?.verified === false ? 'Not verified on this machine' : manifest?.verified === true ? 'Verified' : ''
+
+/** The manifest a trial ran under: its job's own when present, else the experiment's frozen arm manifest
+    (trial job summaries deliberately exclude manifests, so the plan's arm is the recorded source). */
+export function trialManifest(experiment, trial) {
+  const arm = (experiment?.plan?.arms || []).find((row) => row.id === trial?.arm_id)
+  return trial?.job?.manifest || arm?.manifest || null
+}
+/** One verification sentence for an experiment: any unverified trial makes the whole comparison unverified. */
+export function experimentVerification(experiment) {
+  const manifests = (experiment?.trials || []).map((trial) => trialManifest(experiment, trial)).filter(Boolean)
+  if (manifests.some((m) => m.verified === false)) return 'Not verified on this machine'
+  return manifests.length && manifests.every((m) => verificationLabel(m) === 'Verified') ? 'Verified' : ''
+}

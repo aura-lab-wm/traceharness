@@ -3,6 +3,7 @@ import { CARDS, QUESTIONS, blocksFromAnswers } from './shallow-data'
 import { encodeJSON } from '../../json'
 import { fieldIssues, numberIssue } from '../harnessFields'
 import { checkedNativeProfile } from '../../native-prompts-contract'
+import { capabilityFor } from '../../runner-compatibility'
 import { nativeDraftForProfile, safeNativeDraft } from './native-prompts-state'
 
 export const NATIVE_DRAFTS = [
@@ -61,7 +62,7 @@ export function initialComposer(args = []) {
     edit_mode: args[0] === 'guided' ? 'guided' : ['guided', 'advanced'].includes(old.edit_mode) ? old.edit_mode : 'prompt' }
 }
 
-export function configurationFor(state, { card, runtime, fixedPrompt }) {
+export function configurationFor(state, { card, runtime, fixedPrompt, task = null }) {
   const native = state.selection.startsWith('native:')
   const fixed = state.selection.startsWith('fixed:')
   const blocks = fixed && card ? blocksFromHarness({ ...card, prompt: fixedPrompt }) : state.blocks
@@ -75,7 +76,9 @@ export function configurationFor(state, { card, runtime, fixedPrompt }) {
     limits: { ...state.limits, max_steps: native ? state.limits.max_steps : blocks.find((b) => b.type === 'stop')?.max_steps },
     ...(profileDraft?.enabled ? { native_prompt_profile: JSON.parse(JSON.stringify(profileDraft.profile)) } : {}),
     // Only the user's own action sets this (the checkbox, or a file they imported); it is never defaulted.
-    ...(state.unverified_ok === true ? { unverified_ok: true } : {}),
+    // An in-process TraceHarness task (run.local) has no receipt to waive and its backend rejects the
+    // extra field, so consent never travels with it, whatever the checkbox last held.
+    ...(state.unverified_ok === true && !(task && capabilityFor({ native, task }) === 'run.local') ? { unverified_ok: true } : {}),
   }
 }
 

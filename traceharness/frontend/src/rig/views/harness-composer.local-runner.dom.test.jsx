@@ -23,10 +23,17 @@ function compiled(body) {
     policy: get('policy').mode, context_window: get('context').window, observation_chars: get('context').observation_chars, max_steps: get('stop').max_steps,
     max_total_tokens: get('stop').max_total_tokens, temperature: get('sampling').temperature, max_tokens_per_call: get('sampling').max_tokens_per_call, include_file_listing: get('listing').include } }
 }
+// The real backend's rule: the recorded manifest never copies the consent flag, and `verified` is false
+// exactly when the submitted configuration carried unverified_ok. The tests never write `verified` themselves.
+const NO_RECEIPT = 'This task/runtime/model combination has no matching compatibility receipt for its pinned images and grader. Set unverified_ok to run it anyway.'
+const recordedManifest = (configuration) => {
+  const { unverified_ok: consent, ...rest } = configuration
+  return { ...rest, runtime_version: '0.6.0', verified: consent !== true }
+}
 let calls, preflightAnswer, environmentAnswer, Composer, environment
 beforeEach(async () => {
   sessionStorage.clear(); localStorage.clear(); calls = []; delete window.__TRACEHARNESS_DATA__
-  preflightAnswer = (body) => json({ ok: true, issues: [], manifest_sha256: 'b'.repeat(64), manifest: { ...body.configuration, runtime_version: '0.6.0', verified: true } })
+  preflightAnswer = (body) => json({ ok: true, issues: [], manifest_sha256: 'b'.repeat(64), manifest: recordedManifest(body.configuration) })
   environmentAnswer = () => json({ capabilities: {} })
   vi.resetModules()
   vi.stubGlobal('fetch', vi.fn(async (url, opts = {}) => {
@@ -37,8 +44,9 @@ beforeEach(async () => {
     if (url === '/api/runner/catalog') return json(catalog())
     if (url === '/api/runner/preflight') return preflightAnswer(body)
     if (url === '/api/runner/jobs' && method === 'GET') return json({ jobs: [] })
+    if (url === '/api/runner/jobs' && method === 'POST' && body.configuration.task_id === 'reg_container' && body.configuration.unverified_ok !== true) return json({ ok: false, issues: [NO_RECEIPT] }, 422)
     if (url === '/api/runner/jobs' && method === 'POST') return json({ job: { id: 'c'.repeat(48), status: 'succeeded', created_at: 1794891036, grade: 'passed', manifest_sha256: body.manifest_sha256,
-      manifest: { runtime_id: 'traceharness', model_id: 'mock', task_id: body.configuration.task_id, verified: body.configuration.unverified_ok === true ? false : true }, issues: [], artifacts: [], results_dir: 'harness_runs', run_id: '20261117-000000-abcdef' } })
+      manifest: { runtime_id: 'traceharness', model_id: 'mock', task_id: body.configuration.task_id, verified: recordedManifest(body.configuration).verified }, issues: [], artifacts: [], results_dir: 'harness_runs', run_id: '20261117-000000-abcdef' } })
     if (url === '/api/shallow/catalog') return json({ harnesses: catalogCards })
     if (url === '/api/shallow/harnesses') return json({ harnesses: [], loaded: true, unconfirmed: [] })
     if (url === '/api/shallow/compile') return json(compiled(body))
@@ -106,12 +114,12 @@ describe('the Docker-free local console (run.container and run.native are runner
 })
 
 describe('explicit consent to run without a receipt', () => {
-  const noReceipt = 'This task/runtime/model combination has no matching compatibility receipt for its pinned images and grader. Set unverified_ok to run it anyway.'
+  const noReceipt = NO_RECEIPT
   it('offers the checkbox only after the review says so, never sets the flag on its own, then records it', async () => {
     environmentAnswer = () => json({ capabilities: { 'run.container': { reason: 'ok' }, 'run.native': { reason: 'ok' }, 'run.experiments': { reason: 'ok' } } })
     await environment.refreshEnvironment()
     preflightAnswer = (body) => body.configuration.unverified_ok === true
-      ? json({ ok: true, issues: [], manifest_sha256: 'd'.repeat(64), manifest: { ...body.configuration, verified: false } })
+      ? json({ ok: true, issues: [], manifest_sha256: 'd'.repeat(64), manifest: recordedManifest(body.configuration) })
       : json({ ok: false, issues: [noReceipt] })
     render(<Composer />)
     await ready('Container registry task')
@@ -133,5 +141,31 @@ describe('explicit consent to run without a receipt', () => {
     await screen.findByText('Run ' + 'c'.repeat(48))
     expect(calls.find((c) => c.url === '/api/runner/jobs' && c.method === 'POST').body.configuration.unverified_ok).toBe(true)
     expect(document.querySelector('[data-el="runner-job-verified"]').textContent).toBe('Not verified on this machine')
+  })
+
+  it('drops consent and clears the box when the user switches to an in-process task, and again on a model or task change', async () => {
+    environmentAnswer = () => json({ capabilities: { 'run.container': { reason: 'ok' }, 'run.native': { reason: 'ok' }, 'run.experiments': { reason: 'ok' } } })
+    await environment.refreshEnvironment()
+    preflightAnswer = (body) => body.configuration.unverified_ok === true || body.configuration.task_id !== 'reg_container' ? json({ ok: true, issues: [], manifest_sha256: 'd'.repeat(64), manifest: recordedManifest(body.configuration) }) : json({ ok: false, issues: [noReceipt] })
+    render(<Composer />)
+    await ready('Container registry task')
+    await waitFor(() => expect(review().disabled).toBe(false))
+    fireEvent.click(review())
+    await screen.findByText(noReceipt)
+    fireEvent.click(screen.getByLabelText('Run without a receipt on this machine (not verified)'))
+    await waitFor(() => expect(review().disabled).toBe(false))
+    // A different task clears the consent; the box is unchecked when it reappears.
+    choose('Task', 'In-process slugify task')
+    await waitFor(() => expect(review().disabled).toBe(false))
+    fireEvent.click(review())
+    await screen.findByText('Configuration verified')
+    const sent = calls.filter((c) => c.url === '/api/runner/preflight').at(-1).body.configuration
+    expect(sent).not.toHaveProperty('unverified_ok')
+    expect(screen.queryByLabelText('Run without a receipt on this machine (not verified)')).toBeNull()
+    choose('Task', 'Container registry task')
+    fireEvent.click(review())
+    await screen.findByText(noReceipt)
+    expect(screen.getByLabelText('Run without a receipt on this machine (not verified)').checked).toBe(false)
+    expect(calls.filter((c) => c.url === '/api/runner/preflight').at(-1).body.configuration).not.toHaveProperty('unverified_ok')
   })
 })
