@@ -130,7 +130,13 @@ def start_import(body: ImportIn):
     except hf_fetch.HFError as e:
         _refuse(e)
     root = paths.RUNS_ROOT
-    if os.path.lexists(os.path.join(root, name)):
+    # check_name allows one plain segment; keep the target provably inside the runs root as well. normpath, not
+    # realpath, so that a symlink already standing at that name is still seen (and refused) by lexists.
+    base = os.path.realpath(root)
+    target = os.path.normpath(os.path.join(base, name))
+    if os.path.dirname(target) != base or not target.startswith(base + os.sep):
+        raise HTTPException(status_code=400, detail="the name must be one plain word (no path)")
+    if os.path.lexists(target):
         raise HTTPException(status_code=409, detail=f"data/runs/{name} already exists; choose another name")
     dataset, config, split, n, seed = body.dataset, body.config, body.split, body.n, body.seed
 

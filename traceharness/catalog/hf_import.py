@@ -339,8 +339,9 @@ def import_dataset(dataset_id: str, config=None, split=None, n: int = 200, seed:
     if adapter is None:
         raise F.HFError("this dataset's rows are not a shape this console reads. Columns found: " + ", ".join(columns))
     os.makedirs(root, exist_ok=True)
+    # mkdtemp creates the directory 0o700 and it keeps that mode when moved into place: an imported dataset
+    # is readable by the user who imported it, never world-readable.
     tmp = tempfile.mkdtemp(prefix=".hf-import-", dir=root)
-    os.chmod(tmp, 0o755)
     try:
         if adapter == "swe_agent":
             res = _write_swe_agent(rows, offsets, dataset_id, tmp)

@@ -268,3 +268,14 @@ class Overwrite(Case):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+
+class ImportedDirectoryMode(unittest.TestCase):
+    def test_an_imported_dataset_is_not_world_readable(self):
+        import stat
+        with tempfile.TemporaryDirectory() as runs:
+            hub = FakeHub(rows=[swe_row(i) for i in range(10)])
+            I.import_dataset(hub.dataset, n=4, name="mode_check", fetch=hub, runs_root=runs, sleep=lambda s: None, pause=0)
+            mode = stat.S_IMODE(os.stat(os.path.join(runs, "mode_check")).st_mode)
+            self.assertEqual(mode & 0o077, 0, oct(mode))
