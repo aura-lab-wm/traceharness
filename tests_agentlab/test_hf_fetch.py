@@ -165,8 +165,10 @@ class Network(unittest.TestCase):
         seen = {}
 
         class R:
+            data = [b"{}", b""]
+
             def read(self, n=-1):
-                return b"{}"
+                return self.data.pop(0)
             def __enter__(self):
                 return self
             def __exit__(self, *a):

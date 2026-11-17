@@ -13,6 +13,7 @@ before any request is made, and a gated dataset is refused. Nothing read from a 
 """
 from __future__ import annotations
 
+import contextvars
 import json
 import os
 import random
@@ -34,17 +35,19 @@ MAX_PER_REQUEST = 100
 MAX_ROWS = 2000
 MAX_BYTES = 200 * 1024 * 1024
 TIMEOUT = 30
+CHUNK = 64 * 1024
 CELL_CHARS = 300
 PREVIEW_ROWS = 5
 RETRY_PAUSE = 5.0
 
 #: licenses that allow redistribution of the data (a stated, permissive one)
-PERMISSIVE = ("mit", "apache-2.0", "cc0-1.0", "cc-by-4.0")
+PERMISSIVE = ("mit", "apache-2.0", "cc0-1.0", "cc-by-4.0", "bsd-2-clause", "bsd-3-clause", "bsd-3-clause-clear")
 
 
 def is_redistributable(license_id) -> bool:
-    lic = (license_id or "").strip().lower()
-    return lic in PERMISSIVE or lic.startswith("bsd-")
+    """True only when the license is exactly ONE known permissive identifier. A list, a compound or comma-joined
+    string, a prefix match such as "bsd-anything", or an unknown value is not redistributable."""
+    return isinstance(license_id, str) and license_id.strip().lower() in PERMISSIVE
 
 
 class HFError(Exception):
@@ -86,6 +89,14 @@ class _SameHost(urllib.request.HTTPRedirectHandler):
         return super().redirect_request(req, fp, code, msg, headers, newurl)
 
 
+class _Budget:
+    """Bytes actually read from the network by one import, across all its requests."""
+    used = 0
+
+
+_BUDGET: contextvars.ContextVar = contextvars.ContextVar("hf_budget", default=None)
+
+
 def http_fetch(url: str) -> dict:
     """GET `url` (only the two Hub hosts, https) and return the parsed JSON object."""
     parts = urllib.parse.urlsplit(url)
@@ -94,8 +105,22 @@ def http_fetch(url: str) -> dict:
     opener = urllib.request.build_opener(_SameHost)
     req = urllib.request.Request(url, headers={"User-Agent": USER_AGENT, "Accept": "application/json"})
     try:
+        budget = _BUDGET.get()
+        chunks, got = [], 0
         with opener.open(req, timeout=TIMEOUT) as r:
-            body = r.read(MAX_BYTES + 1)
+            while True:
+                chunk = r.read(CHUNK)
+                if not chunk:
+                    break
+                got += len(chunk)
+                if budget is not None:
+                    budget.used += len(chunk)
+                    if budget.used > MAX_BYTES:
+                        raise HFError("this import has read more than the 200 MB limit from the Hub; ask for fewer rows")
+                if got > MAX_BYTES:
+                    raise HubError("a Hub answer was larger than the 200 MB limit")
+                chunks.append(chunk)
+        body = b"".join(chunks)
     except urllib.error.HTTPError as e:
         if e.code == 429:
             raise RateLimited("the Hub is rate-limiting this address (HTTP 429); wait a few minutes and try again") from None
@@ -106,8 +131,6 @@ def http_fetch(url: str) -> dict:
         raise HubError(f"the Hub answered HTTP {e.code}") from None
     except (urllib.error.URLError, TimeoutError, OSError) as e:
         raise HubError(f"could not reach the Hub: {type(e).__name__}") from None
-    if len(body) > MAX_BYTES:
-        raise HubError("a Hub answer was larger than the 200 MB limit")
     try:
         data = json.loads(body)
     except ValueError:
@@ -138,7 +161,7 @@ def _license(info: dict):
     card = info.get("cardData") if isinstance(info.get("cardData"), dict) else {}
     lic = card.get("license")
     if isinstance(lic, list):
-        lic = lic[0] if len(lic) == 1 else (",".join(map(str, lic)) or None)
+        lic = lic[0] if len(lic) == 1 else (",".join(map(str, lic)) or None)     # several: kept joined, never permissive
     if lic is None:
         for t in info.get("tags") or []:
             if isinstance(t, str) and t.startswith("license:"):
@@ -264,7 +287,17 @@ def sample_rows(dataset_id: str, config=None, split=None, n: int = 200, seed: in
             pause = max(0.0, float(os.environ.get("TRACEHARNESS_HF_PAUSE", "0.3")))
         except ValueError:
             pause = 0.3
+    token = _BUDGET.set(_Budget())
+    try:
+        return _sample(dataset_id, config, split, n, seed, fetch, sleep, pause, progress)
+    finally:
+        _BUDGET.reset(token)
+
+
+def _sample(dataset_id, config, split, n, seed, fetch, sleep, pause, progress) -> dict:
     info = hub_info(dataset_id, fetch, sleep)
+    if not info["revision"]:
+        raise HFError("the Hub states no revision for this dataset, so the rows could not be tied to one; nothing was read")
     sz = sizes(dataset_id, fetch, sleep)
     config, split = pick_split(sz["splits"], config, split)
     total = next((s["rows"] for s in sz["splits"] if s["config"] == config and s["split"] == split), None)
@@ -301,5 +334,11 @@ def sample_rows(dataset_id: str, config=None, split=None, n: int = 200, seed: in
                 offs.append(o)
         if progress:
             progress(len(rows) + len(skipped), n, "rows")
+    # datasets-server reads cannot be pinned to a revision: ask the Hub once more and refuse if the dataset moved
+    again = hub_info(dataset_id, fetch, sleep)
+    if again["revision"] != info["revision"]:
+        raise HFError(f"the dataset changed on the Hub while its rows were being read (revision {info['revision'][:12]} "
+                      f"became {str(again['revision'])[:12]}); nothing was written, try the import again")
     return {"rows": rows, "offsets": offs, "skipped": skipped,
-            "meta": {"dataset": dataset_id, **info, "config": config, "split": split, "total_rows": total}}
+            "meta": {"dataset": dataset_id, **info, "revision_verified": True, "config": config, "split": split,
+                     "total_rows": total}}
