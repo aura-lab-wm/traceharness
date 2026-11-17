@@ -9,6 +9,7 @@ import re
 import shutil
 import stat
 import subprocess
+import tempfile
 import time
 from contextlib import contextmanager
 import sys
@@ -19,6 +20,11 @@ from .registry import tree_hash
 
 TRUSTED_GRADES = frozenset({"passed", "failed", "error"})
 RUNTIME_FAILURE = "Runtime process did not complete successfully."
+
+
+def short_tmp() -> str:
+    """A directory whose paths stay well inside the AF_UNIX limit and that Docker can bind-mount."""
+    return "/tmp" if os.path.isdir("/tmp") else tempfile.gettempdir()
 
 
 class ExecutionError(Exception):
@@ -102,10 +108,25 @@ class DockerExecutor:
         self.settings, self.registry, self.command = settings, registry, command
         self._reconciled, self._startup_blocked = False, False
 
+    def _state_label(self):
+        """Names this runner's state directory, so two consoles never reap each other's containers."""
+        return hashlib.sha256(str(Path(self.settings.state_dir).resolve()).encode()).hexdigest()[:16]
+
     def reconcile_startup(self):
         if self._startup_blocked:
             return False
         if self._reconciled:
+            return True
+        if self.settings.local:
+            # A crashed earlier session may have left job containers. They carry this runner's own
+            # label, so remove exactly those (by id), never a pattern over unrelated containers.
+            listed = self.command([self.settings.docker_binary, "ps", "--all", "--quiet", "--no-trunc",
+                                   "--filter", "label=org.traceharness.state=" + self._state_label()],
+                                  capture_output=True, timeout=8, check=True)
+            ids = [line for line in listed.stdout.decode().split() if re.fullmatch(r"[a-f0-9]{64}", line)]
+            if ids:
+                self.command([self.settings.docker_binary, "rm", "--force", *ids], capture_output=True, timeout=60, check=False)
+            self._reconciled = True
             return True
         result = self.command([self.settings.docker_binary, "ps", "--all", "--filter", "name=^/traceharness-", "--format", "{{.ID}}"],
                               capture_output=True, timeout=8, check=True)
@@ -128,11 +149,12 @@ class DockerExecutor:
         if not self.settings.execution_enabled:
             return empty
         try:
-            if sys.platform != "linux" or os.geteuid() != 0:
-                return empty
-            capabilities = next(line.split()[1] for line in Path("/proc/self/status").read_text().splitlines() if line.startswith("CapEff:"))
-            if not (int(capabilities, 16) & (1 << 21)):
-                return empty  # Per-job tmpfs needs host control-plane CAP_SYS_ADMIN.
+            if not self.settings.local:
+                if sys.platform != "linux" or os.geteuid() != 0:
+                    return empty
+                capabilities = next(line.split()[1] for line in Path("/proc/self/status").read_text().splitlines() if line.startswith("CapEff:"))
+                if not (int(capabilities, 16) & (1 << 21)):
+                    return empty  # Per-job tmpfs needs host control-plane CAP_SYS_ADMIN.
             if not self.reconcile_startup():
                 return empty
             info = self._inspect("info", "--format", "{{json .}}")
@@ -143,7 +165,8 @@ class DockerExecutor:
                 images = self._inspect("image", "inspect", runtime["image_digest"])
                 image = images[0]
                 labels = image.get("Config", {}).get("Labels", {}) or {}
-                runtimes[rid] = bool(runtime["model_ids"] and pinned_image_matches(runtime["image_digest"], image)
+                # A receipt is advisory locally: an unreceipted combination runs on an explicit flag.
+                runtimes[rid] = bool((runtime["model_ids"] or self.settings.local) and pinned_image_matches(runtime["image_digest"], image)
                                      and labels.get("org.traceharness.runtime") == rid
                                      and labels.get("org.traceharness.version") == runtime["version"])
             tasks = self.registry.task_health()
@@ -151,12 +174,38 @@ class DockerExecutor:
                 grader = self._inspect("image", "inspect", task["grader_image_digest"])[0]
                 tasks[tid] = bool(tasks[tid] and pinned_image_matches(task["grader_image_digest"], grader)
                                   and any(runtimes.get(rid) for rid in task["runtime_ids"]))
-            return {"available": any(tasks.values()) and any(runtimes.values()), "runtimes": runtimes, "tasks": tasks}
+            result = {"available": any(tasks.values()) and any(runtimes.values()), "runtimes": runtimes, "tasks": tasks}
+            if self.settings.local:
+                result["isolation_runtime"] = self.settings.isolation_runtime
+            return result
         except (OSError, subprocess.SubprocessError, ValueError, KeyError, IndexError, TypeError, StopIteration):
             return empty
 
     @contextmanager
+    def local_storage(self, directory):
+        """No root and no tmpfs on a user's machine: plain directories the job's user can write, removed
+        when the job ends. The container still has its memory, CPU, process, file-size and wall limits."""
+        names = ("workspace", "output", "grading")
+        try:
+            for name in names:
+                path = directory / name
+                path.mkdir(mode=0o700)
+                # The agent runs as this host user; a differently-owned agent (10001, under a root console)
+                # needs its workspace and output open. The grader writes to its own tmpfs, never here.
+                path.chmod(0o777 if name != "grading" and self._agent_user() == "10001:10001" else 0o755)
+            yield
+        finally:
+            for name in names:
+                shutil.rmtree(directory / name, ignore_errors=True)
+            if any((directory / name).exists() for name in names):
+                raise ExecutionError("Storage cleanup needs operator attention.")
+
+    @contextmanager
     def bounded_storage(self, directory):
+        if self.settings.local:
+            with self.local_storage(directory):
+                yield
+            return
         mounted = []
         try:
             for name, size in (("workspace", "2g"), ("output", "64m"), ("grading", "16m")):
@@ -178,10 +227,19 @@ class DockerExecutor:
             if failed:
                 raise ExecutionError("Bounded storage cleanup needs operator attention.")
 
-    def container_args(self, name, image, mounts, *, entrypoint, grader=False):
+    def _agent_user(self):
+        # Locally the agent runs as the host user, so it owns what it writes and the console can always clean
+        # it up. It never runs as uid 0 (a console started as root gets the unprivileged hosted user).
+        if self.settings.local and hasattr(os, "getuid") and os.getuid() != 0:
+            return f"{os.getuid()}:{os.getgid()}"
+        return "10001:10001"
+
+    def container_args(self, name, image, mounts, *, entrypoint, grader=False, output_tmpfs=False):
         args = [self.settings.docker_binary, "run", "--name", name, "--pull", "never", "--rm", "--init",
                 "--label", "org.traceharness.runner=private",
-                "--runtime", self.settings.isolation_runtime, "--network", "none", "--read-only", "--user", "0:0" if grader else "10001:10001",
+                "--label", "org.traceharness.state=" + self._state_label(),
+                "--runtime", self.settings.isolation_runtime, "--network", "none", "--read-only",
+                "--user", "0:0" if grader else self._agent_user(),
                 "--cap-drop", "ALL", "--security-opt", "no-new-privileges=true", "--pids-limit", "256",
                 "--memory", "4g", "--cpus", "2", "--ulimit", "fsize=67108864:67108864",
                 "--tmpfs", "/tmp:rw,nosuid,nodev,size=256m,mode=1777", "--env", "HOME=/tmp/home",
@@ -190,6 +248,12 @@ class DockerExecutor:
             # The trusted writer stays root; its evaluated child must drop to
             # uid/gid10002. No other capability or network is granted.
             args += ["--cap-add", "SETUID", "--cap-add", "SETGID"]
+            if output_tmpfs:
+                # Local: the grader insists /output is root-owned and not writable by candidates, which a
+                # directory bind-mounted from a user's disk cannot be. A root-owned tmpfs is; the control
+                # plane reads grade.json from the grader's stdout. Root needs CAP_KILL to end the candidate's
+                # process group (runc, unlike gVisor, enforces it).
+                args += ["--cap-add", "KILL", "--tmpfs", "/output:rw,nosuid,nodev,size=16m,mode=0755"]
         for source, target, readonly in mounts:
             # Docker --mount rejects commas in host paths; refuse instead of reinterpreting.
             if "," in str(source):
@@ -197,11 +261,14 @@ class DockerExecutor:
             args += ["--mount", f"type=bind,src={source},dst={target}" + (",readonly" if readonly else "")]
         return args + [image]
 
-    def _run(self, args, name, cancel, deadline):
+    def _run(self, args, name, cancel, deadline, *, capture=False):
         if cancel.is_set() or time.monotonic() >= deadline:
             raise ExecutionError("Execution was cancelled." if cancel.is_set() else "Execution reached its deadline.")
-        # Container output is an untrusted artifact, not a service log.
-        process = subprocess.Popen(args, stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        # Container output is an untrusted artifact, not a service log. Only the local grader's stdout is
+        # kept: its single `cat` of the root-written grade.json, read after exit and bounded.
+        process = subprocess.Popen(args, stdin=subprocess.DEVNULL, stdout=subprocess.PIPE if capture else subprocess.DEVNULL,
+                                   stderr=subprocess.DEVNULL)
+        captured = b""
         try:
             while process.poll() is None:
                 if cancel.is_set() or time.monotonic() >= deadline:
@@ -213,6 +280,8 @@ class DockerExecutor:
             # allowance expired. Completion alone does not extend that allowance.
             if cancel.is_set() or time.monotonic() >= deadline:
                 raise ExecutionError("Execution was cancelled." if cancel.is_set() else "Execution reached its deadline.")
+            if capture:
+                captured = process.stdout.read(65537)
             if process.returncode:
                 raise ExecutionError("The trusted grader did not complete successfully." if name.endswith("-grade") else RUNTIME_FAILURE)
         finally:
@@ -223,6 +292,7 @@ class DockerExecutor:
             result = self.command([self.settings.docker_binary, "rm", "--force", name], capture_output=True, timeout=15, check=False)
             if result.returncode and b"No such container" not in result.stderr:
                 raise ExecutionError("Container cleanup needs operator attention.")
+        return captured
 
     def execute(self, job_id, manifest, directory: Path, cancel, forward):
         artifacts = []
@@ -351,12 +421,25 @@ class DockerExecutor:
         if tree_hash(source) != manifest["task_content_sha256"]:
             raise ExecutionError("Task package changed after review.")
         work, inputs, output, gateway = [directory / name for name in ("workspace", "input", "output", "gateway")]
+        if self.settings.local:
+            # A Unix socket path is limited to ~107 bytes, and a lab directory plus <runner>/jobs/<48 hex>
+            # exceeds that. The per-job socket lives in a short private directory instead (removed below).
+            gateway = Path(tempfile.mkdtemp(prefix="thg-", dir=short_tmp()))
         for path in (inputs, gateway):
-            path.mkdir(mode=0o755)
+            if path != gateway or not self.settings.local:
+                path.mkdir(mode=0o755)
             # The enclosing private job directory remains0700. Bind-mounted leaf
             # directories must remain traversable by the isolated non-root agent
             # even when the control service uses umask0077.
             path.chmod(0o755)
+        if self.settings.local:
+            # The socket's directory is in a shared /tmp: only the agent's own user may reach the per-job model
+            # socket, so no other account on this machine can spend through it.
+            host_root = hasattr(os, "getuid") and os.getuid() == 0
+            if host_root:
+                os.chown(gateway, 10001, 10001)
+            if host_root or self._agent_user() != "10001:10001":
+                gateway.chmod(0o700)
         # On a dedicated Linux host the control service owns mounts for uid10001.
         # No host home, Docker socket, or provider credential is exposed to the task.
         (inputs / "manifest.json").write_text(json.dumps(manifest, ensure_ascii=False))
@@ -401,6 +484,8 @@ class DockerExecutor:
             finally:
                 if native_mount:
                     native_mount[0].unlink(missing_ok=True)
+                if self.settings.local:
+                    shutil.rmtree(gateway, ignore_errors=True)
         if runtime_error is not None:
             if cancel.is_set() or time.monotonic() >= deadline:
                 raise runtime_error
@@ -408,10 +493,21 @@ class DockerExecutor:
             raise ExecutionError("Execution was cancelled.")
         # Grading is a separate offline process. The agent never sees hidden tests.
         grading = directory / "grading"
-        args = self.container_args(name + "-grade", manifest["grader_image_digest"],
-            [(work, "/workspace", True), (source, "/task", True), (grading, "/output", False)],
-            entrypoint="/opt/traceharness-grade", grader=True)
-        self._run(args, name + "-grade", cancel, deadline)
+        if self.settings.local:
+            args = self.container_args(name + "-grade", manifest["grader_image_digest"],
+                [(work, "/workspace", True), (source, "/task", True)], entrypoint="sh", grader=True, output_tmpfs=True)
+            args += ["-c", "python -I /opt/traceharness-grader/grade.py >/dev/null 2>&1; cat /output/grade.json"]
+            raw = self._run(args, name + "-grade", cancel, deadline, capture=True)
+            if not raw or len(raw) > 65536:
+                raise ExecutionError("The trusted grader did not return a bounded result.")
+            fd = os.open(grading / "grade.json", os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW, 0o600)
+            with os.fdopen(fd, "wb") as stream:
+                stream.write(raw)
+        else:
+            args = self.container_args(name + "-grade", manifest["grader_image_digest"],
+                [(work, "/workspace", True), (source, "/task", True), (grading, "/output", False)],
+                entrypoint="/opt/traceharness-grade", grader=True)
+            self._run(args, name + "-grade", cancel, deadline)
         if cancel.is_set():
             raise ExecutionError("Execution was cancelled.")
         grade = grading / "grade.json"

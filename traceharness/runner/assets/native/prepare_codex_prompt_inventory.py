@@ -14,7 +14,7 @@ from pathlib import Path
 import sys
 import tarfile
 
-sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
+sys.path.insert(0, str(Path(__file__).resolve().parents[4]))
 from traceharness.runner_service import native_prompts as shared
 from traceharness.runner_service import native_prompts_codex as codex
 
@@ -25,12 +25,12 @@ BINARY_SHA256 = "dd5bfdf19d794dcc6fb482d2d5a2d9fb31d11f6caa44b303bb72890d461e8a0
 IMAGE_DIGEST_RE = re.compile(r"sha256:[0-9a-f]{64}")
 
 
-def prepare(binary, archive_path, candidate, image_digest):
+def prepare(binary, archive_path, candidate, image_digest, archive_sha256=ARCHIVE_SHA256):
     if not isinstance(image_digest, str) or not IMAGE_DIGEST_RE.fullmatch(image_digest):
         raise ValueError("Image digest must be sha256:<64 hex>")
     if shared.digest(binary) != BINARY_SHA256:
         raise ValueError("Pristine Codex executable differs from the inspected build")
-    if archive_path.is_symlink() or archive_path.stat().st_size > 100 * 1024 * 1024 or shared.digest(archive_path.read_bytes()) != ARCHIVE_SHA256:
+    if archive_path.is_symlink() or archive_path.stat().st_size > 100 * 1024 * 1024 or shared.digest(archive_path.read_bytes()) != archive_sha256:
         raise ValueError("Official Codex source archive differs")
     if candidate.get("source_commit") != codex.SOURCE_COMMIT or candidate.get("runtime_version") != "0.167.1":
         raise ValueError("Unsupported Codex preparation source")
@@ -91,6 +91,9 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     for name in ("binary", "source-archive", "output"): parser.add_argument("--" + name, type=Path, required=True)
     parser.add_argument("--image-digest", required=True, help="sha256:<64 hex> of the registered native-codex runtime image")
+    parser.add_argument("--archive-sha256", default=ARCHIVE_SHA256,
+                        help="digest of the source tarball. GitHub regenerates tarballs, so a fresh download can differ "
+                             "from the pinned one; every asset's own baseline digest in the candidate file stays pinned.")
     parser.add_argument("--candidate", type=Path, default=Path(__file__).with_name("codex-source-assets-0.167.1.json"))
     parser.add_argument("--candidate-sha256", default="c6865c05c50ec8fa366a3d0a43bf985afae89bceadd7314dabb31634ecc7dead")
     args = parser.parse_args()
@@ -100,7 +103,7 @@ def main():
         raise ValueError("Preparation input exceeds its bound")
     raw = args.candidate.read_bytes()
     if shared.digest(raw) != args.candidate_sha256: raise ValueError("Candidate provenance changed")
-    inventory = prepare(args.binary.read_bytes(), args.source_archive, json.loads(raw), args.image_digest)
+    inventory = prepare(args.binary.read_bytes(), args.source_archive, json.loads(raw), args.image_digest, args.archive_sha256)
     fd = os.open(args.output, os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW, 0o600)
     with os.fdopen(fd, "wb") as stream: stream.write(shared.canonical_bytes(inventory))
     print(json.dumps({"inventory_sha256": inventory["inventory_sha256"], "materializer_sha256": inventory["materializer_sha256"],

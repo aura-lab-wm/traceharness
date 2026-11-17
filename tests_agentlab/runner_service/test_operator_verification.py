@@ -10,7 +10,7 @@ from unittest.mock import Mock, patch
 
 from traceharness.core.blocks import compile_blocks
 
-spec=importlib.util.spec_from_file_location('operator_verify',Path(__file__).resolve().parents[2]/'deploy/runner/verify_runtime.py')
+spec=importlib.util.spec_from_file_location('operator_verify',Path(__file__).resolve().parents[2]/'traceharness/runner/verify.py')
 verify=importlib.util.module_from_spec(spec);spec.loader.exec_module(verify)
 
 
@@ -64,23 +64,29 @@ class OperatorVerificationTests(unittest.TestCase):
     def test_main_passes_observation_option_to_review_before_any_provider_use(self):
         registry=SimpleNamespace(tasks={'task':{'runtime_ids':['traceharness']}})
         with tempfile.TemporaryDirectory() as temporary:
-            path=Path(temporary)/'registry.json';path.write_text('{}')
-            with patch.object(verify.sys,'platform','linux'),patch.object(verify.os,'geteuid',return_value=0), \
+            registry_file=Path(temporary)/'data'/'runner'/'registry.json';registry_file.parent.mkdir(parents=True);registry_file.write_text('{}')
+            with patch.object(verify,'find_docker',return_value='/usr/bin/docker'),patch.object(verify,'docker_info',return_value={'Runtimes':{}}), \
                     patch.object(verify,'Registry',return_value=registry),patch.object(verify,'DockerExecutor') as executor, \
                     patch.object(verify,'ObservedProvider') as provider, \
                     patch.object(verify,'review_operator_run',side_effect=verify.VerificationRefused('Review stop.')) as review:
                 with self.assertRaisesRegex(verify.VerificationRefused,'Review stop'):
-                    verify.main(['--runtime','traceharness','--model','provider/model','--task','task',
-                                 '--registry',str(path),'--observation-chars','50000'])
+                    verify.main(['--runtime','traceharness','--model','provider/model','--task','task','--yes',
+                                 '--observation-chars','50000'],lab_root=temporary)
                 self.assertEqual(review.call_args.kwargs['observation_chars'],50000)
                 executor.assert_called_once()
                 provider.assert_not_called()
+
+    def test_paid_run_needs_an_explicit_yes_and_starts_nothing_without_it(self):
+        with patch.object(verify,'DockerExecutor') as executor,patch.object(verify,'ObservedProvider') as provider:
+            with self.assertRaisesRegex(verify.VerificationRefused,'--yes'):
+                verify.main(['--runtime','traceharness','--model','provider/model'],lab_root='/nonexistent')
+            executor.assert_not_called();provider.assert_not_called()
 
     def test_noninteger_observation_cli_arguments_refuse_before_executor_construction(self):
         for value in ('true','50000.0','private-input'):
             with self.subTest(value=value),patch.object(verify,'DockerExecutor') as executor:
                 with self.assertRaises(verify.VerificationRefused) as error:
-                    verify.main(['--runtime','traceharness','--model','provider/model','--observation-chars',value])
+                    verify.main(['--runtime','traceharness','--model','provider/model','--yes','--observation-chars',value],lab_root='/nonexistent')
                 executor.assert_not_called()
                 self.assertNotIn(value,str(error.exception))
 
@@ -124,11 +130,11 @@ class OperatorVerificationTests(unittest.TestCase):
             verify.review_operator_run(registry,executor,'traceharness','provider/model','task')
         executor.health.assert_called_once()
 
-    def test_unregistered_model_cannot_enter_bootstrap_readiness(self):
+    def test_unregistered_model_is_registered_by_its_receipt_not_by_the_review(self):
         registry=SimpleNamespace(runtimes={'traceharness':{'model_ids':[]}},models={},tasks={'task':{'runtime_ids':['traceharness']}})
-        executor=SimpleNamespace(health=Mock())
+        executor=SimpleNamespace(health=Mock(return_value={'available':False,'runtimes':{},'tasks':{}}))
         with self.assertRaises(verify.VerificationRefused):verify.review_operator_run(registry,executor,'traceharness','unknown/model','task')
-        executor.health.assert_not_called()
+        executor.health.assert_called_once()
 
     def test_receipt_refused_for_no_successful_model_response_or_failed_grade(self):
         job={'status':'succeeded','grade':'passed','cancellation_requested':False,'usage':{'requests':1}}

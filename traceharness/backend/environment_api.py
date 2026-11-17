@@ -19,9 +19,12 @@ router = APIRouter(prefix="/api")
 
 
 def runner_reasons() -> dict:
-    """The runner capabilities' state on this machine. Until the local runner is set up (WP1 of
-    docs/superpowers/specs/2026-11-17-local-only-design.md), every one reports runner_not_ready."""
-    return {cid: "runner_not_ready" for cid in RUNNER}
+    """The runner capabilities' state on this machine: "ok" when Docker answers and a valid registry
+    exists (`traceharness runner setup` wrote it), else "runner_not_ready". Cached a few seconds."""
+    from traceharness.runner.local import active_runner
+    runner = active_runner()
+    ready = bool(runner and runner.is_ready())
+    return {cid: "ok" if ready else "runner_not_ready" for cid in RUNNER}
 
 
 @router.get("/environment")

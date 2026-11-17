@@ -9,7 +9,7 @@ import unittest
 from unittest.mock import patch
 
 ROOT = Path(__file__).resolve().parents[2]
-SPEC = importlib.util.spec_from_file_location('curated_grader_under_test', ROOT / 'deploy/runner/tasks/grade.py')
+SPEC = importlib.util.spec_from_file_location('curated_grader_under_test', ROOT / 'traceharness/runner/assets/tasks/grade.py')
 grade = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(grade)
 

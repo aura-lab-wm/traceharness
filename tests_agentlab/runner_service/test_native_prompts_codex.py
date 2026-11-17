@@ -178,12 +178,11 @@ class CodexProtocolTests(unittest.TestCase):
         from traceharness.runner_service.execution import DockerExecutor
         from traceharness.runner_service.configuration import preflight
         from traceharness.runner_service.settings import Settings
-        from tests_agentlab.runner_service.test_runner import SECRET
         from unittest.mock import Mock
         directory = self.root / "job"; directory.mkdir(); (directory / "input").mkdir()
         self.profile["overrides"] = [override(self.installed.native_prompt_inventories["native-codex"], "replace", "Changed fixture")]
         result = preflight(self.configuration, self.installed, self.health); self.assertTrue(result["ok"], result)
-        executor = DockerExecutor(Settings(shared_secret=SECRET, state_dir=self.root / "jobs"), self.installed, command=Mock(side_effect=AssertionError("No host command allowed")))
+        executor = DockerExecutor(Settings(state_dir=self.root / "jobs"), self.installed, command=Mock(side_effect=AssertionError("No host command allowed")))
         mount, observer = executor.prepare_native_prompts(result["manifest"], directory)
         self.assertEqual(mount[1:], (codex.BINARY_TARGET, True)); self.assertEqual(mount[0].name, "native-codex")
         self.assertEqual((self.root / "codex-pristine").read_bytes(), self.binary)

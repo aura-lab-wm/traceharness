@@ -40,7 +40,7 @@ the contested cells are in the paper folder (`notes/related-tools-matrix.md`).
 - **Command:** `traceharness import PATH` reads the logs of fifteen sources (Claude Code, Codex, Cursor, agy (Antigravity CLI), Qwen Code, Kimi Code, ZCode, Grok CLI, GitHub Copilot CLI, Muse Code, OpenHands, SWE-agent, mini-SWE-agent, Inspect, Trajectory v1). `traceharness agents run --agent mini-swe-agent|codex|claude-code` runs three of them in containers on the lab's tasks or on real-repository task packages.
 - **Modules:** `backend/importers/*`, `traceharness/agents/{run,broker,inside,grade}.py`.
 - **Tests:** `test_paper_table.ThirdPartyAgents`, `test_importers.py`, `test_agents_containers.py`.
-- **Runs:** `data/runs/real_swe_agent_500` (imported SWE-agent trajectories); `third_party_agents` (Hugging Face) (mini-SWE-agent 2.4.6 with the three study models, Codex CLI 0.167.1, Claude Code 2.1.322, 24 tasks × 5 repeats, 2026-11-15); `third_party_real` (Hugging Face) (the same five agent/model pairs on the eight real-repository packages of `deploy/runner/tasks`, 3 repeats).
+- **Runs:** `data/runs/real_swe_agent_500` (imported SWE-agent trajectories); `third_party_agents` (Hugging Face) (mini-SWE-agent 2.4.6 with the three study models, Codex CLI 0.167.1, Claude Code 2.1.322, 24 tasks × 5 repeats, 2026-11-15); `third_party_real` (Hugging Face) (the same five agent/model pairs on the eight real-repository packages of `traceharness/runner/assets/tasks`, 3 repeats).
 
 ### Compares harnesses
 - **Command:** harness files in `harnesses/` (baseline plus nine variants); `traceharness comparisons DIR --baseline baseline`; `traceharness fit DIR` (variance decomposition); the console's harness comparison.
@@ -56,7 +56,7 @@ the contested cells are in the paper folder (`notes/related-tools-matrix.md`).
 
 ### Multiple graders
 - **Command:** every run is graded by three suites (visible, hidden, strengthened); `scripts/validate_task.py` checks each task's tiers against its reference patch; real-repository packages bring their own independent checks.
-- **Modules:** `core/grader.py` (pristine tests restored, nonce-checked report, static test count), `core/_grade_runner.py`, `deploy/runner/tasks/grade.py`.
+- **Modules:** `core/grader.py` (pristine tests restored, nonce-checked report, static test count), `core/_grade_runner.py`, `traceharness/runner/assets/tasks/grade.py`.
 - **Tests:** `test_paper_table.MultipleGraders`, `test_grader_forgery.py`.
 - **Runs:** the `grade` span of every run above.
 

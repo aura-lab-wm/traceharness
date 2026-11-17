@@ -52,7 +52,7 @@ def test_matrix_freezes_every_runtime_model_task_and_budget_without_paired_claim
     assert result['trial_count'] == 6 and result['maximum_cost_usd'] == .3
     assert [a['configuration'] for a in result['plan']['arms']] == [a['configuration'] for a in value['arms']]
     assert result == review_plan(value, reviewed)
-    settings = Settings(shared_secret='fixture-shared-secret-at-least-32bytes', state_dir=tmp_path/'jobs')
+    settings = Settings(state_dir=tmp_path/'jobs')
     vault = CredentialVault(); cid = vault.put(OWNER, 'fixture-not-a-key')['credential_id']
     jobs = FakeJobs(); engine = Experiments(settings, jobs, vault, reviewed, poll_interval=.01)
     try:

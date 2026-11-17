@@ -35,6 +35,7 @@ def build_parser() -> argparse.ArgumentParser:
                "`traceharness capture export --out FILE.zip` writes the captured sessions on this machine "
                "(redacted) to one zip, and `traceharness capture import FILE.zip` (or `traceharness import "
                "FILE.zip`) reads one on another machine. "
+               "`traceharness runner setup|status|verify` builds and checks the local runner (Docker). "
                "`traceharness native-prompts inventory|profile|experiment ...` inspects native prompt inventories and authors "
                "profiles offline. `traceharness doctor [--site PATH] [--compare URL] [--json]` checks that the package, "
                "the UI build, the shared sources, the runner image and the site agree (exit 0 aligned, 1 drift, 2 could "
@@ -805,6 +806,9 @@ def main(argv: list[str] | None = None) -> int:
             return import_main(argv[2:])
         from traceharness.capture.__main__ import main as capture_main  # noqa: E402
         return capture_main(argv[1:])
+    if argv and argv[0] == "runner":
+        from traceharness.runner.cli import main as runner_main  # noqa: E402
+        return runner_main(argv[1:])
     if argv and argv[0] == "native-prompts":
         from traceharness.runner_service.native_prompt_cli import main as native_prompts_main  # noqa: E402
         return native_prompts_main(argv[1:])

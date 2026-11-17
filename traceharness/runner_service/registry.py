@@ -61,8 +61,11 @@ def tree_hash(directory: Path) -> str:
 
 
 class Registry:
-    def __init__(self, root: Path, data: dict | None = None):
+    def __init__(self, root: Path, data: dict | None = None, *, local: bool = False):
         self.root = Path(root).resolve()
+        #: The local runner accepts any model the provider's live catalog lists (the registry's own
+        #: "models" are only the ones receipts are written for) and the scripted proof model.
+        self.local = self.open_models = bool(local)
         data = data or {"version": 1, "runtimes": [], "models": [], "tasks": []}
         if data.get("version") != 1 or has_secret(data):
             raise ValueError("Invalid runner inventory")
@@ -71,7 +74,7 @@ class Registry:
         self.native_prompt_inventories, self._native_prompt_admissions = {}, {}
         for model in data.get("models", []):
             mid = model.get("id")
-            if not isinstance(mid, str) or not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9/_.:@+-]{1,150}", mid) or mid.startswith("mock") or mid in self.models:
+            if not isinstance(mid, str) or not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9/_.:@+-]{1,150}", mid) or (mid.startswith("mock") and not self.local) or mid in self.models:
                 raise ValueError("Invalid or duplicate model")
             self.models[mid] = {"id": mid, "name": str(model.get("name", mid))[:200]}
         for source in data.get("runtimes", []):
@@ -252,9 +255,9 @@ class Registry:
                 "inventory": adapter.public_inventory(copy.deepcopy(inventory)) if inventory is not None else None}
 
     @classmethod
-    def load(cls, path: Path):
+    def load(cls, path: Path, *, local: bool = False):
         path = Path(path)
-        return cls(path.parent, json.loads(path.read_text()))
+        return cls(path.parent, json.loads(path.read_text()), local=local)
 
     def private_path(self, relative: str) -> Path:
         if not isinstance(relative, str) or not relative or Path(relative).is_absolute():
@@ -296,21 +299,32 @@ class Registry:
                       for rid in task["runtime_ids"]} for tid, task in self.tasks.items()}
 
     def catalog(self, health: dict, models: list[dict] | None = None) -> dict:
-        combinations = self.ready_combinations(health, None if models is None else [row["id"] for row in models])
+        active_ids = None if models is None else [row["id"] for row in models]
+        combinations = self.ready_combinations(health, active_ids)
+        verified = combinations
+        if self.open_models:
+            # Local: every live model can run on a healthy runtime x task; the receipt-backed ones are
+            # listed separately, and a job on any other carries "verified": false in its manifest.
+            combinations = {tid: {rid: (sorted(active_ids or []) if health.get("available") and health.get("tasks", {}).get(tid)
+                                        and health.get("runtimes", {}).get(rid) else [])
+                                  for rid in task["runtime_ids"]} for tid, task in self.tasks.items()}
         runtimes = []
         for rid, name in RUNTIME_NAMES.items():
             row = self.runtimes.get(rid, {})
             ready_models = sorted({mid for task in combinations.values() for mid in task.get(rid, [])})
+            verified_models = sorted({mid for task in verified.values() for mid in task.get(rid, [])})
             available = bool(ready_models)
             runtimes.append({"id": rid, "name": name, "kind": "traceharness" if rid == "traceharness" else "native",
-                             "available": available, "reason": "" if available else "No verified, isolated runtime is available.",
+                             "available": available, "reason": "" if available else "No verified, isolated runtime is available." if not self.open_models else "This runtime is not set up on this computer. Run traceharness runner setup.",
                              "version": row.get("version"), "image_digest": row.get("image_digest"),
                              "prompt_mode": "replace" if rid == "traceharness" else "append", "supports_advanced": rid == "traceharness",
                              "model_ids": ready_models,
+                             **({"verified_model_ids": verified_models} if self.open_models else {}),
                              **({"native_prompts": self.native_prompt_catalog(rid, health)} if rid != "traceharness" else {})})
         tasks = [{**{k: task[k] for k in ("id", "title", "repository", "revision", "environment_digest")},
                   "runtime_ids": list(task["runtime_ids"]), "environment_digests": dict(task["environment_digests"]),
                   "model_ids_by_runtime": combinations[tid], "ready": any(combinations[tid].values()),
+                  **({"verified_model_ids_by_runtime": verified[tid]} if self.open_models else {}),
                   "reason": "" if any(combinations[tid].values()) else "No verified task/runtime/model combination is currently available."}
                  for tid, task in self.tasks.items()]
         available = any(task["ready"] for task in tasks)

@@ -1,4 +1,5 @@
-"""Private ASGI control plane. All member identity comes from a verified HMAC."""
+"""The runner's /api/runner/* routes. In the local console it runs in-process behind the backend's own
+Host, Origin and JSON-content-type guards (backend/guard.py); the owner is the constant settings.owner."""
 from __future__ import annotations
 
 import asyncio
@@ -11,7 +12,6 @@ import time
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 
-from .auth import Authenticator, AuthenticationError
 from .artifacts import read_artifact
 from .configuration import preflight
 from .credentials import CredentialVault, CredentialUnavailable
@@ -25,14 +25,12 @@ from .settings import Settings
 HEX_ID = re.compile(r"^[a-f0-9]{16,64}$")
 
 
-def create_app(settings: Settings | None = None, *, registry=None, provider=None, executor=None, clock=time.time):
+def create_app(settings: Settings, *, registry=None, provider=None, executor=None, vault=None, clock=time.time):
     """Injection is explicit for tests; the production default is never a fixture."""
-    settings = settings or Settings.from_env()
-    registry = registry or (Registry.load(settings.registry_path) if settings.registry_path else Registry(settings.state_dir))
+    registry = registry or (Registry.load(settings.registry_path, local=settings.local) if settings.registry_path else Registry(settings.state_dir, local=settings.local))
     provider = provider or OpenRouter()
     executor = executor or DockerExecutor(settings, registry)
-    auth = Authenticator(settings.shared_secret, clock=clock)
-    vault = CredentialVault(clock=clock)
+    vault = vault or CredentialVault(clock=clock)
     jobs = Jobs(settings, vault, provider, executor, clock)
     readiness = {"at": 0, "health": {"available": False, "runtimes": {}, "tasks": {}}, "models": []}
     readiness_lock = threading.Lock()
@@ -52,12 +50,16 @@ def create_app(settings: Settings | None = None, *, registry=None, provider=None
             if clock() - readiness["at"] < 30:
                 return readiness["health"], readiness["models"]
             health = executor.health()
-            models = provider.models(set(registry.models)) if health.get("available") else []
+            models = provider.models(None if registry.open_models else set(registry.models)) if health.get("available") else []
             active = {row["id"] for row in models if isinstance(row, dict) and isinstance(row.get("id"), str)}
-            combinations = registry.ready_combinations(health, active)
-            runtimes = {rid: any(task.get(rid) for task in combinations.values()) for rid in registry.runtimes}
-            tasks = {tid: any(engines.values()) for tid, engines in combinations.items()}
-            health = {"available": bool(any(runtimes.values()) and any(tasks.values())), "runtimes": runtimes, "tasks": tasks}
+            if registry.open_models:
+                # Local: readiness is what the executor saw (Docker, images, tasks); a receipt narrows nothing.
+                health = {**health, "available": bool(health.get("available") and active)}
+            else:
+                combinations = registry.ready_combinations(health, active)
+                runtimes = {rid: any(task.get(rid) for task in combinations.values()) for rid in registry.runtimes}
+                tasks = {tid: any(engines.values()) for tid, engines in combinations.items()}
+                health = {"available": bool(any(runtimes.values()) and any(tasks.values())), "runtimes": runtimes, "tasks": tasks}
             readiness.update(at=clock(), health=health, models=models)
             return health, models
         except Exception:
@@ -88,23 +90,27 @@ def create_app(settings: Settings | None = None, *, registry=None, provider=None
 
     experiments = Experiments(settings, jobs, vault, review_current, clock)
 
+    def close():
+        experiments.close()
+        jobs.close()
+
     @asynccontextmanager
     async def lifespan(_):
         yield
-        await asyncio.to_thread(experiments.close)
-        await asyncio.to_thread(jobs.close)
+        await asyncio.to_thread(close)
 
     app = FastAPI(docs_url=None, redoc_url=None, openapi_url=None, lifespan=lifespan)
     app.state.jobs, app.state.vault, app.state.registry = jobs, vault, registry
     app.state.readiness = readiness
     app.state.experiments = experiments
+    app.state.close = close
 
     @app.middleware("http")
     async def private_boundary(request: Request, call_next):
-        def denied(message="Runner authentication required.", status=401):
+        def denied(message="Unsupported runner route.", status=404):
             return JSONResponse({"error": message}, status_code=status, headers={"Cache-Control": "no-store"})
         if request.url.query or not request.url.path.startswith("/api/runner/"):
-            return denied("Unsupported runner route.", 404)
+            return denied()
         maximum = 8192 if request.url.path == "/api/runner/credentials" else 1024 * 1024
         try:
             if int(request.headers.get("Content-Length", "0")) > maximum:
@@ -118,16 +124,14 @@ def create_app(settings: Settings | None = None, *, registry=None, provider=None
                     parts.append(part)
                 return b"".join(parts)
             body = await asyncio.wait_for(read_body(), timeout=5)
-            owner = auth.verify(request.method, request.url.path, request.headers, body)
-        except AuthenticationError:
-            return denied()
         except asyncio.TimeoutError:
             return denied("Request body deadline exceeded.", 408)
         except OverflowError:
             return denied("Request exceeds the runner limit.", 413)
         except (ValueError, TypeError):
             return denied("Invalid request.", 400)
-        request.state.owner, request.state.raw_body = owner, body
+        # Host, Origin and the JSON content type were already enforced by the backend's guard.
+        request.state.owner, request.state.raw_body = settings.owner, body
         try:
             response = await call_next(request)
         except Exception:
@@ -137,10 +141,10 @@ def create_app(settings: Settings | None = None, *, registry=None, provider=None
         # No CORS middleware and no credential-bearing error reflection.
         return response
 
-    def parse(request, fields):
+    def parse(request, fields, optional=()):
         try:
             body = json.loads(request.state.raw_body, parse_constant=lambda _: (_ for _ in ()).throw(ValueError()))
-            if not isinstance(body, dict) or set(body) != set(fields):
+            if not isinstance(body, dict) or not set(fields) <= set(body) <= set(fields) | set(optional):
                 raise ValueError()
             def validate(value, depth=0):
                 if depth > 32:
@@ -174,7 +178,10 @@ def create_app(settings: Settings | None = None, *, registry=None, provider=None
     @app.get("/api/runner/catalog")
     async def catalog():
         status, models = await health()
-        return registry.catalog(status, models)
+        result = registry.catalog(status, models)
+        if settings.local:
+            result["runner"]["isolation_runtime"] = settings.isolation_runtime   # shown beside every job's own record
+        return result
 
     @app.get("/api/runner/prompt-inventory/{runtime_id}")
     async def prompt_inventory(runtime_id: str):
@@ -245,6 +252,11 @@ def create_app(settings: Settings | None = None, *, registry=None, provider=None
 
     @app.post("/api/runner/credentials")
     async def credentials(request: Request):
+        if getattr(vault, "local", False):
+            # Local: the key lives only in the console's Settings. A key sent here is never read,
+            # stored or forwarded; this mints a handle that resolves to the Settings key on use.
+            parse(request, set(), {"api_key"})
+            return vault.put(request.state.owner, None)
         started = time.monotonic()
         body = parse(request, {"api_key"})
         key = body["api_key"]

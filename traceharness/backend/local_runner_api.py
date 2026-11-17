@@ -6,9 +6,12 @@ always and the curated OpenRouter models only when this server already holds a k
 job is one run through `app.create_job`, written to the results directory `harness_runs`, so it
 opens in Datasets like any other run.
 
-Hosted only, and said so: native runtimes (listed with `available: false` and a reason), native
-prompt inventories, experiments (`experiments_available: false`) and the credential vault
-(`credentials_available: false`, `credential_required: false`). Those paths answer a JSON 404.
+Container runs are the local runner's (traceharness/runner, WP1): once `traceharness runner setup` has
+run and Docker answers, the same paths also serve native runtimes, the eight real task packages,
+experiment matrices, native prompt inventories and the credential handle; this module hands those
+requests to the runner in-process (`_container_ready`, `_to_container`) and merges the catalog and the
+job list. Without the runner they are listed with `available: false` and a reason, and the rest
+answers a JSON 404. A container job's credential_id may be null: the runner reads the key in Settings.
 
 Limits, as `core/harness.py:run_task` and `app._run_one` really apply them (READ): the step cap
 (`limits.max_steps`, written into the stop block) is enforced inside the run. `max_cost_usd` is
@@ -46,7 +49,7 @@ router = APIRouter(prefix="/api/runner")
 RUNTIME = "traceharness"
 RESULTS_DIR = "harness_runs"
 ENFORCED_LIMITS = ["max_steps"]
-NATIVE_REASON = "Native runtimes run on the hosted runner only."
+NATIVE_REASON = "Native runtimes need the local runner. Run traceharness runner setup (Docker required)."
 NATIVE = (("native-claude-code", "Claude Code"), ("native-codex", "Codex CLI"))
 #: app.create_job's refusal of a live model without a key (app.py `create_job`); a test holds them equal.
 LIVE_MODEL_NEEDS_KEY = "This run calls a live model. Paste your own LLM key. The lab does not keep one for you."
@@ -373,9 +376,9 @@ async def _call(fn, *args):
         raise HTTPException(error.status, error.message) from None
 
 
-async def _body(request: Request, *, null_credential: bool = False) -> dict:
+async def _body(request: Request, *, null_credential: bool = False, preread: dict | None = None) -> dict:
     try:
-        body = await L.read_json(request)
+        body = await L.read_json(request) if preread is None else preread
         if null_credential and "credential_id" in body:
             if body["credential_id"] is not None:
                 raise L.LibraryError("This computer runs with the key set in Settings; it takes no credential_id.")
@@ -386,9 +389,82 @@ async def _body(request: Request, *, null_credential: bool = False) -> dict:
     return body
 
 
+def _runner():
+    from traceharness.runner.local import active_runner
+    return active_runner()
+
+
+async def _container_ready():
+    """The local runner when it is set up and Docker answers (cached a few seconds), else None."""
+    runner = _runner()
+    if runner is None:
+        return None
+    return runner if await run_in_threadpool(runner.is_ready) else None
+
+
+async def _handle(runner) -> str:
+    """A credential handle for the runner. The key itself stays in Settings; the handle resolves to it."""
+    try:
+        return (await runner.app_async()).state.vault.put("local")["credential_id"]
+    except Exception as error:
+        detail = getattr(error, "args", ["The runner has no credential."])[0]
+        raise HTTPException(getattr(error, "status", 401), str(detail)) from None
+
+
+def _no_secrets(body: dict) -> None:
+    """A handle is not a key; everything else a key-named field or key-shaped string is refused."""
+    L.refuse_secrets({k: v for k, v in body.items() if k != "credential_id"})
+
+
+async def _to_container(runner, configuration) -> bool:
+    """True when this configuration is the container runner's: a native runtime or a registry task."""
+    if not isinstance(configuration, dict):
+        return False
+    if configuration.get("runtime_id") in dict(NATIVE):
+        return True
+    app = await runner.app_async()
+    return isinstance(configuration.get("task_id"), str) and configuration["task_id"] in app.state.registry.tasks
+
+
+def _passthrough(status: int, data):
+    from fastapi.responses import JSONResponse
+    return JSONResponse(data, status_code=status, headers={"Cache-Control": "no-store"})
+
+
+def merge_catalog(local: dict, container: dict) -> dict:
+    """The local engine's catalog plus the container runner's, one row per runtime / model / task."""
+    rows = {r["id"]: r for r in container.get("runtimes", [])}
+    runtimes = []
+    for row in local["runtimes"]:
+        other = rows.get(row["id"])
+        if other is None:
+            runtimes.append(row)
+        elif row["id"] == RUNTIME:
+            ids = list(dict.fromkeys(list(row.get("model_ids", [])) + list(other.get("model_ids", []))))
+            runtimes.append({**other, "available": row["available"] or other["available"], "model_ids": ids})
+        else:
+            runtimes.append(other)
+    models = {m["id"]: m for m in local["models"]}
+    for m in container.get("models", []):
+        models.setdefault(m["id"], m)
+    tasks = {t["id"]: t for t in local["tasks"]}
+    for t in container.get("tasks", []):
+        tasks.setdefault(t["id"], t)
+    runner = {**local["runner"], "message": "Runs on this computer: the TraceHarness engine in-process, and containers via the local runner.",
+              **({"isolation_runtime": container["runner"]["isolation_runtime"]} if container.get("runner", {}).get("isolation_runtime") else {})}
+    return {**local, "runner": runner, "runtimes": runtimes, "models": list(models.values()), "tasks": list(tasks.values()),
+            "credentials_available": True, "experiments_available": bool(container.get("execution_available"))}
+
+
 @router.get("/catalog")
 async def runner_catalog():
-    return await _call(catalog)
+    local = await _call(catalog)
+    runner = await _container_ready()
+    if runner is not None:
+        status, data = await runner.call("GET", "/api/runner/catalog")
+        if status == 200 and isinstance(data, dict):
+            return merge_catalog(local, data)
+    return local
 
 
 @router.post("/preflight")
@@ -396,22 +472,57 @@ async def runner_preflight(request: Request):
     body = await _body(request)
     if set(body) != {"configuration"}:
         raise HTTPException(400, "Invalid request body.")
+    runner = await _container_ready()
+    if runner is not None and await _to_container(runner, body["configuration"]):
+        return _passthrough(*await runner.call("POST", "/api/runner/preflight", body))
     return await _call(preflight, body["configuration"])
 
 
 @router.post("/jobs")
 async def runner_submit(request: Request):
-    return await _call(submit, await _body(request, null_credential=True))
+    try:
+        raw = await L.read_json(request)
+        _no_secrets(raw)
+    except L.LibraryError as error:
+        raise HTTPException(error.status, error.message) from None
+    runner = await _container_ready()
+    if runner is not None and await _to_container(runner, raw.get("configuration")):
+        credential = raw.get("credential_id")
+        if credential is None:
+            credential = await _handle(runner)      # the key is in Settings
+        return _passthrough(*await runner.call("POST", "/api/runner/jobs", {**raw, "credential_id": credential}))
+    return await _call(submit, await _body(request, null_credential=True, preread=raw))
 
 
 @router.get("/jobs")
 async def runner_jobs():
-    return await _call(list_jobs)
+    local = await _call(list_jobs)
+    runner = await _container_ready()
+    if runner is not None:
+        status, data = await runner.call("GET", "/api/runner/jobs")
+        if status == 200 and isinstance(data.get("jobs"), list):
+            jobs = sorted(local["jobs"] + data["jobs"], key=lambda j: j.get("created_at", 0), reverse=True)
+            return {"jobs": jobs}
+    return local
+
+
+async def _container_job(job_id: str, suffix: str = "", *, method="GET", body=None):
+    """The runner's answer for a job id it knows, else None (the id then belongs to a local run)."""
+    runner = await _container_ready()
+    if runner is None or not JOB_ID.fullmatch(job_id):
+        return None
+    status, data = await runner.call("GET", f"/api/runner/jobs/{job_id}")
+    if status != 200:
+        return None
+    if not suffix:
+        return _passthrough(status, data)
+    return _passthrough(*await runner.call(method, f"/api/runner/jobs/{job_id}{suffix}", body))
 
 
 @router.get("/jobs/{job_id}")
 async def runner_job(job_id: str):
-    return await _call(get_job, job_id)
+    answered = await _container_job(job_id)
+    return answered if answered is not None else await _call(get_job, job_id)
 
 
 @router.post("/jobs/{job_id}/cancel")
@@ -419,17 +530,36 @@ async def runner_cancel(job_id: str, request: Request):
     body = await _body(request)
     if body:
         raise HTTPException(400, "Invalid cancellation request.")
-    return await _call(cancel, job_id)
+    answered = await _container_job(job_id, "/cancel", method="POST", body={})
+    return answered if answered is not None else await _call(cancel, job_id)
 
 
 @router.get("/jobs/{job_id}/artifacts/{name}")
 async def runner_artifact(job_id: str, name: str):
-    return await _call(artifact, job_id, name)
+    answered = await _container_job(job_id, f"/artifacts/{name}")
+    return answered if answered is not None else await _call(artifact, job_id, name)
 
 
-# Registered last: credentials, experiments, prompt inventories and every other path or method
-# under /api/runner (and the bare prefix) are a JSON 404 here, never the console's HTML.
+# Registered last: experiments, credentials, prompt inventories and every other path under /api/runner
+# go to the container runner when it is ready (it answers its own 404 for what it lacks); otherwise,
+# and for the bare prefix, a JSON 404 here, never the console's HTML.
 @router.api_route("", methods=["GET", "POST", "PUT", "PATCH", "DELETE"], include_in_schema=False)
 @router.api_route("/{rest:path}", methods=["GET", "POST", "PUT", "PATCH", "DELETE"], include_in_schema=False)
-async def runner_not_found(rest: str = ""):
-    raise HTTPException(404, L.NOT_FOUND)
+async def runner_rest(request: Request, rest: str = ""):
+    runner = await _container_ready() if rest else None
+    if runner is None:
+        raise HTTPException(404, L.NOT_FOUND)
+    body = None
+    if request.method in ("POST", "PUT", "PATCH", "DELETE"):
+        try:
+            body = await L.read_json(request)
+            if rest == "credentials":
+                body = {}       # a key sent to the credential route is never read, kept or forwarded
+            else:
+                _no_secrets(body)
+                if rest.endswith("/start") and body.get("credential_id") is None and "credential_id" in body:
+                    body["credential_id"] = await _handle(runner)
+        except L.LibraryError as error:
+            raise HTTPException(error.status, error.message) from None
+    query = ("?" + request.url.query) if request.url.query else ""
+    return _passthrough(*await runner.call(request.method, "/api/runner/" + rest + query, body))

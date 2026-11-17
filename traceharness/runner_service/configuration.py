@@ -41,7 +41,10 @@ def preflight(configuration, registry, health: dict) -> dict:
         return {"ok": False, "issues": ["Configuration must be an object without credentials."]}
     expected = {"version", "runtime_id", "model_id", "task_id", "prompt", "prompt_mode", "harness", "limits"}
     version = configuration.get("version")
-    if type(version) is not int or version not in {1, 2} or set(configuration) != (expected if version == 1 else expected | {"native_prompt_profile"}):
+    # "unverified_ok" is the explicit opt-in to run a combination that has no compatibility receipt.
+    unverified_ok = configuration.get("unverified_ok", False)
+    if (type(version) is not int or version not in {1, 2} or type(unverified_ok) is not bool
+            or set(configuration) - {"unverified_ok"} != (expected if version == 1 else expected | {"native_prompt_profile"})):
         return {"ok": False, "issues": ["Unsupported or incomplete run configuration."]}
     runtime = registry.runtimes.get(configuration.get("runtime_id")) if isinstance(configuration.get("runtime_id"), str) else None
     task = registry.tasks.get(configuration.get("task_id")) if isinstance(configuration.get("task_id"), str) else None
@@ -54,10 +57,16 @@ def preflight(configuration, registry, health: dict) -> dict:
         issues.append("Select an installed task package; a recorded result is not an executable task.")
     elif not health.get("tasks", {}).get(task["id"], False):
         issues.append("The selected task package is unavailable or its content changed.")
-    if not isinstance(model_id, str) or model_id not in registry.models:
+    verified = True
+    if not isinstance(model_id, str) or not (model_id in registry.models or (
+            getattr(registry, "open_models", False) and re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9/_.:@+-]{1,150}", model_id))):
         issues.append("Select a registered model.")
     elif runtime and task and not registry.compatible(runtime["id"], model_id, task["id"]):
-        issues.append("This task/runtime/model combination has no matching compatibility receipt for its pinned images and grader.")
+        if unverified_ok:
+            verified = False
+        else:
+            issues.append("This task/runtime/model combination has no matching compatibility receipt for its pinned images and grader."
+                          + (" Set unverified_ok to run it anyway." if getattr(registry, "open_models", False) else ""))
     if runtime and task and runtime["id"] not in task.get("runtime_ids", []):
         issues.append("The task environment is not registered for this runtime.")
     prompt = configuration.get("prompt")
@@ -139,6 +148,9 @@ def preflight(configuration, registry, health: dict) -> dict:
                 "task_content_sha256": task["content_sha256"], "prompt": prompt,
                 "prompt_mode": runtime["prompt_mode"], "prompt_sha256": hashlib.sha256(prompt.encode()).hexdigest(),
                 "harness": compiled or {}, "limits": dict(limits)}
+    if getattr(registry, "open_models", False):
+        # The local runner records what actually isolated and vouched for the run.
+        manifest.update(verified=verified, isolation_runtime=health.get("isolation_runtime") or "unknown")
     if version == 2:
         from .native_prompts import profile_sha256
         manifest.update(native_prompt_profile=native_profile, native_prompt_profile_sha256=profile_sha256(native_profile),

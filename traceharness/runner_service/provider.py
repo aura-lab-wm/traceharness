@@ -128,13 +128,13 @@ class OpenRouter:
         if not isinstance(result, dict) or not isinstance(result.get("data"), dict):
             raise ProviderError("Provider key could not be validated.")
 
-    def models(self, allowed: set[str]):
+    def models(self, allowed: set[str] | None):
         result = self._request("GET", "/v1/models")
         rows = result.get("data") if isinstance(result, dict) else None
         if not isinstance(rows, list):
             raise ProviderError("Provider catalog could not be read.")
         return [{k: row[k] for k in ("id", "name", "context_length", "pricing", "supported_parameters") if k in row}
-                for row in rows if isinstance(row, dict) and row.get("id") in allowed]
+                for row in rows if isinstance(row, dict) and isinstance(row.get("id"), str) and (allowed is None or row["id"] in allowed)]
 
     def complete(self, protocol: str, key: str, body: dict):
         path = {"chat/completions": "/v1/chat/completions", "responses": "/v1/responses", "messages": "/v1/messages"}.get(protocol)

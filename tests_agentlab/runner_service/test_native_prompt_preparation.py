@@ -14,7 +14,7 @@ import unittest
 
 
 ROOT = Path(__file__).resolve().parents[2]
-EXTRACTOR = ROOT / "deploy/runner/prepare_native_prompt_inventory.mjs"
+EXTRACTOR = ROOT / "traceharness/runner/assets/native/prepare_native_prompt_inventory.mjs"
 ACORN = Path(os.environ.get("TRACEHARNESS_TEST_ACORN", "/nonexistent-acorn.mjs"))
 
 

@@ -94,7 +94,8 @@ def image_id(ref: str = "") -> str:
     return r.stdout.strip() if r.returncode == 0 else ""
 
 
-REAL_TASKS = os.path.join(LAB_ROOT, "deploy", "runner", "tasks")     # recipes, grade.py, requirements.lock
+RUNNER_ASSETS = os.path.join(os.path.dirname(HERE), "runner", "assets")   # shipped in the wheel
+REAL_TASKS = os.path.join(RUNNER_ASSETS, "tasks")     # recipes, grade.py, requirements.lock
 GRADER_IMAGE = "traceharness-realrepo-grader"
 
 
@@ -108,7 +109,7 @@ def grader_ref() -> str:
 
 def build_real_repos() -> int:
     """The agent image with the packages' dependencies, and the packages' own grader image
-    (deploy/runner/grader.Dockerfile: root writer, candidate checks as an unprivileged child)."""
+    (traceharness/runner/assets/grader.Dockerfile: root writer, candidate checks as an unprivileged child)."""
     import tempfile
     lock = os.path.join(REAL_TASKS, "requests-jsondecode-pickle", "requirements.lock")
     with tempfile.TemporaryDirectory(prefix="th-build-", dir=os.path.expanduser("~")) as ctx:
@@ -119,7 +120,7 @@ def build_real_repos() -> int:
             return r.returncode
         os.makedirs(os.path.join(ctx, "grader"))
         shutil.copy(os.path.join(REAL_TASKS, "grade.py"), os.path.join(ctx, "grader", "grade.py"))
-        shutil.copy(os.path.join(LAB_ROOT, "deploy", "runner", "grader.Dockerfile"), os.path.join(ctx, "Dockerfile"))
+        shutil.copy(os.path.join(RUNNER_ASSETS, "grader.Dockerfile"), os.path.join(ctx, "Dockerfile"))
         r = subprocess.run(["docker", "build", "-t", grader_ref(), ctx])
     if r.returncode == 0:
         print(f"built {pydeps_ref()} and {grader_ref()}")
@@ -372,7 +373,7 @@ def harness_for(agent: str, model: str, route: list, max_requests: int, wall_s: 
 
 
 def load_package(pkg: str) -> dict:
-    """A real-repository task package (scripts/package_runner_task.py) as a task dict."""
+    """A real-repository task package (traceharness/runner/package_task.py) as a task dict."""
     with open(os.path.join(pkg, "task.json")) as f:
         meta = json.load(f)
     with open(os.path.join(pkg, "issue.md")) as f:
@@ -384,7 +385,7 @@ def load_package(pkg: str) -> dict:
 def grade_package(ws_volume: str, pkg: str, runtime: list) -> dict:
     """The package's own grader (its edit contract and independent checks), in its own container:
     no network, read-only task and workspace, root only to write the result, the candidate's checks
-    as an unprivileged child (deploy/runner/tasks/grade.py)."""
+    as an unprivileged child (traceharness/runner/assets/tasks/grade.py)."""
     r = docker(["run", "--rm", *runtime, "--network", "none", "--read-only", "--cap-drop", "ALL", "--cap-add", "SETUID",
                 "--cap-add", "SETGID", "--cap-add", "KILL", "--security-opt", "no-new-privileges",
                 "--memory", "1g", "--cpus", "1", "--pids-limit", "256", "--tmpfs", "/tmp:rw,size=1g,mode=1777",
@@ -693,7 +694,7 @@ def run_cli(argv) -> int:
     ap.add_argument("--tasks", default="all", help="as for `traceharness run`: all/core, extended, full, or ids "
                     "(with --task-packages: 'all' or package names)")
     ap.add_argument("--task-packages", default=None, help="a folder of real-repository task packages "
-                    "(scripts/package_runner_task.py) to run instead of the lab's tasks; graded by their own grader")
+                    "(traceharness/runner/package_task.py) to run instead of the lab's tasks; graded by their own grader")
     ap.add_argument("--repeats", type=int, default=1)
     ap.add_argument("--repeat-offset", type=int, default=0, help="index of the first repeat (to add repeats to a results directory)")
     ap.add_argument("--out", required=True)
