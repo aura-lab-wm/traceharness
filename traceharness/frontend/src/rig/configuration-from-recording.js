@@ -36,9 +36,12 @@ export function configurationFromManifest(manifest) {
   if (Object.hasOwn(manifest, 'isolation_runtime') && !['runsc', 'runc'].includes(manifest.isolation_runtime)) fail('The recorded isolation runtime is not recognized.')
   const value = Object.fromEntries(['version', 'runtime_id', 'model_id', 'task_id', 'prompt', 'prompt_mode', 'limits'].map(key => [key, manifest[key]]))
   // `verified` and `isolation_runtime` are recorded facts about that run: a fork never inherits them
-  // (consent is always the user's own new act). `limits.storage_bytes` is a limit the runner enforces
-  // itself and the editor cannot change, so it is translated out of the editable limits.
-  if (object(value.limits)) { const { storage_bytes: _enforced, ...editable } = value.limits; value.limits = editable }
+  // (consent is always the user's own new act). `limits.storage_bytes` and `limits.storage_enforcement`
+  // record what the runner enforced itself; the editor cannot change them, so they leave the editable limits.
+  if (object(value.limits)) {
+    const { storage_bytes: _enforced, storage_enforcement: _how, ...editable } = value.limits
+    value.limits = editable
+  }
   if (manifest.runtime_id === 'traceharness') {
     if (!object(manifest.harness) || !Array.isArray(manifest.harness.blocks)) fail('The recorded manifest does not contain the engine compiler blocks.')
     const compiled = Object.hasOwn(manifest.harness, 'configuration')

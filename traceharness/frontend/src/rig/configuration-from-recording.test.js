@@ -31,13 +31,14 @@ it('forks hosted native and compiled engine manifests into strict current-draft 
 
 it('forks a recorded local manifest carrying verified, isolation_runtime and the enforced storage limit', () => {
   const engine = configurationFromRecordedHarness({ harness: harness(), modelId: 'provider/model', taskId: 'registered-task' })
-  const recorded = { ...engine, runtime_version: '0.6.0', verified: false, isolation_runtime: 'runc', limits: { ...engine.limits, storage_bytes: 1073741824 },
+  const recorded = { ...engine, runtime_version: '0.6.0', verified: false, isolation_runtime: 'runc', limits: { ...engine.limits, storage_bytes: 1073741824, storage_enforcement: 'directory-scan+filesystem-budget' },
     harness: { id: 'compiled-record-id', hash: 'a'.repeat(12), blocks: engine.harness.blocks, configuration: harness() } }
   const forked = configurationFromManifest(recorded)
   expect(forked).not.toHaveProperty('unverified_ok')
   expect(forked).not.toHaveProperty('verified')
   expect(forked).not.toHaveProperty('isolation_runtime')
   expect(forked.limits).not.toHaveProperty('storage_bytes')
+  expect(forked.limits).not.toHaveProperty('storage_enforcement')
   expect(forked.limits).toEqual(engine.limits)
   // The result passes the same validation a user import does, so the composer can load it.
   expect(() => parseConfiguration(JSON.stringify(forked))).not.toThrow()
