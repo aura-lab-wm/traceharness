@@ -1,0 +1,63 @@
+user: 
+<uploaded_files>
+/testbed
+</uploaded_files>
+
+I've uploaded a python code repository named astropy/astropy in the directory /testbed. Consider the following PR description:
+<pr_description>
+Modeling's `separability_matrix` does not compute separability correctly for nested CompoundModels
+Consider the following model:
+
+```python
+from astropy.modeling import models as m
+from astropy.modeling.separable import separability_matrix
+
+cm = m.Linear1D(10) & m.Linear1D(5)
+```
+
+It's separability matrix as you might expect is a diagonal:
+
+```python
+>>> separability_matrix(cm)
+array([[ True, False],
+       [False,  True]])
+```
+
+If I make the model more complex:
+```python
+>>> separability_matrix(m.Pix2Sky_TAN() & m.Linear1D(10) & m.Linear1D(5))
+array([[ True,  True, False, False],
+       [ True,  
+[...]
+
+SolverAgent: I'll help create and run a test script to reproduce the issue with `separability_matrix` for nested CompoundModels. Let me analyze the issue and create the test script.
+
+First, let me create the test script that reproduces the issue:
+[
+    {
+        "id": "toolu_016NrY5bMau7AoFmazq6ut3G",
+        "input": {
+            "command": "create",
+            "file_text": "from astropy.modeling import models as m\nfrom astropy.modeling.separable import separability_matrix\n\ndef test_separability_matrix_nested():\n    # Test case 1: Simple compound model\n    cm = m.Linear1D(10) & m.Linear1D(5)\n    result1 = separability_matrix(cm)\n    print(\"\\nTest Case 1 - Simple compound model (Linear1D & Linear1D):\")\n    print(result1)\n\n    # Test case 2: Complex non-nested model\n    complex_model = m.Pix2Sky_TAN() & m.Linear1D(10) & m.Linear1D(5)\n    result2 = separability_matrix(complex_model)\n    print(\"\\nTest Case 2 - Complex non-nested model (Pix2Sky_TAN & Linear1D & Linear1D):\")\n    print(result2)\n\n    # Test case 3: Nested compound model - showing the issue\n    nested_model = m.Pix2Sky_TAN() & cm\n    result3 = separability_matrix(nested_model)\n    print(\"\\nTest Case 3 - Nested compound model (Pix2Sky_TAN & (Linear1D & Linear1D)):\")\n    print(result3)\n\nif __name__ == \"__main__\":\n    test_separability_matrix_nested()",
+            "path": "/testbed/reproduce_test.py"
+        },
+        "name": "str_replace_editor",
+        "type": "tool_use"
+    }
+]
+[...]
+ "input": {
+            "code_modification": "No code modifications were made in this final section as this is just the completion summary.",
+            "modification_process": "This was the final completion section where we verified there were no pending changes and prepared to finish the task successfully.",
+            "related_code_span": "No specific code spans were examined in this final section as this was just the completion summary."
+        },
+        "name": "section_complete",
+        "type": "tool_use"
+    }
+]
+section_complete: Section Complete.
+{
+    "instance_id": "astropy__astropy-12907",
+    "model_name_or_path": "agentscope-swe",
+    "model_patch": "diff --git a/astropy/modeling/separable.py b/astropy/modeling/separable.py\nindex a308e27297..45bea36085 100644\n--- a/astropy/modeling/separable.py\n+++ b/astropy/modeling/separable.py\n@@ -242,7 +242,7 @@ def _cstack(left, right):\n         cright = _coord_matrix(right, 'right', noutp)\n     else:\n         cright = np.zeros((noutp, right.shape[1]))\n-        cright[-right.shape[0]:, -right.shape[1]:] = 1\n+        cright[-right.shape[0]:, -right.shape[1]:] = right\n \n     return np.hstack([cleft, cright])\n \n"
+}

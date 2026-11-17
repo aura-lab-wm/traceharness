@@ -351,6 +351,16 @@ The downloaded file is cached in `~/.cache/traceharness/nebius/`, so a second do
 
 </details>
 
+<details>
+<summary>Other public trajectories</summary>
+
+`traceharness import PATH` reads logs from other harnesses (SWE-agent, OpenHands, mini-SWE-agent, Inspect and more).
+`traceharness import-swebench <submission_dir>` imports one entry of the public
+[SWE-bench experiments](https://github.com/SWE-bench/experiments) repository, with each instance's resolved verdict
+from its `results.json`; see [`docs/IMPORT_SWEBENCH.md`](IMPORT_SWEBENCH.md).
+
+</details>
+
 ---
 
 Data: [nebius/SWE-agent-trajectories](https://huggingface.co/datasets/nebius/SWE-agent-trajectories)
