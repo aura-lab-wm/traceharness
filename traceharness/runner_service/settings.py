@@ -19,6 +19,9 @@ class Settings:
     #: receipt is advisory (an unreceipted combination needs an explicit flag, never a refusal here).
     local: bool = False
     owner: str = "local"
+    #: This process does not own the state directory (another one holds its lock): it may read recorded
+    #: jobs but never restores, rewrites, purges or reconciles, and it starts nothing.
+    read_only: bool = False
 
     def __post_init__(self):
         if not self.local:

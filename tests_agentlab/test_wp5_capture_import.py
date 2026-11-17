@@ -85,6 +85,53 @@ class HostileButHashedArchive(Base):
             return data + b'{"seq": 99}\n'
         self.assertRefused(self.replaced(member, change), "not a ledger span")
 
+    def append_span(self, **span):
+        member = self.run_member("ledger.jsonl")
+        return self.replaced(member, lambda data: data + (json.dumps({"seq": 999, **span}) + "\n").encode())
+
+    def test_span_specific_fields_are_validated_for_the_readers(self):
+        """Each of these hashes correctly and passed the old generic check; each breaks a reader
+        (backend/sentinel.py replay, backend/fork.py steps, core/analysis.py counters)."""
+        for label, span in (
+                ("a chat span without its step", {"span": "chat"}),
+                ("a chat span with a text step", {"span": "chat", "step": "3"}),
+                ("chat tool_calls that are not objects", {"span": "chat", "step": 1, "tool_calls": ["x"]}),
+                ("a chat span with a text token count", {"span": "chat", "step": 1, "gen_ai.usage.input_tokens": "9"}),
+                ("a boundary_event without its kind", {"span": "boundary_event", "tool": "bash"}),
+                ("a boundary_event with object args", {"span": "boundary_event", "kind": "k", "args": [1]}),
+                ("an execute_tool whose args are a list", {"span": "execute_tool", "args": ["a"]}),
+                ("an execute_tool with a numeric preview", {"span": "execute_tool", "result_preview": 7}),
+                ("a sentinel span without its step", {"span": "sentinel", "risk": 0.1}),
+                ("a run start whose harness is null", {"span": "invoke_agent", "status": "start", "harness": None}),
+        ):
+            with self.subTest(label):
+                self.assertRefused(self.append_span(**span), "not a ledger span")
+
+    def test_list_fields_must_hold_only_the_expected_element_types(self):
+        member = self.run_member("summary.json")
+        for field in ("boundary_kinds", "files_touched", "served_by"):
+            with self.subTest(field=field):
+                def change(data, field=field):
+                    return json.dumps({**json.loads(data), field: [{}]}).encode()
+                self.assertRefused(self.replaced(member, change), "wrong type")
+
+    def test_boundary_kinds_with_an_object_in_an_index_row_is_refused(self):
+        def change(data):
+            lines = data.decode().splitlines()
+            lines[0] = json.dumps({**json.loads(lines[0]), "boundary_kinds": [{}]})
+            return ("\n".join(lines) + "\n").encode()
+        self.assertRefused(self.replaced("index.jsonl", change), "wrong type")
+
+    def test_a_well_formed_span_of_each_kind_is_still_accepted(self):
+        good = ({"span": "chat", "step": 4, "text": "t", "tool_calls": [{"name": "bash"}], "gen_ai.usage.input_tokens": None},
+                {"span": "boundary_event", "kind": "outside_repo", "tool": "bash", "args": {"command": "ls"}, "status": "blocked"},
+                {"span": "execute_tool", "gen_ai.tool.name": "bash", "args": {"command": "ls"}, "result_preview": "exit=0", "tests_passed": None},
+                {"span": "sentinel", "step": 4, "risk": 0.2}, {"span": "future_kind", "anything": [1, {}]})
+        for span in good:
+            with self.subTest(span=span["span"]):
+                path = self.append_span(**span)
+                self.assertTrue(exchange.verify_archive(path)["runs"])
+
     def test_the_untouched_archive_still_imports(self):
         report = exchange.import_archive(self.dst_runs, self.out)
         self.assertEqual(len(report["imported"]), len(self.run_ids))

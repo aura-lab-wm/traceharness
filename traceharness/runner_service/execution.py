@@ -138,9 +138,57 @@ STORAGE_CHECK_SECONDS = 1.0
 STORAGE_ENTRY_LIMIT = 200_000
 
 
+#: The enforcement the local runner applies, recorded in every local manifest's limits. The directory scan
+#: cannot see a file that was opened, unlinked and kept writing; the filesystem budget can, because it reads
+#: what the filesystem has allocated. On a shared filesystem it is a budget over everything that changed
+#: while the job ran, not an exact per-job quota.
+STORAGE_ENFORCEMENT = "directory-scan+filesystem-budget"
+#: Free bytes / inodes the filesystem holding the job directories must keep. Below this a running job is
+#: stopped and no new job starts, whoever is consuming the space.
+FREE_BYTES_FLOOR = 1024 ** 3
+FREE_INODES_FLOOR = 20_000
+
+
+class FilesystemGuard:
+    """What a job consumed, read from the filesystem itself (statvfs), so unlinked-but-open files, sparse
+    files and inodes all count. Measured against free space at job start; any other writer on the same
+    filesystem counts too, which makes this a conservative budget rather than an exact quota."""
+
+    def __init__(self, path, cap_bytes, *, statvfs=os.statvfs, floor_bytes=FREE_BYTES_FLOOR, floor_inodes=FREE_INODES_FLOOR,
+                 inode_cap=STORAGE_ENTRY_LIMIT):
+        self.path, self.cap, self.statvfs = str(path), cap_bytes, statvfs
+        self.floor_bytes, self.floor_inodes, self.inode_cap = floor_bytes, floor_inodes, inode_cap
+        self.start_bytes, self.start_inodes, self.has_inodes = self._free()
+
+    def _free(self):
+        info = self.statvfs(self.path)
+        return info.f_bavail * info.f_frsize, getattr(info, "f_favail", 0), bool(getattr(info, "f_files", 0))
+
+    def admission(self):
+        """None when a job may start, else why not."""
+        if self.start_bytes < self.floor_bytes:
+            return "Free disk space (%d MiB) is below the %d MiB this runner keeps; no job was started." % (
+                self.start_bytes // 2**20, self.floor_bytes // 2**20)
+        if self.has_inodes and self.start_inodes < self.floor_inodes:
+            return "Free inodes (%d) are below the %d this runner keeps; no job was started." % (self.start_inodes, self.floor_inodes)
+        return None
+
+    def violation(self):
+        """None while the job is within its budget, else the reason to stop it."""
+        free_bytes, free_inodes, _ = self._free()
+        used, used_inodes = self.start_bytes - free_bytes, self.start_inodes - free_inodes
+        if self.cap is not None and used > self.cap:
+            return "The job used more than its storage budget of %d MiB on the filesystem and was stopped." % (self.cap // 2**20)
+        if free_bytes < self.floor_bytes:
+            return "Free disk space fell below %d MiB; the job was stopped." % (self.floor_bytes // 2**20)
+        if self.has_inodes and (used_inodes > self.inode_cap or free_inodes < self.floor_inodes):
+            return "The job used too many inodes (or free inodes fell too low) and was stopped."
+        return None
+
+
 class DockerExecutor:
-    def __init__(self, settings, registry, command=subprocess.run):
-        self.settings, self.registry, self.command = settings, registry, command
+    def __init__(self, settings, registry, command=subprocess.run, statvfs=os.statvfs):
+        self.settings, self.registry, self.command, self.statvfs = settings, registry, command, statvfs
         self._reconciled, self._startup_blocked = False, False
 
     def _state_label(self):
@@ -154,6 +202,8 @@ class DockerExecutor:
         return [line for line in listed.stdout.decode().split() if re.fullmatch(r"[a-f0-9]{64}", line)]
 
     def reconcile_startup(self):
+        if self.settings.read_only:
+            return False        # another process owns this state directory; it alone may remove its containers
         if self._startup_blocked:
             return False
         if self._reconciled:
@@ -238,7 +288,13 @@ class DockerExecutor:
                 path.mkdir(mode=0o700)
                 # The agent runs as this host user; a differently-owned agent (10001, under a root console)
                 # needs its workspace and output open. The grader writes to its own tmpfs, never here.
-                path.chmod(0o777 if name != "grading" and self._agent_user() == "10001:10001" else 0o755)
+                if name != "grading" and self._agent_user() == "10001:10001":
+                    # A root console: the agent (10001) must own its workspace and output, or copying the task
+                    # into /workspace fails on the directory's own copystat. Owned and 0700, never world-writable.
+                    os.chown(path, 10001, 10001)
+                    path.chmod(0o700)
+                else:
+                    path.chmod(0o755)
             yield
         finally:
             for name in names:
@@ -308,7 +364,8 @@ class DockerExecutor:
         return args + [image]
 
     def _run(self, args, name, cancel, deadline, *, capture=False, watch=None):
-        """`watch` = (directories, byte cap): the job is stopped when what it wrote there exceeds the cap."""
+        """`watch` = (directories, byte cap, FilesystemGuard): the job is stopped when what it wrote there exceeds
+        the cap, or when the filesystem says it consumed more than its budget (unlinked files included)."""
         if cancel.is_set() or time.monotonic() >= deadline:
             raise ExecutionError("Execution was cancelled." if cancel.is_set() else "Execution reached its deadline.")
         # Container output is an untrusted artifact, not a service log. Only the local grader's stdout is
@@ -322,11 +379,12 @@ class DockerExecutor:
                 if watch and time.monotonic() >= next_check:
                     next_check = time.monotonic() + STORAGE_CHECK_SECONDS
                     used, entries = measure_tree(watch[0], stop_after_bytes=watch[1], stop_after_entries=STORAGE_ENTRY_LIMIT)
-                    if used > watch[1] or entries > STORAGE_ENTRY_LIMIT:
+                    reason = watch[2].violation() if len(watch) > 2 and watch[2] else None
+                    if used > watch[1] or entries > STORAGE_ENTRY_LIMIT or reason:
                         self.command([self.settings.docker_binary, "rm", "--force", name], capture_output=True, timeout=15, check=False)
                         process.kill()          # the container is gone; end the docker client too
                         process.wait(timeout=5)
-                        raise StorageLimitError("The job exceeded its storage limit of %d MiB and was stopped." % (watch[1] // (1024 * 1024)))
+                        raise StorageLimitError(reason or "The job exceeded its storage limit of %d MiB and was stopped." % (watch[1] // (1024 * 1024)))
                 if cancel.is_set() or time.monotonic() >= deadline:
                     self.command([self.settings.docker_binary, "rm", "--force", name], capture_output=True, timeout=15, check=False)
                     process.wait(timeout=15)
@@ -519,13 +577,19 @@ class DockerExecutor:
         if native_mount:
             mounts.append(native_mount)
         runtime_error = None
+        guard = None
+        if self.settings.local and manifest["limits"].get("storage_bytes"):
+            guard = FilesystemGuard(directory, manifest["limits"]["storage_bytes"], statvfs=self.statvfs)
+            refusal = guard.admission()
+            if refusal:
+                raise StorageLimitError(refusal)
         try:
             with UnixModelProxy(gateway / "runner.sock", observer.wrap(forward) if observer else forward):
                 args = self.container_args(name, manifest["image_digest"], mounts,
                     entrypoint="python") + ["-m", "traceharness.runner_service.container_entrypoint"]
                 try:
                     cap = manifest["limits"].get("storage_bytes")
-                    extra = {"watch": ([work, output], cap)} if self.settings.local and cap else {}
+                    extra = {"watch": ([work, output], cap, guard)} if self.settings.local and cap else {}
                     self._run(args, name, cancel, deadline, **extra)
                 except ExecutionError as error:
                     if type(error) is not ExecutionError or str(error) != RUNTIME_FAILURE or error.grade is not None:

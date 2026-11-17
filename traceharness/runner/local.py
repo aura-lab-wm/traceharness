@@ -73,6 +73,7 @@ class LocalRunner:
         self._registry_seen = None     # ((mtime_ns, size), valid)
         self._probe = threading.Lock()  # one readiness probe at a time
         self._loaded = None             # stamp of the registry.json the app was built from
+        self._ownership = None          # the OS lock on the runner's state directory, held while the app lives
 
     @property
     def lab_root(self):
@@ -132,6 +133,32 @@ class LocalRunner:
                 self._ready = (self._clock(), value)
             return value
 
+    def probe(self) -> dict:
+        """Readiness that changes nothing: Docker answers, the registry loads, every registered image is
+        present. It never builds the runner app, restores job state, reconciles or removes a container, so
+        `traceharness doctor` and the release check are safe beside a running console. Read-only Docker
+        calls only (`info`, `image inspect`)."""
+        from traceharness.runner_service.registry import Registry
+        docker = find_docker()
+        info = docker_info(docker, self._command)
+        registry = self._registry_valid()
+        images = False
+        if info is not None and registry:
+            try:
+                loaded = Registry.load(registry_path(self.lab_root), local=True)
+                digests = {r["image_digest"] for r in loaded.runtimes.values()} | {t["grader_image_digest"] for t in loaded.tasks.values()}
+                images = bool(digests)
+                for digest in sorted(digests):
+                    done = self._command([docker, "image", "inspect", digest], capture_output=True, timeout=DOCKER_TIMEOUT, check=False)
+                    if done.returncode:
+                        images = False
+                        break
+            except Exception:
+                images = False
+        ready = bool(info is not None and registry and images)
+        return {"ready": ready, "docker": info is not None, "registry": registry, "images": images,
+                "isolation": detect_isolation(info) if info is not None else None}
+
     def has_state(self) -> bool:
         """A registry exists: finished jobs can be read even when Docker is stopped."""
         return registry_path(self.lab_root).is_file()
@@ -181,21 +208,34 @@ class LocalRunner:
         docker = find_docker() or "docker"
         isolation = detect_isolation(docker_info(find_docker(), self._command))
         settings = local_settings(self.lab_root, docker, isolation)
+        # Own the state directory before anything restores job state or removes containers. A process that
+        # cannot get the lock (a second console) serves recorded jobs read-only and reconciles nothing.
+        from dataclasses import replace
+        from traceharness.runner_service.ownership import StateOwnership
+        ownership = StateOwnership(settings.state_dir)
+        if not ownership.acquire():
+            settings = replace(settings, read_only=True)
+        else:
+            self._ownership = ownership
         scripted = scripted_selected()
         vault = LocalKeyVault(self._key, keyless=scripted)
         from traceharness.runner_service.execution import DockerExecutor
         from traceharness.runner_service.registry import Registry
         registry = Registry.load(settings.registry_path, local=True)
         app = create_app(settings, registry=registry, executor=DockerExecutor(settings, registry, command=self._command),
-                         provider=ScriptedProvider() if scripted else OpenRouter(), vault=vault)
-        self.attach_datasets(app)
+                         provider=ScriptedProvider() if scripted else OpenRouter(), vault=vault,
+                         persist=self.dataset_hook())
         return app
 
-    def attach_datasets(self, app):
-        """Finished jobs are written to data/runs/<dataset>/ before retention may remove them."""
+    def dataset_hook(self):
+        """Finished jobs are written to data/runs/<dataset>/ before retention may remove them. The hook is
+        handed to the runner at construction, so restoring state after a restart can already use it."""
         from .datasets import persist_job
         runs_root = Path(self.lab_root) / "data" / "runs"
-        app.state.jobs.persist = lambda row, job_dir: persist_job(runs_root, row, job_dir)
+        return lambda row, job_dir: persist_job(runs_root, row, job_dir)
+
+    def attach_datasets(self, app):
+        app.state.jobs.persist = self.dataset_hook()
 
     async def app_async(self):
         import asyncio
@@ -227,6 +267,9 @@ class LocalRunner:
             app, self._app = self._app, None
         if app is not None:
             app.state.close()
+        if self._ownership is not None:
+            self._ownership.release()
+            self._ownership = None
 
     # ---- calls into the runner -----------------------------------------------------------------
     @property

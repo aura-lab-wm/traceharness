@@ -166,7 +166,11 @@ class NativePromptProtocolTests(unittest.TestCase):
         self.assertTrue(any("unverified_ok" in issue for issue in refused["issues"]), refused)
         answer = local.native_prompt_inventory(self.runtime["id"], self.health)
         self.assertTrue(answer["execution_available"])
-        self.assertIn("runner verify", answer["reason"])
+        self.assertIn("only with your confirmation", answer["reason"])
+        self.assertIn("recorded as not verified", answer["reason"])
+        self.assertIn("compatibility receipts only", answer["reason"])      # `runner verify` does not prove native application
+        self.assertNotIn("to prove it", answer["reason"])
+        self.assertTrue(any("recorded as not verified" in issue and "runner verify" not in issue for issue in refused["issues"]), refused)
         accepted = preflight(dict(self.config, unverified_ok=True), local, self.health)
         self.assertTrue(accepted["ok"], accepted)
         self.assertIs(accepted["manifest"]["verified"], False)

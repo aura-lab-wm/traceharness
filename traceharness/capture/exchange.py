@@ -44,6 +44,7 @@ from typing import Iterable, Optional
 from .lock import CaptureLock
 from .redact import REDACTION_VERSION, redact, redact_text
 from .sources import SOURCES
+from traceharness.core.span_schema import loads_finite, span_problem   # one definition, shared with the runner's datasets
 
 FORMAT = "traceharness-capture-export"
 VERSION = 1
@@ -79,29 +80,7 @@ _S_INT_NULL = ("steps", "sentinel_interventions", "tool_calls", "edits", "lines_
                "reprompts", "human_interventions")
 _S_NUM_NULL = ("sentinel_max_risk", "sentinel_cost_usd", "cost_usd")
 _S_BOOL_NULL = ("ran_tests_before_submit", "visible_pass", "hidden_pass", "strong_pass", "tests_modified", "human_intervened")
-_S_LIST_NULL = ("files_touched", "boundary_kinds", "served_by")
-
-
-def _refuse_constant(name):
-    raise ValueError(name)
-
-
-def _all_finite(value) -> bool:
-    if isinstance(value, float):
-        return value == value and value not in (float("inf"), float("-inf"))
-    if isinstance(value, dict):
-        return all(_all_finite(v) for v in value.values())
-    if isinstance(value, list):
-        return all(_all_finite(v) for v in value)
-    return True
-
-
-def loads_finite(text):
-    """json.loads that refuses NaN, Infinity, -Infinity and numbers too large for a float (1e999)."""
-    value = json.loads(text, parse_constant=_refuse_constant)
-    if not _all_finite(value):
-        raise ValueError("non-finite number")
-    return value
+_S_LIST_NULL = ("files_touched", "boundary_kinds", "served_by")      # every element is text (core/analysis.py counts boundary_kinds)
 
 
 def _is_int(value) -> bool:
@@ -118,14 +97,15 @@ def check_summary_row(row, what: str) -> None:
     bad += [k for k in _S_INT_NULL if row.get(k) is not None and not _is_int(row[k])]
     bad += [k for k in _S_NUM_NULL if row.get(k) is not None and (isinstance(row[k], bool) or not isinstance(row[k], (int, float)))]
     bad += [k for k in _S_BOOL_NULL if row.get(k) is not None and not isinstance(row[k], bool)]
-    bad += [k for k in _S_LIST_NULL if row.get(k) is not None and not isinstance(row[k], list)]
+    bad += [k for k in _S_LIST_NULL if row.get(k) is not None and not (isinstance(row[k], list) and all(isinstance(x, str) for x in row[k]))]
     if bad:
         raise ExchangeError(f"{what} has fields of the wrong type or missing: {', '.join(sorted(set(bad))[:5])}")
 
 
 def check_ledger_line(span, what: str) -> None:
-    if not isinstance(span, dict) or not isinstance(span.get("span"), str) or not _is_int(span.get("seq")) or span["seq"] < 0:
-        raise ExchangeError(f"{what} is not a ledger span (an object with a text `span` and a whole-number `seq`)")
+    problem = span_problem(span)
+    if problem:
+        raise ExchangeError(f"{what} is not a ledger span the readers of a run can take ({problem}); nothing was imported")
 
 
 # --- export ---------------------------------------------------------------------------------------

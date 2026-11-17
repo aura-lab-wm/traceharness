@@ -25,13 +25,13 @@ from .settings import Settings
 HEX_ID = re.compile(r"^[a-f0-9]{16,64}$")
 
 
-def create_app(settings: Settings, *, registry=None, provider=None, executor=None, vault=None, clock=time.time):
+def create_app(settings: Settings, *, registry=None, provider=None, executor=None, vault=None, clock=time.time, persist=None):
     """Injection is explicit for tests; the production default is never a fixture."""
     registry = registry or (Registry.load(settings.registry_path, local=settings.local) if settings.registry_path else Registry(settings.state_dir, local=settings.local))
     provider = provider or OpenRouter()
     executor = executor or DockerExecutor(settings, registry)
     vault = vault or CredentialVault(clock=clock)
-    jobs = Jobs(settings, vault, provider, executor, clock)
+    jobs = Jobs(settings, vault, provider, executor, clock, persist)
     readiness = {"at": 0, "health": {"available": False, "runtimes": {}, "tasks": {}}, "models": []}
     readiness_lock = threading.Lock()
     credential_slots = threading.BoundedSemaphore(4)
