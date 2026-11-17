@@ -114,13 +114,15 @@ describe('the Docker-free local console (run.container and run.native are runner
 })
 
 describe('explicit consent to run without a receipt', () => {
-  const noReceipt = NO_RECEIPT
+  // The review's structured answer: generic issue text plus consent_required (never the receipt wording).
+  const noReceipt = 'This configuration did not pass current runner review.'
+  const refused = () => json({ ok: false, issues: [noReceipt], consent_required: true })
   it('offers the checkbox only after the review says so, never sets the flag on its own, then records it', async () => {
     environmentAnswer = () => json({ capabilities: { 'run.container': { reason: 'ok' }, 'run.native': { reason: 'ok' }, 'run.experiments': { reason: 'ok' } } })
     await environment.refreshEnvironment()
     preflightAnswer = (body) => body.configuration.unverified_ok === true
       ? json({ ok: true, issues: [], manifest_sha256: 'd'.repeat(64), manifest: recordedManifest(body.configuration) })
-      : json({ ok: false, issues: [noReceipt] })
+      : refused()
     render(<Composer />)
     await ready('Container registry task')
     await waitFor(() => expect(review().disabled).toBe(false))
@@ -130,9 +132,8 @@ describe('explicit consent to run without a receipt', () => {
     const box = screen.getByLabelText('Run without a receipt on this machine (not verified)')
     expect(box.checked).toBe(false)
     expect(calls.find((c) => c.url === '/api/runner/preflight').body.configuration).not.toHaveProperty('unverified_ok')
-    fireEvent.click(box)
-    await waitFor(() => expect(review().disabled).toBe(false))
-    fireEvent.click(review())
+    expect(calls.filter((c) => c.url === '/api/runner/preflight')).toHaveLength(1)
+    fireEvent.click(box) // confirming re-runs the review by itself
     await screen.findByText('Configuration reviewed')
     expect(document.querySelector('[data-el="runner-review-verified"]').textContent).toBe('Not verified on this machine')
     const second = calls.filter((c) => c.url === '/api/runner/preflight')[1]
@@ -146,7 +147,7 @@ describe('explicit consent to run without a receipt', () => {
   it('drops consent and clears the box when the user switches to an in-process task, and again on a model or task change', async () => {
     environmentAnswer = () => json({ capabilities: { 'run.container': { reason: 'ok' }, 'run.native': { reason: 'ok' }, 'run.experiments': { reason: 'ok' } } })
     await environment.refreshEnvironment()
-    preflightAnswer = (body) => body.configuration.unverified_ok === true || body.configuration.task_id !== 'reg_container' ? json({ ok: true, issues: [], manifest_sha256: 'd'.repeat(64), manifest: recordedManifest(body.configuration) }) : json({ ok: false, issues: [noReceipt] })
+    preflightAnswer = (body) => body.configuration.unverified_ok === true || body.configuration.task_id !== 'reg_container' ? json({ ok: true, issues: [], manifest_sha256: 'd'.repeat(64), manifest: recordedManifest(body.configuration) }) : refused()
     render(<Composer />)
     await ready('Container registry task')
     await waitFor(() => expect(review().disabled).toBe(false))

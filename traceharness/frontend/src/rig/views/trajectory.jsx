@@ -45,7 +45,17 @@ const vWord = (v) => (v === true ? 'passed' : v === false ? 'failed' : 'unknown'
 export const finishOf = (s) => (s && Array.isArray(s['gen_ai.response.finish_reasons']) ? s['gen_ai.response.finish_reasons'] : [])
 export const isCutoff = (s) => !!s && s.span === 'chat' && finishOf(s).includes('length')
 const callsOf = (s) => (s && Array.isArray(s.tool_calls) ? s.tool_calls : [])
-const callName = (t) => (t && (t.name || (t.function && t.function.name))) || 'tool'
+const callName = (t) => {
+  const name = t && typeof t === 'object' ? t.name || (t.function && typeof t.function === 'object' && t.function.name) : ''
+  return typeof name === 'string' && name ? name : 'tool'
+}
+// A recorded message can be malformed (the runner stores what the agent produced): render what is readable, never throw.
+const isPlain = (v) => v !== null && typeof v === 'object' && !Array.isArray(v)
+const roleOf = (m) => (isPlain(m) && typeof m.role === 'string' && m.role ? m.role : 'unknown')
+const callArgs = (tc) => {
+  const raw = isPlain(tc) ? tc.arguments ?? (isPlain(tc.function) ? tc.function.arguments : undefined) : undefined
+  return typeof raw === 'string' || isPlain(raw) ? String(text(raw)).slice(0, 200) : ''
+}
 const startSpan = (spans) => (spans || []).find((s) => s.span === 'invoke_agent' && s.status === 'start') || null
 const endSpan = (spans) => [...(spans || [])].reverse().find((s) => s.span === 'invoke_agent' && s.status === 'end') || null
 export const harnessOf = (spans) => { const s = startSpan(spans); return (s && s.harness && typeof s.harness === 'object' && !Array.isArray(s.harness)) ? s.harness : null }
@@ -518,13 +528,19 @@ function Messages({ detail, actions }) {
   if (!ms.length) return <div data-el="messages"><Empty title="No conversation captured." actions={actions}>This recording has no messages.json, so the prompt and replies were not saved as a conversation. The ledger still records every reply and tool call in order.</Empty></div>
   return (
     <div data-el="messages"><Panel label="Captured messages" meta={plural(ms.length, 'message')} flush>
-      {ms.map((m, i) => (
-        <div key={i} className="rg-traj-msg">
-          <div className={cx('role', m.role)}>{m.role || 'unknown'}</div>
-          <div className="body">{text(m.content ?? '') || <span className="rg-mute">No textual content.</span>}
-            {callsOf(m).map((tc, j) => <div key={j} className="tc">→ {callName(tc)}({String(text(tc.arguments ?? (tc.function && tc.function.arguments) ?? '')).slice(0, 200)})</div>)}</div>
-        </div>
-      ))}
+      {ms.map((m, i) => {
+        const role = roleOf(m)
+        const content = isPlain(m) ? m.content : undefined
+        return (
+          <div key={i} className="rg-traj-msg">
+            <div className={cx('role', role)}>{role}</div>
+            <div className="body">{text(content ?? '') || <span className="rg-mute">No textual content.</span>}
+              {callsOf(m).map((tc, j) => isPlain(tc)
+                ? <div key={j} className="tc">→ {callName(tc)}({callArgs(tc)})</div>
+                : <div key={j} className="tc rg-mute">→ malformed tool call</div>)}</div>
+          </div>
+        )
+      })}
     </Panel></div>
   )
 }

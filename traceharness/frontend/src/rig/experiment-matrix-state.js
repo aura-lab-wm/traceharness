@@ -261,7 +261,7 @@ function buildCellLabel(snapshotLabel, modelLabel, taskLabel, index, usedLabels)
   return candidate
 }
 
-export function expandMatrixCells({ snapshots = [], modelIds = [], taskIds = [], catalog = null, unverifiedOk = false } = {}) {
+export function expandMatrixCells({ snapshots = [], modelIds = [], taskIds = [], catalog = null, unverifiedOk = false, unverifiedArms = [] } = {}) {
   const cells = []
   const incompatibleCells = []
   const duplicateCells = []
@@ -275,8 +275,9 @@ export function expandMatrixCells({ snapshots = [], modelIds = [], taskIds = [],
         const cellConfig = cloneConfiguration(snapshot.configuration)
         cellConfig.model_id = String(modelId ?? '')
         cellConfig.task_id = String(taskId ?? '')
-        // The user's confirmation for the whole experiment goes into every arm's configuration.
-        if (unverifiedOk === true) cellConfig.unverified_ok = true
+        // The user's confirmation goes only into the arms the runner said need it (unverifiedArms), or every arm
+        // when a caller passes unverifiedOk: true.
+        if (unverifiedOk === true || (Array.isArray(unverifiedArms) && unverifiedArms.includes(`arm-${index + 1}`))) cellConfig.unverified_ok = true
 
         const runtime = catalog?.runtimes?.find((row) => row.id === cellConfig.runtime_id)
         const model = catalog?.models?.find((row) => row.id === cellConfig.model_id)
