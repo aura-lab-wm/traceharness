@@ -161,11 +161,24 @@ class FilesystemBudgetTests(unittest.TestCase):
         os.fsync(fd)
         return fd
 
+    @staticmethod
+    def statvfs_of(fds, free=50 * 2**30):
+        """statvfs as the filesystem reports it, made deterministic: the free space is a fixed amount minus the
+        blocks really allocated to the open files (fstat st_blocks counts them even after unlink). A whole-disk
+        statvfs on a shared test machine also moves with every other writer and with lazily reclaimed space."""
+        def fake(_path):
+            used = sum(os.fstat(fd).st_blocks * 512 for fd in fds)
+            return SimpleNamespace(f_bavail=(free - used) // 4096, f_frsize=4096, f_favail=10**6, f_files=10**7)
+        return fake
+
     def test_statvfs_sees_an_unlinked_open_file_the_directory_scan_cannot(self):
-        guard = FilesystemGuard(self.root, 8 * 2**20, floor_bytes=0, floor_inodes=0)
+        fds = []
+        guard = FilesystemGuard(self.root, 8 * 2**20, statvfs=self.statvfs_of(fds), floor_bytes=0, floor_inodes=0)
         self.assertIsNone(guard.violation())
         fd = self.write_unlinked(160)
+        fds.append(fd)
         try:
+            self.assertGreaterEqual(os.fstat(fd).st_blocks * 512, 160 * 2**20, "the unlinked file holds real blocks")
             self.assertEqual(measure_tree([self.root])[0], 0, "a directory walk cannot see it")
             self.assertIn("storage budget", guard.violation() or "")
         finally:
@@ -177,8 +190,8 @@ class FilesystemBudgetTests(unittest.TestCase):
                                   command=lambda args, **kw: removed.append(args) or SimpleNamespace(returncode=0, stdout=b"", stderr=b""))
         work = self.root / "workspace"
         work.mkdir()
-        guard = FilesystemGuard(self.root, 8 * 2**20, floor_bytes=0, floor_inodes=0)
         fds = []
+        guard = FilesystemGuard(self.root, 8 * 2**20, statvfs=self.statvfs_of(fds), floor_bytes=0, floor_inodes=0)
         stop = threading.Event()
 
         def hostile():
