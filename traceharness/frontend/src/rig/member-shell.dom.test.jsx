@@ -17,6 +17,7 @@ import { normRuns, tokStats, paths } from './data'
 import { tokenCoverage, suiteLabel } from './provenance'
 import { memberStorageKey } from './memberStorage'
 import { reviewKey } from '../workspace/workspaceFacts'
+import { RETIRED } from '../shared/index.js'
 
 afterEach(resetRig)
 
@@ -82,7 +83,7 @@ describe('hosted workbench navigation', () => {
     expect(within(sample).getByRole('heading', { name: 'Download a public sample' })).toBeTruthy()
     expect(sample.textContent).toContain('Downloading public samples runs on your computer.')
     expect(sample.textContent).toContain('127.0.0.1:8765')
-    expect(sample.textContent).not.toContain('8742')
+    for (const { phrase } of RETIRED) expect(sample.textContent).not.toContain(phrase)
     expect(sample.querySelector('[data-capability="data.import"]').getAttribute('data-el')).toBe('read-only-export-state')
     expect(within(sample).queryByRole('button', { name: 'Download SWE-agent sample' })).toBeNull()
     expect(requests).toEqual([{ url: '/api/onboarding', method: 'GET' }])

@@ -26,6 +26,7 @@ afterEach(() => {
   vi.unstubAllGlobals()
 })
 
+const saysNoRetiredPhrase = (shared, text) => { for (const { phrase } of shared.RETIRED) expect(text).not.toContain(phrase) }
 const message = async (promise) => { try { await promise } catch (e) { return e.message } throw new Error('expected a refusal') }
 
 describe('api() refusals come from why()', () => {
@@ -36,15 +37,16 @@ describe('api() refusals come from why()', () => {
       const said = await message(api('/launch', { method: 'POST', body: {} }))
       expect(said).toBe(env.why('run.local', 'This action'))
       expect(said).toContain(shared.LOCAL_APP.command)
-      expect(said).not.toContain('8742')
+      saysNoRetiredPhrase(shared, said)
       expect(fetch).not.toHaveBeenCalled()
     })
 
     it(`${mode}: a read the snapshot lacks is refused with why('data.live_events', 'This view')`, async () => {
-      const { api, env, fetch } = await load(mode)
+      const { api, env, shared, fetch } = await load(mode)
       const said = await message(api('/results/elsewhere/runs'))
       expect(said).toBe(env.why('data.live_events', 'This view'))
-      expect(said).not.toMatch(/live app|local app|8742/)
+      expect(said).not.toMatch(/live app|local app/)
+      saysNoRetiredPhrase(shared, said)
       expect(fetch).not.toHaveBeenCalled()
     })
   }
@@ -57,10 +59,10 @@ describe('api() refusals come from why()', () => {
   })
 
   it('a member marker without a snapshot still fails closed, with a sentence', async () => {
-    const { api, fetch } = await load('member', null)
+    const { api, shared, fetch } = await load('member', null)
     const said = await message(api('/launch', { method: 'POST', body: {} }))
     expect(said.length).toBeGreaterThan(0)
-    expect(said).not.toContain('8742')
+    saysNoRetiredPhrase(shared, said)
     expect(fetch).not.toHaveBeenCalled()
   })
 

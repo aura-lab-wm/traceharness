@@ -11,6 +11,7 @@ vi.hoisted(() => {
 
 import { renderRig, resetRig, rigFixture } from '../../test/rig-testing'
 import { MODE } from '../environment'
+import { RETIRED } from '../shared/index.js'
 
 afterEach(resetRig)
 
@@ -22,6 +23,6 @@ describe('export shell', () => {
     fireEvent.click(screen.getByRole('button', { name: 'More actions' }))
     expect(within(screen.getByRole('menu')).queryByRole('menuitem', { name: 'Capture computers' })).toBeNull()
     expect(container.querySelector('[data-el="read-only-export-state"]').textContent).toBe('read-only snapshot')
-    expect(document.body.textContent).not.toMatch(/[Ss]imple harness editor|8742/)
+    for (const { phrase } of RETIRED) expect(document.body.textContent).not.toContain(phrase)
   })
 })

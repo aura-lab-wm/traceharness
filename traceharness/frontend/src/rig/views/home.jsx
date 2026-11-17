@@ -9,7 +9,7 @@
    ==================================================================================== */
 import { useMemo } from 'react'
 import { IS_STATIC, IS_MEMBER } from '../../api'
-import { MODE, why } from '../../environment'
+import { MODE, can, why } from '../../environment'
 import { DATASETS } from '../../shared/index.js'
 import { Unavailable } from '../unavailable'
 import { makeSpec } from '../route'
@@ -49,7 +49,7 @@ function Home({ spec }) {
     return (
       <div className="rg-dpad">
         <div className="rg-dh"><div className="t"><div className="rg-eyebrow">Library · data/runs</div><h1>Datasets</h1></div></div>
-        <Empty title="No datasets yet." actions={[!IS_STATIC && { label: 'Load trajectories', spec: 'sources', primary: true }, !IS_STATIC && { label: 'Capture sessions on this machine', spec: 'capture' }, { label: 'Fixed harnesses', spec: 'shallowCards' }, { label: 'Minimal harness', spec: 'shallowWizard' }].filter(Boolean)}>
+        <Empty title="No datasets yet." actions={[can('data.import') && { label: 'Load trajectories', spec: 'sources', primary: true }, can('capture.local') && { label: 'Capture sessions on this machine', spec: 'capture' }, { label: 'Fixed harnesses', spec: 'shallowCards' }, { label: 'Minimal harness', spec: 'shallowWizard' }].filter(Boolean)}>
           {IS_STATIC ? `This snapshot contains no trajectory sets. You can still design a harness. ${why('data.import', 'Importing')}` : 'data/runs on this machine holds no trajectory sets. Import another harness\'s traces, or capture the coding-agent sessions already on this machine.'}
         </Empty>
       </div>
@@ -60,7 +60,7 @@ function Home({ spec }) {
       <div className="rg-dh rg-home-head">
         <div className="t"><div className="rg-eyebrow">Library · {IS_STATIC ? 'saved snapshot' : 'data/runs'} · {fmt.int(total)} runs</div><h1>Datasets</h1>
           <p>{fmt.plural(all.length, 'trajectory set')}. Recorded agents appear first; scripted mock controls stay labeled. Open a dataset to examine its analysis, then follow a result into its run evidence.</p></div>
-        {!IS_STATIC && <Go spec="sources" className="rg-btn pri lg" el="load-trajectories-cta">Load trajectories</Go>}
+        {can('data.import') && <Go spec="sources" className="rg-btn pri lg" el="load-trajectories-cta">Load trajectories</Go>}
       </div>
       <section className="rg-card rg-home-design" data-fill data-el="harness-workflow" aria-label="Design from the evidence">
         <div className="rg-home-design-t">
