@@ -543,7 +543,7 @@ def main():
         result = {'outcome': 'error', 'reason': 'Offline grading could not validate this workspace.'}
     # Root creates this after the unprivileged process group is terminated.
     dest = args.output / 'grade.json'
-    fd = os.open(dest, os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW, 0o644)
+    fd = os.open(dest, os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW, 0o600)    # root reads it back itself (`cat` in the same container); no other identity needs it
     with os.fdopen(fd, 'w') as stream:
         json.dump(result, stream, sort_keys=True)
         stream.write('\n')

@@ -30,6 +30,7 @@ from typing import Optional
 # changes (this was the third, un-migrated copy repeats.py's own docstring claimed didn't exist).
 from traceharness.core.repeats import THRESHOLD as _REPEAT_THRESHOLD
 from traceharness.core.analysis import is_human_intervened
+from traceharness.core.span_schema import readable_harness
 
 # --------------------------------------------------------------------------- events
 # The sentinel reasons over a normalised event list, so the same code scores a live conversation
@@ -113,6 +114,7 @@ def prefix_features(events: list[dict], harness: dict, tokens_used: int = 0,
                     pending: Optional[list] = None, step: Optional[int] = None) -> dict:
     """Features of the trajectory so far. `pending` = tool calls the model has just requested but the
     harness has not executed yet (this is what lets the hook act *before* a bad submit)."""
+    harness = readable_harness(harness)[0]       # a malformed field of an older recording is ignored, never raised on
     max_steps = max(1, int(harness.get("max_steps") or 20))
     max_tokens = int(harness.get("max_total_tokens") or 0)      # <= 0 means "no token budget" (imported runs)
     steps_seen = (max(e["step"] for e in events) + 1) if events else 0
@@ -450,8 +452,9 @@ def rule_env(f: dict, events: Optional[list] = None, harness: Optional[dict] = N
                                                 and e.get("status") == "ok" and e["step"] > last_test))
         else:   # no event list: fall back to what the features alone can say
             env["edits_since_test"] = float(f.get("n_edits", 0.0)) if not f.get("n_tests") else float(f.get("edited_since_last_test", 0.0))
-    env.setdefault("max_steps", float((harness or {}).get("max_steps") or 0))
-    env.setdefault("harness_policy", str((harness or {}).get("policy") or ""))
+    harness = readable_harness(harness)[0]
+    env.setdefault("max_steps", float(harness.get("max_steps") or 0))
+    env.setdefault("harness_policy", str(harness.get("policy") or ""))
     return env
 
 
@@ -1150,7 +1153,7 @@ def make_hook(sentinel_cfg: dict, model: RiskModel, task_issue: str = "", api_ke
 # --------------------------------------------------------------------------- replay
 def replay(spans: list[dict], model: RiskModel) -> list[dict]:
     """Score a finished run step by step, as the live hook would have seen it."""
-    harness = next((s.get("harness", {}) for s in spans if s.get("span") == "invoke_agent" and s.get("status") == "start"), {})
+    harness = readable_harness(next((s.get("harness", {}) for s in spans if s.get("span") == "invoke_agent" and s.get("status") == "start"), {}))[0]
     events = events_from_spans(spans)
     steps = sorted({e["step"] for e in events})
     tokens, out = 0, []

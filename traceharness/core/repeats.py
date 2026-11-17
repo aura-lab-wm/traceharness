@@ -158,8 +158,9 @@ def _truncated(spans: list[dict], n_calls: int) -> bool:
     complete behaviour."""
     for sp in spans:
         if sp.get("span") == "invoke_agent" and sp.get("status") == "start":
-            max_steps = (sp.get("harness") or {}).get("max_steps")
-            return max_steps is not None and n_calls >= max_steps
+            harness = sp.get("harness")
+            max_steps = harness.get("max_steps") if isinstance(harness, dict) else None
+            return isinstance(max_steps, (int, float)) and not isinstance(max_steps, bool) and n_calls >= max_steps
     return False
 
 

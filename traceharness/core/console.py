@@ -196,7 +196,7 @@ def _load_dir(d: str, preview_chars: int) -> dict:
             spans = load_ledger(d, r["run_id"])
         except FileNotFoundError:
             spans = []
-        if spans and spans[0].get("span") == "invoke_agent" and spans[0].get("harness"):
+        if spans and spans[0].get("span") == "invoke_agent" and isinstance(spans[0].get("harness"), dict) and isinstance(spans[0]["harness"].get("id"), str):
             h = spans[0]["harness"]
             harnesses.setdefault(h["id"], h)
         key = f"{label}/{r['run_id']}"

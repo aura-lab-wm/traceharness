@@ -363,6 +363,45 @@ describe('ExperimentWorkspace consent to run unverified arms', () => {
     expect(plans[1].arms[1].configuration).not.toHaveProperty('unverified_ok')
   })
 
+  it('clears consent when the axes or the snapshots change, so it never moves to another configuration', async () => {
+    const catalog = catalogFixture()
+    const plans = []
+    runnerRequest.mockImplementation((path, options) => {
+      if (path === '/experiments/preflight') {
+        plans.push(options.body.plan)
+        const needy = options.body.plan.arms[0].id
+        return Promise.resolve(options.body.plan.arms[0].configuration.unverified_ok === true ? preflightOk(options.body.plan)
+          : { ok: false, issues: ['Configuration ' + needy + ' did not pass current runner review.'], consent_required: true, consent_arms: [needy] })
+      }
+      return Promise.resolve({ experiments: [] })
+    })
+    render(<ExperimentWorkspace configuration={customConfiguration('Prompt for consent', 1)} catalog={catalog} available lease={{ current: false }} />)
+    await openMatrix()
+    fireEvent.click(screen.getByRole('button', { name: 'Capture current harness' }))
+    fireEvent.click(screen.getByRole('checkbox', { name: 'Select model Model A' }))
+    fireEvent.click(screen.getByRole('checkbox', { name: 'Select model Model B' }))
+    fireEvent.click(screen.getByRole('checkbox', { name: 'Select task Task Alpha' }))
+    const label = 'Run without a receipt on this machine (not verified)'
+    fireEvent.click(screen.getByRole('button', { name: 'Review matrix experiment' }))
+    await screen.findByText(/did not pass current runner review/)
+    fireEvent.click(screen.getByLabelText(label))
+    await screen.findByText(/planned trials/)
+    // an axis change: the next review carries no consent
+    fireEvent.click(screen.getByRole('checkbox', { name: 'Select task Task Beta' }))
+    const before = plans.length
+    fireEvent.click(screen.getByRole('button', { name: 'Review matrix experiment' }))
+    await screen.findByText(/did not pass current runner review/)
+    expect(plans.length).toBe(before + 1)
+    expect(plans.at(-1).arms.some((arm) => Object.hasOwn(arm.configuration, 'unverified_ok'))).toBe(false)
+    expect(screen.getByLabelText(label).checked).toBe(false)
+    // a snapshot replacement: same
+    fireEvent.click(screen.getByLabelText(label))
+    await screen.findByText(/planned trials/)
+    fireEvent.change(screen.getByLabelText('Harness snapshot name'), { target: { value: 'Second snapshot' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Capture current harness' }))
+    expect(screen.queryByLabelText(label)).toBeNull() // consent is gone with the old plan
+  })
+
   it('does not offer the checkbox for receipt-worded issue text without consent_required', async () => {
     const catalog = catalogFixture()
     runnerRequest.mockImplementation((path) => Promise.resolve(path === '/experiments/preflight'

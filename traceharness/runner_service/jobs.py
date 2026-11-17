@@ -20,7 +20,7 @@ from .provider import ProviderError, provider_status
 
 #: Format of what the persistence hook writes (runner/datasets.py). Bump it when that format changes: jobs marked
 #: persisted under an older version are written again before retention may delete them.
-PERSISTED_VERSION = 2
+PERSISTED_VERSION = 3   # 3: hidden_pass only for passed/failed; engine lists and flags; finite-JSON runtime summary; durable parents
 TERMINAL = {"succeeded", "failed", "cancelled", "needs_attention"}
 
 # Only these adapter-authored literals may become pretransport diagnostics.

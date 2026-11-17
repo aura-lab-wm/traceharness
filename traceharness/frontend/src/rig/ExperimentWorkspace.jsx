@@ -347,9 +347,15 @@ export function ExperimentWorkspace({
     return () => window.clearTimeout(timer)
   }, [available, experiment, busy])
 
-  const invalidateAuthoringReview = () => {
+  const invalidateReview = () => {
     reviewGenerationRef.current += 1
     setReview(null)
+  }
+  // Consent is keyed to positional arm ids ("arm-N"); any change to the authoring inputs (snapshots, axes, selected
+  // cells) could make an id name another configuration, so it is cleared and must be given again for the new plan.
+  const invalidateAuthoringReview = () => {
+    invalidateReview()
+    setConsentArms(null)
   }
 
   const handleCaptureSnapshot = () => {
@@ -951,7 +957,7 @@ export function ExperimentWorkspace({
                   checked={consentArms !== null && consentArmsOf(activeReview?.result).every((id) => consentArms.includes(id))}
                   disabled={busy || disabled}
                   onChange={(event) => {
-                    invalidateAuthoringReview()
+                    invalidateReview()
                     if (event.target.checked) {
                       setConsentArms((current) => [...new Set([...(current || []), ...consentArmsOf(activeReview?.result)])])
                       setRereview((count) => count + 1)

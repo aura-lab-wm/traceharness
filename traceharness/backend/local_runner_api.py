@@ -24,6 +24,7 @@ artifact route requires), each pointing at the `app.JOBS` id it started.
 """
 from __future__ import annotations
 
+import logging
 import base64
 import copy
 import hashlib
@@ -452,7 +453,10 @@ async def _existing_submission(runner, raw: dict):
     try:
         job = await run_in_threadpool(jobs.reconcile, "local", key, digest)
     except JobError as error:
-        return _passthrough(error.status, {"error": str(error)})
+        # The refusal's own text stays server-side; the response carries a fixed message per status.
+        logging.getLogger(__name__).warning("experiment/job reconcile refused: %s", error)
+        return _passthrough(error.status, {"error": "This submission conflicts with an existing job."
+                                           if error.status == 409 else "This submission was refused."})
     return None if job is None else _passthrough(200, {"job": job})
 
 
@@ -608,6 +612,8 @@ async def runner_rest(request: Request, rest: str = ""):
     if runner is None:
         raise HTTPException(404, L.NOT_FOUND)
     body = None
+    startable = True
+    minted = None           # a credential handle this request created and the runner may not have taken
     if request.method in ("POST", "PUT", "PATCH", "DELETE"):
         try:
             body = await L.read_json(request)
@@ -617,9 +623,31 @@ async def runner_rest(request: Request, rest: str = ""):
                 _no_secrets(body)
                 if rest.startswith("experiments/") and rest.endswith("/start") and body.get("credential_id") is None:
                     # The catalog says credential_required false, so the console omits the field: resolve
-                    # the Settings key exactly like a single-job submission.
-                    body["credential_id"] = await _handle(runner)
+                    # the Settings key exactly like a single-job submission. The experiment is read first; a
+                    # handle minted for a start that does not proceed (refused, or already running) is released
+                    # below, so refusals never use up the vault's capacity.
+                    current = await _read_runner(runner, "GET", "/api/runner/" + rest[:-len("/start")])
+                    state = ((current[1] or {}).get("experiment") or {}).get("status") if current and isinstance(current[1], dict) else None
+                    startable = current is None or current[0] != 200 or state in ("ready", "paused")
+                    minted = body["credential_id"] = await _handle(runner)
         except L.LibraryError as error:
             raise HTTPException(error.status, error.message) from None
     query = ("?" + request.url.query) if request.url.query else ""
-    return _passthrough(*await runner.call(request.method, "/api/runner/" + rest + query, body))
+    try:
+        status, data = await runner.call(request.method, "/api/runner/" + rest + query, body)
+    except BaseException:
+        await _release(runner, minted)
+        raise
+    if minted is not None and (status >= 400 or not startable):
+        await _release(runner, minted)
+    return _passthrough(status, data)
+
+
+async def _release(runner, handle) -> None:
+    """Drop a credential handle this console minted for a start that did not proceed."""
+    if handle is None:
+        return
+    try:
+        (await runner.app_async()).state.vault.revoke("local", handle)
+    except Exception:
+        pass            # already expired or taken: nothing to release

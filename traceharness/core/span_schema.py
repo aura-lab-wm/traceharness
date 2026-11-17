@@ -86,6 +86,47 @@ def _tool_args(v) -> bool:
     return isinstance(v, dict) and all(isinstance(v[k], str) for k in ("command", "path") if k in v)
 
 
+# Harness fields the readers dereference (backend/sentinel.py prefix_features/rule_env, core/repeats.py, core/console.py):
+# numeric ones go through int()/float(), `tools` is iterated and searched, `policy` is compared.
+_HARNESS_NUMBERS = ("max_steps", "max_total_tokens", "context_window")
+
+
+def _finite_number(v) -> bool:
+    return _num(v) and math.isfinite(v) and abs(v) < 2 ** 53
+
+
+def harness_problems(harness) -> list[str]:
+    """Every harness field the readers cannot take, as short notes; empty when it is fine."""
+    if not isinstance(harness, dict):
+        return ["harness is not an object"]
+    notes = []
+    for name in _HARNESS_NUMBERS:
+        if harness.get(name) is not None and not _finite_number(harness[name]):
+            notes.append(f"harness.{name} is not a finite number")
+    tools = harness.get("tools")
+    if tools is not None and not (isinstance(tools, list) and all(isinstance(t, str) for t in tools)):
+        notes.append("harness.tools is not a list of text")
+    if harness.get("policy") is not None and not isinstance(harness["policy"], str):
+        notes.append("harness.policy is not text")
+    if harness.get("id") is not None and not isinstance(harness["id"], str):
+        notes.append("harness.id is not text")
+    return notes
+
+
+def readable_harness(harness) -> tuple[dict, list[str]]:
+    """(harness the readers can take, notes). A field that fails its check is dropped, never raised on: this is how
+    replay reads a recording stored before the schema checked it."""
+    if not isinstance(harness, dict):
+        return {}, ([] if harness is None else ["harness is not an object: ignored"])
+    bad = {n.split(" ")[0].split(".", 1)[1] for n in harness_problems(harness)}
+    notes = [f"{n}: ignored" for n in harness_problems(harness)]
+    return {k: v for k, v in harness.items() if k not in bad}, notes
+
+
+def _harness_ok(v) -> bool:
+    return isinstance(v, dict) and not harness_problems(v)
+
+
 def _served_by(v) -> bool:
     return v is None or isinstance(v, str) or (isinstance(v, list) and all(isinstance(x, str) for x in v))
 
@@ -100,7 +141,7 @@ _KINDS = {
                           "tests_passed": _bool_or_none, "duration_ms": _num_or_none}),
     "boundary_event": ({"kind": _is_str}, {"tool": _str_or_none, "status": _is_str, "args": _tool_args}),
     "sentinel": ({"step": _step}, {"risk": _num_or_none, "action": _str_or_none, "patterns": lambda v: v is None or isinstance(v, list)}),
-    "invoke_agent": ({"status": _is_str}, {"harness": _is_dict, "exit_reason": _str_or_none, "cost_usd": _num_or_none}),
+    "invoke_agent": ({"status": _is_str}, {"harness": _harness_ok, "exit_reason": _str_or_none, "cost_usd": _num_or_none}),
     "edit": ({}, {"path": _str_or_none, "lines_added": _int_or_none, "lines_removed": _int_or_none, "tool": _str_or_none}),
     "grade": ({}, {"visible": _bool_or_none, "hidden": _bool_or_none, "strong": _bool_or_none, "tests_modified": _bool_or_none}),
     "reprompt": ({}, {"step": _int_or_none, "text": _str_or_none}),
