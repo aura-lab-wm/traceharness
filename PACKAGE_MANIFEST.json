@@ -136,7 +136,7 @@
     {
       "path": "CITATION.cff",
       "bytes": 1535,
-      "sha256": "31d96a930a379bcae242e35ce0aab66b8203714dc63cef3de80fe2766026512b"
+      "sha256": "ff128f86d6385d41e7df0db6f991218282ee9cc6d661d4c8318d4b74c37b5667"
     },
     {
       "path": "Dockerfile",
@@ -151,7 +151,7 @@
     {
       "path": "LAB_1H.md",
       "bytes": 6595,
-      "sha256": "6ae91814db98ba9b2601fc780032ff686f552758b68af2685b020c8fa46248b0"
+      "sha256": "67358323ea57c2496d2449a21bf6cd1c894feb155ada7ebea4799b1eb7c4fd1b"
     },
     {
       "path": "LICENSE",
@@ -166,12 +166,12 @@
     {
       "path": "README.md",
       "bytes": 11485,
-      "sha256": "bb148021254ee3f4d2a5770cba7ed38503d7a3b480de5d2a09e7b0291c000653"
+      "sha256": "522f057f4399aa17fe58ea2f4c9d17ab508d9efca4db2b0d6d1a11acd50dfee4"
     },
     {
       "path": "SCHOOL_PACKAGE.md",
       "bytes": 11485,
-      "sha256": "bb148021254ee3f4d2a5770cba7ed38503d7a3b480de5d2a09e7b0291c000653"
+      "sha256": "522f057f4399aa17fe58ea2f4c9d17ab508d9efca4db2b0d6d1a11acd50dfee4"
     },
     {
       "path": "data/runs/captured_claude_code/imp-claude-code-5a95de19f443/ledger.jsonl",
@@ -61596,7 +61596,7 @@
     {
       "path": "docker-compose.yml",
       "bytes": 1746,
-      "sha256": "51bd427b22c02f42d249f56f6319b1601bfa4a45e9476563f70bdfe6c3f9f2bc"
+      "sha256": "af8f757115c5809dbadb86716a313284679b456b622c54ce0a78b822de2c53bd"
     },
     {
       "path": "docs/CODESPACES.md",
@@ -61605,13 +61605,13 @@
     },
     {
       "path": "docs/GUIDE.md",
-      "bytes": 15123,
-      "sha256": "d703f80a42c93549baa322dd4fbe12dcb4d7dcb3bb20395310eebe20061556a0"
+      "bytes": 19793,
+      "sha256": "7b337d7dddab152719981ce2b570563b26ea0c80adc9672c27374eb5af6e1cec"
     },
     {
       "path": "docs/STUDENT_GUIDE.md",
       "bytes": 46936,
-      "sha256": "20ab2f23fdee3d735bf91df258fcddf06dfa9be46e79e10a350efcb7704194d5"
+      "sha256": "48e49048a72db40e021e148633a26d87ce91a64bc0646f22ef588df7aabf446d"
     },
     {
       "path": "docs/img/guide/compare.png",
@@ -61825,8 +61825,8 @@
     },
     {
       "path": "pyproject.toml",
-      "bytes": 3348,
-      "sha256": "585a26ced5d760545cebf6db2accdcb9b389eecb83efb1f4d028ae5a08144fed"
+      "bytes": 3418,
+      "sha256": "8e33a06c419314c1a10062fea0fe7fb5780fe1675149ab5bac51b963f7e16c0e"
     },
     {
       "path": "requirements.txt",
@@ -61840,13 +61840,13 @@
     },
     {
       "path": "scripts/build_school_package.py",
-      "bytes": 9496,
-      "sha256": "7516f673bf338e01a9bc7e6bd3a923df82db4e3c1444250a6ec99a30b4fbb4b1"
+      "bytes": 10101,
+      "sha256": "357ab9d2d1b25e484cb2429ccd8626771e692a470db51bec05fd323051052e6d"
     },
     {
       "path": "scripts/check_install.py",
       "bytes": 4251,
-      "sha256": "2b560b4ca90ce06bff6e8ca2a05ace16ea3437ff09e56de8f699b65d19d95e8f"
+      "sha256": "d1af19468cdb40ae377347a3fa01f43c9bcc709f1fb297e5520b6b1bfaff5b23"
     },
     {
       "path": "scripts/console_width_check.py",
@@ -61857,6 +61857,11 @@
       "path": "scripts/frontier_batch.py",
       "bytes": 5339,
       "sha256": "9924f012509654182b310a902630c9d5b76140a14ff41a3c3bb1429679243bec"
+    },
+    {
+      "path": "scripts/import_swebench_experiments.py",
+      "bytes": 479,
+      "sha256": "ba66ba0a76ea2d5219cdd0570ab1025709f9ebef591763ac2a7d0dc9c5f4f8a8"
     },
     {
       "path": "scripts/live_run_e2e.py",
@@ -61872,6 +61877,11 @@
       "path": "scripts/publish_public_repo.py",
       "bytes": 4734,
       "sha256": "e6d7bdee07ff72520876d819974a959e4e8f7540b5f59b937795c881be317472"
+    },
+    {
+      "path": "scripts/refresh_hf_catalog.py",
+      "bytes": 11873,
+      "sha256": "672b2ab42c278819f00be0eab2d7d65aad4118d82a1ae31fd02222fe4d35cadf"
     },
     {
       "path": "scripts/release_all.py",
@@ -63209,6 +63219,21 @@
       "sha256": "da2827b7fd581600b594598f8672f271f73cf3630b51419e90410b986b40865d"
     },
     {
+      "path": "tests_agentlab/fixtures/hf/columns.json",
+      "bytes": 1741,
+      "sha256": "4998c95fb0d9906d78bbe6964550dc7ca25c5d87e9691f7c09b5e11e06519b75"
+    },
+    {
+      "path": "tests_agentlab/fixtures/hf/openhands_row.json",
+      "bytes": 4843,
+      "sha256": "cf4ef91442d1e0d37d624409e2a4cc2757a294c8f97182509b6ddbd4be122b87"
+    },
+    {
+      "path": "tests_agentlab/fixtures/hf/smith_rows.json",
+      "bytes": 10897,
+      "sha256": "377ac685eef7e784a0cf21ead76901ece7cd6e9dc9cb90ab0858c7fa05594651"
+    },
+    {
       "path": "tests_agentlab/fixtures/importers/claude_code_session.jsonl",
       "bytes": 4001,
       "sha256": "246be47aa11637435ef6f84bf2c057cbd69c6285693b7c26cdc04b176f471617"
@@ -63289,6 +63314,176 @@
       "sha256": "c333155baecd8451e48a78161706d5511ed2bb696efe972b61a74692d3f9781a"
     },
     {
+      "path": "tests_agentlab/fixtures/importers/swebench_experiments/astropy__astropy-12907_trail_0.txt",
+      "bytes": 3514,
+      "sha256": "f9bb8c94030911d4d276b0fe9b92cd516f7db349053ebb1122683fd1d7abaf9e"
+    },
+    {
+      "path": "tests_agentlab/fixtures/importers/swebench_experiments/astropy__astropy-12907_trail_2.txt",
+      "bytes": 3514,
+      "sha256": "748e8bfb7559c4eb3fc5aeaf1b379cead5ded18eb6e2d20c150cbde90d655081"
+    },
+    {
+      "path": "tests_agentlab/fixtures/importers/swebench_experiments/astropy__astropy-12907_voting.json",
+      "bytes": 5818,
+      "sha256": "719d533dc97794f298a3b93cc61c7c496387996fd1d495a0ee204e1a5e49e40d"
+    },
+    {
+      "path": "tests_agentlab/fixtures/importers/swebench_experiments/autocoderover/astropy__astropy-13033/attempt_0/context_retrieval_agent.json",
+      "bytes": 4750,
+      "sha256": "2b483d04ebd2a2f38b3931a730e8465a4157159756222c6518d9f57189b3d899"
+    },
+    {
+      "path": "tests_agentlab/fixtures/importers/swebench_experiments/autocoderover/astropy__astropy-13033/attempt_0/patch_0.diff",
+      "bytes": 1802,
+      "sha256": "e1e5f1086610ebdc687a584a2f2e10ede2789df8fc5da6d1c099822524c7f761"
+    },
+    {
+      "path": "tests_agentlab/fixtures/importers/swebench_experiments/autocoderover/astropy__astropy-13033/attempt_0/patching_agent.json",
+      "bytes": 2179,
+      "sha256": "41b77dbdbf819b5032981f46452f0b727b405cb2e00ac2c1bb8531a64c6d7500"
+    },
+    {
+      "path": "tests_agentlab/fixtures/importers/swebench_experiments/autocoderover/astropy__astropy-13033/attempt_0/regression_test_result_0.json",
+      "bytes": 35,
+      "sha256": "d5adfe103c625b70fb9cbcac3169e56b99317776ba76d7bbd6f25dd10b0e65f2"
+    },
+    {
+      "path": "tests_agentlab/fixtures/importers/swebench_experiments/autocoderover/astropy__astropy-13033/attempt_0/reproducer_agent.jsonl",
+      "bytes": 4398,
+      "sha256": "ddea598f7043fd131e06ebe5e22239b2d17b298dd5698a8be2b63a712a4c5695"
+    },
+    {
+      "path": "tests_agentlab/fixtures/importers/swebench_experiments/autocoderover/astropy__astropy-13033/attempt_0/review-patch_0-reproducer_1.json",
+      "bytes": 2947,
+      "sha256": "7b3ebc8bbb7b08e01ab56062751222b70b24d9629f4382b501a48ff340e8f28d"
+    },
+    {
+      "path": "tests_agentlab/fixtures/importers/swebench_experiments/autocoderover/astropy__astropy-13033/attempt_0/review-patch_0-reproducer_2.json",
+      "bytes": 2947,
+      "sha256": "d67c1f7cfcc0bf2936ebfb5e0f350a11cb6fdc76dbd0599f9d434cd5923fdece"
+    },
+    {
+      "path": "tests_agentlab/fixtures/importers/swebench_experiments/autocoderover/astropy__astropy-13033/attempt_1/context_retrieval_agent.json",
+      "bytes": 4254,
+      "sha256": "ba8a415497444e35e1249f2c5b3a093dec958aed310519d869e31793c6fd9ddb"
+    },
+    {
+      "path": "tests_agentlab/fixtures/importers/swebench_experiments/autocoderover/astropy__astropy-13033/attempt_1/patch_0.diff",
+      "bytes": 1210,
+      "sha256": "c758992152af1020235cf59c1369198abb074372080e3570ac52e127dee562a1"
+    },
+    {
+      "path": "tests_agentlab/fixtures/importers/swebench_experiments/autocoderover/astropy__astropy-13033/attempt_1/patching_agent.json",
+      "bytes": 2179,
+      "sha256": "01e35590fb58ac28445dbaaf7f13a4b7e1c9cc5cd4555a13bff3d2421f1fa048"
+    },
+    {
+      "path": "tests_agentlab/fixtures/importers/swebench_experiments/autocoderover/astropy__astropy-13033/attempt_1/regression_test_result_0.json",
+      "bytes": 35,
+      "sha256": "d5adfe103c625b70fb9cbcac3169e56b99317776ba76d7bbd6f25dd10b0e65f2"
+    },
+    {
+      "path": "tests_agentlab/fixtures/importers/swebench_experiments/autocoderover/astropy__astropy-13033/attempt_1/reproducer_agent.jsonl",
+      "bytes": 4413,
+      "sha256": "8248ab5627f44e5b57ea529d55f3562873696fc8d20ec135e5dfa067f7f19bb7"
+    },
+    {
+      "path": "tests_agentlab/fixtures/importers/swebench_experiments/autocoderover/astropy__astropy-13033/attempt_1/review-patch_0-reproducer_1.json",
+      "bytes": 2947,
+      "sha256": "8e329cbeeffab2f6697dfdfdc96c9012b7f2726666ede6bf7aaccb6d2b757670"
+    },
+    {
+      "path": "tests_agentlab/fixtures/importers/swebench_experiments/autocoderover/astropy__astropy-13033/attempt_1/review-patch_0-reproducer_2.json",
+      "bytes": 2946,
+      "sha256": "a13b6b5c28e8ffdb3db9543b8b9d057d31908d34685849ea7c65d41fcfb75a0a"
+    },
+    {
+      "path": "tests_agentlab/fixtures/importers/swebench_experiments/autocoderover/astropy__astropy-13033/attempt_1/review-patch_0-reproducer_3.json",
+      "bytes": 2946,
+      "sha256": "92ef399bc8b4ad119d3cc85251046c2bb0cfd69b646ebb5c9befa338ac439a94"
+    },
+    {
+      "path": "tests_agentlab/fixtures/importers/swebench_experiments/autocoderover/astropy__astropy-13033/attempt_1/review-patch_0-reproducer_4.json",
+      "bytes": 2946,
+      "sha256": "6e3ece3bf6f22b885d570f8a143a6f3fceac0a41ae1a31c26d72a12299007bbd"
+    },
+    {
+      "path": "tests_agentlab/fixtures/importers/swebench_experiments/autocoderover/astropy__astropy-13033/attempt_2/context_retrieval_agent.json",
+      "bytes": 4556,
+      "sha256": "6f0459800415033a2ba75a5edc015489e86613bea41cb28e46975d2d7af45c7f"
+    },
+    {
+      "path": "tests_agentlab/fixtures/importers/swebench_experiments/autocoderover/astropy__astropy-13033/attempt_2/patch_0.diff",
+      "bytes": 1880,
+      "sha256": "2d2f302205ba030d44786a786f4a613e1e4689b7f7c467eb8abf1997ff78983a"
+    },
+    {
+      "path": "tests_agentlab/fixtures/importers/swebench_experiments/autocoderover/astropy__astropy-13033/attempt_2/patching_agent.json",
+      "bytes": 2181,
+      "sha256": "bdef1d509df2535b5fa1fe8aaf02d19ebf6434b6af62f6bf26c38dea96b929d1"
+    },
+    {
+      "path": "tests_agentlab/fixtures/importers/swebench_experiments/autocoderover/astropy__astropy-13033/attempt_2/regression_test_result_0.json",
+      "bytes": 35,
+      "sha256": "d5adfe103c625b70fb9cbcac3169e56b99317776ba76d7bbd6f25dd10b0e65f2"
+    },
+    {
+      "path": "tests_agentlab/fixtures/importers/swebench_experiments/autocoderover/astropy__astropy-13033/attempt_2/reproducer_agent.jsonl",
+      "bytes": 4471,
+      "sha256": "1653ddd9f3eeae53df3ec7a3be5607de2fb3d8cdf38f391b1f1282f09c9637b6"
+    },
+    {
+      "path": "tests_agentlab/fixtures/importers/swebench_experiments/autocoderover/astropy__astropy-13033/attempt_2/review-patch_0-reproducer_1.json",
+      "bytes": 2947,
+      "sha256": "7ea3ca177319c831761d35a19ef80480cadc29a883aec7d59e210d2ddee6dd2b"
+    },
+    {
+      "path": "tests_agentlab/fixtures/importers/swebench_experiments/autocoderover/astropy__astropy-13033/selected_patch.json",
+      "bytes": 722,
+      "sha256": "3d03820548e0e3c6b5059c2812345f3ab6b35147824172bdc55d69acf410bbed"
+    },
+    {
+      "path": "tests_agentlab/fixtures/importers/swebench_experiments/composio_traj.json",
+      "bytes": 10748,
+      "sha256": "972eaba948ee3488487c8406572fd414aa68bdbef2e686bdfa863ed9001009a0"
+    },
+    {
+      "path": "tests_agentlab/fixtures/importers/swebench_experiments/enginelabs.json",
+      "bytes": 9050,
+      "sha256": "10f5fde0a42c44b3266f13d80f40aeff26d9d963180fc6f1809641b01251cb3e"
+    },
+    {
+      "path": "tests_agentlab/fixtures/importers/swebench_experiments/epam_astropy__astropy-12907.traj",
+      "bytes": 1986,
+      "sha256": "03a2b131addd53aca6e0b8cb9a2543c339d59cbe00f55f2c83dd2ada56711e70"
+    },
+    {
+      "path": "tests_agentlab/fixtures/importers/swebench_experiments/learn_by_interact.json",
+      "bytes": 834,
+      "sha256": "ebb9c7fbf448c61791e5f82b8dd78fe28f0bf55d2e9751d8d7e132fde68a7f01"
+    },
+    {
+      "path": "tests_agentlab/fixtures/importers/swebench_experiments/openhands_flat_devstral.json",
+      "bytes": 19233,
+      "sha256": "6829f213628d167702a393264735c85ddfe1d9c750083a43ac23e5ec2d61fbdc"
+    },
+    {
+      "path": "tests_agentlab/fixtures/importers/swebench_experiments/openhands_flat_opus.json",
+      "bytes": 4595,
+      "sha256": "4a3e3da05c26d6e2e75d82b67fc891121cee24a093722e090ddf3a9a82a74af9"
+    },
+    {
+      "path": "tests_agentlab/fixtures/importers/swebench_experiments/openhands_messages.json",
+      "bytes": 11918,
+      "sha256": "2d73b36174bb19eabb89ff911954f7c78daa7d711ab8c2677369866e7c3d3567"
+    },
+    {
+      "path": "tests_agentlab/fixtures/importers/swebench_experiments/tools.log",
+      "bytes": 3000,
+      "sha256": "5a51f4193c17b2ad4e31dd036ceac5e64b5c7ec10e81109e611df3967dd33902"
+    },
+    {
       "path": "tests_agentlab/fixtures/importers/tiny_swe.eval",
       "bytes": 9363,
       "sha256": "2094283895835618f841139951a5d75abb166e5b0b32d7bf16f55b301e2cd514"
@@ -63307,6 +63502,11 @@
       "path": "tests_agentlab/fixtures/importers/zcode/schema.sql",
       "bytes": 8491,
       "sha256": "2bec9be8590577d5dd646bd375cb30cbef6756a2c8ca9af79a8d0216c8a8bfe8"
+    },
+    {
+      "path": "tests_agentlab/hf_fake.py",
+      "bytes": 4621,
+      "sha256": "56f63dd3db96b0d1081821da7fa890d30dd8d6b2aacab771bbf9aaa69972dcb6"
     },
     {
       "path": "tests_agentlab/live_fixtures.py",
@@ -63744,6 +63944,66 @@
       "sha256": "eb0d4caf2a53c63cdd1aa10309f6d248131d52f3dc5b2d1c1c50f33305937796"
     },
     {
+      "path": "tests_agentlab/test_hf_api.py",
+      "bytes": 2770,
+      "sha256": "9f2729c86f84b14c37a7c1901127f9a8bfae94e56b0bf2f2e0634755f3e319e3"
+    },
+    {
+      "path": "tests_agentlab/test_hf_catalog.py",
+      "bytes": 11630,
+      "sha256": "c91bdaf8e9329281b5fe8e7d169b9aef5888db62798c89e5681956272da0c1c1"
+    },
+    {
+      "path": "tests_agentlab/test_hf_cli.py",
+      "bytes": 2529,
+      "sha256": "b525748942f5bebe1a0304aedd9fb7694b1d140e69909f2542d835cd879875bd"
+    },
+    {
+      "path": "tests_agentlab/test_hf_fetch.py",
+      "bytes": 9607,
+      "sha256": "37b552f24584f7f9e6617465660f08669795716f04188e322ea444163d7475b8"
+    },
+    {
+      "path": "tests_agentlab/test_hf_fetch_transport.py",
+      "bytes": 4264,
+      "sha256": "70238b63137a6203887788cd538a8fc6bab852d9c56100f1cf7b38c447704d12"
+    },
+    {
+      "path": "tests_agentlab/test_hf_import.py",
+      "bytes": 15828,
+      "sha256": "d6e6af7f9dfd7a53f095aa4b0c805f4226892be6647706e7659a2885b4837614"
+    },
+    {
+      "path": "tests_agentlab/test_hf_import_fidelity.py",
+      "bytes": 9052,
+      "sha256": "b65cf6fb2f4998616183fcc426891f324078875b8188b94703ec7333faa09e09"
+    },
+    {
+      "path": "tests_agentlab/test_hf_import_security.py",
+      "bytes": 11910,
+      "sha256": "757279b9e6c0d99740851e5cc1130e7cd9699a59fd6393ebc40b78e034cbc946"
+    },
+    {
+      "path": "tests_agentlab/test_hf_license_rule.py",
+      "bytes": 1302,
+      "sha256": "01becfa694183488bc0b4983daadb0a9aae46528e6abb3edef0a3f4b3621e420"
+    },
+    {
+      "path": "tests_agentlab/test_hf_preview_guard.py",
+      "bytes": 2521,
+      "sha256": "964d61f6710666c2ef2a996263301142b2bfde8950a14c51a32ab960c73a2cca"
+    },
+    {
+      "path": "tests_agentlab/test_hf_recommend_link.py",
+      "bytes": 4707,
+      "sha256": "632dd1bc7d5bab5a43e02814732618ef8f0f7e5fc7ef8c09beea3a06f02ecd12"
+    },
+    {
+      "path": "tests_agentlab/test_hf_source.py",
+      "bytes": 12101,
+      "sha256": "17ae4796985e8f97a869dd84fe6347070955ac48305b56294f5f410664b1a744"
+    },
+    {
       "path": "tests_agentlab/test_hold_inspect.py",
       "bytes": 12734,
       "sha256": "39a0ccb97ec50f5fdd1adf85b439d0816eb4d7dc798131a1cac7c8795e6f6a54"
@@ -63757,6 +64017,11 @@
       "path": "tests_agentlab/test_import_privacy.py",
       "bytes": 5083,
       "sha256": "d7e04076ed87858875ec73c875121ceaaa5590d10f098498904de5a6e03fac39"
+    },
+    {
+      "path": "tests_agentlab/test_import_swebench.py",
+      "bytes": 38247,
+      "sha256": "c1dcca7d609ce9071c584753bb0e6ac2d00f58ccdb1c74d3e8c202762d6aabec"
     },
     {
       "path": "tests_agentlab/test_importer_agy.py",
@@ -63929,6 +64194,26 @@
       "sha256": "396942ba0724a8341a23d72fa6d0bc6a8ecf766f91fa70df86ec1f465ff16826"
     },
     {
+      "path": "tests_agentlab/test_recommend.py",
+      "bytes": 25429,
+      "sha256": "2b6ad08ce1928d0c5ad1fdff3a1871245bcbb3583c8bc9a189b49d4bcae2e9f3"
+    },
+    {
+      "path": "tests_agentlab/test_recommend_api.py",
+      "bytes": 5655,
+      "sha256": "be3e7b272af1bae56621e9197200746d46eac88ab3860282344a3f958760ef35"
+    },
+    {
+      "path": "tests_agentlab/test_recommend_evidence.py",
+      "bytes": 8524,
+      "sha256": "15eb69759b95c28b233377a352fe7c13b36c18d812f16b0fa869a49635231449"
+    },
+    {
+      "path": "tests_agentlab/test_recommend_review.py",
+      "bytes": 13535,
+      "sha256": "8a5f5388253e526780286a0565930a5d6cfaa2cd8efc861f823d34ff641f5970"
+    },
+    {
       "path": "tests_agentlab/test_release_all.py",
       "bytes": 10164,
       "sha256": "bd9ccedf007df8a370011b8520e51c96b824d6e9c843f71b6e073b79ca139755"
@@ -64035,8 +64320,8 @@
     },
     {
       "path": "tests_agentlab/test_static_export_coverage.py",
-      "bytes": 13592,
-      "sha256": "18de99769ed125f72bff13870c79f5a03a2faae40150e9bb01287100273ea6f0"
+      "bytes": 14174,
+      "sha256": "c90634890bcfc5f8ad4b37f82b310ddff3e87a100ede3059ca1428d3c7a30d5d"
     },
     {
       "path": "tests_agentlab/test_static_export_generation.py",
@@ -64105,8 +64390,8 @@
     },
     {
       "path": "traceharness/__main__.py",
-      "bytes": 48414,
-      "sha256": "25aff34f2314d87dc11a31b25c9edb64c007bc26cf6cc126ce40c7648ff06d36"
+      "bytes": 48895,
+      "sha256": "06a2778bd39e88990840cd1654e62d37c25429193e5e88143636cf729d44a494"
     },
     {
       "path": "traceharness/agents/Dockerfile",
@@ -64150,8 +64435,8 @@
     },
     {
       "path": "traceharness/backend/app.py",
-      "bytes": 47185,
-      "sha256": "191f600c7742f9f712bcb80e028054a7a28e49ab5be074e665cb48e0d40307ae"
+      "bytes": 47386,
+      "sha256": "26992a512ec6af0ddbdd3d4363f3a4449e1800719dcb955a176049920fea49c1"
     },
     {
       "path": "traceharness/backend/assist.py",
@@ -64217,6 +64502,11 @@
       "path": "traceharness/backend/harness_tools.py",
       "bytes": 48772,
       "sha256": "ab884659d712e7004af2ddf4094387a365bf081de595050f1eedf8d680bf2ddc"
+    },
+    {
+      "path": "traceharness/backend/hf_api.py",
+      "bytes": 6322,
+      "sha256": "94b81e30e43d1b5766eccdbb504c44d825737de9134d33a9e67aca7c862360d1"
     },
     {
       "path": "traceharness/backend/importers/__init__.py",
@@ -64290,8 +64580,8 @@
     },
     {
       "path": "traceharness/backend/importers/routes.py",
-      "bytes": 6772,
-      "sha256": "f13ee07686737682662d30149fe46735cf1325c0de8c960f27ba82c0d9d1c30d"
+      "bytes": 8991,
+      "sha256": "003765e3a8641dcbf58b63cb75b06bfd826985d650abba4a93738f7965435230"
     },
     {
       "path": "traceharness/backend/importers/swe_agent.py",
@@ -64364,6 +64654,11 @@
       "sha256": "71a606947fad054921aac31f4593742380b82dc21c7cd71a89920fab4ebc7470"
     },
     {
+      "path": "traceharness/backend/recommend_api.py",
+      "bytes": 2311,
+      "sha256": "630cee9f52955facf49d27034ec2ddc07fe6a07f21c04658e817b7743d2ca1f7"
+    },
+    {
       "path": "traceharness/backend/remote_link.py",
       "bytes": 33178,
       "sha256": "dd4019e14140ed0866ad3c9ce0cc00ee947da083ed1df8410fd143e7e3c672d9"
@@ -64375,8 +64670,8 @@
     },
     {
       "path": "traceharness/backend/results_scope.py",
-      "bytes": 3103,
-      "sha256": "f65e8970de1ed23157f0b6082a25fcb4418fe0beebe1d856dab2b9510b646753"
+      "bytes": 4027,
+      "sha256": "c6d018f5dc79f016a59bedfbaf25b8d348bb33cc570a41919797b9eafe6d99fe"
     },
     {
       "path": "traceharness/backend/safe_paths.py",
@@ -64405,8 +64700,8 @@
     },
     {
       "path": "traceharness/backend/static_export.py",
-      "bytes": 29025,
-      "sha256": "02e1f5af73e849832dfc6c7ce51f8626e6196d6aa553aa9dea1ee52873875465"
+      "bytes": 29449,
+      "sha256": "1d3f2a2fb4156556f6658b8d3e9c490ad26dddf8dadd3aeec93c91cc7e8dc559"
     },
     {
       "path": "traceharness/backend/store.py",
@@ -64511,7 +64806,7 @@
     {
       "path": "traceharness/capture/remote.py",
       "bytes": 12554,
-      "sha256": "739c256a54bde8088a3d01a41122a2d06524b82994ab90128f5f74e81f43ce89"
+      "sha256": "2751f66bef6d00597b8d9916575ce1bdb5d01a9a77531cf665172ea390cceab5"
     },
     {
       "path": "traceharness/capture/sniffer.py",
@@ -64527,6 +64822,46 @@
       "path": "traceharness/capture/writer.py",
       "bytes": 15705,
       "sha256": "4c1a3d9120072d1c4638bf13800719b05edf7ea06bcbacc663b5a5cd40ca19fc"
+    },
+    {
+      "path": "traceharness/catalog/__init__.py",
+      "bytes": 81,
+      "sha256": "db5b4ec16be0204b578fb83325be2c8b40b8be82a3f8c8570ce023ebda28b5c2"
+    },
+    {
+      "path": "traceharness/catalog/evidence.py",
+      "bytes": 14414,
+      "sha256": "5bd70b30a06e0790d7b4af6698ee75d0de809484afa262bba15ac5cb8c443dae"
+    },
+    {
+      "path": "traceharness/catalog/hf.py",
+      "bytes": 9271,
+      "sha256": "b8fa5c9dbefe1ec799d79d68148b248d9ae90311db920d6b970c37caf5cd5769"
+    },
+    {
+      "path": "traceharness/catalog/hf_datasets.json",
+      "bytes": 18816,
+      "sha256": "d7548956aff30acc4901d1466a489c89c0af5ab67b445ddcd0a42d3af9643ce7"
+    },
+    {
+      "path": "traceharness/catalog/hf_fetch.py",
+      "bytes": 16147,
+      "sha256": "25842f43c01329d2b10a9809c6f2bf57b8c2dbdd39331564510ca5bb557242f0"
+    },
+    {
+      "path": "traceharness/catalog/hf_import.py",
+      "bytes": 19403,
+      "sha256": "b8a5a9afa2a86737faa707cc809bd66193f9218f2238e0e8a930b37200e9a3d8"
+    },
+    {
+      "path": "traceharness/catalog/recommend.py",
+      "bytes": 25788,
+      "sha256": "331cd0bb5cda1225b3f6b830f8ecee93f1622075262b29502f816dc6162e0d9e"
+    },
+    {
+      "path": "traceharness/catalog/recommend_rules.json",
+      "bytes": 10253,
+      "sha256": "47bd34986bab8e4664f5af47c36f205258c33ab83663bc2a610dac25b4bda0ba"
     },
     {
       "path": "traceharness/core/__init__.py",
@@ -64620,8 +64955,8 @@
     },
     {
       "path": "traceharness/core/real_traj.py",
-      "bytes": 17376,
-      "sha256": "85d9cb307db69fa922a80e8c3c313e7f07b2b061f661b9b733202856f7936f57"
+      "bytes": 17942,
+      "sha256": "ca7af8c00d429c62572d1a753ef50fd893fb09cc2fc3a59dbc0b796643f64d97"
     },
     {
       "path": "traceharness/core/repeats.py",
@@ -64674,19 +65009,19 @@
       "sha256": "f70f2d9d8d9a9cd7c3211a6216cfe90c345581b375435dad7ba7f5a17f97f276"
     },
     {
-      "path": "traceharness/frontend/dist/assets/index-C2WtN-ft.js",
-      "bytes": 2237215,
-      "sha256": "d74f9ddf8e1ae9af84818e39b267b7d81b70c142105c8a3519b63e644a6daa73"
+      "path": "traceharness/frontend/dist/assets/index-C6xVgPE5.css",
+      "bytes": 451638,
+      "sha256": "15dab6403ab0e107b1ca58b297efd639699c4760897b035dd22ca10d8fc54ed1"
     },
     {
-      "path": "traceharness/frontend/dist/assets/index-DdfNWFMF.css",
-      "bytes": 446926,
-      "sha256": "be6784f05997434465e4d11bbf96e3f9029e1bd279cff11d8f614ea397d6605c"
+      "path": "traceharness/frontend/dist/assets/index-TJSD1xVe.js",
+      "bytes": 2260134,
+      "sha256": "a3012f025517b55cbc6d1901e5ecfb66156f95fe2d2bba515b1a19c889fb4acb"
     },
     {
       "path": "traceharness/frontend/dist/build-source.json",
       "bytes": 97,
-      "sha256": "7ef9695d1c448f12e0a84a45e73bcd5824310f9fb67bc0e44ffc5a90742c6efe"
+      "sha256": "57403f86f853b3095ba4d988089f4bf5b94ad0dfe6117bba3386ab0aff35580b"
     },
     {
       "path": "traceharness/frontend/dist/design-directions/README.md",
@@ -64771,7 +65106,7 @@
     {
       "path": "traceharness/frontend/dist/index.html",
       "bytes": 4301,
-      "sha256": "939d0eacd953c5a5a32b767cdb1182bf9fb1c43d7537b3bc36117027514b74e4"
+      "sha256": "dba53700e27cf3ea667dd719c9fa1c7977f9599c599ec77ce9f69014582e058a"
     },
     {
       "path": "traceharness/frontend/index.html",
@@ -64944,6 +65279,16 @@
       "sha256": "b40e8b04ee84d6f7f7ea008c597f326a3b51bd511eaa3283623a876a3f8da838"
     },
     {
+      "path": "traceharness/frontend/src/hf-api.js",
+      "bytes": 2931,
+      "sha256": "e3b6680e6fa765226bad03111e79fc0630890daa914ee58eb2a2ef5edd96e965"
+    },
+    {
+      "path": "traceharness/frontend/src/hf-api.test.js",
+      "bytes": 2625,
+      "sha256": "383e0199164b9a43c421811d67ec63aeedb1ff4dd2156c4775d869363136529e"
+    },
+    {
       "path": "traceharness/frontend/src/index.css",
       "bytes": 50097,
       "sha256": "a2f461532200e0b8877f396713e9527b9e124c25aae1db1e622e9026aa7f0267"
@@ -65104,6 +65449,26 @@
       "sha256": "8c1483a6d58d603d458edd8174a879e95ccda69babf71049f714a4bf09d12ed5"
     },
     {
+      "path": "traceharness/frontend/src/rig/HuggingFaceSource.dom.test.jsx",
+      "bytes": 11151,
+      "sha256": "c3c86be3134e920d4205d8e8218c28b648d05c3e58067078edaf8c9ab9766713"
+    },
+    {
+      "path": "traceharness/frontend/src/rig/HuggingFaceSource.export.dom.test.jsx",
+      "bytes": 1978,
+      "sha256": "fd26fc51a47ac7683b3bf0fc66743aa9a6fa75f66153aae2c0cddc8d25deb218"
+    },
+    {
+      "path": "traceharness/frontend/src/rig/HuggingFaceSource.jsx",
+      "bytes": 10695,
+      "sha256": "ddd5a77cd9fd3e76ee75c0e7c87124a4383f4004640e759bfbe5fcf2390f7e5c"
+    },
+    {
+      "path": "traceharness/frontend/src/rig/HuggingFaceSource.member.dom.test.jsx",
+      "bytes": 1270,
+      "sha256": "c84b72f75e0343976f59e9285e9dbf7b6a6371e89e5666d1a68f56fa8c41447a"
+    },
+    {
       "path": "traceharness/frontend/src/rig/MemberCapture.dom.test.jsx",
       "bytes": 12757,
       "sha256": "963e4c6d201abb5f55128b1f75de09767e6e6f72e488e154b321db44d0aabf2e"
@@ -65195,8 +65560,8 @@
     },
     {
       "path": "traceharness/frontend/src/rig/RigApp.jsx",
-      "bytes": 69867,
-      "sha256": "ef440fc9f80844cf4a473e5eeea04d986f6f282661482d219ad9b2bf4bd29471"
+      "bytes": 69997,
+      "sha256": "ab4cd73c8b353fc6ec65be59f9a23b969ea1413d353c1f973c50b90083679af9"
     },
     {
       "path": "traceharness/frontend/src/rig/answers.js",
@@ -65400,8 +65765,8 @@
     },
     {
       "path": "traceharness/frontend/src/rig/modes.parity.test.jsx",
-      "bytes": 7457,
-      "sha256": "ea2cffcbc27ae369e6fef8c930c3c801d8a40653e2cbe565c2b5a8291f194f14"
+      "bytes": 7481,
+      "sha256": "e888452d1ae99de1e03ff86b0dc21f32880068c5a8d69ff08ccd64494f5f2c9d"
     },
     {
       "path": "traceharness/frontend/src/rig/native/audit.js",
@@ -65725,8 +66090,8 @@
     },
     {
       "path": "traceharness/frontend/src/rig/registry.js",
-      "bytes": 5264,
-      "sha256": "41bd12bfd5fa5559ca73dc856b785de8e98469f28953d2e94f5a9375b4280c00"
+      "bytes": 5357,
+      "sha256": "0c67f8944b3dd9d3f6c5ee6045c3fb7ec344b86885b6e1a089b2960a0e9dc090"
     },
     {
       "path": "traceharness/frontend/src/rig/registry.test.js",
@@ -65984,6 +66349,31 @@
       "sha256": "3c78b87ae70736f8925895d6b5da2377c544ced3e73e29d0d0336469f1ce2b5c"
     },
     {
+      "path": "traceharness/frontend/src/rig/views/recommend.css",
+      "bytes": 4706,
+      "sha256": "5166973a7cdeac121785bb707bc26e758953e73111ad0c785eb47239c8b88ae3"
+    },
+    {
+      "path": "traceharness/frontend/src/rig/views/recommend.dom.test.jsx",
+      "bytes": 13182,
+      "sha256": "5e6f4bc6925e663764ba6eaf2cf37dd629491c09414c71dafc9f1c770816c92c"
+    },
+    {
+      "path": "traceharness/frontend/src/rig/views/recommend.export.dom.test.jsx",
+      "bytes": 1035,
+      "sha256": "95c1ddfed78981b10e642e6b9b79e00b521cf9934badbbbab84ad51de826098a"
+    },
+    {
+      "path": "traceharness/frontend/src/rig/views/recommend.jsx",
+      "bytes": 14300,
+      "sha256": "a4251cbf00736e0baac526e3c09e123b8a209179348e6a3af10bc544f1053b32"
+    },
+    {
+      "path": "traceharness/frontend/src/rig/views/recommend.member.dom.test.jsx",
+      "bytes": 1168,
+      "sha256": "d4aabba8a517bc49e3dd4e48ca291761952dfbcc2e75d0367d1c8b21bb3ffb97"
+    },
+    {
       "path": "traceharness/frontend/src/rig/views/shallow-apply.jsx",
       "bytes": 4993,
       "sha256": "be97e9afee3d1b3b9c3f558e2904ab27e28e0fabcf92411139045aa8de839485"
@@ -66050,18 +66440,18 @@
     },
     {
       "path": "traceharness/frontend/src/rig/views/workspace.css",
-      "bytes": 26509,
-      "sha256": "2318057cd1c4b259858880119efc4d7c891868a2f3550b053509e4991694af7c"
+      "bytes": 27076,
+      "sha256": "0b6a9fd48054737d99cd116eaa8552f23c5cbf37b48ef560efa0253ea8951daa"
     },
     {
       "path": "traceharness/frontend/src/rig/views/workspace.dom.test.jsx",
-      "bytes": 41791,
-      "sha256": "f58888c640a06a296880ac1463cb5ebc0d3acb6e9f97be6607f78ac33f8539ff"
+      "bytes": 42447,
+      "sha256": "be52deb16e5020cb503c374666c4f5c3968d50226af7155a8973a1b0df7125c8"
     },
     {
       "path": "traceharness/frontend/src/rig/views/workspace.jsx",
-      "bytes": 126700,
-      "sha256": "c29ccdc100081d778a59063ab9549d6964bf2fae6e98a2feff014ae46a4bf2d3"
+      "bytes": 126917,
+      "sha256": "f4bd7ef3ca35dcb7098fe689377d2648e4fefcdbec85df7b70e0f9068776161c"
     },
     {
       "path": "traceharness/frontend/src/runner-api.js",
@@ -66096,7 +66486,7 @@
     {
       "path": "traceharness/frontend/src/shared/shared-sources.json",
       "bytes": 16402,
-      "sha256": "47c65feb766e61ce056f978efa8017de05a437c9878e85bdf397eb84d6eafff7"
+      "sha256": "c83cde9c8d13b34c8f15a3cb7264d5a960c63dc5febb7239d8a32ebf9853f504"
     },
     {
       "path": "traceharness/frontend/src/shared/shared-sources.test.js",
@@ -66192,6 +66582,11 @@
       "path": "traceharness/frontend/vite.config.js",
       "bytes": 2275,
       "sha256": "6a7dd70e70f48df62609b59c1bf9394a5497da78fbe9580ecc1e1bd3191bc872"
+    },
+    {
+      "path": "traceharness/importers_swebench.py",
+      "bytes": 99924,
+      "sha256": "d7d9ac8822f8c5acef6a736ff1bc96a0b9743d89f8679758c0937330dd0966f2"
     },
     {
       "path": "traceharness/plugins/blind_flailing.rule.json",
@@ -66386,12 +66781,12 @@
     {
       "path": "traceharness/shared/shared-sources.json",
       "bytes": 16402,
-      "sha256": "47c65feb766e61ce056f978efa8017de05a437c9878e85bdf397eb84d6eafff7"
+      "sha256": "c83cde9c8d13b34c8f15a3cb7264d5a960c63dc5febb7239d8a32ebf9853f504"
     },
     {
       "path": "traceharness/shared/versions.py",
       "bytes": 2507,
-      "sha256": "b176e3111d4ccd75e8da07ad5fb30176eead7fad16caf39a643c3ea3c00c5907"
+      "sha256": "595794c8ca3db5d850f3b133866289aab92d075dca4fb899162350b2f30b8f4c"
     },
     {
       "path": "traceharness/shared/vocabulary.py",
