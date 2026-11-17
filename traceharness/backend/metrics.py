@@ -1,7 +1,7 @@
 """Analysis endpoints' logic: everything the exercises compute, as JSON-ready dicts.
 Reuses traceharness.core.analysis so the platform and the CLI exercises never disagree."""
 from __future__ import annotations
-import difflib, json, math, os, re, time
+import difflib, json, math, os, re
 from collections import Counter, defaultdict
 
 from traceharness.core.analysis import (unattended_only, exclude_human, load_index, filter_rows, task_table, aggregate, bootstrap_ci, paired_bootstrap, flip_rate,
@@ -14,6 +14,9 @@ from traceharness.core.real_traj import ledger_rows_as_features
 from traceharness.core import patterns as P
 from traceharness.core.reportcard import build_card, card_markdown, added_lines, similarity
 
+from traceharness.shared.contract import availability
+
+from .dataset_dates import dataset_updated
 from .paths import LAB_ROOT, RUNS_ROOT   # checkout or installed wheel
 from .results_scope import count_runs, list_results_dirs
 
@@ -40,16 +43,18 @@ def _clean(x):
 def results_dirs() -> list[dict]:
     out = []
     for name in list_results_dirs(RUNS_ROOT):
-        idx = os.path.join(_rd(name), "index.jsonl")
         rows = load_index(_rd(name))
         known = [r["hidden_pass"] for r in exclude_human(rows) if isinstance(r.get("hidden_pass"), bool)]   # an aggregate: unattended runs only
+        # when the runs happened (SPEC 4.7), never the file's mtime, which a clone or a copy resets
+        updated, updated_source = dataset_updated(rows)
         out.append({"name": name, "runs": len(rows),
                     "harnesses": sorted({r["harness_id"] for r in rows}),
                     "models": sorted({r["model"] for r in rows}),
                     "model_runs": dict(sorted(Counter(r["model"] for r in rows).items())),
                     "tasks": sorted({r["task_id"] for r in rows}),
                     "pass_rate": mean(float(verdict) for verdict in known) if known else None,
-                    "updated": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime(os.path.getmtime(idx)))})
+                    "updated": updated, "updated_source": updated_source,
+                    "availability": availability(name)})
     return _clean(out)
 
 
