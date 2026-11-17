@@ -269,3 +269,21 @@ it('round-trips an explicit output cap and preserves legacy configuration shape 
     expect(() => parseConfiguration(JSON.stringify(value))).toThrow('Output token cap')
   }
 })
+
+describe('consent to run without a receipt', () => {
+  it('is never in a configuration unless the state carries it, and never restored from a draft', () => {
+    expect(config()).not.toHaveProperty('unverified_ok')
+    expect(configurationFor(state({ unverified_ok: false }), {})).not.toHaveProperty('unverified_ok')
+    expect(configurationFor(state({ unverified_ok: true }), {}).unverified_ok).toBe(true)
+    expect(initialComposer([]).unverified_ok).toBe(false)
+  })
+  it('round-trips through export and import, and rejects a non-boolean', () => {
+    const withConsent = configurationFor(state({ unverified_ok: true }), {})
+    const parsed = parseConfiguration(configurationText(withConsent))
+    expect(parsed.unverified_ok).toBe(true)
+    expect(applyConfiguration(state(), parsed).state.unverified_ok).toBe(true)
+    expect(applyConfiguration(state({ unverified_ok: true }), config()).state.unverified_ok).toBe(false)
+    expect(() => parse({ ...config(), unverified_ok: 'yes' })).toThrow('unverified_ok must be true or false')
+    expect(() => parse({ ...config(), extra: true })).toThrow()
+  })
+})

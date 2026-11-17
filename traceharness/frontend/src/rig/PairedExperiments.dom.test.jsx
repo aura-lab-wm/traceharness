@@ -39,6 +39,27 @@ it('reviews and freezes a captured plan without connecting credentials or launch
   expect(body.plan.arms).toHaveLength(2)
   expect(Object.keys(body).sort()).toEqual(['idempotency_key', 'plan', 'plan_sha256'])
 })
+it('asks for consent only when the review says there is no receipt, and puts the flag into every arm', async () => {
+  const plans = []
+  runnerRequest.mockImplementation(async (path, options) => {
+    if (path !== '/experiments/preflight') return { experiments: [] }
+    plans.push(options.body.plan)
+    return options.body.plan.arms.every((arm) => arm.configuration.unverified_ok === true) ? reviewed(options.body.plan)
+      : { ok: false, issues: ['This native prompt profile has no application receipt on this machine. Set unverified_ok to run it anyway, or run traceharness runner verify.'] }
+  })
+  render(<PairedExperiments configuration={configuration()} available lease={{ current: false }} />)
+  await open(); await captureTwo()
+  const label = 'Run without a receipt on this machine (not verified)'
+  expect(screen.queryByLabelText(label)).toBeNull()
+  fireEvent.click(screen.getByRole('button', { name: 'Review experiment' }))
+  await screen.findByText(/no application receipt on this machine/)
+  expect(plans[0].arms.some((arm) => Object.hasOwn(arm.configuration, 'unverified_ok'))).toBe(false)
+  fireEvent.click(screen.getByLabelText(label))
+  fireEvent.click(screen.getByRole('button', { name: 'Review experiment' }))
+  await screen.findByText('2 planned trials · maximum $2')
+  expect(plans[1].arms).toHaveLength(2)
+  expect(plans[1].arms.every((arm) => arm.configuration.unverified_ok === true)).toBe(true)
+})
 it('refuses a key-shaped arm name before review (review m5)', async () => {
   render(<PairedExperiments configuration={configuration()} available lease={{ current: false }} />)
   await open(); await captureTwo()

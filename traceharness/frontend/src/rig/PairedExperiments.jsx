@@ -11,6 +11,7 @@ import { copyText, downloadText } from './native/ui/download'
 import { experimentNameStorage, readExperimentNames, rememberExperimentName } from './native/ui/experiment-names'
 import { formatDate, formatKiB, plural } from './native/ui/format'
 import { pendingPairing, subscribePairing, takePairing } from './native/ui/pairing-bus'
+import { UNVERIFIED_LABEL, needsReceiptConsent, verificationLabel, withUnverified } from '../runner-compatibility'
 import { ResultsMatrix, readableExperiment, roleWords } from './native/ui/ResultsMatrix'
 import './PairedExperiments.css'
 
@@ -65,6 +66,7 @@ export function PairedExperiments({ configuration, credential, credentialRequire
   const [label, setLabel] = useState('Control')
   const [arms, setArms] = useState([])
   const [noneArm, setNoneArm] = useState(false)
+  const [unverifiedOk, setUnverifiedOk] = useState(false)
   const [seed, setSeed] = useState('0')
   const [repeats, setRepeats] = useState('1')
   const [review, setReview] = useState(null)
@@ -85,7 +87,7 @@ export function PairedExperiments({ configuration, credential, credentialRequire
   const armsHeading = useRef(null)
   const armsIssue = labelIssue(arms)
   let draft, draftIssue = ''
-  try { draft = experimentDraft(name, seed, repeats, arms.map((arm) => ({ ...arm, label: arm.label.trim() }))) } catch (failure) { draftIssue = failure.message }
+  try { draft = experimentDraft(name, seed, repeats, arms.map((arm) => ({ ...arm, label: arm.label.trim(), configuration: withUnverified(arm.configuration, unverifiedOk) }))) } catch (failure) { draftIssue = failure.message }
   if (!draftIssue && armsIssue) { draft = undefined; draftIssue = armsIssue }
   const draftKey = draft ? stableJSON(draft) : ''
   const reviewed = review?.key === draftKey && review.result.ok
@@ -147,7 +149,7 @@ export function PairedExperiments({ configuration, credential, credentialRequire
     try {
       const unedited = armProfileSummary({ configuration }).is_baseline
       const chosen = unedited ? 'A/A control (no edits)' : variantLabel || 'Profile ' + profileDigest(configuration.native_prompt_profile).slice(0, 12)
-      const next = pairAgainstBaseline(configuration, RESERVED.has(chosen) ? chosen + ' (edited)' : chosen, { includeNoneIncluded })
+      const next = pairAgainstBaseline(withUnverified(configuration, false), RESERVED.has(chosen) ? chosen + ' (edited)' : chosen, { includeNoneIncluded })
       const replaced = arms.length && stableJSON(arms.map((arm) => arm.id)) !== stableJSON(next.map((arm) => arm.id)) ? arms.length : 0
       editArms(next); setError(''); setOpen(true)
       setNotice((origin === 'workbench' ? 'Arms prepared from the Native Prompts workbench. ' : 'Arms prepared. ')
@@ -159,7 +161,7 @@ export function PairedExperiments({ configuration, credential, credentialRequire
     } catch (failure) { setError(failure.message) }
   }
   function capture() {
-    try { editArms(captureArm(arms, label, configuration)); setLabel('Variant ' + (arms.length + 1)); setError(''); setNotice('') } catch (failure) { setError(failure.message) }
+    try { editArms(captureArm(arms, label, withUnverified(configuration, false))); setLabel('Variant ' + (arms.length + 1)); setError(''); setNotice('') } catch (failure) { setError(failure.message) }
   }
   function reviewPlan() { action(async (request) => {
     const result = await runnerRequest('/experiments/preflight', { method: 'POST', body: { plan: draft } })
@@ -284,6 +286,7 @@ export function PairedExperiments({ configuration, credential, credentialRequire
         <li className="rg-pe-step">
           <h3>Review and freeze</h3>
           <div className="rg-pe-actions"><button type="button" className="rg-btn" disabled={busy || !available || !!draftIssue} onClick={reviewPlan}>Review experiment</button><button type="button" className="rg-btn" disabled={busy || !reviewed} onClick={freeze}>Freeze experiment</button></div>
+          {(unverifiedOk || needsReceiptConsent(review?.key === draftKey ? review.result.issues : [])) && <label className="rg-pe-unverified" data-el="paired-unverified-consent"><input type="checkbox" checked={unverifiedOk} disabled={busy} onChange={(event) => setUnverifiedOk(event.target.checked)} />{UNVERIFIED_LABEL}</label>}
           {review?.key === draftKey && <div className="rg-pe-review" aria-label="Experiment review">
             {review.result.issues.map((issue, index) => <p role="alert" key={index}>{issue}</p>)}
             {review.result.ok && <><strong>{review.result.trial_count} planned trials · maximum {money(review.result.maximum_cost_usd)}</strong>
@@ -298,6 +301,7 @@ export function PairedExperiments({ configuration, credential, credentialRequire
           {!experiment && <p className="rg-pe-note">Freeze a reviewed plan, or open a saved experiment below, to run it and read its results here.</p>}
           {experiment && <section aria-label="Experiment results">
             <div className="rg-pe-result-head"><h4>{experiment.plan.name}</h4><strong>{String(experiment.status).replaceAll('_', ' ')}</strong></div>
+            {(() => { const manifests = experiment.trials.map((trial) => trial.job?.manifest).filter(Boolean); const label = manifests.some((m) => m.verified === false) ? 'Not verified on this machine' : manifests.length && manifests.every((m) => verificationLabel(m) === 'Verified') ? 'Verified' : ''; return label && <p className="rg-pe-note" data-el="paired-verified">{label}</p> })()}
             <p className="rg-pe-note">Plan <Id value={experiment.plan_sha256} max={24} head={12} tail={8} /></p>
             <ActionBar label="Experiment actions" actions={runControls} moreLabel="Export" />
             {credentialRequired && !credential && ['ready', 'paused'].includes(experiment.status) && <p>Connect OpenRouter above before starting.</p>}

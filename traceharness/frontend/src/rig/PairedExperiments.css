@@ -98,3 +98,5 @@ button.rg-pe-saved-row:disabled{opacity:.5;cursor:not-allowed}
   .rg-pe-matrix td::before{font-weight:var(--rig-fw-medium);color:var(--rig-text)}
   .rg-pe-counts,.rg-pe-evidence dl{grid-template-columns:minmax(0,1fr) auto}
 }
+
+.rg-pe-unverified { display: flex; gap: 8px; align-items: flex-start; margin: 8px 0; font-size: 13px; }

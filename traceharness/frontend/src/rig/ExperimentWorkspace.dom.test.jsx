@@ -327,6 +327,38 @@ describe('ExperimentWorkspace matrix authoring, compatibility, and budget guards
   })
 })
 
+describe('ExperimentWorkspace consent to run unverified arms', () => {
+  it('offers the checkbox only when the review says there is no receipt, and puts the flag into every arm', async () => {
+    const catalog = catalogFixture()
+    const plans = []
+    runnerRequest.mockImplementation((path, options) => {
+      if (path === '/experiments/preflight') {
+        plans.push(options.body.plan)
+        return Promise.resolve(options.body.plan.arms.every((arm) => arm.configuration.unverified_ok === true) ? preflightOk(options.body.plan)
+          : { ok: false, issues: ['This task/runtime/model combination has no matching compatibility receipt for its pinned images and grader. Set unverified_ok to run it anyway.'] })
+      }
+      return Promise.resolve({ experiments: [] })
+    })
+    render(<ExperimentWorkspace configuration={customConfiguration('Prompt for consent', 1)} catalog={catalog} available lease={{ current: false }} />)
+    await openMatrix()
+    fireEvent.click(screen.getByRole('button', { name: 'Capture current harness' }))
+    fireEvent.click(screen.getByRole('checkbox', { name: 'Select model Model A' }))
+    fireEvent.click(screen.getByRole('checkbox', { name: 'Select task Task Alpha' }))
+    const label = 'Run without a receipt on this machine (not verified)'
+    expect(screen.queryByLabelText(label)).toBeNull()
+    fireEvent.click(screen.getByRole('button', { name: 'Review matrix experiment' }))
+    await screen.findByText(/no matching compatibility receipt/)
+    expect(plans[0].arms.some((arm) => Object.hasOwn(arm.configuration, 'unverified_ok'))).toBe(false)
+    const box = screen.getByLabelText(label)
+    expect(box.checked).toBe(false)
+    fireEvent.click(box)
+    fireEvent.click(screen.getByRole('button', { name: 'Review matrix experiment' }))
+    await screen.findByText(/planned trials/)
+    expect(plans[1].arms.length).toBeGreaterThan(0)
+    expect(plans[1].arms.every((arm) => arm.configuration.unverified_ok === true)).toBe(true)
+  })
+})
+
 describe('ExperimentWorkspace freeze/start idempotency, credentials, lease, cancellation, and results', () => {
   it('reuses freeze idempotency_key after uncertain failure, resets review on 409, and never sends credentials before explicit start', async () => {
     const catalog = catalogFixture()

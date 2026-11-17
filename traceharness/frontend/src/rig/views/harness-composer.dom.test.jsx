@@ -1265,7 +1265,7 @@ function environmentFor(mode, runnerReady = true) {
   const can = (id) => reasonFor(id) === 'ok'
   const why = (id, what) => can(id) ? '' : (messages[reasonFor(id)] ?? messages.unavailable)
     .replace(/\{(what|command|url)\}/g, (_, key) => ({ what, command: LOCAL_APP.command, url: LOCAL_APP.url })[key])
-  return { MODE: mode, LIBRARY, HAS_LIBRARY: LIBRARY.available === true, ENV: { mode, library: LIBRARY }, can, reasonFor, why }
+  return { MODE: mode, LIBRARY, HAS_LIBRARY: LIBRARY.available === true, ENV: { mode, library: LIBRARY }, can, reasonFor, why, useEnvironment: () => 0, refreshEnvironment: async () => true }
 }
 const localJson = (data, status = 200) => ({ ok: status >= 200 && status < 300, status, statusText: status === 200 ? 'OK' : 'Error',
   headers: { get: () => 'application/json' }, json: async () => data })
@@ -1373,7 +1373,7 @@ describe('the Harnesses view on the local console and in a read-only export', ()
     const before = { overview: { results: [], stale: true }, runs: [{ run_id: 'older' }], repeats: { stale: true }, other: [{ run_id: 'kept' }] }
     data.prime({ '/overview': before.overview, '/results/harness_runs/runs': before.runs, '/repeats/harness_runs': before.repeats, '/results/demo_mock/runs': before.other })
     render(<Local />)
-    await screen.findByText('Runner connected')
+    await screen.findByText('Engine ready · container runner ready')
     await catalogReady()
     choose('Model', 'Mock (offline)')
     choose('Task', 'slugify collapses hyphens incorrectly')

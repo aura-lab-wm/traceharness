@@ -8,6 +8,7 @@
    (SHARED.environment.runner) depend on this machine: they start as runner_not_ready, and
    applyRuntime() takes the backend's /api/environment answer before the first render (main.jsx).
    This module must not import api.js. Capabilities drive display only: every server keeps its own checks. */
+import { useSyncExternalStore } from 'react'
 import { LOCAL_APP, SHARED } from './shared/index.js'
 
 const TABLE = SHARED.environment.table
@@ -39,16 +40,42 @@ export const ENV = Object.freeze({
   capabilities,
 })
 
+let version = 0
+const listeners = new Set()
+/** Observe environment changes (a new backend answer changed a capability). Returns the unsubscribe. */
+export function subscribe(listener) { listeners.add(listener); return () => { listeners.delete(listener) } }
+/** A number that changes whenever a capability changes; for useSyncExternalStore. */
+export const environmentVersion = () => version
+/** Re-render the calling component when a capability changes (after `runner setup`, say). */
+export function useEnvironment() { return useSyncExternalStore(subscribe, environmentVersion, environmentVersion) }
+
 /** Take the backend's live reasons for the local runner's capabilities. Only the local console
-    applies them, only for the runner capabilities, and only reasons the shared table knows. */
+    applies them, only for the runner capabilities, and only reasons the shared table knows.
+    Observers are told only when a capability actually changed. */
 export function applyRuntime(answer) {
   if (MODE !== 'local' || !answer || typeof answer !== 'object' || !answer.capabilities) return
+  let changed = false
   for (const id of RUNNER) {
     const reason = answer.capabilities[id]?.reason
     if (TABLE[id]?.[MODE] !== 'ok' || typeof reason !== 'string') continue
     if (reason !== 'ok' && !Object.hasOwn(MESSAGES, reason)) continue
+    if (capabilities[id].reason === reason) continue
     capabilities[id] = Object.freeze({ available: reason === 'ok', reason })
+    changed = true
   }
+  if (changed) { version += 1; for (const listener of [...listeners]) listener() }
+}
+
+/** Ask the backend again (GET /api/environment) and apply its answer. Resolves true when the
+    backend answered, false (capabilities unchanged) when it did not. */
+export async function refreshEnvironment() {
+  if (MODE !== 'local' || typeof fetch !== 'function') return false
+  try {
+    const response = await fetch('/api/environment', { headers: { Accept: 'application/json' }, cache: 'no-store' })
+    if (!response.ok) return false
+    applyRuntime(await response.json())
+    return true
+  } catch { return false }
 }
 
 const entry = (id) => (Object.hasOwn(capabilities, id) ? capabilities[id] : null)

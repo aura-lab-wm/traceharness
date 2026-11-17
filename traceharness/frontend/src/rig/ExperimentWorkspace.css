@@ -172,3 +172,5 @@
   .rg-matrix-table .rg-matrix-job{grid-column:1/-1;grid-row:auto;justify-self:start;order:2}
   .rg-matrix-table .rg-matrix-id{order:1}
 }
+
+.rg-matrix-unverified { display: flex; gap: 8px; align-items: flex-start; margin: 8px 0; font-size: 13px; }

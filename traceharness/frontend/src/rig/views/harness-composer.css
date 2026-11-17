@@ -213,3 +213,5 @@
   .rg-composer-setup-summary>.rg-btn{flex:1 1 100%}
   .rg-harness-picker-option-trailing{max-width:35%}
 }
+
+.rg-composer-unverified { display: flex; gap: 8px; align-items: flex-start; margin-top: 8px; font-size: 13px; }
