@@ -421,7 +421,10 @@ class ReadinessTests(unittest.TestCase):
             self.assertTrue(value["docker"] and value["registry"])
             self.assertFalse(value["ready"])
             self.assertFalse(missing.is_ready())
-            self.assertTrue(self.runner(root, images=True).is_ready())
+            missing.close()                      # a state directory has one owner: release it first
+            ready = self.runner(root, images=True)
+            self.assertTrue(ready.is_ready())
+            ready.close()
 
     def test_readiness_is_cached_a_few_seconds_and_never_raises(self):
         now = [100.0]

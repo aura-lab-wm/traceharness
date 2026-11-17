@@ -158,7 +158,9 @@ def preflight(configuration, registry, health: dict) -> dict:
     if getattr(registry, "open_models", False):
         # The local runner records what actually isolated and vouched for the run.
         from .settings import LOCAL_STORAGE_BYTES
-        manifest["limits"]["storage_bytes"] = LOCAL_STORAGE_BYTES   # enforced by the executor's watchdog
+        from .execution import STORAGE_ENFORCEMENT
+        manifest["limits"]["storage_bytes"] = LOCAL_STORAGE_BYTES   # enforced by the executor
+        manifest["limits"]["storage_enforcement"] = STORAGE_ENFORCEMENT   # which enforcement applied
         manifest.update(verified=verified, isolation_runtime=health.get("isolation_runtime") or "unknown")
     if version == 2:
         from .native_prompts import profile_sha256

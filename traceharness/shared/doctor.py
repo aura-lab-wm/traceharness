@@ -143,10 +143,10 @@ def check_runner(root: str = ROOT) -> dict:
         from traceharness.runner import local
         from traceharness.backend.labroot import resolve_lab_root
         lab = resolve_lab_root(seed=False)
-        state = local.LocalRunner(lab, lambda: None).readiness()
+        state = local.LocalRunner(lab, lambda: None).probe()   # read-only: never restores state or removes containers
         if state.get("ready"):
             return row("runner", "ok", f"ready (Docker answers, registry set up, isolation: {state.get('isolation')})")
-        missing = [name for name in ("docker", "registry") if not state.get(name)]
+        missing = [name for name in ("docker", "registry", "images") if not state.get(name)]
         return row("runner", "not_set_up", f"not_set_up ({', '.join(missing) or 'not ready'} missing): {hint}")
     except Exception:
         return row("runner", "not_set_up", f"not_set_up: {hint}")

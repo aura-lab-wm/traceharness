@@ -182,7 +182,8 @@ class Experiments:
         if self.root.is_symlink():raise ValueError('Experiment state cannot be a symlink')
         self.root.mkdir(mode=0o700,parents=True,exist_ok=True);self.root.chmod(0o700)
         self.lock=threading.RLock();self.rows={};self.idempotency={};self.threads={};self.credentials={}
-        self.stop=threading.Event();self.poll_interval=max(.01,float(poll_interval));self.blocked_reason=None
+        self.stop=threading.Event();self.poll_interval=max(.01,float(poll_interval));self.blocked_reason='Another process owns this runner state; this one only reads it.' if settings.read_only else None
+        self.read_only=settings.read_only
         paths=list(self.root.iterdir())
         if len(paths)>MAX_RECORDS:self.blocked_reason='Experiment state exceeds its retention limit.'
         for path in paths[:MAX_RECORDS]:
@@ -241,6 +242,7 @@ class Experiments:
         _require(not has_secret(row),'Experiment state contains credential-shaped data.')
 
     def _save(self,row):
+        if self.read_only:return
         raw=canonical(row)
         _require(len(raw)<=MAX_RECORD_BYTES,'Experiment retention limit reached.')
         total=sum(len(canonical(existing)) for key,existing in self.rows.items() if key!=row['experiment']['id'])+len(raw)

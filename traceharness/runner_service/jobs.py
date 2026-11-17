@@ -271,7 +271,7 @@ class JobError(Exception):
 
 
 class Jobs:
-    def __init__(self, settings, vault, provider, executor, clock=time.time):
+    def __init__(self, settings, vault, provider, executor, clock=time.time, persist=None):
         self.settings, self.vault, self.provider, self.executor, self.clock = settings, vault, provider, executor, clock
         self.root = Path(settings.state_dir)
         if self.root.is_symlink():
@@ -280,10 +280,12 @@ class Jobs:
         self.root.chmod(0o700)
         self.lock = threading.RLock()
         self.rows, self.idempotency, self.events = {}, {}, {}
-        self.blocked_reason = None
+        self.blocked_reason = "Another process owns this runner state; this one only reads it." if settings.read_only else None
         #: Optional callable(row, job_dir) that writes a finished job somewhere durable and returns True. A
         #: terminal job is not removed by retention until this has succeeded for it.
-        self.persist = None
+        #: Given here, not attached later: restoring state purges expired jobs, and that must already
+        #: be able to write them out. Without a hook nothing counts as durably written, so nothing is purged.
+        self.persist = persist
         self.restore_pending = set()    # local: jobs from an earlier session whose containers are not yet confirmed removed
         self.pool = ThreadPoolExecutor(max_workers=settings.max_workers, thread_name_prefix="private-runner")
         for directory in self.root.iterdir():
@@ -297,7 +299,9 @@ class Jobs:
                 if row["job"]["id"] != path.parent.name:
                     self.blocked_reason = "Invalid runner state requires operator reconciliation."
                     continue
-                if settings.local and (row["job"]["status"] == "needs_attention" or row["job"]["status"] not in TERMINAL):
+                if settings.read_only:
+                    pass        # the owner's state is shown as it is stored; this process changes nothing
+                elif settings.local and (row["job"]["status"] == "needs_attention" or row["job"]["status"] not in TERMINAL):
                     # A restart is the local runner's reconciliation, but only once the executor has confirmed
                     # that no container of this runner remains (settle_restored). Until then the job stays in
                     # needs_attention, which also keeps new runs from starting.
@@ -339,6 +343,8 @@ class Jobs:
         return True
 
     def _save(self, row):
+        if self.settings.read_only:
+            return
         directory = self.root / row["job"]["id"]
         directory.mkdir(mode=0o700, exist_ok=True)
         temp = directory / "job.tmp"
@@ -347,8 +353,10 @@ class Jobs:
         temp.replace(directory / "job.json")
 
     def _persisted(self, row):
-        if self.persist is None or row.get("persisted"):
+        if row.get("persisted"):
             return True
+        if self.persist is None:
+            return False
         try:
             if self.persist(row, self.root / row["job"]["id"]):
                 row["persisted"] = True
@@ -359,6 +367,8 @@ class Jobs:
         return False
 
     def _purge(self):
+        if self.settings.read_only:
+            return
         now = self.clock()
         for jid, row in list(self.rows.items()):
             if self.persist is not None and row["job"]["status"] in TERMINAL - {"needs_attention"}:

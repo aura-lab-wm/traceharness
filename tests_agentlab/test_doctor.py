@@ -53,7 +53,7 @@ def _main(*argv):
     return code, out.getvalue()
 
 
-READINESS = "traceharness.runner.local.LocalRunner.readiness"
+READINESS = "traceharness.runner.local.LocalRunner.probe"
 
 
 class RunnerRow(unittest.TestCase):
