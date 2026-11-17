@@ -8,6 +8,7 @@ lists data/runs/ without coming through here.
 """
 from __future__ import annotations
 
+import json
 import os
 from typing import Callable
 
@@ -43,6 +44,24 @@ def list_results_dirs(runs_root: str, include_private: bool = False) -> list[str
         name for name in os.listdir(runs_root)
         if (include_private or not is_private(runs_root, name))
         and os.path.exists(os.path.join(runs_root, name, "index.jsonl")))
+
+
+def is_redistributable(runs_root: str, name: str) -> bool:
+    """False when the results directory says its data may not be redistributed.
+
+    A directory written by an import from Hugging Face carries provenance.json with `redistributable`
+    (true only for a stated permissive license). Such a directory stays visible on this machine, but
+    a default export and the school package leave it out; an export includes it only when it is named
+    explicitly. A directory with no provenance.json is unaffected. An unreadable provenance.json fails
+    closed (not redistributable)."""
+    path = os.path.join(runs_root, (name or "").strip(), "provenance.json")
+    if not os.path.exists(path):
+        return True
+    try:
+        with open(path, encoding="utf-8") as f:
+            return json.load(f).get("redistributable") is not False
+    except (OSError, ValueError, AttributeError):
+        return False
 
 
 def count_runs(runs_root: str, name: str) -> int:

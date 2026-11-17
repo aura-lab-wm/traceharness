@@ -32,6 +32,7 @@ const IMPORT = {
   '/import/sources': { sources: [{ name: 'codex', description: 'OpenAI Codex CLI rollout JSONL (~/.codex/sessions/YYYY/MM/DD/rollout-*.jsonl)', patterns: ['rollout-*.jsonl'] }, { name: 'inspect', description: 'Inspect AI eval log (.eval zip or .json)', patterns: ['*.eval'] }] },
   '/import/status': { status: 'idle', progress: null, error: null, result: null, history: [{ source: 'codex', results_dir: 'imported_codex_old', imported: 3, skipped: 0 }] },
   '/real/status': { status: 'idle', progress: null, error: null, result: null },
+  '/hf/catalog': { schema: 1, refreshed: '2026-11-16', datasets: [{ id: 'nebius/SWE-agent-trajectories', kind: 'trajectories', title: 'SWE-agent trajectories', summary: 'Recorded runs.', rows: 80036, license: 'cc-by-4.0', gated: false }] },
   [`/harness/versions?dir=${MINI}`]: { dir: MINI, versions: [{ harness_id: 'baseline', hash: 'aaa111', runs: 8, pass1: 0.75, matches_current: true, has_file: true }, { harness_id: 'terse', hash: 'bbb222', runs: 8, pass1: 0.875, matches_current: false, has_file: true }] },
   '/settings': { key_present: true, key_hint: 'sk-or-v…abcd', base_url: 'https://openrouter.ai/api/v1', lab_root: '/lab', results_root: '/lab/data/runs', harness_dir: '/lab/harnesses', task_dir: '/lab/tasks', results: [MINI, 'mock_ctl'], harnesses: ['baseline', 'terse'] },
 }
@@ -48,6 +49,12 @@ describe('sources', () => {
     expect(container.textContent).toContain('/lab/data/runs · 18 runs in 2 directories')
     expect(container.textContent).toContain('× drifted')
     expect(requests).toEqual([])
+  })
+  it('carries a Hugging Face panel that lists the catalog\'s recorded-run datasets', () => {
+    const { container } = renderRig('#/rig/sources', { data: { ...rigFixture(), ...IMPORT } })
+    const hf = el(container, 'hugging-face')
+    expect(hf.querySelector('h2').textContent).toBe('Hugging Face')
+    expect(within(hf).getByRole('button', { name: 'Preview nebius/SWE-agent-trajectories' })).not.toBeNull()
   })
   it('"status: idle · 0 past imports" is gone; earlier imports are listed, each with a way to open it', () => {
     const { container } = renderRig('#/rig/sources', { data: { ...rigFixture(), ...IMPORT } })

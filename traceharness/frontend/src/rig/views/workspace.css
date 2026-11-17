@@ -299,3 +299,12 @@
 @container (max-width:640px){
   .rg-ws-doc{gap:var(--rig-s5)}
 }
+
+/* ---------------------------------------------------------------- Hugging Face panel (HuggingFaceSource.jsx) */
+.rg-ws-hf{display:flex;flex-direction:column;gap:var(--rig-s4);min-width:0}
+.rg-ws-hf .rg-ws-lead{max-width:var(--rig-measure)}
+.rg-ws-hftbl td{vertical-align:top}
+.rg-ws-hfprev{display:flex;flex-direction:column;gap:var(--rig-s3);min-width:0}
+.rg-ws-hfprev p{margin:0}
+.rg-ws-hfrows caption{caption-side:top;text-align:left;padding-bottom:var(--rig-s2)}
+.rg-ws-hfrows td{max-width:22rem;white-space:pre-wrap;overflow-wrap:anywhere;vertical-align:top}
