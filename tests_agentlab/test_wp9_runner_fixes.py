@@ -316,8 +316,10 @@ class SpanAndMessageValidationTests(unittest.TestCase):
                     self.assertIn("trace.jsonl", built["quarantined"])
 
     def test_the_run_detail_route_survives_a_stored_span_without_task_id(self):
-        from traceharness.backend import app as backend
-        self.assertIn("no task", backend._issue_for(None))
+        from tests_agentlab.test_wp11_final_fixes import open_run_detail
+        body = open_run_detail([{"span": "invoke_agent", "seq": 0, "status": "start"},
+                                {"span": "chat", "seq": 1, "step": 0, "text": "hi"}])
+        self.assertIn("no task", body["issue"])
 
     def test_messages_that_crash_the_readers_are_quarantined(self):
         for label, raw in (("null tool call", [{"role": "assistant", "tool_calls": [None]}]),
@@ -356,29 +358,17 @@ class NativeCountersTests(unittest.TestCase):
 
 class DurabilityTests(unittest.TestCase):
     def test_directories_are_fsynced_before_persistence_is_acknowledged(self):
-        synced = []
-        real = os.fsync
-        opened = {}
-        real_open = os.open
-
-        def tracking_open(path, flags, *a, **k):
-            fd = real_open(path, flags, *a, **k)
-            if flags & getattr(os, "O_DIRECTORY", 0):
-                opened[fd] = str(path)
-            return fd
-
+        from tests_agentlab.test_wp11_final_fixes import synced_directories
         with tempfile.TemporaryDirectory() as t:
             row, directory = finished_job(Path(t))
             runs = str(Path(t) / "data" / "runs")
-            with patch.object(os, "open", side_effect=tracking_open), \
-                    patch.object(os, "fsync", side_effect=lambda fd: (synced.append(opened.get(fd)), real(fd))[1]):
-                datasets.persist_job(runs, row, str(directory))
-            names = [s for s in synced if s]
+            names = synced_directories(lambda: datasets.persist_job(runs, row, str(directory)))
             dataset = str(Path(runs) / "runner_jobs")
             self.assertTrue(any(n.endswith("/evidence") for n in names), names)
             self.assertTrue(any(".tmp-" in n and not n.endswith("/evidence") for n in names), "the staging directory")
-            self.assertIn(dataset, names, "the parent after the rename and the index's directory")
             self.assertGreaterEqual(names.count(dataset), 2)
+            self.assertIn(runs, names, "runs_root, created with the first dataset, and the dataset's entry in it")
+            self.assertIn(str(Path(t) / "data"), names, "the parent of the newly created runs_root")
 
 
 class SetupAndOwnershipTests(unittest.TestCase):

@@ -144,7 +144,8 @@ export function PairedExperiments({ configuration, credential, credentialRequire
     finally { if (mounted.current && request === generation.current) setBusy(false) }
   }
   const changed = (setter) => (event) => { generation.current++; setter(event.target.value); setReview(null); setBusy(false) }
-  const editArms = (next) => { generation.current++; setArms(next); setReview(null); setBusy(false) }
+  // Consent is keyed to positional arm ids; replacing the arms clears it so it cannot move to a different configuration.
+  const editArms = (next) => { generation.current++; setArms(next); setConsentArms(null); setReview(null); setBusy(false) }
   function remember(next) {
     if (rememberExperimentName(storage, next.id, next.plan?.name)) setNames(readExperimentNames(storage))
   }

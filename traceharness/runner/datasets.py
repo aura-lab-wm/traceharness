@@ -126,7 +126,24 @@ def _ledger(run_id, job, manifest, raw_trace):
             return (_fallback_ledger(run_id, job, manifest, "trace.jsonl was quarantined"), "quarantined",
                     "trace.jsonl record %d %s" % (number, problem))
         spans.append({**record, "run_id": run_id})
-    return spans, "ledger", None
+    return _trusted_metadata(spans, manifest), "ledger", None
+
+
+def _trusted_metadata(spans, manifest):
+    """A runner-produced run's harness, task and model come from the trusted manifest, never from the runtime's own
+    spans (a runtime wrote those; the manifest is what the runner froze and hashed)."""
+    out = []
+    for number, span in enumerate(spans):
+        span = dict(span)
+        if number == 0 and isinstance(manifest.get("task_id"), str):
+            span["task_id"] = manifest["task_id"]
+        if span.get("span") == "invoke_agent" and span.get("status") == "start":
+            if isinstance(manifest.get("harness"), dict):
+                span["harness"] = manifest["harness"]
+            if isinstance(manifest.get("model_id"), str):
+                span["gen_ai.request.model"] = manifest["model_id"]
+        out.append(span)
+    return out
 
 
 def _messages_problem(raw):
@@ -193,15 +210,19 @@ def build_run(row, job_dir) -> dict:
                          steps=int(usage.get("requests") or 0),
                          input_tokens=_count(usage.get("input_tokens")), output_tokens=_count(usage.get("output_tokens")),
                          cost_usd=_money(usage.get("cost_usd")),
-                         hidden_pass=(grade == "passed") if grade in ("passed", "failed", "error") else None,
-                         error="; ".join(job.get("issues", []))[:500] if job.get("status") != "succeeded" else "")
-    own = _read(os.path.join(job_dir, "summary.json"))
-    parsed = None
-    if own:
+                         hidden_pass={"passed": True, "failed": False}.get(grade),
+                         error="; ".join(str(i) for i in job.get("issues") or [])[:500]
+                         if job.get("status") != "succeeded" or grade not in ("passed", "failed") else "")
+    own = _read(os.path.join(job_dir, "summary.json"), limit=4 * 1024 * 1024)
+    parsed, summary_problem = None, None
+    if own is not None:
         try:
-            parsed = json.loads(own)
+            parsed = loads_finite(own)
         except ValueError:
-            parsed = None
+            summary_problem = "summary.json is not finite JSON"
+        else:
+            if not isinstance(parsed, dict):
+                summary_problem, parsed = "summary.json is not an object", None
     measured = set()
     if isinstance(parsed, dict):
         for name in _COUNTERS:
@@ -213,8 +234,15 @@ def build_run(row, job_dir) -> dict:
     for name in ("tool_calls", "edits", "lines_added", "lines_removed", "boundary_events", "tests_run_by_agent"):
         if name not in measured:
             setattr(summary, name, None)
-    if not isinstance(parsed, dict):
-        summary.files_touched = summary.boundary_kinds = summary.ran_tests_before_submit = summary.tests_modified = None
+    # Engine lists and flags are copied only when their type is right; otherwise (or when absent) they are null.
+    def strings(value):
+        return list(value) if isinstance(value, list) and all(isinstance(x, str) for x in value) else None
+    flag = lambda v: v if isinstance(v, bool) else None
+    source = parsed if isinstance(parsed, dict) else {}
+    summary.files_touched = strings(source.get("files_touched"))
+    summary.boundary_kinds = strings(source.get("boundary_kinds"))
+    summary.ran_tests_before_submit = flag(source.get("ran_tests_before_submit"))
+    summary.tests_modified = flag(source.get("tests_modified"))
     patch = _read(os.path.join(job_dir, "patch.diff"))
     if patch is not None:
         summary.patch_bytes = len(patch)
@@ -222,7 +250,9 @@ def build_run(row, job_dir) -> dict:
     extra = {"verified": verified if isinstance(verified, bool) else None,
              "isolation_runtime": manifest.get("isolation_runtime") or "unknown",
              "runtime_id": manifest.get("runtime_id"), "job_id": job["id"], "grade": grade,
-             "idempotency_key": row.get("idempotency_key")}
+             "idempotency_key": row.get("idempotency_key"),
+             # error / ungraded are not failed solutions: hidden_pass is null and the grader's outcome stays visible
+             "grade_outcome": grade if isinstance(grade, str) else None}
     index = {**asdict(summary), **extra}
     files = {"summary.json": json.dumps(index, ensure_ascii=False, indent=2, allow_nan=False).encode(),
              "patch.diff": patch or b""}
@@ -232,6 +262,8 @@ def build_run(row, job_dir) -> dict:
     if reason:
         quarantined["trace.jsonl"] = (raw_trace, reason)
     files["ledger.jsonl"] = "".join(json.dumps(span, ensure_ascii=False, allow_nan=False) + "\n" for span in ledger).encode()
+    if summary_problem:
+        quarantined["summary.json"] = (own, summary_problem)       # the runtime's own file; the index row above is the runner's
     messages = _read(os.path.join(job_dir, "messages.json"))
     if messages is not None:
         problem = _messages_problem(messages)
@@ -279,26 +311,59 @@ def read_evidence(runs_root, dataset, run_id) -> dict:
     return out
 
 
-def _quarantine(runs_root, built):
-    """Keep what was not published, outside every dataset: <data>/runner/quarantine/<job id>/<name>."""
-    if not built["quarantined"]:
-        return
-    directory = os.path.join(os.path.dirname(os.path.abspath(runs_root)), "runner", "quarantine", built["run_id"])
-    os.makedirs(directory, mode=0o700, exist_ok=True)
-    for name, body in built["quarantined"].items():
-        fd = os.open(os.path.join(directory, name), os.O_WRONLY | os.O_CREAT | os.O_TRUNC | os.O_NOFOLLOW, 0o600)
-        with os.fdopen(fd, "wb") as stream:
-            stream.write(body or b"")
-            stream.flush()
-            os.fsync(stream.fileno())
-
-
 def _fsync_dir(path) -> None:
     fd = os.open(path, os.O_RDONLY | getattr(os, "O_DIRECTORY", 0))
     try:
         os.fsync(fd)
     finally:
         os.close(fd)
+
+
+def _makedirs_durable(path, mode=0o777) -> list:
+    """Create `path` and any missing ancestors; returns the directories created, outermost first. Their entries are
+    not durable until each one's parent is fsynced (`_sync_created`)."""
+    path = os.path.abspath(path)
+    missing = []
+    probe = path
+    while not os.path.isdir(probe):
+        missing.append(probe)
+        parent = os.path.dirname(probe)
+        if parent == probe:
+            break
+        probe = parent
+    created = []
+    for directory in reversed(missing):
+        try:
+            os.mkdir(directory, mode)
+            created.append(directory)
+        except FileExistsError:
+            if not os.path.isdir(directory):
+                raise
+    return created
+
+
+def _sync_created(created) -> None:
+    """fsync every newly created directory and its parent, so the new entries survive a crash. Failures propagate:
+    persistence is not acknowledged unless every one succeeded."""
+    for directory in created:
+        _fsync_dir(directory)
+        _fsync_dir(os.path.dirname(directory))
+
+
+def _quarantine(runs_root, built):
+    """Keep what was not published, outside every dataset: <data>/runner/quarantine/<job id>/<name>."""
+    if not built["quarantined"]:
+        return
+    directory = os.path.join(os.path.dirname(os.path.abspath(runs_root)), "runner", "quarantine", built["run_id"])
+    created = _makedirs_durable(directory, 0o700)
+    for name, body in built["quarantined"].items():
+        fd = os.open(os.path.join(directory, name), os.O_WRONLY | os.O_CREAT | os.O_TRUNC | os.O_NOFOLLOW, 0o600)
+        with os.fdopen(fd, "wb") as stream:
+            stream.write(body or b"")
+            stream.flush()
+            os.fsync(stream.fileno())
+    _fsync_dir(directory)           # the file entries
+    _sync_created(created)          # the new directories' own entries, up to the first ancestor that already existed
 
 
 def _current(final) -> bool:
@@ -320,7 +385,7 @@ def persist_job(runs_root, row, job_dir) -> bool:
     final = os.path.join(dataset, built["run_id"])
     _quarantine(runs_root, built)
     with _LOCK:
-        os.makedirs(dataset, exist_ok=True)
+        _sync_created(_makedirs_durable(dataset))      # a new dataset (and runs_root) is durable before anything in it
         if not (os.path.isdir(final) and _current(final)):
             stage = tempfile.mkdtemp(dir=dataset, prefix=built["run_id"] + ".tmp-")
             old = None

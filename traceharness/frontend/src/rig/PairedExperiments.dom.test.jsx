@@ -66,6 +66,28 @@ it('asks for consent only from the structured consent_required field, and flags 
   expect(plans[1].arms[1].configuration.unverified_ok).toBe(true)
   expect(screen.getByLabelText(label).checked).toBe(true)
 })
+it('clears consent when the arms are replaced, so it never moves to a different configuration', async () => {
+  const plans = []
+  runnerRequest.mockImplementation(async (path, options) => {
+    if (path !== '/experiments/preflight') return { experiments: [] }
+    plans.push(options.body.plan)
+    const needy = options.body.plan.arms[1].id
+    return options.body.plan.arms[1].configuration.unverified_ok === true ? reviewed(options.body.plan)
+      : { ok: false, issues: ['Configuration ' + needy + ' did not pass current runner review.'], consent_required: true, consent_arms: [needy] }
+  })
+  render(<PairedExperiments configuration={configuration()} available lease={{ current: false }} />)
+  await open(); await captureTwo()
+  const label = 'Run without a receipt on this machine (not verified)'
+  fireEvent.click(screen.getByRole('button', { name: 'Review experiment' }))
+  await screen.findByText(/did not pass current runner review/)
+  fireEvent.click(screen.getByLabelText(label))
+  await screen.findByText('2 planned trials · maximum $2')
+  fireEvent.click(screen.getByText('Pair current profile against baseline')) // replaces the arms
+  fireEvent.click(screen.getByRole('button', { name: 'Review experiment' }))
+  await screen.findByText(/did not pass current runner review/)
+  expect(plans.at(-1).arms.some((arm) => Object.hasOwn(arm.configuration, 'unverified_ok'))).toBe(false)
+  expect(screen.getByLabelText(label).checked).toBe(false)
+})
 it('does not offer consent for a receipt-worded issue when consent_required is not set', async () => {
   runnerRequest.mockImplementation(async (path) => path === '/experiments/preflight'
     ? { ok: false, issues: ['This native prompt profile has no application receipt on this machine. Set unverified_ok to run it anyway.'] } : { experiments: [] })
