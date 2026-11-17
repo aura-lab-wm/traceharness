@@ -63,7 +63,8 @@ export function applyRuntime(answer) {
     capabilities[id] = Object.freeze({ available: reason === 'ok', reason })
     changed = true
   }
-  if (changed) { version += 1; for (const listener of [...listeners]) listener() }
+  // A snapshot: a listener may unsubscribe while the others are called.
+  if (changed) { version += 1; for (const listener of Array.from(listeners)) listener() }
 }
 
 /** Ask the backend again (GET /api/environment) and apply its answer. Resolves true when the
