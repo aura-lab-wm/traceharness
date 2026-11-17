@@ -23,7 +23,7 @@ import urllib.parse
 import urllib.request
 
 DEFAULT_URL = "https://traceharness.dev"
-FALLBACK_VERSION = "0.5.4"          # tests pin this to traceharness.__main__.__version__
+FALLBACK_VERSION = "0.5.5"          # tests pin this to traceharness.__main__.__version__
 TOKEN_RE = re.compile(r"^thc_[A-Za-z0-9_-]{20,}$")
 _LOOPBACK = frozenset({"127.0.0.1", "::1", "localhost"})
 TIMEOUT_S = 30.0
