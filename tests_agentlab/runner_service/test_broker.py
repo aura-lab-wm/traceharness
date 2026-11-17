@@ -84,7 +84,7 @@ class BrokerTests(unittest.TestCase):
         class Executor:
             def execute(self, jid, manifest, directory, cancel, forward):
                 return case.behavior(forward)
-        settings = Settings(shared_secret='explicit-fixture-secret-long-enough', state_dir=Path(self.temp.name) / 'state')
+        settings = Settings(state_dir=Path(self.temp.name) / 'state')
         self.jobs = Jobs(settings, self.vault, Provider(), Executor())
 
     def tearDown(self):

@@ -48,6 +48,7 @@ async def _lifespan(_app):
     _SHUTDOWN.clear()          # a fresh start (and a test that enters the app twice) begins un-stopped
     yield
     _stop_paused_runs()
+    RUNNER.close()             # the local runner's job pool and experiment scheduler
 
 
 from traceharness.__main__ import __version__ as _VERSION   # one version for the API docs and the package
@@ -992,3 +993,11 @@ app.include_router(hf_router)
 from traceharness.backend.recommend_api import router as recommend_router
 app.include_router(recommend_router)
 app.router.routes.sort(key=lambda r: 1 if getattr(r, "path", "") == "/{path:path}" else 0)
+
+# --- the local runner (WP1 of docs/superpowers/specs/2026-11-17-local-only-design.md) ---
+# Its /api/runner/* routes are served by backend/local_runner_api.py, which hands container, native and
+# experiment requests to this runner in-process. Behind the same Host / Origin / JSON guards as every
+# route (security_guard above); the owner is the constant "local"; the OpenRouter key is read from
+# SETTINGS only when a model request is made.
+from traceharness.runner.local import LocalRunner, activate as _activate_runner
+RUNNER = _activate_runner(LocalRunner(lambda: LAB_ROOT, lambda: SETTINGS["openrouter_key"]))

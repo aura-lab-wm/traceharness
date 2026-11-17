@@ -28,7 +28,6 @@ from tests_agentlab.runner_service.test_runner import (
     IMAGE,
     OTHER as AUTH_OTHER,
     OWNER as AUTH_OWNER,
-    SECRET,
     FixtureExecutor,
     FixtureProvider,
     configuration as traceharness_v1_configuration,
@@ -198,7 +197,7 @@ class ExperimentMatrixTests(unittest.TestCase):
     def setUp(self):
         self.temp = tempfile.TemporaryDirectory()
         self.addCleanup(self.temp.cleanup)
-        self.settings = Settings(shared_secret='fixture-secret-that-is-at-least-32bytes', state_dir=Path(self.temp.name) / 'jobs')
+        self.settings = Settings(state_dir=Path(self.temp.name) / 'jobs')
         self.vault = CredentialVault()
         self.cid = self.vault.put(OWNER, 'fixture-not-a-provider-key')['credential_id']
         self.jobs = MatrixFakeJobs()
@@ -715,11 +714,10 @@ class ExperimentMatrixAPITests(unittest.TestCase):
             {'id': 'fixture/model-b', 'name': 'Second explicit fixture', 'pricing': {'prompt': '0.000001', 'completion': '0.000002'}},
         ]
 
-        self.secret, self.owner = SECRET, AUTH_OWNER
+        self.owner = AUTH_OWNER
         self.now = 1770000000
-        self.nonce = 0
         self.app = create_app(
-            Settings(shared_secret=SECRET, state_dir=self.fixture.root / 'matrix-api-jobs'),
+            Settings(state_dir=self.fixture.root / 'matrix-api-jobs'),
             registry=registry,
             provider=provider,
             executor=self.executor,
@@ -752,21 +750,8 @@ class ExperimentMatrixAPITests(unittest.TestCase):
         }
 
     def request(self, method, path, body=None, owner=None):
-        from traceharness.runner_service.auth import sign
-
         raw = canonical(body) if body is not None else b''
-        self.nonce += 1
-        nonce = f'{self.nonce:032x}'
-        owner = owner or self.owner
-        timestamp = str(self.now)
-        headers = {
-            'content-type': 'application/json',
-            'x-traceharness-user': owner,
-            'x-traceharness-timestamp': timestamp,
-            'x-traceharness-nonce': nonce,
-            'x-traceharness-signature': sign(self.secret, method, path, owner, timestamp, nonce, raw),
-        }
-        return self.client.request(method, path, content=raw, headers=headers)
+        return self.client.request(method, path, content=raw, headers={'content-type': 'application/json'})
 
     def test_api_incompatible_matrix_cell_identifies_arm_label_and_prevents_freeze(self):
         bad_plan = copy.deepcopy(self.plan)
@@ -814,15 +799,6 @@ class ExperimentMatrixAPITests(unittest.TestCase):
         self.assertEqual(frozen_res.status_code, 200, frozen_res.text)
         experiment = frozen_res.json()['experiment']
         eid = experiment['id']
-
-        # Other member cannot inspect, start, cancel or list this v2 experiment.
-        self.assertEqual(self.request('GET', prefix, owner=AUTH_OTHER).json(), {'experiments': []})
-        for method, route, body in (
-            ('GET', f'{prefix}/{eid}', None),
-            ('POST', f'{prefix}/{eid}/start', {'credential_id': 'a' * 48, 'plan_sha256': experiment['plan_sha256']}),
-            ('POST', f'{prefix}/{eid}/cancel', {}),
-        ):
-            self.assertEqual(self.request(method, route, body, owner=AUTH_OTHER).status_code, 404)
 
         connection = self.app.state.vault.put(self.owner, 'explicit-fixture-no-provider-key')
         started = self.request('POST', f'{prefix}/{eid}/start', {

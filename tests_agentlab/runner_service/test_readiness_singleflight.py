@@ -12,11 +12,10 @@ import unittest
 
 from fastapi.testclient import TestClient
 
-from traceharness.runner_service.auth import sign
 from traceharness.runner_service.configuration import canonical
 from traceharness.runner_service.service import create_app
 from traceharness.runner_service.settings import Settings
-from tests_agentlab.runner_service.test_runner import fixture_registry, FixtureExecutor, FixtureProvider, SECRET, OWNER
+from tests_agentlab.runner_service.test_runner import fixture_registry, FixtureExecutor, FixtureProvider, OWNER
 
 
 def closure_cell(function, name):
@@ -40,14 +39,10 @@ class ReadinessSingleFlightTests(unittest.TestCase):
         def counted_models(allowed):model_calls[0]+=1;return original_models(allowed)
         executor.health=gated_health;provider.models=counted_models
         now=[1770000000]
-        app=create_app(Settings(shared_secret=SECRET,state_dir=root/'jobs'),registry=registry,provider=provider,executor=executor,clock=lambda:now[0])
-        client=TestClient(app);client.__enter__();self.addCleanup(lambda:client.__exit__(None,None,None))
-        nonce=[0];nonce_lock=threading.Lock()
+        app=create_app(Settings(state_dir=root/'jobs'),registry=registry,provider=provider,executor=executor,clock=lambda:now[0])
+        app.state.test_clock=now;client=TestClient(app);client.__enter__();self.addCleanup(lambda:client.__exit__(None,None,None))
         def request(path='/api/runner/catalog'):
-            with nonce_lock:nonce[0]+=1;token=f'{nonce[0]:032x}'
-            timestamp=str(now[0]);headers={'x-traceharness-user':OWNER,'x-traceharness-timestamp':timestamp,'x-traceharness-nonce':token,
-                'x-traceharness-signature':sign(SECRET,'GET',path,OWNER,timestamp,token,b'')}
-            return client.get(path,headers=headers)
+            return client.get(path)
         if expired_passing_cache:
             warm=request();self.assertTrue(warm.json()['runner']['available']);now[0]+=31
             calls[0]=0;model_calls[0]=0
@@ -78,9 +73,9 @@ class ReadinessSingleFlightTests(unittest.TestCase):
                 second=pool.submit(request)
                 self.assertTrue(second_attempt.wait(2),'Concurrent health reader did not reach its lock')
                 # A waiting refresh must not block the ASGI event loop or anon gate.
-                anonymous=client.get('/api/runner/catalog')
-                self.assertEqual(anonymous.status_code,401)
-                self.assertNotIn('access-control-allow-origin',anonymous.headers)
+                cheap=client.get('/api/runner/catalog?x=1')
+                self.assertEqual(cheap.status_code,404)
+                self.assertNotIn('access-control-allow-origin',cheap.headers)
             finally:release.set()
             responses=[first.result(timeout=4),second.result(timeout=4)]
         for response in responses:
@@ -102,7 +97,7 @@ class ReadinessSingleFlightTests(unittest.TestCase):
 
     def test_wait_timeout_refuses_expired_passing_cache_and_can_refresh_after_release(self):
         app,request,calls,model_calls=self.wave()
-        now=closure_cell(request,'now').cell_contents;now[0]+=31
+        now=app.state.test_clock;now[0]+=31
         catalog=next(route.endpoint for route in app.routes if route.path=='/api/runner/catalog')
         health=closure_cell(catalog,'health').cell_contents
         refresh=closure_cell(health,'refresh').cell_contents

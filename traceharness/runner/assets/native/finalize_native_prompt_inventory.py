@@ -12,7 +12,7 @@ from pathlib import Path
 import re
 import sys
 
-sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
+sys.path.insert(0, str(Path(__file__).resolve().parents[4]))
 from traceharness.runner_service import native_prompts as N
 from traceharness.runner_service import native_prompts_elf as ELF
 

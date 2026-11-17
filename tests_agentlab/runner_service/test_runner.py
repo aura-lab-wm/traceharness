@@ -15,7 +15,6 @@ from unittest.mock import patch
 from fastapi.testclient import TestClient
 
 from traceharness.runner_service import create_app
-from traceharness.runner_service.auth import Authenticator, AuthenticationError, sign
 from traceharness.runner_service.configuration import preflight, canonical
 from traceharness.runner_service.credentials import CredentialVault, CredentialUnavailable
 from traceharness.runner_service.execution import DockerExecutor, ExecutionError
@@ -26,9 +25,8 @@ from traceharness.runner_service.settings import Settings
 from traceharness.runner_service.container_entrypoint import native_command
 from traceharness.runner_service.proxy import UnixModelProxy
 
-SECRET = "unit-fixture-shared-secret-32-characters"
-OWNER = "11111111-1111-4111-8111-111111111111"
-OTHER = "22222222-2222-4222-8222-222222222222"
+OWNER = "local"          # the local runner has one owner
+OTHER = "other-fixture-owner"   # data-layer isolation only; the HTTP surface has no second owner
 KEY = "sk-or-v1-explicit-fixture-not-a-real-key"
 IMAGE = "fixture.invalid/agent@sha256:" + "a" * 64
 GRADER = "fixture.invalid/grader@sha256:" + "b" * 64
@@ -112,7 +110,7 @@ class RunnerTests(unittest.TestCase):
         self.registry, self.data = fixture_registry(self.root)
         self.now = [1770000000.0]
         self.executor, self.provider = FixtureExecutor(), FixtureProvider()
-        self.settings = Settings(shared_secret=SECRET, state_dir=self.root / "state")
+        self.settings = Settings(state_dir=self.root / "state")
         self.app = create_app(self.settings, registry=self.registry, provider=self.provider, executor=self.executor, clock=lambda: self.now[0])
         self.client = TestClient(self.app)
         self.client.__enter__()
@@ -124,11 +122,10 @@ class RunnerTests(unittest.TestCase):
         self.temp.cleanup()
 
     def request(self, method, path, body=None, owner=OWNER, raw=None, extra=None):
-        self.nonce += 1
+        # The backend's own guard (Host, Origin, JSON content type) sits in front of this app in the
+        # console; here the runner app is driven directly, as an in-process call.
         raw = (canonical(body) if body is not None else b"") if raw is None else raw
-        nonce, timestamp = f"{self.nonce:032x}", str(int(self.now[0]))
-        headers = {"x-traceharness-user": owner, "x-traceharness-timestamp": timestamp, "x-traceharness-nonce": nonce,
-                   "x-traceharness-signature": sign(SECRET, method, path, owner, timestamp, nonce, raw), "content-type": "application/json"}
+        headers = {"content-type": "application/json"}
         headers.update(extra or {})
         return self.client.request(method, path, content=raw, headers=headers)
 
@@ -151,16 +148,13 @@ class RunnerTests(unittest.TestCase):
             time.sleep(0.01)
         self.fail("Fixture job did not finish")
 
-    def test_authentication_rejects_unsigned_replay_tamper_and_hostile_origin(self):
+    def test_the_runner_app_sets_no_cors_and_marks_responses_uncacheable(self):
         response = self.client.get("/api/runner/catalog", headers={"Origin": "https://hostile.invalid"})
-        self.assertEqual(response.status_code, 401)
+        self.assertEqual(response.status_code, 200)
         self.assertNotIn("access-control-allow-origin", response.headers)
-        valid = self.request("GET", "/api/runner/catalog")
-        self.assertEqual(valid.status_code, 200)
-        replay = self.client.get("/api/runner/catalog", headers=dict(valid.request.headers))
-        self.assertEqual(replay.status_code, 401)
-        tampered = self.request("POST", "/api/runner/credentials", {"api_key": KEY}, extra={"x-traceharness-signature": "0" * 64})
-        self.assertEqual(tampered.status_code, 401)
+        self.assertEqual(response.headers["cache-control"], "no-store")
+        self.assertEqual(self.client.get("/api/runner/catalog?x=1").status_code, 404)
+        self.assertEqual(self.client.get("/elsewhere").status_code, 404)
 
     def test_task_catalog_preserves_runtime_constraints_without_private_paths(self):
         response = self.request("GET", "/api/runner/catalog")
@@ -183,22 +177,6 @@ class RunnerTests(unittest.TestCase):
                 with self.assertRaises(ValueError):
                     Registry(self.root, data)
 
-    def test_authenticator_window_capacity_and_body_binding(self):
-        auth = Authenticator(SECRET, clock=lambda: self.now[0], capacity=1)
-        timestamp, nonce = str(int(self.now[0])), "a" * 32
-        headers = {"x-traceharness-user": OWNER, "x-traceharness-timestamp": timestamp, "x-traceharness-nonce": nonce,
-                   "x-traceharness-signature": sign(SECRET, "POST", "/api/runner/jobs", OWNER, timestamp, nonce, b"a")}
-        with self.assertRaises(AuthenticationError):
-            auth.verify("POST", "/api/runner/jobs", headers, b"b")
-        self.assertEqual(auth.verify("POST", "/api/runner/jobs", headers, b"a"), OWNER)
-        headers["x-traceharness-nonce"] = "b" * 32
-        headers["x-traceharness-signature"] = sign(SECRET, "POST", "/api/runner/jobs", OWNER, timestamp, "b" * 32, b"a")
-        with self.assertRaises(AuthenticationError):
-            auth.verify("POST", "/api/runner/jobs", headers, b"a")
-        self.now[0] += 121
-        with self.assertRaises(AuthenticationError):
-            auth.verify("POST", "/api/runner/jobs", headers, b"a")
-
     def test_secret_errors_unicode_nonfinite_depth_and_unknown_fields(self):
         bodies = [b'{"api_key":{"secret":"DO-NOT-ECHO"}}', b'{"api_key":"\\ud800"}', b'{"api_key":NaN}',
                   b'{"api_key":' + b'[' * 40 + b'0' + b']' * 40 + b'}', canonical({"api_key": KEY, "owner": OTHER})]
@@ -208,7 +186,6 @@ class RunnerTests(unittest.TestCase):
             self.assertNotIn(KEY, response.text)
             self.assertNotIn("DO-NOT-ECHO", response.text)
             self.assertNotIn('"input"', response.text)
-        self.assertNotIn(SECRET, repr(self.settings))
 
     def test_preflight_recompiles_authoritative_prompt_and_limits(self):
         response = self.request("POST", "/api/runner/preflight", {"configuration": configuration()})
@@ -240,8 +217,6 @@ class RunnerTests(unittest.TestCase):
         cid = self.credential()
         with self.assertRaises(CredentialUnavailable):
             self.app.state.vault.resolve(OTHER, cid)
-        response = self.request("DELETE", "/api/runner/credentials/" + cid, owner=OTHER)
-        self.assertEqual(response.status_code, 401)
         self.assertEqual(self.app.state.vault.resolve(OWNER, cid), KEY)
         self.assertNotIn(KEY, repr(self.app.state.vault._values))
         for _ in range(3):
@@ -255,8 +230,9 @@ class RunnerTests(unittest.TestCase):
         job = self.finished(self.submit()["id"])
         self.assertEqual(job["status"], "succeeded")
         self.assertEqual(job["grade"], "failed")
-        self.assertEqual(self.request("GET", "/api/runner/jobs/" + job["id"], owner=OTHER).status_code, 404)
-        self.assertEqual(self.request("GET", "/api/runner/jobs", owner=OTHER).json(), {"jobs": []})
+        with self.assertRaises(JobError):
+            self.app.state.jobs.get(OTHER, job["id"])
+        self.assertEqual(self.app.state.jobs.list(OTHER), [])
         listing = self.request("GET", "/api/runner/jobs").json()["jobs"]
         self.assertNotIn("manifest", listing[0])
         disk = (self.settings.state_dir / job["id"] / "job.json").read_text()
@@ -402,7 +378,7 @@ class RunnerTests(unittest.TestCase):
         from traceharness.runner_service.jobs import Jobs
         invalid = self.root / "restart-state"
         (invalid / ("d" * 48)).mkdir(parents=True)
-        settings = Settings(shared_secret=SECRET, state_dir=invalid)
+        settings = Settings(state_dir=invalid)
         jobs = Jobs(settings, CredentialVault(), self.provider, self.executor)
         try:
             self.assertIsNotNone(jobs.blocked_reason)
@@ -431,7 +407,7 @@ class RunnerTests(unittest.TestCase):
 
     def test_cleanup_failure_prevents_already_queued_job_from_starting(self):
         from traceharness.runner_service.jobs import Jobs
-        settings = Settings(shared_secret=SECRET, state_dir=self.root / "queue-state", max_workers=1)
+        settings = Settings(state_dir=self.root / "queue-state", max_workers=1)
         executor = FixtureExecutor()
         executor.release.clear()
         def failure(*_):

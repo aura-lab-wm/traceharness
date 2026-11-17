@@ -9,15 +9,15 @@ import unittest
 
 from fastapi.testclient import TestClient
 
-from traceharness.runner_service.auth import sign
 from traceharness.runner_service.configuration import canonical, digest, preflight
 from traceharness.runner_service.native_prompts import (PINS, inventory_sha256, materializer_sha256,
     taxonomy_sha256, profile_sha256)
+from traceharness.runner_service.jobs import JobError
 from traceharness.runner_service.registry import Registry, NATIVE_PROMPT_CHECKS
 from traceharness.runner_service.service import create_app
 from traceharness.runner_service.settings import Settings
 from tests_agentlab.runner_service.test_runner import (fixture_registry, configuration, FixtureExecutor,
-    FixtureProvider, SECRET, OWNER, OTHER)
+    FixtureProvider, OWNER, OTHER)
 
 
 def sha(raw):
@@ -221,21 +221,15 @@ class NativePromptProtocolTests(unittest.TestCase):
         self.assertFalse(result["ok"])
         self.assertIn("manifest artifact limit", " ".join(result["issues"]))
 
-    def test_inventory_and_new_artifacts_are_authenticated_owner_scoped_reads(self):
+    def test_inventory_and_new_artifacts_are_owner_scoped_reads(self):
         registry = self.registry()
         executor = FixtureExecutor()
         executor.health = lambda: self.health
-        app = create_app(Settings(shared_secret=SECRET, state_dir=self.root / "state"), registry=registry, provider=FixtureProvider(), executor=executor, clock=lambda: 1770000000)
-        nonce = 0
+        app = create_app(Settings(state_dir=self.root / "state"), registry=registry, provider=FixtureProvider(), executor=executor, clock=lambda: 1770000000)
         def request(client, path, owner=OWNER):
-            nonlocal nonce
-            nonce += 1
-            timestamp, token = "1770000000", f"{nonce:032x}"
-            return client.get(path, headers={"x-traceharness-user": owner, "x-traceharness-timestamp": timestamp,
-                "x-traceharness-nonce": token, "x-traceharness-signature": sign(SECRET, "GET", path, owner, timestamp, token, b"")})
+            return client.get(path)
         with TestClient(app) as client:
             path = "/api/runner/prompt-inventory/native-claude-code"
-            self.assertEqual(client.get(path, headers={"Origin": "https://hostile.invalid"}).status_code, 401)
             response = request(client, path)
             self.assertEqual(response.status_code, 200, response.text)
             self.assertNotIn("access-control-allow-origin", response.headers)
@@ -254,10 +248,10 @@ class NativePromptProtocolTests(unittest.TestCase):
                 app.state.jobs.rows[jid] = {"owner": OWNER, "job": {"id": jid, "status": "succeeded", "artifacts": [metadata]}}
                 route = f"/api/runner/jobs/{jid}/artifacts/{name}"
                 self.assertEqual(request(client, route).status_code, 200)
-                foreign = request(client, route, OTHER)
-                absent = request(client, route.replace(jid, "e" * 48), OTHER)
-                self.assertEqual(foreign.status_code, 404)
-                self.assertEqual(foreign.json(), absent.json())
+                absent = request(client, route.replace(jid, "e" * 48))
+                self.assertEqual(absent.status_code, 404)
+                with self.assertRaises(JobError):
+                    app.state.jobs.get(OTHER, jid)
 
 
 if __name__ == "__main__":

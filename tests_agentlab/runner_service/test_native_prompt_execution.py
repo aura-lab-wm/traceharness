@@ -19,7 +19,6 @@ from traceharness.runner_service.execution import DockerExecutor, ExecutionError
 from traceharness.runner_service.native_prompts import profile_sha256
 from traceharness.runner_service.settings import Settings
 from tests_agentlab.runner_service import test_native_prompt_protocol as protocol_fixtures
-from tests_agentlab.runner_service.test_runner import SECRET
 
 
 MATERIALIZE = "traceharness.runner_service.native_prompts_elf.materialize_native_binary"
@@ -42,7 +41,7 @@ class NativePromptExecutionTests(unittest.TestCase):
         self.directory.mkdir(mode=0o700)
         for name in ("workspace", "output", "grading"):
             (self.directory / name).mkdir()
-        settings = Settings(shared_secret=SECRET, state_dir=self.root / "state")
+        settings = Settings(state_dir=self.root / "state")
         self.executor = DockerExecutor(settings, self.installed, command=Mock(side_effect=AssertionError("No Docker or host commands in fixture")))
         self.patched = b"explicit plumbing fixture, not an executable native binary"
         self.evidence = {"schema_version": 1, "profile_sha256": profile_sha256(self.profile),

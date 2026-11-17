@@ -1,11 +1,12 @@
-#!/usr/bin/env python3
-"""Operator-only isolated compatibility run. Never imported by the member service.
+"""`traceharness runner verify`: one isolated compatibility run that writes a receipt. PAID.
 
-Read the OpenRouter key from stdin. No key argument, key file, transcript output,
-HTTP endpoint or browser path exists. The sole receipt bootstrap exception is a
-CLI-local review of the exact selected runtime/model/task after real Docker/image,
-label, isolation and task-content checks. The inventory remains unchanged until
-an actual model response, completed runtime and passed trusted grader are proved.
+Spends real money on the model the operator names, so it runs only when asked, needs --yes, and keeps
+the hosted release's caps (1-64 requests, 30-600 s, $0.01-$5). Read the OpenRouter key from stdin. No key
+argument, key file, transcript output, HTTP endpoint or browser path exists. The sole receipt bootstrap
+exception is a CLI-local review of the exact selected runtime/model/task after real Docker/image,
+label, isolation and task-content checks. The registry remains unchanged until an actual model
+response, completed runtime and passed trusted grader are proved. A combination without a receipt still
+runs from the console on an explicit unverified_ok flag; a receipt only records that it was proved.
 """
 from __future__ import annotations
 
@@ -21,7 +22,6 @@ import re
 import secrets
 import sys
 import time
-import uuid
 
 from traceharness.runner_service.configuration import canonical, preflight, RUNTIME_NAMES
 from traceharness.runner_service.credentials import CredentialVault
@@ -30,6 +30,8 @@ from traceharness.runner_service.jobs import Jobs, TERMINAL
 from traceharness.runner_service.provider import OpenRouter
 from traceharness.runner_service.registry import Registry, COMPATIBILITY_FIELDS
 from traceharness.runner_service.settings import Settings
+from traceharness.runner.local import (docker_info, detect_isolation, find_docker, registry_path as default_registry_path,
+                                       runner_dir)
 
 ARTIFACT_NAMES = {"manifest.json", "grade.json", "trace.jsonl", "messages.json", "summary.json", "patch.diff"}
 
@@ -104,8 +106,9 @@ def configuration(runtime_id, model_id, task_id, *, max_steps=None, max_cost_usd
 
 def review_operator_run(registry, executor, runtime_id, model_id, task_id, **limits):
     """Bootstrap only the receipt gate; actual executor readiness is still required."""
-    if runtime_id not in registry.runtimes or model_id not in registry.models or task_id not in registry.tasks:
-        raise VerificationRefused("Select an installed runtime, registered model and installed task.")
+    if runtime_id not in registry.runtimes or task_id not in registry.tasks:
+        raise VerificationRefused("Select an installed runtime and installed task.")
+    registry.models.setdefault(model_id, {"id": model_id, "name": model_id})
     runtime = registry.runtimes[runtime_id]
     if runtime_id not in registry.tasks[task_id]["runtime_ids"]:
         raise VerificationRefused("The installed task does not support this runtime.")
@@ -123,6 +126,7 @@ def review_operator_run(registry, executor, runtime_id, model_id, task_id, **lim
         raise VerificationRefused("Actual host, pinned images, isolation or task readiness checks failed.")
     class OperatorReview:
         runtimes, tasks, models = registry.runtimes, registry.tasks, registry.models
+        open_models = True      # records verified/isolation_runtime in the manifest, as the local runner does
 
         @staticmethod
         def compatible(selected_runtime, selected_model, selected_task):
@@ -201,7 +205,9 @@ def register_receipt(registry_path, original_raw, receipt):
     if registry_path.is_symlink() or registry_path.read_bytes() != original_raw:
         raise VerificationRefused("Inventory changed during verification; no inventory update was made.")
     data = json.loads(original_raw)
-    inventory = Registry(registry_path.parent, data)
+    if all(row.get("id") != receipt["model_id"] for row in data.setdefault("models", [])):
+        data["models"].append({"id": receipt["model_id"], "name": receipt["model_id"]})
+    inventory = Registry(registry_path.parent, data, local=True)
     runtime = next(row for row in data["runtimes"] if row["id"] == receipt["runtime_id"])
     folder = registry_path.parent / "compatibility"
     if folder.is_symlink():
@@ -219,7 +225,7 @@ def register_receipt(registry_path, original_raw, receipt):
     runtime["compatibility_receipts"] = existing + [{"path": "compatibility/" + filename, "sha256": hashlib.sha256(raw).hexdigest()}]
     # Revalidate every path, receipt, runtime/environment binding and task before
     # atomically replacing the operator inventory. The service must reload it.
-    Registry(registry_path.parent, data)
+    Registry(registry_path.parent, data, local=True)
     temporary = registry_path.with_name(registry_path.name + ".verified-" + secrets.token_hex(8))
     write_private(temporary, canonical(data))
     try:
@@ -245,40 +251,44 @@ def safe_job(job):
             "issues": [_redacted(str(item).encode()).decode()[:1000] for item in job.get("issues", [])[:20]]}
 
 
-def main(argv=None):
-    parser = SafeParser(description=__doc__)
+def main(argv=None, *, lab_root=None):
+    parser = SafeParser(prog="traceharness runner verify", description="Write a compatibility receipt from one real, paid, isolated run.")
     parser.add_argument('--runtime', choices=list(RUNTIME_NAMES), required=True)
     parser.add_argument('--model', required=True)
     parser.add_argument('--task')
+    parser.add_argument('--yes', action='store_true', help='Confirm that this spends money on the named model (caps below).')
     parser.add_argument('--max-steps', type=int, help='Maximum model requests, 1–64; default Claude 32, otherwise 20.')
     parser.add_argument('--max-cost-usd', type=float, help='Maximum model spend, $0.01–$5; default Claude $2, otherwise $1.')
     parser.add_argument('--wall-time-seconds', type=int, help='Maximum runtime, 30–600 seconds; default 240.')
     parser.add_argument('--observation-chars', type=int, help='TraceHarness only: observation size, 200–50000 characters; default 20000. Native runtimes own their context.')
-    parser.add_argument('--registry', type=Path, default=Path('/data/inventory/registry.json'))
-    parser.add_argument('--state-dir', type=Path, default=Path('/data/verification/jobs'))
     args = parser.parse_args(argv)
+    if not args.yes:
+        raise VerificationRefused('This run spends money on the model you named. Re-run with --yes to confirm; nothing was started.')
     if not re.fullmatch(r'[A-Za-z0-9][A-Za-z0-9/_.:@+-]{1,150}', args.model) or args.model.startswith(('mock', 'sk-')):
         raise VerificationRefused('Select a registered real model identifier.')
-    if sys.platform != 'linux' or os.geteuid() != 0:
-        raise VerificationRefused('Run this operator command on the dedicated Linux execution machine.')
-    registry_path = args.registry.resolve(strict=True)
-    if args.registry.is_symlink():
-        raise VerificationRefused('Inventory must be a regular operator file.')
+    docker = find_docker()
+    info = docker_info(docker)
+    if info is None:
+        raise VerificationRefused('Docker does not answer. Start it, then run traceharness runner setup if you have not.')
+    base = runner_dir(lab_root)
+    registry_file = default_registry_path(lab_root)
+    if not registry_file.is_file() or registry_file.is_symlink():
+        raise VerificationRefused('No registry yet. Run traceharness runner setup first.')
+    registry_path = registry_file.resolve(strict=True)
+    state_dir = base / 'verification' / 'jobs'
     lock_path = registry_path.parent / '.verification.lock'
     lock_fd = os.open(lock_path, os.O_RDWR | os.O_CREAT | os.O_NOFOLLOW, 0o600)
     with os.fdopen(lock_fd, 'w') as lock:
         try: fcntl.flock(lock.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
         except BlockingIOError: raise VerificationRefused('Another operator verification is running.') from None
         original_raw = registry_path.read_bytes()
-        registry = Registry(registry_path.parent, json.loads(original_raw))
+        registry = Registry(registry_path.parent, json.loads(original_raw), local=True)
         candidates = [tid for tid, task in registry.tasks.items() if args.runtime in task['runtime_ids']]
         task_id = args.task or (candidates[0] if len(candidates) == 1 else None)
         if task_id is None:
             raise VerificationRefused('Select one installed task with --task.')
-        settings = Settings(shared_secret=secrets.token_urlsafe(48), state_dir=args.state_dir,
-                            registry_path=registry_path, execution_enabled=True,
-                            docker_binary=os.environ.get('RUNNER_DOCKER', '/usr/bin/docker'),
-                            isolation_runtime=os.environ.get('RUNNER_ISOLATION_RUNTIME', 'runsc'), max_workers=1)
+        settings = Settings(state_dir=state_dir, registry_path=registry_path, execution_enabled=True,
+                            docker_binary=docker, isolation_runtime=detect_isolation(info), max_workers=1, local=True)
         executor = DockerExecutor(settings, registry)
         review = review_operator_run(registry, executor, args.runtime, args.model, task_id,
                                      max_steps=args.max_steps, max_cost_usd=args.max_cost_usd,
@@ -291,7 +301,7 @@ def main(argv=None):
         key = read_key(sys.stdin)
         provider.validate_key(key)
         vault = CredentialVault()
-        owner = str(uuid.uuid4())  # Local operator namespace, never a fabricated signed-in session.
+        owner = settings.owner
         credential = vault.put(owner, key)
         key = None
         jobs = Jobs(settings, vault, provider, executor)
@@ -314,7 +324,7 @@ def main(argv=None):
             report['successful_model_responses'] = provider.successful_responses
             try:
                 receipt = receipt_for(job, review['manifest'], provider.successful_responses)
-                validate_artifact_files(args.state_dir, job)
+                validate_artifact_files(state_dir, job)
                 report['receipt'] = register_receipt(registry_path, original_raw, receipt)
                 report.update(compatibility_passed=True, verification_kind='operator-bootstrap-no-browser-auth')
                 code = 0
@@ -325,15 +335,3 @@ def main(argv=None):
             return code
         finally:
             jobs.close()
-
-
-if __name__ == '__main__':
-    try:
-        raise SystemExit(main())
-    except VerificationRefused as error:
-        print(json.dumps({'compatibility_passed': False, 'receipt_written': False, 'reason': str(error)}), flush=True)
-        raise SystemExit(1)
-    except Exception:
-        print(json.dumps({'compatibility_passed': False, 'receipt_written': False,
-                          'reason': 'Operator verification failed; inspect private state. Sensitive details suppressed.'}), flush=True)
-        raise SystemExit(1)

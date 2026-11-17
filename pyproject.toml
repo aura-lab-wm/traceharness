@@ -75,6 +75,9 @@ zip-safe = false
 # The built UI. Absent until `npm run build` has been run in traceharness/frontend.
 "traceharness.frontend" = ["dist/*", "dist/**/*"]
 "traceharness.plugins" = ["*.json", "*.py"]
+# What `traceharness runner setup` builds from: the runtime and grader Dockerfiles, the eight task
+# recipes with their grader, the native-prompt inventory scripts and the Codex source-asset list.
+"traceharness.runner" = ["assets/*", "assets/**/*"]
 # The image third-party agents run in (`traceharness agents build`).
 "traceharness.agents" = ["Dockerfile", "Dockerfile.pydeps"]
 "traceharness.docs" = ["*.md"]

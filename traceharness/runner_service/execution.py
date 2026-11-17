@@ -102,10 +102,25 @@ class DockerExecutor:
         self.settings, self.registry, self.command = settings, registry, command
         self._reconciled, self._startup_blocked = False, False
 
+    def _state_label(self):
+        """Names this runner's state directory, so two consoles never reap each other's containers."""
+        return hashlib.sha256(str(Path(self.settings.state_dir).resolve()).encode()).hexdigest()[:16]
+
     def reconcile_startup(self):
         if self._startup_blocked:
             return False
         if self._reconciled:
+            return True
+        if self.settings.local:
+            # A crashed earlier session may have left job containers. They carry this runner's own
+            # label, so remove exactly those (by id), never a pattern over unrelated containers.
+            listed = self.command([self.settings.docker_binary, "ps", "--all", "--quiet", "--no-trunc",
+                                   "--filter", "label=org.traceharness.state=" + self._state_label()],
+                                  capture_output=True, timeout=8, check=True)
+            ids = [line for line in listed.stdout.decode().split() if re.fullmatch(r"[a-f0-9]{64}", line)]
+            if ids:
+                self.command([self.settings.docker_binary, "rm", "--force", *ids], capture_output=True, timeout=60, check=False)
+            self._reconciled = True
             return True
         result = self.command([self.settings.docker_binary, "ps", "--all", "--filter", "name=^/traceharness-", "--format", "{{.ID}}"],
                               capture_output=True, timeout=8, check=True)
@@ -128,11 +143,12 @@ class DockerExecutor:
         if not self.settings.execution_enabled:
             return empty
         try:
-            if sys.platform != "linux" or os.geteuid() != 0:
-                return empty
-            capabilities = next(line.split()[1] for line in Path("/proc/self/status").read_text().splitlines() if line.startswith("CapEff:"))
-            if not (int(capabilities, 16) & (1 << 21)):
-                return empty  # Per-job tmpfs needs host control-plane CAP_SYS_ADMIN.
+            if not self.settings.local:
+                if sys.platform != "linux" or os.geteuid() != 0:
+                    return empty
+                capabilities = next(line.split()[1] for line in Path("/proc/self/status").read_text().splitlines() if line.startswith("CapEff:"))
+                if not (int(capabilities, 16) & (1 << 21)):
+                    return empty  # Per-job tmpfs needs host control-plane CAP_SYS_ADMIN.
             if not self.reconcile_startup():
                 return empty
             info = self._inspect("info", "--format", "{{json .}}")
@@ -143,7 +159,8 @@ class DockerExecutor:
                 images = self._inspect("image", "inspect", runtime["image_digest"])
                 image = images[0]
                 labels = image.get("Config", {}).get("Labels", {}) or {}
-                runtimes[rid] = bool(runtime["model_ids"] and pinned_image_matches(runtime["image_digest"], image)
+                # A receipt is advisory locally: an unreceipted combination runs on an explicit flag.
+                runtimes[rid] = bool((runtime["model_ids"] or self.settings.local) and pinned_image_matches(runtime["image_digest"], image)
                                      and labels.get("org.traceharness.runtime") == rid
                                      and labels.get("org.traceharness.version") == runtime["version"])
             tasks = self.registry.task_health()
@@ -151,12 +168,39 @@ class DockerExecutor:
                 grader = self._inspect("image", "inspect", task["grader_image_digest"])[0]
                 tasks[tid] = bool(tasks[tid] and pinned_image_matches(task["grader_image_digest"], grader)
                                   and any(runtimes.get(rid) for rid in task["runtime_ids"]))
-            return {"available": any(tasks.values()) and any(runtimes.values()), "runtimes": runtimes, "tasks": tasks}
+            result = {"available": any(tasks.values()) and any(runtimes.values()), "runtimes": runtimes, "tasks": tasks}
+            if self.settings.local:
+                result["isolation_runtime"] = self.settings.isolation_runtime
+            return result
         except (OSError, subprocess.SubprocessError, ValueError, KeyError, IndexError, TypeError, StopIteration):
             return empty
 
     @contextmanager
+    def local_storage(self, directory):
+        """No root and no tmpfs on a user's machine: plain directories the job's user can write, removed
+        when the job ends. The container still has its memory, CPU, process, file-size and wall limits."""
+        names = ("workspace", "output", "grading")
+        try:
+            for name in names:
+                path = directory / name
+                path.mkdir(mode=0o700)
+                # The agent runs as this host user; the root grader has no DAC override, so the
+                # grading directory it writes into is open to it.
+                # (a differently-owned agent, e.g. 10001 under a root console, needs workspace and output open too)
+                path.chmod(0o777 if name == "grading" or self._agent_user() == "10001:10001" else 0o755)
+            yield
+        finally:
+            for name in names:
+                shutil.rmtree(directory / name, ignore_errors=True)
+            if any((directory / name).exists() for name in names):
+                raise ExecutionError("Storage cleanup needs operator attention.")
+
+    @contextmanager
     def bounded_storage(self, directory):
+        if self.settings.local:
+            with self.local_storage(directory):
+                yield
+            return
         mounted = []
         try:
             for name, size in (("workspace", "2g"), ("output", "64m"), ("grading", "16m")):
@@ -178,10 +222,19 @@ class DockerExecutor:
             if failed:
                 raise ExecutionError("Bounded storage cleanup needs operator attention.")
 
+    def _agent_user(self):
+        # Locally the agent runs as the host user, so it owns what it writes and the console can always clean
+        # it up. It never runs as uid 0 (a console started as root gets the unprivileged hosted user).
+        if self.settings.local and hasattr(os, "getuid") and os.getuid() != 0:
+            return f"{os.getuid()}:{os.getgid()}"
+        return "10001:10001"
+
     def container_args(self, name, image, mounts, *, entrypoint, grader=False):
         args = [self.settings.docker_binary, "run", "--name", name, "--pull", "never", "--rm", "--init",
                 "--label", "org.traceharness.runner=private",
-                "--runtime", self.settings.isolation_runtime, "--network", "none", "--read-only", "--user", "0:0" if grader else "10001:10001",
+                "--label", "org.traceharness.state=" + self._state_label(),
+                "--runtime", self.settings.isolation_runtime, "--network", "none", "--read-only",
+                "--user", "0:0" if grader else self._agent_user(),
                 "--cap-drop", "ALL", "--security-opt", "no-new-privileges=true", "--pids-limit", "256",
                 "--memory", "4g", "--cpus", "2", "--ulimit", "fsize=67108864:67108864",
                 "--tmpfs", "/tmp:rw,nosuid,nodev,size=256m,mode=1777", "--env", "HOME=/tmp/home",
