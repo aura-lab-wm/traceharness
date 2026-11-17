@@ -123,6 +123,14 @@ class DurableResultTests(BackendBase):
         self.assertIn(job["id"], jobs.rows)
 
 
+class DatasetNamingTests(unittest.TestCase):
+    def test_trials_go_to_their_experiment_and_single_jobs_to_runner_jobs(self):
+        from traceharness.runner.datasets import dataset_for
+        self.assertEqual(dataset_for("experiment_" + "a" * 48 + "_t1"), "experiment_" + "a" * 48)
+        self.assertEqual(dataset_for("wp5-idempotency-0001"), "runner_jobs")
+        self.assertEqual(dataset_for(None), "runner_jobs")
+
+
 def stopped_docker(args, **kwargs):
     return SimpleNamespace(returncode=1, stdout=b"")
 

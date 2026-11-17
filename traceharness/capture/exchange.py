@@ -67,6 +67,67 @@ class ExchangeError(Exception):
     """A refusal, in words meant for the person at the terminal. Nothing was written."""
 
 
+# --- import-side schema ---------------------------------------------------------------------------
+# What a RunSummary (summary.json, an index row) may hold, by JSON type. A value of the wrong type or a
+# non-finite number is refused before anything is written: a stored NaN later breaks every JSON response
+# that serves the run.
+_S_STR = ("run_id", "task_id", "harness_id", "model", "provider", "started_at")
+_S_STR_OPT = ("finished_at", "exit_reason", "error", "harness_hash")
+_S_INT = ("repeat_index",)
+_S_INT_NULL = ("steps", "sentinel_interventions", "tool_calls", "edits", "lines_added", "lines_removed",
+               "boundary_events", "tests_run_by_agent", "input_tokens", "output_tokens", "wall_ms", "patch_bytes",
+               "reprompts", "human_interventions")
+_S_NUM_NULL = ("sentinel_max_risk", "sentinel_cost_usd", "cost_usd")
+_S_BOOL_NULL = ("ran_tests_before_submit", "visible_pass", "hidden_pass", "strong_pass", "tests_modified", "human_intervened")
+_S_LIST_NULL = ("files_touched", "boundary_kinds", "served_by")
+
+
+def _refuse_constant(name):
+    raise ValueError(name)
+
+
+def _all_finite(value) -> bool:
+    if isinstance(value, float):
+        return value == value and value not in (float("inf"), float("-inf"))
+    if isinstance(value, dict):
+        return all(_all_finite(v) for v in value.values())
+    if isinstance(value, list):
+        return all(_all_finite(v) for v in value)
+    return True
+
+
+def loads_finite(text):
+    """json.loads that refuses NaN, Infinity, -Infinity and numbers too large for a float (1e999)."""
+    value = json.loads(text, parse_constant=_refuse_constant)
+    if not _all_finite(value):
+        raise ValueError("non-finite number")
+    return value
+
+
+def _is_int(value) -> bool:
+    return isinstance(value, int) and not isinstance(value, bool)
+
+
+def check_summary_row(row, what: str) -> None:
+    """Raise ExchangeError unless `row` is a well-typed RunSummary object (extra provenance keys are kept)."""
+    if not isinstance(row, dict):
+        raise ExchangeError(f"{what} is not a JSON object")
+    bad = [k for k in _S_STR if not isinstance(row.get(k), str)]
+    bad += [k for k in _S_STR_OPT if k in row and not isinstance(row[k], str)]
+    bad += [k for k in _S_INT if not _is_int(row.get(k))]
+    bad += [k for k in _S_INT_NULL if row.get(k) is not None and not _is_int(row[k])]
+    bad += [k for k in _S_NUM_NULL if row.get(k) is not None and (isinstance(row[k], bool) or not isinstance(row[k], (int, float)))]
+    bad += [k for k in _S_BOOL_NULL if row.get(k) is not None and not isinstance(row[k], bool)]
+    bad += [k for k in _S_LIST_NULL if row.get(k) is not None and not isinstance(row[k], list)]
+    if bad:
+        raise ExchangeError(f"{what} has fields of the wrong type or missing: {', '.join(sorted(set(bad))[:5])}")
+
+
+def check_ledger_line(span, what: str) -> None:
+    if not isinstance(span, dict) or not isinstance(span.get("span"), str) or not _is_int(span.get("seq")) or span["seq"] < 0:
+        raise ExchangeError(f"{what} is not a ledger span (an object with a text `span` and a whole-number `seq`)")
+
+
 # --- export ---------------------------------------------------------------------------------------
 
 def _read_file(directory_fd: int, name: str) -> Optional[bytes]:
@@ -348,7 +409,7 @@ def verify_archive(path: str) -> dict:
         if MANIFEST not in by_name:
             raise ExchangeError("this is not a TraceHarness capture export: there is no manifest.json")
         try:
-            manifest = json.loads(_read_member(z, by_name[MANIFEST], MAX_MANIFEST_BYTES))
+            manifest = loads_finite(_read_member(z, by_name[MANIFEST], MAX_MANIFEST_BYTES))
         except ValueError:
             raise ExchangeError("manifest.json is not valid JSON") from None
         if not isinstance(manifest, dict) or manifest.get("format") != FORMAT:
@@ -404,16 +465,17 @@ def verify_archive(path: str) -> dict:
             if need not in files:
                 raise ExchangeError(f"run {run_id!r} has no {need}")
         try:
-            summary = json.loads(files["summary.json"].decode("utf-8"))
-            for raw in files["ledger.jsonl"].decode("utf-8").splitlines():
+            summary = loads_finite(files["summary.json"].decode("utf-8"))
+            for number, raw in enumerate(files["ledger.jsonl"].decode("utf-8").splitlines(), 1):
                 if raw.strip():
-                    json.loads(raw)
+                    check_ledger_line(loads_finite(raw), f"run {run_id!r} ledger line {number}")
             files["patch.diff"].decode("utf-8") if "patch.diff" in files else None
             src = source_of(files["ledger.jsonl"])
         except (ValueError, UnicodeDecodeError):
             raise ExchangeError(f"run {run_id!r} has a summary or ledger that is not valid JSON") from None
         if not isinstance(summary, dict) or summary.get("run_id") != run_id:
             raise ExchangeError(f"run {run_id!r}: summary.json names a different run")
+        check_summary_row(summary, f"run {run_id!r} summary.json")
         if src not in SOURCES or (run_id in sources and sources[run_id] != src):
             raise ExchangeError(f"run {run_id!r} has an unknown capture source {src!r}")
     index = []
@@ -421,9 +483,10 @@ def verify_archive(path: str) -> dict:
         try:
             for raw in data[INDEX].decode("utf-8").splitlines():
                 if raw.strip():
-                    row = json.loads(raw)
+                    row = loads_finite(raw)
                     if not isinstance(row, dict) or row.get("run_id") not in runs:
                         raise ValueError
+                    check_summary_row(row, f"an index.jsonl row for run {row['run_id']!r}")
                     index.append(row)
         except (ValueError, UnicodeDecodeError):
             raise ExchangeError("index.jsonl is malformed or names a run the archive does not hold") from None

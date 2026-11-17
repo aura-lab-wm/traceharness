@@ -217,5 +217,20 @@ class SetupKeepsReceiptsTests(unittest.TestCase):
         self.assertEqual(build._native_receipts_kept(self.runner, [ref], row), [])
 
 
+class VerifyHelpTests(unittest.TestCase):
+    def test_runner_verify_help_shows_the_full_verification_parser(self):
+        import contextlib
+        import io
+        from traceharness.runner import cli
+        for flag in ("--help", "-h"):
+            out = io.StringIO()
+            with contextlib.redirect_stdout(out):
+                code = cli.main(["verify", flag])
+            text = out.getvalue()
+            self.assertEqual(code, 0)
+            for expected in ("--runtime", "--model", "--task", "--yes", "--max-steps", "--max-cost-usd", "--wall-time-seconds", "--lab"):
+                self.assertIn(expected, text, expected)
+
+
 if __name__ == "__main__":
     unittest.main()
