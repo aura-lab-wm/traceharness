@@ -21,7 +21,7 @@ The build context contains:
 
 - `Dockerfile`, `start.py`, and `../verify_runtime.py` from this directory tree.
 - `traceharness/`: the reviewed coordinator source, without caches or secrets.
-- `traceharness-0.5.1-py3-none-any.whl`: a wheel built from that same source.
+- `traceharness-0.5.4-py3-none-any.whl`: a wheel built from that same source.
 - `requirements.lock`: the reviewed task's dependency lock file.
 - `grader/grade.py`: `../tasks/grade.py`.
 - `gvisor-x86_64.tar.bz2`: release `20261102.0`, checked against the SHA-256
@@ -30,7 +30,7 @@ The build context contains:
 - `images.tar.gz`: `docker save` output for the three runtime images and grader.
 
 Build the `runtime` target three times, setting `RUNTIME_ID` and
-`RUNTIME_VERSION` to `traceharness`/`0.5.1`, `native-claude-code`/`2.1.322`, and
+`RUNTIME_VERSION` to `traceharness`/`0.5.4`, `native-claude-code`/`2.1.322`, and
 `native-codex`/`0.167.1`. Build the `grader` target separately. Record each actual
 immutable image ID in the registry and its task environment map, then create
 the image archive. Finally build/push the `control` target and deploy its
