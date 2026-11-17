@@ -29,9 +29,10 @@
    ==================================================================================== */
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { api, IS_STATIC, IS_MEMBER, captureControl } from '../../api'
-import { can } from '../../environment'
-import { LOCAL_APP } from '../../shared/index.js'
+import { can, MODE } from '../../environment'
+import { LABELS, LOCAL_APP } from '../../shared/index.js'
 import { Unavailable } from '../unavailable'
+import { MemberCapture } from '../MemberCapture'
 import schoolPackage from '../../../../school-package.json'
 import { arrival, suggestResultsDir, cleanResultsDir, detectState, progressPct, progressKnown, progressPhrase, verdictTile } from '../../method/importing'
 import { browserStores, readMate, writeKey, forgetKey, writeModel, isKeyRemembered, setCaptured, DEFAULT_MODEL } from '../../matekey'
@@ -593,7 +594,10 @@ function WatcherControls({ st, compact }) {
   )
 }
 
-function Capture() {
+/** The capture view: Capture computers for a member (the hosted account's computers and uploads),
+ *  Session capture on this machine otherwise. */
+function Capture() { return MODE === 'member' ? <MemberCapture /> : <LocalCapture /> }
+function LocalCapture() {
   const local = can('capture.local')
   const st = useCapture(local ? 5000 : 0)
   const runs = useApi(local ? '/capture/runs?limit=25' : null, PRIV)
@@ -1522,8 +1526,11 @@ export const views = {
   sources: { tag: 'src', title: () => 'Sources', render: Sources, crumbs: () => [['sources & machine']],
     Actions: () => <Go spec="capture" className="rg-btn">Session capture <Icon name="right" size={13} /></Go>,
     palette: () => [{ title: 'Sources & results on disk', detail: 'data/runs · import a trace', spec: 'sources', keywords: 'load trajectories import' }] },
-  capture: { tag: 'cap', title: () => 'Capture', render: Capture, crumbs: () => [['sources & machine', 'sources'], ['session capture']],
-    palette: () => [{ title: 'Session capture', detail: 'watcher · captured sessions', spec: 'capture' }] },
+  capture: { tag: 'cap', title: () => (MODE === 'member' ? LABELS.capture_member : 'Capture'), render: Capture,
+    crumbs: () => (MODE === 'member' ? [[LABELS.capture_member]] : [['sources & machine', 'sources'], ['session capture']]),
+    palette: () => [MODE === 'member'
+      ? { title: LABELS.capture_member, detail: 'connected computers · uploaded sessions', spec: 'capture' }
+      : { title: 'Session capture', detail: 'watcher · captured sessions', spec: 'capture' }] },
   sentinel: { tag: 'sent', title: () => 'Sentinel', render: Sentinel, crumbs: () => [['sentinel · early warning on a partial trajectory']], outsideGuided: () => true,
     palette: () => [{ title: 'Sentinel', detail: 'early warning on a partial trajectory', spec: 'sentinel' }] },
   canvas: { tag: 'cv', title: () => 'Canvas', render: Canvas, crumbs: () => [['canvas · studies → models → cells']], outsideGuided: () => true,
