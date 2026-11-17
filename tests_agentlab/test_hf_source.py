@@ -31,6 +31,18 @@ PEER = ("192.0.2.10", 51234)
 BASE = "http://127.0.0.1:8765"
 
 
+
+def drain_import_job(test, timeout=30.0):
+    """Cleanup step: wait until no import job is running, so a job a test started never outlives its patches.
+    Registered last in setUp, so it runs first, before the fake Hub, RUNS_ROOT and the shared status are restored.
+    A job still running after `timeout` fails the test instead of leaking into the next one."""
+    import time as _time
+    deadline = _time.monotonic() + timeout
+    while routes.STATE.get("status") == "running":
+        if _time.monotonic() > deadline:
+            test.fail("an import job was still running when the test ended")
+        _time.sleep(0.02)
+
 class Lab(unittest.TestCase):
     def setUp(self):
         self.tmp = tempfile.mkdtemp(prefix="th-hf-src-")
@@ -51,6 +63,7 @@ class Lab(unittest.TestCase):
         saved = dict(routes.STATE)
         self.addCleanup(lambda: (routes.STATE.clear(), routes.STATE.update(saved)))
         routes.STATE.update(status="idle", progress=None, error=None, result=None, history=[])
+        self.addCleanup(drain_import_job, self)
 
 
 def cli_run(*argv):

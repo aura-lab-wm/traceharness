@@ -25,6 +25,18 @@ BASE = "http://127.0.0.1:8765"
 GOOD = {"dataset": "acme/data", "n": 5, "seed": 0, "name": "sec_ok"}
 
 
+
+def drain_import_job(test, timeout=30.0):
+    """Cleanup step: wait until no import job is running, so a job a test started never outlives its patches.
+    Registered last in setUp, so it runs first, before the fake Hub, RUNS_ROOT and the shared status are restored.
+    A job still running after `timeout` fails the test instead of leaking into the next one."""
+    import time as _time
+    deadline = _time.monotonic() + timeout
+    while routes.STATE.get("status") == "running":
+        if _time.monotonic() > deadline:
+            test.fail("an import job was still running when the test ended")
+        _time.sleep(0.02)
+
 class Sec(unittest.TestCase):
     def setUp(self):
         self.tmp = tempfile.mkdtemp(prefix="th-hf-sec-")
@@ -44,6 +56,7 @@ class Sec(unittest.TestCase):
         routes.STATE.update(status="idle", progress=None, error=None, result=None, history=[])
         self.client = TestClient(app, base_url=BASE, client=PEER)
         self.baseline = self.walk()
+        self.addCleanup(drain_import_job, self)
 
     def walk(self):
         return sorted(os.path.relpath(os.path.join(d, f), self.tmp) for d, _s, fs in os.walk(self.tmp) for f in fs)
@@ -165,7 +178,8 @@ class Sizes(Sec):
         self.untouched()
 
     def test_one_import_at_a_time(self):
-        routes.STATE["status"] = "running"
+        routes.STATE["status"] = "running"          # a simulated running job: no thread exists, so put it back
+        self.addCleanup(routes.STATE.update, status="idle")
         self.assertEqual(self.post(GOOD).status_code, 409)
         self.assertEqual(self.hub.calls, [])
 
