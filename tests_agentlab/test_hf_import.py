@@ -140,6 +140,17 @@ class Completeness(Case):
                 for steps, _lines in self.steps_and_turns(f"smith_{label}"):
                     self.assertEqual(steps, f["assistant_turns"])
 
+    def test_a_catalog_dataset_imports_its_default_split_when_none_is_named(self):
+        class ThreeSplits(FakeHub):               # the Hub lists "ticks" first; the plain default would read it
+            def __call__(self, url):
+                out = super().__call__(url)
+                if "/size" in url:
+                    out["size"]["splits"].insert(0, {"config": "default", "split": "ticks", "num_rows": 10})
+                return out
+        hub = ThreeSplits(dataset="SWE-bench/SWE-smith-trajectories", rows=[msg_row(i) for i in range(10)], features=MSG_FEATURES, split="tool")
+        res = I.import_dataset("SWE-bench/SWE-smith-trajectories", n=5, name="smith_default", fetch=hub, runs_root=self.runs, sleep=NOSLEEP, pause=0)
+        self.assertEqual((res["provenance"]["config"], res["provenance"]["split"]), ("default", "tool"))
+
     def test_tool_results_are_matched_to_their_calls(self):
         f = fixture("smith_rows.json")["rows"][0]
         sess = I.message_session(f["row"], 0, "x/y")

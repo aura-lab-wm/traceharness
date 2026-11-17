@@ -281,7 +281,13 @@ def import_dataset(dataset_id: str, config=None, split=None, n: int = 200, seed:
     """Sample `n` rows of a public dataset and write data/runs/<name>/ (see the module docstring).
     Raises HFError for a refusal (bad id, gated, unknown shape, existing directory, too many rows)."""
     from traceharness.backend import paths
+    from traceharness.catalog import hf as catalog
     F.check_id(dataset_id)
+    if config is None and split is None:
+        # a dataset the catalog has imported live names its own default split (SWE-smith: "tool", not the first split)
+        entry = catalog.get(dataset_id)
+        if entry and entry.get("hf_adapter") and entry.get("hf_import"):
+            config, split = entry["hf_import"]["config"], entry["hf_import"]["split"]
     root = runs_root or paths.RUNS_ROOT
     name = check_name(name or default_name(dataset_id), root)
     final = os.path.join(root, name)
