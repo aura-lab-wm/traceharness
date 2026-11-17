@@ -95,6 +95,28 @@ describe('environment: one console, two modes', () => {
       '$& {command} needs the local runner. Run traceharness runner setup (Docker required).')
   })
 
+  it('tells observers when a capability changes, and only then; refreshEnvironment re-reads /api/environment', async () => {
+    const env = await load({})
+    const seen = []
+    const stop = env.subscribe(() => seen.push(env.environmentVersion()))
+    const before = env.environmentVersion()
+    env.applyRuntime({ capabilities: { 'run.container': { reason: 'runner_not_ready' } } })
+    expect(seen).toEqual([])
+    env.applyRuntime({ capabilities: { 'run.container': { reason: 'ok' } } })
+    expect(seen).toEqual([before + 1])
+    env.applyRuntime({ capabilities: { 'run.container': { reason: 'ok' } } })
+    expect(seen).toHaveLength(1)
+    stop()
+    const answers = [{ ok: true, json: async () => ({ capabilities: { 'run.native': { reason: 'ok' } } }) }, { ok: false }, 'throw']
+    vi.stubGlobal('fetch', vi.fn(async () => { const a = answers.shift(); if (a === 'throw') throw new Error('offline'); return a }))
+    expect(await env.refreshEnvironment()).toBe(true)
+    expect(env.can('run.native')).toBe(true)
+    expect(await env.refreshEnvironment()).toBe(false)
+    expect(await env.refreshEnvironment()).toBe(false)
+    expect(fetch).toHaveBeenCalledWith('/api/environment', expect.objectContaining({ cache: 'no-store' }))
+    expect(seen).toHaveLength(1)
+  })
+
   it('reads the page globals itself and never imports the API modules', () => {
     const source = readFileSync(new URL('./environment.js', import.meta.url), 'utf8')
     expect(source).not.toMatch(/from\s+['"]\.\/(api|json)(\.js)?['"]/)

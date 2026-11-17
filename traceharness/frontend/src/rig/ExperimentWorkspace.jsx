@@ -1,6 +1,7 @@
 import { useEffect, useId, useMemo, useRef, useState } from 'react'
 import { runnerRequest } from '../runner-api'
 import { isolationLabel } from '../isolation'
+import { UNVERIFIED_LABEL, needsReceiptConsent, verificationLabel } from '../runner-compatibility'
 import { ActionBar, Field, Icon } from './ui'
 import { expiryTime } from './views/harness-composer-state'
 import {
@@ -93,6 +94,7 @@ function describeTrialIdentity(trial, arm) {
 
   return {
     isolation: isolationLabel(manifest),
+    verification: verificationLabel(manifest),
     runtimeLine: `${runtimeId}${runtimeVersion} · ${modelId}`,
     taskLine: `${taskId}${taskRevision}${mode ? ' · ' + mode : ''}`,
   }
@@ -165,6 +167,7 @@ export function ExperimentWorkspace({
   const [seed, setSeed] = useState('0')
   const [budgetUsd, setBudgetUsd] = useState('10')
   const [excludedCells, setExcludedCells] = useState(new Set())
+  const [unverifiedOk, setUnverifiedOk] = useState(false)
   const [uncertainStart, setUncertainStart] = useState(null)
   const [review, setReview] = useState(null)
   const [experiment, setExperiment] = useState(null)
@@ -256,8 +259,8 @@ export function ExperimentWorkspace({
   const expanded = useMemo(() => {
     const count = snapshots.length * orderedModelIds.length * orderedTaskIds.length
     if (count > 512) return { cells: [], issue: `${count} candidate cells. Narrow the axes to at most 512 candidates, then select up to 64 trials.` }
-    return expandMatrixCells({ snapshots, modelIds: orderedModelIds, taskIds: orderedTaskIds, catalog })
-  }, [snapshots, orderedModelIds, orderedTaskIds, catalog])
+    return expandMatrixCells({ snapshots, modelIds: orderedModelIds, taskIds: orderedTaskIds, catalog, unverifiedOk })
+  }, [snapshots, orderedModelIds, orderedTaskIds, catalog, unverifiedOk])
   const includedCells = useMemo(() => expanded.cells.filter(cell => !excludedCells.has(cellIdentity(cell))), [expanded.cells, excludedCells])
 
   const draftEvaluation = useMemo(() => {
@@ -933,6 +936,18 @@ export function ExperimentWorkspace({
               </Field>
             </div>
 
+            {(unverifiedOk || needsReceiptConsent(activeReview?.result?.issues || [])) && (
+              <label className="rg-matrix-unverified" data-el="matrix-unverified-consent">
+                <input
+                  type="checkbox"
+                  checked={unverifiedOk}
+                  disabled={busy || disabled}
+                  onChange={(event) => { invalidateAuthoringReview(); setUnverifiedOk(event.target.checked) }}
+                />
+                {UNVERIFIED_LABEL}
+              </label>
+            )}
+
             <section className="rg-matrix-preview" aria-label="Expanded matrix cells">
               <div className="rg-matrix-preview-h">
                 <h4>Expanded matrix cells</h4>
@@ -1164,7 +1179,7 @@ export function ExperimentWorkspace({
                           </td>
                           <td className="rg-matrix-id">
                             <div className="rg-matrix-identity">
-                              <span>{identity.runtimeLine}</span>{identity.isolation && <span data-el="trial-isolation">{identity.isolation}</span>}
+                              <span>{identity.runtimeLine}</span>{identity.isolation && <span data-el="trial-isolation">{identity.isolation}</span>}{identity.verification && <span data-el="trial-verified">{identity.verification}</span>}
                               <span>{identity.taskLine}</span>
                               <code title={trial.manifest_sha256}>{trial.manifest_sha256}</code>
                             </div>

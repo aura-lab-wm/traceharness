@@ -2,7 +2,7 @@ import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import './index.css'
 import App from './App.jsx'
-import { MODE, applyRuntime } from './environment.js'
+import { MODE, refreshEnvironment } from './environment.js'
 import { initTheme } from './theme'
 import { initWorkspaceTheme } from './workspace/workspaceTheme'
 
@@ -13,12 +13,7 @@ initWorkspaceTheme()
    runner set up) before the first render; an export, or a backend that does not answer, keeps the
    compiled-in defaults. */
 async function start() {
-  if (MODE === 'local') {
-    try {
-      const r = await fetch('/api/environment', { headers: { Accept: 'application/json' } })
-      if (r.ok) applyRuntime(await r.json())
-    } catch { /* keep the defaults */ }
-  }
+  if (MODE === 'local') await refreshEnvironment() // keeps the defaults when the backend does not answer
   createRoot(document.getElementById('root')).render(<StrictMode><App /></StrictMode>)
 }
 start()

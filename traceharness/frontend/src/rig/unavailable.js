@@ -3,9 +3,10 @@
    is available. A .js file built with createElement, so it is not an orphan .jsx before a view
    imports it. */
 import { createElement } from 'react'
-import { can, reasonFor, why } from '../environment.js'
+import { can, reasonFor, useEnvironment, why } from '../environment.js'
 
 export function Unavailable({ capability, what, el = 'unavailable-note' }) {
+  useEnvironment()
   if (can(capability)) return null
   return createElement('div', {
     className: 'rg-note',

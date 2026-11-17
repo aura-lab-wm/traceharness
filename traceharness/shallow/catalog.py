@@ -73,7 +73,7 @@ _TAIL = (
     "Network, privilege, secret access, and path escape stay blocked. "
     "Stay on the files the task names. Do not invent a tool. "
     "If the step cap arrives first, call submit with the edit you have and say what is still open. "
-    "This copy belongs to the signed-in member. It does not read a home directory and it does not patch a local agent install."
+    "This is a stand-in copy for this console. It does not read a home directory and it does not patch a local agent install."
 )
 
 PROMPTS = {

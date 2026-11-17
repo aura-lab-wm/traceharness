@@ -22,7 +22,7 @@ function environmentFor(mode) {
   const reasonFor = (id) => table[id]?.[mode] ?? 'unavailable'
   const why = (id, what) => can(id) ? '' : (messages[reasonFor(id)] ?? messages.unavailable)
     .replace(/\{(what|command|url)\}/g, (_, key) => ({ what, command: LOCAL_APP.command, url: LOCAL_APP.url })[key])
-  return { MODE: mode, LIBRARY, HAS_LIBRARY: LIBRARY.available === true, ENV: { mode, library: LIBRARY }, can, reasonFor, why }
+  return { MODE: mode, LIBRARY, HAS_LIBRARY: LIBRARY.available === true, ENV: { mode, library: LIBRARY }, can, reasonFor, why, useEnvironment: () => 0, refreshEnvironment: async () => true }
 }
 
 async function loadViews(mode) {

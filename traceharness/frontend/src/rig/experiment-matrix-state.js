@@ -115,7 +115,8 @@ function checkedLabel(raw, noun = 'snapshot', maxChars = 80) {
 function checkedHarnessConfiguration(value, { requireAxes = false } = {}) {
   checkData(value, 0, { nodes: 0 }, 10, 100000)
   const expectedKeys = [...CONFIGURATION_KEYS, ...(value?.version === 2 ? ['native_prompt_profile'] : [])]
-  if (!keysMatch(value, expectedKeys) || ![1, 2].includes(value.version)) {
+  if (Object.hasOwn(value || {}, 'unverified_ok') && typeof value.unverified_ok !== 'boolean') fail('unverified_ok must be true or false.')
+  if (!keysMatch(value, expectedKeys, ['unverified_ok']) || ![1, 2].includes(value.version)) {
     fail('Capture a complete version 1 or native version 2 TraceHarness configuration.')
   }
   const native = NATIVE_DRAFTS.some((runtime) => runtime.id === value.runtime_id)
@@ -219,6 +220,7 @@ export function captureHarnessSnapshot(snapshots, label, configuration, { id } =
   const checked = checkedHarnessConfiguration(configuration, { requireAxes: false })
   checked.model_id = ''
   checked.task_id = ''
+  delete checked.unverified_ok // consent is given for the experiment, never captured
   return [...snapshots.map((row) => ({ ...row, configuration: cloneConfiguration(row.configuration) })), {
     id: snapshotId,
     label: trimmed,
@@ -233,6 +235,7 @@ export function replaceHarnessSnapshot(snapshots, snapshotId, configuration) {
   const checked = checkedHarnessConfiguration(configuration, { requireAxes: false })
   checked.model_id = ''
   checked.task_id = ''
+  delete checked.unverified_ok
   return snapshots.map((row, position) => position === index
     ? { id: row.id, label: row.label, configuration: checked }
     : { ...row, configuration: cloneConfiguration(row.configuration) })
@@ -258,7 +261,7 @@ function buildCellLabel(snapshotLabel, modelLabel, taskLabel, index, usedLabels)
   return candidate
 }
 
-export function expandMatrixCells({ snapshots = [], modelIds = [], taskIds = [], catalog = null } = {}) {
+export function expandMatrixCells({ snapshots = [], modelIds = [], taskIds = [], catalog = null, unverifiedOk = false } = {}) {
   const cells = []
   const incompatibleCells = []
   const duplicateCells = []
@@ -272,6 +275,8 @@ export function expandMatrixCells({ snapshots = [], modelIds = [], taskIds = [],
         const cellConfig = cloneConfiguration(snapshot.configuration)
         cellConfig.model_id = String(modelId ?? '')
         cellConfig.task_id = String(taskId ?? '')
+        // The user's confirmation for the whole experiment goes into every arm's configuration.
+        if (unverifiedOk === true) cellConfig.unverified_ok = true
 
         const runtime = catalog?.runtimes?.find((row) => row.id === cellConfig.runtime_id)
         const model = catalog?.models?.find((row) => row.id === cellConfig.model_id)

@@ -227,6 +227,20 @@ describe('harness snapshot capture, immutability, and explicit replacement', () 
 })
 
 describe('deterministic matrix expansion and compatibility reporting', () => {
+  it('puts the experiment-level consent into every arm configuration, never from a captured snapshot', () => {
+    const catalog = catalogFixture()
+    const flagged = { ...customConfiguration(), unverified_ok: true }
+    const snapshots = captureHarnessSnapshot([], 'TH Custom', flagged)
+    expect(snapshots[0].configuration).not.toHaveProperty('unverified_ok')
+    const args = { snapshots, modelIds: ['fixture/model-a', 'fixture/model-b'], taskIds: ['task-alpha'], catalog }
+    for (const cell of expandMatrixCells(args).cells) expect(cell.configuration).not.toHaveProperty('unverified_ok')
+    const confirmed = expandMatrixCells({ ...args, unverifiedOk: true })
+    expect(confirmed.cells).toHaveLength(2)
+    for (const cell of confirmed.cells) expect(cell.configuration.unverified_ok).toBe(true)
+    const plan = matrixPlanDraft({ name: 'Unverified matrix', seed: 0, repeats: 1, budgetUsd: 10, cells: confirmed.cells })
+    expect(plan.plan.arms.every((arm) => arm.configuration.unverified_ok === true)).toBe(true)
+  })
+
   it('expands all snapshots × models × tasks deterministically without silently excluding incompatible cells', () => {
     const catalog = catalogFixture()
     let snapshots = []
