@@ -5,7 +5,6 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import { fireEvent, screen, within } from '@testing-library/react'
 
 vi.hoisted(() => {
-  delete window.__TRACEHARNESS_MEMBER__
   window.__TRACEHARNESS_DATA__ = {}
 })
 

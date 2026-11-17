@@ -1,4 +1,4 @@
-// File hand-off helpers for the workbench: save text the member asked for, read a file the member
+// File hand-off helpers for the workbench: save text the user asked for, read a file the user
 // chose, copy a value. Nothing is fetched, uploaded or executed here.
 
 /** A conservative file name: ASCII letters, digits, dot, dash, underscore; at most 120 characters. */

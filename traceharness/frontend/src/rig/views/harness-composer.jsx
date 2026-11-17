@@ -1,9 +1,10 @@
 import { useEffect, useId, useMemo, useRef, useState } from 'react'
 import { below } from '../displayClasses'
-import { api, IS_MEMBER } from '../../api'
-import { HAS_LIBRARY, LIBRARY } from '../../environment'
-import { libraryPlace, requireStored, encodeMemberJSON } from '../../member-api'
+import { api } from '../../api'
+import { HAS_LIBRARY, LIBRARY, can, why } from '../../environment'
+import { libraryPlace, requireStored, encodeJSON } from '../../json'
 import { runnerRequest, runnerCatalog, decodeRunnerArtifact, RUNNER_ARTIFACT_NAMES, UNAVAILABLE_RUNNER } from '../../runner-api'
+import { isolationLabel } from '../../isolation'
 import { taskCompatibility } from '../../runner-compatibility'
 import { nativeInventoryResponse, nativeProfileIssue } from '../../native-prompts-contract'
 import { ByteMeter, NumericField, ToolChips } from '../harnessWorkspace'
@@ -20,6 +21,7 @@ import { HarnessPicker } from '../harnessPicker'
 import { ConfigurationLibrary } from '../configurationLibrary'
 import { NativePrompts } from '../NativePrompts'
 import { PairedExperiments } from '../PairedExperiments'
+import { Unavailable } from '../unavailable'
 import { HarnessJson } from '../HarnessJson'
 import { ConfigurationEditor } from '../ConfigurationEditor'
 import { ExperimentWorkspace } from '../ExperimentWorkspace'
@@ -34,7 +36,7 @@ import './harness-composer.css'
 const terminal = new Set(['succeeded', 'failed', 'cancelled', 'needs_attention'])
 const jobStates = new Set(['queued', 'preparing', 'running', 'cancel_requested', 'succeeded', 'failed', 'cancelled', 'awaiting_credentials', 'needs_attention'])
 const gradeLabels = { ungraded: 'Not graded', passed: 'Passed', failed: 'Failed', error: 'Grading error' }
-const jsonKey = (value) => encodeMemberJSON(value)
+const jsonKey = (value) => encodeJSON(value)
 const units = (value) => Number.isFinite(Number(value)) && value != null ? '$' + (Number(value) * 1e6).toLocaleString(undefined, { maximumFractionDigits: 3 }) : '—'
 const runTime = (value) => Number.isFinite(expiryTime(value)) ? new Date(expiryTime(value)).toLocaleString() : 'Time not reported'
 const readableTime = (value) => Number.isFinite(expiryTime(value)) ? new Date(expiryTime(value)).toLocaleTimeString() : 'unknown'
@@ -184,7 +186,8 @@ export function HarnessComposer({ args = [] }) {
     ...(jsonPending ? ['Apply or discard the pending JSON edits before reviewing or dispatching.'] : []),
     ...(forkError ? ['The requested recorded fork has not loaded. Resolve or dismiss its error before dispatching.'] : []),
     ...(catalogLoading ? ['Checking current task and model compatibility.'] : []),
-    ...(!catalog.execution_available || !catalog.runner.available ? [catalog.runner.message || 'No execution service is connected.'] : []),
+    ...(native ? (can('run.native') ? [] : [why('run.native', 'Running a native agent')]) : (can('run.container') ? [] : [why('run.container', 'Running a task in a container')])),
+    ...(!catalog.execution_available || !catalog.runner.available ? [catalog.runner.message || 'The local runner is not connected.'] : []),
     ...(!runtime?.available ? [runtime?.reason || 'This runtime is not available on the connected runner.'] : []),
     ...(!model ? ['Select a model.'] : runtime?.available && !selectedRuntimeModelAllowed ? ['The selected model is not verified for this runtime. Choose a supported model.'] : []),
     ...(!task || !task.ready ? [task?.reason || 'Select a runnable task package. Recorded trajectories alone cannot be run.'] : []),
@@ -255,7 +258,7 @@ export function HarnessComposer({ args = [] }) {
     return () => { live = false; controller.abort() }
   }, [catalogRevision])
   useEffect(() => {
-    if (!native || !runtime || catalogLoading) { setNativeInventory(null); setNativeInventoryLoading(false); return }
+    if (!native || !runtime || catalogLoading || !can('run.native')) { setNativeInventory(null); setNativeInventoryLoading(false); return }
     let live = true
     const controller = new AbortController()
     setNativeInventory(null); setNativeInventoryError('')
@@ -275,7 +278,7 @@ export function HarnessComposer({ args = [] }) {
       if (!live) return
       const savedRows = new Map(savedData.harnesses.filter((r) => r.lane === 'fixed').map((r) => [r.id, r]))
       setCards(base.harnesses.map((r) => ({ ...r, ...(savedRows.has(r.id) ? { prompt: savedRows.get(r.id).prompt, hash: savedRows.get(r.id).hash } : {}),
-        memberSaved: savedRows.has(r.id) && !(savedData.unconfirmed || []).includes(r.id), memberUnconfirmed: (savedData.unconfirmed || []).includes(r.id) })))
+        savedHere: savedRows.has(r.id) && !(savedData.unconfirmed || []).includes(r.id), saveUnconfirmed: (savedData.unconfirmed || []).includes(r.id) })))
       setLibrary(savedData.harnesses.filter((r) => r.lane === 'minimal'))
       setAccountLoaded(savedData.loaded === true)
       if (savedData.loaded !== true) setAccountError(`Your harnesses saved to ${LIBRARY.label} have not loaded. Your draft is still here; saving is unavailable.`)
@@ -381,8 +384,8 @@ export function HarnessComposer({ args = [] }) {
     if (!fixed) { setState((s) => ({ ...s, blocks: s.blocks.map((b) => b.type === 'prompt' ? { ...b, text: value } : b) })); return }
     if (!card || !accountLoaded) return
     setFixedDrafts((old) => {
-      const next = { ...old, [card.id]: { prompt: value, baseHash: old[card.id]?.baseHash || card.hash, basePresent: old[card.id]?.basePresent ?? card.memberSaved } }
-      if (value === card.prompt && accountLoaded && !card.memberUnconfirmed) delete next[card.id]
+      const next = { ...old, [card.id]: { prompt: value, baseHash: old[card.id]?.baseHash || card.hash, basePresent: old[card.id]?.basePresent ?? card.savedHere } }
+      if (value === card.prompt && accountLoaded && !card.saveUnconfirmed) delete next[card.id]
       setStorageError(writeDraft('fixed', next)); return next
     })
   }
@@ -391,7 +394,7 @@ export function HarnessComposer({ args = [] }) {
     const row = selection.startsWith('fixed:') ? cards.find((c) => c.id === selection.slice(6)) : library.find((c) => selection === 'saved:' + c.id)
     if (selection.startsWith('fixed:') && row && carry) {
       setFixedDrafts((old) => {
-        const next = { ...old, [row.id]: { prompt, baseHash: old[row.id]?.baseHash || row.hash, basePresent: old[row.id]?.basePresent ?? row.memberSaved } }
+        const next = { ...old, [row.id]: { prompt, baseHash: old[row.id]?.baseHash || row.hash, basePresent: old[row.id]?.basePresent ?? row.savedHere } }
         setStorageError(writeDraft('fixed', next)); return next
       })
     }
@@ -436,11 +439,11 @@ export function HarnessComposer({ args = [] }) {
       if (fixed) {
         const submitted = fixedPrompt
         const result = requireStored(await api('/shallow/harnesses', { method: 'POST', body: {
-          id: card.id, prompt: submitted, ...((fixedDrafts[card.id]?.basePresent ?? card.memberSaved) ? { if_hash: fixedDrafts[card.id]?.baseHash || card.hash } : { if_absent: true }),
+          id: card.id, prompt: submitted, ...((fixedDrafts[card.id]?.basePresent ?? card.savedHere) ? { if_hash: fixedDrafts[card.id]?.baseHash || card.hash } : { if_absent: true }),
         } }))
         if (!active.current) return
         confirmedBlocks = blocksFromHarness({ ...card, ...result.harness })
-        setCards((rows) => rows.map((r) => r.id === card.id ? { ...r, prompt: result.harness.prompt, hash: result.harness.hash, memberSaved: true, memberUnconfirmed: false } : r))
+        setCards((rows) => rows.map((r) => r.id === card.id ? { ...r, prompt: result.harness.prompt, hash: result.harness.hash, savedHere: true, saveUnconfirmed: false } : r))
         setFixedDrafts((old) => { const next = { ...old }; delete next[card.id]; setStorageError(writeDraft('fixed', next)); return next })
       } else {
         const result = requireStored(await api('/shallow/wizard', { method: 'POST', body: { blocks: state.blocks } }))
@@ -586,7 +589,7 @@ export function HarnessComposer({ args = [] }) {
       result.state.harness_drafts = { ...state.harness_drafts, ...((state.selection === 'custom' || state.selection.startsWith('saved:')) ? { [state.selection]: state.blocks } : {}) }
       result.fixedDrafts = { ...fixedDrafts }
       if (value.prompt === originalCard.prompt) delete result.fixedDrafts[originalCard.id]
-      else result.fixedDrafts[originalCard.id] = { prompt: value.prompt, baseHash: originalCard.hash, basePresent: !!originalCard.memberSaved }
+      else result.fixedDrafts[originalCard.id] = { prompt: value.prompt, baseHash: originalCard.hash, basePresent: !!originalCard.savedHere }
       result.notice = 'Restored the checkpoint as a fixed-preset draft. Saved harnesses are unchanged.'
     } else result.notice = 'Restored checkpoint. ' + result.notice
     applyDraft(result); setComparedCheckpoint(id)
@@ -603,7 +606,7 @@ export function HarnessComposer({ args = [] }) {
   }
   function editorSnapshot(previous = state) {
     const drafts = JSON.parse(jsonKey(fixedDrafts))
-    if (fixed && card) drafts[card.id] = { prompt: fixedPrompt, baseHash: fixedDrafts[card.id]?.baseHash || card.hash, basePresent: fixedDrafts[card.id]?.basePresent ?? !!card.memberSaved }
+    if (fixed && card) drafts[card.id] = { prompt: fixedPrompt, baseHash: fixedDrafts[card.id]?.baseHash || card.hash, basePresent: fixedDrafts[card.id]?.basePresent ?? !!card.savedHere }
     return { state: JSON.parse(jsonKey(previous)), fixedDrafts: drafts, source: forkSource }
   }
   function undoEditorChange() {
@@ -627,11 +630,11 @@ export function HarnessComposer({ args = [] }) {
     if (result.fixedDrafts) { setFixedDrafts(result.fixedDrafts); setStorageError(writeDraft('fixed', result.fixedDrafts)) }
     setState(result.state); setForkSource(result.source || null); setConfigNotice(result.notice); setError(''); setSaved('')
   }
-  function forkHostedRun() {
+  function forkRunConfiguration() {
     if (!job?.manifest || editLocked || jsonPending) return
     try {
       // `local` (results directory, enforced limits) describes where a local run went, not what it ran.
-      const value = parseConfiguration(encodeMemberJSON(configurationFromManifest(Object.fromEntries(Object.entries(job.manifest).filter(([key]) => key !== 'local')))))
+      const value = parseConfiguration(encodeJSON(configurationFromManifest(Object.fromEntries(Object.entries(job.manifest).filter(([key]) => key !== 'local')))))
       const prepared = prepareHarnessJSON(job.manifest)
       const source = { kind: 'Recorded run manifest', title: `Run ${job.id}`, hash: job.manifest_sha256 || null, value: JSON.parse(prepared.json), redacted: prepared.redactions > 0,
         note: 'Forked from the recorded manifest. The original runtime/task pins remain in the source document; the new dispatch must pass current compatibility and manifest review.' }
@@ -686,7 +689,7 @@ export function HarnessComposer({ args = [] }) {
       actions={<div className="rg-composer-head-actions"><button type="button" className="rg-btn" aria-label="Configuration checkpoints" aria-expanded={showCheckpoints} aria-controls={instanceId + '-checkpoints'} onClick={toggleCheckpoints}><span>Checkpoints<span aria-hidden="true">{checkpoints.length ? ` (${checkpoints.length})` : ''}</span></span></button><button className="rg-btn" disabled={editLocked} onClick={() => importInput.current?.click()}>{importing ? 'Importing…' : <span>Import <span className="rg-cq-hide-xs">configuration</span></span>}</button><button className="rg-btn" disabled={importing} onClick={exportConfiguration}><span>Export <span className="rg-cq-hide-xs">configuration</span></span></button>{HAS_LIBRARY && !native && <button className="rg-btn" onClick={saveHarness} disabled={!accountLoaded || editLocked || fixed && !card || !prompt.trim() || !fixed && (!preview?.ok || !!blocksIssues.length)}>{saving ? 'Saving…' : 'Save harness'}</button>}</div>} />
     <input ref={importInput} type="file" accept="application/json,.json" aria-label="Import configuration file" hidden onChange={importConfiguration} />
     <EvidenceOrigin args={args} />
-    {saved && saved.key === harnessContentKey(configuration.harness.blocks) && <p role="status">{saved.message}</p>}{error && <p role="alert">{error}{IS_MEMBER && error.includes('account changed') && <> <a href="/login">Account</a></>}</p>}
+    {saved && saved.key === harnessContentKey(configuration.harness.blocks) && <p role="status">{saved.message}</p>}{error && <p role="alert">{error}</p>}
     {mobileSetup && <section className="rg-composer-setup-summary" aria-label="Selected configuration"><dl><div><dt>Harness</dt><dd>{harnessOptions.find((row) => row.value === state.selection)?.label || state.selection}</dd></div><div><dt>Model</dt><dd>{model?.name || state.model_id || 'Not selected'}</dd></div><div><dt>Task</dt><dd>{task?.title || state.task_id || 'Not selected'}</dd></div></dl><button type="button" className="rg-btn" aria-expanded={setupExpanded} aria-controls={instanceId + '-selections'} onClick={() => setSetupExpanded((value) => !value)}>{setupExpanded ? 'Done selecting' : 'Edit selections'}</button></section>}
     <div id={instanceId + '-selections'} className="rg-composer-setup" hidden={mobileSetup && !setupExpanded}>
     <div className="rg-composer-selectors" data-panes data-fill>
@@ -699,7 +702,7 @@ export function HarnessComposer({ args = [] }) {
     </div>
     {configNotice && <div className="rg-note rg-composer-import-status" role="status"><p>{configNotice}</p>{undoConfiguration && <button className="rg-btn" disabled={editLocked} onClick={undoEditorChange}>Undo configuration change</button>}</div>}
     {(model || task) && <details className="rg-composer-details"><summary>Selection details</summary><dl>{model && <><div><dt>Model</dt><dd>{model.id}</dd></div>{Number.isFinite(model.context_length) && <div><dt>Context window</dt><dd>{model.context_length.toLocaleString()} tokens</dd></div>}<div><dt>Task/runtime compatibility</dt><dd>{selectedModelAllowed ? 'Verified for this task and runtime' : !task ? 'Choose a task to check this model' : compatibility.status}</dd></div></>}{task && <><div><dt>Repository</dt><dd>{task.repository || 'Not supplied'}</dd></div><div><dt>Revision</dt><dd>{task.revision || 'Not verified'}</dd></div>{(task.environment_digests?.[configuration.runtime_id] || task.environment_digest) && <div><dt>Environment</dt><dd>{task.environment_digests?.[configuration.runtime_id] || task.environment_digest}</dd></div>}{Array.isArray(task.runtime_ids) && <div><dt>Task runtimes</dt><dd>{task.runtime_ids.join(', ') || 'None registered'}</dd></div>}{task.reason && <div><dt>Task status</dt><dd>{task.reason}</dd></div>}</>}</dl></details>}
-    {(storageError || accountError) && <div className="rg-note" role="alert">{storageError || accountError}{accountError && <><button className="rg-btn" onClick={() => setAccountRevision((n) => n + 1)}>Retry saved harnesses</button>{IS_MEMBER && <a href="/login">Account</a>}</>}</div>}
+    {(storageError || accountError) && <div className="rg-note" role="alert">{storageError || accountError}{accountError && <><button className="rg-btn" onClick={() => setAccountRevision((n) => n + 1)}>Retry saved harnesses</button></>}</div>}
     <div className="rg-split rg-split-end rg-composer-layout" data-panes>
       <section className="rg-split-main rg-composer-editor" aria-label="Configuration editor">
         <section className={`rg-pnl rg-composer-prompt${expandedPrompt ? ' is-expanded' : ''}`}><div className="rg-pnl-h"><h2>{native && configuration.prompt_mode === 'append' ? 'Additional instructions' : 'Standing prompt'}</h2><span className="meta">{native ? configuration.prompt_mode === 'append' ? 'Appended to native instructions' : 'Runtime prompt override' : fixed ? 'Fixed shell · prompt only' : 'TraceHarness instructions'}</span></div><div className="rg-pnl-b">
@@ -709,10 +712,11 @@ export function HarnessComposer({ args = [] }) {
           </div>
           <label className="rg-fld"><span className="rg-composer-sr">Prompt</span><textarea ref={promptInput} className="rg-inp" aria-label="Prompt" value={prompt} rows={12} spellCheck={false} disabled={editLocked || fixed && (!card || !accountLoaded)} onChange={(e) => editPrompt(e.target.value)} placeholder={native ? configuration.version === 2 ? 'Optional additional instructions, separate from the native prompt profile below.' : 'Add the instructions this task needs. Native built-in instructions remain in place.' : 'Describe how the agent should inspect, edit and verify the repository.'} /></label>
           {fixed && card ? <ByteMeter used={new TextEncoder().encode(prompt).length} cap={card.cap_bytes} name={card.name} /> : <span className="rg-small rg-mute rg-mono">{new TextEncoder().encode(prompt).length.toLocaleString()} UTF-8 bytes · {native ? 'runtime validates the prompt limit' : 'compiled with the harness'}</span>}
-          {fixed && card && <><ToolChips tools={card.tools} /><p className="rg-small rg-mute">Tools, permissions and byte caps belong to this TraceHarness preset, not the vendor’s native runtime.</p>{(!prompt.includes('verify') || !prompt.includes('modify the tests') || new TextEncoder().encode(prompt).length > card.cap_bytes) && <p className="rg-harness-warning">This prompt exceeds the preset’s byte cap or omits its verification and test-edit safeguards. Saving clips to the byte cap; review the saved text.</p>}{fixedDrafts[card.id] && <p className="rg-small">Unsaved draft in this tab</p>}{card.memberUnconfirmed && <p role="alert">{libraryPlace()} has not confirmed this prompt. Your draft is still pending.</p>}</>}
+          {fixed && card && <><ToolChips tools={card.tools} /><p className="rg-small rg-mute">Tools, permissions and byte caps belong to this TraceHarness preset, not the vendor’s native runtime.</p>{(!prompt.includes('verify') || !prompt.includes('modify the tests') || new TextEncoder().encode(prompt).length > card.cap_bytes) && <p className="rg-harness-warning">This prompt exceeds the preset’s byte cap or omits its verification and test-edit safeguards. Saving clips to the byte cap; review the saved text.</p>}{fixedDrafts[card.id] && <p className="rg-small">Unsaved draft in this tab</p>}{card.saveUnconfirmed && <p role="alert">{libraryPlace()} has not confirmed this prompt. Your draft is still pending.</p>}</>}
 
         </div></section>
-        {native && runtime && <NativePrompts key={runtime.id} runtime={runtime} response={inventoryForRuntime} loading={catalogLoading || nativeInventoryLoading} error={nativeInventoryError} draft={nativeDraft} disabled={editLocked}
+        {native && runtime && !can('run.native') && <Unavailable capability="run.native" what="The native prompt workbench" el="native-unavailable" />}
+        {native && runtime && can('run.native') && <NativePrompts key={runtime.id} runtime={runtime} response={inventoryForRuntime} loading={catalogLoading || nativeInventoryLoading} error={nativeInventoryError} draft={nativeDraft} disabled={editLocked}
           onRefresh={() => { setNativeInventoryRevision((revision) => revision + 1); setCatalogRevision((revision) => revision + 1) }}
           onChange={(draft) => setState((previous) => { const drafts = { ...previous.native_prompt_drafts }; if (draft) drafts[runtime.id] = draft; else delete drafts[runtime.id]; return { ...previous, native_prompt_drafts: drafts } })} />}
         {!native && !fixed && state.edit_mode === 'guided' && <section className="rg-composer-guide" id={instanceId + '-guided'} tabIndex={-1} aria-label="Guided harness setup"><div className="rg-composer-section-head"><h2>Guided setup</h2><span>Six choices, one configuration</span></div>{QUESTIONS.map((q) => <fieldset key={q.id} className="rg-harness-question" disabled={editLocked}><legend>{q.id === 'verify' ? 'Prompt verification template' : q.prompt}</legend><div className="rg-harness-options">{q.options.map(([value, label]) => <label key={value} className={`rg-harness-option${guidance.selections[q.id] === value ? ' selected' : ''}`}><input type="radio" name={instanceId + '-' + q.id} value={value} checked={guidance.selections[q.id] === value} onChange={() => changeAnswer(q.id, value)} /><span>{label}</span></label>)}</div>{guidance.custom.includes(q.id) && <p className="rg-small rg-mute">Custom setting. Choose an answer to replace only this setting.</p>}{guidance.resetDifferences.includes(q.id) && <p className="rg-small rg-mute">Reset value: {q.options.find(([value]) => value === state.answers[q.id])?.[1]}</p>}{q.id === 'verify' && <div className="rg-row rg-wrap"><p className="rg-small rg-mute">This choice sets the prompt template. Apply it explicitly to replace your current instructions.</p><button type="button" className="rg-btn" disabled={editLocked} onClick={() => resetToAnswers(true)}>Apply prompt template</button></div>}</fieldset>)}<p className="rg-small rg-mute">Guidance reflects your current configuration. Reset replaces the prompt and all seven blocks with the remembered wizard answers; Undo is available.</p><button className="rg-btn" disabled={editLocked} onClick={() => resetToAnswers()}>Reset to Wizard Answers</button></section>}
@@ -742,7 +746,7 @@ export function HarnessComposer({ args = [] }) {
       </aside>
     </div>
     {/* the main workflow sits directly under the run configuration, above history and the JSON editor */}
-    <section aria-label="Experiment dispatch"><ExperimentWorkspace configuration={configuration} catalog={catalog} credential={credential} available={catalog.execution_available && catalog.experiments_available !== false} disabled={editLocked || jsonPending || !!forkError} lease={experimentLease} onOpenJob={openJob} /></section>
+    <section aria-label="Experiment dispatch"><ExperimentWorkspace configuration={configuration} catalog={catalog} credential={credential} credentialRequired={needsCredential} available={can('run.experiments') && catalog.execution_available && catalog.experiments_available !== false} disabled={editLocked || jsonPending || !!forkError} lease={experimentLease} onOpenJob={openJob} /></section>
     {forkError && <p role="alert">{forkError} <button className="rg-btn" onClick={() => setForkError('')}>Keep previous draft</button></p>}
     {forkSource?.value && <aside className="rg-pnl rg-pnl-b" aria-label="Draft source"><strong>Derived from {forkSource.title}</strong><p className="rg-small">{forkSource.note}</p>{forkSource.redacted && <p className="rg-small">Credential-shaped source values were redacted before copying this provenance into the draft.</p>}</aside>}
     <details className="rg-composer-details"><summary>Edit configuration JSON</summary><section aria-label="Configuration JSON editor"><ConfigurationEditor configuration={configuration} disabled={editLocked} onApply={(value) => applyDraft({ ...applyConfiguration(state, value), source: forkSource })} onPendingChange={setJsonPending} /></section></details>
@@ -775,12 +779,13 @@ export function HarnessComposer({ args = [] }) {
       <div className="rg-pnl-b"><p>{job.cancellation_requested && !terminal.has(job.status) ? 'Cancellation requested; waiting for confirmed termination.' : job.status === 'succeeded' ? 'Execution completed. The task grade is reported separately below.' : terminal.has(job.status) ? 'The runner reported a final state.' : 'Showing status reported by the execution service.'}</p>
         {!terminal.has(job.status) && <p className="rg-small">This run continues on the runner while its connection remains valid. You can return through Recent runs after reloading.</p>}
         <p data-el="runner-job-grade"><strong>Task grade:</strong> {gradeLabels[job.grade] || 'Not reported'}</p>
+        {isolationLabel(job.manifest) && <p className="rg-small" data-el="runner-job-isolation">{isolationLabel(job.manifest)}</p>}
         {job.manifest && <dl className="rg-composer-job-identity">{['runtime_id', 'runtime_version', 'model_id', 'task_id', 'task_revision'].filter((name) => typeof job.manifest[name] === 'string').map((name) => <div key={name}><dt>{name.replaceAll('_', ' ')}</dt><dd>{job.manifest[name]}</dd></div>)}</dl>}
         <HarnessJson key={job.id} source="Recorded run manifest" identity={`Run ${job.id}${job.manifest_sha256 ? ' · manifest SHA-256 ' + job.manifest_sha256 : ''}`}
           description="The complete manifest returned for this run: harness, prompts, runtime pins, model, task, limits and native interventions when recorded. Your editor draft is separate. The manifest artifact below provides the SHA-256-verified original file."
           documents={[{ id: 'manifest', label: 'Run manifest', value: job.manifest, filename: `manifest-${job.id}.json` }]} />
         {terminal.has(job.status) && SAFE_NAME.test(job.results_dir || '') && SAFE_NAME.test(job.run_id || '') && <div className="rg-row rg-wrap" data-el="runner-local-run"><Go spec={makeSpec('ds', job.results_dir)} className="rg-btn" label={'Open ' + job.results_dir + ' in Datasets'}>Open in Datasets</Go><Go spec={makeSpec('run', job.run_id)} className="rg-btn" label={'Open run ' + job.run_id}>Open the run</Go></div>}
-        {job.manifest && <button className="rg-btn" disabled={editLocked || jsonPending} onClick={forkHostedRun}>Fork this run configuration</button>}
+        {job.manifest && <button className="rg-btn" disabled={editLocked || jsonPending} onClick={forkRunConfiguration}>Fork this run configuration</button>}
         {job.manifest_sha256 && <p className="rg-small rg-mono">Configuration {job.manifest_sha256}</p>}{(job.issues || []).map((issue) => <p key={issue} role="alert">{issue}</p>)}{jobError && <p role="alert">{jobError}</p>}
         <div className="rg-row rg-wrap"><button className="rg-btn" disabled={launching || !!openingJob} onClick={() => refreshJob()}>Refresh status</button>{!terminal.has(job.status) && <button className="rg-btn" disabled={cancelling || job.cancellation_requested || !!openingJob} onClick={() => refreshJob(true)}>{cancelling ? 'Requesting cancellation…' : 'Cancel run'}</button>}</div>
         {job.usage && <><dl className="rg-composer-usage">{Object.entries(job.usage).filter(([, value]) => value != null).map(([name, value]) => <div key={name}><dt>{name.replaceAll('_', ' ')}</dt><dd>{name === 'cost_usd' ? '$' + value.toLocaleString(undefined, { maximumFractionDigits: 8 }) : value.toLocaleString()}</dd></div>)}</dl><p className="rg-small rg-mute">Only usage reported by the runner is shown. Missing token or cost totals are unconfirmed.</p></>}
@@ -788,7 +793,7 @@ export function HarnessComposer({ args = [] }) {
         {job.artifacts?.length > 0 && <ul className="rg-composer-artifacts" aria-label="Run artifacts">{job.artifacts.map((artifact) => <li key={artifact.name}><div><strong>{artifact.name}</strong><span>{artifact.bytes.toLocaleString()} bytes · SHA-256 verified before download</span></div><button type="button" className="rg-btn" aria-label={'Download ' + artifact.name} disabled={!!downloadingArtifact} onClick={() => downloadArtifact(artifact)}>{downloadingArtifact === artifact.name ? 'Verifying…' : 'Download'}</button></li>)}</ul>}
       </div>
     </section>}
-    <PairedExperiments configuration={configuration} credential={credential} available={catalog.execution_available && catalog.experiments_available !== false} disabled={editLocked || !!readyIssues.length} lease={experimentLease} />
+    <PairedExperiments configuration={configuration} credential={credential} credentialRequired={needsCredential} available={can('run.experiments') && catalog.execution_available && catalog.experiments_available !== false} disabled={editLocked || !!readyIssues.length} lease={experimentLease} />
     <footer className="rg-composer-footer"><Go spec="shallowApply" className="rg-tlink">Compare one prompt across the six TraceHarness shells</Go><span>Native runtimes and lab stand-ins are distinct engines.</span></footer>
   </div>
 }

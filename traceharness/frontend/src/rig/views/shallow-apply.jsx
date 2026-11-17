@@ -1,6 +1,6 @@
 /* A preview only. No write is sent to any library or runner. */
 import { useEffect, useState } from 'react'
-import { api, IS_MEMBER } from '../../api'
+import { api } from '../../api'
 import { HAS_LIBRARY } from '../../environment'
 import { ErrorState, Go, Loading } from '../ui'
 import { EvidenceOrigin, evidenceOrigin, withEvidenceOrigin } from '../shallowEvidence'
@@ -23,9 +23,8 @@ function clipUtf8(text, capBytes) {
 }
 
 function ShallowApply({ args } = {}) {
-  // As on Fixed harnesses: only the member snapshot waits for the Worker's catalog; the local and
-  // export catalogs are compiled in, and the local server's copy replaces them when it answers.
-  const [cards, setCards] = useState(IS_MEMBER ? null : CARDS)
+  // As on Fixed harnesses: the local and export catalogs are compiled in, and the local server's copy replaces them when it answers.
+  const [cards, setCards] = useState(CARDS)
   const [prompt, setPrompt] = useState(() => readDraft('apply')?.prompt ?? CARDS[0].prompt)
   const [applied, setApplied] = useState(() => readDraft('apply')?.applied ?? CARDS[0].prompt)
   const [error, setError] = useState(null)
@@ -40,7 +39,7 @@ function ShallowApply({ args } = {}) {
     return () => { active = false }
   }, [revision])
   useEffect(() => { setStorageError(writeDraft('apply', { prompt, applied })) }, [prompt, applied])
-  if (error && !cards) return <><ErrorState error={error} what="The six shell preview" onRetry={() => setRevision((n) => n + 1)} />{IS_MEMBER && <p><a href="/login">Account</a> · Sign back into the original account to keep working on its draft.</p>}</>
+  if (error && !cards) return <><ErrorState error={error} what="The six shell preview" onRetry={() => setRevision((n) => n + 1)} /></>
   if (!cards) return <Loading label="Reading the six shells…" />
   return (
     <div className="rg-dpad rg-harness" data-el="shallow-apply">

@@ -1,6 +1,6 @@
 import { blocksFromHarness, readDraft, wizardAnswers, wizardBlocks } from './shallow-drafts'
 import { CARDS, QUESTIONS, blocksFromAnswers } from './shallow-data'
-import { encodeMemberJSON } from '../../member-api'
+import { encodeJSON } from '../../json'
 import { fieldIssues, numberIssue } from '../harnessFields'
 import { checkedNativeProfile } from '../../native-prompts-contract'
 import { nativeDraftForProfile, safeNativeDraft } from './native-prompts-state'
@@ -125,7 +125,7 @@ const secretKeys = new Set(['apikey', 'key', 'password', 'token', 'authorization
 const plain = (value) => value && typeof value === 'object' && !Array.isArray(value) && Object.getPrototypeOf(value) === Object.prototype
 const keysMatch = (value, required, optional = []) => plain(value) && required.every((key) => Object.hasOwn(value, key))
   && Object.keys(value).every((key) => required.includes(key) || optional.includes(key))
-const copy = (value) => JSON.parse(encodeMemberJSON(value))
+const copy = (value) => JSON.parse(encodeJSON(value))
 const fail = (message) => { throw new Error(message) }
 
 // Check before copying or serializing: imports are configuration, never an
@@ -197,7 +197,7 @@ function checkedConfiguration(value) {
     if (blocks.find((block) => block.type === 'prompt').text !== value.prompt) fail('The prompt and prompt block disagree. Export a consistent configuration from the editor.')
     if (blocks.find((block) => block.type === 'stop').max_steps !== value.limits.max_steps) fail('The step limit and stop block disagree. Use the same step cap in both.')
   }
-  if (new TextEncoder().encode(encodeMemberJSON(value)).length > CONFIGURATION_MAX_BYTES) fail('The configuration must be at most 1 MiB.')
+  if (new TextEncoder().encode(encodeJSON(value)).length > CONFIGURATION_MAX_BYTES) fail('The configuration must be at most 1 MiB.')
   return copy(value)
 }
 
@@ -210,7 +210,7 @@ export function parseConfiguration(text) {
 }
 
 export function configurationText(configuration) {
-  return encodeMemberJSON(checkedConfiguration(configuration))
+  return encodeJSON(checkedConfiguration(configuration))
 }
 
 /** Apply a checked file as a draft. This helper never saves, fetches, or runs. */

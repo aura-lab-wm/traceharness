@@ -15,7 +15,7 @@
    characters stripped (cleanText) so what a reviewer reads is what will run.
    ==================================================================================== */
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { api, IS_STATIC, IS_MEMBER } from '../api'
+import { api, IS_STATIC } from '../api'
 import { ConfirmAction, Empty, Note, Tag } from './ui'
 import './PausePanel.css'
 
@@ -60,9 +60,9 @@ export function decisionBody(kind, { note = '', call = 0, argsText = '', message
 const readToken = () => { try { return sessionStorage.getItem(TOKEN_KEY) || '' } catch { return '' } }
 const saveToken = (t) => { try { if (t) sessionStorage.setItem(TOKEN_KEY, t); else sessionStorage.removeItem(TOKEN_KEY) } catch { /* private mode: the token stays in memory */ } }
 
-/** The waiting runs, polled. { runs, config, error, reload, token, setToken }. Nothing is requested on a static export or a member host. */
+/** The waiting runs, polled. { runs, config, error, reload, token, setToken }. Nothing is requested on a static export. */
 export function usePausedRuns(enabled = true, poll = POLL_MS) {
-  const off = !enabled || IS_STATIC || IS_MEMBER
+  const off = !enabled || IS_STATIC
   const [state, set] = useState({ runs: [], config: null, error: null, loaded: false })
   const [token, setTokenState] = useState(readToken)
   const setToken = useCallback((t) => { saveToken(t); setTokenState(t) }, [])

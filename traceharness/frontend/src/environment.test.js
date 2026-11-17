@@ -97,6 +97,6 @@ describe('environment: one console, two modes', () => {
 
   it('reads the page globals itself and never imports the API modules', () => {
     const source = readFileSync(new URL('./environment.js', import.meta.url), 'utf8')
-    expect(source).not.toMatch(/from\s+['"]\.\/(api|member-api)(\.js)?['"]/)
+    expect(source).not.toMatch(/from\s+['"]\.\/(api|json)(\.js)?['"]/)
   })
 })

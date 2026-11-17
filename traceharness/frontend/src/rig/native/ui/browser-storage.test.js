@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { browserStorage, memberScope } from './browser-storage'
+import { browserStorage } from './browser-storage'
 
 afterEach(() => { vi.unstubAllGlobals(); localStorage.clear() })
 
@@ -19,9 +19,5 @@ describe('browser storage access', () => {
     Object.defineProperty(globalThis, 'localStorage', { configurable: true, get() { throw new Error('SecurityError') } })
     expect(browserStorage()).toBeNull()
     delete globalThis.localStorage
-  })
-
-  it('has no member scope outside a signed-in member page', () => {
-    expect(memberScope()).toBeNull()
   })
 })

@@ -1,5 +1,4 @@
 import { useEffect, useRef, useState } from 'react'
-import { IS_MEMBER, MEMBER } from '../member-api'
 import { GUIDE_TOPICS } from './guidance'
 import { ScrollX } from './ui'
 import lessons from './tutorial/lessons.json'
@@ -11,52 +10,11 @@ import buddy from './tutorial/buddy.mp3?inline'
 import './getting-started.css'
 
 const recordings = { evidence, harness, dispatch, results, buddy }
-const localKey = () => `rig.member.${MEMBER?.scope}.tour.v1.seen`
-const readSeen = () => { try { return IS_MEMBER && localStorage.getItem(localKey()) === '1' } catch { return false } }
-const remember = () => { try { localStorage.setItem(localKey(), '1') } catch { /* account acknowledgement is still attempted */ } }
-async function preference(method, signal) {
-  const response = await fetch('/api/onboarding', { method, signal, credentials: 'same-origin', mode: 'same-origin', redirect: 'error', cache: 'no-store',
-    headers: { 'content-type': 'application/json', 'x-traceharness-member-scope': MEMBER.scope },
-    ...(method === 'POST' ? { body: JSON.stringify({ version: 1, seen: true }) } : {}) })
-  const value = await response.json()
-  if (!response.ok || value?.version !== 1 || typeof value.seen !== 'boolean' || Object.keys(value).length !== 2 || method === 'POST' && value.seen !== true) throw new Error('Tour acknowledgement unconfirmed')
-  return value
-}
-
 export default function GettingStarted({ onGuide }) {
   const [open, setOpen] = useState(false)
-  const [error, setError] = useState(false)
-  const serverSeen = useRef(false), dismissed = useRef(readSeen()), touched = useRef(false), active = useRef(true), pending = useRef(null)
-  useEffect(() => {
-    active.current = true
-    if (!IS_MEMBER) return () => { active.current = false }
-    const interacted = () => { touched.current = true }
-    window.addEventListener('pointerdown', interacted, { once: true }); window.addEventListener('keydown', interacted, { once: true })
-    const controller = new AbortController(); pending.current = controller
-    const timer = setTimeout(() => controller.abort(), 10000)
-    preference('GET', controller.signal).then(value => {
-      if (!active.current || controller.signal.aborted) return
-      serverSeen.current = value.seen
-      if (!value.seen && !dismissed.current && !touched.current) setOpen(true)
-    }).catch(() => { if (active.current && !dismissed.current) setError(true) }).finally(() => clearTimeout(timer))
-    return () => { active.current = false; pending.current?.abort(); clearTimeout(timer); window.removeEventListener('pointerdown', interacted); window.removeEventListener('keydown', interacted) }
-  }, [])
-  async function acknowledge() {
-    dismissed.current = true
-    if (!IS_MEMBER || serverSeen.current) return
-    remember(); pending.current?.abort()
-    const controller = new AbortController(); pending.current = controller
-    const timer = setTimeout(() => controller.abort(), 10000)
-    try {
-      await preference('POST', controller.signal)
-      if (active.current) { serverSeen.current = true; setError(false) }
-    } catch { if (active.current) setError(true) }
-    finally { clearTimeout(timer) }
-  }
-  const close = () => { setOpen(false); void acknowledge() }
+  const close = () => setOpen(false)
   return <>
     <button type="button" className="rg-tbtn rg-tour-launcher" aria-label="Voice tour" title="Replay the narrated tour" onClick={() => setOpen(true)}><svg className="rg-ico" width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 16v-4a8 8 0 0 1 16 0v4" /><path d="M4 15h3v6H4zM17 15h3v6h-3z" /></svg><span className="lbl-d">Voice tour</span></button>
-    {error && <aside className="rg-tour-notice" role="status"><p>The tour reminder is unconfirmed. You can keep working.</p><button type="button" className="rg-btn" onClick={() => void acknowledge()}>Remember tour dismissal</button><button type="button" className="rg-btn ghost rg-tour-notice-x" aria-label="Hide tour notice" onClick={() => setError(false)}>×</button></aside>}
     {open && <VoiceTour onClose={close} onGuide={topic => { close(); onGuide(topic) }} />}
   </>
 }

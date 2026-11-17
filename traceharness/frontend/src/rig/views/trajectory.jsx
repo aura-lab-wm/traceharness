@@ -13,7 +13,7 @@
    messages, issue), useFindRun (id or 6-hex suffix). Failure findings are DERIVED from the
    ledger spans (finish_reasons, usage, the harness's max_tokens_per_call in the invoke_agent
    start span) — nothing is hard-coded per run. Local notes share the classic app's browser-local
-   review key; hosted notes isolate that key per member and Export review keeps its Markdown format, with the
+   review key and Export review keeps its Markdown format, with the
    failure mode added.
    ==================================================================================== */
 import { Fragment, useEffect, useMemo, useRef, useState } from 'react'
@@ -24,7 +24,6 @@ import { useRig, useTabState } from '../context'
 import { Panel, Loading, ErrorState, Empty, NextSteps, Btn, About, FailureChip, PinButton, AskingSentence, Verdict, VerdictText, OutcomeBar, Tag, Note, Seg, SearchBox, Switch, Go, Icon, Kbd, MOD, failureModeOf, FailureSummary, ActionBar, Tabs, TableScroll, ScrollX, Split, Toolbar } from '../ui'
 import { downloadText, useCaseFile } from '../caseFile'
 import { reviewKey, reviewReport } from '../../workspace/workspaceFacts'
-import { memberStorageKey } from '../memberStorage'
 import { RecordingProvenance } from '../RecordingProvenance'
 import { isSweRun, suiteLabel, tokenCoverage } from '../provenance'
 import { findings as checkpoints } from '../../directions/investigationFacts'
@@ -365,7 +364,7 @@ const FACETS = [['findings', 'Findings'], ['timeline', 'Timeline'], ['patch', 'P
 
 export function readReviewNote(dir, id) {
   try {
-    const p = JSON.parse(localStorage.getItem(memberStorageKey(reviewKey(dir, id))) || 'null')
+    const p = JSON.parse(localStorage.getItem(reviewKey(dir, id)) || 'null')
     return { text: p && typeof p.text === 'string' ? p.text : '', status: p && p.status === 'reviewed' ? 'reviewed' : 'unreviewed', saved: (p && p.saved) || null }
   } catch { return { text: '', status: 'unreviewed', saved: null } }
 }
@@ -375,7 +374,7 @@ function Notes({ dir, run, onExport }) {
   const { toast } = useRig()
   const save = (next = note) => {
     const v = { ...next, saved: new Date().toISOString().slice(0, 16).replace('T', ' ') }
-    try { localStorage.setItem(memberStorageKey(reviewKey(dir, run.id)), JSON.stringify(v)); setNote(v); setMsg('Saved in this browser.'); toast('Note saved in this browser') } catch { setMsg('Could not save — browser storage is blocked. Copy or export your note before leaving.') }
+    try { localStorage.setItem(reviewKey(dir, run.id), JSON.stringify(v)); setNote(v); setMsg('Saved in this browser.'); toast('Note saved in this browser') } catch { setMsg('Could not save — browser storage is blocked. Copy or export your note before leaving.') }
   }
   const hint = 'rg-traj-note-hint-' + run.id
   return (

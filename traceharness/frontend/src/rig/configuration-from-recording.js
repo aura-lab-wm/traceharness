@@ -1,15 +1,15 @@
-import { encodeMemberJSON } from '../member-api'
+import { encodeJSON } from '../json'
 import { DEFAULT_LIMITS, assertConfigurationJSON, parseConfiguration } from './views/harness-composer-state'
 
 const object = value => value && typeof value === 'object' && !Array.isArray(value)
-const checked = value => parseConfiguration(encodeMemberJSON(value))
+const checked = value => parseConfiguration(encodeJSON(value))
 const fail = message => { throw new Error(message) }
 
 export function configurationFromRecordedHarness({ harness, modelId = '', taskId = '' } = {}) {
   if (!object(harness)) fail('No complete engine configuration was recorded.')
   assertConfigurationJSON(harness)
   const required = ['tools', 'policy', 'context_window', 'observation_chars', 'max_steps', 'max_total_tokens', 'temperature', 'max_tokens_per_call', 'include_file_listing']
-  const metadata = ['id', 'hash', 'lane', 'name', 'notes', 'cap_bytes', 'memberSaved', 'memberUnconfirmed', 'sentinel', 'system_prompt', 'prompt']
+  const metadata = ['id', 'hash', 'lane', 'name', 'notes', 'cap_bytes', 'savedHere', 'saveUnconfirmed', 'sentinel', 'system_prompt', 'prompt']
   if (!required.every(key => Object.hasOwn(harness, key))) fail('This recording is missing engine settings. Missing fields cannot be recovered from the current preset.')
   if (Object.keys(harness).some(key => !required.includes(key) && !metadata.includes(key))) fail('This recording contains settings that the current editor cannot represent. Export the original JSON to inspect them.')
   if (harness.sentinel != null && (!object(harness.sentinel) || Object.keys(harness.sentinel).length)) fail('The recorded sentinel settings are not supported by this editor; they were not silently removed.')
