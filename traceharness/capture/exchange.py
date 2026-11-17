@@ -44,7 +44,7 @@ from typing import Iterable, Optional
 from .lock import CaptureLock
 from .redact import REDACTION_VERSION, redact, redact_text
 from .sources import SOURCES
-from traceharness.core.span_schema import loads_finite, span_problem   # one definition, shared with the runner's datasets
+from traceharness.core.span_schema import first_span_problem, loads_finite, span_problem   # one definition, shared with the runner's datasets
 
 FORMAT = "traceharness-capture-export"
 VERSION = 1
@@ -102,8 +102,8 @@ def check_summary_row(row, what: str) -> None:
         raise ExchangeError(f"{what} has fields of the wrong type or missing: {', '.join(sorted(set(bad))[:5])}")
 
 
-def check_ledger_line(span, what: str) -> None:
-    problem = span_problem(span)
+def check_ledger_line(span, what: str, first: bool = False) -> None:
+    problem = span_problem(span) or (first_span_problem(span) if first else None)
     if problem:
         raise ExchangeError(f"{what} is not a ledger span the readers of a run can take ({problem}); nothing was imported")
 
@@ -446,9 +446,11 @@ def verify_archive(path: str) -> dict:
                 raise ExchangeError(f"run {run_id!r} has no {need}")
         try:
             summary = loads_finite(files["summary.json"].decode("utf-8"))
+            seen = False
             for number, raw in enumerate(files["ledger.jsonl"].decode("utf-8").splitlines(), 1):
                 if raw.strip():
-                    check_ledger_line(loads_finite(raw), f"run {run_id!r} ledger line {number}")
+                    check_ledger_line(loads_finite(raw), f"run {run_id!r} ledger line {number}", first=not seen)
+                    seen = True
             files["patch.diff"].decode("utf-8") if "patch.diff" in files else None
             src = source_of(files["ledger.jsonl"])
         except (ValueError, UnicodeDecodeError):

@@ -137,10 +137,10 @@ def preflight(configuration) -> dict:
     except (ValueError, TypeError, UnicodeError, RecursionError):
         invalid = True
     if invalid:
-        return {"ok": False, "issues": ["Configuration must be an object without credentials."]}
+        return {"ok": False, "issues": ["Configuration must be an object without credentials."], "consent_required": False}
     expected = {"version", "runtime_id", "model_id", "task_id", "prompt", "prompt_mode", "harness", "limits"}
     if type(configuration.get("version")) is not int or configuration["version"] != 1 or set(configuration) != expected:
-        return {"ok": False, "issues": ["Unsupported or incomplete run configuration."]}
+        return {"ok": False, "issues": ["Unsupported or incomplete run configuration."], "consent_required": False}
     issues: list[str] = []
     runtime_id = configuration["runtime_id"]
     if runtime_id != RUNTIME:
@@ -193,12 +193,12 @@ def preflight(configuration) -> dict:
                     compiled = {"id": result["harness"]["id"], "hash": result["hash"],
                                 "configuration": result["harness"], "blocks": blocks}
     if issues or compiled is None:
-        return {"ok": False, "issues": list(dict.fromkeys(issues or ["The configuration could not be reviewed."]))}
+        return {"ok": False, "issues": list(dict.fromkeys(issues or ["The configuration could not be reviewed."])), "consent_required": False}
     manifest = {"version": 1, "runtime_id": RUNTIME, "runtime_version": _version(), "model_id": model_id, "task_id": task_id,
                 "prompt": prompt, "prompt_mode": "replace", "prompt_sha256": hashlib.sha256(prompt.encode("utf-8")).hexdigest(),
                 "harness": compiled, "limits": dict(limits),
                 "local": {"results_dir": RESULTS_DIR, "enforced_limits": list(ENFORCED_LIMITS)}}
-    return {"ok": True, "issues": [], "manifest": manifest, "manifest_sha256": digest(manifest)}
+    return {"ok": True, "issues": [], "consent_required": False, "manifest": manifest, "manifest_sha256": digest(manifest)}
 
 
 # --------------------------------------------------------------------------- jobs
@@ -615,7 +615,9 @@ async def runner_rest(request: Request, rest: str = ""):
                 body = {}       # a key sent to the credential route is never read, kept or forwarded
             else:
                 _no_secrets(body)
-                if rest.endswith("/start") and body.get("credential_id") is None and "credential_id" in body:
+                if rest.startswith("experiments/") and rest.endswith("/start") and body.get("credential_id") is None:
+                    # The catalog says credential_required false, so the console omits the field: resolve
+                    # the Settings key exactly like a single-job submission.
                     body["credential_id"] = await _handle(runner)
         except L.LibraryError as error:
             raise HTTPException(error.status, error.message) from None

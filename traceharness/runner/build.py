@@ -322,9 +322,37 @@ def write_registry(runner: Path, data: dict) -> Path:
 
 
 # --------------------------------------------------------------------------- setup
-def setup(lab_root, *, log=print, run=subprocess.run, stream=_stream, package=None, native=True, force=False,
-          fetcher=fetch, docker=None) -> dict:
-    """Build the images, task packages and (best effort) native inventories, then write the registry."""
+TERMINAL_JOB_STATES = {"succeeded", "failed", "cancelled"}
+STOP_CONSOLE = "Stop the console before rebuilding the runner."
+
+
+def setup(lab_root, **kwargs) -> dict:
+    """Build the images, task packages and (best effort) native inventories, then write the registry.
+
+    Refused while a console owns the runner state (the OS lock on its state directory) or any job on disk is not
+    terminal: a rebuild replaces the task packages and images those jobs read. The lock is held for the whole
+    rebuild, so a console cannot start and adopt half-replaced inputs."""
+    from traceharness.runner_service.ownership import StateOwnership
+    state = L.runner_dir(lab_root) / "jobs"
+    ownership = StateOwnership(state)
+    if not ownership.acquire():
+        raise SetupError(STOP_CONSOLE)
+    try:
+        if state.is_dir():
+            for path in state.glob("*/job.json"):
+                try:
+                    status = json.loads(path.read_text())["job"]["status"]
+                except (OSError, ValueError, KeyError, TypeError):
+                    raise SetupError(STOP_CONSOLE + " A job record is unreadable.") from None
+                if status not in TERMINAL_JOB_STATES:
+                    raise SetupError(STOP_CONSOLE + " A job is still not finished.")
+        return _setup(lab_root, **kwargs)
+    finally:
+        ownership.release()
+
+
+def _setup(lab_root, *, log=print, run=subprocess.run, stream=_stream, package=None, native=True, force=False,
+           fetcher=fetch, docker=None) -> dict:
     docker = docker or L.find_docker()
     if not docker:
         raise SetupError("Docker is not installed. Install Docker, start it, and run this again.")

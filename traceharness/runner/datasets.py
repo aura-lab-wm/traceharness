@@ -38,7 +38,8 @@ import threading
 import time
 
 from traceharness.core.ledger import RunSummary
-from traceharness.core.span_schema import loads_finite, span_problem
+from traceharness.core.span_schema import first_span_problem, loads_finite, span_problem
+from traceharness.runner_service.jobs import PERSISTED_VERSION
 
 SINGLE_DATASET = "runner_jobs"
 PROVIDER = "traceharness-runner"
@@ -46,6 +47,9 @@ _LOCK = threading.Lock()
 _EXPERIMENT_KEY = re.compile(r"^experiment_([a-f0-9]{16,64})_")
 _COUNTERS = ("steps", "tool_calls", "edits", "lines_added", "lines_removed", "boundary_events", "tests_run_by_agent", "patch_bytes")
 _MAX_LEDGER_LINES = 20000
+# PERSISTED_VERSION (runner_service/jobs.py) is the format of what persist_job writes: evidence folder, provenance,
+# null counters, validated messages. A job or run directory written under an older format is rewritten before
+# retention may delete the job. Bump it with the format.
 
 
 def dataset_for(idempotency_key) -> str:
@@ -117,7 +121,7 @@ def _ledger(run_id, job, manifest, raw_trace):
         return _fallback_ledger(run_id, job, manifest, note), "native_events", None
     spans = []
     for number, record in enumerate(records, 1):
-        problem = span_problem(record)
+        problem = span_problem(record) or (first_span_problem(record) if number == 1 else None)
         if problem:
             return (_fallback_ledger(run_id, job, manifest, "trace.jsonl was quarantined"), "quarantined",
                     "trace.jsonl record %d %s" % (number, problem))
@@ -132,6 +136,38 @@ def _messages_problem(raw):
         return "messages.json is not finite JSON"
     if not isinstance(value, list) or not all(isinstance(m, dict) for m in value):
         return "messages.json is not a list of messages"
+    for number, message in enumerate(value, 1):
+        problem = _message_problem(message)
+        if problem:
+            return "messages.json message %d %s" % (number, problem)
+    return None
+
+
+_ROLES = ("system", "user", "assistant", "tool", "developer", "function")
+
+
+def _message_problem(message):
+    """What the readers (backend/sentinel.py, the Messages view) cannot take in one message, or None."""
+    if not isinstance(message.get("role"), str) or message["role"] not in _ROLES:
+        return "has an unknown or non-text role"
+    calls = message.get("tool_calls")
+    if calls is None:
+        return None
+    if not isinstance(calls, list):
+        return "has tool_calls that are not a list"
+    for call in calls:
+        if not isinstance(call, dict):
+            return "has a tool call that is not an object"
+        function = call.get("function")
+        named = function if isinstance(function, dict) else call     # {function:{name,arguments}} or {name,arguments}
+        if function is not None and not isinstance(function, dict):
+            return "has a tool call whose function is not an object"
+        if not isinstance(named.get("name"), str):
+            return "has a tool call without a text name"
+        if named.get("arguments") is not None and not isinstance(named["arguments"], (str, dict)):
+            return "has tool-call arguments that are neither text nor an object"
+        if isinstance(named.get("arguments"), dict) and any(not isinstance(v, (str, int, float, bool, list, dict, type(None))) for v in named["arguments"].values()):
+            return "has unreadable tool-call arguments"
     return None
 
 
@@ -160,15 +196,25 @@ def build_run(row, job_dir) -> dict:
                          hidden_pass=(grade == "passed") if grade in ("passed", "failed", "error") else None,
                          error="; ".join(job.get("issues", []))[:500] if job.get("status") != "succeeded" else "")
     own = _read(os.path.join(job_dir, "summary.json"))
+    parsed = None
     if own:
         try:
             parsed = json.loads(own)
         except ValueError:
             parsed = None
-        if isinstance(parsed, dict):
-            for name in _COUNTERS:
-                if type(parsed.get(name)) is int and parsed[name] >= 0 and name != "steps":
-                    setattr(summary, name, parsed[name])
+    measured = set()
+    if isinstance(parsed, dict):
+        for name in _COUNTERS:
+            if type(parsed.get(name)) is int and parsed[name] >= 0 and name != "steps":
+                setattr(summary, name, parsed[name])
+                measured.add(name)
+    # A native runtime writes no summary: what the runtime did is not measured, and the RunSummary defaults
+    # (0 calls, no edits, tests not run) would report it as observed inactivity. Unmeasured is null.
+    for name in ("tool_calls", "edits", "lines_added", "lines_removed", "boundary_events", "tests_run_by_agent"):
+        if name not in measured:
+            setattr(summary, name, None)
+    if not isinstance(parsed, dict):
+        summary.files_touched = summary.boundary_kinds = summary.ran_tests_before_submit = summary.tests_modified = None
     patch = _read(os.path.join(job_dir, "patch.diff"))
     if patch is not None:
         summary.patch_bytes = len(patch)
@@ -207,7 +253,7 @@ def build_run(row, job_dir) -> dict:
         digest = hashlib.sha256(body).hexdigest()
         evidence[name] = {"sha256": digest, "bytes": len(body),
                           "runner_receipt": (digest == receipts[name]) if name in receipts else None}
-    provenance = {"version": 1, "job_id": run_id, "manifest_sha256": job.get("manifest_sha256"),
+    provenance = {"version": 1, "persisted_version": PERSISTED_VERSION, "job_id": run_id, "manifest_sha256": job.get("manifest_sha256"),
                   "grade": grade, "status": job.get("status"), "idempotency_key": row.get("idempotency_key"),
                   "trace": trace_kind,
                   "files": evidence,
@@ -247,8 +293,27 @@ def _quarantine(runs_root, built):
             os.fsync(stream.fileno())
 
 
+def _fsync_dir(path) -> None:
+    fd = os.open(path, os.O_RDONLY | getattr(os, "O_DIRECTORY", 0))
+    try:
+        os.fsync(fd)
+    finally:
+        os.close(fd)
+
+
+def _current(final) -> bool:
+    """True when an existing run directory was written in the current format."""
+    raw = _read(os.path.join(final, "evidence", "provenance.json"))
+    try:
+        return isinstance(raw, bytes) and json.loads(raw).get("persisted_version") == PERSISTED_VERSION
+    except (ValueError, AttributeError):
+        return False
+
+
 def persist_job(runs_root, row, job_dir) -> bool:
-    """Write this job into data/runs/<dataset>/ (idempotent). True once it is durably there."""
+    """Write this job into data/runs/<dataset>/ (idempotent). True once it is durably there: every file, the
+    evidence and staging directories, the rename and the index have been fsynced. A run directory written
+    under an older format is replaced (staged, then swapped in), never skipped."""
     from traceharness.capture.backfill import _append_index
     built = build_run(row, job_dir)
     dataset = os.path.join(runs_root, dataset_for(row.get("idempotency_key")))
@@ -256,8 +321,9 @@ def persist_job(runs_root, row, job_dir) -> bool:
     _quarantine(runs_root, built)
     with _LOCK:
         os.makedirs(dataset, exist_ok=True)
-        if not os.path.isdir(final):
+        if not (os.path.isdir(final) and _current(final)):
             stage = tempfile.mkdtemp(dir=dataset, prefix=built["run_id"] + ".tmp-")
+            old = None
             try:
                 os.makedirs(os.path.join(stage, "evidence"), mode=0o700)
                 for name, body in built["files"].items():
@@ -267,9 +333,26 @@ def persist_job(runs_root, row, job_dir) -> bool:
                         stream.flush()
                         os.fsync(stream.fileno())
                 os.chmod(stage, 0o700)
-                os.rename(stage, final)
+                _fsync_dir(os.path.join(stage, "evidence"))
+                _fsync_dir(stage)
+                if os.path.isdir(final):
+                    old = tempfile.mkdtemp(dir=dataset, prefix=built["run_id"] + ".old-")
+                    os.rmdir(old)
+                    os.rename(final, old)           # an old-format directory is moved aside, never half-overwritten
+                try:
+                    os.rename(stage, final)
+                except BaseException:
+                    if old is not None:
+                        os.rename(old, final)       # put the previous directory back
+                        old = None
+                    raise
+                _fsync_dir(dataset)
             except BaseException:
                 shutil.rmtree(stage, ignore_errors=True)
                 raise
+            finally:
+                if old is not None:
+                    shutil.rmtree(old, ignore_errors=True)
         _append_index(os.path.join(dataset, "index.jsonl"), [built["index"]])
+        _fsync_dir(dataset)
     return True

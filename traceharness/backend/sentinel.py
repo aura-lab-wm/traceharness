@@ -83,11 +83,15 @@ def events_from_spans(spans: list[dict]) -> list[dict]:
             name = sp.get("gen_ai.tool.name")
             res = sp.get("result_preview", "") or ""
             tp = sp.get("tests_passed")
+            args = sp.get("args") if isinstance(sp.get("args"), dict) else {}    # a malformed span is read as having none
+            args = {k: (v if isinstance(v, str) or k not in ("command", "path") else "") for k, v in args.items()}
+            if not isinstance(res, str):
+                res = ""
             if tp is None and name == "bash":
-                cmd = (sp.get("args") or {}).get("command", "")
-                if "pytest" in cmd or "unittest" in cmd:
+                cmd = args.get("command", "")
+                if isinstance(cmd, str) and ("pytest" in cmd or "unittest" in cmd):
                     tp = res.startswith("exit=0")
-            out.append({"step": step, "tool": name, "args": sp.get("args") or {}, "status": sp.get("status", "ok"),
+            out.append({"step": step, "tool": name, "args": args, "status": sp.get("status", "ok"),
                         "result": res, "tests_passed": tp, "text": text})
     return out
 

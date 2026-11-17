@@ -32,20 +32,21 @@ def has_secret(value) -> bool:
 
 def preflight(configuration, registry, health: dict) -> dict:
     issues: list[str] = []
+    consent: list[str] = []       # the issues only an explicit unverified_ok clears (a missing receipt)
     try:
         invalid = not isinstance(configuration, dict) or has_secret(configuration)
         canonical(configuration)
     except (ValueError, TypeError, UnicodeError, RecursionError):
         invalid = True
     if invalid:
-        return {"ok": False, "issues": ["Configuration must be an object without credentials."]}
+        return {"ok": False, "issues": ["Configuration must be an object without credentials."], "consent_required": False}
     expected = {"version", "runtime_id", "model_id", "task_id", "prompt", "prompt_mode", "harness", "limits"}
     version = configuration.get("version")
     # "unverified_ok" is the explicit opt-in to run a combination that has no compatibility receipt.
     unverified_ok = configuration.get("unverified_ok", False)
     if (type(version) is not int or version not in {1, 2} or type(unverified_ok) is not bool
             or set(configuration) - {"unverified_ok"} != (expected if version == 1 else expected | {"native_prompt_profile"})):
-        return {"ok": False, "issues": ["Unsupported or incomplete run configuration."]}
+        return {"ok": False, "issues": ["Unsupported or incomplete run configuration."], "consent_required": False}
     runtime = registry.runtimes.get(configuration.get("runtime_id")) if isinstance(configuration.get("runtime_id"), str) else None
     task = registry.tasks.get(configuration.get("task_id")) if isinstance(configuration.get("task_id"), str) else None
     model_id = configuration.get("model_id")
@@ -67,6 +68,8 @@ def preflight(configuration, registry, health: dict) -> dict:
         else:
             issues.append("This task/runtime/model combination has no matching compatibility receipt for its pinned images and grader."
                           + (" Set unverified_ok to run it anyway." if getattr(registry, "open_models", False) else ""))
+            if getattr(registry, "open_models", False):
+                consent.append(issues[-1])
     if runtime and task and runtime["id"] not in task.get("runtime_ids", []):
         issues.append("The task environment is not registered for this runtime.")
     prompt = configuration.get("prompt")
@@ -144,10 +147,13 @@ def preflight(configuration, registry, health: dict) -> dict:
                     else:
                         issues.append("This native prompt profile has no application receipt on this machine."
                                       " Set unverified_ok to run it anyway; the run is recorded as not verified.")
+                        consent.append(issues[-1])
     if not health.get("available"):
         issues.append("The private execution service is not ready.")
     if issues:
-        return {"ok": False, "issues": list(dict.fromkeys(issues))}
+        # consent_required: refused only for a missing receipt, so unverified_ok would make it pass.
+        return {"ok": False, "issues": list(dict.fromkeys(issues)),
+                "consent_required": all(issue in consent for issue in issues)}
     manifest = {"version": version, "runtime_id": runtime["id"], "runtime_version": runtime["version"],
                 "image_digest": runtime["image_digest"], "model_id": model_id, "task_id": task["id"],
                 "task_revision": task["revision"], "environment_digest": task.get("environment_digests", {}).get(runtime["id"], task["environment_digest"]),
@@ -170,8 +176,8 @@ def preflight(configuration, registry, health: dict) -> dict:
         # not produce a manifest too large to retain as an immutable job artifact.
         artifact = json.dumps(manifest, ensure_ascii=False, sort_keys=True).encode("utf-8")
         if len(artifact) > 1024 * 1024:
-            return {"ok": False, "issues": ["Native prompt profile and additional instructions exceed the manifest artifact limit."]}
+            return {"ok": False, "issues": ["Native prompt profile and additional instructions exceed the manifest artifact limit."], "consent_required": False}
         from .execution import _redacted
         if _redacted(artifact) != artifact:
-            return {"ok": False, "issues": ["Remove credential-shaped content from native prompt instructions before execution."]}
-    return {"ok": True, "issues": [], "manifest": manifest, "manifest_sha256": digest(manifest)}
+            return {"ok": False, "issues": ["Remove credential-shaped content from native prompt instructions before execution."], "consent_required": False}
+    return {"ok": True, "issues": [], "consent_required": False, "manifest": manifest, "manifest_sha256": digest(manifest)}

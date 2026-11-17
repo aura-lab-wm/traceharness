@@ -217,14 +217,22 @@ class LocalRunner:
             settings = replace(settings, read_only=True)
         else:
             self._ownership = ownership
-        scripted = scripted_selected()
-        vault = LocalKeyVault(self._key, keyless=scripted)
-        from traceharness.runner_service.execution import DockerExecutor
-        from traceharness.runner_service.registry import Registry
-        registry = Registry.load(settings.registry_path, local=True)
-        app = create_app(settings, registry=registry, executor=DockerExecutor(settings, registry, command=self._command),
-                         provider=ScriptedProvider() if scripted else OpenRouter(), vault=vault,
-                         persist=self.dataset_hook())
+        try:
+            scripted = scripted_selected()
+            vault = LocalKeyVault(self._key, keyless=scripted)
+            from traceharness.runner_service.execution import DockerExecutor
+            from traceharness.runner_service.registry import Registry
+            registry = Registry.load(settings.registry_path, local=True)
+            app = create_app(settings, registry=registry, executor=DockerExecutor(settings, registry, command=self._command),
+                             provider=ScriptedProvider() if scripted else OpenRouter(), vault=vault,
+                             persist=self.dataset_hook())
+        except BaseException:
+            # A failed construction must not keep the lock: a retry would find it held by this very process and
+            # build a permanently read-only app.
+            if self._ownership is not None:
+                self._ownership.release()
+                self._ownership = None
+            raise
         return app
 
     def dataset_hook(self):
