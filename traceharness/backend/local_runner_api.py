@@ -402,6 +402,23 @@ async def _container_ready():
     return runner if await run_in_threadpool(runner.is_ready) else None
 
 
+async def _container_reader():
+    """The local runner for READING what it already recorded: set up, Docker not required. Only starting new
+    execution needs `_container_ready`."""
+    runner = _runner()
+    if runner is None or not await run_in_threadpool(runner.has_state):
+        return None
+    return runner
+
+
+async def _read_runner(runner, method: str, path: str, body=None):
+    """(status, data) from the runner, or None when its recorded state cannot be opened."""
+    try:
+        return await runner.call(method, path, body)
+    except Exception:
+        return None
+
+
 async def _handle(runner) -> str:
     """A credential handle for the runner. The key itself stays in Settings; the handle resolves to it."""
     try:
@@ -515,26 +532,28 @@ async def runner_submit(request: Request):
 @router.get("/jobs")
 async def runner_jobs():
     local = await _call(list_jobs)
-    runner = await _container_ready()
+    runner = await _container_reader()
     if runner is not None:
-        status, data = await runner.call("GET", "/api/runner/jobs")
-        if status == 200 and isinstance(data.get("jobs"), list):
-            jobs = sorted(local["jobs"] + data["jobs"], key=lambda j: j.get("created_at", 0), reverse=True)
+        answer = await _read_runner(runner, "GET", "/api/runner/jobs")
+        if answer and answer[0] == 200 and isinstance(answer[1].get("jobs"), list):
+            jobs = sorted(local["jobs"] + answer[1]["jobs"], key=lambda j: j.get("created_at", 0), reverse=True)
             return {"jobs": jobs}
     return local
 
 
 async def _container_job(job_id: str, suffix: str = "", *, method="GET", body=None):
-    """The runner's answer for a job id it knows, else None (the id then belongs to a local run)."""
-    runner = await _container_ready()
+    """The runner's answer for a job id it knows, else None (the id then belongs to a local run).
+    Reading needs no Docker: the jobs were recorded by an earlier run."""
+    runner = await _container_reader()
     if runner is None or not JOB_ID.fullmatch(job_id):
         return None
-    status, data = await runner.call("GET", f"/api/runner/jobs/{job_id}")
-    if status != 200:
+    known = await _read_runner(runner, "GET", f"/api/runner/jobs/{job_id}")
+    if known is None or known[0] != 200:
         return None
     if not suffix:
-        return _passthrough(status, data)
-    return _passthrough(*await runner.call(method, f"/api/runner/jobs/{job_id}{suffix}", body))
+        return _passthrough(*known)
+    answer = await _read_runner(runner, method, f"/api/runner/jobs/{job_id}{suffix}", body)
+    return None if answer is None else _passthrough(*answer)
 
 
 @router.get("/jobs/{job_id}")

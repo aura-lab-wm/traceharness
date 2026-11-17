@@ -103,6 +103,7 @@ def create_app(settings: Settings, *, registry=None, provider=None, executor=Non
 
     app = FastAPI(docs_url=None, redoc_url=None, openapi_url=None, lifespan=lifespan)
     app.state.jobs, app.state.vault, app.state.registry = jobs, vault, registry
+    app.state.executor = executor
     app.state.readiness = readiness
     app.state.experiments = experiments
     app.state.close = close

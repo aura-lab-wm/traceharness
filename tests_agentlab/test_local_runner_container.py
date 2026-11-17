@@ -66,6 +66,9 @@ class ReadyRunner(L.LocalRunner):
     def is_ready(self):
         return True
 
+    def has_state(self):
+        return True
+
     def build_app(self):
         return create_app(local_settings(self.root), registry=self.registry, provider=self.provider,
                           executor=LocalExecutor(), vault=LocalKeyVault(self.key_getter))
@@ -375,10 +378,18 @@ class VaultTests(unittest.TestCase):
 
 
 class ReadinessTests(unittest.TestCase):
-    def runner(self, root, docker_ok=True, clock=None):
+    def runner(self, root, docker_ok=True, clock=None, images=True):
         def command(args, **kwargs):
             if not docker_ok:
                 return SimpleNamespace(returncode=1, stdout=b"")
+            if args[1:3] == ["image", "inspect"]:
+                if not images:
+                    raise subprocess.CalledProcessError(1, args)
+                return SimpleNamespace(returncode=0, stdout=json.dumps([{
+                    "Id": args[-1], "RepoDigests": [args[-1]],
+                    "Config": {"Labels": {"org.traceharness.runtime": "traceharness", "org.traceharness.version": "0.3.0"}}}]).encode())
+            if args[1:3] == ["ps", "--all"]:
+                return SimpleNamespace(returncode=0, stdout=b"")
             return SimpleNamespace(returncode=0, stdout=json.dumps({"Runtimes": {"runc": {}}}).encode())
         return L.LocalRunner(str(root), lambda: "", command=command, **({"clock": clock} if clock else {}))
 
@@ -400,6 +411,17 @@ class ReadinessTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as t, patch.object(L, "find_docker", return_value=None):
             self.write_registry(Path(t))
             self.assertFalse(self.runner(Path(t)).is_ready())                    # no docker binary
+
+    def test_docker_answering_is_not_readiness_when_the_registered_images_are_missing(self):
+        with tempfile.TemporaryDirectory() as t, patch.object(L, "find_docker", return_value="/usr/bin/docker"):
+            root = Path(t)
+            self.write_registry(root)
+            missing = self.runner(root, images=False)
+            value = missing.readiness()
+            self.assertTrue(value["docker"] and value["registry"])
+            self.assertFalse(value["ready"])
+            self.assertFalse(missing.is_ready())
+            self.assertTrue(self.runner(root, images=True).is_ready())
 
     def test_readiness_is_cached_a_few_seconds_and_never_raises(self):
         now = [100.0]

@@ -1,10 +1,16 @@
 """WP5 through the backend mount: idempotent submissions, results without Docker, durable datasets."""
+import asyncio
+import hashlib
+import json
 import os
+import subprocess
 import sys
 import tempfile
 import time
 import unittest
 from pathlib import Path
+from types import SimpleNamespace
+from unittest.mock import patch
 
 LAB = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, LAB)
@@ -13,7 +19,7 @@ from fastapi.testclient import TestClient                                   # no
 
 from traceharness.backend.app import app                                    # noqa: E402
 from traceharness.runner import local as L                                  # noqa: E402
-from tests_agentlab.runner_service.test_runner import KEY, configuration    # noqa: E402
+from tests_agentlab.runner_service.test_runner import KEY, configuration, fixture_registry  # noqa: E402
 from tests_agentlab.test_local_runner_container import ReadyRunner          # noqa: E402
 
 
@@ -115,6 +121,95 @@ class DurableResultTests(BackendBase):
         jobs.clock = lambda: job["updated_at"] + jobs.settings.job_ttl + 10
         jobs.list("local")
         self.assertIn(job["id"], jobs.rows)
+
+
+def stopped_docker(args, **kwargs):
+    return SimpleNamespace(returncode=1, stdout=b"")
+
+
+class ResultsWithoutDockerTests(unittest.TestCase):
+    JID = "c" * 48
+
+    def setUp(self):
+        self.temp = tempfile.TemporaryDirectory()
+        self.root = Path(self.temp.name)
+        base = L.runner_dir(self.root)
+        base.mkdir(parents=True)
+        _, data = fixture_registry(base)
+        (base / "registry.json").write_text(json.dumps(data))
+        jobdir = base / "jobs" / self.JID
+        jobdir.mkdir(parents=True)
+        self.body = b'{"recorded": true}'
+        row = {"owner": "local", "idempotency_key": "k" * 16, "fingerprint": "x",
+               "job": {"id": self.JID, "status": "succeeded", "created_at": int(time.time()), "updated_at": int(time.time()),
+                       "manifest": {"task_id": "fixture-task"}, "manifest_sha256": "0" * 64, "issues": [], "grade": "passed",
+                       "artifacts": [{"name": "manifest.json", "bytes": len(self.body), "sha256": hashlib.sha256(self.body).hexdigest()}],
+                       "usage": {"requests": 1}, "cancellation_requested": False}}
+        (jobdir / "job.json").write_text(json.dumps(row))
+        (jobdir / "manifest.json").write_bytes(self.body)
+        self.docker = patch.object(L, "find_docker", return_value="/usr/bin/docker")
+        self.docker.start()
+        self.runner = L.LocalRunner(str(self.root), lambda: KEY, command=stopped_docker)
+        self.previous = L.active_runner()
+        L.activate(self.runner)
+        self.client = TestClient(app)
+
+    def tearDown(self):
+        self.runner.close()
+        L.activate(self.previous)
+        self.docker.stop()
+        self.temp.cleanup()
+
+    def test_completed_jobs_list_open_and_download_while_docker_is_stopped(self):
+        self.assertFalse(self.runner.is_ready())            # Docker does not answer: nothing new may start
+        listed = self.client.get("/api/runner/jobs").json()["jobs"]
+        self.assertIn(self.JID, [j["id"] for j in listed])
+        detail = self.client.get("/api/runner/jobs/" + self.JID)
+        self.assertEqual(detail.status_code, 200, detail.text)
+        self.assertEqual(detail.json()["job"]["grade"], "passed")
+        artifact = self.client.get(f"/api/runner/jobs/{self.JID}/artifacts/manifest.json")
+        self.assertEqual(artifact.status_code, 200, artifact.text)
+        import base64
+        self.assertEqual(base64.b64decode(artifact.json()["content"]), self.body)
+
+    def test_new_execution_still_needs_readiness(self):
+        cfg = configuration()
+        response = self.client.post("/api/runner/jobs", json={"configuration": cfg, "credential_id": None,
+                                   "idempotency_key": "wp5-nodocker-0001", "manifest_sha256": "0" * 64})
+        self.assertNotEqual(response.status_code, 200, response.text)
+        self.assertEqual(len(self.runner.app.state.jobs.rows) if self.runner.app else 1, 1)
+
+
+class RegistryReloadTests(unittest.TestCase):
+    def test_a_replaced_registry_is_used_by_new_submissions_without_a_restart(self):
+        def docker(args, **kwargs):
+            return SimpleNamespace(returncode=0, stdout=json.dumps({"Runtimes": {"runc": {}}}).encode())
+        with tempfile.TemporaryDirectory() as t, patch.object(L, "find_docker", return_value="/usr/bin/docker"):
+            root = Path(t)
+            base = L.runner_dir(root)
+            base.mkdir(parents=True)
+            _, data = fixture_registry(base)
+            path = base / "registry.json"
+            path.write_text(json.dumps(data))
+            runner = L.LocalRunner(str(root), lambda: KEY, command=docker)
+            try:
+                app_ = asyncio.run(runner.app_async())
+                registry = app_.state.registry
+                self.assertEqual(registry.tasks["fixture-task"]["title"], "Explicit unit fixture")
+                data["tasks"][0]["title"] = "Re-verified task"          # what `runner setup` / `verify` rewrite
+                path.write_text(json.dumps(data))
+                os.utime(path, ns=(time.time_ns() + 10**9, time.time_ns() + 10**9))
+                again = asyncio.run(runner.app_async())
+                self.assertIs(again, app_)
+                self.assertIs(again.state.registry, registry, "the running app's registry object is updated in place")
+                self.assertEqual(registry.tasks["fixture-task"]["title"], "Re-verified task")
+                # a registry that does not load never replaces the working one
+                path.write_text("{broken")
+                os.utime(path, ns=(time.time_ns() + 2 * 10**9, time.time_ns() + 2 * 10**9))
+                asyncio.run(runner.app_async())
+                self.assertEqual(registry.tasks["fixture-task"]["title"], "Re-verified task")
+            finally:
+                runner.close()
 
 
 if __name__ == "__main__":

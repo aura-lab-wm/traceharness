@@ -71,6 +71,8 @@ class LocalRunner:
         self._app = None
         self._ready = (float("-inf"), None)
         self._registry_seen = None     # ((mtime_ns, size), valid)
+        self._probe = threading.Lock()  # one readiness probe at a time
+        self._loaded = None             # stamp of the registry.json the app was built from
 
     @property
     def lab_root(self):
@@ -95,19 +97,76 @@ class LocalRunner:
         self._registry_seen = (stamp, valid)
         return valid
 
+    def _executor_healthy(self) -> bool:
+        """The runner's own executor says execution can start: Docker's runtime, every registered image
+        and task package. (The one executor of the built app: a second one would reap live containers.)"""
+        try:
+            self._build_once()
+            app = self._app
+            self.refresh_registry()
+            if not app.state.jobs.settle_restored():
+                return False
+            with app.state.jobs.lock:
+                if app.state.jobs.blocked_reason or any(r["job"]["status"] == "needs_attention" for r in app.state.jobs.rows.values()):
+                    return False
+            return bool(app.state.executor.health().get("available"))
+        except Exception:
+            return False
+
     def readiness(self) -> dict:
-        """{"ready", "docker", "registry", "isolation"}; cached for a few seconds."""
+        """{"ready", "docker", "registry", "executor", "isolation"}; cached for a few seconds.
+
+        Ready needs more than Docker answering: the registry must load and the executor's health check
+        (images present and as pinned, task packages unchanged) must pass."""
+        with self._probe:
+            with self._lock:
+                at, value = self._ready
+                if value is not None and self._clock() - at < CACHE_SECONDS:
+                    return value
+            info = docker_info(find_docker(), self._command)
+            registry = self._registry_valid()
+            healthy = bool(info is not None and registry and self._executor_healthy())
+            value = {"ready": healthy, "docker": info is not None, "registry": registry, "executor": healthy,
+                     "isolation": detect_isolation(info) if info is not None else None}
+            with self._lock:
+                self._ready = (self._clock(), value)
+            return value
+
+    def has_state(self) -> bool:
+        """A registry exists: finished jobs can be read even when Docker is stopped."""
+        return registry_path(self.lab_root).is_file()
+
+    def refresh_registry(self) -> bool:
+        """Adopt a changed, valid registry.json (setup or verify replaced it) for submissions from now on.
+
+        The built app's registry object is updated in place, so its executor, review and catalog all see
+        it. A running job pinned its image, task hash and inventory in its manifest and read them at start;
+        a queued one is checked against its pinned hashes when it starts. A registry that does not load
+        is ignored and the previous one stays."""
+        from traceharness.runner_service.registry import Registry
+        app, path = self._app, registry_path(self.lab_root)
+        if app is None:
+            return False
+        try:
+            st = path.stat()
+        except OSError:
+            return False
+        stamp = (st.st_mtime_ns, st.st_size, st.st_ino)
         with self._lock:
-            at, value = self._ready
-            if value is not None and self._clock() - at < CACHE_SECONDS:
-                return value
-        info = docker_info(find_docker(), self._command)
-        registry = self._registry_valid()
-        value = {"ready": bool(info is not None and registry), "docker": info is not None,
-                 "registry": registry, "isolation": detect_isolation(info) if info is not None else None}
+            if stamp == self._loaded:
+                return False
+        try:
+            fresh = Registry.load(path, local=True)
+        except Exception:
+            with self._lock:
+                self._loaded = stamp       # do not re-parse the same broken file on every request
+            return False
         with self._lock:
-            self._ready = (self._clock(), value)
-        return value
+            app.state.registry.__dict__.update(vars(fresh))
+            app.state.readiness["at"] = 0
+            self._loaded = stamp
+            self._ready = (float("-inf"), None)
+        return True
 
     def is_ready(self) -> bool:
         return self.readiness()["ready"]
@@ -118,14 +177,17 @@ class LocalRunner:
         from traceharness.runner_service.provider import OpenRouter
         from .keyvault import LocalKeyVault
         from .scripted import ScriptedProvider
-        docker = find_docker()
-        if not docker:
-            raise RuntimeError("Docker is not installed")
-        isolation = detect_isolation(docker_info(docker, self._command))
+        # Without Docker the app still serves what was already recorded; new execution is gated by readiness.
+        docker = find_docker() or "docker"
+        isolation = detect_isolation(docker_info(find_docker(), self._command))
         settings = local_settings(self.lab_root, docker, isolation)
         scripted = scripted_selected()
         vault = LocalKeyVault(self._key, keyless=scripted)
-        app = create_app(settings, provider=ScriptedProvider() if scripted else OpenRouter(), vault=vault)
+        from traceharness.runner_service.execution import DockerExecutor
+        from traceharness.runner_service.registry import Registry
+        registry = Registry.load(settings.registry_path, local=True)
+        app = create_app(settings, registry=registry, executor=DockerExecutor(settings, registry, command=self._command),
+                         provider=ScriptedProvider() if scripted else OpenRouter(), vault=vault)
         self.attach_datasets(app)
         return app
 
@@ -139,11 +201,25 @@ class LocalRunner:
         import asyncio
         if self._app is None:
             await asyncio.to_thread(self._build_once)
+        elif self._stamp() != self._loaded:
+            await asyncio.to_thread(self.refresh_registry)
         return self._app
+
+    def _stamp(self):
+        try:
+            st = registry_path(self.lab_root).stat()
+            return (st.st_mtime_ns, st.st_size, st.st_ino)
+        except OSError:
+            return None
 
     def _build_once(self):
         with self._lock:
             if self._app is None:
+                try:
+                    st = registry_path(self.lab_root).stat()
+                    self._loaded = (st.st_mtime_ns, st.st_size, st.st_ino)
+                except OSError:
+                    self._loaded = None
                 self._app = self.build_app()
 
     def close(self):
