@@ -5,20 +5,25 @@ Host guard trusts as "testserver"; see backend/guard.py), talking to `Host: 127.
 browser on this machine. Each attack is a request a hostile page, a rebinding DNS name or a careless
 script could send; each test records what the server answers and what reached the disk.
 """
+import base64
 import json
 import os
 import re
 import shutil
 import sys
 import tempfile
+import time
 import unittest
 from unittest import mock
 
 LAB = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, LAB)
 
+from fastapi import HTTPException  # noqa: E402
 from fastapi.testclient import TestClient  # noqa: E402
 
+from traceharness.backend import app as appmod  # noqa: E402
+from traceharness.backend import metrics as M  # noqa: E402
 from traceharness.backend import paths  # noqa: E402
 from traceharness.backend.app import app  # noqa: E402
 from traceharness.shallow.wizard import blocks_from_answers, recommended_answers  # noqa: E402
@@ -27,30 +32,63 @@ PEER = ("192.0.2.10", 51234)          # a documentation address: any real socket
 BASE = "http://127.0.0.1:8765"
 KEY = "sk-or-v1-" + "0123456789abcdef" * 4     # key-shaped, not a credential
 
+LIVE_MODEL = "openai/gpt-5.6-luna"            # a curated OpenRouter id; no key is ever set here
+JOB = "0" * 48                                  # a well-formed job id that names no job
+
+
+def configuration(**over):
+    blocks = blocks_from_answers(recommended_answers())
+    value = {"version": 1, "runtime_id": "traceharness", "model_id": "mock", "task_id": "t01_slugify",
+             "prompt": blocks[0]["text"], "prompt_mode": "replace", "harness": {"lane": "minimal", "blocks": blocks},
+             "limits": {"max_steps": 4, "wall_time_seconds": 900, "max_cost_usd": 1, "max_output_tokens": 8192}}
+    value.update(over)
+    return value
+
+
 #: (path, a body the route accepts) for every write route this package adds.
 WRITES = [
     ("/api/shallow/harnesses", {"id": "claude", "prompt": "Synthetic prompt. verify. Do not modify the tests.", "if_absent": True}),
     ("/api/shallow/wizard", {"blocks": blocks_from_answers(recommended_answers())}),
     ("/api/shallow/compile", {"blocks": blocks_from_answers(recommended_answers())}),
+    ("/api/runner/preflight", {"configuration": configuration()}),
+    ("/api/runner/jobs", {"configuration": configuration(), "manifest_sha256": "0" * 64, "idempotency_key": "fixture-key-sec-0"}),
+    (f"/api/runner/jobs/{JOB}/cancel", {}),
 ]
 
 
 class SecurityCase(unittest.TestCase):
+    """A temp lab (one task, the harnesses, an empty data/) and no server key."""
+
     def setUp(self):
         self.tmp = tempfile.mkdtemp(prefix="th-local-sec-")
         self.addCleanup(shutil.rmtree, self.tmp, True)
-        self.data = os.path.join(self.tmp, "lab", "data")
-        os.makedirs(self.data)
-        patcher = mock.patch.object(paths, "DATA_ROOT", self.data)
-        patcher.start()
-        self.addCleanup(patcher.stop)
+        lab = os.path.join(self.tmp, "lab")
+        shutil.copytree(os.path.join(LAB, "tasks", "t01_slugify"), os.path.join(lab, "tasks", "t01_slugify"))
+        shutil.copytree(os.path.join(LAB, "harnesses"), os.path.join(lab, "harnesses"))
+        self.data = os.path.join(lab, "data")
+        self.runs = os.path.join(self.data, "runs")
+        os.makedirs(self.runs)
+        for target, name, value in ((paths, "DATA_ROOT", self.data), (M, "RUNS_ROOT", self.runs),
+                                    (appmod, "TASK_DIR", os.path.join(lab, "tasks")),
+                                    (appmod, "HARNESS_DIR", os.path.join(lab, "harnesses"))):
+            patcher = mock.patch.object(target, name, value)
+            patcher.start()
+            self.addCleanup(patcher.stop)
+        saved_key = appmod.SETTINGS["openrouter_key"]
+        appmod.SETTINGS["openrouter_key"] = ""
+        self.addCleanup(appmod.SETTINGS.__setitem__, "openrouter_key", saved_key)
+        self.baseline = set(self._walk())
         self.client = TestClient(app, base_url=BASE, client=PEER)
 
-    def all_files(self):
+    def _walk(self):
         out = []
         for root, _dirs, files in os.walk(self.tmp):
             out += [os.path.relpath(os.path.join(root, f), self.tmp) for f in files]
-        return sorted(out)
+        return out
+
+    def all_files(self):
+        """Every file that appeared in the temp tree since setUp (the copied lab excluded)."""
+        return sorted(set(self._walk()) - self.baseline)
 
     def library_files(self):
         folder = os.path.join(self.data, "harness-library", "harnesses")
@@ -165,6 +203,87 @@ class TestBodiesAndReads(SecurityCase):
     def test_reads_never_write(self):
         for path in ("/api/shallow/catalog", "/api/shallow/harnesses", "/api/shallow/harnesses/claude",
                      "/api/shallow/harnesses/min_099dc52e693e", "/api/shallow/anything"):
+            with self.subTest(path=path):
+                self.assertIn(self.client.get(path).status_code, (200, 404))
+        self.assertEqual(self.all_files(), [])
+
+
+class TestRunnerRefusals(SecurityCase):
+    def test_a_live_model_without_a_server_key_is_refused_and_no_provider_is_made(self):
+        with self.assertRaises(HTTPException) as caught:   # the sentence app.create_job itself answers
+            appmod.create_job(appmod.JobIn(out="never-written", models=[LIVE_MODEL], harnesses=["baseline"], tasks=["t01_slugify"]))
+        sentence = caught.exception.detail
+        self.assertEqual(caught.exception.status_code, 400)
+        jobs_before = len(appmod.JOBS)
+        with mock.patch.object(appmod, "make_provider", side_effect=AssertionError("a provider was made")) as factory:
+            review = self.post("/api/runner/preflight", {"configuration": configuration(model_id=LIVE_MODEL)})
+            self.assertEqual(review.status_code, 200, review.text[:200])
+            self.assertEqual(review.json()["ok"], False)
+            self.assertNotIn("manifest", review.json())
+            r = self.post("/api/runner/jobs", {"configuration": configuration(model_id=LIVE_MODEL), "manifest_sha256": "a" * 64,
+                                               "idempotency_key": "fixture-key-live-model"})
+            self.assertEqual(r.status_code, 400, r.text[:200])
+            self.assertEqual(r.json()["detail"], sentence)
+            time.sleep(0.2)
+            factory.assert_not_called()
+        self.assertEqual(len(appmod.JOBS), jobs_before)
+        self.assertEqual(self.all_files(), [])
+
+    def test_a_key_in_a_runner_body_is_refused_and_never_reaches_a_manifest(self):
+        bodies = [("/api/runner/preflight", {"configuration": configuration(prompt="Use " + KEY + " to verify.")}),
+                  ("/api/runner/preflight", {"configuration": {**configuration(), "api_key": "anything"}}),
+                  ("/api/runner/preflight", {"configuration": configuration(), "openrouter_api_key": "anything"}),
+                  ("/api/runner/jobs", {**WRITES[4][1], "configuration": configuration(prompt="Use " + KEY)}),
+                  ("/api/runner/jobs", {**WRITES[4][1], "credential_id": "a" * 32}),
+                  ("/api/runner/jobs", {**WRITES[4][1], "api_key": KEY})]
+        for path, body in bodies:
+            with self.subTest(path=path, keys=sorted(body)):
+                r = self.post(path, body)
+                self.assertEqual(r.status_code, 400, r.text[:200])
+                self.assertNotIn(KEY, r.text)
+                self.assertNotIn("manifest", r.text)
+        self.assertEqual(self.all_files(), [])
+
+    def test_artifact_names_cannot_leave_the_run_directory(self):
+        checked = self.post("/api/runner/preflight", {"configuration": configuration()}).json()
+        r = self.post("/api/runner/jobs", {"configuration": configuration(), "manifest_sha256": checked["manifest_sha256"],
+                                           "idempotency_key": "fixture-key-artifacts"})
+        self.assertEqual(r.status_code, 200, r.text[:200])
+        job_id = r.json()["job"]["id"]
+        deadline = time.time() + 120
+        while True:
+            job = self.client.get(f"/api/runner/jobs/{job_id}").json()["job"]
+            if job["status"] in ("succeeded", "failed", "cancelled") or time.time() > deadline:
+                break
+            time.sleep(0.2)
+        self.assertEqual(job["status"], "succeeded", job)
+        run_dir = os.path.join(self.runs, "harness_runs", job["run_id"])
+        secret = "OUTSIDE-THE-RUN-DIRECTORY"
+        for planted in (os.path.join(self.runs, "harness_runs", "summary.json"), os.path.join(self.data, "summary.json"),
+                        os.path.join(self.tmp, "outside.txt")):
+            with open(planted, "w") as f:
+                f.write(secret)
+        for name in ("../summary.json", "..%2Fsummary.json", "%2e%2e", "%2e%2e%2fsummary.json", "..", "summary.json%00",
+                     "%00", "index.jsonl", "ledger.jsonl", "workspace", "summary.json/", "SUMMARY.JSON"):
+            with self.subTest(name=name):
+                got = self.client.get(f"/api/runner/jobs/{job_id}/artifacts/{name}")
+                self.assertNotIn(secret, got.text)
+                self.assertNotIn(base64.b64encode(secret.encode()).decode(), got.text)
+                self.assertNotIn('"content"', got.text)
+                if name != "..":   # the client resolves a bare ".." itself: that request is the job's own status
+                    self.assertIn(got.status_code, (404, 422), got.text[:200])
+        # a symlink planted where an artifact belongs is refused, never followed
+        os.remove(os.path.join(run_dir, "patch.diff"))
+        os.symlink(os.path.join(self.tmp, "outside.txt"), os.path.join(run_dir, "patch.diff"))
+        got = self.client.get(f"/api/runner/jobs/{job_id}/artifacts/patch.diff")
+        self.assertEqual(got.status_code, 404, got.text[:200])
+        self.assertNotIn(base64.b64encode(secret.encode()).decode(), got.text)
+        listed = self.client.get(f"/api/runner/jobs/{job_id}").json()["job"]["artifacts"]
+        self.assertNotIn("patch.diff", [a["name"] for a in listed])
+
+    def test_runner_reads_never_write(self):
+        for path in ("/api/runner/catalog", "/api/runner/jobs", f"/api/runner/jobs/{JOB}", f"/api/runner/jobs/{JOB}/artifacts/summary.json",
+                     "/api/runner/credentials", "/api/runner/experiments"):
             with self.subTest(path=path):
                 self.assertIn(self.client.get(path).status_code, (200, 404))
         self.assertEqual(self.all_files(), [])
