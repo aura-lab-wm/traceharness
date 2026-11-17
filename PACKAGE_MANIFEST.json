@@ -64390,8 +64390,13 @@
     },
     {
       "path": "tests_agentlab/test_wp12_round5_fixes.py",
-      "bytes": 16189,
-      "sha256": "cbd5657340b364775fc656f1bc0fedcbf4593f3e5235ee0ae8c632dc3d0fd2f5"
+      "bytes": 15779,
+      "sha256": "fb88f3195452bbcc2ea1f7e153212a4251122cd617d4c7daeb083585671e9c09"
+    },
+    {
+      "path": "tests_agentlab/test_wp13_round6_fixes.py",
+      "bytes": 7695,
+      "sha256": "ac5ce448b12f434055361492e6251ef9c1e2551a204d2c852154fa6318bdb951"
     },
     {
       "path": "tests_agentlab/test_wp5_capture_import.py",
@@ -64465,8 +64470,8 @@
     },
     {
       "path": "traceharness/backend/app.py",
-      "bytes": 48625,
-      "sha256": "66560ac7e3ebf357a3c84a58b4634c9b3ed76aae2c94d7d4864816c4f8a21291"
+      "bytes": 48253,
+      "sha256": "379c7405c8f9281947d5f35a7924f4462abdc09d15f303ddeb450caf3deef5bf"
     },
     {
       "path": "traceharness/backend/assist.py",
@@ -66890,8 +66895,8 @@
     },
     {
       "path": "traceharness/runner/datasets.py",
-      "bytes": 27278,
-      "sha256": "88b14bc7d222b7365c3db0e0a7998756504ca7b579e3b7495004b37ed73ed988"
+      "bytes": 28699,
+      "sha256": "1030faaa8b8b568b2855515779016d8c4bdb7d78f353b8dd1cb1118981dd663c"
     },
     {
       "path": "traceharness/runner/keyvault.py",
@@ -66900,8 +66905,8 @@
     },
     {
       "path": "traceharness/runner/local.py",
-      "bytes": 13934,
-      "sha256": "b93c3087be51b4ff98c9984d997d6c68581199556f4a47a6dcc05f9db2941cb2"
+      "bytes": 14287,
+      "sha256": "ea9432e72946c7d0855f83b7742048a2f8897c45f400df1673076f90148f6503"
     },
     {
       "path": "traceharness/runner/package_task.py",
