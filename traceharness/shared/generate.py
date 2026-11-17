@@ -1,4 +1,4 @@
-"""Write the shared-sources bundle (SPEC 4.1): the one file the console, the package and the site agree on.
+"""Write the shared-sources bundle (SPEC 4.1): the one file the console and the package agree on.
 
     python -m traceharness.shared.generate            # writes both copies
     python -m traceharness.shared.generate --check    # exit 1, naming the stale file
@@ -96,9 +96,9 @@ def build_bundle() -> dict:
         "tokens": tokens(),
         "capture_sources": capture_sources(),
         "shallow": shallow(),
-        "datasets": {"hosted": list(contract.HOSTED_DATASETS), "school": list(contract.SCHOOL_DATASETS)},
+        "datasets": {"school": list(contract.SCHOOL_DATASETS)},
         "environment": {"capabilities": list(contract.CAPABILITIES), "table": contract.CAPABILITY_TABLE,
-                        "messages": contract.MESSAGES, "library": contract.LIBRARY},
+                        "messages": contract.MESSAGES, "library": contract.LIBRARY, "runner": list(contract.RUNNER)},
         "glossary": {"labels": contract.LABELS, "retired": [dict(r) for r in contract.RETIRED]},
         "drafts": {"prefix_member": contract.DRAFT_PREFIX_MEMBER, "prefix_local": contract.DRAFT_PREFIX_LOCAL,
                    "names": list(contract.DRAFT_NAMES)},

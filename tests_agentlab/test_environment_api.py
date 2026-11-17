@@ -88,7 +88,9 @@ class TestEnvironmentRoute(unittest.TestCase):
             self.assertEqual(set(cap), {"available", "reason"}, cid)
             self.assertEqual(cap["available"], cap["reason"] == "ok", cid)
             self.assertIn(cap["reason"], C.REASONS, cid)
-        self.assertEqual(body, C.environment("local"))
+        self.assertEqual(body, C.environment("local", {cid: "runner_not_ready" for cid in C.RUNNER}))
+        for cid in C.RUNNER:
+            self.assertEqual(body["capabilities"][cid], {"available": False, "reason": "runner_not_ready"}, cid)
 
     def test_version_answers_the_package_stamp(self):
         r = self.client.get("/api/version")

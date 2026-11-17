@@ -19,7 +19,7 @@ describe('Unavailable', () => {
   })
 
   it('takes its own data-el', async () => {
-    const html = await render({}, { capability: 'run.hosted', what: 'Hosted runs', el: 'runner-note' })
+    const html = await render({}, { capability: 'run.container', what: 'Hosted runs', el: 'runner-note' })
     expect(html).toContain('data-el="runner-note"')
     expect(html).toContain('data-reason="hosted_only"')
     expect(html).toContain('Hosted runs runs on traceharness.dev for signed-in members.')

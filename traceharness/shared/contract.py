@@ -4,7 +4,8 @@ table, one glossary.
 Standard library only, and nothing from `traceharness.backend`: the command line imports this
 before it has resolved the lab root, and `generate.py` builds the shared-sources bundle from it
 without starting the app. The console reads the same values from the generated
-`frontend/src/shared/shared-sources.json`; the site vendors that file and fails on a hash mismatch.
+`frontend/src/shared/shared-sources.json`. TraceHarness runs only on the user's machine (0.6.0): the
+modes are the local console and a read-only export.
 """
 from __future__ import annotations
 
@@ -28,42 +29,33 @@ DISPLAY_CLASSES = (
     ("laptop", 1280), ("desktop", 1440), ("full-hd", 1920), ("qhd", 2560), ("ultrawide", 3440),
 )
 
-#: Datasets the site publishes in its `/app` snapshot.
-HOSTED_DATASETS = ("demo_mock", "families_mock", "prerecorded_mock", "prerecorded_mock_weak", "study_v04")
 #: Datasets the school replication package ships, in the order of `traceharness/school-package.json`.
 SCHOOL_DATASETS = ("llma4se_live", "live", "real_swe_agent_500", "prerecorded_mock", "prerecorded_mock_weak",
                    "families_mock", "demo_mock", "captured_claude_code")
 
-MODES = ("local", "export", "member")
+MODES = ("local", "export")
 
 CAPABILITIES = (
     "data.read", "data.import", "data.live_events", "harness.compile", "harness.save", "run.local",
-    "run.hosted", "run.native", "run.experiments", "judge.run", "capture.local", "capture.computers",
-    "settings.server_key", "assistant.model", "account",
+    "run.container", "run.native", "run.experiments", "judge.run", "capture.local",
+    "settings.server_key", "assistant.model",
 )
 
-REASONS = ("ok", "export_read_only", "local_only", "hosted_only", "not_configured", "unavailable")
+REASONS = ("ok", "export_read_only", "runner_not_ready", "not_configured", "unavailable")
 
-_LOCAL_ONLY = ("run.local", "data.import", "data.live_events", "judge.run", "capture.local",
-               "settings.server_key", "assistant.model")
-_HOSTED_ONLY = ("run.hosted", "run.native", "run.experiments", "capture.computers", "account")
+#: Capabilities that need the local runner (`traceharness runner setup`, Docker). The table says "ok" for the
+#: local console; the backend reports "runner_not_ready" at runtime until the runner is set up.
+RUNNER = ("run.container", "run.native", "run.experiments")
 
 #: CAPABILITY_TABLE[capability][mode] -> reason; "ok" means available (SPEC 4.2).
-CAPABILITY_TABLE = {
-    "data.read": {"local": "ok", "export": "ok", "member": "ok"},
-    "harness.compile": {"local": "ok", "export": "export_read_only", "member": "ok"},
-    "harness.save": {"local": "ok", "export": "export_read_only", "member": "ok"},
-    **{cid: {"local": "ok", "export": "export_read_only", "member": "local_only"} for cid in _LOCAL_ONLY},
-    **{cid: {"local": "hosted_only", "export": "hosted_only", "member": "ok"} for cid in _HOSTED_ONLY},
-}
-CAPABILITY_TABLE = {cid: CAPABILITY_TABLE[cid] for cid in CAPABILITIES}   # in CAPABILITIES order
+CAPABILITY_TABLE = {cid: {"local": "ok", "export": "ok" if cid == "data.read" else "export_read_only"}
+                    for cid in CAPABILITIES}
 
 #: One sentence per reason that is not "ok", with {what}, {command} and {url} to fill.
 MESSAGES = {
     "export_read_only": "{what} is not available in a read-only export. Start the local console: {command}",
-    "local_only": "{what} runs on your computer. Start the local console with {command} and open {url}.",
-    "hosted_only": "{what} runs on traceharness.dev for signed-in members.",
-    "not_configured": "{what} is not set up on this server.",
+    "runner_not_ready": "{what} needs the local runner. Run traceharness runner setup (Docker required).",
+    "not_configured": "{what} is not set up on this computer.",
     "unavailable": "{what} is not available right now.",
 }
 
@@ -71,7 +63,6 @@ MESSAGES = {
 LIBRARY = {
     "local": {"available": True, "store": "local", "label": "this computer"},
     "export": {"available": False, "store": None, "label": None},
-    "member": {"available": True, "store": "account", "label": "your account"},
 }
 
 #: The canonical words (SPEC 4.4).
@@ -123,23 +114,33 @@ def local_app() -> dict:
             "url": f"http://{HOST}:{PORT}", "port": PORT}
 
 
-def environment(mode: str) -> dict:
-    """The SPEC 4.2 environment answer for `mode`: what this console can do here, and why not."""
+def environment(mode: str, reasons: dict | None = None) -> dict:
+    """The SPEC 4.2 environment answer for `mode`: what this console can do here, and why not.
+
+    `reasons` lets the backend report a runtime state that the static table cannot know, e.g.
+    {"run.native": "runner_not_ready"} before `traceharness runner setup` has run."""
     if mode not in MODES:
         raise ValueError(f"unknown mode {mode!r}: expected one of {', '.join(MODES)}")
+    reasons = reasons or {}
+    unknown = set(reasons) - set(CAPABILITIES) or {r for r in reasons.values() if r not in REASONS}
+    if unknown:
+        raise ValueError(f"unknown capability or reason: {sorted(unknown)}")
     from traceharness.__main__ import __version__   # deferred: __main__ imports this module
+
+    def reason(cid):
+        base = CAPABILITY_TABLE[cid][mode]
+        return reasons.get(cid, base) if base == "ok" else base
+
     return {
         "schema": SCHEMA,
         "mode": mode,
         "package_version": __version__,
         "local_app": local_app(),
         "library": dict(LIBRARY[mode]),
-        "capabilities": {cid: {"available": CAPABILITY_TABLE[cid][mode] == "ok",
-                               "reason": CAPABILITY_TABLE[cid][mode]} for cid in CAPABILITIES},
+        "capabilities": {cid: {"available": reason(cid) == "ok", "reason": reason(cid)} for cid in CAPABILITIES},
     }
 
 
 def availability(name: str) -> list[str]:
-    """Where a dataset is published: a subset of ["hosted", "school"], in that order."""
-    return [where for where, names in (("hosted", HOSTED_DATASETS), ("school", SCHOOL_DATASETS))
-            if name in names]
+    """Where a dataset is published: ["school"] when the school package ships it, else []."""
+    return ["school"] if name in SCHOOL_DATASETS else []

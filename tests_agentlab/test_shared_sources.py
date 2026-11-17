@@ -112,16 +112,25 @@ class TestBundleSources(unittest.TestCase):
 
     def test_the_capability_table_is_the_spec_table(self):
         t = C.CAPABILITY_TABLE
-        self.assertEqual([t["data.read"][m] for m in C.MODES], ["ok", "ok", "ok"])
-        self.assertEqual([t["harness.compile"][m] for m in C.MODES], ["ok", "export_read_only", "ok"])
-        self.assertEqual([t["harness.save"][m] for m in C.MODES], ["ok", "export_read_only", "ok"])
-        for cid in ("run.local", "data.import", "data.live_events", "judge.run", "capture.local",
-                    "settings.server_key", "assistant.model"):
-            self.assertEqual([t[cid][m] for m in C.MODES], ["ok", "export_read_only", "local_only"], cid)
-        for cid in ("run.hosted", "run.native", "run.experiments", "capture.computers", "account"):
-            self.assertEqual([t[cid][m] for m in C.MODES], ["hosted_only", "hosted_only", "ok"], cid)
+        self.assertEqual(C.MODES, ("local", "export"))
+        self.assertEqual([t["data.read"][m] for m in C.MODES], ["ok", "ok"])
+        for cid in set(C.CAPABILITIES) - {"data.read"}:
+            self.assertEqual([t[cid][m] for m in C.MODES], ["ok", "export_read_only"], cid)
+        self.assertEqual(set(C.RUNNER), {"run.container", "run.native", "run.experiments"})
+        self.assertNotIn("member", C.LIBRARY)
         self.assertEqual(set(t), set(C.CAPABILITIES))
         self.assertEqual(set(C.MESSAGES), set(C.REASONS) - {"ok"})
+
+    def test_runtime_reasons_override_only_available_capabilities(self):
+        env = C.environment("local", {"run.native": "runner_not_ready"})
+        self.assertEqual(env["capabilities"]["run.native"], {"available": False, "reason": "runner_not_ready"})
+        self.assertTrue(env["capabilities"]["run.local"]["available"])
+        exp = C.environment("export", {"run.native": "runner_not_ready"})
+        self.assertEqual(exp["capabilities"]["run.native"]["reason"], "export_read_only")
+        with self.assertRaises(ValueError):
+            C.environment("local", {"run.native": "maybe"})
+        with self.assertRaises(ValueError):
+            C.environment("local", {"account": "ok"})
 
     def test_tokens_capture_sources_and_harnesses_come_from_their_sources(self):
         tokens = self.bundle["tokens"]
@@ -141,8 +150,8 @@ class TestBundleSources(unittest.TestCase):
         self.assertEqual(self.bundle["display_classes"], dict(C.DISPLAY_CLASSES))
 
     def test_availability(self):
-        self.assertEqual(C.availability("demo_mock"), ["hosted", "school"])
-        self.assertEqual(C.availability("study_v04"), ["hosted"])
+        self.assertEqual(C.availability("demo_mock"), ["school"])
+        self.assertEqual(C.availability("study_v04"), [])
         self.assertEqual(C.availability("live"), ["school"])
         self.assertEqual(C.availability("somewhere_else"), [])
 

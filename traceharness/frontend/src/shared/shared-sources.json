@@ -21,15 +21,8 @@
   },
   "sha256": "1a22738c915dd698d8f2592d019dd25244707f7e382a9b945c032b79c638e0a9"
  },
- "content_sha256": "9ed083cee90e8f41da2059c82384e6fbada8c7f2a408768cfbde03fc6105dfbf",
+ "content_sha256": "722213b281d6d651f6951833d9a6d0bd95defab6fab7fef435d0115078c55eeb",
  "datasets": {
-  "hosted": [
-   "demo_mock",
-   "families_mock",
-   "prerecorded_mock",
-   "prerecorded_mock_weak",
-   "study_v04"
-  ],
   "school": [
    "llma4se_live",
    "live",
@@ -74,15 +67,13 @@
    "harness.compile",
    "harness.save",
    "run.local",
-   "run.hosted",
+   "run.container",
    "run.native",
    "run.experiments",
    "judge.run",
    "capture.local",
-   "capture.computers",
    "settings.server_key",
-   "assistant.model",
-   "account"
+   "assistant.model"
   ],
   "library": {
    "export": {
@@ -94,95 +85,71 @@
     "available": true,
     "label": "this computer",
     "store": "local"
-   },
-   "member": {
-    "available": true,
-    "label": "your account",
-    "store": "account"
    }
   },
   "messages": {
    "export_read_only": "{what} is not available in a read-only export. Start the local console: {command}",
-   "hosted_only": "{what} runs on traceharness.dev for signed-in members.",
-   "local_only": "{what} runs on your computer. Start the local console with {command} and open {url}.",
-   "not_configured": "{what} is not set up on this server.",
+   "not_configured": "{what} is not set up on this computer.",
+   "runner_not_ready": "{what} needs the local runner. Run traceharness runner setup (Docker required).",
    "unavailable": "{what} is not available right now."
   },
+  "runner": [
+   "run.container",
+   "run.native",
+   "run.experiments"
+  ],
   "table": {
-   "account": {
-    "export": "hosted_only",
-    "local": "hosted_only",
-    "member": "ok"
-   },
    "assistant.model": {
     "export": "export_read_only",
-    "local": "ok",
-    "member": "local_only"
-   },
-   "capture.computers": {
-    "export": "hosted_only",
-    "local": "hosted_only",
-    "member": "ok"
+    "local": "ok"
    },
    "capture.local": {
     "export": "export_read_only",
-    "local": "ok",
-    "member": "local_only"
+    "local": "ok"
    },
    "data.import": {
     "export": "export_read_only",
-    "local": "ok",
-    "member": "local_only"
+    "local": "ok"
    },
    "data.live_events": {
     "export": "export_read_only",
-    "local": "ok",
-    "member": "local_only"
+    "local": "ok"
    },
    "data.read": {
     "export": "ok",
-    "local": "ok",
-    "member": "ok"
+    "local": "ok"
    },
    "harness.compile": {
     "export": "export_read_only",
-    "local": "ok",
-    "member": "ok"
+    "local": "ok"
    },
    "harness.save": {
     "export": "export_read_only",
-    "local": "ok",
-    "member": "ok"
+    "local": "ok"
    },
    "judge.run": {
     "export": "export_read_only",
-    "local": "ok",
-    "member": "local_only"
+    "local": "ok"
+   },
+   "run.container": {
+    "export": "export_read_only",
+    "local": "ok"
    },
    "run.experiments": {
-    "export": "hosted_only",
-    "local": "hosted_only",
-    "member": "ok"
-   },
-   "run.hosted": {
-    "export": "hosted_only",
-    "local": "hosted_only",
-    "member": "ok"
+    "export": "export_read_only",
+    "local": "ok"
    },
    "run.local": {
     "export": "export_read_only",
-    "local": "ok",
-    "member": "local_only"
+    "local": "ok"
    },
    "run.native": {
-    "export": "hosted_only",
-    "local": "hosted_only",
-    "member": "ok"
+    "export": "export_read_only",
+    "local": "ok"
    },
    "settings.server_key": {
     "export": "export_read_only",
-    "local": "ok",
-    "member": "local_only"
+    "local": "ok"
    }
   }
  },
