@@ -27,7 +27,7 @@ export function profileNameIssue(name) {
   return ''
 }
 
-/** Recover only bounded member-authored data; baseline bodies never enter storage. */
+/** Recover only bounded user-authored data; baseline bodies never enter storage. */
 export function safeNativeDraft(value, runtimeId) {
   try {
     if (!value || Object.keys(value).some((key) => !['enabled', 'profile', 'remembered', 'sets', 'name'].includes(key)) || typeof value.enabled !== 'boolean') return null

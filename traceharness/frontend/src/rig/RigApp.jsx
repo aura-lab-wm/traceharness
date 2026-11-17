@@ -16,8 +16,7 @@
    ==================================================================================== */
 import { DISPLAY_CLASSES, up, below } from './displayClasses'
 import { Component, useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { IS_STATIC, IS_MEMBER, STATIC_DATA } from '../api'
-import { LABELS } from '../shared/index.js'
+import { IS_STATIC } from '../api'
 import { parseHash, toHash, parseSpec, makeSpec, withChain, specKind, isRigHash, SUITES } from './route'
 import { RigContext, useRig } from './context'
 import { getView, listViews, listDocks } from './registry'
@@ -31,7 +30,7 @@ import GettingStarted from './GettingStarted'
 import { GUIDE_TOPICS, guideDestination } from './guidance'
 import { TaskSideNav } from './views/trajectory.jsx'
 import { usePausedCount } from './PausePanel.jsx'
-import { Icon, Kbd, MOD, NotFound, EvidenceChain, Toaster, toast as showToast, Seg, NextSteps, Menu, ScrollX, Modal, Go } from './ui'
+import { Icon, Kbd, MOD, NotFound, EvidenceChain, Toaster, toast as showToast, Seg, NextSteps, Menu, ScrollX, Modal } from './ui'
 
 const cx = (...a) => a.filter(Boolean).join(' ')
 import './rig.css'
@@ -456,9 +455,7 @@ export default function RigApp() {
   const nTabs = panes.reduce((a, p) => a + p.tabs.length, 0)
   /* The status bar's connection item: the dot is always drawn; the words leave below 1280px of bar and
      are repeated, with everything else the bar hides, in the status popover the item opens. */
-  const connection = IS_MEMBER
-    ? { dot: <span className="rg-dot" />, label: 'recorded snapshot · member harness saves · hosted runs', words: <span data-el="member-workspace-state" title={STATIC_DATA?.__meta__?.generated_at ? `Snapshot created ${STATIC_DATA.__meta__.generated_at}; saved harnesses and hosted runs are read from your account.` : 'Recorded data snapshot; saved harnesses and hosted runs are read from your account.'}>recorded snapshot · member harness saves · hosted runs</span> }
-    : IS_STATIC ? { dot: <span className="rg-dot off" />, label: 'read-only snapshot', words: <span data-el="read-only-export-state">read-only snapshot</span> }
+  const connection = IS_STATIC ? { dot: <span className="rg-dot off" />, label: 'read-only snapshot', words: <span data-el="read-only-export-state">read-only snapshot</span> }
     : ov.error || !online ? { dot: <span className="rg-dot warn" />, label: 'backend unreachable · retrying', words: <span data-el="backend-down">backend unreachable · retrying</span> }
     : ov.data ? { dot: <span className="rg-dot" />, label: 'local workspace · connected', words: 'local workspace · connected' } : { dot: <span className="rg-dot off" />, label: 'connecting…', words: 'connecting…' }
   const jobsWords = `${jobs.data.running} ${jobs.data.running === 1 ? 'run' : 'runs'} in progress`
@@ -475,7 +472,7 @@ export default function RigApp() {
     <RigContext.Provider value={rig}>
       <div className={cx('rig', sideDock && 'has-side')} data-rig-theme={theme} data-rig-mobile={isMobile ? '1' : undefined} data-rig-max={route.max && !isMobile ? '1' : undefined} data-rig-nav={navOpen ? 'open' : 'closed'} style={{ '--rig-dock-w': `${dockW}px` }}>
         <a className="rg-skip" href="#rig-doc-main" data-el="skip-link" onClick={(e) => { e.preventDefault(); document.getElementById('rig-doc-main')?.focus() }}>Skip to document</a>
-        <header className={cx('rg-tb', IS_MEMBER && 'rg-tb-member')}>
+        <header className={'rg-tb'}>
           <div className="rg-tb-l">
             <button type="button" className="rg-brand" data-el="brand" aria-label="TraceHarness home" onClick={() => openTab('home')}><BrandMark /><b>TraceHarness</b></button>
           </div>
@@ -483,19 +480,14 @@ export default function RigApp() {
           <button type="button" className="rg-cmd" aria-label="Open command palette" onClick={() => setPalette(true)}><Icon name="search" size={15} /><span className="rg-cmd-ph">Search datasets, runs, tasks and views…</span><span className="rg-cmd-k"><Kbd>{MOD}</Kbd><Kbd>K</Kbd></span></button>
           <div className="rg-tb-r">
             <GettingStarted onGuide={topic => showGuidance(topic, focusCtx)} />
-            {IS_MEMBER && <a className="rg-tbtn rg-tb-acct" href="/app/account" data-el="member-account">{LABELS.account}</a>}
-            {/* The Worker's injected "Capture computers" link yields to this entry (workbench.js). */}
-            {IS_MEMBER && <Go spec="capture" className="rg-tbtn rg-tb-acct" el="member-capture">{LABELS.capture_member}</Go>}
             <button type="button" className={`rg-tbtn${route.dock === 'buddy' ? ' on' : ''}`} data-el="buddy-launcher" aria-label="Ask Buddy" aria-pressed={route.dock === 'buddy'} onClick={() => toggleDock('buddy')}><Icon name="buddy" size={16} /><span className="lbl-d">Ask Buddy</span></button>
             <span className="rg-tb-sep rg-hide-sm" aria-hidden="true" />
             <button type="button" className={`rg-tbtn ico rg-hide-sm${panes.length > 1 ? ' on' : ''}`} aria-label="Toggle split view" aria-pressed={panes.length > 1} title={`Split view (${MOD}+\\)`} onClick={toggleSplit}><Icon name="split" size={16} /></button>
             <button type="button" className={`rg-tbtn ico rg-hide-sm${route.max ? ' on' : ''}`} data-el="maximize" aria-label={route.max ? 'Restore layout' : 'Maximize document'} aria-pressed={!!route.max} title={route.max ? `Restore (${MOD}+Shift+Enter or Esc)` : `Maximize (${MOD}+Shift+Enter)`} onClick={toggleMax}><Icon name={route.max ? 'unmax' : 'max'} size={16} /></button>
             <button type="button" className="rg-tbtn ico rg-tb-theme" aria-label={`Theme: ${pref}. Switch theme`} title={`Theme: ${pref}`} data-el="appearance" onClick={cycleTheme}><Icon name={pref === 'system' ? 'sys' : theme === 'light' ? 'moon' : 'sun'} size={16} /></button>
-            {/* phone (and a member's narrower window): what does not fit in the bar, in one menu */}
+            {/* phone: what does not fit in the bar, in one menu */}
             <Menu className="rg-tb-more" label={<Icon name="more" size={16} />} buttonLabel="More actions" buttonClassName="rg-tbtn ico" caret={false} items={[
               { label: 'Voice tour', onClick: () => document.querySelector('.rg-tb .rg-tour-launcher')?.click() },
-              IS_MEMBER && { label: LABELS.account, href: '/app/account' },
-              IS_MEMBER && { label: LABELS.capture_member, spec: 'capture' },
               { label: `Theme: ${pref} · switch`, onClick: cycleTheme },
             ]} />
           </div>
@@ -562,7 +554,6 @@ export default function RigApp() {
           {lab ? <button type="button" className="it lab-on rg-sb-p3" data-el="guided-indicator" onClick={() => openTab('guide')}>Guided analysis on</button>
             : <button type="button" className="it rg-sb-p3" data-el="student-lab-toggle" title="Turn on the Student Lab reading guide" onClick={() => setLab(true)}>Student Lab off</button>}
           <span className="sp" />
-          {IS_MEMBER && <a className="it rg-sb-p3" href="/app/shallow" data-el="member-simple-editor">{LABELS.plain_editor}</a>}
           <DockLaunchers dock={route.dock} toggleDock={toggleDock} caseCount={caseItems.length} />
         </footer>
 
@@ -837,7 +828,6 @@ function StatusPop({ pop, setPop, close, condition, rowOf, connection, jobsWords
             <button type="button" className="rg-pop-row" onClick={reopen('oracle')}><span>Test suite</span><b>{rig.oracle}</b><Icon name="chev" size={14} /></button>
             <button type="button" className="rg-pop-row" onClick={() => { close(); if (rig.lab) rig.openTab('guide'); else rig.setLab(true) }}><span>Student Lab</span><b>{rig.lab ? 'on · open the guide' : 'off · turn on'}</b><Icon name="right" size={14} /></button>
             {stale && <button type="button" className="rg-pop-row" onClick={() => location.reload()}><span>Update</span><b>New version ready · reload</b><Icon name="right" size={14} /></button>}
-            {IS_MEMBER && <a className="rg-pop-row" href="/app/shallow"><span>Editor</span><b>{LABELS.plain_editor}</b><Icon name="ext" size={14} /></a>}
           </div>
         </>}
         {pop.id === 'oracle' && <>
@@ -899,7 +889,6 @@ function TabSheet({ panes, focus, close, rail }) {
           })}
           <div className="rg-lbl rg-sheet-gl">Go to</div>
           {[...rail.items, ...rail.bottom].map((r) => <button key={r.label} type="button" className="it" data-el={r.el} onClick={() => rig.openTab(r.spec)}><Icon name={r.icon} size={18} /><span>{r.label}</span></button>)}
-          {IS_MEMBER && <a className="it" href="/app/shallow" data-el="mobile-simple-editor"><Icon name="ext" size={18} /><span>Open {LABELS.plain_editor.toLowerCase()}</span></a>}
           <div className="rg-lbl rg-sheet-gl">Panels</div>
           {listDocks().map((d) => <button key={d.id} type="button" className="it" onClick={() => { close(); rig.setDock(d.id) }}><Icon name={d.icon || 'log'} size={18} /><span>{d.label}</span></button>)}
           <button type="button" className="it" onClick={() => rig.setPalette(true)}><Icon name="search" size={18} /><span>Command palette…</span></button>

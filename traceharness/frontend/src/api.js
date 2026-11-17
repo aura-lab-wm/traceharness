@@ -1,25 +1,21 @@
 import { useEffect, useRef, useState, useCallback } from 'react'
-import { IS_MEMBER, memberRequest, memberRoute } from './member-api'
 import { why } from './environment.js'
 import { SHARED } from './shared/index.js'
-export { IS_MEMBER } from './member-api'
 
 /** A file written by `python -m traceharness --export` carries every read-only response inline.
  *  There is no server to reach, so reads are served from the blob and writes are refused. */
 export const STATIC_DATA = typeof window !== 'undefined' ? window.__TRACEHARNESS_DATA__ : undefined
 export const IS_STATIC = !!STATIC_DATA
 
-/** Why a request is refused here: the mode's sentence from environment.why(). A member marker
- *  without its snapshot is still refused (fail closed) although environment.js reads that page as
- *  local, so the shared "unavailable" sentence stands in when why() has nothing to say. */
+/** Why a request is refused here: the mode's sentence from environment.why(), with the shared
+ *  "unavailable" sentence when why() has nothing to say. */
 function refusal(capability, what) {
   return why(capability, what) || SHARED.environment.messages.unavailable.replace('{what}', what)
 }
 
 export async function api(path, opts = {}) {
   const method = (opts.method || 'GET').toUpperCase()
-  if (IS_MEMBER && memberRoute(path, method)) return memberRequest(path, opts)
-  if (IS_STATIC || IS_MEMBER) {
+  if (IS_STATIC) {
     if (method !== 'GET') throw new Error(refusal('run.local', 'This action'))
     if (STATIC_DATA && Object.hasOwn(STATIC_DATA, path)) return STATIC_DATA[path]
     // Match on the normalised query, never on the bare path: a request carrying parameters the
@@ -100,7 +96,7 @@ export function useEvents(enabled = true) {
   const [tick, setTick] = useState(0)
   const ref = useRef(null)
   useEffect(() => {
-    if (IS_STATIC || IS_MEMBER || !enabled) return // Hosted snapshots have no local live stream.
+    if (IS_STATIC || !enabled) return // An export has no live stream.
     const es = new EventSource('/api/events')
     ref.current = es
     es.onopen = () => setConnected(true)
@@ -159,7 +155,7 @@ export function useLiveRun(dir, runId, enabled = true) {
   const [state, set] = useState(fresh)
   useEffect(() => {
     set(fresh())
-    if (!enabled || IS_STATIC || IS_MEMBER || !dir || !runId) return
+    if (!enabled || IS_STATIC || !dir || !runId) return
     const es = new EventSource(runStreamUrl(dir, runId))
     const seenBad = new Set()
     es.onopen = () => set(s => ({ ...s, reconnecting: false, phase: s.phase === 'connecting' ? 'live' : s.phase }))

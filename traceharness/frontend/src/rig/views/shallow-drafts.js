@@ -1,11 +1,8 @@
-import { MEMBER, encodeMemberJSON } from '../../member-api'
 import { DRAFTS } from '../../shared/index.js'
 import { QUESTIONS, RECOMMENDED_ANSWERS, blocksFromAnswers } from './shallow-data'
 
-// SPEC 4.5: one sessionStorage key per draft, scoped to the signed-in account in the member snapshot.
-export const draftKey = (name) => MEMBER
-  ? DRAFTS.prefix_member.replace('{scope}', MEMBER.scope) + name
-  : DRAFTS.prefix_local + name
+// SPEC 4.5: one sessionStorage key per draft.
+export const draftKey = (name) => DRAFTS.prefix_local + name
 
 export function readDraft(name) {
   try { return JSON.parse(sessionStorage.getItem(draftKey(name)) || 'null') } catch { return null }
@@ -14,7 +11,7 @@ export function readDraft(name) {
 export function writeDraft(name, value) {
   try {
     if (value === null) sessionStorage.removeItem(draftKey(name))
-    else sessionStorage.setItem(draftKey(name), MEMBER ? encodeMemberJSON(value) : JSON.stringify(value))
+    else sessionStorage.setItem(draftKey(name), JSON.stringify(value))
     return ''
   } catch { return 'This browser could not keep the draft for reload. Keep this tab open until your save is confirmed.' }
 }

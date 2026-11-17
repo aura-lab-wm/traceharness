@@ -5,10 +5,10 @@
    computer or the member's account); the member snapshot has no runner, so Customize is its
    only builder there. */
 import { useEffect, useLayoutEffect, useRef, useState } from 'react'
-import { api, IS_MEMBER } from '../../api'
+import { api } from '../../api'
 import { HAS_LIBRARY, LIBRARY, can } from '../../environment'
 import { HarnessJson } from '../HarnessJson'
-import { libraryPlace, requireStored } from '../../member-api'
+import { libraryPlace, requireStored } from '../../json'
 import { Unavailable } from '../unavailable'
 import { Btn, Empty, ErrorState, Go, Icon, Loading, Note, Tag } from '../ui'
 import { EvidenceOrigin, evidenceOrigin, withEvidenceOrigin } from '../shallowEvidence'
@@ -319,7 +319,7 @@ function Blocks({ args } = {}) {
     }
   }
 
-  if (loadError) return <><ErrorState error={loadError} what="The harness builder" onRetry={() => setRevision((n) => n + 1)} />{IS_MEMBER && <p><a href="/login">Account</a> · Sign back into the original account to keep working on its draft.</p>}</>
+  if (loadError) return <><ErrorState error={loadError} what="The harness builder" onRetry={() => setRevision((n) => n + 1)} /></>
   if (!blocks) return <Loading label="Reading the harness catalog…" />
   const query = libraryQuery.trim().toLowerCase()
   const filteredLibrary = library.filter((row) => [row.id, row.prompt, row.policy, ...(row.tools || [])].join(' ').toLowerCase().includes(query))
@@ -344,7 +344,7 @@ function Blocks({ args } = {}) {
       </div>
       <EvidenceOrigin args={args} />
       {storageError && <p role="alert">{storageError}</p>}
-      {libraryMode && accountError && <p role="alert">{accountError} <button type="button" className="rg-btn" onClick={() => setRevision((n) => n + 1)}>Retry saved harnesses</button>{IS_MEMBER && <> <a href="/login">Account</a></>}</p>}
+      {libraryMode && accountError && <p role="alert">{accountError} <button type="button" className="rg-btn" onClick={() => setRevision((n) => n + 1)}>Retry saved harnesses</button></p>}
       {libraryMode && restored && <p role="status" className="rg-small">Restored the editor draft from this tab. Use Save to keep it on {LIBRARY.label}, or Reset to Wizard Answers to discard these edits.</p>}
       {!customize && <div className="rg-row rg-wrap" data-el="harness-catalog">
         {(catalog || []).map((row) => (
@@ -397,9 +397,9 @@ function Blocks({ args } = {}) {
         {model === 'mock' && <Tag tone="dash">mock · no key</Tag>}
         {compiled && compiled.ok && !libraryMode && <span className="rg-small rg-dim">Cell {customize ? `min_${compiled.hash}` : compiled.harness.id}</span>}
       </div>}
-      {compiled && compiled.ok === false && <Note tone="bad"><span role="alert">{(compiled.errors || []).join(' ')}{IS_MEMBER && (compiled.errors || []).some((message) => message.includes('account changed')) && <> <a href="/login">Account</a></>}</span>{libraryMode && !fieldIssues(blocks).length && <button type="button" className="rg-btn" onClick={() => setPreviewRevision((n) => n + 1)}>Retry preview</button>}</Note>}
+      {compiled && compiled.ok === false && <Note tone="bad"><span role="alert">{(compiled.errors || []).join(' ')}</span>{libraryMode && !fieldIssues(blocks).length && <button type="button" className="rg-btn" onClick={() => setPreviewRevision((n) => n + 1)}>Retry preview</button>}</Note>}
       {compiled && (compiled.warnings || []).length > 0 && compiled.ok && (compiled.warnings || []).map((w) => <p key={w} className="rg-harness-warning">{w}</p>)}
-      {error && <Note tone="bad" el="harness-error"><span role="alert">{error}{IS_MEMBER && error.includes('account changed') && <> <a href="/login">Account</a></>}</span></Note>}
+      {error && <Note tone="bad" el="harness-error"><span role="alert">{error}</span></Note>}
       {job && (
         <div className="rg-pnl" data-el="harness-job">
           <div className="rg-pnl-h"><span className="rg-lbl">Run</span><span className="meta">{job.job.status}</span></div>
@@ -427,7 +427,7 @@ function Blocks({ args } = {}) {
         </label>
         <button type="button" className="rg-btn" disabled={!selected || busy} onClick={reopen}>Open selected harness</button>
         <p className="rg-small">Showing {filteredLibrary.length} of {library.length} saved minimal harnesses.</p>
-        <p className="rg-small">Opening a saved harness replaces the current editor draft. Drafts stay in this tab until you save them.{IS_MEMBER ? ' The plain editor shares confirmed account saves only.' : ''}</p>
+        <p className="rg-small">Opening a saved harness replaces the current editor draft. Drafts stay in this tab until you save them.</p>
         {unconfirmed.length > 0 && <p role="alert">{libraryPlace()} has not confirmed every listed harness. Save again before relying on another browser or session.</p>}
       </div>}
 

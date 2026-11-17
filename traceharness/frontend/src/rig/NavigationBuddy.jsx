@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useRig } from './context'
-import { IS_MEMBER } from '../member-api'
 import { runnerRequest, runnerCatalog } from '../runner-api'
+import { can, why } from '../environment'
 import { GUIDE_TOPICS, guidanceFor } from './guidance'
 import './getting-started.css'
 
@@ -11,7 +11,7 @@ export default function NavigationBuddy({ ctx = {} }) {
   const [answer, setAnswer] = useState(null)
   const [asked, setAsked] = useState(false)
   const [catalog, setCatalog] = useState(null), [catalogState, setCatalogState] = useState('unknown'), [revision, setRevision] = useState(0)
-  const executionTopic = IS_MEMBER && ['matrix', 'native', 'cancel', 'tasks', 'model', 'billing', 'harness'].includes(answer?.id)
+  const executionTopic = ['matrix', 'native', 'cancel', 'tasks', 'model', 'billing', 'harness'].includes(answer?.id)
   useEffect(() => {
     if (!executionTopic) return
     const controller = new AbortController(); let live = true
@@ -38,8 +38,9 @@ export default function NavigationBuddy({ ctx = {} }) {
         {executionTopic && <section className="rg-guide-note" aria-label="Live runner check" aria-live="polite">
           {catalogState === 'loading' ? <p>Checking the current runner catalog…</p>
             : catalogState !== 'checked' ? <p>Runner availability is unconfirmed. The steps below describe the workflow; they do not confirm this configuration can run.</p>
-              : !catalog.execution_available ? <p>Hosted execution is unavailable right now. You can still inspect configurations. Recheck the service before dispatch.</p>
-                : <p>Hosted runner connected · {catalog.runtimes.filter(r => r.available).length} runtimes · {catalog.models.length} models · {catalog.tasks.filter(t => t.ready).length} registered ready tasks. Check the exact runtime/model/task pair and obtain fresh review before starting.</p>}
+              : !can('run.container') ? <p>{why('run.container', 'Running a task')} You can still inspect configurations.</p>
+                : !catalog.execution_available ? <p>The local runner is unavailable right now. You can still inspect configurations. Recheck the runner before dispatch.</p>
+                : <p>Local runner connected · {catalog.runtimes.filter(r => r.available).length} runtimes · {catalog.models.length} models · {catalog.tasks.filter(t => t.ready).length} registered ready tasks. Check the exact runtime/model/task pair and obtain fresh review before starting.</p>}
           <button type="button" className="rg-btn" disabled={catalogState === 'loading'} onClick={() => setRevision(value => value + 1)}>Recheck runner</button>
         </section>}
         <ol>{answer.steps.map(step => <li key={step}>{step}</li>)}</ol>

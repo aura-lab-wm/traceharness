@@ -46,6 +46,10 @@ EXCLUDED_FROM_EXPORT = {
         "the local runner's live job state: runner-api.js answers for itself in an export, and a run cannot be frozen",
     "/api/runner/jobs/{job_id}/artifacts/{name}":
         "the local runner's live job state: runner-api.js answers for itself in an export, and a run cannot be frozen",
+    "/api/runner/experiments":
+        "the local runner's live job state: runner-api.js answers for itself in an export, and a run cannot be frozen",
+    "/api/runner/experiments/{experiment_id}":
+        "the local runner's live job state: runner-api.js answers for itself in an export, and a run cannot be frozen",
     "/api/shallow":
         "a JSON 404 catch-all under the prefix, never a page read",
     "/api/shallow/{rest:path}":

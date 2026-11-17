@@ -1,8 +1,8 @@
 """Each dataset row says where the dataset is published (SPEC 4.8).
 
-`availability` is `contract.availability(name)`: a subset of ["hosted", "school"]. Both providers of
+`availability` is `contract.availability(name)`: ["school"] or []. Both providers of
 the dataset list add it, `/api/overview` serves it, and a static export keeps it, so the console can
-label a dataset "on traceharness.dev", "school package" or "this computer only".
+label a dataset "school package" or "this computer only".
 """
 import json
 import os
@@ -21,7 +21,7 @@ from traceharness.backend import metrics, store              # noqa: E402
 from traceharness.backend import static_export as SE         # noqa: E402
 from traceharness.shared import contract                     # noqa: E402
 
-EXPECTED = {"demo_mock": ["hosted", "school"], "study_v04": ["hosted"], "llma4se_live": ["school"],
+EXPECTED = {"demo_mock": ["school"], "study_v04": [], "llma4se_live": ["school"],
             "fixture_dataset_never_published": []}
 
 
@@ -83,7 +83,7 @@ class ExportKeepsIt(unittest.TestCase):
         self.assertIsNotNone(m, "the export's embedded-data banner was not found")
         rows = {d["name"]: d for d in json.loads(m.group(1))["/overview"]["results"]}
         self.assertEqual(list(rows), ["demo_mock"])
-        self.assertEqual(rows["demo_mock"]["availability"], ["hosted", "school"])
+        self.assertEqual(rows["demo_mock"]["availability"], ["school"])
         self.assertEqual(rows["demo_mock"]["updated_source"], "runs")
         self.assertRegex(rows["demo_mock"]["updated"], r"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$")
 

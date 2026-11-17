@@ -20,8 +20,7 @@ ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)
 #: The documents and backend files in scope, besides the console sources.
 DOCUMENTS = (
     "traceharness/backend/static_export.py", "README.md", "HANDOUT.md", "LAB_1H.md", "SCHOOL_PACKAGE.md",
-    "docs/STUDENT_GUIDE.md", "docs/GUIDE.md", "docs/CODESPACES.md", "docs/member-workbench.md",
-    "docs/NATIVE_PROMPT_INTERVENTIONS.md", "deploy/runner/README.md", "deploy/runner/fly/README.md",
+    "docs/STUDENT_GUIDE.md", "docs/GUIDE.md", "docs/CODESPACES.md", "deploy/runner/README.md",
 )
 
 

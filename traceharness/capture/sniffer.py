@@ -344,8 +344,7 @@ FULL_SWEEP_S = 24 * 3600.0
 def loop(roots: list, runs_root: str, gap_s: float, interval_s: float,
          stop: Optional[Callable[[], bool]] = None, now: Optional[Callable[[], float]] = None,
          archive_root: Optional[str] = None, sleep=time.sleep,
-         full_sweep_s: float = FULL_SWEEP_S, on_pass: Optional[Callable[[dict], None]] = None,
-         after_pass: Optional[Callable[[dict], None]] = None) -> None:
+         full_sweep_s: float = FULL_SWEEP_S, on_pass: Optional[Callable[[dict], None]] = None) -> None:
     """Tick until `stop()` says otherwise, obeying the control file between passes.
 
     Holds the `sniffer` lock for its whole life so a second one cannot start. `stop`, `now` and
@@ -356,8 +355,6 @@ def loop(roots: list, runs_root: str, gap_s: float, interval_s: float,
     of the loop ITSELF propagates, and is left on the page as `error`, never painted over as a clean
     stop.
     """
-    if on_pass is not None and after_pass is not None:
-        raise ValueError("choose one pass callback; combining observers can duplicate uploads")
     stop = stop or (lambda: False)
     now = now or time.time
     os.makedirs(os.path.join(runs_root, "captured"), exist_ok=True)
@@ -403,9 +400,6 @@ def loop(roots: list, runs_root: str, gap_s: float, interval_s: float,
                     pass                                   # tick already said "locked"
                 except Exception as e:                     # recorded by tick(); survive it
                     presence.write(runs_root, state="error", error=_said(e))
-                # External sync failures end the loop; they must not enter the tick retry path.
-                if after_pass is not None and rep is not None and rep.get("state") != "locked":
-                    after_pass(rep)
                 presence.write(runs_root, next_tick_at=now() + interval_s, heartbeat_at=now())
                 _wait(runs_root, interval_s, last_nudge, sleep, stop)
             clean = True

@@ -8,7 +8,7 @@
    (narrow pane), then harnesses / models (medium pane); the design card's text keeps a basis.
    ==================================================================================== */
 import { useMemo } from 'react'
-import { IS_STATIC, IS_MEMBER } from '../../api'
+import { IS_STATIC } from '../../api'
 import { MODE, can, why } from '../../environment'
 import { DATASETS } from '../../shared/index.js'
 import { Unavailable } from '../unavailable'
@@ -23,7 +23,7 @@ import './home.css'
 const breakable = (name) => String(name).split(/(?<=[_-])/).flatMap((part, i) => (i ? [<wbr key={i} />, part] : [part]))
 
 /** Where a dataset can also be opened (SPEC 4.8). No chip when the server did not say. */
-const PLACE = { hosted: 'on traceharness.dev', school: 'school package' }
+const PLACE = { school: 'school package' }
 function Availability({ places }) {
   if (!Array.isArray(places)) return null
   const labels = places.length ? places.map((p) => PLACE[p]).filter(Boolean) : ['this computer only']
@@ -43,7 +43,7 @@ function Home({ spec }) {
   if (!ds.data) return <Loading label="Reading the dataset library (/api/overview)…" />
   const total = all.reduce((a, r) => a + (r.runs || 0), 0)
   const cnt = (k) => all.filter((r) => k === 'all' || r.kind === k).length
-  // a snapshot (export or member) names the school datasets it does not carry; the local console has what it has
+  // an export names the school datasets it does not carry; the local console has what it has
   const lacking = MODE === 'local' ? [] : DATASETS.school.filter((name) => !all.some((r) => r.name === name))
   if (!all.length) {
     return (
@@ -65,14 +65,12 @@ function Home({ spec }) {
       <section className="rg-card rg-home-design" data-fill data-el="harness-workflow" aria-label="Design from the evidence">
         <div className="rg-home-design-t">
           <h2>Design from the evidence</h2>
-          <p>Open a run and choose Design a harness to keep a link back to it. {IS_MEMBER ? 'Choose a harness, compatible model and registered task in Harnesses. Save to your account, review the full configuration, then start a hosted run.' : 'Or begin with a fixed shell, six questions, or a block stack.'}</p>
+          <p>Open a run and choose Design a harness to keep a link back to it. Or begin with a fixed shell, six questions, or a block stack.</p>
         </div>
         <div className="rg-cluster rg-home-design-a">
-          {IS_MEMBER ? <Go spec="harnesses" className="rg-btn pri" el="open-harnesses-cta">Open Harnesses</Go> : <>
-            <Go spec="shallowWizard" className="rg-btn pri" el="minimal-harness-cta">Minimal harness</Go>
-            <Go spec="shallowCards" className="rg-btn" el="fixed-harnesses-cta">Fixed harnesses</Go>
-            <Go spec="blocks" className="rg-btn" el="build-harness-cta">Build a harness</Go>
-          </>}
+          <Go spec="shallowWizard" className="rg-btn pri" el="minimal-harness-cta">Minimal harness</Go>
+          <Go spec="shallowCards" className="rg-btn" el="fixed-harnesses-cta">Fixed harnesses</Go>
+          <Go spec="blocks" className="rg-btn" el="build-harness-cta">Build a harness</Go>
         </div>
       </section>
       <section className="rg-home-lib" aria-label="Dataset library">
@@ -120,7 +118,7 @@ function Home({ spec }) {
         </div>
         {lacking.length > 0 && (
           <div className="rg-home-nothere" data-el="datasets-not-here">
-            <p className="rg-small rg-dim">Not in this snapshot: {lacking.join(', ')}.</p>
+            <p className="rg-small rg-dim">Not in this export: {lacking.join(', ')}.</p>
             <Unavailable capability="data.import" what="Opening them" el="datasets-not-here-why" />
           </div>
         )}

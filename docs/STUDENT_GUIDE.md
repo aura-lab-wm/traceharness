@@ -28,7 +28,7 @@ cleanly, this guide says so.
 9. [Reading the results](#9-reading-the-results)
 10. [The lab exercises](#10-the-lab-exercises)
 11. [Testing the software](#11-testing-the-software)
-12. [Other ways to run it (Docker, offline HTML)](#12-other-ways-to-run-it)
+12. [Other ways to run it (Docker, local runner, offline HTML)](#12-other-ways-to-run-it)
 13. [Troubleshooting](#13-troubleshooting)
 14. [Safety, privacy and cost](#14-safety-privacy-and-cost)
 15. [Known issues](#15-known-issues)
@@ -188,7 +188,7 @@ python -m traceharness --version
 Expected output:
 
 ```
-traceharness 0.5.5
+traceharness 0.6.0
 ```
 
 Then:
@@ -281,7 +281,7 @@ This starts a local server on **http://127.0.0.1:8765** and opens your browser. 
 prints:
 
 ```
-traceharness 0.5.5 -> http://127.0.0.1:8765   (lab root: /…/traceharness; OpenRouter key: NOT set)
+traceharness 0.6.0 -> http://127.0.0.1:8765   (lab root: /…/traceharness; OpenRouter key: NOT set)
 ```
 
 "OpenRouter key: NOT set" is normal; you do not need one.
@@ -813,7 +813,7 @@ python scripts/check_install.py      # or: make check  ->  All 5 checks passed
 The same steps by hand:
 
 ```bash
-python -m traceharness --version                                   # traceharness 0.5.5
+python -m traceharness --version                                   # traceharness 0.6.0
 python -m traceharness run --provider mock --tasks all --repeats 3 --price 0,0 --out data/runs/smoke
 #   -> 24 runs, 14 PASS
 python exercises/ex1_variance.py --results data/runs/smoke       # prints four sections
@@ -871,7 +871,15 @@ disk with no server. TraceHarness works in it, read-only.
 - Leave out `--export-results` to embed every dataset. The file gets much larger.
 - `--export-runs` sets how many full run recordings are embedded (default 40).
 
-### 12.3 The legacy console
+### 12.3 The local runner (Docker)
+
+`traceharness runner setup` builds, on your own machine, the images that the console's **Harnesses** workspace uses to run
+agents, experiment matrices and paired experiments in containers. Docker is required; the first run downloads the agent CLIs
+and builds a few GB of images. gVisor is used when installed, otherwise plain Docker isolation. `traceharness runner status`
+shows what is ready; `traceharness runner verify` is optional and makes paid calls with your OpenRouter key. Capture
+sessions move between machines with `traceharness capture export --out FILE.zip` and `traceharness capture import FILE.zip`.
+
+### 12.4 The legacy console
 
 Older material mentions a second console (`python -m traceharness.core.serve`). It is not part of this package.
 Its Patterns, Queries and Attribution views are in TraceHarness under Analysis → **Trajectory features**, and

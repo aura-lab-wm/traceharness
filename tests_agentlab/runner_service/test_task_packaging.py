@@ -27,8 +27,8 @@ def module(name, path):
     return value
 
 
-package = module('task_package_script', ROOT / 'scripts/package_runner_task.py')
-grade = module('offline_task_grader', ROOT / 'deploy/runner/tasks/grade.py')
+package = module('task_package_script', ROOT / 'traceharness/runner/package_task.py')
+grade = module('offline_task_grader', ROOT / 'traceharness/runner/assets/tasks/grade.py')
 
 
 def archive(name='source/file.py', content=b'x = 1\n', kind=None):
@@ -229,7 +229,7 @@ class TaskPackagingTests(unittest.TestCase):
             self.assertEqual(str(restored), str(original))
             self.assertEqual(repr(restored), repr(original))
             self.assertEqual(original.args, ('Extra data',))
-            tree = ast.parse((ROOT / 'deploy/runner/tasks/requests-jsondecode-pickle/checks.py').read_text())
+            tree = ast.parse((ROOT / 'traceharness/runner/assets/tasks/requests-jsondecode-pickle/checks.py').read_text())
             checks = next(node for node in tree.body if isinstance(node, ast.ClassDef) and node.name == 'RegressionChecks')
             oracle_method = next(node for node in checks.body if isinstance(node, ast.FunctionDef) and node.name == 'assert_matches_oracle')
             namespace = {}
@@ -242,7 +242,7 @@ class TaskPackagingTests(unittest.TestCase):
             sys.modules.pop(name, None)
 
     def test_runtime_recipe_contains_no_execution_claim_or_embedded_solution(self):
-        recipe = json.loads((ROOT / 'deploy/runner/tasks/requests-jsondecode-pickle/recipe.json').read_text())
+        recipe = json.loads((ROOT / 'traceharness/runner/assets/tasks/requests-jsondecode-pickle/recipe.json').read_text())
         self.assertEqual(recipe['revision'], '96b22fa18c00831656ee4b286bf1c9062459b00a')
         self.assertEqual(recipe['issue_url'], 'https://github.com/psf/requests/issues/6628')
         self.assertNotIn('compatibility_receipts', recipe)
@@ -348,7 +348,7 @@ class JSONDecodeError(InvalidJSONError, CompatJSONDecodeError):
                 self.assertFalse((target / name).exists(), name)
 
     def test_public_edit_policy_matches_curated_recipe(self):
-        directory = ROOT / 'deploy/runner/tasks/requests-jsondecode-pickle'
+        directory = ROOT / 'traceharness/runner/assets/tasks/requests-jsondecode-pickle'
         recipe = json.loads((directory / 'recipe.json').read_text())
         policy = json.loads((directory / 'public_policy.json').read_text())
         self.assertEqual(policy['editable_file'], recipe['edit_contract']['path'])

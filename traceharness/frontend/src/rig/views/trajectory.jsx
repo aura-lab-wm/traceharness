@@ -13,7 +13,7 @@
    messages, issue), useFindRun (id or 6-hex suffix). Failure findings are DERIVED from the
    ledger spans (finish_reasons, usage, the harness's max_tokens_per_call in the invoke_agent
    start span) — nothing is hard-coded per run. Local notes share the classic app's browser-local
-   review key; hosted notes isolate that key per member and Export review keeps its Markdown format, with the
+   review key and Export review keeps its Markdown format, with the
    failure mode added.
    ==================================================================================== */
 import { Fragment, useEffect, useMemo, useRef, useState } from 'react'
@@ -24,7 +24,6 @@ import { useRig, useTabState } from '../context'
 import { Panel, Loading, ErrorState, Empty, NextSteps, Btn, About, FailureChip, PinButton, AskingSentence, Verdict, VerdictText, OutcomeBar, Tag, Note, Seg, SearchBox, Switch, Go, Icon, Kbd, MOD, failureModeOf, FailureSummary, ActionBar, Tabs, TableScroll, ScrollX, Split, Toolbar } from '../ui'
 import { downloadText, useCaseFile } from '../caseFile'
 import { reviewKey, reviewReport } from '../../workspace/workspaceFacts'
-import { memberStorageKey } from '../memberStorage'
 import { RecordingProvenance } from '../RecordingProvenance'
 import { isSweRun, suiteLabel, tokenCoverage } from '../provenance'
 import { findings as checkpoints } from '../../directions/investigationFacts'
@@ -46,7 +45,17 @@ const vWord = (v) => (v === true ? 'passed' : v === false ? 'failed' : 'unknown'
 export const finishOf = (s) => (s && Array.isArray(s['gen_ai.response.finish_reasons']) ? s['gen_ai.response.finish_reasons'] : [])
 export const isCutoff = (s) => !!s && s.span === 'chat' && finishOf(s).includes('length')
 const callsOf = (s) => (s && Array.isArray(s.tool_calls) ? s.tool_calls : [])
-const callName = (t) => (t && (t.name || (t.function && t.function.name))) || 'tool'
+const callName = (t) => {
+  const name = t && typeof t === 'object' ? t.name || (t.function && typeof t.function === 'object' && t.function.name) : ''
+  return typeof name === 'string' && name ? name : 'tool'
+}
+// A recorded message can be malformed (the runner stores what the agent produced): render what is readable, never throw.
+const isPlain = (v) => v !== null && typeof v === 'object' && !Array.isArray(v)
+const roleOf = (m) => (isPlain(m) && typeof m.role === 'string' && m.role ? m.role : 'unknown')
+const callArgs = (tc) => {
+  const raw = isPlain(tc) ? tc.arguments ?? (isPlain(tc.function) ? tc.function.arguments : undefined) : undefined
+  return typeof raw === 'string' || isPlain(raw) ? String(text(raw)).slice(0, 200) : ''
+}
 const startSpan = (spans) => (spans || []).find((s) => s.span === 'invoke_agent' && s.status === 'start') || null
 const endSpan = (spans) => [...(spans || [])].reverse().find((s) => s.span === 'invoke_agent' && s.status === 'end') || null
 export const harnessOf = (spans) => { const s = startSpan(spans); return (s && s.harness && typeof s.harness === 'object' && !Array.isArray(s.harness)) ? s.harness : null }
@@ -365,7 +374,7 @@ const FACETS = [['findings', 'Findings'], ['timeline', 'Timeline'], ['patch', 'P
 
 export function readReviewNote(dir, id) {
   try {
-    const p = JSON.parse(localStorage.getItem(memberStorageKey(reviewKey(dir, id))) || 'null')
+    const p = JSON.parse(localStorage.getItem(reviewKey(dir, id)) || 'null')
     return { text: p && typeof p.text === 'string' ? p.text : '', status: p && p.status === 'reviewed' ? 'reviewed' : 'unreviewed', saved: (p && p.saved) || null }
   } catch { return { text: '', status: 'unreviewed', saved: null } }
 }
@@ -375,7 +384,7 @@ function Notes({ dir, run, onExport }) {
   const { toast } = useRig()
   const save = (next = note) => {
     const v = { ...next, saved: new Date().toISOString().slice(0, 16).replace('T', ' ') }
-    try { localStorage.setItem(memberStorageKey(reviewKey(dir, run.id)), JSON.stringify(v)); setNote(v); setMsg('Saved in this browser.'); toast('Note saved in this browser') } catch { setMsg('Could not save — browser storage is blocked. Copy or export your note before leaving.') }
+    try { localStorage.setItem(reviewKey(dir, run.id), JSON.stringify(v)); setNote(v); setMsg('Saved in this browser.'); toast('Note saved in this browser') } catch { setMsg('Could not save — browser storage is blocked. Copy or export your note before leaving.') }
   }
   const hint = 'rg-traj-note-hint-' + run.id
   return (
@@ -519,13 +528,19 @@ function Messages({ detail, actions }) {
   if (!ms.length) return <div data-el="messages"><Empty title="No conversation captured." actions={actions}>This recording has no messages.json, so the prompt and replies were not saved as a conversation. The ledger still records every reply and tool call in order.</Empty></div>
   return (
     <div data-el="messages"><Panel label="Captured messages" meta={plural(ms.length, 'message')} flush>
-      {ms.map((m, i) => (
-        <div key={i} className="rg-traj-msg">
-          <div className={cx('role', m.role)}>{m.role || 'unknown'}</div>
-          <div className="body">{text(m.content ?? '') || <span className="rg-mute">No textual content.</span>}
-            {callsOf(m).map((tc, j) => <div key={j} className="tc">→ {callName(tc)}({String(text(tc.arguments ?? (tc.function && tc.function.arguments) ?? '')).slice(0, 200)})</div>)}</div>
-        </div>
-      ))}
+      {ms.map((m, i) => {
+        const role = roleOf(m)
+        const content = isPlain(m) ? m.content : undefined
+        return (
+          <div key={i} className="rg-traj-msg">
+            <div className={cx('role', role)}>{role}</div>
+            <div className="body">{text(content ?? '') || <span className="rg-mute">No textual content.</span>}
+              {callsOf(m).map((tc, j) => isPlain(tc)
+                ? <div key={j} className="tc">→ {callName(tc)}({callArgs(tc)})</div>
+                : <div key={j} className="tc rg-mute">→ malformed tool call</div>)}</div>
+          </div>
+        )
+      })}
     </Panel></div>
   )
 }

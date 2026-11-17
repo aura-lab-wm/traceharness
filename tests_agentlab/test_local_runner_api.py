@@ -100,7 +100,7 @@ class TestCatalog(TempLabCase):
         for native, name in (("native-claude-code", "Claude Code"), ("native-codex", "Codex CLI")):
             row = next(r for r in body["runtimes"] if r["id"] == native)
             self.assertEqual(row, {"id": native, "name": name, "kind": "native", "available": False, "prompt_mode": "append",
-                                   "version": None, "reason": "Native runtimes run on the hosted runner only."})
+                                   "version": None, "reason": "Native runtimes need the local runner. Run traceharness runner setup (Docker required)."})
         self.assertEqual(body["models"], [{"id": "mock", "name": "Mock (offline)"}])
         expected = [t["id"] for t in appmod.list_tasks("full")]
         self.assertEqual([t["id"] for t in body["tasks"]], expected)
@@ -187,7 +187,7 @@ class TestPreflight(TempLabCase):
                 self.assertEqual(body["ok"], False, body)
                 self.assertTrue(body["issues"] and all(isinstance(i, str) and i for i in body["issues"]), body)
                 self.assertNotIn("manifest", body)
-        self.assertIn("Native runtimes run on the hosted runner only.",
+        self.assertIn("Native runtimes need the local runner. Run traceharness runner setup (Docker required).",
                       self.preflight(cases["native runtime"])["issues"])
 
     def test_preflight_takes_exactly_a_configuration(self):

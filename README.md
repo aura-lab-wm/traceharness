@@ -63,7 +63,7 @@ Both container setups bind to `127.0.0.1` only by default. To reach the server f
 
 ## Run third-party agents
 
-`traceharness agents` runs mini-SWE-agent 2.4.6, Codex CLI 0.167.1 and Claude Code 2.1.322 on the lab's tasks (or on the eight real-repository task packages in `deploy/runner/tasks`), with a pinned model and pinned hosts, and writes the same results directory as `traceharness run`. The agent's own log is turned into the ledger by the import adapters, and its workspace is graded by the same grader, so the console and every analysis treat these runs like the lab's own. Docker is required (on macOS, `colima start` gives a headless one).
+`traceharness agents` runs mini-SWE-agent 2.4.6, Codex CLI 0.167.1 and Claude Code 2.1.322 on the lab's tasks (or on the eight real-repository task packages in `traceharness/runner/assets/tasks`), with a pinned model and pinned hosts, and writes the same results directory as `traceharness run`. The agent's own log is turned into the ledger by the import adapters, and its workspace is graded by the same grader, so the console and every analysis treat these runs like the lab's own. Docker is required (on macOS, `colima start` gives a headless one).
 
 `traceharness import PATH` converts the logs of agents TraceHarness did not run into the same ledger: Claude Code, Codex, Cursor, agy (Antigravity CLI), Qwen Code, Kimi Code, ZCode, Grok CLI, GitHub Copilot CLI, Muse Code, OpenHands, SWE-agent, mini-SWE-agent, Inspect logs and Trajectory v1 files. `--detect` names the adapter it would pick. A source that does not record something (Copilot CLI records no token usage) imports it as unknown, never as an estimate. `traceharness import-swebench <submission_dir>` imports one public submission of the [SWE-bench experiments](https://github.com/SWE-bench/experiments) repository, with its resolved verdicts ([`docs/IMPORT_SWEBENCH.md`](docs/IMPORT_SWEBENCH.md)).
 
@@ -76,40 +76,53 @@ traceharness agents run --agent mini-swe-agent --model google/gemini-2.5-flash-l
 
 Each run uses separate containers. The **broker** is the only one with network access and the only place the key exists; it serves the model on a Unix socket and fixes the model, the hosts (fallbacks off), the output cap, the number of calls and the bytes sent. The **agent** container has no network, no capabilities, a read-only root and a non-root user, and works in a size-capped in-memory workspace. A separate container exports the workspace as regular files only, and the **grader** container (no network, read-only mounts) grades it. Every call's host and cost come from OpenRouter's generation records and are shown on the run page under **Model calls**; `traceharness agents resolve DIR` prices calls whose record arrived late. This is ordinary Docker isolation; for agents you do not trust, pass `--runtime runsc` (gVisor).
 
-## Record on traceharness.dev
+## Local runner (containers on your machine)
 
-Sign in at [traceharness.dev](https://traceharness.dev), then connect the machine where your coding agents run. Local capture adapters support **Claude Code**, **Codex**, **agy** (Antigravity CLI), **Qwen Code**, and **Cursor**. These commands use the CLI without starting a local web server:
-
-```bash
-pipx install git+https://github.com/aura-lab-wm/traceharness
-traceharness login
-traceharness capture --watch --sync --path /path/to/chosen/session-directory
-```
-
-`traceharness login` prints a short device code and `https://traceharness.dev/app/device`. Open that URL in an already signed-in browser, verify the code, and press **Approve**. No browser opens automatically. The token is saved to `~/.traceharness/credentials.json` (mode `0600`, owner-only) and is sent exclusively in an `Authorization` header to the host you signed in to. Run `traceharness whoami` to inspect the active account. See [`docs/CAPTURE_SYNC.md`](docs/CAPTURE_SYNC.md) for setup details and verification limits.
-
-**Claude Code plugin** (requires the `pipx` install above; attempts an upload when an allowed session exits):
+Container runs of third-party agents, experiment matrices and paired native-prompt experiments happen in the
+**local runner**. It needs Docker and is optional; everything else works without it.
 
 ```bash
-claude plugin marketplace add aura-lab-wm/traceharness
-claude plugin install traceharness-capture@traceharness
+traceharness runner setup      # once: builds the runtime and grader images on this machine (a few GB, takes a while)
+traceharness runner status     # Docker, isolation, images, registry, compatibility receipts
+traceharness runner verify     # optional and PAID: one real isolated job that writes a compatibility receipt
 ```
 
-On session exit, the `SessionEnd` hook (60-second hook limit; 45-second upload subprocess timeout) runs `traceharness capture push --source claude_code --session-file <transcript> --quiet`. It exits `0` with no output if `traceharness` is absent or signed out, and failed uploads do not retry automatically.
+gVisor (`runsc`) is used for isolation when `docker info` lists it; otherwise plain Docker isolation applies (no network
+except the model broker, read-only task mounts, memory, CPU and wall limits). The console shows which isolation a job
+used. Images are built from public bases and the agents' own npm packages; nothing is pulled from a registry we publish.
+Without a verified receipt a combination runs only after you confirm it as not verified on this machine. Native prompt
+profiles (keeping, replacing or disabling Claude Code's or Codex's own instructions) are never verified offline: `runner
+verify` writes compatibility receipts only, so a profile always runs after your confirmation and its manifest records
+`verified: false`. The OpenRouter
+key saved in **Settings** stays in the console's backend and never enters a container. `traceharness doctor` reports
+whether the runner is set up (it only reads: it never touches a running job or a container).
 
-- **What is recorded.** Each session's ordered action list (reads, edits, commands, test runs, model replies), a summary, and the final patch. Uploaded runs appear under *Connect this computer* at `/app/capture`, where you can inspect or delete any run.
-- **Explicit terminal consent (`type yes`).** `--watch --sync` requires a person to type `yes` at an interactive terminal and refuses `--yes` and noninteractive input. The website and linked pages cannot start capture. The optional `SessionEnd` plugin operates strictly within your local allow-list and saved login.
-- **Allow-list.** Only sessions inside folders you explicitly allow are read or sent. Persistent rules live in `~/.traceharness/capture.json` (editable from the Capture page of `traceharness serve`), while `--path DIR` authorizes one folder for a single invocation. A missing or unreadable `capture.json` allows nothing.
-- **Redaction limits.** Before upload, known API keys and tokens (Anthropic, OpenAI, OpenRouter, GitHub, AWS, Google, Slack, Supabase, Stripe, Hugging Face, npm, TraceHarness), JWTs, `Bearer` tokens, URL `user:password` segments, private-key blocks, `password=`/`secret=`/`api_key=`/`refresh_token=` values, and string values under JSON keys containing `password`, `secret`, `token`, `api key`, `authorization`, or `credential` are replaced with `[redacted:<kind>]`. Redaction is pattern-based and cannot know every secret format (a password written as plain prose, or an unusual token shape, passes through), so read a run before you share it if it may hold something unusual. Inspect outbound payloads locally with `traceharness capture push --dry-run`. Runs exceeding 4 MiB are skipped and reported.
-- **Optional outbound link.** `traceharness link --member` opens an outbound watch-only connection under your sign-in, binds no local port, refuses `--accept-commands`, and disables `run` and run-directory streaming (`live`/`tail`). Live streaming of captured sessions is unimplemented; `/app/capture` displays stored runs.
-- **Pause or revoke.**
+Storage limits are a budget, not an exact per-job quota. A job's workspace and output directories are scanned
+(2 GiB, 200,000 entries), and the filesystem holding the job directories is measured with `statvfs` at job start and
+while it runs, which also counts files the job opened and then unlinked. A job is stopped when, while it runs, the
+filesystem's free space shrinks by more than four times its storage limit or its free inodes by more than 1,000,000, or
+when the filesystem drops below 1 GiB or 20,000 inodes free; a new job does not start below those floors. On a filesystem shared with other writers, their writes count against the running job, so the
+guard can stop a job early; it cannot give each job its own quota. Each manifest records which enforcement applied
+(`limits.storage_enforcement`). A second console on the same data directory serves recorded jobs read-only and does not
+restart or remove anything: one process owns the runner state at a time.
+
+Finished jobs are written to `data/runs/<dataset>/<run_id>/` with an `evidence/` folder (the finalized manifest, grade,
+raw trace, native prompt files and a `provenance.json` with each file's sha256), so a result outlives the 24-hour job
+retention. The console opens the run from its dataset; the evidence files themselves are read from that folder on disk
+(the console has no download button for them yet). A runtime artifact that is not finite JSON or not a ledger the console can read is kept out of the dataset,
+under `data/runner/quarantine/<job id>/`.
+
+## Capture your coding-agent sessions
+
+Capture runs on your machine only: no account, no upload. It supports **Claude Code**, **Codex**, **agy** (Antigravity CLI), **Qwen Code**, and **Cursor**, reads only the folders you allow, and writes ledgers into the local console (the Capture page of `traceharness serve`).
 
 ```bash
-traceharness logout            # revokes this computer's token and deletes it; sends nothing afterwards
-traceharness capture --pause   # stops the watcher and `capture push` (including the Claude Code hook); `--resume` undoes it
+traceharness capture --watch --path /path/to/session-directory      # follow sessions as they are written
+traceharness capture export --out sessions.zip [--source codex] [--since 2026-11-01]
+traceharness capture import sessions.zip                            # on another machine (also: traceharness import sessions.zip)
 ```
 
-The Claude Code hook respects the allow-list, sign-in state, and `--pause`. You can also revoke tokens and delete uploaded runs from `/app/capture` at any time.
+An export is one zip of the captured sessions, redacted (known key and token shapes, `Bearer` tokens, URL passwords, private keys, secret-looking values), with a `manifest.json` that records a SHA-256 for every file. Import checks every hash and refuses archives with unsafe names, links, oversize members or an unknown version; it writes nothing unless the whole archive verifies, and runs nothing from it. Redaction is pattern-based and cannot know every secret format, so read an export before you share it. See [`docs/CAPTURE.md`](docs/CAPTURE.md).
 
 ## Local server security
 
@@ -165,7 +178,7 @@ New run directories appear on the dashboard alongside the included datasets. To 
 
 **Maintainer archive build:** run `python3 scripts/build_school_package.py --verify` (or `make school-package`) to build and clean-room verify `dist/traceharness-school.zip` (runs the four core exercises, a live mock run, the shipped tests, SHA-256 checks, and a path/secret scan; rejects symlinks, caches, hidden files, dropped tracked files, and non-zero exits). If you change frontend source, rebuild and stage `dist/` first (`cd traceharness/frontend && npm ci && npm run build && cd ../.. && git add traceharness/frontend/dist`), or restore tracked assets with `git checkout -- traceharness/frontend/dist && git clean -fdq traceharness/frontend/dist`.
 
-**Further documentation:** [`docs/EXPERIMENT_WORKSPACE.md`](docs/EXPERIMENT_WORKSPACE.md) (signed-in harness editor, forked runs, and OpenRouter sweeps), [`docs/EXECUTION_PERFORMANCE.md`](docs/EXECUTION_PERFORMANCE.md), [`docs/COMPREHENSIVE_VERIFICATION.md`](docs/COMPREHENSIVE_VERIFICATION.md), [`docs/ASTRA_REVIEW_FIXES.md`](docs/ASTRA_REVIEW_FIXES.md) (seven repaired review findings), [`docs/CAPTURE_PRODUCTION_VERIFICATION.md`](docs/CAPTURE_PRODUCTION_VERIFICATION.md) (production uploads and two-member isolation), [`docs/EIGHT_SOL_PLATFORM_AUDIT.md`](docs/EIGHT_SOL_PLATFORM_AUDIT.md) (twelve platform audit repairs), [`docs/VOICE_TOUR_AND_BUDDY.md`](docs/VOICE_TOUR_AND_BUDDY.md) (narrated tour and Ask Buddy), and [`docs/ACCOUNT_PLATFORM_DESIGN.md`](docs/ACCOUNT_PLATFORM_DESIGN.md) (undeployed account/MFA/admin design proposal).
+**Further documentation:** [`docs/EXPERIMENT_WORKSPACE.md`](docs/EXPERIMENT_WORKSPACE.md) (harness editor, forked runs and OpenRouter sweeps in the local console), [`docs/CAPTURE.md`](docs/CAPTURE.md) (capture, export and import), [`docs/RELEASING.md`](docs/RELEASING.md), and [`docs/history/`](docs/history/) (records from when TraceHarness had a hosted site, retired 2026-11-17).
 
 ## How to cite
 
@@ -176,12 +189,12 @@ If you use TraceHarness in academic work, cite the software and the version used
   author  = {Antonio Mastropaolo},
   title   = {{TraceHarness}: Treating the Agent Harness as a Controlled Experimental Variable},
   year    = {2026},
-  version = {0.5.5},
+  version = {0.6.0},
   url     = {https://traceharness.dev}
 }
 ```
 
-Plain text: Mastropaolo, A. (2026). *TraceHarness: Treating the agent harness as a controlled experimental variable* (Version 0.5.5) [Computer software]. https://traceharness.dev
+Plain text: Mastropaolo, A. (2026). *TraceHarness: Treating the agent harness as a controlled experimental variable* (Version 0.6.0) [Computer software]. https://traceharness.dev
 
 If you use the 500 runs in `data/runs/real_swe_agent_500`, also cite Nebius, [SWE-agent-trajectories](https://huggingface.co/datasets/nebius/SWE-agent-trajectories) (CC BY 4.0).
 

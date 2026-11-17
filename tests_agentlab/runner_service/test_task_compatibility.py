@@ -11,14 +11,13 @@ from unittest.mock import Mock, patch
 
 from fastapi.testclient import TestClient
 
-from traceharness.runner_service.auth import sign
 from traceharness.runner_service.configuration import canonical, preflight
 from traceharness.runner_service.registry import Registry, tree_hash
 from traceharness.runner_service.service import create_app
 from traceharness.runner_service.settings import Settings
 from tests_agentlab.runner_service.test_operator_verification import verify
 from tests_agentlab.runner_service.test_runner import (
-    SECRET, OWNER, FixtureExecutor, FixtureProvider, configuration, fixture_registry,
+    OWNER, FixtureExecutor, FixtureProvider, configuration, fixture_registry,
 )
 
 
@@ -206,19 +205,12 @@ class TaskCompatibilityTests(unittest.TestCase):
         executor = FixtureExecutor()
         executor.health = lambda: self.health
         provider = FixtureProvider()  # Only fixture/model currently exists upstream.
-        app = create_app(Settings(shared_secret=SECRET, state_dir=self.root / "state"), registry=registry,
+        app = create_app(Settings(state_dir=self.root / "state"), registry=registry,
                          executor=executor, provider=provider, clock=lambda: 1770000000)
-        nonce = 0
         with TestClient(app) as client:
             def request(method, path, body=None):
-                nonlocal nonce
-                nonce += 1
                 raw = canonical(body) if body is not None else b""
-                stamp, salt = "1770000000", f"{nonce:032x}"
-                return client.request(method, path, content=raw, headers={"x-traceharness-user": OWNER,
-                    "x-traceharness-timestamp": stamp, "x-traceharness-nonce": salt,
-                    "x-traceharness-signature": sign(SECRET, method, path, OWNER, stamp, salt, raw),
-                    "content-type": "application/json"})
+                return client.request(method, path, content=raw, headers={"content-type": "application/json"})
             catalog = request("GET", "/api/runner/catalog").json()
             tasks = {task["id"]: task for task in catalog["tasks"]}
             self.assertFalse(tasks["fixture-task"]["ready"])

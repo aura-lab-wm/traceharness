@@ -1,8 +1,9 @@
 import { blocksFromHarness, readDraft, wizardAnswers, wizardBlocks } from './shallow-drafts'
 import { CARDS, QUESTIONS, blocksFromAnswers } from './shallow-data'
-import { encodeMemberJSON } from '../../member-api'
+import { encodeJSON } from '../../json'
 import { fieldIssues, numberIssue } from '../harnessFields'
 import { checkedNativeProfile } from '../../native-prompts-contract'
+import { capabilityFor } from '../../runner-compatibility'
 import { nativeDraftForProfile, safeNativeDraft } from './native-prompts-state'
 
 export const NATIVE_DRAFTS = [
@@ -56,10 +57,12 @@ export function initialComposer(args = []) {
   const answers = Object.fromEntries(QUESTIONS.map((q) => [q.id, q.options.some(([v]) => v === old.answers?.[q.id]) ? old.answers[q.id] : wizardAnswers()[q.id]]))
   return { selection, model_id: typeof old.model_id === 'string' ? old.model_id : '', task_id: typeof old.task_id === 'string' ? old.task_id : '', blocks,
     native_prompts: nativePrompts, native_prompt_drafts: nativePromptDrafts, harness_drafts: harnessDrafts, answers, limits, preserve_prompt: old.preserve_prompt === true,
+    // Consent to run without a receipt is never remembered: each session asks again.
+    unverified_ok: false,
     edit_mode: args[0] === 'guided' ? 'guided' : ['guided', 'advanced'].includes(old.edit_mode) ? old.edit_mode : 'prompt' }
 }
 
-export function configurationFor(state, { card, runtime, fixedPrompt }) {
+export function configurationFor(state, { card, runtime, fixedPrompt, task = null }) {
   const native = state.selection.startsWith('native:')
   const fixed = state.selection.startsWith('fixed:')
   const blocks = fixed && card ? blocksFromHarness({ ...card, prompt: fixedPrompt }) : state.blocks
@@ -72,6 +75,10 @@ export function configurationFor(state, { card, runtime, fixedPrompt }) {
     harness: native ? {} : { ...(fixed && card ? { id: card.id, lane: 'fixed', ...(typeof card.hash === 'string' ? { hash: card.hash } : {}) } : { lane: 'minimal' }), blocks },
     limits: { ...state.limits, max_steps: native ? state.limits.max_steps : blocks.find((b) => b.type === 'stop')?.max_steps },
     ...(profileDraft?.enabled ? { native_prompt_profile: JSON.parse(JSON.stringify(profileDraft.profile)) } : {}),
+    // Only the user's own action sets this (the checkbox, or a file they imported); it is never defaulted.
+    // An in-process TraceHarness task (run.local) has no receipt to waive and its backend rejects the
+    // extra field, so consent never travels with it, whatever the checkbox last held.
+    ...(state.unverified_ok === true && !(task && capabilityFor({ native, task }) === 'run.local') ? { unverified_ok: true } : {}),
   }
 }
 
@@ -125,7 +132,7 @@ const secretKeys = new Set(['apikey', 'key', 'password', 'token', 'authorization
 const plain = (value) => value && typeof value === 'object' && !Array.isArray(value) && Object.getPrototypeOf(value) === Object.prototype
 const keysMatch = (value, required, optional = []) => plain(value) && required.every((key) => Object.hasOwn(value, key))
   && Object.keys(value).every((key) => required.includes(key) || optional.includes(key))
-const copy = (value) => JSON.parse(encodeMemberJSON(value))
+const copy = (value) => JSON.parse(encodeJSON(value))
 const fail = (message) => { throw new Error(message) }
 
 // Check before copying or serializing: imports are configuration, never an
@@ -161,7 +168,8 @@ function checkData(value, depth = 0, budget = { nodes: 0 }) {
 
 function checkedConfiguration(value) {
   checkData(value)
-  if (!keysMatch(value, [...configurationKeys, ...(value?.version === 2 ? ['native_prompt_profile'] : [])]) || ![1, 2].includes(value.version)) fail('Import a complete version 1 or native version 2 TraceHarness configuration export.')
+  if (!keysMatch(value, [...configurationKeys, ...(value?.version === 2 ? ['native_prompt_profile'] : [])], ['unverified_ok']) || ![1, 2].includes(value.version)) fail('Import a complete version 1 or native version 2 TraceHarness configuration export.')
+  if (Object.hasOwn(value, 'unverified_ok') && typeof value.unverified_ok !== 'boolean') fail('unverified_ok must be true or false.')
   const native = NATIVE_DRAFTS.some((runtime) => runtime.id === value.runtime_id)
   if (value.runtime_id !== 'traceharness' && !native) fail('This configuration names an unsupported runtime. Choose a supported harness first.')
   if (value.version === 2) {
@@ -197,7 +205,7 @@ function checkedConfiguration(value) {
     if (blocks.find((block) => block.type === 'prompt').text !== value.prompt) fail('The prompt and prompt block disagree. Export a consistent configuration from the editor.')
     if (blocks.find((block) => block.type === 'stop').max_steps !== value.limits.max_steps) fail('The step limit and stop block disagree. Use the same step cap in both.')
   }
-  if (new TextEncoder().encode(encodeMemberJSON(value)).length > CONFIGURATION_MAX_BYTES) fail('The configuration must be at most 1 MiB.')
+  if (new TextEncoder().encode(encodeJSON(value)).length > CONFIGURATION_MAX_BYTES) fail('The configuration must be at most 1 MiB.')
   return copy(value)
 }
 
@@ -210,7 +218,7 @@ export function parseConfiguration(text) {
 }
 
 export function configurationText(configuration) {
-  return encodeMemberJSON(checkedConfiguration(configuration))
+  return encodeJSON(checkedConfiguration(configuration))
 }
 
 /** Apply a checked file as a draft. This helper never saves, fetches, or runs. */
@@ -221,6 +229,7 @@ export function applyConfiguration(state, configuration) {
   if (state.selection === 'custom' || state.selection.startsWith('saved:')) next.harness_drafts[state.selection] = safeBlocks(state.blocks)
   next.model_id = value.model_id
   next.task_id = value.task_id
+  next.unverified_ok = value.unverified_ok === true
   next.limits = { ...value.limits, max_output_tokens: value.limits.max_output_tokens ?? 8192 }
   const native = value.runtime_id !== 'traceharness'
   if (native) {

@@ -1,6 +1,6 @@
 """Six questions that compile to one minimal harness.
 
-Callers: tests_agentlab/test_shallow_harness.py, and the signed-in page
+Callers: tests_agentlab/test_shallow_harness.py, and the console page
 which repeats the same recommended answers. compile_blocks still stamps
 built_. This module stamps min_ afterwards. It does not call inline_config.
 """

@@ -39,6 +39,87 @@ it('reviews and freezes a captured plan without connecting credentials or launch
   expect(body.plan.arms).toHaveLength(2)
   expect(Object.keys(body).sort()).toEqual(['idempotency_key', 'plan', 'plan_sha256'])
 })
+it('asks for consent only from the structured consent_required field, and flags exactly consent_arms', async () => {
+  const plans = []
+  runnerRequest.mockImplementation(async (path, options) => {
+    if (path !== '/experiments/preflight') return { experiments: [] }
+    plans.push(options.body.plan)
+    const needy = options.body.plan.arms[1].id
+    const flagged = (arm) => arm.configuration.unverified_ok === true
+    // The real backend's shape: generic issue text, no receipt wording, plus the structured consent fields.
+    return flagged(options.body.plan.arms[1]) ? reviewed(options.body.plan)
+      : { ok: false, issues: ['Configuration ' + needy + ' did not pass current runner review.'], consent_required: true, consent_arms: [needy] }
+  })
+  render(<PairedExperiments configuration={configuration()} available lease={{ current: false }} />)
+  await open(); await captureTwo()
+  const label = 'Run without a receipt on this machine (not verified)'
+  expect(screen.queryByLabelText(label)).toBeNull()
+  fireEvent.click(screen.getByRole('button', { name: 'Review experiment' }))
+  await screen.findByText(/did not pass current runner review/)
+  expect(plans[0].arms.some((arm) => Object.hasOwn(arm.configuration, 'unverified_ok'))).toBe(false)
+  expect(screen.getByLabelText(label).checked).toBe(false)
+  expect(plans).toHaveLength(1) // nothing is set without the user's action
+  fireEvent.click(screen.getByLabelText(label)) // the click re-runs the review by itself
+  await screen.findByText('2 planned trials · maximum $2')
+  expect(plans).toHaveLength(2)
+  expect(plans[1].arms[0].configuration).not.toHaveProperty('unverified_ok')
+  expect(plans[1].arms[1].configuration.unverified_ok).toBe(true)
+  expect(screen.getByLabelText(label).checked).toBe(true)
+})
+it('clears consent when the arms are replaced, so it never moves to a different configuration', async () => {
+  const plans = []
+  runnerRequest.mockImplementation(async (path, options) => {
+    if (path !== '/experiments/preflight') return { experiments: [] }
+    plans.push(options.body.plan)
+    const needy = options.body.plan.arms[1].id
+    return options.body.plan.arms[1].configuration.unverified_ok === true ? reviewed(options.body.plan)
+      : { ok: false, issues: ['Configuration ' + needy + ' did not pass current runner review.'], consent_required: true, consent_arms: [needy] }
+  })
+  render(<PairedExperiments configuration={configuration()} available lease={{ current: false }} />)
+  await open(); await captureTwo()
+  const label = 'Run without a receipt on this machine (not verified)'
+  fireEvent.click(screen.getByRole('button', { name: 'Review experiment' }))
+  await screen.findByText(/did not pass current runner review/)
+  fireEvent.click(screen.getByLabelText(label))
+  await screen.findByText('2 planned trials · maximum $2')
+  fireEvent.click(screen.getByText('Pair current profile against baseline')) // replaces the arms
+  fireEvent.click(screen.getByRole('button', { name: 'Review experiment' }))
+  await screen.findByText(/did not pass current runner review/)
+  expect(plans.at(-1).arms.some((arm) => Object.hasOwn(arm.configuration, 'unverified_ok'))).toBe(false)
+  expect(screen.getByLabelText(label).checked).toBe(false)
+})
+it('does not offer consent for a receipt-worded issue when consent_required is not set', async () => {
+  runnerRequest.mockImplementation(async (path) => path === '/experiments/preflight'
+    ? { ok: false, issues: ['This native prompt profile has no application receipt on this machine. Set unverified_ok to run it anyway.'] } : { experiments: [] })
+  render(<PairedExperiments configuration={configuration()} available lease={{ current: false }} />)
+  await open(); await captureTwo()
+  fireEvent.click(screen.getByRole('button', { name: 'Review experiment' }))
+  await screen.findByText(/no application receipt/)
+  expect(screen.queryByLabelText('Run without a receipt on this machine (not verified)')).toBeNull()
+})
+it('lists saved experiments and loads one with the execution service unavailable (Docker stopped)', async () => {
+  const id = 'e'.repeat(48)
+  runnerRequest.mockImplementation(async (path) => path === '/experiments' ? { experiments: [{ id, status: 'ready', trial_count: 2 }] } : path === '/experiments/' + id ? { experiment: { ...exp(), id } } : { experiments: [] })
+  render(<PairedExperiments configuration={configuration()} available={false} lease={{ current: false }} />)
+  await open()
+  const row = await screen.findByText(/eeeeeeee · ready · 2 trials/)
+  expect(runnerRequest).toHaveBeenCalledWith('/experiments')
+  fireEvent.click(row)
+  await screen.findByLabelText('Experiment results')
+  expect(screen.getByRole('button', { name: 'Start experiment' }).disabled).toBe(true)
+  expect(screen.getByRole('button', { name: 'Review experiment' }).disabled).toBe(true)
+})
+it('starts without credential_id when the catalog says no credential is required', async () => {
+  const record = exp()
+  runnerRequest.mockImplementation(async (path) => path.endsWith('/start') ? { experiment: { ...record, status: 'running' } } : path === '/experiments' ? { experiments: [record] } : { experiment: record })
+  render(<PairedExperiments configuration={configuration()} credentialRequired={false} available lease={{ current: false }} />)
+  await open(); fireEvent.click(await screen.findByRole('button', { name: /aaaaaaaa · ready/ }))
+  await screen.findByLabelText('Experiment results')
+  fireEvent.click(screen.getByRole('button', { name: 'Start experiment' }))
+  await waitFor(() => expect(runnerRequest.mock.calls.some(([path]) => path.endsWith('/start'))).toBe(true))
+  const [, options] = runnerRequest.mock.calls.find(([path]) => path.endsWith('/start'))
+  expect(options.body).toEqual({ plan_sha256: 'b'.repeat(64) })
+})
 it('refuses a key-shaped arm name before review (review m5)', async () => {
   render(<PairedExperiments configuration={configuration()} available lease={{ current: false }} />)
   await open(); await captureTwo()
@@ -228,4 +309,21 @@ it('exports CSV with one row per trial and Markdown with the caveats', async () 
   expect(csv.trimEnd().split('\r\n')).toHaveLength(1 + record.trial_count)
   expect(markdown).toContain('## Caveats')
   expect(markdown).toContain('does not show that an intervention improves task performance')
+})
+
+it('labels an experiment from its frozen arm manifests when trial job summaries carry none', async () => {
+  const build = (verified) => {
+    const record = exp(); record.status = 'completed'; record.trial_count = 2
+    record.plan = { ...record.plan, arms: record.plan.arms.map((arm) => ({ ...arm, manifest_sha256: 'c'.repeat(64), manifest: { runtime_id: 'traceharness', verified: arm.id === 'variant' ? verified : true } })) }
+    record.trials = [{ id: 'one', repeat: 1, arm_id: 'control', status: 'succeeded', issues: [], job: { grade: 'passed', usage: {}, issues: [] } }, { id: 'two', repeat: 1, arm_id: 'variant', status: 'succeeded', issues: [], job: { grade: 'passed', usage: {}, issues: [] } }]
+    return record
+  }
+  for (const [verified, text] of [[false, 'Not verified on this machine'], [true, 'Verified']]) {
+    const record = build(verified)
+    runnerRequest.mockImplementation(async (path) => path === '/experiments' ? { experiments: [record] } : { experiment: record })
+    const view = render(<PairedExperiments configuration={configuration()} available lease={{ current: false }} />)
+    await open(); fireEvent.click(await screen.findByRole('button', { name: /aaaaaaaa · completed/ }))
+    await waitFor(() => expect(document.querySelector('[data-el="paired-verified"]')?.textContent).toBe(text))
+    view.unmount()
+  }
 })

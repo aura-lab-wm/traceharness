@@ -1,5 +1,7 @@
 import { useEffect, useId, useMemo, useRef, useState } from 'react'
 import { runnerRequest } from '../runner-api'
+import { isolationLabel } from '../isolation'
+import { UNVERIFIED_LABEL, consentArmsOf, verificationLabel } from '../runner-compatibility'
 import { ActionBar, Field, Icon } from './ui'
 import { expiryTime } from './views/harness-composer-state'
 import {
@@ -14,6 +16,7 @@ import {
   replaceHarnessSnapshot,
   stableJSON,
 } from './experiment-matrix-state'
+import { reasonFor } from '../environment'
 import { HarnessJson } from './HarnessJson'
 import { Unavailable } from './unavailable'
 import './ExperimentWorkspace.css'
@@ -91,6 +94,8 @@ function describeTrialIdentity(trial, arm) {
   }
 
   return {
+    isolation: isolationLabel(manifest),
+    verification: verificationLabel(manifest),
     runtimeLine: `${runtimeId}${runtimeVersion} · ${modelId}`,
     taskLine: `${taskId}${taskRevision}${mode ? ' · ' + mode : ''}`,
   }
@@ -144,6 +149,7 @@ export function ExperimentWorkspace({
   configuration,
   catalog,
   credential = null,
+  credentialRequired = true,
   available = false,
   disabled = false,
   lease,
@@ -162,6 +168,11 @@ export function ExperimentWorkspace({
   const [seed, setSeed] = useState('0')
   const [budgetUsd, setBudgetUsd] = useState('10')
   const [excludedCells, setExcludedCells] = useState(new Set())
+  // Saved experiments are read from what the runner recorded, so they need no execution service (Docker stopped);
+  // only creating and starting need run.experiments.
+  const historyReadable = available || ['ok', 'runner_not_ready'].includes(reasonFor('run.experiments'))
+  const [consentArms, setConsentArms] = useState(null) // null until the user confirms; then the arm ids that carry the flag
+  const [rereview, setRereview] = useState(0)
   const [uncertainStart, setUncertainStart] = useState(null)
   const [review, setReview] = useState(null)
   const [experiment, setExperiment] = useState(null)
@@ -205,7 +216,7 @@ export function ExperimentWorkspace({
     return () => window.clearTimeout(timer)
   }, [credentialExpiresAtMs])
 
-  const credentialReady = Boolean(credential?.credential_id)
+  const credentialReady = !credentialRequired || Boolean(credential?.credential_id)
     && (credential.expires_at === undefined || (Number.isFinite(credentialExpiresAtMs) && credentialExpiresAtMs > nowMs))
 
   const modelOptions = useMemo(() => {
@@ -253,8 +264,8 @@ export function ExperimentWorkspace({
   const expanded = useMemo(() => {
     const count = snapshots.length * orderedModelIds.length * orderedTaskIds.length
     if (count > 512) return { cells: [], issue: `${count} candidate cells. Narrow the axes to at most 512 candidates, then select up to 64 trials.` }
-    return expandMatrixCells({ snapshots, modelIds: orderedModelIds, taskIds: orderedTaskIds, catalog })
-  }, [snapshots, orderedModelIds, orderedTaskIds, catalog])
+    return expandMatrixCells({ snapshots, modelIds: orderedModelIds, taskIds: orderedTaskIds, catalog, unverifiedArms: consentArms || [] })
+  }, [snapshots, orderedModelIds, orderedTaskIds, catalog, consentArms])
   const includedCells = useMemo(() => expanded.cells.filter(cell => !excludedCells.has(cellIdentity(cell))), [expanded.cells, excludedCells])
 
   const draftEvaluation = useMemo(() => {
@@ -291,7 +302,7 @@ export function ExperimentWorkspace({
   const reviewed = Boolean(activeReview?.result?.ok)
 
   useEffect(() => {
-    if (!available) return undefined
+    if (!historyReadable) return undefined
     let cancelled = false
     runnerRequest('/experiments')
       .then((data) => {
@@ -302,12 +313,12 @@ export function ExperimentWorkspace({
         syncExperimentLease(leaseRef.current, uncertainStartRef.current, currentExperimentRef.current, items)
       })
       .catch((err) => {
-        if (!cancelled && mountedRef.current) {
+        if (!cancelled && mountedRef.current && err?.status !== 404) { // 404: no runner is configured at all, so there is no history
           setError(err?.message || 'Could not load saved experiments.')
         }
       })
     return () => { cancelled = true }
-  }, [available])
+  }, [historyReadable])
 
   useEffect(() => {
     if (!available || !experiment || !experimentActive(experiment)) return undefined
@@ -336,9 +347,15 @@ export function ExperimentWorkspace({
     return () => window.clearTimeout(timer)
   }, [available, experiment, busy])
 
-  const invalidateAuthoringReview = () => {
+  const invalidateReview = () => {
     reviewGenerationRef.current += 1
     setReview(null)
+  }
+  // Consent is keyed to positional arm ids ("arm-N"); any change to the authoring inputs (snapshots, axes, selected
+  // cells) could make an id name another configuration, so it is cleared and must be given again for the new plan.
+  const invalidateAuthoringReview = () => {
+    invalidateReview()
+    setConsentArms(null)
   }
 
   const handleCaptureSnapshot = () => {
@@ -422,6 +439,9 @@ export function ExperimentWorkspace({
     }
   }
 
+  // Confirming consent re-runs the review with the flag in exactly the arms that needed it.
+  useEffect(() => { if (rereview > 0 && consentArms !== null) handleReviewPlan() }, [rereview])
+
   const handleFreezePlan = async () => {
     if (busy || disabled || !reviewed || !draftEvaluation.ok || !activeReview) return
     const planSha = activeReview.result.plan_sha256
@@ -467,7 +487,7 @@ export function ExperimentWorkspace({
   }
 
   const handleRefreshHistory = async () => {
-    if (busy || !available) return
+    if (busy || !historyReadable) return
     setBusy(true)
     setError('')
     try {
@@ -523,7 +543,7 @@ export function ExperimentWorkspace({
       const response = await runnerRequest(`/experiments/${targetId}/start`, {
         method: 'POST',
         body: {
-          credential_id: credential.credential_id,
+          ...(credentialRequired ? { credential_id: credential.credential_id } : {}),
           plan_sha256: experiment.plan_sha256,
         },
       })
@@ -930,6 +950,24 @@ export function ExperimentWorkspace({
               </Field>
             </div>
 
+            {(consentArms !== null || consentArmsOf(activeReview?.result).length > 0) && (
+              <label className="rg-matrix-unverified" data-el="matrix-unverified-consent">
+                <input
+                  type="checkbox"
+                  checked={consentArms !== null && consentArmsOf(activeReview?.result).every((id) => consentArms.includes(id))}
+                  disabled={busy || disabled}
+                  onChange={(event) => {
+                    invalidateReview()
+                    if (event.target.checked) {
+                      setConsentArms((current) => [...new Set([...(current || []), ...consentArmsOf(activeReview?.result)])])
+                      setRereview((count) => count + 1)
+                    } else setConsentArms(null)
+                  }}
+                />
+                {UNVERIFIED_LABEL}
+              </label>
+            )}
+
             <section className="rg-matrix-preview" aria-label="Expanded matrix cells">
               <div className="rg-matrix-preview-h">
                 <h4>Expanded matrix cells</h4>
@@ -1069,7 +1107,7 @@ export function ExperimentWorkspace({
                   {
                     label: experiment.status === 'paused' ? 'Resume experiment' : 'Start experiment',
                     primary: true,
-                    disabled: busy || disabled || !!uncertainStart || !!leaseRef.current?.current || !credentialReady || !['ready', 'paused'].includes(experiment.status),
+                    disabled: busy || disabled || !available || !!uncertainStart || !!leaseRef.current?.current || !credentialReady || !['ready', 'paused'].includes(experiment.status),
                     onClick: handleStartExperiment,
                   },
                   {
@@ -1093,7 +1131,7 @@ export function ExperimentWorkspace({
               />
 
               {uncertainStart && <p role="status" className="rg-matrix-issue">Start outcome is unconfirmed. Refresh the experiment before taking another start action.</p>}
-              {!credentialReady && ['ready', 'paused'].includes(experiment.status) && (
+              {credentialRequired && !credentialReady && ['ready', 'paused'].includes(experiment.status) && (
                 <p className="rg-matrix-hint">
                   Connect an active OpenRouter key above before starting or resuming this frozen experiment.
                 </p>
@@ -1161,7 +1199,7 @@ export function ExperimentWorkspace({
                           </td>
                           <td className="rg-matrix-id">
                             <div className="rg-matrix-identity">
-                              <span>{identity.runtimeLine}</span>
+                              <span>{identity.runtimeLine}</span>{identity.isolation && <span data-el="trial-isolation">{identity.isolation}</span>}{identity.verification && <span data-el="trial-verified">{identity.verification}</span>}
                               <span>{identity.taskLine}</span>
                               <code title={trial.manifest_sha256}>{trial.manifest_sha256}</code>
                             </div>
@@ -1187,7 +1225,7 @@ export function ExperimentWorkspace({
             </section>
           )}
 
-          {available && (
+          {historyReadable && (
             <div className="rg-matrix-group rg-matrix-history">
               <div className="rg-matrix-group-h">
                 <h3 className="rg-matrix-group-t">Saved experiments</h3>

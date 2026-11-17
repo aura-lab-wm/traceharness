@@ -1,5 +1,5 @@
 import { useEffect, useId, useMemo, useRef, useState } from 'react'
-import { encodeMemberJSON } from '../member-api'
+import { encodeJSON } from '../json'
 import { diffText } from './native/diff'
 import { utf8Bytes } from './native/text-metrics'
 import { parseConfiguration } from './views/harness-composer-state'
@@ -18,7 +18,7 @@ const MAX_DIFF_OPS = 4000
 function formatted(value) {
   if (value === undefined) return 'Not set'
   if (Object.is(value, -0)) return '-0.0\n'
-  const raw = encodeMemberJSON(value)
+  const raw = encodeJSON(value)
   let output = '', depth = 0, quoted = false, escaped = false
   for (const char of raw) {
     if (quoted) {
@@ -96,7 +96,7 @@ export function ConfigurationEditor({ configuration, disabled = false, onApply, 
   const parsing = source !== text
   const parsed = useMemo(() => parse(source), [source])
   const changes = useMemo(() => parsed.value ? differences(configuration, parsed.value) : [], [configuration, parsed.value])
-  const submitBytes = useMemo(() => { try { return parsed.value ? utf8Bytes(encodeMemberJSON(parsed.value)) : null } catch { return null } }, [parsed.value])
+  const submitBytes = useMemo(() => { try { return parsed.value ? utf8Bytes(encodeJSON(parsed.value)) : null } catch { return null } }, [parsed.value])
   const dirty = text !== base && (parsing || !parsed.value || changes.length > 0)
   const conflict = dirty && current !== base
   const pending = dirty || !!parsed.error || conflict

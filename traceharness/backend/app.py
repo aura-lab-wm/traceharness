@@ -46,8 +46,13 @@ def _stop_paused_runs():
 @contextlib.asynccontextmanager
 async def _lifespan(_app):
     _SHUTDOWN.clear()          # a fresh start (and a test that enters the app twice) begins un-stopped
+    try:                       # own the runner state and migrate recorded grades, with or without Docker
+        RUNNER.claim_state_and_migrate()
+    except Exception:
+        pass                   # never stops the console; the runner app retries at its first build
     yield
     _stop_paused_runs()
+    RUNNER.close()             # the local runner's job pool and experiment scheduler
 
 
 from traceharness.__main__ import __version__ as _VERSION   # one version for the API docs and the package
@@ -298,7 +303,7 @@ def run_detail(name: str, run_id: str):
     model = S.load_model()
     out = {"summary": rd_("summary.json", True), "spans": spans, "patch": rd_("patch.diff"),
            "messages": rd_("messages.json", True), "replay": S.replay(spans, model),
-           "issue": _issue_for(spans[0]["task_id"]) if spans else ""}
+           "issue": _issue_for(spans[0].get("task_id")) if spans else ""}
     # A third-party agent run in a container (traceharness/agents): the broker's record of every model
     # call (host, tokens, cache, cost, latency) and where the run happened (image, limits, exit).
     if os.path.exists(os.path.join(rd, "container.json")):
@@ -307,7 +312,9 @@ def run_detail(name: str, run_id: str):
     return out
 
 
-def _issue_for(tid: str) -> str:
+def _issue_for(tid) -> str:
+    if not isinstance(tid, str) or not tid or "/" in tid or tid in (".", ".."):
+        return "(this run's first span names no task: the issue text is unavailable)"
     p = os.path.join(TASK_DIR, tid)
     if os.path.isdir(p) and os.path.exists(os.path.join(p, "task.json")):
         return load_task(p)["issue"]
@@ -992,3 +999,11 @@ app.include_router(hf_router)
 from traceharness.backend.recommend_api import router as recommend_router
 app.include_router(recommend_router)
 app.router.routes.sort(key=lambda r: 1 if getattr(r, "path", "") == "/{path:path}" else 0)
+
+# --- the local runner (WP1 of docs/superpowers/specs/2026-11-17-local-only-design.md) ---
+# Its /api/runner/* routes are served by backend/local_runner_api.py, which hands container, native and
+# experiment requests to this runner in-process. Behind the same Host / Origin / JSON guards as every
+# route (security_guard above); the owner is the constant "local"; the OpenRouter key is read from
+# SETTINGS only when a model request is made.
+from traceharness.runner.local import LocalRunner, activate as _activate_runner
+RUNNER = _activate_runner(LocalRunner(lambda: LAB_ROOT, lambda: SETTINGS["openrouter_key"]))

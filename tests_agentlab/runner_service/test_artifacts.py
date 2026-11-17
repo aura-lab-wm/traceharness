@@ -1,4 +1,4 @@
-"""Signed service artifact boundary fixtures; no real account, Docker or provider."""
+"""Service artifact boundary fixtures; no real account, Docker or provider."""
 import base64
 import hashlib
 import os
@@ -41,13 +41,12 @@ class ArtifactTests(unittest.TestCase):
         self.assertEqual(body["encoding"], "base64")
         self.assertEqual(base64.b64decode(body["content"], validate=True), raw)
 
-    def test_anonymous_and_other_member_cannot_download_or_infer_artifact(self):
+    def test_unknown_job_and_other_owner_get_the_same_answer(self):
         route, _, _ = self.fixture_artifact()
-        self.assert_denied(self.client.get(route, headers={"Origin": "https://hostile.invalid"}), 401)
-        foreign = self.request("GET", route, owner=OTHER)
-        absent = self.request("GET", route.replace("d" * 48, "e" * 48), owner=OTHER)
-        self.assert_denied(foreign, 404)
-        self.assertEqual(foreign.json(), absent.json())
+        absent = self.request("GET", route.replace("d" * 48, "e" * 48))
+        self.assert_denied(absent, 404)
+        with self.assertRaises(fixtures.JobError):
+            self.app.state.jobs.get(OTHER, "d" * 48)
 
     def test_unlisted_or_unknown_artifacts_are_not_exposed(self):
         route, path, _ = self.fixture_artifact()
@@ -89,7 +88,7 @@ class ArtifactTests(unittest.TestCase):
             stream.write(b"x")
         self.assert_denied(self.request("GET", route), 409)
 
-    def test_encoded_traversal_query_and_changed_signature_do_not_release_content(self):
+    def test_encoded_traversal_and_query_do_not_release_content(self):
         route, _, _ = self.fixture_artifact()
         for suffix in ["%2e%2e%2fjob.json", "patch.diff%2fextra"]:
             with self.subTest(suffix=suffix):
@@ -97,7 +96,6 @@ class ArtifactTests(unittest.TestCase):
                 self.assertIn(response.status_code, [401, 404])
                 self.assertNotIn("content", response.json())
         self.assert_denied(self.request("GET", route + "?owner=" + OWNER), 404)
-        self.assert_denied(self.request("GET", route, extra={"x-traceharness-signature": "0" * 64}), 401)
 
 
 if __name__ == "__main__":

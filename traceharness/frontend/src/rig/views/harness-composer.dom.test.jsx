@@ -7,9 +7,8 @@ import { CARDS, RECOMMENDED_ID, VERIFY_NO, blocksFromAnswers } from './shallow-d
 import { nativeInventoryFixture, nativeResponseFixture, nativeRuntimeFixture } from '../../../test/native-prompts-fixture'
 import { SHARED, LOCAL_APP } from '../../shared/index.js'
 
-const scope = 'd'.repeat(24)
-const draftKey = (name) => `traceharness.shallow.member.${scope}.${name}`
-const json = (data, status = 200) => ({ ok: status >= 200 && status < 300, status, json: async () => data })
+const draftKey = (name) => SHARED.drafts.prefix_local + name
+const json = (data, status = 200) => ({ ok: status >= 200 && status < 300, status, headers: { get: () => 'application/json' }, json: async () => data })
 const deferred = () => { let resolve; const promise = new Promise((r) => { resolve = r }); return { promise, resolve } }
 const catalogCards = CARDS.map((row) => ({ ...row, hash: '123456789abc' }))
 const readOnlyWarning = 'This prompt asks to edit files and run tests, and neither edit_file nor run_tests is mounted.'
@@ -39,8 +38,8 @@ function compiled(body) {
       include_file_listing: get('listing').include } }
 }
 beforeAll(async () => {
-  window.__TRACEHARNESS_MEMBER__ = { version: 1, scope }
-  window.__TRACEHARNESS_DATA__ = { '/overview': { results: [] } }
+  delete window.__TRACEHARNESS_DATA__
+  ;(await import('../../environment')).applyRuntime({ capabilities: { 'run.container': { reason: 'ok' }, 'run.native': { reason: 'ok' }, 'run.experiments': { reason: 'ok' } } })
   Composer = (await import('./harness-composer')).HarnessComposer
   safeBlocks = (await import('./harness-composer-state')).safeBlocks
   runnerRequest = (await import('../../runner-api')).runnerRequest
@@ -48,25 +47,29 @@ beforeAll(async () => {
 beforeEach(() => {
   sessionStorage.clear(); localStorage.clear(); calls = []; rows = []; handler = null; stored = true; catalog = defaultCatalog()
   vi.stubGlobal('fetch', vi.fn(async (url, opts) => {
+    const method = opts.method || 'GET'
     const body = opts.body ? JSON.parse(opts.body) : null
-    const call = { url, ...opts, body }; calls.push(call)
-    expect(opts.headers.get('x-traceharness-member-scope')).toBe(scope)
-    expect(opts.credentials).toBe('same-origin')
-    expect(opts.mode).toBe('same-origin')
-    expect(opts.redirect).toBe('error')
+    const call = { url, ...opts, method, body }; calls.push(call)
+    if (String(url).startsWith('/api/runner/')) {
+      expect(opts.headers.get('content-type')).toBe('application/json')
+      expect(opts.headers.has('x-traceharness-member-scope')).toBe(false)
+      expect(opts.credentials).toBe('same-origin')
+      expect(opts.mode).toBe('same-origin')
+      expect(opts.redirect).toBe('error')
+    }
     const custom = handler?.(call)
     if (custom !== undefined) return custom
     if (url === '/api/runner/catalog') return json(catalog)
-    if (url === '/api/runner/jobs' && opts.method === 'GET') return json({ jobs: [] })
+    if (url === '/api/runner/jobs' && method === 'GET') return json({ jobs: [] })
     if (url === '/api/shallow/catalog') return json({ harnesses: catalogCards })
-    if (url === '/api/shallow/harnesses' && opts.method === 'GET') return json({ harnesses: rows, loaded: true, unconfirmed: [] })
+    if (url === '/api/shallow/harnesses' && method === 'GET') return json({ harnesses: rows, loaded: true, unconfirmed: [] })
     if (url === '/api/shallow/compile') return json(compiled(body))
     if (url === '/api/shallow/wizard') return json({ ...compiled(body), stored })
-    if (url === '/api/shallow/harnesses' && opts.method === 'POST') return json({ harness: { ...catalogCards.find((r) => r.id === body.id), prompt: body.prompt, hash: 'abcdef123456' }, stored })
+    if (url === '/api/shallow/harnesses' && method === 'POST') return json({ harness: { ...catalogCards.find((r) => r.id === body.id), prompt: body.prompt, hash: 'abcdef123456' }, stored })
     if (url === '/api/runner/preflight') return json({ ok: true, issues: [], manifest_sha256: 'a'.repeat(64), manifest: { configuration: body.configuration } })
-    if (url === '/api/runner/credentials' && opts.method === 'POST') return json({ credential_id: 'fixture-credential', expires_at: Math.floor(Date.now() / 1000) + 300 })
-    if (url.startsWith('/api/runner/credentials/') && opts.method === 'DELETE') return json({ revoked: true })
-    if (url === '/api/runner/jobs' && opts.method === 'POST') return json({ job: { id: 'fixture-job', status: 'needs_attention', issues: ['Fixture only; no executor was run.'] } })
+    if (url === '/api/runner/credentials' && method === 'POST') return json({ credential_id: 'fixture-credential', expires_at: Math.floor(Date.now() / 1000) + 300 })
+    if (url.startsWith('/api/runner/credentials/') && method === 'DELETE') return json({ revoked: true })
+    if (url === '/api/runner/jobs' && method === 'POST') return json({ job: { id: 'fixture-job', status: 'needs_attention', issues: ['Fixture only; no executor was run.'] } })
     throw new Error('Unexpected request: ' + url)
   }))
 })
@@ -348,7 +351,8 @@ describe('the unified member Harnesses composer', () => {
     expect(screen.getByRole('combobox', { name: 'Task', exact: true }).placeholder).toBe('No runnable task packages connected')
     expect(screen.queryByLabelText('OpenRouter API key')).toBeNull()
     expect(screen.getByRole('button', { name: 'Run', exact: true }).disabled).toBe(true)
-    expect(calls.filter((c) => c.url.startsWith('/api/runner/')).map((c) => c.url)).toEqual(['/api/runner/catalog'])
+    // Saved experiments are read-only history, asked for even without a runner; nothing else is.
+    expect(calls.filter((c) => c.url.startsWith('/api/runner/')).map((c) => c.url).filter((url) => url !== '/api/runner/experiments')).toEqual(['/api/runner/catalog'])
   })
 
   it('preserves selections and distinct prompt drafts across presets and native engines', async () => {
@@ -381,13 +385,13 @@ describe('the unified member Harnesses composer', () => {
     expect(prompt().value).toBe('My custom prompt.')
   })
 
-  it('retains fixed account CAS and only clears its draft after confirmed storage', async () => {
-    rows = [{ ...catalogCards[0], prompt: 'Account version.', hash: '777777777777' }]
+  it('retains fixed saved-prompt CAS and only clears its draft after confirmed storage', async () => {
+    rows = [{ ...catalogCards[0], prompt: 'Saved version.', hash: '777777777777' }]
     render(<Composer args={['fixed', 'claude']} />)
-    await waitFor(() => expect(prompt().value).toBe('Account version.'))
+    await waitFor(() => expect(prompt().value).toBe('Saved version.'))
     fireEvent.change(prompt(), { target: { value: 'Edited account prompt.' } })
     fireEvent.click(screen.getByRole('button', { name: 'Save harness' }))
-    await screen.findByText(/Harness saved to your account/)
+    await screen.findByText(/Harness saved to this computer/)
     expect(calls.find((c) => c.url === '/api/shallow/harnesses' && c.method === 'POST').body).toEqual({ id: 'claude', prompt: 'Edited account prompt.', if_hash: '777777777777' })
     expect(JSON.parse(sessionStorage.getItem(draftKey('fixed'))).claude).toBeUndefined()
     expect(calls.some((c) => c.url === '/api/runner/jobs' && c.method === 'POST')).toBe(false)
@@ -399,14 +403,14 @@ describe('the unified member Harnesses composer', () => {
     await waitFor(() => expect(prompt().disabled).toBe(false))
     fireEvent.change(prompt(), { target: { value: 'Keep this draft.' } })
     fireEvent.click(screen.getByRole('button', { name: 'Save harness' }))
-    await screen.findByText(/Your account did not confirm this save/)
+    await screen.findByText(/This computer did not confirm this save/)
     expect(JSON.parse(sessionStorage.getItem(draftKey('fixed'))).codex.prompt).toBe('Keep this draft.')
     expect(calls.find((c) => c.url === '/api/shallow/harnesses' && c.method === 'POST').body.if_absent).toBe(true)
-    handler = (call) => call.url === '/api/shallow/harnesses' && call.method === 'POST' ? json({ error: 'This prompt changed in your account.' }, 409) : undefined
+    handler = (call) => call.url === '/api/shallow/harnesses' && call.method === 'POST' ? json({ detail: 'This prompt changed on this computer.' }, 409) : undefined
     fireEvent.click(screen.getByRole('button', { name: 'Save harness' }))
-    await screen.findByText('This prompt changed in your account.')
+    await screen.findByText('This prompt changed on this computer.')
     expect(prompt().value).toBe('Keep this draft.')
-    expect(screen.queryByText(/Harness saved to your account/)).toBeNull()
+    expect(screen.queryByText(/Harness saved to this computer/)).toBeNull()
   })
 
   it('shares prompt and warnings between guidance and advanced settings, with explicit reset', async () => {
@@ -609,7 +613,7 @@ describe('the unified member Harnesses composer', () => {
     expect(screen.queryByLabelText('OpenRouter API key')).toBeNull()
     expect(screen.getByRole('button', { name: 'Review run' }).disabled).toBe(true)
     expect(screen.getByRole('button', { name: 'Run', exact: true }).disabled).toBe(true)
-    expect(calls.filter((call) => call.url.startsWith('/api/runner/')).map((call) => call.url)).toEqual(['/api/runner/catalog'])
+    expect(calls.filter((call) => call.url.startsWith('/api/runner/')).map((call) => call.url).filter((url) => url !== '/api/runner/experiments')).toEqual(['/api/runner/catalog'])
   })
 
   it.each([
@@ -819,15 +823,15 @@ describe('the unified member Harnesses composer', () => {
     render(<Composer />); await ready()
     await waitFor(() => expect(screen.getByRole('button', { name: 'Save harness', exact: true }).disabled).toBe(false))
     fireEvent.click(screen.getByRole('button', { name: 'Save harness', exact: true }))
-    await screen.findByText('Harness saved to your account. Model, task and run limits remain in this tab.')
+    await screen.findByText('Harness saved to this computer. Model, task and run limits remain in this tab.')
     fireEvent.click(screen.getByRole('button', { name: 'Guide me' }))
-    expect(screen.getByText('Harness saved to your account. Model, task and run limits remain in this tab.')).toBeTruthy()
+    expect(screen.getByText('Harness saved to this computer. Model, task and run limits remain in this tab.')).toBeTruthy()
     fireEvent.click(screen.getByRole('button', { name: 'Advanced settings' }))
-    expect(screen.getByText('Harness saved to your account. Model, task and run limits remain in this tab.')).toBeTruthy()
+    expect(screen.getByText('Harness saved to this computer. Model, task and run limits remain in this tab.')).toBeTruthy()
     fireEvent.click(screen.getByRole('checkbox', { name: 'Keep prompt when switching harnesses', exact: true }))
-    expect(screen.getByText('Harness saved to your account. Model, task and run limits remain in this tab.')).toBeTruthy()
+    expect(screen.getByText('Harness saved to this computer. Model, task and run limits remain in this tab.')).toBeTruthy()
     fireEvent.change(screen.getByRole('spinbutton', { name: 'Temperature' }), { target: { value: '0.7' } })
-    expect(screen.queryByText('Harness saved to your account. Model, task and run limits remain in this tab.')).toBeNull()
+    expect(screen.queryByText('Harness saved to this computer. Model, task and run limits remain in this tab.')).toBeNull()
     expect(calls.filter((call) => call.url === '/api/shallow/wizard' && call.method === 'POST')).toHaveLength(1)
   })
 
@@ -872,7 +876,7 @@ describe('the unified member Harnesses composer', () => {
     expect(calls.filter((call) => call.url.startsWith('/api/runner/') && call.method !== 'GET')).toHaveLength(0)
   })
 
-  it('creates, compares, restores and renames a complete checkpoint that survives this account tab reload', async () => {
+  it('creates, compares, restores and renames a complete checkpoint that survives this tab reload', async () => {
     render(<Composer />); await ready()
     fireEvent.click(screen.getByRole('button', { name: 'Configuration checkpoints', exact: true }))
     fireEvent.change(prompt(), { target: { value: 'Checkpoint baseline instructions.' } })
@@ -1253,15 +1257,16 @@ describe('integrated configuration editing and dispatch', () => {
 
 // The local console and the read-only export, each loaded fresh with its own environment module.
 // These requests are fixtures; the Python suite proves the real local routes.
-function environmentFor(mode) {
+function environmentFor(mode, runnerReady = true) {
   const table = SHARED.environment.table
+  const RUNNER = new Set(SHARED.environment.runner)
   const messages = SHARED.environment.messages
   const LIBRARY = SHARED.environment.library[mode]
-  const can = (id) => table[id]?.[mode] === 'ok'
-  const reasonFor = (id) => table[id]?.[mode] ?? 'unavailable'
+  const reasonFor = (id) => { const base = table[id]?.[mode] ?? 'unavailable'; return base === 'ok' && RUNNER.has(id) && !runnerReady ? 'runner_not_ready' : base }
+  const can = (id) => reasonFor(id) === 'ok'
   const why = (id, what) => can(id) ? '' : (messages[reasonFor(id)] ?? messages.unavailable)
     .replace(/\{(what|command|url)\}/g, (_, key) => ({ what, command: LOCAL_APP.command, url: LOCAL_APP.url })[key])
-  return { MODE: mode, LIBRARY, HAS_LIBRARY: LIBRARY.available === true, ENV: { mode, library: LIBRARY }, can, reasonFor, why }
+  return { MODE: mode, LIBRARY, HAS_LIBRARY: LIBRARY.available === true, ENV: { mode, library: LIBRARY }, can, reasonFor, why, useEnvironment: () => 0, refreshEnvironment: async () => true }
 }
 const localJson = (data, status = 200) => ({ ok: status >= 200 && status < 300, status, statusText: status === 200 ? 'OK' : 'Error',
   headers: { get: () => 'application/json' }, json: async () => data })
@@ -1269,8 +1274,8 @@ const localJson = (data, status = 200) => ({ ok: status >= 200 && status < 300, 
 // GET /api/runner/catalog as the local console answers it (tasks trimmed to two; see runner-catalog.test.js).
 const LOCAL_CATALOG = () => ({ version: 1, scope: 'local', runner: { available: true, message: 'Runs on this computer with the TraceHarness engine.' },
   runtimes: [{ id: 'traceharness', name: 'TraceHarness engine', kind: 'traceharness', available: true, prompt_mode: 'replace', version: '0.5.3', model_ids: ['mock'] },
-    { id: 'native-claude-code', name: 'Claude Code', kind: 'native', available: false, prompt_mode: 'append', version: null, reason: 'Native runtimes run on the hosted runner only.' },
-    { id: 'native-codex', name: 'Codex CLI', kind: 'native', available: false, prompt_mode: 'append', version: null, reason: 'Native runtimes run on the hosted runner only.' }],
+    { id: 'native-claude-code', name: 'Claude Code', kind: 'native', available: false, prompt_mode: 'append', version: null, reason: 'Native runtimes need the local runner.' },
+    { id: 'native-codex', name: 'Codex CLI', kind: 'native', available: false, prompt_mode: 'append', version: null, reason: 'Native runtimes need the local runner.' }],
   models: [{ id: 'mock', name: 'Mock (offline)' }],
   tasks: [{ id: 't01_slugify', title: 'slugify collapses hyphens incorrectly', ready: true, runtime_ids: ['traceharness'], model_ids_by_runtime: { traceharness: ['mock'] } },
     { id: 't02_intervals', title: 'merge_intervals drops touching intervals', ready: true, runtime_ids: ['traceharness'], model_ids_by_runtime: { traceharness: ['mock'] } }],
@@ -1278,12 +1283,11 @@ const LOCAL_CATALOG = () => ({ version: 1, scope: 'local', runner: { available: 
 
 describe('the Harnesses view on the local console and in a read-only export', () => {
   let localCalls, library, counter, runnerCatalogAnswer, localJobs
-  async function loadComposer(mode) {
+  async function loadComposer(mode, runnerReady = true) {
     vi.resetModules()
-    delete window.__TRACEHARNESS_MEMBER__
     if (mode === 'export') window.__TRACEHARNESS_DATA__ = { '/overview': { results: [] } }
     else delete window.__TRACEHARNESS_DATA__
-    vi.doMock('../../environment', () => environmentFor(mode))
+    vi.doMock('../../environment', () => environmentFor(mode, runnerReady))
     return (await import('./harness-composer')).HarnessComposer
   }
   beforeEach(() => {
@@ -1322,8 +1326,7 @@ describe('the Harnesses view on the local console and in a read-only export', ()
   })
   afterEach(() => {
     vi.doUnmock('../../environment'); vi.resetModules()
-    window.__TRACEHARNESS_MEMBER__ = { version: 1, scope }
-    window.__TRACEHARNESS_DATA__ = { '/overview': { results: [] } }
+    delete window.__TRACEHARNESS_DATA__
   })
 
   it('shows Save harness on the local console and saves a fixed prompt with if_absent, then if_hash', async () => {
@@ -1371,7 +1374,7 @@ describe('the Harnesses view on the local console and in a read-only export', ()
     const before = { overview: { results: [], stale: true }, runs: [{ run_id: 'older' }], repeats: { stale: true }, other: [{ run_id: 'kept' }] }
     data.prime({ '/overview': before.overview, '/results/harness_runs/runs': before.runs, '/repeats/harness_runs': before.repeats, '/results/demo_mock/runs': before.other })
     render(<Local />)
-    await screen.findByText('Runner connected')
+    await screen.findByText('Engine ready · container runner ready')
     await catalogReady()
     choose('Model', 'Mock (offline)')
     choose('Task', 'slugify collapses hyphens incorrectly')
@@ -1405,20 +1408,21 @@ describe('the Harnesses view on the local console and in a read-only export', ()
     expect(localCalls.some((c) => c.url.includes('/credentials'))).toBe(false)
   })
 
-  it('the experiment panels say they are hosted only and never ask the local runner', async () => {
+  it('the experiment panels say they need the local runner until it is set up, and only read saved history from it', async () => {
     runnerCatalogAnswer = () => localJson(LOCAL_CATALOG())
-    const Local = await loadComposer('local')
+    const Local = await loadComposer('local', false)
     render(<Local />)
     await catalogReady()
     fireEvent.click(screen.getByText('Experiment matrix'))
     fireEvent.click(screen.getByText('Compare prompt variants'))
     const notes = await waitFor(() => { const found = document.querySelectorAll('[data-capability="run.experiments"]'); expect(found).toHaveLength(2); return found })
     for (const note of notes) {
-      expect(note.getAttribute('data-reason')).toBe('hosted_only')
-      expect(note.textContent).toMatch(/runs on traceharness\.dev for signed-in members\.$/)
+      expect(note.getAttribute('data-reason')).toBe('runner_not_ready')
+      expect(note.textContent).toMatch(/needs the local runner\. Run traceharness runner setup \(Docker required\)\.$/)
     }
     expect(screen.queryByText('No execution service is connected.')).toBeNull()
-    expect(localCalls.some((c) => c.url.startsWith('/api/runner/experiments'))).toBe(false)
+    // Saved experiments are read from what the runner recorded, so only that GET goes out; nothing creates or starts.
+    expect(localCalls.filter((c) => c.url.startsWith('/api/runner/experiments')).every((c) => (c.method || 'GET') === 'GET' && c.url === '/api/runner/experiments')).toBe(true)
   })
 })
 

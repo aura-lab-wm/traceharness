@@ -32,17 +32,21 @@ def has_secret(value) -> bool:
 
 def preflight(configuration, registry, health: dict) -> dict:
     issues: list[str] = []
+    consent: list[str] = []       # the issues only an explicit unverified_ok clears (a missing receipt)
     try:
         invalid = not isinstance(configuration, dict) or has_secret(configuration)
         canonical(configuration)
     except (ValueError, TypeError, UnicodeError, RecursionError):
         invalid = True
     if invalid:
-        return {"ok": False, "issues": ["Configuration must be an object without credentials."]}
+        return {"ok": False, "issues": ["Configuration must be an object without credentials."], "consent_required": False}
     expected = {"version", "runtime_id", "model_id", "task_id", "prompt", "prompt_mode", "harness", "limits"}
     version = configuration.get("version")
-    if type(version) is not int or version not in {1, 2} or set(configuration) != (expected if version == 1 else expected | {"native_prompt_profile"}):
-        return {"ok": False, "issues": ["Unsupported or incomplete run configuration."]}
+    # "unverified_ok" is the explicit opt-in to run a combination that has no compatibility receipt.
+    unverified_ok = configuration.get("unverified_ok", False)
+    if (type(version) is not int or version not in {1, 2} or type(unverified_ok) is not bool
+            or set(configuration) - {"unverified_ok"} != (expected if version == 1 else expected | {"native_prompt_profile"})):
+        return {"ok": False, "issues": ["Unsupported or incomplete run configuration."], "consent_required": False}
     runtime = registry.runtimes.get(configuration.get("runtime_id")) if isinstance(configuration.get("runtime_id"), str) else None
     task = registry.tasks.get(configuration.get("task_id")) if isinstance(configuration.get("task_id"), str) else None
     model_id = configuration.get("model_id")
@@ -54,10 +58,18 @@ def preflight(configuration, registry, health: dict) -> dict:
         issues.append("Select an installed task package; a recorded result is not an executable task.")
     elif not health.get("tasks", {}).get(task["id"], False):
         issues.append("The selected task package is unavailable or its content changed.")
-    if not isinstance(model_id, str) or model_id not in registry.models:
+    verified = True
+    if not isinstance(model_id, str) or not (model_id in registry.models or (
+            getattr(registry, "open_models", False) and re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9/_.:@+-]{1,150}", model_id))):
         issues.append("Select a registered model.")
     elif runtime and task and not registry.compatible(runtime["id"], model_id, task["id"]):
-        issues.append("This task/runtime/model combination has no matching compatibility receipt for its pinned images and grader.")
+        if unverified_ok:
+            verified = False
+        else:
+            issues.append("This task/runtime/model combination has no matching compatibility receipt for its pinned images and grader."
+                          + (" Set unverified_ok to run it anyway." if getattr(registry, "open_models", False) else ""))
+            if getattr(registry, "open_models", False):
+                consent.append(issues[-1])
     if runtime and task and runtime["id"] not in task.get("runtime_ids", []):
         issues.append("The task environment is not registered for this runtime.")
     prompt = configuration.get("prompt")
@@ -128,10 +140,20 @@ def preflight(configuration, registry, health: dict) -> dict:
                 native_profile, admission = registry.native_prompt_profile(runtime["id"], configuration["native_prompt_profile"])
             except (ValueError, TypeError, KeyError, UnicodeError):
                 issues.append("The native prompt profile or its application receipt is unavailable, stale or invalid.")
+            else:
+                if admission.get("cohort") == "unverified_local":
+                    if unverified_ok:
+                        verified = False
+                    else:
+                        issues.append("This native prompt profile has no application receipt on this machine."
+                                      " Set unverified_ok to run it anyway; the run is recorded as not verified.")
+                        consent.append(issues[-1])
     if not health.get("available"):
         issues.append("The private execution service is not ready.")
     if issues:
-        return {"ok": False, "issues": list(dict.fromkeys(issues))}
+        # consent_required: refused only for a missing receipt, so unverified_ok would make it pass.
+        return {"ok": False, "issues": list(dict.fromkeys(issues)),
+                "consent_required": all(issue in consent for issue in issues)}
     manifest = {"version": version, "runtime_id": runtime["id"], "runtime_version": runtime["version"],
                 "image_digest": runtime["image_digest"], "model_id": model_id, "task_id": task["id"],
                 "task_revision": task["revision"], "environment_digest": task.get("environment_digests", {}).get(runtime["id"], task["environment_digest"]),
@@ -139,6 +161,13 @@ def preflight(configuration, registry, health: dict) -> dict:
                 "task_content_sha256": task["content_sha256"], "prompt": prompt,
                 "prompt_mode": runtime["prompt_mode"], "prompt_sha256": hashlib.sha256(prompt.encode()).hexdigest(),
                 "harness": compiled or {}, "limits": dict(limits)}
+    if getattr(registry, "open_models", False):
+        # The local runner records what actually isolated and vouched for the run.
+        from .settings import LOCAL_STORAGE_BYTES
+        from .execution import STORAGE_ENFORCEMENT
+        manifest["limits"]["storage_bytes"] = LOCAL_STORAGE_BYTES   # enforced by the executor
+        manifest["limits"]["storage_enforcement"] = STORAGE_ENFORCEMENT   # which enforcement applied
+        manifest.update(verified=verified, isolation_runtime=health.get("isolation_runtime") or "unknown")
     if version == 2:
         from .native_prompts import profile_sha256
         manifest.update(native_prompt_profile=native_profile, native_prompt_profile_sha256=profile_sha256(native_profile),
@@ -147,8 +176,8 @@ def preflight(configuration, registry, health: dict) -> dict:
         # not produce a manifest too large to retain as an immutable job artifact.
         artifact = json.dumps(manifest, ensure_ascii=False, sort_keys=True).encode("utf-8")
         if len(artifact) > 1024 * 1024:
-            return {"ok": False, "issues": ["Native prompt profile and additional instructions exceed the manifest artifact limit."]}
+            return {"ok": False, "issues": ["Native prompt profile and additional instructions exceed the manifest artifact limit."], "consent_required": False}
         from .execution import _redacted
         if _redacted(artifact) != artifact:
-            return {"ok": False, "issues": ["Remove credential-shaped content from native prompt instructions before execution."]}
-    return {"ok": True, "issues": [], "manifest": manifest, "manifest_sha256": digest(manifest)}
+            return {"ok": False, "issues": ["Remove credential-shaped content from native prompt instructions before execution."], "consent_required": False}
+    return {"ok": True, "issues": [], "consent_required": False, "manifest": manifest, "manifest_sha256": digest(manifest)}

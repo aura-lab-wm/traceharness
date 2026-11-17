@@ -54,15 +54,15 @@ def tracked(rel: str) -> bool:
     return r.returncode == 0
 
 
-@unittest.skipUnless(HAVE_ROOT_DOCS_CAPTURE, "requires the full checkout: docs/capture.md")
+@unittest.skipUnless(HAVE_ROOT_DOCS_CAPTURE, "requires the full checkout: docs/CAPTURE.md")
 class TestTheCaptureRunbookIsInTheRepo(unittest.TestCase):
     def test_docs_capture_md_exists_and_is_tracked(self):
         self.assertTrue(os.path.exists(os.path.join(LAB, "docs", "capture.md")),
-                        "docs/capture.md is missing: a clone has no capture instructions")
+                        "docs/CAPTURE.md is missing: a clone has no capture instructions")
         if not HAVE_GIT:
             self.skipTest("not a git checkout: whether git ships a file is not answerable here")
-        self.assertTrue(tracked("docs/capture.md"),
-                        "docs/capture.md exists but git does not ship it")
+        self.assertTrue(tracked("docs/CAPTURE.md"),
+                        "docs/CAPTURE.md exists but git does not ship it")
 
     def test_the_capture_package_points_at_a_document_a_clone_has(self):
         """__init__.py named docs/superpowers/specs/..., which .gitignore excludes."""
@@ -93,11 +93,11 @@ class TestTheReadmeNamesEveryCaptureRoute(unittest.TestCase):
 
     def test_the_readme_has_a_capture_section(self):
         readme = read("traceharness", "README.md")
-        self.assertIn("docs/capture.md", readme,
+        self.assertIn("docs/CAPTURE.md", readme,
                       "traceharness/README.md does not point at the capture runbook")
 
 
-@unittest.skipUnless(HAVE_ROOT_DOCS_CAPTURE, "requires the full checkout: docs/capture.md")
+@unittest.skipUnless(HAVE_ROOT_DOCS_CAPTURE, "requires the full checkout: docs/CAPTURE.md")
 class TestTheRunbookPrintsTheWholeReport(unittest.TestCase):
     """The runbook shows what `--backfill` prints, and a reader checks their own output against it.
 
@@ -108,7 +108,7 @@ class TestTheRunbookPrintsTheWholeReport(unittest.TestCase):
     """
 
     def documented_keys(self) -> set:
-        text = read("docs", "capture.md")
+        text = read("docs", "CAPTURE.md")
         at = text.index("--backfill --path")
         block = text[at:].split("```json", 1)[1].split("```", 1)[0]
         return set(json.loads(block))

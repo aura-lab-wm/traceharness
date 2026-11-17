@@ -3,7 +3,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
 vi.hoisted(() => {
-  delete window.__TRACEHARNESS_MEMBER__
   window.__TRACEHARNESS_DATA__ = {}
 })
 

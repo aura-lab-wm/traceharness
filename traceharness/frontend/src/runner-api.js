@@ -1,5 +1,5 @@
 import { IS_STATIC } from './api'
-import { MEMBER, encodeMemberJSON } from './member-api'
+import { encodeJSON } from './json'
 
 export const UNAVAILABLE_RUNNER = Object.freeze({
   version: 1,
@@ -27,12 +27,12 @@ const allowed = (path, method) => method === 'GET' && ['/catalog', '/jobs'].incl
   || method === 'POST' && /^\/jobs\/[A-Za-z0-9_-]{1,100}\/cancel$/.test(path)
   || method === 'DELETE' && /^\/credentials\/[A-Za-z0-9_-]{1,100}$/.test(path)
 
-// The member snapshot reaches the hosted runner through the Worker, with its scope header. The local
-// console reaches the local runner (backend/local_runner_api.py) at the same paths with no header.
-// A read-only export has no runner at all.
+// The console reaches the local runner, mounted in the local backend, at /api/runner/* on the same
+// origin with a JSON content type (the backend's guards require both on writes). A read-only export
+// has no runner at all.
 export async function runnerRequest(path, { method = 'GET', body, signal } = {}) {
   if (!allowed(path, method)) throw new Error('This runner action is not supported.')
-  if (IS_STATIC && !MEMBER) {
+  if (IS_STATIC) {
     if (path === '/catalog' && method === 'GET') return UNAVAILABLE_RUNNER
     throw new Error('This offline export is not connected to an execution service.')
   }
@@ -42,12 +42,11 @@ export async function runnerRequest(path, { method = 'GET', body, signal } = {})
   signal?.addEventListener('abort', cancel, { once: true })
   const timeout = setTimeout(cancel, 20_000)
   const headers = new Headers({ 'content-type': 'application/json' })
-  if (MEMBER) headers.set('x-traceharness-member-scope', MEMBER.scope)
   try {
     const response = await fetch('/api/runner' + path, {
       method, headers, signal: controller.signal, credentials: 'same-origin',
       mode: 'same-origin', redirect: 'error', cache: 'no-store',
-      ...(method === 'GET' || body === undefined ? {} : { body: encodeMemberJSON(body) }),
+      ...(method === 'GET' || body === undefined ? {} : { body: encodeJSON(body) }),
     })
     let data
     try { data = await response.json() } catch { throw new Error('The runner returned an unreadable response.') }
@@ -55,8 +54,7 @@ export async function runnerRequest(path, { method = 'GET', body, signal } = {})
       // Credential transport errors must never echo a provider response or key.
       const message = path.startsWith('/credentials')
         ? response.status === 401 ? 'The key could not be verified. Check it and try again.'
-          : response.status === 409 ? 'The signed-in account changed. Reload before connecting a key.'
-            : 'The key connection could not be confirmed. Try again when the runner is available.'
+          : 'The key connection could not be confirmed. Try again when the runner is available.'
         : data?.error || data?.detail || 'The runner request failed.'
       const error = new Error(typeof message === 'string' ? message : 'The runner request failed.')
       error.status = response.status

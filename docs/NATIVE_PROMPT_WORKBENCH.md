@@ -8,7 +8,7 @@ tool, and paired against the unedited baseline in a paired experiment.
 
 Two surfaces share one logic layer:
 
-- the **browser workbench** in the hosted member app (the Native Prompts panel of the harness
+- the **browser workbench** in the local console (the Native Prompts panel of the harness
   composer and the Paired Experiments panel), and
 - the **CLI** `python -m traceharness native-prompts …`, which works offline on files.
 
@@ -28,7 +28,7 @@ Three rules frame everything below.
    the workbench says that an intervention improves task performance.
 
 The design history and the evidence model of native profiles are in
-[Native prompt interventions](NATIVE_PROMPT_INTERVENTIONS.md).
+[Native prompt interventions](history/NATIVE_PROMPT_INTERVENTIONS.md).
 
 ## Contents
 
@@ -236,14 +236,13 @@ limit; "largest savings first until the profile fits" keeps the subset that fits
   remounts the workbench when the runtime changes, which clears it; the draft itself is kept by
   the host.
 - **Saved in this browser**: up to 40 entries and 3 MiB in `localStorage` under
-  `traceharness.native.member.<scope>.library.v1` (member mode) or
   `traceharness.native.library.v1`. An entry holds the profile, named sets and counts, never a
   baseline body. "Save snapshot" stores the current draft; a snapshot is also taken
   automatically before an import, a restore and a macro. Oldest snapshots are evicted first; a
   saved profile is never evicted. Restore is an undoable step. An entry for another inventory is
   listed as "different inventory" and can be inspected, exported, compared after rebase or
   deleted, never run.
-- The copy says so: "Saved in this browser only, not in your account. Anyone using this
+- The copy says so: "Saved in this browser only. Anyone using this
   browser profile can read it." "Delete all" clears the library after a confirmation.
 
 ## File formats
@@ -280,7 +279,7 @@ construction:
 
 Arm ids are deterministic, so the plan content and the seed reproduce the schedule. Arm names
 and the experiment name are 1 to 80 (120) printable characters and may not carry an `sk-` or
-provider key shape: the Worker refuses such a plan ("Invalid experiment variant."), so the panel
+provider key shape: the runner refuses such a plan ("Invalid experiment variant."), so the panel
 says "Remove provider credentials from the variant name." before review. A profile
 with no edits makes an **A/A control**: baseline against baseline, which measures how much the
 task varies between identical runs. Any arm can be made the reference; the reference always
@@ -465,8 +464,8 @@ TH_UPDATE_NATIVE_GOLDEN=1 .venv/bin/python -m unittest tests_agentlab.test_nativ
 
 ## What needs a runner release
 
-These are not built, because the deployed runner and gateway would have to change: a profile
-library stored in the member account; a profile name, note or sets recorded in the run manifest;
+These are not built, because the runner would have to change: a profile
+library stored outside the browser; a profile name, note or sets recorded in the run manifest;
 an audit report stored as a job artifact; experiment names in the saved-experiment list;
 finer edit operations (insert, append, per-occurrence patches); paired plans across tasks or
 models; observation of templated fragments and per-fragment measured tokens; server-side

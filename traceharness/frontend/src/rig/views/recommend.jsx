@@ -7,7 +7,7 @@
    a "Why these three" table straight from `considered` (every dataset, its score, the rules that
    fired); the sizing arithmetic; and "Copy method paragraph" / "Download JSON".
 
-   The recommender reads the lab's own recorded runs, so in an export or the member console the
+   The recommender reads the lab's own recorded runs, so in an export the
    view shows the "not available here" note (capability run.local) and asks for nothing.
    Everything the server sends is rendered as text, never as markup.
    ==================================================================================== */

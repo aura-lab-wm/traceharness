@@ -169,6 +169,7 @@ def execute(manifest, base_url, *, workspace=Path("/workspace"), taskrepo=Path("
         for child in changed.iterdir():
             shutil.move(str(child), workspace / child.name)
         shutil.rmtree(control)
+        workspace.chmod(0o755)      # as the native path's copy leaves it: the trusted grader must be able to traverse it
         return 1 if result.exit_reason == "error" else 0
     shutil.copytree(taskrepo, workspace, dirs_exist_ok=True, symlinks=True)
     binary = "claude" if rid == "native-claude-code" else "codex"

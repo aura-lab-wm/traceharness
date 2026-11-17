@@ -9,15 +9,15 @@ import unittest
 
 from fastapi.testclient import TestClient
 
-from traceharness.runner_service.auth import sign
 from traceharness.runner_service.configuration import canonical, digest, preflight
 from traceharness.runner_service.native_prompts import (PINS, inventory_sha256, materializer_sha256,
     taxonomy_sha256, profile_sha256)
+from traceharness.runner_service.jobs import JobError
 from traceharness.runner_service.registry import Registry, NATIVE_PROMPT_CHECKS
 from traceharness.runner_service.service import create_app
 from traceharness.runner_service.settings import Settings
 from tests_agentlab.runner_service.test_runner import (fixture_registry, configuration, FixtureExecutor,
-    FixtureProvider, SECRET, OWNER, OTHER)
+    FixtureProvider, OWNER, OTHER)
 
 
 def sha(raw):
@@ -155,6 +155,30 @@ class NativePromptProtocolTests(unittest.TestCase):
         health["runtimes"]["native-codex"] = True
         self.assertFalse(registry.native_prompt_catalog("native-codex", health)["execution_available"])
 
+    def test_local_registry_admits_an_unreceipted_inventory_only_with_unverified_ok(self):
+        self.runtime["native_prompt_receipts"] = []
+        hosted = Registry(self.root, copy.deepcopy(self.data))
+        self.assertFalse(preflight(self.config, hosted, self.health)["ok"])
+        self.assertFalse(preflight(dict(self.config, unverified_ok=True), hosted, self.health)["ok"])
+        local = Registry(self.root, copy.deepcopy(self.data), local=True)
+        refused = preflight(self.config, local, self.health)
+        self.assertFalse(refused["ok"])
+        self.assertTrue(any("unverified_ok" in issue for issue in refused["issues"]), refused)
+        answer = local.native_prompt_inventory(self.runtime["id"], self.health)
+        self.assertTrue(answer["execution_available"])
+        self.assertIn("only with your confirmation", answer["reason"])
+        self.assertIn("recorded as not verified", answer["reason"])
+        self.assertIn("compatibility receipts only", answer["reason"])      # `runner verify` does not prove native application
+        self.assertNotIn("to prove it", answer["reason"])
+        self.assertTrue(any("recorded as not verified" in issue and "runner verify" not in issue for issue in refused["issues"]), refused)
+        accepted = preflight(dict(self.config, unverified_ok=True), local, self.health)
+        self.assertTrue(accepted["ok"], accepted)
+        self.assertIs(accepted["manifest"]["verified"], False)
+        admission = accepted["manifest"]["native_prompt_admission"]
+        self.assertEqual(admission["cohort"], "unverified_local")
+        self.assertIsNone(admission["receipt_sha256"])
+        self.assertEqual(admission["inventory_sha256"], self.inventory["inventory_sha256"])
+
     def test_mechanism_receipt_and_inventory_are_exact_and_required(self):
         data = copy.deepcopy(self.data)
         self.runtime["native_prompt_receipts"] = []
@@ -221,21 +245,15 @@ class NativePromptProtocolTests(unittest.TestCase):
         self.assertFalse(result["ok"])
         self.assertIn("manifest artifact limit", " ".join(result["issues"]))
 
-    def test_inventory_and_new_artifacts_are_authenticated_owner_scoped_reads(self):
+    def test_inventory_and_new_artifacts_are_owner_scoped_reads(self):
         registry = self.registry()
         executor = FixtureExecutor()
         executor.health = lambda: self.health
-        app = create_app(Settings(shared_secret=SECRET, state_dir=self.root / "state"), registry=registry, provider=FixtureProvider(), executor=executor, clock=lambda: 1770000000)
-        nonce = 0
+        app = create_app(Settings(state_dir=self.root / "state"), registry=registry, provider=FixtureProvider(), executor=executor, clock=lambda: 1770000000)
         def request(client, path, owner=OWNER):
-            nonlocal nonce
-            nonce += 1
-            timestamp, token = "1770000000", f"{nonce:032x}"
-            return client.get(path, headers={"x-traceharness-user": owner, "x-traceharness-timestamp": timestamp,
-                "x-traceharness-nonce": token, "x-traceharness-signature": sign(SECRET, "GET", path, owner, timestamp, token, b"")})
+            return client.get(path)
         with TestClient(app) as client:
             path = "/api/runner/prompt-inventory/native-claude-code"
-            self.assertEqual(client.get(path, headers={"Origin": "https://hostile.invalid"}).status_code, 401)
             response = request(client, path)
             self.assertEqual(response.status_code, 200, response.text)
             self.assertNotIn("access-control-allow-origin", response.headers)
@@ -254,10 +272,10 @@ class NativePromptProtocolTests(unittest.TestCase):
                 app.state.jobs.rows[jid] = {"owner": OWNER, "job": {"id": jid, "status": "succeeded", "artifacts": [metadata]}}
                 route = f"/api/runner/jobs/{jid}/artifacts/{name}"
                 self.assertEqual(request(client, route).status_code, 200)
-                foreign = request(client, route, OTHER)
-                absent = request(client, route.replace(jid, "e" * 48), OTHER)
-                self.assertEqual(foreign.status_code, 404)
-                self.assertEqual(foreign.json(), absent.json())
+                absent = request(client, route.replace(jid, "e" * 48))
+                self.assertEqual(absent.status_code, 404)
+                with self.assertRaises(JobError):
+                    app.state.jobs.get(OTHER, jid)
 
 
 if __name__ == "__main__":

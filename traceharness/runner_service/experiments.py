@@ -101,15 +101,27 @@ def _schedule(base):
 
 def review_plan(value, review):
     """Pure: resolve all exact manifests, then freeze one reproducible schedule."""
-    failure=lambda message:{'ok':False,'issues':[message],'plan':None,'plan_sha256':None,'maximum_cost_usd':None,'trial_count':0}
+    failure=lambda message,**more:{'ok':False,'issues':[message],'plan':None,'plan_sha256':None,'maximum_cost_usd':None,'trial_count':0,
+                                   'consent_required':False,'consent_arms':[],**more}
     try:
-        draft=_core_plan(value);arms=[]
+        draft=_core_plan(value);arms=[];refused=[];consent_arms=[];notes=[]
         for arm in draft['arms']:
             result,_=review(arm['configuration'])
-            _require(isinstance(result,dict) and result.get('ok') is True,f"Configuration {arm['label']} did not pass current runner review.")
+            if not (isinstance(result,dict) and result.get('ok') is True):
+                refused.append(arm['label'])
+                found=[str(i)[:300] for i in (result.get('issues') if isinstance(result,dict) and isinstance(result.get('issues'),list) else [])][:3]
+                notes+=[f"{arm['label']}: {i}" for i in found]
+                if isinstance(result,dict) and result.get('consent_required') is True:consent_arms.append(arm['id'])
+                continue
             _require(isinstance(result.get('manifest'),dict) and digest(result['manifest'])==result.get('manifest_sha256'),
                      'An experiment arm manifest could not be verified.')
             arms.append({**arm,'manifest':result['manifest'],'manifest_sha256':result['manifest_sha256']})
+        if refused:
+            # Bounded per-arm diagnostics. consent_arms are the arms refused only for a missing receipt (unverified_ok
+            # would pass them); consent_required says at least one such arm exists.
+            return failure(f"Configuration {refused[0]} did not pass current runner review.",
+                           issues=[f"Configuration {refused[0]} did not pass current runner review."]+notes[:12],
+                           consent_required=bool(consent_arms),consent_arms=consent_arms[:64])
         total=sum((Decimal(str(a['configuration']['limits']['max_cost_usd'])) for a in arms),Decimal('0'))*draft['repeats']
         _require(total.is_finite() and Decimal('0') < total <= Decimal('100'),'The maximum aggregate experiment budget must be at most $100.')
         if draft['version']==2:
@@ -118,7 +130,8 @@ def review_plan(value, review):
               'maximum_cost_usd':float(total),'trial_count':len(arms)*draft['repeats']}
         plan['schedule']=_schedule(plan)
         _require(len(canonical(plan))<=MAX_PLAN_BYTES,'The frozen experiment plan exceeds its retention limit. Use fewer or smaller arms.')
-        return {'ok':True,'issues':[],'plan':plan,'plan_sha256':digest(plan),'maximum_cost_usd':float(total),'trial_count':plan['trial_count']}
+        return {'ok':True,'issues':[],'plan':plan,'plan_sha256':digest(plan),'maximum_cost_usd':float(total),'trial_count':plan['trial_count'],
+                'consent_required':False,'consent_arms':[]}
     except JobError as error:return failure(str(error))
     except (ValueError,TypeError,KeyError,UnicodeError,RecursionError,OverflowError,InvalidOperation):return failure('The experiment plan is incomplete or invalid.')
 
@@ -182,7 +195,8 @@ class Experiments:
         if self.root.is_symlink():raise ValueError('Experiment state cannot be a symlink')
         self.root.mkdir(mode=0o700,parents=True,exist_ok=True);self.root.chmod(0o700)
         self.lock=threading.RLock();self.rows={};self.idempotency={};self.threads={};self.credentials={}
-        self.stop=threading.Event();self.poll_interval=max(.01,float(poll_interval));self.blocked_reason=None
+        self.stop=threading.Event();self.poll_interval=max(.01,float(poll_interval));self.blocked_reason='Another process owns this runner state; this one only reads it.' if settings.read_only else None
+        self.read_only=settings.read_only
         paths=list(self.root.iterdir())
         if len(paths)>MAX_RECORDS:self.blocked_reason='Experiment state exceeds its retention limit.'
         for path in paths[:MAX_RECORDS]:
@@ -241,6 +255,7 @@ class Experiments:
         _require(not has_secret(row),'Experiment state contains credential-shaped data.')
 
     def _save(self,row):
+        if self.read_only:return
         raw=canonical(row)
         _require(len(raw)<=MAX_RECORD_BYTES,'Experiment retention limit reached.')
         total=sum(len(canonical(existing)) for key,existing in self.rows.items() if key!=row['experiment']['id'])+len(raw)
@@ -311,13 +326,19 @@ class Experiments:
             trial.update(status='needs_attention',issues=['The prior submission outcome is uncertain. It was not retried.'])
 
     def start(self,owner,eid,credential_id,plan_sha256):
+        return self.start_adopting(owner,eid,credential_id,plan_sha256)[0]
+
+    def start_adopting(self,owner,eid,credential_id,plan_sha256):
+        """(public experiment, adopted). `adopted` is decided under the experiment lock: True only when THIS handle
+        became the scheduler's credential. A start that finds the experiment already running keeps the earlier
+        handle, so the caller must release the one it passed."""
         with self.lock:
             row=self._owned(owner,eid);exp=row['experiment']
             if exp['plan_sha256']!=plan_sha256:raise JobError('The frozen experiment plan changed.',409)
             self._safe()
             previous=self.threads.get(eid)
             if previous is not None and previous.is_alive():
-                if exp['status']=='running':return self._public(row)
+                if exp['status']=='running':return self._public(row),False
                 raise JobError('The previous scheduler is finishing. Refresh before resuming.',409)
             if exp['status'] not in {'ready','paused'} or exp['cancellation_requested']:raise JobError('This experiment cannot be started or resumed.',409)
             if any(r['owner']==owner and r['experiment']['status'] in {'running','cancelling'} for r in self.rows.values()):raise JobError('Another experiment for this member is active.',429)
@@ -325,7 +346,7 @@ class Experiments:
             self.vault.resolve(owner,credential_id)
             exp.update(status='running',issues=[],updated_at=int(self.clock()));self.credentials[eid]=credential_id;self._save(row)
             worker=threading.Thread(target=self._run,args=(eid,),name='paired-experiment',daemon=True);self.threads[eid]=worker;worker.start()
-            return self._public(row)
+            return self._public(row),True
 
     def cancel(self,owner,eid):
         with self.lock:

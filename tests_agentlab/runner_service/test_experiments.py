@@ -67,7 +67,7 @@ class FakeJobs:
 class ExperimentsTests(unittest.TestCase):
     def setUp(self):
         self.temp=tempfile.TemporaryDirectory();self.addCleanup(self.temp.cleanup)
-        self.settings=Settings(shared_secret='fixture-secret-that-is-at-least-32bytes',state_dir=Path(self.temp.name)/'jobs')
+        self.settings=Settings(state_dir=Path(self.temp.name)/'jobs')
         self.vault=CredentialVault();self.cid=self.vault.put(OWNER,'fixture-not-a-provider-key')['credential_id']
         self.jobs=FakeJobs();self.engine=Experiments(self.settings,self.jobs,self.vault,review,poll_interval=.01)
         self.addCleanup(self.engine.close)
@@ -273,42 +273,32 @@ class ExperimentAPITests(unittest.TestCase):
         from fastapi.testclient import TestClient
         from traceharness.runner_service.service import create_app
         from tests_agentlab.runner_service.test_native_prompt_protocol import NativePromptProtocolTests
-        from tests_agentlab.runner_service.test_runner import FixtureExecutor, FixtureProvider, SECRET, OWNER as AUTH_OWNER
+        from tests_agentlab.runner_service.test_runner import FixtureExecutor, FixtureProvider, OWNER as AUTH_OWNER
         self.fixture=NativePromptProtocolTests();self.fixture.setUp();self.addCleanup(self.fixture.doCleanups)
         self.executor=FixtureExecutor();self.executor.health=lambda:self.fixture.health
-        self.secret,self.owner=SECRET,AUTH_OWNER;self.now=1770000000;self.nonce=0
-        app=create_app(Settings(shared_secret=SECRET,state_dir=self.fixture.root/'api-jobs'),registry=self.fixture.registry(),provider=FixtureProvider(),executor=self.executor,clock=lambda:self.now)
+        self.owner=AUTH_OWNER;self.now=1770000000
+        app=create_app(Settings(state_dir=self.fixture.root/'api-jobs'),registry=self.fixture.registry(),provider=FixtureProvider(),executor=self.executor,clock=lambda:self.now)
         self.app=app;self.client=TestClient(app);self.client.__enter__();self.addCleanup(lambda:self.client.__exit__(None,None,None))
         self.plan=draft(1)
         self.plan['arms'][0]['configuration']=copy.deepcopy(self.fixture.config)
         self.plan['arms'][1]['configuration']=copy.deepcopy(self.fixture.config)
         self.plan['arms'][1]['configuration']['native_prompt_profile']['default_action']='disable'
     def request(self,method,path,body=None,owner=None):
-        from traceharness.runner_service.auth import sign
         from traceharness.runner_service.configuration import canonical
-        raw=canonical(body) if body is not None else b'';self.nonce+=1;nonce=f'{self.nonce:032x}';owner=owner or self.owner;timestamp=str(self.now)
-        headers={'content-type':'application/json','x-traceharness-user':owner,'x-traceharness-timestamp':timestamp,'x-traceharness-nonce':nonce,
-                 'x-traceharness-signature':sign(self.secret,method,path,owner,timestamp,nonce,raw)}
-        return self.client.request(method,path,content=raw,headers=headers)
+        raw=canonical(body) if body is not None else b''
+        return self.client.request(method,path,content=raw,headers={'content-type':'application/json'})
     def frozen(self):
         path='/api/runner/experiments'
         reviewed=self.request('POST',path+'/preflight',{'plan':self.plan});self.assertEqual(reviewed.status_code,200,reviewed.text)
         value=reviewed.json();self.assertTrue(value['ok'],value)
         response=self.request('POST',path,{'plan':self.plan,'plan_sha256':value['plan_sha256'],'idempotency_key':'api-fixture-create-key'})
         self.assertEqual(response.status_code,200,response.text);return response.json()['experiment']
-    def test_exact_authentication_owner_and_frozen_hash_boundaries(self):
-        from tests_agentlab.runner_service.test_runner import OTHER as AUTH_OTHER
-        prefix='/api/runner/experiments';eid='a'*48
-        for method,path,body in [('GET',prefix,None),('POST',prefix+'/preflight',{'plan':self.plan}),('POST',prefix,{}),
-                                 ('GET',prefix+'/'+eid,None),('POST',prefix+'/'+eid+'/start',{}),('POST',prefix+'/'+eid+'/cancel',{})]:
-            response=self.client.request(method,path,json=body,headers={'Origin':'https://hostile.invalid'})
-            self.assertEqual(response.status_code,401);self.assertNotIn('access-control-allow-origin',response.headers)
-        self.assertEqual(self.request('POST',prefix+'/preflight',{'plan':self.plan,'owner':AUTH_OTHER}).status_code,400)
-        row=self.frozen();path=prefix+'/'+row['id']
-        for method,route,body in [('GET',path,None),('POST',path+'/start',{'credential_id':'a'*48,'plan_sha256':row['plan_sha256']}),('POST',path+'/cancel',{})]:
-            response=self.request(method,route,body,AUTH_OTHER);self.assertEqual(response.status_code,404,response.text)
-        self.assertEqual(self.request('GET',prefix,owner=AUTH_OTHER).json(),{'experiments':[]})
+    def test_exact_fields_owner_and_frozen_hash_boundaries(self):
+        prefix='/api/runner/experiments'
+        self.assertEqual(self.request('POST',prefix+'/preflight',{'plan':self.plan,'owner':'someone-else'}).status_code,400)
+        row=self.frozen()
         self.assertEqual(self.request('POST',prefix,{'plan':self.plan,'plan_sha256':'0'*64,'idempotency_key':'api-fixture-other-key'}).status_code,409)
+        self.assertEqual(self.request('GET',prefix+'/'+'a'*48).status_code,404)
         self.assertEqual(self.executor.count,0)
     def test_full_api_freeze_start_completion_and_outcome_retention(self):
         row=self.frozen();prefix='/api/runner/experiments/'+row['id']

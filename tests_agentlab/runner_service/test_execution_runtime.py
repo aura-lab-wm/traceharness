@@ -34,7 +34,7 @@ class ExecutionRuntimeTests(unittest.TestCase):
         (self.package / 'repo/module.py').write_text('value = 1\n')
         (self.package / 'issue.md').write_text('Explicit plumbing fixture; never a registered live task.')
         (self.package / 'task.json').write_text(json.dumps({'visible_test_command': 'python3 -c "from module import value; assert value == 2"'}))
-        self.settings = Settings(shared_secret='explicit-test-shared-secret-32-characters', state_dir=self.root / 'state')
+        self.settings = Settings(state_dir=self.root / 'state')
         self.registry = SimpleNamespace(tasks={'fixture-task': {'path': str(self.package)}})
         self.executor = DockerExecutor(self.settings, self.registry)
         compiled = compile_blocks([{'type': 'prompt', 'text': 'Explicit fixture'},

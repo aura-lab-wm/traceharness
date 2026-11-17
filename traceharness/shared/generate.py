@@ -1,4 +1,4 @@
-"""Write the shared-sources bundle (SPEC 4.1): the one file the console, the package and the site agree on.
+"""Write the shared-sources bundle (SPEC 4.1): the one file the console and the package agree on.
 
     python -m traceharness.shared.generate            # writes both copies
     python -m traceharness.shared.generate --check    # exit 1, naming the stale file
@@ -7,7 +7,7 @@
 The two copies are byte-identical: `traceharness/shared/shared-sources.json` ships in the wheel, and
 `traceharness/frontend/src/shared/shared-sources.json` is compiled into the console. Every value comes
 from the source that owns it: the constants from `contract`, the colour tokens from the console's
-`index.css`, the capture sources from `capture/push.py`, the fixed and minimal harnesses from
+`index.css`, the capture sources from `capture/sources.py`, the fixed and minimal harnesses from
 `shallow/`, and a SHA-256 of each compiler-oracle file. Standard library only.
 """
 from __future__ import annotations
@@ -58,9 +58,9 @@ def tokens() -> dict:
 
 
 def capture_sources() -> list[str]:
-    m = _SOURCES.search(_read("traceharness/capture/push.py"))
+    m = _SOURCES.search(_read("traceharness/capture/sources.py"))
     if not m:
-        raise RuntimeError("traceharness/capture/push.py has no `SOURCES = (...)` line")
+        raise RuntimeError("traceharness/capture/sources.py has no `SOURCES = (...)` line")
     return sorted(ast.literal_eval(m.group(1)))
 
 
@@ -96,9 +96,9 @@ def build_bundle() -> dict:
         "tokens": tokens(),
         "capture_sources": capture_sources(),
         "shallow": shallow(),
-        "datasets": {"hosted": list(contract.HOSTED_DATASETS), "school": list(contract.SCHOOL_DATASETS)},
+        "datasets": {"school": list(contract.SCHOOL_DATASETS)},
         "environment": {"capabilities": list(contract.CAPABILITIES), "table": contract.CAPABILITY_TABLE,
-                        "messages": contract.MESSAGES, "library": contract.LIBRARY},
+                        "messages": contract.MESSAGES, "library": contract.LIBRARY, "runner": list(contract.RUNNER)},
         "glossary": {"labels": contract.LABELS, "retired": [dict(r) for r in contract.RETIRED]},
         "drafts": {"prefix_member": contract.DRAFT_PREFIX_MEMBER, "prefix_local": contract.DRAFT_PREFIX_LOCAL,
                    "names": list(contract.DRAFT_NAMES)},

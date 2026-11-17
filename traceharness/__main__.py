@@ -13,7 +13,7 @@ import time
 
 from traceharness.shared import contract
 
-__version__ = "0.5.5"
+__version__ = "0.6.0"
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -32,15 +32,14 @@ def build_parser() -> argparse.ArgumentParser:
                "same canonical study-aggregate statistics as GET /api/results/<dir>/{oracle,"
                "comparisons,experiment} as JSON; `traceharness sources` lists the grids on disk, the import "
                "adapters, and the benchmarks that are not loaded; `traceharness serve` is this, the default. "
-               "`traceharness login` signs in for capture; `traceharness whoami` checks identity and "
-               "`traceharness logout` revokes the token. `traceharness capture push` sends redacted "
-               "captured runs; `traceharness capture --watch --sync` uploads consented sessions. "
-               "`traceharness link --member` connects this account; `link --url wss://...` dials out "
-               "to a console. Neither opens a port. "
+               "`traceharness capture export --out FILE.zip` writes the captured sessions on this machine "
+               "(redacted) to one zip, and `traceharness capture import FILE.zip` (or `traceharness import "
+               "FILE.zip`) reads one on another machine. "
+               "`traceharness runner setup|status|verify` builds and checks the local runner (Docker). "
                "`traceharness native-prompts inventory|profile|experiment ...` inspects native prompt inventories and authors "
-               "profiles offline. `traceharness doctor [--site PATH] [--compare URL] [--json]` checks that the package, "
-               "the UI build, the shared sources, the runner image and the site agree (exit 0 aligned, 1 drift, 2 could "
-               "not check; --compare is its only network use).",
+               "profiles offline. `traceharness doctor [--json]` checks that the package, "
+               "the UI build and the shared sources agree and reports whether the local runner is set up (offline; exit 0 "
+               "aligned, 1 drift, 2 could not check; the runner is optional and never changes the exit code).",
     )
     p.add_argument("--host", default=os.environ.get("TRACEHARNESS_HOST", "127.0.0.1"),
                    help="interface to bind (default 127.0.0.1; use 0.0.0.0 in a container)")
@@ -157,6 +156,10 @@ def import_cli(argv: list[str]) -> int:
     adapters = I.list_sources()
     known = [a["name"] for a in adapters]
     path = os.path.abspath(os.path.expanduser(args.path))
+
+    from traceharness.capture import exchange                    # noqa: E402
+    if not args.detect and not args.source and os.path.isfile(path) and exchange.is_export_archive(path):
+        return exchange.import_path(path, paths.RUNS_ROOT)       # a capture export, not a foreign trace
 
     if args.source and args.source not in known:
         print(f"unknown adapter {args.source!r}", file=sys.stderr)
@@ -752,9 +755,6 @@ def main(argv: list[str] | None = None) -> int:
     # explicit form of the default. A bare invocation still serves, because the handout and the
     # lab deck both say `python3 -m traceharness --no-browser` and those must keep working.
     argv = list(sys.argv[1:] if argv is None else argv)
-    if argv and argv[0] in {"login", "logout", "whoami"}:
-        from traceharness.capture.client import auth_main
-        return auth_main(argv[0], argv[1:])
     if argv and argv[0] == "run":
         from traceharness.core import runner  # noqa: E402
         sys.argv = ["traceharness run"] + argv[1:]
@@ -798,14 +798,17 @@ def main(argv: list[str] | None = None) -> int:
         from traceharness.shared.doctor import main as doctor_main  # noqa: E402
         return doctor_main(argv[1:])
     if argv and argv[0] == "capture":
-        if len(argv) > 1 and argv[1] == "push":
-            from traceharness.capture.push import push_main  # noqa: E402
-            return push_main(argv[2:])
+        if len(argv) > 1 and argv[1] == "export":
+            from traceharness.capture.exchange import export_main  # noqa: E402
+            return export_main(argv[2:])
+        if len(argv) > 1 and argv[1] == "import":
+            from traceharness.capture.exchange import import_main  # noqa: E402
+            return import_main(argv[2:])
         from traceharness.capture.__main__ import main as capture_main  # noqa: E402
         return capture_main(argv[1:])
-    if argv and argv[0] == "link":
-        from traceharness.backend.remote_link import link_main  # noqa: E402
-        return link_main(argv[1:])
+    if argv and argv[0] == "runner":
+        from traceharness.runner.cli import main as runner_main  # noqa: E402
+        return runner_main(argv[1:])
     if argv and argv[0] == "native-prompts":
         from traceharness.runner_service.native_prompt_cli import main as native_prompts_main  # noqa: E402
         return native_prompts_main(argv[1:])

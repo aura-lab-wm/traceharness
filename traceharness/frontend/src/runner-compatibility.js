@@ -19,3 +19,44 @@ export function taskCompatibility(task, runtime, modelId = '') {
   }
   return { modelIds, status: modelId ? 'Ready' : 'Choose a model', reason: '' }
 }
+
+/** The capability a run really needs: a native agent needs run.native; a task packaged in a container
+    image (it carries environment digests) needs run.container; an in-process TraceHarness task needs
+    only run.local, so it runs with no Docker and no setup. */
+export function capabilityFor({ native = false, task = null } = {}) {
+  if (native) return 'run.native'
+  if (task && (task.environment_digests || task.environment_digest)) return 'run.container'
+  return 'run.local'
+}
+
+/** A copy of the configuration that carries the explicit consent flag, or does not carry it at all. */
+export function withUnverified(configuration, on) {
+  const { unverified_ok: _drop, ...rest } = configuration
+  return on ? { ...rest, unverified_ok: true } : rest
+}
+/** The arm ids an experiment preflight answer says need consent: its structured `consent_arms`, only when
+    `consent_required` is true. Never derived from issue text. */
+export const consentArmsOf = (result) => result?.consent_required === true && Array.isArray(result.consent_arms)
+  ? result.consent_arms.filter((id) => typeof id === 'string') : []
+/** A copy of the arms where exactly the arms in `ids` carry the explicit consent flag. */
+export const withUnverifiedArms = (arms, ids) => arms.map((arm) => ({ ...arm, configuration: withUnverified(arm.configuration, Array.isArray(ids) && ids.includes(arm.id)) }))
+export const UNVERIFIED_LABEL = 'Run without a receipt on this machine (not verified)'
+const RECEIPT_TEXT = /compatibility receipt|application receipt|not verified on this machine|unverified_ok/i
+/** True when a backend issue or an inventory reason says the combination or profile has no receipt
+    on this machine (so the user may confirm running it unverified). */
+export const needsReceiptConsent = (...texts) => texts.flat().some((text) => typeof text === 'string' && RECEIPT_TEXT.test(text))
+/** "Verified" or "Not verified on this machine" from a manifest's `verified`; '' when it is not recorded. */
+export const verificationLabel = (manifest) => manifest?.verified === false ? 'Not verified on this machine' : manifest?.verified === true ? 'Verified' : ''
+
+/** The manifest a trial ran under: its job's own when present, else the experiment's frozen arm manifest
+    (trial job summaries deliberately exclude manifests, so the plan's arm is the recorded source). */
+export function trialManifest(experiment, trial) {
+  const arm = (experiment?.plan?.arms || []).find((row) => row.id === trial?.arm_id)
+  return trial?.job?.manifest || arm?.manifest || null
+}
+/** One verification sentence for an experiment: any unverified trial makes the whole comparison unverified. */
+export function experimentVerification(experiment) {
+  const manifests = (experiment?.trials || []).map((trial) => trialManifest(experiment, trial)).filter(Boolean)
+  if (manifests.some((m) => m.verified === false)) return 'Not verified on this machine'
+  return manifests.length && manifests.every((m) => verificationLabel(m) === 'Verified') ? 'Verified' : ''
+}

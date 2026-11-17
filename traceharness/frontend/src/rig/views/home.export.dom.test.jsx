@@ -4,7 +4,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
 vi.hoisted(() => {
-  delete window.__TRACEHARNESS_MEMBER__
   window.__TRACEHARNESS_DATA__ = {}
 })
 
@@ -24,7 +23,7 @@ describe('home in an export', () => {
     const line = container.querySelector('[data-el="datasets-not-here"]')
     expect(line).not.toBeNull()
     const missing = DATASETS.school.filter((name) => name !== present)
-    expect(line.textContent).toContain(`Not in this snapshot: ${missing.join(', ')}`)
+    expect(line.textContent).toContain(`Not in this export: ${missing.join(', ')}`)
     expect(line.textContent).not.toContain(`${present},`)
     expect(line.textContent).toContain(why('data.import', 'Opening them'))
     expect(line.querySelector('[data-capability="data.import"]')).not.toBeNull()

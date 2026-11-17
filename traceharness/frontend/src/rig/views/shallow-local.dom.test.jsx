@@ -22,12 +22,11 @@ function environmentFor(mode) {
   const reasonFor = (id) => table[id]?.[mode] ?? 'unavailable'
   const why = (id, what) => can(id) ? '' : (messages[reasonFor(id)] ?? messages.unavailable)
     .replace(/\{(what|command|url)\}/g, (_, key) => ({ what, command: LOCAL_APP.command, url: LOCAL_APP.url })[key])
-  return { MODE: mode, LIBRARY, HAS_LIBRARY: LIBRARY.available === true, ENV: { mode, library: LIBRARY }, can, reasonFor, why }
+  return { MODE: mode, LIBRARY, HAS_LIBRARY: LIBRARY.available === true, ENV: { mode, library: LIBRARY }, can, reasonFor, why, useEnvironment: () => 0, refreshEnvironment: async () => true }
 }
 
 async function loadViews(mode) {
   vi.resetModules()
-  delete window.__TRACEHARNESS_MEMBER__
   if (mode === 'export') window.__TRACEHARNESS_DATA__ = { '/overview': { results: [] }, '/blocks/palette': PALETTE }
   else delete window.__TRACEHARNESS_DATA__
   vi.doMock('../../environment', () => environmentFor(mode))
@@ -70,7 +69,7 @@ beforeEach(() => {
 })
 afterEach(() => {
   cleanup(); vi.unstubAllGlobals(); vi.doUnmock('../../environment'); vi.resetModules()
-  delete window.__TRACEHARNESS_DATA__; delete window.__TRACEHARNESS_MEMBER__
+  delete window.__TRACEHARNESS_DATA__
 })
 
 describe('local console: harnesses save to this computer', () => {

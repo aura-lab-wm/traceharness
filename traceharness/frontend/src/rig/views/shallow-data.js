@@ -1,6 +1,5 @@
-/* Shared numbers for the three shallow screens. The signed-in page in
-   traceharness-site repeats this catalog. These screens do not call a model. */
-const TAIL = " When the edit is in place, verify the result with the tools you have, then call submit. Do not modify the tests. Network, privilege, secret access, and path escape stay blocked. Stay on the files the task names. Do not invent a tool. If the step cap arrives first, call submit with the edit you have and say what is still open. This copy belongs to the signed-in member. It does not read a home directory and it does not patch a local agent install."
+/* Shared numbers for the three shallow screens. These screens do not call a model. */
+const TAIL = " When the edit is in place, verify the result with the tools you have, then call submit. Do not modify the tests. Network, privilege, secret access, and path escape stay blocked. Stay on the files the task names. Do not invent a tool. If the step cap arrives first, call submit with the edit you have and say what is still open. This is a stand-in copy for this console. It does not read a home directory and it does not patch a local agent install."
 
 export const PERMISSION = "Network, privilege, secret access, and path escape stay blocked. Strict policy also blocks destructive shell and test edits."
 

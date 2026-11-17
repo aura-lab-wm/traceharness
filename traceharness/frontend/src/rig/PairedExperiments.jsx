@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { runnerRequest } from '../runner-api'
-import { can } from '../environment'
+import { reasonFor } from '../environment'
 import { Unavailable } from './unavailable'
 import { VARIANT_CREDENTIAL_ISSUE, armProfileSummary, captureArm, checkedExperiment, experimentActive, experimentDraft, hasCredentialShape, makeReference, pairAgainstBaseline, stableJSON } from './paired-experiments-state'
 import { ActionBar, Id } from './primitives'
@@ -8,9 +8,10 @@ import { planBudget } from './native/budget'
 import { experimentCsv, experimentMarkdown } from './native/experiment-stats'
 import { canonicalJSON, sha256HexSync } from './native/profile-model'
 import { copyText, downloadText } from './native/ui/download'
-import { experimentNameScope as memberScope, experimentNameStorage, readExperimentNames, rememberExperimentName } from './native/ui/experiment-names'
+import { experimentNameStorage, readExperimentNames, rememberExperimentName } from './native/ui/experiment-names'
 import { formatDate, formatKiB, plural } from './native/ui/format'
 import { pendingPairing, subscribePairing, takePairing } from './native/ui/pairing-bus'
+import { UNVERIFIED_LABEL, consentArmsOf, experimentVerification, withUnverified, withUnverifiedArms } from '../runner-compatibility'
 import { ResultsMatrix, readableExperiment, roleWords } from './native/ui/ResultsMatrix'
 import './PairedExperiments.css'
 
@@ -59,12 +60,14 @@ function scheduleRounds(plan) {
   return [...rounds.entries()].sort((left, right) => left[0] - right[0])
 }
 
-export function PairedExperiments({ configuration, credential, available, disabled, lease }) {
+export function PairedExperiments({ configuration, credential, credentialRequired = true, available, disabled, lease }) {
   const [open, setOpen] = useState(false)
   const [name, setName] = useState('Native prompt comparison')
   const [label, setLabel] = useState('Control')
   const [arms, setArms] = useState([])
   const [noneArm, setNoneArm] = useState(false)
+  const [consentArms, setConsentArms] = useState(null) // null until the user confirms; then the arm ids that carry the flag
+  const [rereview, setRereview] = useState(0)
   const [seed, setSeed] = useState('0')
   const [repeats, setRepeats] = useState('1')
   const [review, setReview] = useState(null)
@@ -77,15 +80,17 @@ export function PairedExperiments({ configuration, credential, available, disabl
   const [busTick, setBusTick] = useState(0)
   const [focusArms, setFocusArms] = useState(0)
   const [storage] = useState(experimentNameStorage)
-  const [names, setNames] = useState(() => readExperimentNames(storage, memberScope()))
+  const [names, setNames] = useState(() => readExperimentNames(storage))
   const pendingCreate = useRef(null)
   const uncertainStart = useRef(null)
   const mounted = useRef(true)
   const generation = useRef(0)
   const armsHeading = useRef(null)
+  // Saved experiments need no execution service (Docker stopped); only reviewing, freezing and starting do.
+  const historyReadable = available || ['ok', 'runner_not_ready'].includes(reasonFor('run.experiments'))
   const armsIssue = labelIssue(arms)
   let draft, draftIssue = ''
-  try { draft = experimentDraft(name, seed, repeats, arms.map((arm) => ({ ...arm, label: arm.label.trim() }))) } catch (failure) { draftIssue = failure.message }
+  try { draft = experimentDraft(name, seed, repeats, withUnverifiedArms(arms.map((arm) => ({ ...arm, label: arm.label.trim() })), consentArms || [])) } catch (failure) { draftIssue = failure.message }
   if (!draftIssue && armsIssue) { draft = undefined; draftIssue = armsIssue }
   const draftKey = draft ? stableJSON(draft) : ''
   const reviewed = review?.key === draftKey && review.result.ok
@@ -97,7 +102,7 @@ export function PairedExperiments({ configuration, credential, available, disabl
   useEffect(() => { mounted.current = true; return () => { mounted.current = false; generation.current++ } }, [])
   useEffect(() => subscribePairing((request) => { setBusTick((value) => value + 1); if (request) setOpen(true) }), [])
   useEffect(() => {
-    if (!open || !available) return
+    if (!open || !historyReadable) return
     let live = true
     runnerRequest('/experiments').then((data) => {
       if (!Array.isArray(data.experiments)) throw new Error('Experiment history is incomplete.')
@@ -106,9 +111,9 @@ export function PairedExperiments({ configuration, credential, available, disabl
         if (uncertainStart.current && data.experiments.some((row) => row.id === uncertainStart.current)) uncertainStart.current = null
         lease.current = !!uncertainStart.current || data.experiments.some(experimentActive)
       }
-    }).catch((failure) => { if (live) setError(failure.message) })
+    }).catch((failure) => { if (live && failure.status !== 404) setError(failure.message) }) // 404: no runner is configured, so no history
     return () => { live = false }
-  }, [open, available, revision, lease])
+  }, [open, historyReadable, revision, lease])
   useEffect(() => {
     if (!experimentActive(experiment)) return
     let live = true
@@ -139,15 +144,16 @@ export function PairedExperiments({ configuration, credential, available, disabl
     finally { if (mounted.current && request === generation.current) setBusy(false) }
   }
   const changed = (setter) => (event) => { generation.current++; setter(event.target.value); setReview(null); setBusy(false) }
-  const editArms = (next) => { generation.current++; setArms(next); setReview(null); setBusy(false) }
+  // Consent is keyed to positional arm ids; replacing the arms clears it so it cannot move to a different configuration.
+  const editArms = (next) => { generation.current++; setArms(next); setConsentArms(null); setReview(null); setBusy(false) }
   function remember(next) {
-    if (rememberExperimentName(storage, memberScope(), next.id, next.plan?.name)) setNames(readExperimentNames(storage, memberScope()))
+    if (rememberExperimentName(storage, next.id, next.plan?.name)) setNames(readExperimentNames(storage))
   }
   function prepare(variantLabel, includeNoneIncluded, origin) {
     try {
       const unedited = armProfileSummary({ configuration }).is_baseline
       const chosen = unedited ? 'A/A control (no edits)' : variantLabel || 'Profile ' + profileDigest(configuration.native_prompt_profile).slice(0, 12)
-      const next = pairAgainstBaseline(configuration, RESERVED.has(chosen) ? chosen + ' (edited)' : chosen, { includeNoneIncluded })
+      const next = pairAgainstBaseline(withUnverified(configuration, false), RESERVED.has(chosen) ? chosen + ' (edited)' : chosen, { includeNoneIncluded })
       const replaced = arms.length && stableJSON(arms.map((arm) => arm.id)) !== stableJSON(next.map((arm) => arm.id)) ? arms.length : 0
       editArms(next); setError(''); setOpen(true)
       setNotice((origin === 'workbench' ? 'Arms prepared from the Native Prompts workbench. ' : 'Arms prepared. ')
@@ -159,13 +165,15 @@ export function PairedExperiments({ configuration, credential, available, disabl
     } catch (failure) { setError(failure.message) }
   }
   function capture() {
-    try { editArms(captureArm(arms, label, configuration)); setLabel('Variant ' + (arms.length + 1)); setError(''); setNotice('') } catch (failure) { setError(failure.message) }
+    try { editArms(captureArm(arms, label, withUnverified(configuration, false))); setLabel('Variant ' + (arms.length + 1)); setError(''); setNotice('') } catch (failure) { setError(failure.message) }
   }
   function reviewPlan() { action(async (request) => {
     const result = await runnerRequest('/experiments/preflight', { method: 'POST', body: { plan: draft } })
     if (typeof result.ok !== 'boolean' || !Array.isArray(result.issues) || result.ok && (!/^[a-f0-9]{64}$/.test(result.plan_sha256) || !result.plan || !Number.isFinite(result.maximum_cost_usd))) throw new Error('The experiment review is incomplete.')
     if (mounted.current && request === generation.current) setReview({ key: draftKey, result })
   }) }
+  // Confirming consent re-runs the review with the flag in exactly the arms that needed it.
+  useEffect(() => { if (rereview > 0 && consentArms !== null && !busy && !draftIssue) reviewPlan() }, [rereview])
   function freeze() { action(async (request) => {
     const identity = draftKey + ':' + review.result.plan_sha256
     if (pendingCreate.current?.identity !== identity) pendingCreate.current = { identity, key: crypto.randomUUID() }
@@ -185,7 +193,7 @@ export function PairedExperiments({ configuration, credential, available, disabl
   }) }
   function control(operation) { action(async (request) => {
     if (operation === 'start') { lease.reserve?.(experiment.id); uncertainStart.current = experiment.id; lease.current = true }
-    const body = operation === 'start' ? { credential_id: credential.credential_id, plan_sha256: experiment.plan_sha256 } : {}
+    const body = operation === 'start' ? { ...(credentialRequired ? { credential_id: credential.credential_id } : {}), plan_sha256: experiment.plan_sha256 } : {}
     try {
       const data = await runnerRequest('/experiments/' + experiment.id + '/' + operation, { method: 'POST', body })
       const next = checkedExperiment(data.experiment, experiment.id)
@@ -226,7 +234,7 @@ export function PairedExperiments({ configuration, credential, available, disabl
   }
   const armSummary = (arm) => armProfileSummary(arm)
   const runControls = experiment && [
-    { label: experiment.status === 'paused' ? 'Resume experiment' : 'Start experiment', primary: true, onClick: () => control('start'), disabled: busy || !credential || !['ready', 'paused'].includes(experiment.status) },
+    { label: experiment.status === 'paused' ? 'Resume experiment' : 'Start experiment', primary: true, onClick: () => control('start'), disabled: busy || !available || (credentialRequired && !credential) || !['ready', 'paused'].includes(experiment.status) },
     { label: 'Refresh experiment', onClick: () => load(experiment.id), disabled: busy },
     { label: 'Cancel experiment', onClick: () => control('cancel'), disabled: busy || ['completed', 'cancelled'].includes(experiment.status) },
     { label: 'Export experiment results', onClick: () => exportAs('json'), title: 'The whole experiment as JSON', more: true },
@@ -284,6 +292,11 @@ export function PairedExperiments({ configuration, credential, available, disabl
         <li className="rg-pe-step">
           <h3>Review and freeze</h3>
           <div className="rg-pe-actions"><button type="button" className="rg-btn" disabled={busy || !available || !!draftIssue} onClick={reviewPlan}>Review experiment</button><button type="button" className="rg-btn" disabled={busy || !reviewed} onClick={freeze}>Freeze experiment</button></div>
+          {(consentArms !== null || consentArmsOf(review?.key === draftKey ? review.result : null).length > 0) && <label className="rg-pe-unverified" data-el="paired-unverified-consent"><input type="checkbox" checked={consentArms !== null && consentArmsOf(review?.key === draftKey ? review.result : null).every((id) => consentArms.includes(id))} disabled={busy} onChange={(event) => {
+            const needed = consentArmsOf(review?.key === draftKey ? review.result : null)
+            generation.current++; setReview(null); setBusy(false)
+            if (event.target.checked) { setConsentArms((current) => [...new Set([...(current || []), ...needed])]); setRereview((count) => count + 1) } else setConsentArms(null)
+          }} />{UNVERIFIED_LABEL}</label>}
           {review?.key === draftKey && <div className="rg-pe-review" aria-label="Experiment review">
             {review.result.issues.map((issue, index) => <p role="alert" key={index}>{issue}</p>)}
             {review.result.ok && <><strong>{review.result.trial_count} planned trials · maximum {money(review.result.maximum_cost_usd)}</strong>
@@ -298,9 +311,10 @@ export function PairedExperiments({ configuration, credential, available, disabl
           {!experiment && <p className="rg-pe-note">Freeze a reviewed plan, or open a saved experiment below, to run it and read its results here.</p>}
           {experiment && <section aria-label="Experiment results">
             <div className="rg-pe-result-head"><h4>{experiment.plan.name}</h4><strong>{String(experiment.status).replaceAll('_', ' ')}</strong></div>
+            {(() => { const label = experimentVerification(experiment); return label && <p className="rg-pe-note" data-el="paired-verified">{label}</p> })()}
             <p className="rg-pe-note">Plan <Id value={experiment.plan_sha256} max={24} head={12} tail={8} /></p>
             <ActionBar label="Experiment actions" actions={runControls} moreLabel="Export" />
-            {!credential && ['ready', 'paused'].includes(experiment.status) && <p>Connect OpenRouter above before starting.</p>}
+            {credentialRequired && !credential && ['ready', 'paused'].includes(experiment.status) && <p>Connect OpenRouter above before starting.</p>}
             {experiment.issues.map((issue, index) => <p role="alert" key={index}>{issue}</p>)}
             <p className="rg-pe-note">{experiment.summary.finalized_trials} finalized · {experiment.summary.pending_trials} pending · {experiment.summary.active_trials} active</p>
             <p className="rg-pe-note">Confirmed cost subtotal: {money(experiment.summary.confirmed_cost_usd)} · {plural(experiment.summary.cost_unknown_trials, 'trial')} with unconfirmed cost</p>
@@ -309,7 +323,7 @@ export function PairedExperiments({ configuration, credential, available, disabl
         </li>
       </ol>
       <div className="rg-pe-result-head"><h3>Saved experiments</h3><button type="button" className="rg-btn" onClick={() => setRevision((value) => value + 1)}>Refresh experiments</button></div>
-      {!recent.length && (available || can('run.experiments')) && <p className="rg-pe-note">{available ? 'No saved experiment yet.' : 'No execution service is connected.'}</p>}
+      {!recent.length && historyReadable && <p className="rg-pe-note">No saved experiment yet.</p>}
       {!!recent.length && <ul className="rg-pe-saved">{recent.map((row) => <li key={row.id}><button type="button" className="rg-pe-saved-row" disabled={busy} onClick={() => load(row.id)}>
         <span>{names[row.id] || 'name not loaded'} · {row.id.slice(0, 8)} · {String(row.status).replaceAll('_', ' ')} · {plural(row.trial_count, 'trial')}</span>
         <span className="rg-pe-note">{row.created_at === undefined ? 'date not reported' : formatDate(row.created_at)}</span>

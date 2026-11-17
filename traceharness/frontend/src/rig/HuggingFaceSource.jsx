@@ -3,7 +3,7 @@
    Lists the catalog's recorded-run datasets (GET /api/hf/catalog: also in an export). In the local console a
    row opens a preview (GET /api/hf/preview: columns and first rows, as text) and an import form (rows, seed,
    name) that starts POST /api/hf/import and follows it on GET /api/import/status, then shows the provenance
-   the server wrote (data/runs/<name>/provenance.json). In an export or a member snapshot the preview and the
+   the server wrote (data/runs/<name>/provenance.json). In an export the preview and the
    import are replaced by the shared "not available here" note. Every cell is rendered as text. */
 import { useEffect, useRef, useState } from 'react'
 import { can } from '../environment'

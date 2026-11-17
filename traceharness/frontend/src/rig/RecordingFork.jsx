@@ -6,7 +6,7 @@ import { prepareHarnessJSON, recordedHarnessSnapshot } from './harness-json'
 import { configurationFromRecordedHarness } from './configuration-from-recording'
 import { parseConfiguration } from './views/harness-composer-state'
 import { readDraft, writeDraft } from './views/shallow-drafts'
-import { encodeMemberJSON } from '../member-api'
+import { encodeJSON } from '../json'
 import './RecordingFork.css'
 
 export function safeRecordingSource(value) {
@@ -30,7 +30,7 @@ export function stagedRecordingFork(args = []) {
   try {
     const source = safeRecordingSource(value.source)
     if (!source) throw new Error()
-    return { request_id: value.request_id, configuration: parseConfiguration(encodeMemberJSON(value.configuration)), source }
+    return { request_id: value.request_id, configuration: parseConfiguration(encodeJSON(value.configuration)), source }
   } catch {
     return { error: 'The recorded fork is incomplete or unsupported. Your previous draft has been kept.' }
   }
@@ -45,7 +45,7 @@ export function ForkRecordedHarness({ run, detail, loading, error }) {
   try {
     if (loading || error || !snapshot.config) throw new Error('Load a complete recorded harness before forking it.')
     if (snapshot.source !== 'Recorded ledger') throw new Error('This source is partial or reconstructed. Its JSON can be exported, but an original executable harness cannot be recovered from it.')
-    configuration = parseConfiguration(encodeMemberJSON(configurationFromRecordedHarness({ harness: snapshot.config, modelId: run.raw?.model || run.raw?.['gen_ai.request.model'] || run.model, taskId: run.task })))
+    configuration = parseConfiguration(encodeJSON(configurationFromRecordedHarness({ harness: snapshot.config, modelId: run.raw?.model || run.raw?.['gen_ai.request.model'] || run.model, taskId: run.task })))
   } catch (cause) { reason = cause.message }
   function fork() {
     if (!configuration) return

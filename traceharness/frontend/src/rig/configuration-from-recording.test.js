@@ -1,5 +1,6 @@
 import { expect, it } from 'vitest'
 import { configurationFromManifest, configurationFromRecordedHarness } from './configuration-from-recording'
+import { parseConfiguration } from './views/harness-composer-state'
 
 const harness = () => ({ id: 'baseline', system_prompt: 'Inspect, edit, verify, and submit.', tools: ['read_file','edit_file','run_tests','submit'], policy: 'strict',
   context_window: 0, observation_chars: 6000, max_steps: 12, max_total_tokens: 400000, temperature: -0, max_tokens_per_call: 2048, include_file_listing: true, notes: 'Recorded experiment', sentinel: {} })
@@ -26,4 +27,22 @@ it('forks hosted native and compiled engine manifests into strict current-draft 
   const result=configurationFromManifest({...engine,harness:{id:'compiled-record-id',hash:'a'.repeat(12),blocks:engine.harness.blocks,configuration:harness()}})
   expect(result.harness).toEqual(engine.harness)
   expect(result.prompt).toBe(engine.prompt)
+})
+
+it('forks a recorded local manifest carrying verified, isolation_runtime and the enforced storage limit', () => {
+  const engine = configurationFromRecordedHarness({ harness: harness(), modelId: 'provider/model', taskId: 'registered-task' })
+  const recorded = { ...engine, runtime_version: '0.6.0', verified: false, isolation_runtime: 'runc', limits: { ...engine.limits, storage_bytes: 1073741824, storage_enforcement: 'directory-scan+filesystem-budget' },
+    harness: { id: 'compiled-record-id', hash: 'a'.repeat(12), blocks: engine.harness.blocks, configuration: harness() } }
+  const forked = configurationFromManifest(recorded)
+  expect(forked).not.toHaveProperty('unverified_ok')
+  expect(forked).not.toHaveProperty('verified')
+  expect(forked).not.toHaveProperty('isolation_runtime')
+  expect(forked.limits).not.toHaveProperty('storage_bytes')
+  expect(forked.limits).not.toHaveProperty('storage_enforcement')
+  expect(forked.limits).toEqual(engine.limits)
+  // The result passes the same validation a user import does, so the composer can load it.
+  expect(() => parseConfiguration(JSON.stringify(forked))).not.toThrow()
+  expect(configurationFromManifest({ ...recorded, verified: true, isolation_runtime: 'runsc' })).toEqual(forked)
+  expect(() => configurationFromManifest({ ...recorded, verified: 'yes' })).toThrow(/true or false/)
+  expect(() => configurationFromManifest({ ...recorded, isolation_runtime: 'kvm' })).toThrow(/isolation runtime/)
 })

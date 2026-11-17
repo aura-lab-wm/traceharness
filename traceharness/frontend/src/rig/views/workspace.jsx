@@ -28,11 +28,10 @@
    owns the theme today. Sec / About / CopyCmd are local; they would serve every view from ui.jsx.
    ==================================================================================== */
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { api, IS_STATIC, IS_MEMBER, captureControl } from '../../api'
-import { can, MODE } from '../../environment'
-import { LABELS, LOCAL_APP } from '../../shared/index.js'
+import { api, IS_STATIC, captureControl } from '../../api'
+import { can } from '../../environment'
+import { LOCAL_APP } from '../../shared/index.js'
 import { Unavailable } from '../unavailable'
-import { MemberCapture } from '../MemberCapture'
 import { HuggingFaceSource } from '../HuggingFaceSource'
 import { AboutConsole } from '../AboutConsole'
 import schoolPackage from '../../../../school-package.json'
@@ -599,9 +598,8 @@ function WatcherControls({ st, compact }) {
   )
 }
 
-/** The capture view: Capture computers for a member (the hosted account's computers and uploads),
- *  Session capture on this machine otherwise. */
-function Capture() { return MODE === 'member' ? <MemberCapture /> : <LocalCapture /> }
+/** The capture view: Session capture on this machine. */
+const Capture = LocalCapture
 function LocalCapture() {
   const local = can('capture.local')
   const st = useCapture(local ? 5000 : 0)
@@ -1224,20 +1222,6 @@ function Settings() {
         <p className="rg-small rg-mute">Remembered in this browser. Your system&apos;s reduced-motion setting is always honoured.</p>
         {(prefFail || !probe) && <p className="rg-small rg-red">This browser blocks storage — the preference holds for this visit only.</p>}
       </Sec>
-      {IS_MEMBER ? (
-<>
-      <Sec title="Learning preferences" meta={rig.lab ? <Tag tone="acc">on</Tag> : <Tag tone="dash">off</Tag>} el="student-lab-toggle">
-        <Switch checked={rig.lab} onChange={toggleLab} label={<b>Student Lab · Guided Analysis</b>} />
-        <div className="rg-ws-pair" data-panes>
-          <Note tone={rig.lab ? 'acc' : undefined}><div><b>When on</b><br />Reading guide, reference materials and an evidence-linked lesson beside each attempt. Prediction and intervention controls are marked as outside the guided path.</div></Note>
-          <Note tone={rig.lab ? undefined : 'acc'}><div><b>When off</b><br />The professional instrument: experiment comparisons and the trajectory inspector. Teaching resources stay out of navigation.</div></Note>
-        </div>
-        <p className="rg-small rg-mute">Off by default. Remembered in this browser (<span className="rg-mono">hs.studentLab</span>); it does not change data access.</p>
-        {labFail && <Note tone="red"><div><b>Could not save the preference.</b> This browser blocks storage — Student Lab is {rig.lab ? 'on' : 'off'} for this visit only.</div></Note>}
-        {rig.lab && <div className="rg-row rg-wrap" data-el="guidance-links"><Go spec="guide" className="rg-btn"><Icon name="guide" size={14} /> Reading guide</Go><Go spec="package" className="rg-btn"><Icon name="pkg" size={14} /> Reference materials</Go></div>}
-      </Sec>
-</>
-) : (
       <Sec title="Paths in use" meta={IS_STATIC ? 'export' : 'GET /api/settings'} el="paths-in-use">
         {!can('settings.server_key') ? <LocalOnly capability="settings.server_key" what="The server's paths" /> : st.error ? <Failed what="Could not read the server's settings." error={st.error} onRetry={st.reload} /> : !s ? <div className="rg-skel rg-ws-sk" /> : (
           <dl className="rg-kv rg-ws-kv">
@@ -1248,26 +1232,12 @@ function Settings() {
             <dt>tasks</dt><dd>{s.task_dir} <span className="rg-mute">· {Array.isArray(tasks.data) ? tasks.data.length : '—'}</span></dd>
           </dl>)}
       </Sec>
-)}
       </div>
       {/* The two key panels share their rows: key field beside key field, buttons beside buttons. */}
       <div className="rg-ws-set rg-ws-keys" data-panes>
-        {IS_MEMBER ? <Sec title="Local model integrations" el="member-local-keys"><p>Connect your OpenRouter key in Harnesses for hosted runs. Buddy, the narrator and the judge use keys held by the local console.</p><Unavailable capability="assistant.model" what="Asking a model" /><CopyCmd cmd={LOCAL_APP.command} /></Sec>
-          : can('assistant.model') ? <><BuddyPanel /><LabKeyPanel st={st} /></> : <><Sec title="Buddy · OpenRouter" el="buddy-settings"><Unavailable capability="assistant.model" what="Asking a model" /></Sec><LabKeyPanel st={st} /></>}
+        {can('assistant.model') ? <><BuddyPanel /><LabKeyPanel st={st} /></> : <><Sec title="Buddy · OpenRouter" el="buddy-settings"><Unavailable capability="assistant.model" what="Asking a model" /></Sec><LabKeyPanel st={st} /></>}
       </div>
       <div className="rg-ws-set" data-panes>
-      {IS_MEMBER ? (
-      <Sec title="Paths in use" meta={IS_STATIC ? 'export' : 'GET /api/settings'} el="paths-in-use">
-        {!can('settings.server_key') ? <LocalOnly capability="settings.server_key" what="The server's paths" /> : st.error ? <Failed what="Could not read the server's settings." error={st.error} onRetry={st.reload} /> : !s ? <div className="rg-skel rg-ws-sk" /> : (
-          <dl className="rg-kv rg-ws-kv">
-            <dt>base URL</dt><dd>{s.base_url}</dd>
-            <dt>lab root</dt><dd>{s.lab_root}</dd>
-            <dt>runs root</dt><dd>{s.results_root} <span className="rg-mute">· {plural((s.results || []).length, 'directory', 'directories')}</span></dd>
-            <dt>harnesses</dt><dd>{s.harness_dir} <span className="rg-mute">· {(s.harnesses || []).length}</span></dd>
-            <dt>tasks</dt><dd>{s.task_dir} <span className="rg-mute">· {Array.isArray(tasks.data) ? tasks.data.length : '—'}</span></dd>
-          </dl>)}
-      </Sec>
-) : (
 <>
       <Sec title="Learning preferences" meta={rig.lab ? <Tag tone="acc">on</Tag> : <Tag tone="dash">off</Tag>} el="student-lab-toggle">
         <Switch checked={rig.lab} onChange={toggleLab} label={<b>Student Lab · Guided Analysis</b>} />
@@ -1281,7 +1251,6 @@ function Settings() {
       </Sec>
       {can('assistant.model') ? <NarratorPanel /> : <Sec title="The narrator" el="narrator-key"><Unavailable capability="assistant.model" what="Asking a model" /></Sec>}
 </>
-)}
       </div>
       <div className="rg-ws-set" data-panes><AboutConsole /></div>
     </div>
@@ -1532,11 +1501,9 @@ export const views = {
   sources: { tag: 'src', title: () => 'Sources', render: Sources, crumbs: () => [['sources & machine']],
     Actions: () => <Go spec="capture" className="rg-btn">Session capture <Icon name="right" size={13} /></Go>,
     palette: () => [{ title: 'Sources & results on disk', detail: 'data/runs · import a trace', spec: 'sources', keywords: 'load trajectories import' }] },
-  capture: { tag: 'cap', title: () => (MODE === 'member' ? LABELS.capture_member : 'Capture'), render: Capture,
-    crumbs: () => (MODE === 'member' ? [[LABELS.capture_member]] : [['sources & machine', 'sources'], ['session capture']]),
-    palette: () => [MODE === 'member'
-      ? { title: LABELS.capture_member, detail: 'connected computers · uploaded sessions', spec: 'capture' }
-      : { title: 'Session capture', detail: 'watcher · captured sessions', spec: 'capture' }] },
+  capture: { tag: 'cap', title: () => 'Capture', render: Capture,
+    crumbs: () => [['sources & machine', 'sources'], ['session capture']],
+    palette: () => [{ title: 'Session capture', detail: 'watcher · captured sessions', spec: 'capture' }] },
   sentinel: { tag: 'sent', title: () => 'Sentinel', render: Sentinel, crumbs: () => [['sentinel · early warning on a partial trajectory']], outsideGuided: () => true,
     palette: () => [{ title: 'Sentinel', detail: 'early warning on a partial trajectory', spec: 'sentinel' }] },
   canvas: { tag: 'cv', title: () => 'Canvas', render: Canvas, crumbs: () => [['canvas · studies → models → cells']], outsideGuided: () => true,

@@ -327,6 +327,108 @@ describe('ExperimentWorkspace matrix authoring, compatibility, and budget guards
   })
 })
 
+describe('ExperimentWorkspace consent to run unverified arms', () => {
+  it('offers the checkbox only from consent_required, and flags exactly the arms in consent_arms', async () => {
+    const catalog = catalogFixture()
+    const plans = []
+    runnerRequest.mockImplementation((path, options) => {
+      if (path === '/experiments/preflight') {
+        plans.push(options.body.plan)
+        const needy = options.body.plan.arms[0].id
+        // The real backend's shape: a generic issue, no receipt wording, plus the structured consent fields.
+        return Promise.resolve(options.body.plan.arms[0].configuration.unverified_ok === true ? preflightOk(options.body.plan)
+          : { ok: false, issues: ['Configuration ' + needy + ' did not pass current runner review.'], consent_required: true, consent_arms: [needy] })
+      }
+      return Promise.resolve({ experiments: [] })
+    })
+    render(<ExperimentWorkspace configuration={customConfiguration('Prompt for consent', 1)} catalog={catalog} available lease={{ current: false }} />)
+    await openMatrix()
+    fireEvent.click(screen.getByRole('button', { name: 'Capture current harness' }))
+    fireEvent.click(screen.getByRole('checkbox', { name: 'Select model Model A' }))
+    fireEvent.click(screen.getByRole('checkbox', { name: 'Select model Model B' }))
+    fireEvent.click(screen.getByRole('checkbox', { name: 'Select task Task Alpha' }))
+    const label = 'Run without a receipt on this machine (not verified)'
+    expect(screen.queryByLabelText(label)).toBeNull()
+    fireEvent.click(screen.getByRole('button', { name: 'Review matrix experiment' }))
+    await screen.findByText(/did not pass current runner review/)
+    expect(plans[0].arms.some((arm) => Object.hasOwn(arm.configuration, 'unverified_ok'))).toBe(false)
+    const box = screen.getByLabelText(label)
+    expect(box.checked).toBe(false)
+    expect(plans).toHaveLength(1) // nothing is set without the user's action
+    fireEvent.click(box) // the click re-runs the review by itself
+    await screen.findByText(/planned trials/)
+    expect(plans).toHaveLength(2)
+    expect(plans[1].arms.length).toBe(2)
+    expect(plans[1].arms[0].configuration.unverified_ok).toBe(true)
+    expect(plans[1].arms[1].configuration).not.toHaveProperty('unverified_ok')
+  })
+
+  it('clears consent when the axes or the snapshots change, so it never moves to another configuration', async () => {
+    const catalog = catalogFixture()
+    const plans = []
+    runnerRequest.mockImplementation((path, options) => {
+      if (path === '/experiments/preflight') {
+        plans.push(options.body.plan)
+        const needy = options.body.plan.arms[0].id
+        return Promise.resolve(options.body.plan.arms[0].configuration.unverified_ok === true ? preflightOk(options.body.plan)
+          : { ok: false, issues: ['Configuration ' + needy + ' did not pass current runner review.'], consent_required: true, consent_arms: [needy] })
+      }
+      return Promise.resolve({ experiments: [] })
+    })
+    render(<ExperimentWorkspace configuration={customConfiguration('Prompt for consent', 1)} catalog={catalog} available lease={{ current: false }} />)
+    await openMatrix()
+    fireEvent.click(screen.getByRole('button', { name: 'Capture current harness' }))
+    fireEvent.click(screen.getByRole('checkbox', { name: 'Select model Model A' }))
+    fireEvent.click(screen.getByRole('checkbox', { name: 'Select model Model B' }))
+    fireEvent.click(screen.getByRole('checkbox', { name: 'Select task Task Alpha' }))
+    const label = 'Run without a receipt on this machine (not verified)'
+    fireEvent.click(screen.getByRole('button', { name: 'Review matrix experiment' }))
+    await screen.findByText(/did not pass current runner review/)
+    fireEvent.click(screen.getByLabelText(label))
+    await screen.findByText(/planned trials/)
+    // an axis change: the next review carries no consent
+    fireEvent.click(screen.getByRole('checkbox', { name: 'Select task Task Beta' }))
+    const before = plans.length
+    fireEvent.click(screen.getByRole('button', { name: 'Review matrix experiment' }))
+    await screen.findByText(/did not pass current runner review/)
+    expect(plans.length).toBe(before + 1)
+    expect(plans.at(-1).arms.some((arm) => Object.hasOwn(arm.configuration, 'unverified_ok'))).toBe(false)
+    expect(screen.getByLabelText(label).checked).toBe(false)
+    // a snapshot replacement: same
+    fireEvent.click(screen.getByLabelText(label))
+    await screen.findByText(/planned trials/)
+    fireEvent.change(screen.getByLabelText('Harness snapshot name'), { target: { value: 'Second snapshot' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Capture current harness' }))
+    expect(screen.queryByLabelText(label)).toBeNull() // consent is gone with the old plan
+  })
+
+  it('does not offer the checkbox for receipt-worded issue text without consent_required', async () => {
+    const catalog = catalogFixture()
+    runnerRequest.mockImplementation((path) => Promise.resolve(path === '/experiments/preflight'
+      ? { ok: false, issues: ['This task/runtime/model combination has no matching compatibility receipt. Set unverified_ok to run it anyway.'] }
+      : { experiments: [] }))
+    render(<ExperimentWorkspace configuration={customConfiguration('Prompt for consent', 1)} catalog={catalog} available lease={{ current: false }} />)
+    await openMatrix()
+    fireEvent.click(screen.getByRole('button', { name: 'Capture current harness' }))
+    fireEvent.click(screen.getByRole('checkbox', { name: 'Select model Model A' }))
+    fireEvent.click(screen.getByRole('checkbox', { name: 'Select task Task Alpha' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Review matrix experiment' }))
+    await screen.findByText(/no matching compatibility receipt/)
+    expect(screen.queryByLabelText('Run without a receipt on this machine (not verified)')).toBeNull()
+  })
+
+  it('shows saved experiments and loads one with the execution service unavailable (runner_not_ready)', async () => {
+    const catalog = catalogFixture()
+    const id = 'd'.repeat(48)
+    runnerRequest.mockImplementation((path) => Promise.resolve(path === '/experiments' ? { experiments: [{ id, status: 'completed', trial_count: 2 }] } : { experiments: [] }))
+    render(<ExperimentWorkspace configuration={customConfiguration('History', 1)} catalog={catalog} available={false} lease={{ current: false }} />)
+    await openMatrix()
+    expect(await screen.findByRole('button', { name: /dddddddd · completed · 2 trials/ })).toBeTruthy()
+    expect(runnerRequest).toHaveBeenCalledWith('/experiments')
+    expect(screen.getByRole('button', { name: 'Review matrix experiment' }).disabled).toBe(true)
+  })
+})
+
 describe('ExperimentWorkspace freeze/start idempotency, credentials, lease, cancellation, and results', () => {
   it('reuses freeze idempotency_key after uncertain failure, resets review on 409, and never sends credentials before explicit start', async () => {
     const catalog = catalogFixture()
@@ -390,6 +492,26 @@ describe('ExperimentWorkspace freeze/start idempotency, credentials, lease, canc
     const allPosts = runnerRequest.mock.calls.filter(([p, o]) => p === '/experiments' && o?.method === 'POST')
     expect(allPosts[3][1].body.idempotency_key).not.toBe(allPosts[2][1].body.idempotency_key)
     expect(screen.getByRole('button', { name: 'Start experiment' }).disabled).toBe(false)
+  })
+
+  it('starts without credential_id when the catalog says no credential is required', async () => {
+    const catalog = catalogFixture()
+    const plan = { version: 2, name: 'No key', seed: 0, repeats: 1, budget_usd: 10,
+      arms: [{ id: 'arm-1', label: 'Custom · Model A · Task Alpha', configuration: { ...customConfiguration('Run', 2), model_id: 'fixture/model-a', task_id: 'task-alpha' } }] }
+    const readyExp = frozenRecord(plan, { id: 'a'.repeat(48), status: 'ready' })
+    runnerRequest.mockImplementation(async (path) => {
+      if (path === '/experiments') return { experiments: [readyExp] }
+      if (path === '/experiments/' + readyExp.id) return { experiment: readyExp }
+      if (path === '/experiments/' + readyExp.id + '/start') return { experiment: { ...readyExp, status: 'running' } }
+      throw new Error('Unexpected: ' + path)
+    })
+    render(<ExperimentWorkspace configuration={customConfiguration()} catalog={catalog} credentialRequired={false} available lease={createExperimentConnectionLease()} />)
+    await openMatrix()
+    fireEvent.click(await screen.findByRole('button', { name: /aaaaaaaa · ready/ }))
+    await screen.findByLabelText('Matrix experiment results')
+    fireEvent.click(screen.getByRole('button', { name: 'Start experiment' }))
+    await waitFor(() => expect(runnerRequest.mock.calls.some(([path]) => path.endsWith('/start'))).toBe(true))
+    expect(runnerRequest.mock.calls.find(([path]) => path.endsWith('/start'))[1].body).toEqual({ plan_sha256: readyExp.plan_sha256 })
   })
 
   it('retains lease on uncertain start without auto-retrying, reconciles 4xx start refusals, resumes paused runs, and cancels cleanly', async () => {

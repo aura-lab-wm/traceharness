@@ -5,17 +5,11 @@
    build (__HL_BUILD__, the hash of the source the bundle was built from) and the mode.
      local    also reads the server's own stamp (GET /api/version) and asks for a reload when the
               server serves a different UI build or different shared sources than this tab.
-     member   also reads the site's stamp (fetchSiteVersion: one same-origin GET of /api/version)
-              and shows its snapshot's version and date, and says so when the site and this
-              console were built from different shared sources. Any failure: "site version not
-              reported", nothing else.
      export   asks nothing: the file is what it is.
    Every value is drawn as text; the stamps carry versions, digests and dates only.
    ==================================================================================== */
-import { useEffect, useState } from 'react'
 import { MODE } from '../environment'
 import { SHARED, SHARED_SHA256 } from '../shared/index.js'
-import { fetchSiteVersion } from '../site-version'
 import { useApi } from './data'
 import { BUILD } from './buildWatch'
 
@@ -42,25 +36,6 @@ function LocalServer() {
   </>
 }
 
-function MemberSite() {
-  const [site, setSite] = useState(undefined)   // undefined while asking, null when not reported
-  useEffect(() => {
-    let alive = true
-    fetchSiteVersion().then((v) => { if (alive) setSite(v) })
-    return () => { alive = false }
-  }, [])
-  if (site === undefined) return <p className="rg-small rg-mute" data-el="about-site">Reading the site&apos;s version…</p>
-  if (site === null) return <p className="rg-small rg-mute" data-el="about-site">site version not reported</p>
-  const snap = site.app_snapshot
-  return <>
-    <dl className="rg-kv" data-el="about-site">
-      <dt>site snapshot</dt><dd className="rg-mono">{snap ? `${snap.package_version} · published ${snap.published_at.slice(0, 10)}` : 'not recorded'}</dd>
-      <dt>site shared sources</dt><dd className="rg-mono">{short(site.shared_sources_sha256)}</dd>
-    </dl>
-    {site.shared_sources_sha256 !== SHARED_SHA256 && <p className="rg-small rg-amb" data-el="about-drift" role="status">This console and the site were built from different shared sources.</p>}
-  </>
-}
-
 export function AboutConsole() {
   return (
     <section className="rg-ws-sec" data-el="about-console" aria-label="About this console">
@@ -72,7 +47,6 @@ export function AboutConsole() {
         <dt>mode</dt><dd className="rg-mono">{MODE}</dd>
       </dl>
       {MODE === 'local' && <LocalServer />}
-      {MODE === 'member' && <MemberSite />}
     </section>
   )
 }

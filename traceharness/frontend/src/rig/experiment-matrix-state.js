@@ -1,4 +1,4 @@
-import { encodeMemberJSON } from '../member-api'
+import { encodeJSON } from '../json'
 import { checkedNativeProfile } from '../native-prompts-contract'
 import { taskCompatibility } from '../runner-compatibility'
 import { fieldIssues, numberIssue } from './harnessFields'
@@ -58,7 +58,7 @@ const keysMatch = (value, required, optional = []) => plain(value)
 const utf8Bytes = (text) => new TextEncoder().encode(text).length
 const roundUsd = (value) => Math.round(value * 1e8) / 1e8
 const hasControls = (value) => /[\p{Cc}\p{Cf}\p{Cs}]/u.test(value)
-const cloneConfiguration = (value) => JSON.parse(encodeMemberJSON(value))
+const cloneConfiguration = (value) => JSON.parse(encodeJSON(value))
 
 function checkUnicode(text) {
   for (let i = 0; i < text.length; i++) {
@@ -115,7 +115,8 @@ function checkedLabel(raw, noun = 'snapshot', maxChars = 80) {
 function checkedHarnessConfiguration(value, { requireAxes = false } = {}) {
   checkData(value, 0, { nodes: 0 }, 10, 100000)
   const expectedKeys = [...CONFIGURATION_KEYS, ...(value?.version === 2 ? ['native_prompt_profile'] : [])]
-  if (!keysMatch(value, expectedKeys) || ![1, 2].includes(value.version)) {
+  if (Object.hasOwn(value || {}, 'unverified_ok') && typeof value.unverified_ok !== 'boolean') fail('unverified_ok must be true or false.')
+  if (!keysMatch(value, expectedKeys, ['unverified_ok']) || ![1, 2].includes(value.version)) {
     fail('Capture a complete version 1 or native version 2 TraceHarness configuration.')
   }
   const native = NATIVE_DRAFTS.some((runtime) => runtime.id === value.runtime_id)
@@ -219,6 +220,7 @@ export function captureHarnessSnapshot(snapshots, label, configuration, { id } =
   const checked = checkedHarnessConfiguration(configuration, { requireAxes: false })
   checked.model_id = ''
   checked.task_id = ''
+  delete checked.unverified_ok // consent is given for the experiment, never captured
   return [...snapshots.map((row) => ({ ...row, configuration: cloneConfiguration(row.configuration) })), {
     id: snapshotId,
     label: trimmed,
@@ -233,6 +235,7 @@ export function replaceHarnessSnapshot(snapshots, snapshotId, configuration) {
   const checked = checkedHarnessConfiguration(configuration, { requireAxes: false })
   checked.model_id = ''
   checked.task_id = ''
+  delete checked.unverified_ok
   return snapshots.map((row, position) => position === index
     ? { id: row.id, label: row.label, configuration: checked }
     : { ...row, configuration: cloneConfiguration(row.configuration) })
@@ -258,7 +261,7 @@ function buildCellLabel(snapshotLabel, modelLabel, taskLabel, index, usedLabels)
   return candidate
 }
 
-export function expandMatrixCells({ snapshots = [], modelIds = [], taskIds = [], catalog = null } = {}) {
+export function expandMatrixCells({ snapshots = [], modelIds = [], taskIds = [], catalog = null, unverifiedOk = false, unverifiedArms = [] } = {}) {
   const cells = []
   const incompatibleCells = []
   const duplicateCells = []
@@ -272,6 +275,9 @@ export function expandMatrixCells({ snapshots = [], modelIds = [], taskIds = [],
         const cellConfig = cloneConfiguration(snapshot.configuration)
         cellConfig.model_id = String(modelId ?? '')
         cellConfig.task_id = String(taskId ?? '')
+        // The user's confirmation goes only into the arms the runner said need it (unverifiedArms), or every arm
+        // when a caller passes unverifiedOk: true.
+        if (unverifiedOk === true || (Array.isArray(unverifiedArms) && unverifiedArms.includes(`arm-${index + 1}`))) cellConfig.unverified_ok = true
 
         const runtime = catalog?.runtimes?.find((row) => row.id === cellConfig.runtime_id)
         const model = catalog?.models?.find((row) => row.id === cellConfig.model_id)
@@ -427,7 +433,7 @@ export function matrixPlanDraft({ name, seed, repeats, budgetUsd, cells }) {
     budget_usd: parsedBudget,
     arms,
   }
-  const bytes = utf8Bytes(encodeMemberJSON(plan))
+  const bytes = utf8Bytes(encodeJSON(plan))
   if (bytes > MAX_PLAN_BYTES) {
     fail(`Experiment plan is ${(bytes / 1024).toFixed(1)} KiB, exceeding the 768 KiB limit. Shorten prompts or reduce matrix arms.`)
   }

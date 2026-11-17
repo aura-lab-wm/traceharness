@@ -1,5 +1,5 @@
 # The agent image plus the pinned pure-Python dependencies of the real-repository task packages
-# (deploy/runner/tasks/*/requirements.lock, identical for all eight), so an agent can run their
+# (traceharness/runner/assets/tasks/*/requirements.lock, identical for all eight), so an agent can run their
 # public tests. Built by `traceharness agents build --real-repos`.
 ARG BASE
 FROM ${BASE}
