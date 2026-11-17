@@ -335,7 +335,7 @@
     "check": "budget",
     "is": "unknown"
    },
-   "text": "{estimate_text} Your budget or hours limit could not be checked.",
+   "text": "{estimate_text} Your {unchecked} limit could not be checked.",
    "method": "{estimate_text}"
   },
   {
@@ -349,8 +349,8 @@
     "check": "budget",
     "is": "shrunk"
    },
-   "text": "The full design would cost about ${full_cost} and take about {full_hours} h ({estimate_basis}); a subset of {tasks} tasks x {repeats} repeats fits your limits at about ${cost} and {hours} h.",
-   "method": "the design was cut to a subset of {tasks} tasks x {repeats} repeats to fit the budget and time"
+   "text": "The full design would cost about ${full_cost} and take about {full_hours} h ({estimate_basis}); a subset of {tasks} tasks x {repeats} repeats fits your {limits} limit at about ${cost} and {hours} h.",
+   "method": "the design was cut to a subset of {tasks} tasks x {repeats} repeats to fit the {limits} limit"
   },
   {
    "id": "within-limits",
@@ -363,8 +363,8 @@
     "check": "budget",
     "is": "fits"
    },
-   "text": "The full design ({tasks} tasks x {repeats} repeats) is about ${cost} and {hours} h ({estimate_basis}), within your limits.",
-   "method": "the full design fits the budget and time (about ${cost}, {hours} h)"
+   "text": "The full design ({tasks} tasks x {repeats} repeats) is about ${cost} and {hours} h ({estimate_basis}), within your {limits} limit.",
+   "method": "the full design fits the {limits} limit (about ${cost}, {hours} h)"
   },
   {
    "id": "over-limits",
@@ -377,8 +377,22 @@
     "check": "budget",
     "is": "none_fits"
    },
-   "text": "Even the smallest design (at least {min_tasks} tasks, one repeat) would exceed your limits: about ${cost} and {hours} h ({estimate_basis}).",
-   "method": "even the smallest design exceeds the budget or time"
+   "text": "Even the smallest design (at least {min_tasks} tasks, one repeat) would exceed your {limits} limit: about ${cost} and {hours} h ({estimate_basis}).",
+   "method": "even the smallest design exceeds the {limits} limit"
+  },
+  {
+   "id": "limit-not-checked",
+   "effect": "score",
+   "weight": 0,
+   "goals": [
+    "run"
+   ],
+   "when": {
+    "check": "unchecked",
+    "is": "yes"
+   },
+   "text": "Your {unchecked} limit could not be checked: {why}.",
+   "method": "the {unchecked} limit could not be checked ({why})"
   }
  ]
 }

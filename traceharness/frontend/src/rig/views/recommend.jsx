@@ -96,6 +96,7 @@ function Card({ label, tone, card, el }) {
         <p className="rg-rec-import" data-el="rec-import">
           Import it: <code className="rg-mono rg-rec-cmd">{card.command}</code>
           {typeof card.sources_view === 'string' && card.sources_view.startsWith('#/rig/') && <> · <a href={card.sources_view}>Open the Sources view</a></>}
+          {card.import_note && <span className="rg-rec-calc" data-el="rec-import-note">{card.import_note}</span>}
         </p>
       )}
       <h3 className="rg-rec-h">Reasons</h3>

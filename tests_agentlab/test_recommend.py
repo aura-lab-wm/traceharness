@@ -1,4 +1,4 @@
-"""The benchmark recommender: every rule fires on a hand-made entry and not on its negation."""
+"""The benchmark recommender (rule-by-rule firing, driven from the rule table: test_recommend_review.EveryRule)."""
 import copy
 import json
 import os
@@ -159,7 +159,7 @@ class Rules(unittest.TestCase):
         self.assertEqual(r["pick"]["subset"]["of_rows"], None)
         self.assertGreaterEqual(texts.lower().count("unknown"), 4)
 
-    def test_every_rule_in_the_table_is_exercised_by_these_tests(self):
+    def test_the_rule_table_is_well_formed(self):    # that each rule fires is tested in test_recommend_review.EveryRule
         ids = {r["id"] for r in R.load_rules()["rules"]}
         self.assertEqual(len(ids), len(R.load_rules()["rules"]), "rule ids are unique")
         for r in R.load_rules()["rules"]:

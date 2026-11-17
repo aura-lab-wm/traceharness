@@ -160,7 +160,11 @@ def collect(runs_root: str | None = None) -> dict:
         base = pass_rate(ds_all[d])
         # a dataset's imported runs come from one agent whose harness is not "baseline": then every graded run counts
         base = base if base["runs"] else pass_rate(ds_all[d], any_harness=True)
-        datasets[d] = dict(_summary(ds_rows.get(d, [])), recorded_runs=len(ds_all[d]), baseline=base)
+        by_model: dict[str, list[dict]] = {}
+        for r in ds_rows.get(d, []):
+            by_model.setdefault(str(r.get("model")), []).append(r)
+        datasets[d] = dict(_summary(ds_rows.get(d, [])), recorded_runs=len(ds_all[d]), baseline=base,
+                           per_model={m: _summary(rs) for m, rs in sorted(by_model.items())})
 
     # run-to-run variation, lab-wide: cells (model, harness, task) with at least two graded repeats
     repeated = disagree = 0
@@ -180,16 +184,34 @@ def collect(runs_root: str | None = None) -> dict:
     return out
 
 
-def cost_basis(evidence: dict, dataset_id: str | None) -> dict | None:
-    """The per-run cost and time for `dataset_id`, ONLY from recorded runs of that same dataset
-    (a catalog-id match or a provenance.json naming it). None otherwise: the lab's built-in tasks
-    are tiny and are not a guide to a real-repository benchmark."""
+def cost_basis(evidence: dict, dataset_id: str | None, model: str | None = None) -> dict | None:
+    """The per-run cost and time for `dataset_id`, ONLY from recorded runs of that same dataset (a catalog-id
+    match or a provenance.json naming it). None otherwise: the lab's built-in tasks are tiny and are not a guide
+    to a real-repository benchmark.
+
+    With a `model` that has recorded runs on the dataset, only that model's runs price it ("from N recorded runs
+    of <model> on <dataset>"). A model with none is priced from the dataset's other models and the text says
+    "from N recorded runs of other models on this dataset". With no model named, the dataset's runs are pooled
+    and the text says across how many models. A figure is never pooled silently."""
     ds = ((evidence or {}).get("datasets") or {}).get(dataset_id or "")
     if not ds or ds.get("median_cost_usd") is None:
         return None
-    return {"scope": "dataset", "dataset": dataset_id, "runs": ds["costed_runs"], "timed_runs": ds["timed_runs"],
-            "median_cost_usd": ds["median_cost_usd"], "median_seconds": ds["median_seconds"],
-            "text": f"from {ds['costed_runs']} recorded runs on {dataset_id}"}
+    per = ds.get("per_model") or {}
+    want = (model or "").strip().lower()
+    mine = next((m for m in per if m.lower() == want), None) if want else None
+    if mine is not None and per[mine].get("median_cost_usd") is not None:
+        s = per[mine]
+        return {"scope": "dataset", "dataset": dataset_id, "model": mine, "runs": s["costed_runs"], "timed_runs": s["timed_runs"],
+                "median_cost_usd": s["median_cost_usd"], "median_seconds": s["median_seconds"],
+                "text": f"from {s['costed_runs']} recorded runs of {mine} on {dataset_id}"}
+    if want:
+        text = f"from {ds['costed_runs']} recorded runs of other models on this dataset ({dataset_id}); none is of {model.strip()}"
+    elif len(per) > 1:
+        text = f"from {ds['costed_runs']} recorded runs on {dataset_id}, pooled across {len(per)} models (name a model to price it)"
+    else:
+        text = f"from {ds['costed_runs']} recorded runs on {dataset_id}"
+    return {"scope": "dataset", "dataset": dataset_id, "model": None, "runs": ds["costed_runs"], "timed_runs": ds["timed_runs"],
+            "median_cost_usd": ds["median_cost_usd"], "median_seconds": ds["median_seconds"], "text": text}
 
 
 def unknown_cost_text(evidence: dict | None, title: str, task_kind: str | None) -> str:
@@ -215,7 +237,13 @@ def size_advice(detect_points: float, evidence: dict | None, rules: dict, datase
         pick = (0.5, 0, "no recorded runs on this dataset: 0.5 assumed")
     p1, base_runs, base_text = pick
     delta = detect_points / 100.0
-    p2 = p1 + delta if p1 + delta <= 1 else p1 - delta
+    if p1 + delta <= 1 + 1e-12:
+        p2 = p1 + delta
+    elif p1 - delta >= -1e-12:
+        p2 = p1 - delta
+    else:
+        raise ValueError(f"a difference of {detect_points:g} points cannot exist from a baseline pass rate of {p1:.2f} "
+                         f"(it would go above 1 or below 0); ask for a smaller difference")
     p2 = min(1.0, max(0.0, round(p2, 10)))
     n = runs_per_arm(p1, p2, rules["alpha"], rules["power"])
     flip = (ev.get("variation") or {}).get("flip_rate")

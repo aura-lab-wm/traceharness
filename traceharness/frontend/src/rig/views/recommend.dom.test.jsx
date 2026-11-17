@@ -51,9 +51,23 @@ describe('recommend view: an importable dataset', () => {
     await waitFor(() => expect(el(container, 'rec-cards')).not.toBeNull())
     const box = el(el(container, 'rec-pick'), 'rec-import')
     expect(box.textContent).toContain('traceharness hf import n/traj --n 120')
+    expect(el(box, 'rec-import-note')).toBeNull()
     const link = within(box).getByRole('link', { name: /Sources/ })
     expect(link.getAttribute('href')).toBe('#/rig/sources')
     expect(el(el(container, 'rec-runner-up'), 'rec-import')).toBeNull()
+  })
+})
+
+describe('recommend view: an import larger than one import can read', () => {
+  it('shows the note that says how many rows are needed and that an import is capped', async () => {
+    const note = 'The study needs 39,237 rows to detect 1 points, but an import is capped at 2,000 rows per run: this command reads 2,000.'
+    const big = { ...RESULT, pick: card('n/traj', 'Traj', { command: 'traceharness hf import n/traj --n 2000', sources_view: '#/rig/sources', import_note: note }) }
+    const { fetchImpl } = stub(big)
+    const { container } = renderRig('#/rig/recommend', { data: rigFixture(), fetchImpl })
+    await waitFor(() => expect(el(container, 'rec-cards')).not.toBeNull())
+    const n = el(el(container, 'rec-pick'), 'rec-import-note')
+    expect(n.textContent).toContain('39,237')
+    expect(n.textContent).toContain('capped at 2,000')
   })
 })
 
@@ -83,7 +97,7 @@ describe('recommend view', () => {
     expect(not.textContent).toContain('seen-in-training')
   })
 
-  it('the cards start and end together: one grid row, stretched', () => {
+  it('puts the three cards in one grid container (layout itself is checked in a real browser, not in jsdom)', () => {
     const { container } = renderRig('#/rig/recommend', { data: rigFixture(), fetchImpl: stub().fetchImpl })
     return waitFor(() => expect(el(container, 'rec-cards')).not.toBeNull()).then(() => {
       expect(el(container, 'rec-cards').children).toHaveLength(3)

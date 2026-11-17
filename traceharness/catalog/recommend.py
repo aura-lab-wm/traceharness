@@ -110,11 +110,12 @@ def _design(entry: dict, p: dict, advice: dict, basis: dict | None, rules: dict,
         d["estimate"] = _estimate(False, "not_applicable", "No model calls: analysing recorded runs spends nothing on the lab's side.")
         return d
     conditions = rules["conditions"]
-    limited = p["budget_usd"] is not None or p["hours"] is not None
+    asked = [w for w, v in (("budget", p["budget_usd"]), ("hours", p["hours"])) if v is not None]
     if basis is None:
         text = E.unknown_cost_text(evidence, entry["title"], entry.get("task_kind"))
         d["estimate"] = _estimate(False, "unknown", text, tasks=tasks, repeats=repeats, conditions=conditions)
-        d["category"] = "unknown" if limited else "unlimited"
+        d["category"] = "unknown" if asked else "unlimited"
+        d["unchecked"] = list(asked)
         return d
 
     def est(t, r):
@@ -131,13 +132,20 @@ def _design(entry: dict, p: dict, advice: dict, basis: dict | None, rules: dict,
     full = est(tasks, repeats)
     d["estimate"] = full
     d["full"] = full
+    # a limit is judged only on a quantity that was measured: cost for the budget (the basis exists), time for the hours
+    checked = [w for w in asked if w == "budget" or basis["median_seconds"] is not None]
+    d["checked"] = checked
+    d["unchecked"] = [w for w in asked if w not in checked]
+    if not asked:
+        d["category"] = "unlimited"
+        return d
+    if not checked:
+        d["category"] = "unchecked"          # a cost is known but no limit could be judged: no reward, no "fits" sentence
+        return d
 
     def fits(e):
         return ((p["budget_usd"] is None or e["cost_usd"] <= p["budget_usd"] + 1e-12) and
-                (p["hours"] is None or e["seconds"] is None or e["seconds"] / 3600.0 <= p["hours"] + 1e-12))
-    if not limited:
-        d["category"] = "unlimited"
-        return d
+                ("hours" not in checked or e["seconds"] / 3600.0 <= p["hours"] + 1e-12))
     if fits(full):
         d["category"] = "fits"
         return d
@@ -146,9 +154,9 @@ def _design(entry: dict, p: dict, advice: dict, basis: dict | None, rules: dict,
     per_sec = (basis["median_seconds"] or 0) * conditions
     for r in range(repeats, 0, -1):
         caps = []
-        if p["budget_usd"] is not None:
+        if p["budget_usd"] is not None and per_run:
             caps.append(math.floor((p["budget_usd"] + 1e-12) / (per_run * r)))
-        if p["hours"] is not None and per_sec:
+        if "hours" in checked and per_sec:
             caps.append(math.floor((p["hours"] * 3600.0 + 1e-9) / (per_sec * r)))
         t = min([tasks] + caps)
         if t >= floor:
@@ -210,7 +218,13 @@ def _checks(entry: dict, p: dict, design: dict, advice: dict) -> dict:
         est = design.get("estimate")
         full = design.get("full") or {}
         shown = design.get("smallest") if cat == "none_fits" else est
+        lim = " and ".join(design.get("checked") or [])
+        miss = " and ".join(design.get("unchecked") or [])
+        if design.get("unchecked") and cat != "unknown":
+            # the budget is always measurable once a cost basis exists, so what is left is the time
+            out["unchecked"] = ("yes", {"unchecked": miss, "why": "the recorded runs carry no timing"})
         out["budget"] = (cat, {
+            "limits": lim or "budget or hours", "unchecked": miss or "budget or hours",
             "cost": _fmt(shown.get("cost_usd")), "hours": _fmt(shown.get("hours")),
             "full_cost": _fmt(full.get("cost_usd")), "full_hours": _fmt(full.get("hours")),
             "tasks": design["tasks"], "repeats": design["repeats"], "min_tasks": 20,
@@ -251,9 +265,16 @@ def _card(c: dict, entry: dict, advice: dict | None = None) -> dict:
             "reasons": [{"rule": r["rule"], "text": r["text"], "weight": r["weight"], "method": r["method"]} for r in c["rules"]],
             "estimate": d["estimate"], "size_advice": advice}
     if entry.get("kind") == "trajectories" and (entry.get("importer") or entry.get("hf_adapter")):
-        # an analyse card for a dataset the console can import: the command with the recommended --n, and where to watch it
-        card["command"] = f"traceharness hf import {entry['id']} --n {d['tasks']}"
+        # an analyse card for a dataset the console can import: the command, and where to watch it. One import is
+        # capped (hf_fetch.MAX_ROWS), so --n never exceeds it; when the study needs more, the card says so.
+        from . import hf_fetch
+        cap = hf_fetch.MAX_ROWS
+        card["command"] = f"traceharness hf import {entry['id']} --n {min(d['tasks'], cap)}"
         card["sources_view"] = "#/rig/sources"
+        if d["tasks"] > cap:
+            card["import_note"] = (f"The study needs {d['tasks']:,} rows to detect {advice['detect_points']:g} points, but an import is "
+                                   f"capped at {cap:,} rows per run: this command reads {cap:,}, and the other {d['tasks'] - cap:,} "
+                                   f"would need further imports under other seeds and names.")
     return card
 
 
@@ -301,7 +322,7 @@ def recommend(params: dict, catalog: dict, evidence: dict | None) -> dict:
     scored = []
     for d in catalog["datasets"]:
         advice = E.size_advice(p["detect_points"], evidence, rules, d["id"])
-        basis = E.cost_basis(evidence, d["id"]) if p["goal"] == "run" else None
+        basis = E.cost_basis(evidence, d["id"], p["model"]) if p["goal"] == "run" else None
         scored.append(_score_one(d, p, rules, advice, basis, evidence))
     order = sorted(scored, key=lambda c: (c["excluded"], -c["score"], _tie_key(c)))
     live = [c for c in order if not c["excluded"]]
@@ -322,7 +343,7 @@ def recommend(params: dict, catalog: dict, evidence: dict | None) -> dict:
         "runner_up": runner_card,
         "not_this": _card(not_this, not_this["entry"]) if not_this else None,
         "size_advice": pick["advice"] if pick else E.size_advice(p["detect_points"], evidence, rules, None),
-        "cost_basis": E.cost_basis(evidence, pick["id"]) if pick and p["goal"] == "run" else None,
+        "cost_basis": E.cost_basis(evidence, pick["id"], p["model"]) if pick and p["goal"] == "run" else None,
         "catalog_refreshed": catalog.get("refreshed"),
         "considered": [{"id": c["id"], "title": c["title"], "kind": c["kind"], "score": c["score"], "excluded": c["excluded"],
                         "rules": [{"rule": r["rule"], "weight": r["weight"], "text": r["text"]} for r in c["rules"]]} for c in order],
@@ -352,9 +373,16 @@ def method_paragraph(result: dict) -> str:
     if bad:
         s += "Caveats: " + "; ".join(bad) + ". "
     sub = pick["subset"]
-    s += (f"The study uses {sub['rows']} tasks with {sub['repeats']} repeat(s) per task, sized to detect a difference of "
-          f"{adv['detect_points']:g} percentage points between two conditions (alpha {adv['alpha']}, power {adv['power']}, "
-          f"two-proportion normal approximation, baseline pass rate {adv['baseline_pass_rate']:.2f}: {adv['baseline_basis']}).")
+    have, need = sub["rows"] * sub["repeats"], adv["runs_per_condition"]
+    basis = (f"alpha {adv['alpha']}, power {adv['power']}, two-proportion normal approximation, "
+             f"baseline pass rate {adv['baseline_pass_rate']:.2f}: {adv['baseline_basis']}")
+    if have >= need:
+        s += (f"The study uses {sub['rows']} tasks with {sub['repeats']} repeat(s) per task, sized to detect a difference of "
+              f"{adv['detect_points']:g} percentage points between two conditions ({basis}).")
+    else:
+        s += (f"Detecting a difference of {adv['detect_points']:g} percentage points between two conditions needs {need} runs per "
+              f"condition ({basis}). The affordable design has {sub['rows']} tasks with {sub['repeats']} repeat(s) per task, "
+              f"{have} runs per condition, so it is underpowered for that difference and can detect only a larger one.")
     est = pick.get("estimate") or {}
     if p["goal"] == "run" and not est.get("known"):
         s += " " + est.get("text", "")
@@ -433,7 +461,11 @@ def main(argv: list[str] | None = None) -> int:
     except ValueError as exc:
         print(f"traceharness recommend: {exc}", file=sys.stderr)
         return 2
-    result = recommend(params, hf.load(), E.collect())
+    try:
+        result = recommend(params, hf.load(), E.collect())
+    except ValueError as exc:
+        print(f"traceharness recommend: {exc}", file=sys.stderr)
+        return 2
     result["method"] = method_paragraph(result)
     print(json.dumps(result, indent=2, sort_keys=True) if a.json else render_text(result))
     return 0
