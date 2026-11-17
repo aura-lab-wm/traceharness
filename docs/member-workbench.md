@@ -1,8 +1,8 @@
 # Member workbench and local execution
 
-The member workbench combines recorded TraceHarness evidence and shallow harness authoring in one React surface. The authenticated Worker serves `/app` from an exported `app.html.gz` snapshot. It inserts an account-scoped, credential-free marker before the React bundle runs. `/app/shallow` remains an independent plain-JavaScript editor with a link back to the workbench.
+The member workbench combines recorded TraceHarness evidence and shallow harness authoring in one React surface. The authenticated Worker serves `/app` from an exported `app.html.gz` snapshot of the console. It inserts an account-scoped, credential-free marker before the React bundle runs. `/app/shallow` remains the Plain harness editor, an independent plain-JavaScript page with a link back to the console.
 
-The hosted workbench retains datasets, analysis, recorded trajectories, questions, reports, and case files. Fixed harnesses, the minimal wizard, and the block builder use a narrow same-origin member API for previews and confirmed saves. Designing a harness from a recorded run retains the evidence link and the selected dataset/model/harness. Customize, Back to Minimal Wizard, and Reset to Wizard Answers preserve the intended answers and edits. Drafts and personal annotations are scoped to the signed-in account.
+The hosted console retains datasets, analysis, recorded trajectories, questions, reports, and case files. Fixed harnesses, the Minimal harness, and the block builder use a narrow same-origin member API for previews and confirmed saves. Designing a harness from a recorded run retains the evidence link and the selected dataset/model/harness. Customize, Back to Minimal Wizard, and Reset to Wizard Answers preserve the intended answers and edits. Drafts and personal annotations are scoped to the signed-in account.
 
 A save is shown as saved only when account storage returns `stored: true`. Fixed-prompt updates use the previously read hash; first saves use an atomic insert-if-absent. Conflicting or unconfirmed responses retain the draft. Compiler warnings belong to the response wrapper and do not alter the harness or its hash. The fixed shells are TraceHarness stand-ins; their limits are lab choices, not verified limits of vendor products.
 
@@ -14,13 +14,13 @@ Imported SWE-agent recordings retain their source and license attribution. Their
 
 ## Local execution
 
-Run the full Python backend only on loopback:
+Run the local console, the full Python backend, only on loopback:
 
 ```sh
-python -m traceharness --host 127.0.0.1 --port 8742
+python -m traceharness --host 127.0.0.1 --port 8765
 ```
 
-Hosted `/app` does not run watch, launch, import, capture, judge, or model calls, and does not accept model keys. Those workflows belong to the local runner. The hosted member API permits only the supported harness read, compile, and save operations.
+and open `http://127.0.0.1:8765`. Hosted `/app` does not run watch, launch, import, capture, judge, or model calls, and does not accept model keys. Those workflows belong to the local console. The hosted member API permits only the supported harness read, compile, and save operations.
 
 ## Exporting and proof
 
