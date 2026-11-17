@@ -344,6 +344,23 @@ describe('dead ends are closed', () => {
     act(() => { fireEvent.click(within(m).getByRole('button', { name: 'Replies and tool calls (Timeline)' })) })
     expect(location.hash).toBe('#/rig/task:mini:alpha-1:baseline:t2:0:timeline')
   })
+  it('messages: malformed recorded messages render readably and never throw', () => {
+    const bad = [
+      { role: 'assistant', tool_calls: [null] },
+      { role: { nested: 'object' }, content: 'object-valued role' },
+      { role: 'assistant', content: 'mixed', tool_calls: [{ name: 'bash', arguments: { command: 'ls' } }, 7, { function: { name: 'edit', arguments: 42 } }, { function: null }] },
+      null,
+      'a bare string',
+    ]
+    const { container } = renderRig('#/rig/task:mini:alpha-1:baseline:t2:1:messages', { data: data({ [`/results/${MINI}/runs/${ID3}`]: { summary: summaryOf(ID3), spans: cutSpans, patch: '', messages: bad, issue: '', replay: [] } }) })
+    const text = q(container, 'messages').textContent
+    expect(text).toContain('malformed tool call')
+    expect(text).toContain('unknown')
+    expect(text).toContain('object-valued role')
+    expect(text).toContain('→ bash({\n  "command": "ls"\n})')
+    expect(text).toContain('→ edit()')
+    expect(text).not.toContain('[object Object]')
+  })
   it('task nav: a filter with no match offers to clear it', () => {
     const { container } = renderRig('#/rig/task:mini:alpha-1:baseline:t2:1', { data: data() })
     const nav = q(container, 'task-nav')

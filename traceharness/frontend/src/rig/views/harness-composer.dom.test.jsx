@@ -351,7 +351,8 @@ describe('the unified member Harnesses composer', () => {
     expect(screen.getByRole('combobox', { name: 'Task', exact: true }).placeholder).toBe('No runnable task packages connected')
     expect(screen.queryByLabelText('OpenRouter API key')).toBeNull()
     expect(screen.getByRole('button', { name: 'Run', exact: true }).disabled).toBe(true)
-    expect(calls.filter((c) => c.url.startsWith('/api/runner/')).map((c) => c.url)).toEqual(['/api/runner/catalog'])
+    // Saved experiments are read-only history, asked for even without a runner; nothing else is.
+    expect(calls.filter((c) => c.url.startsWith('/api/runner/')).map((c) => c.url).filter((url) => url !== '/api/runner/experiments')).toEqual(['/api/runner/catalog'])
   })
 
   it('preserves selections and distinct prompt drafts across presets and native engines', async () => {
@@ -612,7 +613,7 @@ describe('the unified member Harnesses composer', () => {
     expect(screen.queryByLabelText('OpenRouter API key')).toBeNull()
     expect(screen.getByRole('button', { name: 'Review run' }).disabled).toBe(true)
     expect(screen.getByRole('button', { name: 'Run', exact: true }).disabled).toBe(true)
-    expect(calls.filter((call) => call.url.startsWith('/api/runner/')).map((call) => call.url)).toEqual(['/api/runner/catalog'])
+    expect(calls.filter((call) => call.url.startsWith('/api/runner/')).map((call) => call.url).filter((url) => url !== '/api/runner/experiments')).toEqual(['/api/runner/catalog'])
   })
 
   it.each([
@@ -1407,7 +1408,7 @@ describe('the Harnesses view on the local console and in a read-only export', ()
     expect(localCalls.some((c) => c.url.includes('/credentials'))).toBe(false)
   })
 
-  it('the experiment panels say they need the local runner until it is set up, and never ask it', async () => {
+  it('the experiment panels say they need the local runner until it is set up, and only read saved history from it', async () => {
     runnerCatalogAnswer = () => localJson(LOCAL_CATALOG())
     const Local = await loadComposer('local', false)
     render(<Local />)
@@ -1420,7 +1421,8 @@ describe('the Harnesses view on the local console and in a read-only export', ()
       expect(note.textContent).toMatch(/needs the local runner\. Run traceharness runner setup \(Docker required\)\.$/)
     }
     expect(screen.queryByText('No execution service is connected.')).toBeNull()
-    expect(localCalls.some((c) => c.url.startsWith('/api/runner/experiments'))).toBe(false)
+    // Saved experiments are read from what the runner recorded, so only that GET goes out; nothing creates or starts.
+    expect(localCalls.filter((c) => c.url.startsWith('/api/runner/experiments')).every((c) => (c.method || 'GET') === 'GET' && c.url === '/api/runner/experiments')).toBe(true)
   })
 })
 

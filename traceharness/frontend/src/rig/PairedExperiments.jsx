@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { runnerRequest } from '../runner-api'
-import { can } from '../environment'
+import { reasonFor } from '../environment'
 import { Unavailable } from './unavailable'
 import { VARIANT_CREDENTIAL_ISSUE, armProfileSummary, captureArm, checkedExperiment, experimentActive, experimentDraft, hasCredentialShape, makeReference, pairAgainstBaseline, stableJSON } from './paired-experiments-state'
 import { ActionBar, Id } from './primitives'
@@ -11,7 +11,7 @@ import { copyText, downloadText } from './native/ui/download'
 import { experimentNameStorage, readExperimentNames, rememberExperimentName } from './native/ui/experiment-names'
 import { formatDate, formatKiB, plural } from './native/ui/format'
 import { pendingPairing, subscribePairing, takePairing } from './native/ui/pairing-bus'
-import { UNVERIFIED_LABEL, experimentVerification, needsReceiptConsent, withUnverified } from '../runner-compatibility'
+import { UNVERIFIED_LABEL, consentArmsOf, experimentVerification, withUnverified, withUnverifiedArms } from '../runner-compatibility'
 import { ResultsMatrix, readableExperiment, roleWords } from './native/ui/ResultsMatrix'
 import './PairedExperiments.css'
 
@@ -66,7 +66,8 @@ export function PairedExperiments({ configuration, credential, credentialRequire
   const [label, setLabel] = useState('Control')
   const [arms, setArms] = useState([])
   const [noneArm, setNoneArm] = useState(false)
-  const [unverifiedOk, setUnverifiedOk] = useState(false)
+  const [consentArms, setConsentArms] = useState(null) // null until the user confirms; then the arm ids that carry the flag
+  const [rereview, setRereview] = useState(0)
   const [seed, setSeed] = useState('0')
   const [repeats, setRepeats] = useState('1')
   const [review, setReview] = useState(null)
@@ -85,9 +86,11 @@ export function PairedExperiments({ configuration, credential, credentialRequire
   const mounted = useRef(true)
   const generation = useRef(0)
   const armsHeading = useRef(null)
+  // Saved experiments need no execution service (Docker stopped); only reviewing, freezing and starting do.
+  const historyReadable = available || ['ok', 'runner_not_ready'].includes(reasonFor('run.experiments'))
   const armsIssue = labelIssue(arms)
   let draft, draftIssue = ''
-  try { draft = experimentDraft(name, seed, repeats, arms.map((arm) => ({ ...arm, label: arm.label.trim(), configuration: withUnverified(arm.configuration, unverifiedOk) }))) } catch (failure) { draftIssue = failure.message }
+  try { draft = experimentDraft(name, seed, repeats, withUnverifiedArms(arms.map((arm) => ({ ...arm, label: arm.label.trim() })), consentArms || [])) } catch (failure) { draftIssue = failure.message }
   if (!draftIssue && armsIssue) { draft = undefined; draftIssue = armsIssue }
   const draftKey = draft ? stableJSON(draft) : ''
   const reviewed = review?.key === draftKey && review.result.ok
@@ -99,7 +102,7 @@ export function PairedExperiments({ configuration, credential, credentialRequire
   useEffect(() => { mounted.current = true; return () => { mounted.current = false; generation.current++ } }, [])
   useEffect(() => subscribePairing((request) => { setBusTick((value) => value + 1); if (request) setOpen(true) }), [])
   useEffect(() => {
-    if (!open || !available) return
+    if (!open || !historyReadable) return
     let live = true
     runnerRequest('/experiments').then((data) => {
       if (!Array.isArray(data.experiments)) throw new Error('Experiment history is incomplete.')
@@ -108,9 +111,9 @@ export function PairedExperiments({ configuration, credential, credentialRequire
         if (uncertainStart.current && data.experiments.some((row) => row.id === uncertainStart.current)) uncertainStart.current = null
         lease.current = !!uncertainStart.current || data.experiments.some(experimentActive)
       }
-    }).catch((failure) => { if (live) setError(failure.message) })
+    }).catch((failure) => { if (live && failure.status !== 404) setError(failure.message) }) // 404: no runner is configured, so no history
     return () => { live = false }
-  }, [open, available, revision, lease])
+  }, [open, historyReadable, revision, lease])
   useEffect(() => {
     if (!experimentActive(experiment)) return
     let live = true
@@ -168,6 +171,8 @@ export function PairedExperiments({ configuration, credential, credentialRequire
     if (typeof result.ok !== 'boolean' || !Array.isArray(result.issues) || result.ok && (!/^[a-f0-9]{64}$/.test(result.plan_sha256) || !result.plan || !Number.isFinite(result.maximum_cost_usd))) throw new Error('The experiment review is incomplete.')
     if (mounted.current && request === generation.current) setReview({ key: draftKey, result })
   }) }
+  // Confirming consent re-runs the review with the flag in exactly the arms that needed it.
+  useEffect(() => { if (rereview > 0 && consentArms !== null && !busy && !draftIssue) reviewPlan() }, [rereview])
   function freeze() { action(async (request) => {
     const identity = draftKey + ':' + review.result.plan_sha256
     if (pendingCreate.current?.identity !== identity) pendingCreate.current = { identity, key: crypto.randomUUID() }
@@ -228,7 +233,7 @@ export function PairedExperiments({ configuration, credential, credentialRequire
   }
   const armSummary = (arm) => armProfileSummary(arm)
   const runControls = experiment && [
-    { label: experiment.status === 'paused' ? 'Resume experiment' : 'Start experiment', primary: true, onClick: () => control('start'), disabled: busy || (credentialRequired && !credential) || !['ready', 'paused'].includes(experiment.status) },
+    { label: experiment.status === 'paused' ? 'Resume experiment' : 'Start experiment', primary: true, onClick: () => control('start'), disabled: busy || !available || (credentialRequired && !credential) || !['ready', 'paused'].includes(experiment.status) },
     { label: 'Refresh experiment', onClick: () => load(experiment.id), disabled: busy },
     { label: 'Cancel experiment', onClick: () => control('cancel'), disabled: busy || ['completed', 'cancelled'].includes(experiment.status) },
     { label: 'Export experiment results', onClick: () => exportAs('json'), title: 'The whole experiment as JSON', more: true },
@@ -286,7 +291,11 @@ export function PairedExperiments({ configuration, credential, credentialRequire
         <li className="rg-pe-step">
           <h3>Review and freeze</h3>
           <div className="rg-pe-actions"><button type="button" className="rg-btn" disabled={busy || !available || !!draftIssue} onClick={reviewPlan}>Review experiment</button><button type="button" className="rg-btn" disabled={busy || !reviewed} onClick={freeze}>Freeze experiment</button></div>
-          {(unverifiedOk || needsReceiptConsent(review?.key === draftKey ? review.result.issues : [])) && <label className="rg-pe-unverified" data-el="paired-unverified-consent"><input type="checkbox" checked={unverifiedOk} disabled={busy} onChange={(event) => setUnverifiedOk(event.target.checked)} />{UNVERIFIED_LABEL}</label>}
+          {(consentArms !== null || consentArmsOf(review?.key === draftKey ? review.result : null).length > 0) && <label className="rg-pe-unverified" data-el="paired-unverified-consent"><input type="checkbox" checked={consentArms !== null && consentArmsOf(review?.key === draftKey ? review.result : null).every((id) => consentArms.includes(id))} disabled={busy} onChange={(event) => {
+            const needed = consentArmsOf(review?.key === draftKey ? review.result : null)
+            generation.current++; setReview(null); setBusy(false)
+            if (event.target.checked) { setConsentArms((current) => [...new Set([...(current || []), ...needed])]); setRereview((count) => count + 1) } else setConsentArms(null)
+          }} />{UNVERIFIED_LABEL}</label>}
           {review?.key === draftKey && <div className="rg-pe-review" aria-label="Experiment review">
             {review.result.issues.map((issue, index) => <p role="alert" key={index}>{issue}</p>)}
             {review.result.ok && <><strong>{review.result.trial_count} planned trials · maximum {money(review.result.maximum_cost_usd)}</strong>
@@ -313,7 +322,7 @@ export function PairedExperiments({ configuration, credential, credentialRequire
         </li>
       </ol>
       <div className="rg-pe-result-head"><h3>Saved experiments</h3><button type="button" className="rg-btn" onClick={() => setRevision((value) => value + 1)}>Refresh experiments</button></div>
-      {!recent.length && (available || can('run.experiments')) && <p className="rg-pe-note">{available ? 'No saved experiment yet.' : 'No execution service is connected.'}</p>}
+      {!recent.length && historyReadable && <p className="rg-pe-note">No saved experiment yet.</p>}
       {!!recent.length && <ul className="rg-pe-saved">{recent.map((row) => <li key={row.id}><button type="button" className="rg-pe-saved-row" disabled={busy} onClick={() => load(row.id)}>
         <span>{names[row.id] || 'name not loaded'} · {row.id.slice(0, 8)} · {String(row.status).replaceAll('_', ' ')} · {plural(row.trial_count, 'trial')}</span>
         <span className="rg-pe-note">{row.created_at === undefined ? 'date not reported' : formatDate(row.created_at)}</span>

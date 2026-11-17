@@ -34,6 +34,12 @@ export function withUnverified(configuration, on) {
   const { unverified_ok: _drop, ...rest } = configuration
   return on ? { ...rest, unverified_ok: true } : rest
 }
+/** The arm ids an experiment preflight answer says need consent: its structured `consent_arms`, only when
+    `consent_required` is true. Never derived from issue text. */
+export const consentArmsOf = (result) => result?.consent_required === true && Array.isArray(result.consent_arms)
+  ? result.consent_arms.filter((id) => typeof id === 'string') : []
+/** A copy of the arms where exactly the arms in `ids` carry the explicit consent flag. */
+export const withUnverifiedArms = (arms, ids) => arms.map((arm) => ({ ...arm, configuration: withUnverified(arm.configuration, Array.isArray(ids) && ids.includes(arm.id)) }))
 export const UNVERIFIED_LABEL = 'Run without a receipt on this machine (not verified)'
 const RECEIPT_TEXT = /compatibility receipt|application receipt|not verified on this machine|unverified_ok/i
 /** True when a backend issue or an inventory reason says the combination or profile has no receipt

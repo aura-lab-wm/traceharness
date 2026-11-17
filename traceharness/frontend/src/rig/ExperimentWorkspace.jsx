@@ -1,7 +1,7 @@
 import { useEffect, useId, useMemo, useRef, useState } from 'react'
 import { runnerRequest } from '../runner-api'
 import { isolationLabel } from '../isolation'
-import { UNVERIFIED_LABEL, needsReceiptConsent, verificationLabel } from '../runner-compatibility'
+import { UNVERIFIED_LABEL, consentArmsOf, verificationLabel } from '../runner-compatibility'
 import { ActionBar, Field, Icon } from './ui'
 import { expiryTime } from './views/harness-composer-state'
 import {
@@ -16,6 +16,7 @@ import {
   replaceHarnessSnapshot,
   stableJSON,
 } from './experiment-matrix-state'
+import { reasonFor } from '../environment'
 import { HarnessJson } from './HarnessJson'
 import { Unavailable } from './unavailable'
 import './ExperimentWorkspace.css'
@@ -167,7 +168,11 @@ export function ExperimentWorkspace({
   const [seed, setSeed] = useState('0')
   const [budgetUsd, setBudgetUsd] = useState('10')
   const [excludedCells, setExcludedCells] = useState(new Set())
-  const [unverifiedOk, setUnverifiedOk] = useState(false)
+  // Saved experiments are read from what the runner recorded, so they need no execution service (Docker stopped);
+  // only creating and starting need run.experiments.
+  const historyReadable = available || ['ok', 'runner_not_ready'].includes(reasonFor('run.experiments'))
+  const [consentArms, setConsentArms] = useState(null) // null until the user confirms; then the arm ids that carry the flag
+  const [rereview, setRereview] = useState(0)
   const [uncertainStart, setUncertainStart] = useState(null)
   const [review, setReview] = useState(null)
   const [experiment, setExperiment] = useState(null)
@@ -259,8 +264,8 @@ export function ExperimentWorkspace({
   const expanded = useMemo(() => {
     const count = snapshots.length * orderedModelIds.length * orderedTaskIds.length
     if (count > 512) return { cells: [], issue: `${count} candidate cells. Narrow the axes to at most 512 candidates, then select up to 64 trials.` }
-    return expandMatrixCells({ snapshots, modelIds: orderedModelIds, taskIds: orderedTaskIds, catalog, unverifiedOk })
-  }, [snapshots, orderedModelIds, orderedTaskIds, catalog, unverifiedOk])
+    return expandMatrixCells({ snapshots, modelIds: orderedModelIds, taskIds: orderedTaskIds, catalog, unverifiedArms: consentArms || [] })
+  }, [snapshots, orderedModelIds, orderedTaskIds, catalog, consentArms])
   const includedCells = useMemo(() => expanded.cells.filter(cell => !excludedCells.has(cellIdentity(cell))), [expanded.cells, excludedCells])
 
   const draftEvaluation = useMemo(() => {
@@ -297,7 +302,7 @@ export function ExperimentWorkspace({
   const reviewed = Boolean(activeReview?.result?.ok)
 
   useEffect(() => {
-    if (!available) return undefined
+    if (!historyReadable) return undefined
     let cancelled = false
     runnerRequest('/experiments')
       .then((data) => {
@@ -308,12 +313,12 @@ export function ExperimentWorkspace({
         syncExperimentLease(leaseRef.current, uncertainStartRef.current, currentExperimentRef.current, items)
       })
       .catch((err) => {
-        if (!cancelled && mountedRef.current) {
+        if (!cancelled && mountedRef.current && err?.status !== 404) { // 404: no runner is configured at all, so there is no history
           setError(err?.message || 'Could not load saved experiments.')
         }
       })
     return () => { cancelled = true }
-  }, [available])
+  }, [historyReadable])
 
   useEffect(() => {
     if (!available || !experiment || !experimentActive(experiment)) return undefined
@@ -428,6 +433,9 @@ export function ExperimentWorkspace({
     }
   }
 
+  // Confirming consent re-runs the review with the flag in exactly the arms that needed it.
+  useEffect(() => { if (rereview > 0 && consentArms !== null) handleReviewPlan() }, [rereview])
+
   const handleFreezePlan = async () => {
     if (busy || disabled || !reviewed || !draftEvaluation.ok || !activeReview) return
     const planSha = activeReview.result.plan_sha256
@@ -473,7 +481,7 @@ export function ExperimentWorkspace({
   }
 
   const handleRefreshHistory = async () => {
-    if (busy || !available) return
+    if (busy || !historyReadable) return
     setBusy(true)
     setError('')
     try {
@@ -936,13 +944,19 @@ export function ExperimentWorkspace({
               </Field>
             </div>
 
-            {(unverifiedOk || needsReceiptConsent(activeReview?.result?.issues || [])) && (
+            {(consentArms !== null || consentArmsOf(activeReview?.result).length > 0) && (
               <label className="rg-matrix-unverified" data-el="matrix-unverified-consent">
                 <input
                   type="checkbox"
-                  checked={unverifiedOk}
+                  checked={consentArms !== null && consentArmsOf(activeReview?.result).every((id) => consentArms.includes(id))}
                   disabled={busy || disabled}
-                  onChange={(event) => { invalidateAuthoringReview(); setUnverifiedOk(event.target.checked) }}
+                  onChange={(event) => {
+                    invalidateAuthoringReview()
+                    if (event.target.checked) {
+                      setConsentArms((current) => [...new Set([...(current || []), ...consentArmsOf(activeReview?.result)])])
+                      setRereview((count) => count + 1)
+                    } else setConsentArms(null)
+                  }}
                 />
                 {UNVERIFIED_LABEL}
               </label>
@@ -1087,7 +1101,7 @@ export function ExperimentWorkspace({
                   {
                     label: experiment.status === 'paused' ? 'Resume experiment' : 'Start experiment',
                     primary: true,
-                    disabled: busy || disabled || !!uncertainStart || !!leaseRef.current?.current || !credentialReady || !['ready', 'paused'].includes(experiment.status),
+                    disabled: busy || disabled || !available || !!uncertainStart || !!leaseRef.current?.current || !credentialReady || !['ready', 'paused'].includes(experiment.status),
                     onClick: handleStartExperiment,
                   },
                   {
@@ -1205,7 +1219,7 @@ export function ExperimentWorkspace({
             </section>
           )}
 
-          {available && (
+          {historyReadable && (
             <div className="rg-matrix-group rg-matrix-history">
               <div className="rg-matrix-group-h">
                 <h3 className="rg-matrix-group-t">Saved experiments</h3>
