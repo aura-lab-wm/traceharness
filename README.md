@@ -90,7 +90,10 @@ traceharness runner verify     # optional and PAID: one real isolated job that w
 gVisor (`runsc`) is used for isolation when `docker info` lists it; otherwise plain Docker isolation applies (no network
 except the model broker, read-only task mounts, memory, CPU and wall limits). The console shows which isolation a job
 used. Images are built from public bases and the agents' own npm packages; nothing is pulled from a registry we publish.
-Without a verified receipt a combination runs only after you confirm it as not verified on this machine. The OpenRouter
+Without a verified receipt a combination runs only after you confirm it as not verified on this machine. Native prompt
+profiles (keeping, replacing or disabling Claude Code's or Codex's own instructions) are never verified offline: `runner
+verify` writes compatibility receipts only, so a profile always runs after your confirmation and its manifest records
+`verified: false`. The OpenRouter
 key saved in **Settings** stays in the console's backend and never enters a container. `traceharness doctor` reports
 whether the runner is set up (it only reads: it never touches a running job or a container).
 
@@ -105,7 +108,8 @@ restart or remove anything: one process owns the runner state at a time.
 
 Finished jobs are written to `data/runs/<dataset>/<run_id>/` with an `evidence/` folder (the finalized manifest, grade,
 raw trace, native prompt files and a `provenance.json` with each file's sha256), so a result outlives the 24-hour job
-retention. A runtime artifact that is not finite JSON or not a ledger the console can read is kept out of the dataset,
+retention. The console opens the run from its dataset; the evidence files themselves are read from that folder on disk
+(the console has no download button for them yet). A runtime artifact that is not finite JSON or not a ledger the console can read is kept out of the dataset,
 under `data/runner/quarantine/<job id>/`.
 
 ## Capture your coding-agent sessions
