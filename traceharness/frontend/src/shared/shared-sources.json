@@ -21,7 +21,7 @@
   },
   "sha256": "1a22738c915dd698d8f2592d019dd25244707f7e382a9b945c032b79c638e0a9"
  },
- "content_sha256": "17fa8f3f24683f11042ce81076c7819404f28d88b6c83e5bba1af1da543f1eda",
+ "content_sha256": "3e9e990c7efbf501c16e18d4693e74042ad94112c96078cf32536c94e1d8284a",
  "datasets": {
   "hosted": [
    "demo_mock",
@@ -296,7 +296,7 @@
   "port": 8765,
   "url": "http://127.0.0.1:8765"
  },
- "package_version": "0.5.3",
+ "package_version": "0.5.4",
  "port": 8765,
  "save_protocol": {
   "fixed": "if_hash|if_absent",

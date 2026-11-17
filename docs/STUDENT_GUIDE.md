@@ -188,7 +188,7 @@ python -m traceharness --version
 Expected output:
 
 ```
-traceharness 0.5.3
+traceharness 0.5.4
 ```
 
 Then:
@@ -281,7 +281,7 @@ This starts a local server on **http://127.0.0.1:8765** and opens your browser. 
 prints:
 
 ```
-traceharness 0.5.3 -> http://127.0.0.1:8765   (lab root: /…/traceharness; OpenRouter key: NOT set)
+traceharness 0.5.4 -> http://127.0.0.1:8765   (lab root: /…/traceharness; OpenRouter key: NOT set)
 ```
 
 "OpenRouter key: NOT set" is normal; you do not need one.
@@ -813,7 +813,7 @@ python scripts/check_install.py      # or: make check  ->  All 5 checks passed
 The same steps by hand:
 
 ```bash
-python -m traceharness --version                                   # traceharness 0.5.3
+python -m traceharness --version                                   # traceharness 0.5.4
 python -m traceharness run --provider mock --tasks all --repeats 3 --price 0,0 --out data/runs/smoke
 #   -> 24 runs, 14 PASS
 python exercises/ex1_variance.py --results data/runs/smoke       # prints four sections

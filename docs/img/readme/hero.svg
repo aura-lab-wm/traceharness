@@ -16,7 +16,7 @@
 
   <text x="78" y="37" font-family="ui-monospace, monospace" font-size="13" font-weight="600" letter-spacing="1.2" fill="#e5e9e8">TRACEHARNESS</text>
   <line x1="196.5" y1="24" x2="196.5" y2="41" stroke="#919da4" stroke-opacity="0.26"/>
-  <text x="210" y="37" font-family="ui-monospace, monospace" font-size="12" fill="#919da4">v0.5.3 · REPLICATION PACKAGE</text>
+  <text x="210" y="37" font-family="ui-monospace, monospace" font-size="12" fill="#919da4">v0.5.4 · REPLICATION PACKAGE</text>
   <text x="1168" y="37" text-anchor="end" font-family="ui-monospace, monospace" font-size="12" fill="#919da4"><tspan fill="#7daecc">5,565</tspan> / 6,309 REAL RUNS · OFFLINE REPLAY</text>
 
   <!-- Left column: title thesis and included study shape -->
