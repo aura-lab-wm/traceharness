@@ -79,7 +79,7 @@ class Evidence(unittest.TestCase):
         write(self.root, "lite", [row(10, cost=1.0, wall=100000, task="x1"), row(11, cost=3.0, wall=300000, task="x2"),
                                   row(12, cost=2.0, wall=200000, task="x3")])
         with open(os.path.join(self.root, "lite", "provenance.json"), "w") as f:
-            json.dump({"dataset": ds}, f)
+            json.dump({"source": "huggingface", "dataset": ds}, f)
         ev = E.collect(self.root)
         basis = E.cost_basis(ev, ds)
         self.assertEqual((basis["scope"], basis["runs"], basis["median_cost_usd"], basis["median_seconds"]), ("dataset", 3, 2.0, 200.0))

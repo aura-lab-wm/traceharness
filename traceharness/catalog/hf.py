@@ -98,6 +98,8 @@ def _info_text(d: dict) -> str:
         f"  hub updated    {v(d.get('refreshed_upstream'))}",
         "  needs          " + ", ".join(f"{k}={'yes' if x else 'no'}" for k, x in sorted((d.get("needs") or {}).items())),
         f"  importer       {v(d.get('importer'))}",
+        "  hf import      " + (f"importable: traceharness hf import {d['id']}  (adapter {d['hf_adapter']}, default "
+                              f"{d['hf_import']['config']}/{d['hf_import']['split']})" if d.get("hf_adapter") else "-"),
         "  public runs    " + (f"{runs['source']} ({v(runs.get('entries'))} entries)" if runs else "-"),
         f"  url            {d['url']}",
     ]

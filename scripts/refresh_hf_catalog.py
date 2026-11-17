@@ -4,7 +4,7 @@
     python scripts/refresh_hf_catalog.py [--check] [--dry-run] [--only ID ...] [--file PATH]
 
 The catalog is a curated, checked-in list. This script fills the fields the Hub can state and keeps
-every curated field (kind, title, summary, languages, task_kind, needs, importer, public_runs) from the
+every curated field (kind, title, summary, languages, task_kind, needs, importer, hf_adapter, hf_import, public_runs) from the
 existing file:
 
   /api/datasets/<id>                       license, gated, lastModified

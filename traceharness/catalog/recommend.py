@@ -194,8 +194,10 @@ def _checks(entry: dict, p: dict, design: dict, advice: dict) -> dict:
                               {"public_source": (runs or {}).get("source"), "public_entries": _fmt((runs or {}).get("entries"), 0)})
     if p["goal"] == "analyse":
         imp = entry.get("importer")
-        out["importer"] = (("has" if imp else "none"), {"importer": imp})
-        if p["compare_public"] and imp:
+        ada = entry.get("hf_adapter")
+        out["importer"] = (("has" if imp or ada else "none"),
+                           {"importer": imp, "import_command": f"traceharness hf import {entry['id']}"})
+        if p["compare_public"] and (imp or ada):
             out["compare_public"] = ("importable", {})
     g = entry.get("gated")
     out["gated"] = ("unknown" if g is None else ("gated" if g else "open"), {})
@@ -244,10 +246,15 @@ def _score_one(entry: dict, p: dict, rules: dict, advice: dict, basis: dict | No
 def _card(c: dict, entry: dict, advice: dict | None = None) -> dict:
     d = c["design"]
     advice = c["advice"]
-    return {"id": c["id"], "title": c["title"], "url": entry.get("url"), "score": c["score"], "excluded": c["excluded"],
+    card = {"id": c["id"], "title": c["title"], "url": entry.get("url"), "score": c["score"], "excluded": c["excluded"],
             "subset": {"rows": d["tasks"], "repeats": d["repeats"], "of_rows": entry.get("rows"), "demoted": d["demoted"]},
             "reasons": [{"rule": r["rule"], "text": r["text"], "weight": r["weight"], "method": r["method"]} for r in c["rules"]],
             "estimate": d["estimate"], "size_advice": advice}
+    if entry.get("kind") == "trajectories" and (entry.get("importer") or entry.get("hf_adapter")):
+        # an analyse card for a dataset the console can import: the command with the recommended --n, and where to watch it
+        card["command"] = f"traceharness hf import {entry['id']} --n {d['tasks']}"
+        card["sources_view"] = "#/rig/sources"
+    return card
 
 
 def _date_rank(value) -> tuple:

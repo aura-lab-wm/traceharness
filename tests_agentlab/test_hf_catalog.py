@@ -21,7 +21,7 @@ R = importlib.util.module_from_spec(_spec)
 _spec.loader.exec_module(R)
 
 KEYS = {"id", "kind", "title", "summary", "rows", "parquet_bytes", "splits", "license", "gated", "languages",
-        "task_kind", "task_dates", "refreshed_upstream", "needs", "importer", "public_runs", "url"}
+        "task_kind", "task_dates", "refreshed_upstream", "needs", "importer", "hf_adapter", "hf_import", "public_runs", "url"}
 # The withdrawn model family, spelled in two pieces so that no file in the repository names it.
 WITHDRAWN = re.compile("deep" + "seek", re.I)
 REQUIRED = [
@@ -79,6 +79,17 @@ class PackagedFile(unittest.TestCase):
         for d in self.cat["datasets"]:
             self.assertTrue(d["importer"] is None or d["importer"] in real, d["id"])
 
+    def test_hf_adapter_is_set_only_for_the_three_datasets_imported_live(self):
+        live = {"nebius/SWE-agent-trajectories": ("swe_agent", "default", "train"),
+                "nebius/SWE-rebench-openhands-trajectories": ("messages", "default", "train"),
+                "SWE-bench/SWE-smith-trajectories": ("messages", "default", "tool")}
+        for d in self.cat["datasets"]:
+            want = live.get(d["id"])
+            self.assertEqual(d["hf_adapter"], want and want[0], d["id"])
+            self.assertEqual(d["hf_import"], want and {"config": want[1], "split": want[2]}, d["id"])
+            if want:
+                self.assertIn({"config": want[1], "split": want[2]}, [{"config": x["config"], "split": x["split"]} for x in d["splits"]])
+
     def test_no_withdrawn_model_family(self):
         with open(hf.PATH, encoding="utf-8") as f:
             self.assertIsNone(WITHDRAWN.search(f.read()))
@@ -127,7 +138,8 @@ def _hub(measured_rows=500):
 ENTRY = {"id": "a/b", "kind": "benchmark", "title": "AB", "summary": "s", "rows": None, "parquet_bytes": None,
          "splits": None, "license": None, "gated": None, "languages": ["python"], "task_kind": "issue-fix",
          "task_dates": None, "refreshed_upstream": None, "needs": {"containers": True, "x86_64": True},
-         "importer": None, "public_runs": None, "url": "https://huggingface.co/datasets/a/b"}
+         "importer": None, "hf_adapter": None, "hf_import": None, "public_runs": None,
+         "url": "https://huggingface.co/datasets/a/b"}
 
 
 class Refresher(unittest.TestCase):
@@ -162,8 +174,16 @@ class Refresher(unittest.TestCase):
         self.assertEqual(e["task_dates"], {"first": "2013-01-25", "last": "2023-08-07"})
         self.assertEqual(e["refreshed_upstream"], "2025-02-18")
         self.assertEqual(e["languages"], ["python"])            # curated fields are kept
+        self.assertEqual((e["hf_adapter"], e["hf_import"]), (None, None))
         rc, _ = self.run_main(["--check"], _hub())
         self.assertEqual(rc, 0)
+
+    def test_the_import_fields_are_curated_and_survive_a_refresh(self):
+        self.write({"schema": 1, "refreshed": "2026-01-01", "datasets": [
+            dict(ENTRY, hf_adapter="messages", hf_import={"config": "default", "split": "tool"})]})
+        self.run_main([], _hub())
+        e = json.loads(self.read())["datasets"][0]
+        self.assertEqual((e["hf_adapter"], e["hf_import"]), ("messages", {"config": "default", "split": "tool"}))
 
     def test_check_is_1_when_a_measured_field_differs(self):
         self.run_main([], _hub())

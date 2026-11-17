@@ -8,8 +8,9 @@
 core.analysis.load_index, the functions backend.metrics itself uses) and takes the repeated-cell
 outcomes from backend.metrics.cells, so no index row is parsed by hand here.
 
-A run belongs to a DATASET when it names one (a `dataset` field, its results directory's
-provenance.json `dataset`/`source`, or an owner/name provider). Only runs of the same dataset as a
+A run belongs to a DATASET when it names one (a `dataset` field, an owner/name provider, or its
+results directory's provenance.json: the file `traceharness hf import` writes, recognised only when
+it says `"source": "huggingface"` and names the `dataset`). Only runs of the same dataset as a
 candidate may price or size that candidate; the lab's own built-in tasks never do.
 
 A run is COSTED when its provider is not "mock" and its cost_usd is a positive number: a mock
@@ -62,6 +63,8 @@ def _median(values: list) -> float | None:
 
 
 def _summary(rows: list[dict]) -> dict:
+    if not rows:
+        return {"costed_runs": 0, "median_cost_usd": None, "timed_runs": 0, "median_seconds": None}
     costs = [float(r["cost_usd"]) for r in rows]
     secs = [r["wall_ms"] / 1000.0 for r in rows
             if isinstance(r.get("wall_ms"), (int, float)) and not isinstance(r.get("wall_ms"), bool) and r["wall_ms"] > 0]
@@ -78,16 +81,16 @@ def _signature(runs_root: str, names: list[str]) -> tuple:
 
 
 def _provenance_dataset(dirpath: str) -> str | None:
-    """The Hugging Face dataset id a results directory says it was made on: `dataset` (or `source`)
-    in its provenance.json. Anything else, or no file, is None: the runs are the lab's own."""
+    """The Hugging Face dataset id a results directory says it was made on: `dataset` in the
+    provenance.json that `traceharness hf import` writes (`source` is "huggingface"). Any other
+    file, or none, is None: the runs are the lab's own."""
     try:
         with open(os.path.join(dirpath, "provenance.json"), encoding="utf-8") as f:
             doc = json.load(f)
     except (OSError, ValueError):
         return None
-    for key in ("dataset", "source"):
-        if isinstance(doc, dict) and isinstance(doc.get(key), str) and doc[key].strip():
-            return doc[key].strip()
+    if isinstance(doc, dict) and doc.get("source") == "huggingface" and isinstance(doc.get("dataset"), str) and doc["dataset"].strip():
+        return doc["dataset"].strip()
     return None
 
 
@@ -117,11 +120,15 @@ def collect(runs_root: str | None = None) -> dict:
     if key in _CACHE:
         return _CACHE[key]
 
-    costed, flat_cells = [], []
+    costed, flat_cells, recorded = [], [], []
     for name in names:
         d = os.path.join(root, name)
         dir_ds = _provenance_dataset(d)
-        rows = [r for r in exclude_human(load_index(d)) if _is_costed(r)]
+        every = [r for r in exclude_human(load_index(d)) if r.get("provider") != "mock"]
+        # every run of a named dataset counts for its pass rate, costed or not (an import records no cost)
+        recorded.extend(dict(r, _dataset=_row_dataset(r, dir_ds)) for r in every
+                        if _row_dataset(r, dir_ds) is not None and not _is_costed(r))
+        rows = [r for r in every if _is_costed(r)]
         if not rows:
             continue
         for r in rows:
@@ -135,16 +142,25 @@ def collect(runs_root: str | None = None) -> dict:
     per_model = {m: _summary(rs) for m, rs in sorted(by_model.items())}
     pooled = _summary(builtin)
 
-    def pass_rate(rs):
-        graded = [r["hidden_pass"] for r in rs if r.get("harness_id") == "baseline" and isinstance(r.get("hidden_pass"), bool)]
+    def pass_rate(rs, any_harness=False):
+        graded = [r["hidden_pass"] for r in rs if (any_harness or r.get("harness_id") == "baseline") and isinstance(r.get("hidden_pass"), bool)]
         return {"runs": len(graded), "pass_rate": (sum(graded) / len(graded)) if graded else None}
 
     baseline = {"pooled": pass_rate(builtin), "per_model": {m: pass_rate(rs) for m, rs in sorted(by_model.items())}}
     ds_rows: dict[str, list[dict]] = {}
+    ds_all: dict[str, list[dict]] = {}
     for r in costed:
         if r["_dataset"] is not None:
             ds_rows.setdefault(r["_dataset"], []).append(r)
-    datasets = {d: dict(_summary(rs), baseline=pass_rate(rs)) for d, rs in sorted(ds_rows.items())}
+            ds_all.setdefault(r["_dataset"], []).append(r)
+    for r in recorded:
+        ds_all.setdefault(r["_dataset"], []).append(r)
+    datasets = {}
+    for d in sorted(ds_all):
+        base = pass_rate(ds_all[d])
+        # a dataset's imported runs come from one agent whose harness is not "baseline": then every graded run counts
+        base = base if base["runs"] else pass_rate(ds_all[d], any_harness=True)
+        datasets[d] = dict(_summary(ds_rows.get(d, [])), recorded_runs=len(ds_all[d]), baseline=base)
 
     # run-to-run variation, lab-wide: cells (model, harness, task) with at least two graded repeats
     repeated = disagree = 0
@@ -194,7 +210,7 @@ def size_advice(detect_points: float, evidence: dict | None, rules: dict, datase
     pick = None
     b = ((ev.get("datasets") or {}).get(dataset_id or "") or {}).get("baseline") or {}
     if b.get("pass_rate") is not None:
-        pick = (b["pass_rate"], b["runs"], f"the baseline harness's recorded pass rate on {dataset_id}, {b['runs']} graded runs")
+        pick = (b["pass_rate"], b["runs"], f"the recorded pass rate on {dataset_id}, {b['runs']} graded recorded runs")
     if pick is None:
         pick = (0.5, 0, "no recorded runs on this dataset: 0.5 assumed")
     p1, base_runs, base_text = pick

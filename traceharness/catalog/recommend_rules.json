@@ -238,8 +238,8 @@
     "check": "importer",
     "is": "has"
    },
-   "text": "The console has an importer that reads it: {importer}.",
-   "method": "the console imports it with the {importer} importer"
+   "text": "TraceHarness can import it: {import_command}",
+   "method": "TraceHarness can import it (traceharness hf import)"
   },
   {
    "id": "no-importer",
@@ -252,7 +252,7 @@
     "check": "importer",
     "is": "none"
    },
-   "text": "No importer in the console is recorded as reading it (importer is null in the catalog).",
+   "text": "No importer in the console is recorded as reading it (importer and hf_adapter are null in the catalog).",
    "method": "no importer is recorded for it"
   },
   {
