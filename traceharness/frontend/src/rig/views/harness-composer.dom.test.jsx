@@ -1366,6 +1366,10 @@ describe('the Harnesses view on the local console and in a read-only export', ()
   it('runs with no credential on the local console: Review, then Run, and the POST has no credential_id', async () => {
     runnerCatalogAnswer = () => localJson(LOCAL_CATALOG())
     const Local = await loadComposer('local')
+    // What the shell had cached before this run: no harness_runs dataset yet, and an older answer for it.
+    const data = await import('../data')
+    const before = { overview: { results: [], stale: true }, runs: [{ run_id: 'older' }], repeats: { stale: true }, other: [{ run_id: 'kept' }] }
+    data.prime({ '/overview': before.overview, '/results/harness_runs/runs': before.runs, '/repeats/harness_runs': before.repeats, '/results/demo_mock/runs': before.other })
     render(<Local />)
     await screen.findByText('Runner connected')
     await catalogReady()
@@ -1391,6 +1395,12 @@ describe('the Harnesses view on the local console and in a read-only export', ()
     expect(post.headers).not.toHaveProperty('x-traceharness-member-scope')
     expect(screen.getByRole('button', { name: 'Open harness_runs in Datasets' }).getAttribute('data-spec')).toBe('ds:harness_runs')
     expect(screen.getByRole('button', { name: 'Open run 20261116-000000-abcdef' }).getAttribute('data-spec')).toBe('run:20261116-000000-abcdef')
+    // The finished run changed what is on disk, so the links must not land on answers cached before it:
+    // the overview and this dataset's answers are dropped (the views refetch); other datasets are kept.
+    await waitFor(() => expect(data.peek('/overview')).not.toBe(before.overview))
+    expect(data.peek('/results/harness_runs/runs')).not.toBe(before.runs)
+    expect(data.peek('/repeats/harness_runs')).not.toBe(before.repeats)
+    expect(data.peek('/results/demo_mock/runs')).toBe(before.other)
     expect(screen.getByText(/Runs retained for this computer\./)).toBeTruthy()
     expect(localCalls.some((c) => c.url.includes('/credentials'))).toBe(false)
   })

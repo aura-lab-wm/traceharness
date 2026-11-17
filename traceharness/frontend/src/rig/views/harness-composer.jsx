@@ -10,6 +10,7 @@ import { ByteMeter, NumericField, ToolChips } from '../harnessWorkspace'
 import { fieldIssues, numberIssue } from '../harnessFields'
 import { EvidenceOrigin } from '../shallowEvidence'
 import { Go, Icon, PageHeader } from '../ui'
+import { invalidate } from '../data'
 import { makeSpec } from '../route'
 import { BlockCard } from './blocks'
 import { CARDS, QUESTIONS, blocksFromAnswers } from './shallow-data'
@@ -167,6 +168,17 @@ export function HarnessComposer({ args = [] }) {
   const selectedModelAllowed = !!task && !compatibility.reason && compatibility.modelIds.includes(state.model_id)
   const editLocked = saving || launching || importing || !!openingJob
   const jobActive = job && !terminal.has(job.status)
+  // A finished local run changed what is on disk: its dataset now exists, or holds one more run. The
+  // shell caches the overview and each dataset's answers until told otherwise, so drop the overview and
+  // this dataset's answers once per finished job; the Datasets and run links then read the new state.
+  const finishedLocalJob = job && terminal.has(job.status) && SAFE_NAME.test(job.results_dir || '') ? job.id + ' ' + job.results_dir : ''
+  const refreshedJobs = useRef(new Set())
+  useEffect(() => {
+    if (!finishedLocalJob || refreshedJobs.current.has(finishedLocalJob)) return
+    refreshedJobs.current.add(finishedLocalJob)
+    const dir = encodeURIComponent(finishedLocalJob.split(' ')[1])
+    for (const prefix of ['/overview', `/results/${dir}/`, `/outcomes/${dir}`, `/repeats/${dir}`, `/real/${dir}/`, `/harness/versions?dir=${dir}`]) invalidate(prefix)
+  }, [finishedLocalJob])
   const blocksIssues = native || fixed ? [] : fieldIssues(state.blocks)
   const readyIssues = [
     ...(jsonPending ? ['Apply or discard the pending JSON edits before reviewing or dispatching.'] : []),

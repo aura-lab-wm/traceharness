@@ -142,7 +142,7 @@ function ShallowCards({ args } = {}) {
         <Go spec={withEvidenceOrigin('shallowApply', evidenceOrigin(args))} className="rg-btn" el="preview-six-shells">Preview one prompt across six shells</Go>
       </div>
       {HAS_LIBRARY && !accountLoaded && !libraryLoading && <p role="alert">{loadError ? loadError.message + ' ' : ''}Your harnesses saved to {LIBRARY.label} have not loaded. Saving is unavailable. <button type="button" className="rg-btn" onClick={() => setRevision((n) => n + 1)}>Retry saved harnesses</button>{IS_MEMBER && <> <a href="/login">Account</a></>}</p>}
-      <details className="rg-harness-rules"><summary>Permissions and saving</summary><p className="rg-harness-note">{PERMISSION} {HAS_LIBRARY && accountLoaded ? `Drafts stay in this tab until you save them to ${LIBRARY.label}.${IS_MEMBER ? ' The plain editor shares confirmed account saves only.' : ''} Saving does not run a model.` : 'Nothing on this screen is saved, and nothing here calls a model.'}</p></details>
+      <details className="rg-harness-rules"><summary>Permissions and saving</summary><p className="rg-harness-note">{PERMISSION} {HAS_LIBRARY && accountLoaded ? `Drafts stay in this tab until you save them to ${LIBRARY.label}.${IS_MEMBER ? ' The plain editor shares your account saves and the drafts kept in this tab.' : ''} Saving does not run a model.` : 'Nothing on this screen is saved, and nothing here calls a model.'}</p></details>
       <div className="rg-harness-grid">
         {storageError && <p role="alert">{storageError}</p>}
         {cards.map((row) => {
