@@ -270,6 +270,14 @@ class Whole(unittest.TestCase):
         self.assertIn("no benchmark was selected", R.method_paragraph(r))
 
 
+class Packaging(unittest.TestCase):
+    def test_the_rules_ship_as_package_data(self):
+        with open(os.path.join(LAB, "pyproject.toml"), encoding="utf-8") as f:
+            line = next(l for l in f.read().splitlines() if l.startswith('"traceharness.catalog" ='))
+        self.assertIn('"recommend_rules.json"', line)
+        self.assertTrue(os.path.exists(R.RULES_PATH))
+
+
 class Power(unittest.TestCase):
     def test_two_hand_computed_cases(self):
         # n = ceil((1.959964 + 0.841621)^2 * (p1(1-p1) + p2(1-p2)) / (p1-p2)^2)
