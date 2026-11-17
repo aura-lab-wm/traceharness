@@ -176,12 +176,12 @@ If you use TraceHarness in academic work, cite the software and the version used
   author  = {Antonio Mastropaolo},
   title   = {{TraceHarness}: Treating the Agent Harness as a Controlled Experimental Variable},
   year    = {2026},
-  version = {0.5.4},
+  version = {0.5.5},
   url     = {https://traceharness.dev}
 }
 ```
 
-Plain text: Mastropaolo, A. (2026). *TraceHarness: Treating the agent harness as a controlled experimental variable* (Version 0.5.4) [Computer software]. https://traceharness.dev
+Plain text: Mastropaolo, A. (2026). *TraceHarness: Treating the agent harness as a controlled experimental variable* (Version 0.5.5) [Computer software]. https://traceharness.dev
 
 If you use the 500 runs in `data/runs/real_swe_agent_500`, also cite Nebius, [SWE-agent-trajectories](https://huggingface.co/datasets/nebius/SWE-agent-trajectories) (CC BY 4.0).
 

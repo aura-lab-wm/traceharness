@@ -79,7 +79,8 @@ class Check(unittest.TestCase):
             self.skipTest("the runner image already installs this version")
         code, out = _run("--check")
         self.assertEqual(code, 1, out)
-        self.assertRegex(out, r"(?m)^runner_image\s+drift\s+.*0\.5\.1")
+        pin = sorted(pins)[0]                    # the version the runner image actually installs, read above
+        self.assertRegex(out, rf"(?m)^runner_image\s+drift\s+.*{re.escape(pin)}")
         self.assertRegex(out, r"(?m)^release_all: .*runner_image")
 
     def test_aligned_facts_exit_0_and_print_the_release_steps(self):

@@ -1,6 +1,6 @@
 """The version stamp (SPEC 4.3): which package, which UI build and which shared sources this is.
 
-    traceharness version            traceharness 0.5.4 ui 376f94d82b70 shared 1a2b3c4d5e6f
+    traceharness version            traceharness 0.5.5 ui 376f94d82b70 shared 1a2b3c4d5e6f
     traceharness version --json     the stamp
 
 Every value is a version, a 64-hex digest, null or a fixed word: no path, host or user name.
