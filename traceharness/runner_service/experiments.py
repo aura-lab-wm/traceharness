@@ -326,13 +326,19 @@ class Experiments:
             trial.update(status='needs_attention',issues=['The prior submission outcome is uncertain. It was not retried.'])
 
     def start(self,owner,eid,credential_id,plan_sha256):
+        return self.start_adopting(owner,eid,credential_id,plan_sha256)[0]
+
+    def start_adopting(self,owner,eid,credential_id,plan_sha256):
+        """(public experiment, adopted). `adopted` is decided under the experiment lock: True only when THIS handle
+        became the scheduler's credential. A start that finds the experiment already running keeps the earlier
+        handle, so the caller must release the one it passed."""
         with self.lock:
             row=self._owned(owner,eid);exp=row['experiment']
             if exp['plan_sha256']!=plan_sha256:raise JobError('The frozen experiment plan changed.',409)
             self._safe()
             previous=self.threads.get(eid)
             if previous is not None and previous.is_alive():
-                if exp['status']=='running':return self._public(row)
+                if exp['status']=='running':return self._public(row),False
                 raise JobError('The previous scheduler is finishing. Refresh before resuming.',409)
             if exp['status'] not in {'ready','paused'} or exp['cancellation_requested']:raise JobError('This experiment cannot be started or resumed.',409)
             if any(r['owner']==owner and r['experiment']['status'] in {'running','cancelling'} for r in self.rows.values()):raise JobError('Another experiment for this member is active.',429)
@@ -340,7 +346,7 @@ class Experiments:
             self.vault.resolve(owner,credential_id)
             exp.update(status='running',issues=[],updated_at=int(self.clock()));self.credentials[eid]=credential_id;self._save(row)
             worker=threading.Thread(target=self._run,args=(eid,),name='paired-experiment',daemon=True);self.threads[eid]=worker;worker.start()
-            return self._public(row)
+            return self._public(row),True
 
     def cancel(self,owner,eid):
         with self.lock:
