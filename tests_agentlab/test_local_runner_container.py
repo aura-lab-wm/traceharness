@@ -36,6 +36,9 @@ JSON = {"content-type": "application/json"}
 
 
 class LocalExecutor(FixtureExecutor):
+    def reconcile_startup(self):
+        return True
+
     def health(self):
         return {**super().health(), "isolation_runtime": "runc"}
 
@@ -336,6 +339,8 @@ class RestartTests(unittest.TestCase):
                    "job": {"id": jid, "status": "running", "created_at": 1, "updated_at": 1, "usage": {"requests": 0}, "issues": [], "artifacts": []}}
             (root / "jobs" / jid / "job.json").write_text(json.dumps(row))
             jobs = Jobs(local_settings(root), CredentialVault(), FixtureProvider(), LocalExecutor())
+            self.assertEqual(jobs.get("local", jid)["status"], "needs_attention")   # until removal is confirmed
+            self.assertTrue(jobs.settle_restored())
             self.assertEqual(jobs.get("local", jid)["status"], "failed")
             self.assertIsNone(jobs.blocked_reason)
             jobs.close()

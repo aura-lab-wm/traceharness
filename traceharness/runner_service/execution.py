@@ -525,7 +525,8 @@ class DockerExecutor:
                     entrypoint="python") + ["-m", "traceharness.runner_service.container_entrypoint"]
                 try:
                     cap = manifest["limits"].get("storage_bytes")
-                    self._run(args, name, cancel, deadline, watch=([work, output], cap) if self.settings.local and cap else None)
+                    extra = {"watch": ([work, output], cap)} if self.settings.local and cap else {}
+                    self._run(args, name, cancel, deadline, **extra)
                 except ExecutionError as error:
                     if type(error) is not ExecutionError or str(error) != RUNTIME_FAILURE or error.grade is not None:
                         raise
