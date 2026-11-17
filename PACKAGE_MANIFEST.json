@@ -64389,6 +64389,11 @@
       "sha256": "76100fd0c6e30c1f533432fea050a043d19519fab23f71c7bc97f42a8e00194a"
     },
     {
+      "path": "tests_agentlab/test_wp12_round5_fixes.py",
+      "bytes": 16189,
+      "sha256": "cbd5657340b364775fc656f1bc0fedcbf4593f3e5235ee0ae8c632dc3d0fd2f5"
+    },
+    {
       "path": "tests_agentlab/test_wp5_capture_import.py",
       "bytes": 7259,
       "sha256": "aa8fb6480d44af834007b683d4766b765d14d108724e6b04da54c7b7995660c8"
@@ -64460,8 +64465,8 @@
     },
     {
       "path": "traceharness/backend/app.py",
-      "bytes": 48253,
-      "sha256": "379c7405c8f9281947d5f35a7924f4462abdc09d15f303ddeb450caf3deef5bf"
+      "bytes": 48625,
+      "sha256": "66560ac7e3ebf357a3c84a58b4634c9b3ed76aae2c94d7d4864816c4f8a21291"
     },
     {
       "path": "traceharness/backend/assist.py",
@@ -64645,8 +64650,8 @@
     },
     {
       "path": "traceharness/backend/local_runner_api.py",
-      "bytes": 32161,
-      "sha256": "1c50b13cdacca48c2383ce7c1537b274504eb76f464762e6821e683e75bbf387"
+      "bytes": 31971,
+      "sha256": "1e5b8838d09ce755376d6456765f281bb48172d06060df2aedfef99e73b77049"
     },
     {
       "path": "traceharness/backend/metrics.py",
@@ -65000,8 +65005,8 @@
     },
     {
       "path": "traceharness/core/span_schema.py",
-      "bytes": 7198,
-      "sha256": "43b3b4ab4fd8ab3f1126221a8235b72f1373c6cec2dde8c7afa8f5078ec07a6e"
+      "bytes": 8084,
+      "sha256": "effe4d1a8a6b276e71be75dc2601dd1ef3deae31c2d80eeeca25afedcb19012d"
     },
     {
       "path": "traceharness/core/tools.py",
@@ -66885,8 +66890,8 @@
     },
     {
       "path": "traceharness/runner/datasets.py",
-      "bytes": 21964,
-      "sha256": "37c83a318bc1fd974a29779875bf46076b8ed1d787777fcf43678a959dc9e1dd"
+      "bytes": 27278,
+      "sha256": "88b14bc7d222b7365c3db0e0a7998756504ca7b579e3b7495004b37ed73ed988"
     },
     {
       "path": "traceharness/runner/keyvault.py",
@@ -66945,8 +66950,8 @@
     },
     {
       "path": "traceharness/runner_service/experiments.py",
-      "bytes": 31112,
-      "sha256": "4b85babce805e5181b87f2aa03c4c34c277c96e355295166771db08fd001a86d"
+      "bytes": 31557,
+      "sha256": "12071f85e04abba4ccaa00f806d5fee8438193535ab6b25384c19d3efb456e14"
     },
     {
       "path": "traceharness/runner_service/jobs.py",
@@ -67005,8 +67010,8 @@
     },
     {
       "path": "traceharness/runner_service/service.py",
-      "bytes": 17111,
-      "sha256": "954976b3b8e96453465b974bdf3360e2583c0daf52e0e1f2aa1b45501d523b0a"
+      "bytes": 17192,
+      "sha256": "ea5294a6f6042e8867ea783c780d63ffa7b070a81e00d94d0346e602045fcb83"
     },
     {
       "path": "traceharness/runner_service/settings.py",
