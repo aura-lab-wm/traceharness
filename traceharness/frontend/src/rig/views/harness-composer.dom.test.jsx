@@ -5,6 +5,7 @@ import { act, cleanup, fireEvent, render, screen, waitFor, within } from '@testi
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest'
 import { CARDS, RECOMMENDED_ID, VERIFY_NO, blocksFromAnswers } from './shallow-data'
 import { nativeInventoryFixture, nativeResponseFixture, nativeRuntimeFixture } from '../../../test/native-prompts-fixture'
+import { SHARED, LOCAL_APP } from '../../shared/index.js'
 
 const scope = 'd'.repeat(24)
 const draftKey = (name) => `traceharness.shallow.member.${scope}.${name}`
@@ -398,7 +399,7 @@ describe('the unified member Harnesses composer', () => {
     await waitFor(() => expect(prompt().disabled).toBe(false))
     fireEvent.change(prompt(), { target: { value: 'Keep this draft.' } })
     fireEvent.click(screen.getByRole('button', { name: 'Save harness' }))
-    await screen.findByText(/Account storage did not confirm this save/)
+    await screen.findByText(/Your account did not confirm this save/)
     expect(JSON.parse(sessionStorage.getItem(draftKey('fixed'))).codex.prompt).toBe('Keep this draft.')
     expect(calls.find((c) => c.url === '/api/shallow/harnesses' && c.method === 'POST').body.if_absent).toBe(true)
     handler = (call) => call.url === '/api/shallow/harnesses' && call.method === 'POST' ? json({ error: 'This prompt changed in your account.' }, 409) : undefined
@@ -1231,5 +1232,98 @@ describe('integrated configuration editing and dispatch', () => {
     expect(screen.getByRole('region', { name: 'Experiment dispatch' })).toBeTruthy()
     expect(screen.getByText('Edit configuration JSON', { exact: true })).toBeTruthy()
     expect(calls.some((call) => call.method === 'POST' && call.url === '/api/runner/experiments')).toBe(false)
+  })
+})
+
+
+// The local console and the read-only export, each loaded fresh with its own environment module.
+// These requests are fixtures; the Python suite proves the real local routes.
+function environmentFor(mode) {
+  const table = SHARED.environment.table
+  const messages = SHARED.environment.messages
+  const LIBRARY = SHARED.environment.library[mode]
+  const can = (id) => table[id]?.[mode] === 'ok'
+  const reasonFor = (id) => table[id]?.[mode] ?? 'unavailable'
+  const why = (id, what) => can(id) ? '' : (messages[reasonFor(id)] ?? messages.unavailable)
+    .replace(/\{(what|command|url)\}/g, (_, key) => ({ what, command: LOCAL_APP.command, url: LOCAL_APP.url })[key])
+  return { MODE: mode, LIBRARY, HAS_LIBRARY: LIBRARY.available === true, ENV: { mode, library: LIBRARY }, can, reasonFor, why }
+}
+const localJson = (data, status = 200) => ({ ok: status >= 200 && status < 300, status, statusText: status === 200 ? 'OK' : 'Error',
+  headers: { get: () => 'application/json' }, json: async () => data })
+
+describe('the Harnesses view on the local console and in a read-only export', () => {
+  let localCalls, library, counter, runnerCatalogAnswer
+  async function loadComposer(mode) {
+    vi.resetModules()
+    delete window.__TRACEHARNESS_MEMBER__
+    if (mode === 'export') window.__TRACEHARNESS_DATA__ = { '/overview': { results: [] } }
+    else delete window.__TRACEHARNESS_DATA__
+    vi.doMock('../../environment', () => environmentFor(mode))
+    return (await import('./harness-composer')).HarnessComposer
+  }
+  beforeEach(() => {
+    localCalls = []; library = new Map(); counter = 0
+    runnerCatalogAnswer = () => localJson({ detail: 'Not found.' }, 404)
+    vi.stubGlobal('fetch', vi.fn(async (url, opts = {}) => {
+      const method = opts.method || 'GET'
+      const body = opts.body ? JSON.parse(opts.body) : null
+      const headers = opts.headers instanceof Headers ? Object.fromEntries(opts.headers.entries()) : { ...opts.headers }
+      const call = { url, method, body, headers }; localCalls.push(call)
+      if (url === '/api/runner/catalog') return runnerCatalogAnswer(call)
+      if (url === '/api/shallow/catalog') return localJson({ harnesses: catalogCards })
+      if (url === '/api/shallow/harnesses' && method === 'GET') return localJson({ harnesses: [...library.values()], loaded: true, unconfirmed: [] })
+      if (url === '/api/shallow/harnesses' && method === 'POST') {
+        const current = library.get(body.id)
+        if ((body.if_absent && current) || (body.if_hash && current?.hash !== body.if_hash)) return localJson({ detail: 'This prompt changed on this computer. Reload and review it before saving.' }, 409)
+        const harness = { ...catalogCards.find((r) => r.id === body.id), prompt: body.prompt, hash: String(++counter).padStart(12, 'e') }
+        library.set(harness.id, harness)
+        return localJson({ harness, stored: true, conditional: true })
+      }
+      if (url === '/api/shallow/compile') return localJson(compiled(body))
+      if (url === '/api/shallow/wizard') return localJson({ ...compiled(body), stored: true })
+      return localJson({ detail: 'Not found.' }, 404)
+    }))
+  })
+  afterEach(() => {
+    vi.doUnmock('../../environment'); vi.resetModules()
+    window.__TRACEHARNESS_MEMBER__ = { version: 1, scope }
+    window.__TRACEHARNESS_DATA__ = { '/overview': { results: [] } }
+  })
+
+  it('shows Save harness on the local console and saves a fixed prompt with if_absent, then if_hash', async () => {
+    const Local = await loadComposer('local')
+    render(<Local args={['fixed', 'claude']} />)
+    await waitFor(() => expect(prompt().disabled).toBe(false))
+    const save = screen.getByRole('button', { name: 'Save harness' })
+    fireEvent.change(prompt(), { target: { value: 'Local fixed prompt. verify; do not modify the tests.' } })
+    fireEvent.click(save)
+    await screen.findByText('Harness saved to this computer. Model, task and run limits remain in this tab.')
+    const posts = () => localCalls.filter((c) => c.url === '/api/shallow/harnesses' && c.method === 'POST')
+    expect(posts()[0].body).toEqual({ id: 'claude', prompt: 'Local fixed prompt. verify; do not modify the tests.', if_absent: true })
+    expect(posts()[0].headers).not.toHaveProperty('x-traceharness-member-scope')
+    fireEvent.change(prompt(), { target: { value: 'Second local fixed prompt.' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Save harness' }))
+    await waitFor(() => expect(posts()).toHaveLength(2))
+    expect(posts()[1].body).toEqual({ id: 'claude', prompt: 'Second local fixed prompt.', if_hash: 'eeeeeeeeeee1' })
+    expect(screen.queryByRole('link', { name: 'Account' })).toBeNull()
+  })
+
+  it('saves a custom harness through the local wizard route', async () => {
+    const Local = await loadComposer('local')
+    render(<Local />)
+    const save = await screen.findByRole('button', { name: 'Save harness' })
+    await waitFor(() => expect(save.disabled).toBe(false))
+    fireEvent.click(save)
+    await screen.findByText('Harness saved to this computer. Model, task and run limits remain in this tab.')
+    expect(localCalls.some((c) => c.url === '/api/shallow/wizard' && c.method === 'POST')).toBe(true)
+  })
+
+  it('the read-only export shows no Save harness and sends no write', async () => {
+    const Exported = await loadComposer('export')
+    render(<Exported args={['fixed', 'claude']} />)
+    await screen.findByText('Runner not connected')
+    expect(screen.queryByRole('button', { name: 'Save harness' })).toBeNull()
+    expect(localCalls.filter((c) => c.method !== 'GET')).toEqual([])
+    expect(localCalls.some((c) => c.url.startsWith('/api/shallow/'))).toBe(false)
   })
 })
