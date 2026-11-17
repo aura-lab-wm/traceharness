@@ -1,0 +1,765 @@
+{
+ "datasets": [
+  {
+   "gated": false,
+   "id": "princeton-nlp/SWE-bench_Verified",
+   "importer": null,
+   "kind": "benchmark",
+   "languages": [
+    "python"
+   ],
+   "license": null,
+   "needs": {
+    "containers": true,
+    "x86_64": true
+   },
+   "parquet_bytes": 2096679,
+   "public_runs": {
+    "entries": 182,
+    "source": "SWE-bench/experiments"
+   },
+   "refreshed_upstream": "2025-02-18",
+   "rows": 500,
+   "splits": [
+    {
+     "config": "default",
+     "rows": 500,
+     "split": "test"
+    }
+   ],
+   "summary": "500 human-validated GitHub issue-fix tasks from 12 Python repositories.",
+   "task_dates": {
+    "first": "2013-01-25",
+    "last": "2023-08-07"
+   },
+   "task_kind": "issue-fix",
+   "title": "SWE-bench Verified",
+   "url": "https://huggingface.co/datasets/princeton-nlp/SWE-bench_Verified"
+  },
+  {
+   "gated": false,
+   "id": "princeton-nlp/SWE-bench_Lite",
+   "importer": null,
+   "kind": "benchmark",
+   "languages": [
+    "python"
+   ],
+   "license": null,
+   "needs": {
+    "containers": true,
+    "x86_64": true
+   },
+   "parquet_bytes": 1239091,
+   "public_runs": null,
+   "refreshed_upstream": "2025-03-03",
+   "rows": 323,
+   "splits": [
+    {
+     "config": "default",
+     "rows": 23,
+     "split": "dev"
+    },
+    {
+     "config": "default",
+     "rows": 300,
+     "split": "test"
+    }
+   ],
+   "summary": "A 300-task subset of SWE-bench for cheaper evaluation of issue-fixing agents.",
+   "task_dates": {
+    "first": "2012-09-20",
+    "last": "2023-09-13"
+   },
+   "task_kind": "issue-fix",
+   "title": "SWE-bench Lite",
+   "url": "https://huggingface.co/datasets/princeton-nlp/SWE-bench_Lite"
+  },
+  {
+   "gated": false,
+   "id": "princeton-nlp/SWE-bench",
+   "importer": null,
+   "kind": "benchmark",
+   "languages": [
+    "python"
+   ],
+   "license": null,
+   "needs": {
+    "containers": true,
+    "x86_64": true
+   },
+   "parquet_bytes": 120086340,
+   "public_runs": null,
+   "refreshed_upstream": "2025-03-03",
+   "rows": 21527,
+   "splits": [
+    {
+     "config": "default",
+     "rows": 225,
+     "split": "dev"
+    },
+    {
+     "config": "default",
+     "rows": 2294,
+     "split": "test"
+    },
+    {
+     "config": "default",
+     "rows": 19008,
+     "split": "train"
+    }
+   ],
+   "summary": "GitHub issues paired with the pull requests that fixed them, from 12 Python repositories.",
+   "task_dates": null,
+   "task_kind": "issue-fix",
+   "title": "SWE-bench",
+   "url": "https://huggingface.co/datasets/princeton-nlp/SWE-bench"
+  },
+  {
+   "gated": false,
+   "id": "SWE-bench/SWE-bench_Multilingual",
+   "importer": null,
+   "kind": "benchmark",
+   "languages": [
+    "c",
+    "c++",
+    "go",
+    "java",
+    "javascript",
+    "php",
+    "ruby",
+    "rust",
+    "typescript"
+   ],
+   "license": "mit",
+   "needs": {
+    "containers": true,
+    "x86_64": true
+   },
+   "parquet_bytes": 1875846,
+   "public_runs": null,
+   "refreshed_upstream": "2026-08-17",
+   "rows": 300,
+   "splits": [
+    {
+     "config": "default",
+     "rows": 300,
+     "split": "test"
+    }
+   ],
+   "summary": "Issue-fix tasks in nine programming languages, in the SWE-bench format.",
+   "task_dates": {
+    "first": "2017-02-08",
+    "last": "2025-03-12"
+   },
+   "task_kind": "issue-fix",
+   "title": "SWE-bench Multilingual",
+   "url": "https://huggingface.co/datasets/SWE-bench/SWE-bench_Multilingual"
+  },
+  {
+   "gated": false,
+   "id": "SWE-bench/SWE-bench_Multimodal",
+   "importer": null,
+   "kind": "benchmark",
+   "languages": null,
+   "license": null,
+   "needs": {
+    "containers": true,
+    "x86_64": true
+   },
+   "parquet_bytes": 11303640,
+   "public_runs": null,
+   "refreshed_upstream": "2026-08-18",
+   "rows": 580,
+   "splits": [
+    {
+     "config": "default",
+     "rows": 100,
+     "split": "dev"
+    },
+    {
+     "config": "default",
+     "rows": 480,
+     "split": "test"
+    }
+   ],
+   "summary": "Issue-fix tasks in visual software domains, where the issue includes images.",
+   "task_dates": {
+    "first": "2015-11-16",
+    "last": "2024-06-04"
+   },
+   "task_kind": "issue-fix",
+   "title": "SWE-bench Multimodal",
+   "url": "https://huggingface.co/datasets/SWE-bench/SWE-bench_Multimodal"
+  },
+  {
+   "gated": false,
+   "id": "ScaleAI/SWE-bench_Pro",
+   "importer": null,
+   "kind": "benchmark",
+   "languages": [
+    "go",
+    "javascript",
+    "python",
+    "typescript"
+   ],
+   "license": null,
+   "needs": {
+    "containers": true,
+    "x86_64": true
+   },
+   "parquet_bytes": 15128250,
+   "public_runs": null,
+   "refreshed_upstream": "2026-09-22",
+   "rows": 1424,
+   "splits": [
+    {
+     "config": "default",
+     "rows": 642,
+     "split": "test"
+    },
+    {
+     "config": "hard",
+     "rows": 51,
+     "split": "test"
+    },
+    {
+     "config": "v1",
+     "rows": 731,
+     "split": "test"
+    }
+   ],
+   "summary": "Long-horizon issue-fix tasks drawn from real pull requests in 11 open-source repositories.",
+   "task_dates": null,
+   "task_kind": "issue-fix",
+   "title": "SWE-bench Pro",
+   "url": "https://huggingface.co/datasets/ScaleAI/SWE-bench_Pro"
+  },
+  {
+   "gated": false,
+   "id": "SWE-bench-Live/SWE-bench-Live",
+   "importer": null,
+   "kind": "benchmark",
+   "languages": [
+    "python"
+   ],
+   "license": "mit",
+   "needs": {
+    "containers": true,
+    "x86_64": true
+   },
+   "parquet_bytes": 189503892,
+   "public_runs": null,
+   "refreshed_upstream": "2026-11-03",
+   "rows": 3688,
+   "splits": [
+    {
+     "config": "default",
+     "rows": 1888,
+     "split": "full"
+    },
+    {
+     "config": "default",
+     "rows": 300,
+     "split": "lite"
+    },
+    {
+     "config": "default",
+     "rows": 1000,
+     "split": "test"
+    },
+    {
+     "config": "default",
+     "rows": 500,
+     "split": "verified"
+    }
+   ],
+   "summary": "A continuously updated issue-fix benchmark built from recent GitHub issues.",
+   "task_dates": {
+    "first": "2021-07-22",
+    "last": "2025-09-02"
+   },
+   "task_kind": "issue-fix",
+   "title": "SWE-bench-Live",
+   "url": "https://huggingface.co/datasets/SWE-bench-Live/SWE-bench-Live"
+  },
+  {
+   "gated": false,
+   "id": "SWE-bench-Live/MultiLang",
+   "importer": null,
+   "kind": "benchmark",
+   "languages": null,
+   "license": "mit",
+   "needs": {
+    "containers": true,
+    "x86_64": true
+   },
+   "parquet_bytes": 411887822,
+   "public_runs": null,
+   "refreshed_upstream": "2026-11-03",
+   "rows": 1077,
+   "splits": [
+    {
+     "config": "default",
+     "rows": 111,
+     "split": "c"
+    },
+    {
+     "config": "default",
+     "rows": 142,
+     "split": "cpp"
+    },
+    {
+     "config": "default",
+     "rows": 136,
+     "split": "cs"
+    },
+    {
+     "config": "default",
+     "rows": 138,
+     "split": "go"
+    },
+    {
+     "config": "default",
+     "rows": 160,
+     "split": "java"
+    },
+    {
+     "config": "default",
+     "rows": 108,
+     "split": "js"
+    },
+    {
+     "config": "default",
+     "rows": 171,
+     "split": "rust"
+    },
+    {
+     "config": "default",
+     "rows": 111,
+     "split": "ts"
+    }
+   ],
+   "summary": "The multi-language version of SWE-bench-Live, built from crawled GitHub issues.",
+   "task_dates": {
+    "first": "2020-06-29",
+    "last": "2026-07-31"
+   },
+   "task_kind": "issue-fix",
+   "title": "SWE-bench-Live MultiLang",
+   "url": "https://huggingface.co/datasets/SWE-bench-Live/MultiLang"
+  },
+  {
+   "gated": false,
+   "id": "nebius/SWE-rebench-V2",
+   "importer": null,
+   "kind": "benchmark",
+   "languages": null,
+   "license": "cc-by-4.0",
+   "needs": {
+    "containers": true,
+    "x86_64": true
+   },
+   "parquet_bytes": 428839266,
+   "public_runs": null,
+   "refreshed_upstream": "2026-11-05",
+   "rows": 32079,
+   "splits": [
+    {
+     "config": "default",
+     "rows": 32079,
+     "split": "train"
+    }
+   ],
+   "summary": "A curated, automatically collected set of executable issue-fix tasks in many languages.",
+   "task_dates": {
+    "first": "2014-11-10",
+    "last": "2025-10-31"
+   },
+   "task_kind": "issue-fix",
+   "title": "SWE-rebench V2",
+   "url": "https://huggingface.co/datasets/nebius/SWE-rebench-V2"
+  },
+  {
+   "gated": false,
+   "id": "nebius/SWE-rebench",
+   "importer": null,
+   "kind": "benchmark",
+   "languages": [
+    "python"
+   ],
+   "license": "cc-by-4.0",
+   "needs": {
+    "containers": true,
+    "x86_64": true
+   },
+   "parquet_bytes": 245166035,
+   "public_runs": null,
+   "refreshed_upstream": "2025-12-23",
+   "rows": 27878,
+   "splits": [
+    {
+     "config": "default",
+     "rows": 6542,
+     "split": "filtered"
+    },
+    {
+     "config": "default",
+     "rows": 21336,
+     "split": "test"
+    }
+   ],
+   "summary": "A large, automatically collected set of executable Python issue-fix tasks.",
+   "task_dates": {
+    "first": "2016-04-05",
+    "last": "2025-04-30"
+   },
+   "task_kind": "issue-fix",
+   "title": "SWE-rebench",
+   "url": "https://huggingface.co/datasets/nebius/SWE-rebench"
+  },
+  {
+   "gated": false,
+   "id": "SWE-bench/SWE-smith",
+   "importer": null,
+   "kind": "benchmark",
+   "languages": [
+    "python"
+   ],
+   "license": "mit",
+   "needs": {
+    "containers": true,
+    "x86_64": true
+   },
+   "parquet_bytes": 277767206,
+   "public_runs": null,
+   "refreshed_upstream": "2025-12-14",
+   "rows": 59136,
+   "splits": [
+    {
+     "config": "default",
+     "rows": 59136,
+     "split": "train"
+    }
+   ],
+   "summary": "Synthetic software-engineering tasks generated by breaking working Python repositories.",
+   "task_dates": null,
+   "task_kind": "issue-fix",
+   "title": "SWE-smith",
+   "url": "https://huggingface.co/datasets/SWE-bench/SWE-smith"
+  },
+  {
+   "gated": false,
+   "id": "SWE-Gym/SWE-Gym",
+   "importer": null,
+   "kind": "benchmark",
+   "languages": [
+    "python"
+   ],
+   "license": "mit",
+   "needs": {
+    "containers": true,
+    "x86_64": true
+   },
+   "parquet_bytes": 43644473,
+   "public_runs": null,
+   "refreshed_upstream": "2025-05-10",
+   "rows": 2438,
+   "splits": [
+    {
+     "config": "default",
+     "rows": 2438,
+     "split": "train"
+    }
+   ],
+   "summary": "Executable Python issue-fix tasks for training software-engineering agents.",
+   "task_dates": {
+    "first": "2018-09-13",
+    "last": "2024-05-28"
+   },
+   "task_kind": "issue-fix",
+   "title": "SWE-Gym",
+   "url": "https://huggingface.co/datasets/SWE-Gym/SWE-Gym"
+  },
+  {
+   "gated": false,
+   "id": "ByteDance-Seed/Multi-SWE-bench",
+   "importer": null,
+   "kind": "benchmark",
+   "languages": [
+    "c",
+    "c++",
+    "go",
+    "java",
+    "javascript",
+    "rust",
+    "typescript"
+   ],
+   "license": "other",
+   "needs": {
+    "containers": true,
+    "x86_64": true
+   },
+   "parquet_bytes": null,
+   "public_runs": null,
+   "refreshed_upstream": "2026-07-08",
+   "rows": null,
+   "splits": [],
+   "summary": "Issue-fix tasks in seven programming languages.",
+   "task_dates": null,
+   "task_kind": "issue-fix",
+   "title": "Multi-SWE-bench",
+   "url": "https://huggingface.co/datasets/ByteDance-Seed/Multi-SWE-bench"
+  },
+  {
+   "gated": false,
+   "id": "AmazonScience/SWE-PolyBench",
+   "importer": null,
+   "kind": "benchmark",
+   "languages": [
+    "java",
+    "javascript",
+    "python",
+    "typescript"
+   ],
+   "license": "mit",
+   "needs": {
+    "containers": true,
+    "x86_64": true
+   },
+   "parquet_bytes": 26127906,
+   "public_runs": null,
+   "refreshed_upstream": "2025-08-19",
+   "rows": 2110,
+   "splits": [
+    {
+     "config": "default",
+     "rows": 2110,
+     "split": "test"
+    }
+   ],
+   "summary": "Repository-level issue-fix tasks in four programming languages.",
+   "task_dates": null,
+   "task_kind": "issue-fix",
+   "title": "SWE-PolyBench",
+   "url": "https://huggingface.co/datasets/AmazonScience/SWE-PolyBench"
+  },
+  {
+   "gated": false,
+   "id": "harborframework/terminal-bench-2.1",
+   "importer": null,
+   "kind": "benchmark",
+   "languages": null,
+   "license": "apache-2.0",
+   "needs": {
+    "containers": true,
+    "x86_64": true
+   },
+   "parquet_bytes": 131354,
+   "public_runs": null,
+   "refreshed_upstream": "2026-09-14",
+   "rows": 89,
+   "splits": [
+    {
+     "config": "default",
+     "rows": 89,
+     "split": "test"
+    }
+   ],
+   "summary": "Terminal tasks in the Harbor dataset layout, run in containers and checked by tests.",
+   "task_dates": null,
+   "task_kind": "terminal",
+   "title": "Terminal-Bench 2.1",
+   "url": "https://huggingface.co/datasets/harborframework/terminal-bench-2.1"
+  },
+  {
+   "gated": false,
+   "id": "harborframework/terminal-bench-3.0",
+   "importer": null,
+   "kind": "benchmark",
+   "languages": null,
+   "license": "apache-2.0",
+   "needs": {
+    "containers": true,
+    "x86_64": true
+   },
+   "parquet_bytes": null,
+   "public_runs": null,
+   "refreshed_upstream": "2026-08-21",
+   "rows": null,
+   "splits": null,
+   "summary": "Terminal tasks in the Harbor dataset layout, run in containers and checked by tests.",
+   "task_dates": null,
+   "task_kind": "terminal",
+   "title": "Terminal-Bench 3.0",
+   "url": "https://huggingface.co/datasets/harborframework/terminal-bench-3.0"
+  },
+  {
+   "gated": false,
+   "id": "nebius/SWE-agent-trajectories",
+   "importer": null,
+   "kind": "trajectories",
+   "languages": [
+    "python"
+   ],
+   "license": "cc-by-4.0",
+   "needs": {
+    "containers": false,
+    "x86_64": false
+   },
+   "parquet_bytes": 1114367701,
+   "public_runs": null,
+   "refreshed_upstream": "2024-12-23",
+   "rows": 80036,
+   "splits": [
+    {
+     "config": "default",
+     "rows": 80036,
+     "split": "train"
+    }
+   ],
+   "summary": "SWE-agent runs on GitHub issues, with the generated patch and an exit status.",
+   "task_dates": null,
+   "task_kind": "issue-fix",
+   "title": "SWE-agent trajectories (Nebius)",
+   "url": "https://huggingface.co/datasets/nebius/SWE-agent-trajectories"
+  },
+  {
+   "gated": false,
+   "id": "nebius/SWE-rebench-openhands-trajectories",
+   "importer": null,
+   "kind": "trajectories",
+   "languages": [
+    "python"
+   ],
+   "license": "cc-by-4.0",
+   "needs": {
+    "containers": false,
+    "x86_64": false
+   },
+   "parquet_bytes": 2079503354,
+   "public_runs": null,
+   "refreshed_upstream": "2025-12-27",
+   "rows": 67074,
+   "splits": [
+    {
+     "config": "default",
+     "rows": 67074,
+     "split": "train"
+    }
+   ],
+   "summary": "Multi-turn OpenHands runs by Qwen3-Coder-480B-A35B on SWE-rebench tasks, with resolved flags.",
+   "task_dates": null,
+   "task_kind": "issue-fix",
+   "title": "SWE-rebench OpenHands trajectories",
+   "url": "https://huggingface.co/datasets/nebius/SWE-rebench-openhands-trajectories"
+  },
+  {
+   "gated": false,
+   "id": "SWE-bench/SWE-smith-trajectories",
+   "importer": null,
+   "kind": "trajectories",
+   "languages": [
+    "python"
+   ],
+   "license": "mit",
+   "needs": {
+    "containers": false,
+    "x86_64": false
+   },
+   "parquet_bytes": 3171137897,
+   "public_runs": null,
+   "refreshed_upstream": "2025-07-19",
+   "rows": 76002,
+   "splits": [
+    {
+     "config": "default",
+     "rows": 25826,
+     "split": "ticks"
+    },
+    {
+     "config": "default",
+     "rows": 24100,
+     "split": "tool"
+    },
+    {
+     "config": "default",
+     "rows": 26076,
+     "split": "xml"
+    }
+   ],
+   "summary": "Recorded agent runs on SWE-smith tasks, each with its model and a resolved flag.",
+   "task_dates": null,
+   "task_kind": "issue-fix",
+   "title": "SWE-smith trajectories",
+   "url": "https://huggingface.co/datasets/SWE-bench/SWE-smith-trajectories"
+  },
+  {
+   "gated": false,
+   "id": "ByteDance-Seed/Multi-SWE-bench_trajs",
+   "importer": null,
+   "kind": "trajectories",
+   "languages": null,
+   "license": "cc0-1.0",
+   "needs": {
+    "containers": false,
+    "x86_64": false
+   },
+   "parquet_bytes": null,
+   "public_runs": null,
+   "refreshed_upstream": "2025-12-19",
+   "rows": null,
+   "splits": null,
+   "summary": "Trajectories and logs of the agents evaluated on the Multi-SWE-bench leaderboard.",
+   "task_dates": null,
+   "task_kind": "issue-fix",
+   "title": "Multi-SWE-bench trajectories",
+   "url": "https://huggingface.co/datasets/ByteDance-Seed/Multi-SWE-bench_trajs"
+  },
+  {
+   "gated": true,
+   "id": "SALT-NLP/SWE-chat",
+   "importer": null,
+   "kind": "trajectories",
+   "languages": null,
+   "license": "odc-by",
+   "needs": {
+    "containers": false,
+    "x86_64": false
+   },
+   "parquet_bytes": null,
+   "public_runs": null,
+   "refreshed_upstream": "2026-10-03",
+   "rows": null,
+   "splits": null,
+   "summary": "Coding-agent sessions from real users working with AI coding assistants.",
+   "task_dates": null,
+   "task_kind": "mixed",
+   "title": "SWE-chat",
+   "url": "https://huggingface.co/datasets/SALT-NLP/SWE-chat"
+  },
+  {
+   "gated": false,
+   "id": "aura-lab-wm/traceharness-runs",
+   "importer": null,
+   "kind": "trajectories",
+   "languages": null,
+   "license": "mit",
+   "needs": {
+    "containers": false,
+    "x86_64": false
+   },
+   "parquet_bytes": null,
+   "public_runs": null,
+   "refreshed_upstream": "2026-11-15",
+   "rows": null,
+   "splits": [],
+   "summary": "Runs of coding agents recorded by TraceHarness: ledger, patch, messages and summary per run.",
+   "task_dates": null,
+   "task_kind": "mixed",
+   "title": "TraceHarness runs",
+   "url": "https://huggingface.co/datasets/aura-lab-wm/traceharness-runs"
+  }
+ ],
+ "refreshed": "2026-11-17",
+ "schema": 1
+}

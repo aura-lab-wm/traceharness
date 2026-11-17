@@ -47,7 +47,7 @@ MEASURED = ("rows", "parquet_bytes", "splits", "license", "gated", "task_dates",
 PAGE = 100
 MAX_PAGES = 30
 #: seconds between two requests: the Hub's anonymous limit is tight and a scan is up to 30 pages
-DELAY = 0.6
+DELAY = 1.0
 
 
 class FetchError(Exception):
