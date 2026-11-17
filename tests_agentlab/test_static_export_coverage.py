@@ -24,6 +24,8 @@ from test_no_dead_surface import registered_routes           # noqa: E402
 #: dropped from here is a route _urls() must cover instead -- this file's own test below fails
 #: loudly the moment that stops being true, in either direction.
 EXCLUDED_FROM_EXPORT = {
+    "/api/hf/datasets/{owner}/{name}":
+        "one entry of the catalog: /api/hf/catalog is exported whole and carries every entry",
     "/api/shallow/catalog":
         "the local harness library: an export has no library and must carry no /shallow/ key",
     "/api/shallow/harnesses":

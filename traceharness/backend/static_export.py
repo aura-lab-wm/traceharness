@@ -118,7 +118,9 @@ _GLOBAL_URLS = ["/api/overview", "/api/tasks", "/api/harnesses", "/api/models",
                 "/api/export/formats", "/api/settings",
                 # The block builder fetches these with no static-export guard, so a
                 # frozen page still needs the preset catalog and the blank palette.
-                "/api/blocks/catalog", "/api/blocks/palette"]
+                "/api/blocks/catalog", "/api/blocks/palette",
+                # The Hugging Face dataset catalog: a checked-in constant, so an export can show it.
+                "/api/hf/catalog"]
 #: Keys build() writes itself with the export's own answers (mode "export"), never fetched: the
 #: live routes answer for the local console. Listed so _urls() names every key the file carries.
 _WRITTEN_URLS = ["/api/environment", "/api/version"]

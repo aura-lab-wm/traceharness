@@ -987,4 +987,6 @@ from traceharness.backend.local_runner_api import router as local_runner_router
 app.include_router(environment_router)
 app.include_router(shallow_router)
 app.include_router(local_runner_router)
+from traceharness.backend.hf_api import router as hf_router
+app.include_router(hf_router)
 app.router.routes.sort(key=lambda r: 1 if getattr(r, "path", "") == "/{path:path}" else 0)
