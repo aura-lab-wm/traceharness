@@ -1,6 +1,7 @@
-/* A preview only. No write is sent to any account or runner. */
+/* A preview only. No write is sent to any library or runner. */
 import { useEffect, useState } from 'react'
 import { api, IS_MEMBER } from '../../api'
+import { HAS_LIBRARY } from '../../environment'
 import { ErrorState, Go, Loading } from '../ui'
 import { EvidenceOrigin, evidenceOrigin, withEvidenceOrigin } from '../shallowEvidence'
 import { readDraft, writeDraft } from './shallow-drafts'
@@ -22,6 +23,8 @@ function clipUtf8(text, capBytes) {
 }
 
 function ShallowApply({ args } = {}) {
+  // As on Fixed harnesses: only the member snapshot waits for the Worker's catalog; the local and
+  // export catalogs are compiled in, and the local server's copy replaces them when it answers.
   const [cards, setCards] = useState(IS_MEMBER ? null : CARDS)
   const [prompt, setPrompt] = useState(() => readDraft('apply')?.prompt ?? CARDS[0].prompt)
   const [applied, setApplied] = useState(() => readDraft('apply')?.applied ?? CARDS[0].prompt)
@@ -29,15 +32,15 @@ function ShallowApply({ args } = {}) {
   const [storageError, setStorageError] = useState('')
   const [revision, setRevision] = useState(0)
   useEffect(() => {
-    if (!IS_MEMBER) return
+    if (!HAS_LIBRARY) return
     let active = true
     setError(null)
-    api('/shallow/catalog').then((result) => { if (active) setCards(result.harnesses) })
+    api('/shallow/catalog').then((result) => { if (active && Array.isArray(result?.harnesses)) setCards(result.harnesses) })
       .catch((failure) => { if (active) setError(failure) })
     return () => { active = false }
   }, [revision])
   useEffect(() => { setStorageError(writeDraft('apply', { prompt, applied })) }, [prompt, applied])
-  if (error) return <><ErrorState error={error} what="The six shell preview" onRetry={() => setRevision((n) => n + 1)} /><p><a href="/login">Account</a> · Sign back into the original account to keep working on its draft.</p></>
+  if (error && !cards) return <><ErrorState error={error} what="The six shell preview" onRetry={() => setRevision((n) => n + 1)} />{IS_MEMBER && <p><a href="/login">Account</a> · Sign back into the original account to keep working on its draft.</p>}</>
   if (!cards) return <Loading label="Reading the six shells…" />
   return (
     <div className="rg-dpad rg-harness" data-el="shallow-apply">
@@ -47,7 +50,7 @@ function ShallowApply({ args } = {}) {
           <div className="rg-eyebrow">Harness workspace / Compare prompt fit</div>
           <h1>One prompt, six shells</h1>
           <p>The prompt is the only thing this change edits. Each harness keeps its own tools, permission rule, stop, and byte cap. These cells stay off the vendor ladder.</p>
-          <p>This is a preview. Applying it here does not save any account prompt or run a model.</p>
+          <p>This is a preview. Applying it here does not save any prompt or run a model.</p>
         </div>
       </div>
       <EvidenceOrigin args={args} />
@@ -56,7 +59,7 @@ function ShallowApply({ args } = {}) {
         <textarea className="rg-inp" rows={6} value={prompt} onChange={(e) => setPrompt(e.target.value)} spellCheck={false} />
       </label>
       <div className="rg-harness-toolbar"><button type="button" className="rg-btn pri" onClick={() => setApplied(prompt)}>Apply to all six</button>
-      <span className="rg-small">{prompt !== applied ? 'Unapplied edits' : 'Preview only · account prompts unchanged'}</span></div>
+      <span className="rg-small">{prompt !== applied ? 'Unapplied edits' : 'Preview only · saved prompts unchanged'}</span></div>
       <div className="rg-harness-grid">
         {cards.map((row) => {
           const shown = clipUtf8(applied, row.cap_bytes)
@@ -74,7 +77,7 @@ function ShallowApply({ args } = {}) {
           )
         })}
       </div>
-      <Go spec={withEvidenceOrigin('shallowCards', evidenceOrigin(args))} className="rg-btn">{IS_MEMBER ? 'Open fixed harnesses to save individual prompts' : 'Back to fixed harnesses'}</Go>
+      <Go spec={withEvidenceOrigin('shallowCards', evidenceOrigin(args))} className="rg-btn">{HAS_LIBRARY ? 'Open fixed harnesses to save individual prompts' : 'Back to fixed harnesses'}</Go>
     </div>
   )
 }

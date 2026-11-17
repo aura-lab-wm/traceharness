@@ -1,6 +1,7 @@
 /* Door 2. Six questions, recommended answer first. MCP stays off. */
 import { useEffect, useRef, useState } from 'react'
 import { api, IS_MEMBER } from '../../api'
+import { HAS_LIBRARY, LIBRARY } from '../../environment'
 import { requireStored } from '../../member-api'
 import { Go } from '../ui'
 import { EvidenceOrigin, evidenceOrigin, withEvidenceOrigin } from '../shallowEvidence'
@@ -21,28 +22,28 @@ function ShallowWizard({ args } = {}) {
   const [saved, setSaved] = useState('')
   const [busy, setBusy] = useState(false)
   const [previewRevision, setPreviewRevision] = useState(0)
-  const [accountLoaded, setAccountLoaded] = useState(!IS_MEMBER)
+  const [accountLoaded, setAccountLoaded] = useState(!HAS_LIBRARY)
   const [accountError, setAccountError] = useState('')
   const [accountRevision, setAccountRevision] = useState(0)
   const blocks = blocksFromAnswers(answers)
   const matches = QUESTIONS.every((row) => answers[row.id] === INITIAL[row.id])
   useEffect(() => {
-    if (!IS_MEMBER) return
+    if (!HAS_LIBRARY) return
     let active = true
     const controller = new AbortController()
     setAccountLoaded(false)
     setAccountError('')
     api('/shallow/harnesses', { signal: controller.signal }).then((result) => {
       if (!active) return
-      setAccountLoaded(result.loaded === true)
-      if (result.loaded !== true) setAccountError('Your saved account data has not loaded. Saving is unavailable.')
+      setAccountLoaded(result?.loaded === true)
+      if (result?.loaded !== true) setAccountError(`Your harnesses saved to ${LIBRARY.label} have not loaded. Saving is unavailable.`)
     }).catch((failure) => { if (active) setAccountError(failure.message) })
     return () => { active = false; controller.abort() }
   }, [accountRevision])
   useEffect(() => {
     setStorageError(writeDraft('answers', answers) || writeDraft('customize', blocksFromAnswers(answers)))
     setSaved('')
-    if (!IS_MEMBER) return
+    if (!HAS_LIBRARY) return
     let active = true
     const controller = new AbortController()
     setPreview(null)
@@ -60,7 +61,7 @@ function ShallowWizard({ args } = {}) {
     try {
       const result = requireStored(await api('/shallow/wizard', { method: 'POST', body: { answers } }))
       setPreview(result)
-      setSaved(`Saved ${result.harness.id} to your account.`)
+      setSaved(`Saved ${result.harness.id} to ${LIBRARY.label}.`)
     } catch (failure) { setError(failure.message) }
     finally { setBusy(false) }
   }
@@ -105,20 +106,20 @@ function ShallowWizard({ args } = {}) {
       </div>
       <HarnessSummary blocks={blocks} headingRef={summaryRef}>
       <button type="button" className="rg-btn" onClick={() => focusWorkspaceSection(questionsRef)}>Back to answers</button>
-      {IS_MEMBER && !preview && !error && <p role="status" className="rg-small">Checking configuration…</p>}
+      {HAS_LIBRARY && !preview && !error && <p role="status" className="rg-small">Checking configuration…</p>}
       {preview && <p className="rg-small">Cell {preview.harness.id}</p>}
       {(preview?.warnings || []).map((warning) => <p key={warning} role="status" className="rg-harness-warning">{warning}</p>)}
       {error && <p role="alert">{error}{IS_MEMBER && error.includes('account changed') && <> <a href="/login">Account</a></>}</p>}
-      {IS_MEMBER && error && !preview && <button type="button" className="rg-btn" onClick={() => setPreviewRevision((n) => n + 1)}>Retry preview</button>}
+      {HAS_LIBRARY && error && !preview && <button type="button" className="rg-btn" onClick={() => setPreviewRevision((n) => n + 1)}>Retry preview</button>}
       {saved && <p role="status">{saved}</p>}
-      {accountError && <p role="alert">{accountError} <button type="button" className="rg-btn" onClick={() => setAccountRevision((n) => n + 1)}>Retry account data</button> <a href="/login">Account</a></p>}
-      {IS_MEMBER && <button type="button" className="rg-btn pri" disabled={!accountLoaded || busy || !preview?.ok} onClick={save}>{busy ? 'Saving…' : 'Save minimal harness'}</button>}
+      {accountError && <p role="alert">{accountError} <button type="button" className="rg-btn" onClick={() => setAccountRevision((n) => n + 1)}>Retry saved harnesses</button>{IS_MEMBER && <> <a href="/login">Account</a></>}</p>}
+      {HAS_LIBRARY && <button type="button" className="rg-btn pri" disabled={!accountLoaded || busy || !preview?.ok} onClick={save}>{busy ? 'Saving…' : 'Save minimal harness'}</button>}
       <Go spec={withEvidenceOrigin('blocks', evidenceOrigin(args), 'customize')} className="rg-btn" el="customize-spec">Customize</Go>
       <p className="rg-small" data-el="wizard-summary">{matches ? "Matches min_099dc52e693e." : "The selection diverges from the recommended cell."} MCP is off.</p>
       {matches ? null : <button type="button" className="rg-btn" disabled={busy} onClick={() => setAnswers(INITIAL)}>Reset to recommended</button>}
       <p className="rg-small">Network, privilege, secret access, and path escape are not a choice. They stay blocked.</p>
-      {IS_MEMBER && <p className="rg-small">Answers stay in this tab until you save. Saving keeps the harness in your account and does not run a model.</p>}
-      {IS_MEMBER && <p className="rg-small">Open Customize to reopen your saved minimal harnesses.</p>}
+      {HAS_LIBRARY && <p className="rg-small">Answers stay in this tab until you save. Saving sends the harness to {LIBRARY.label} and does not run a model.</p>}
+      {HAS_LIBRARY && <p className="rg-small">Open Customize to reopen your saved minimal harnesses.</p>}
       <HarnessJson source="Current wizard draft" description="The complete block configuration from these answers, with the compiled harness when available."
         documents={[{ id: 'blocks', label: 'Block configuration', value: { blocks: blocksFromAnswers(answers) }, filename: 'minimal-harness-blocks.json' }, { id: 'compiled', label: 'Compiled harness', value: preview?.ok ? preview.harness : null, filename: 'minimal-harness.json' }]} />
       </HarnessSummary>

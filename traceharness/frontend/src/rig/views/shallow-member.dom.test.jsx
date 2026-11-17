@@ -130,7 +130,7 @@ describe('member shallow screens use the existing React workbench', () => {
     fireEvent.change(within(card).getByRole('textbox'), { target: { value: 'Member prompt. verify; do not modify the tests.' } })
     stored = false
     fireEvent.click(within(card).getByRole('button', { name: 'Save prompt' }))
-    await screen.findByText(/Account storage did not confirm/)
+    await screen.findByText(/Your account did not confirm this save/)
     expect(card.textContent).toContain('Unsaved draft')
     expect(card.textContent).not.toContain('Saved to your account.')
     const draftKey = `traceharness.shallow.member.${scope}.fixed`
@@ -217,7 +217,7 @@ describe('member shallow screens use the existing React workbench', () => {
     render(<Wizard />)
     await screen.findByText(`Cell ${RECOMMENDED_ID}`)
     expect(screen.getByRole('button', { name: 'Save minimal harness' }).disabled).toBe(true)
-    expect(screen.getByRole('button', { name: 'Retry account data' })).toBeTruthy()
+    expect(screen.getByRole('button', { name: 'Retry saved harnesses' })).toBeTruthy()
     cleanup()
     render(<Cards />)
     for (const save of await screen.findAllByRole('button', { name: 'Save prompt' })) expect(save.disabled).toBe(true)
@@ -237,7 +237,7 @@ describe('member shallow screens use the existing React workbench', () => {
     await waitFor(() => expect(save.disabled).toBe(false))
     stored = false
     fireEvent.click(save)
-    await screen.findByText(/Account storage did not confirm/)
+    await screen.findByText(/Your account did not confirm this save/)
     expect(screen.queryByText(`Saved ${RECOMMENDED_ID} to your account.`)).toBeNull()
     stored = true
     fireEvent.click(save)
@@ -280,6 +280,24 @@ describe('member shallow screens use the existing React workbench', () => {
     fireEvent.click(document.activeElement)
     expect(container.querySelectorAll('[data-el="harness-block"]')[1]).toBe(tools)
     expect(tools.contains(document.activeElement)).toBe(true)
+  })
+
+  it('reads every save sentence from the library label and keeps the Account link for the account', async () => {
+    const view = render(<Cards />)
+    await screen.findAllByRole('button', { name: 'Save prompt' })
+    await waitFor(() => expect(view.container.querySelector('.rg-harness-note').textContent).toContain('save them to your account'))
+    const card = view.container.querySelector('[data-agent="qwen"]')
+    fireEvent.change(within(card).getByRole('textbox'), { target: { value: 'Member label check' } })
+    fireEvent.click(within(card).getByRole('button', { name: 'Save prompt' }))
+    expect((await within(card).findByRole('status')).textContent).toBe('Saved to your account.')
+    expect(within(card).getByText('Saved to your account', { selector: '.rg-harness-tag' })).toBeTruthy()
+    cleanup()
+    loaded = false
+    render(<Blocks args={['customize']} />)
+    const alert = await screen.findByText(/Your harnesses saved to your account have not loaded/)
+    expect(within(alert).getByRole('link', { name: 'Account' }).getAttribute('href')).toBe('/login')
+    expect(screen.queryByText(/python -m traceharness/)).toBeTruthy()
+    expect(document.body.textContent).not.toContain('8742')
   })
 
   it('distinguishes harness locations in titles and breadcrumbs', () => {

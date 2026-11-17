@@ -17,6 +17,21 @@ afterEach(() => {
 })
 
 describe('hosted member API boundary', () => {
+  it('names the shared start command, and the save check speaks for the library this console has', async () => {
+    await load()
+    const { memberRequest, requireStored } = await import('./member-api')
+    const { LOCAL_APP } = await import('./shared/index.js')
+    vi.stubGlobal('fetch', vi.fn())
+    const refused = await memberRequest('/blocks/run', { method: 'POST' }).catch((error) => error)
+    expect(refused.message).toBe(`This action needs the local console. Start it with ${LOCAL_APP.command}.`)
+    expect(refused.message).not.toMatch(/8742|the local app/)
+    expect(fetch).not.toHaveBeenCalled()
+    expect(() => requireStored({ stored: false, harness: {} })).toThrow('Your account did not confirm this save.')
+    await load(null, null)
+    const local = await import('./member-api')
+    expect(() => local.requireStored({ stored: false, harness: {} })).toThrow('This computer did not confirm this save.')
+  })
+
   it('reads the snapshot without network, and sends only scoped same-origin member requests', async () => {
     const { api, IS_MEMBER, IS_STATIC } = await load()
     const fetch = vi.fn(async () => ({ ok: true, json: async () => ({ harnesses: [] }) }))

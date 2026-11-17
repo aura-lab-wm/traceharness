@@ -1,11 +1,435 @@
 """Harness runs on this computer, in the hosted runner shapes (SPEC 3(b)).
 
-Inert seam: WP1 fills it with `GET /catalog`, `POST /preflight`, `POST /jobs`, `GET /jobs`,
-`GET /jobs/{id}`, `POST /jobs/{id}/cancel` and `GET /jobs/{id}/artifacts/{name}`. Until then the
-router is mounted with no routes.
+The Harnesses view calls the same paths on traceharness.dev (the hosted runner) and here. What runs
+here is the lab's own engine (runtime `traceharness`) on the tasks in `<lab>/tasks`, with `mock`
+always and the curated OpenRouter models only when this server already holds a key (Settings). One
+job is one run through `app.create_job`, written to the results directory `harness_runs`, so it
+opens in Datasets like any other run.
+
+Hosted only, and said so: native runtimes (listed with `available: false` and a reason), native
+prompt inventories, experiments (`experiments_available: false`) and the credential vault
+(`credentials_available: false`, `credential_required: false`). Those paths answer a JSON 404.
+
+Limits, as `core/harness.py:run_task` and `app._run_one` really apply them (READ): the step cap
+(`limits.max_steps`, written into the stop block) is enforced inside the run. `max_cost_usd` is
+handed to the job, whose cap is checked only after a run completes, so it cannot stop a one-run
+job; there is no wall-time parameter; and the output-token limit is not applied (each model call is
+capped by the harness's own sampling block). The manifest lists only the enforced limit.
+
+Jobs live in memory for this server session, keyed by a 48-hex id (the shape the console's
+artifact route requires), each pointing at the `app.JOBS` id it started.
 """
 from __future__ import annotations
 
-from fastapi import APIRouter
+import base64
+import copy
+import hashlib
+import json
+import math
+import os
+import re
+import secrets
+import threading
+import time
+
+from fastapi import APIRouter, HTTPException, Request
+from starlette.concurrency import run_in_threadpool
+
+from traceharness.core.blocks import compile_blocks
+from traceharness.runner_service.configuration import canonical, digest, has_secret
+from traceharness.shared.contract import RUN_LIMITS, RUNNER_PROMPT_MAX_BYTES
+
+from . import local_library as L
 
 router = APIRouter(prefix="/api/runner")
+
+RUNTIME = "traceharness"
+RESULTS_DIR = "harness_runs"
+ENFORCED_LIMITS = ["max_steps"]
+NATIVE_REASON = "Native runtimes run on the hosted runner only."
+NATIVE = (("native-claude-code", "Claude Code"), ("native-codex", "Codex CLI"))
+#: app.create_job's refusal of a live model without a key (app.py `create_job`); a test holds them equal.
+LIVE_MODEL_NEEDS_KEY = "This run calls a live model. Paste your own LLM key. The lab does not keep one for you."
+NEEDS_SERVER_KEY = "This model calls OpenRouter. Set the key in Settings on this computer, then review the run again."
+JOB_ID = re.compile(r"^[a-f0-9]{48}$")
+IDEMPOTENCY_KEY = re.compile(r"^[A-Za-z0-9_-]{8,128}$")
+HEX64 = re.compile(r"^[a-f0-9]{64}$")
+KEY_SHAPED = re.compile(r"sk-or-v\d+-[A-Za-z0-9_-]{8,}|sk-[A-Za-z0-9_-]{20,}")
+ARTIFACT_MAX = 1024 * 1024
+#: Artifact name -> the file in the run directory (manifest.json is the reviewed manifest itself).
+ARTIFACTS = {"summary.json": "summary.json", "patch.diff": "patch.diff", "messages.json": "messages.json",
+             "trace.jsonl": "ledger.jsonl", "manifest.json": None}
+_STATUS = {"queued": "queued", "running": "running", "finished": "succeeded", "error": "failed",
+           "cancelled": "cancelled", "stopped": "failed"}
+_BLOCK_FIELDS = {"prompt": {"type", "text"}, "tools": {"type", "names"}, "policy": {"type", "mode"},
+                 "context": {"type", "window", "observation_chars"}, "stop": {"type", "max_steps", "max_total_tokens"},
+                 "sampling": {"type", "temperature", "max_tokens_per_call"}, "listing": {"type", "include"}}
+
+_LOCK = threading.Lock()
+_JOBS: dict[str, dict] = {}       # our id -> {id, jobs_id, manifest, manifest_sha256, created_at, key}
+_BY_KEY: dict[str, str] = {}      # idempotency key -> our id
+
+
+def _app():
+    # Imported here: app includes this router at the bottom, after the job helpers exist.
+    from traceharness.backend import app
+    return app
+
+
+def _version() -> str:
+    from traceharness.__main__ import __version__
+    return __version__
+
+
+# --------------------------------------------------------------------------- catalog
+def _model_ids() -> list[str]:
+    app = _app()
+    ids = ["mock"]
+    if app.SETTINGS["openrouter_key"]:
+        ids += [row["id"] for row in app.CURATED if row["id"] != "mock"]
+    return ids
+
+
+def catalog() -> dict:
+    app = _app()
+    ids = _model_ids()
+    tasks = [{"id": t["id"], "title": t.get("title") or t["id"], "ready": True, "runtime_ids": [RUNTIME],
+              "model_ids_by_runtime": {RUNTIME: list(ids)}} for t in app.list_tasks("full")]
+    return {
+        "version": 1, "scope": "local",
+        "runner": {"available": True, "message": "Runs on this computer with the TraceHarness engine."},
+        "runtimes": [{"id": RUNTIME, "name": "TraceHarness engine", "kind": "traceharness", "available": True,
+                      "prompt_mode": "replace", "version": _version(), "model_ids": list(ids)}]
+                    + [{"id": rid, "name": name, "kind": "native", "available": False, "prompt_mode": "append",
+                        "version": None, "reason": NATIVE_REASON} for rid, name in NATIVE],
+        "models": [{"id": mid, "name": "Mock (offline)" if mid == "mock" else mid} for mid in ids],
+        "tasks": tasks,
+        "credentials_available": False, "credential_required": False,
+        "execution_available": True, "experiments_available": False,
+    }
+
+
+# --------------------------------------------------------------------------- preflight
+def _limit_issues(limits) -> list[str]:
+    required = {"max_steps", "wall_time_seconds", "max_cost_usd"}
+    if not isinstance(limits, dict) or not required <= set(limits) or set(limits) - required - {"max_output_tokens"}:
+        return ["Set step, time and cost limits."]
+    issues = []
+    for name, (low, high) in RUN_LIMITS.items():
+        if name not in limits:
+            continue
+        value = limits[name]
+        integer = name != "max_cost_usd"
+        if (isinstance(value, bool) or not isinstance(value, (int, float)) or not math.isfinite(value)
+                or not low <= value <= high or integer and int(value) != value):
+            issues.append(f"Invalid {name} limit.")
+    return issues
+
+
+def preflight(configuration) -> dict:
+    """The hosted preflight's rules for the one runtime this computer runs (runner_service/configuration.py)."""
+    try:
+        invalid = not isinstance(configuration, dict) or has_secret(configuration)
+        canonical(configuration)
+    except (ValueError, TypeError, UnicodeError, RecursionError):
+        invalid = True
+    if invalid:
+        return {"ok": False, "issues": ["Configuration must be an object without credentials."]}
+    expected = {"version", "runtime_id", "model_id", "task_id", "prompt", "prompt_mode", "harness", "limits"}
+    if type(configuration.get("version")) is not int or configuration["version"] != 1 or set(configuration) != expected:
+        return {"ok": False, "issues": ["Unsupported or incomplete run configuration."]}
+    issues: list[str] = []
+    runtime_id = configuration["runtime_id"]
+    if runtime_id != RUNTIME:
+        issues.append(NATIVE_REASON if runtime_id in dict(NATIVE) else "Select a registered runtime.")
+    model_id = configuration["model_id"]
+    if not isinstance(model_id, str) or model_id not in _model_ids():
+        live = isinstance(model_id, str) and not model_id.startswith("mock") and model_id in {r["id"] for r in _app().CURATED}
+        issues.append(NEEDS_SERVER_KEY if live else "Select a registered model.")
+    task_id = configuration["task_id"]
+    if not isinstance(task_id, str) or task_id not in {t["id"] for t in _app().list_tasks("full")}:
+        issues.append("Select an installed task package; a recorded result is not an executable task.")
+    prompt = configuration["prompt"]
+    if not isinstance(prompt, str) or not prompt.strip() or len(prompt.encode("utf-8")) > RUNNER_PROMPT_MAX_BYTES:
+        issues.append(f"Enter a prompt of at most {RUNNER_PROMPT_MAX_BYTES} UTF-8 bytes.")
+    if runtime_id == RUNTIME and configuration["prompt_mode"] != "replace":
+        issues.append("The runtime does not support the selected prompt application mode.")
+    limits = configuration["limits"]
+    issues += _limit_issues(limits)
+    harness = configuration["harness"]
+    if not isinstance(harness, dict) or set(harness) - {"id", "lane", "hash", "blocks"}:
+        issues.append("Invalid harness configuration.")
+    elif any(not isinstance(harness[k], str) or len(harness[k]) > 200 for k in ("id", "lane", "hash") if k in harness):
+        issues.append("Invalid harness reference metadata.")
+    compiled = None
+    if runtime_id == RUNTIME and isinstance(harness, dict):
+        blocks = copy.deepcopy(harness.get("blocks"))
+        if not isinstance(blocks, list) or not blocks or len(blocks) > 32 or any(not isinstance(b, dict) for b in blocks):
+            issues.append("TraceHarness execution needs explicit compiler blocks.")
+        elif any(set(b) - _BLOCK_FIELDS.get(b.get("type") if isinstance(b.get("type"), str) else "", set()) for b in blocks):
+            issues.append("Harness blocks contain unsupported fields.")
+        elif not issues:
+            # The reviewed prompt and step limit are authoritative over whatever the blocks carried.
+            blocks = [b for b in blocks if b.get("type") != "prompt"]
+            blocks.insert(0, {"type": "prompt", "text": prompt})
+            for block in blocks:
+                if block.get("type") == "stop":
+                    block["max_steps"] = limits["max_steps"]
+            if not any(b.get("type") == "stop" for b in blocks):
+                blocks.append({"type": "stop", "max_steps": limits["max_steps"], "max_total_tokens": 400000})
+            try:
+                result = compile_blocks(blocks)
+            except (ValueError, TypeError, KeyError, OverflowError):
+                issues.append("Harness blocks could not be compiled.")
+            else:
+                if not result["ok"]:
+                    issues.append("Harness blocks failed the existing compiler's validation: " + "; ".join(result["errors"]))
+                elif result["harness"]["max_tokens_per_call"] > 8192:
+                    issues.append("This runner supports at most 8192 output tokens per model call; lower the sampling block's limit.")
+                else:
+                    compiled = {"id": result["harness"]["id"], "hash": result["hash"],
+                                "configuration": result["harness"], "blocks": blocks}
+    if issues or compiled is None:
+        return {"ok": False, "issues": list(dict.fromkeys(issues or ["The configuration could not be reviewed."]))}
+    manifest = {"version": 1, "runtime_id": RUNTIME, "runtime_version": _version(), "model_id": model_id, "task_id": task_id,
+                "prompt": prompt, "prompt_mode": "replace", "prompt_sha256": hashlib.sha256(prompt.encode("utf-8")).hexdigest(),
+                "harness": compiled, "limits": dict(limits),
+                "local": {"results_dir": RESULTS_DIR, "enforced_limits": list(ENFORCED_LIMITS)}}
+    return {"ok": True, "issues": [], "manifest": manifest, "manifest_sha256": digest(manifest)}
+
+
+# --------------------------------------------------------------------------- jobs
+def _redact(text: str) -> str:
+    key = _app().SETTINGS.get("openrouter_key") or ""
+    if key:
+        text = text.replace(key, "[redacted]")
+    return KEY_SHAPED.sub("[redacted]", text)
+
+
+def _run_dir(run_id: str):
+    if not isinstance(run_id, str) or not re.fullmatch(r"[A-Za-z0-9_.-]{1,80}", run_id):
+        return None
+    from . import metrics as M
+    from .confine import resolve_under
+    try:
+        return resolve_under(M.RUNS_ROOT, RESULTS_DIR, run_id)
+    except ValueError:
+        return None
+
+
+def _artifact_bytes(record: dict, run_dir, name: str):
+    """The artifact's bytes, read only from a regular file inside the run directory, or None."""
+    if name == "manifest.json":
+        return json.dumps(record["manifest"], ensure_ascii=False, sort_keys=True).encode("utf-8")
+    if run_dir is None:
+        return None
+    path = os.path.realpath(os.path.join(run_dir, ARTIFACTS[name]))
+    if os.path.dirname(path) != os.path.realpath(run_dir) or not os.path.isfile(path) or os.path.islink(os.path.join(run_dir, ARTIFACTS[name])):
+        return None
+    if os.path.getsize(path) > ARTIFACT_MAX:
+        return None
+    with open(path, "rb") as f:
+        data = f.read(ARTIFACT_MAX + 1)
+    return data if len(data) <= ARTIFACT_MAX else None
+
+
+def _usage(run_dir) -> dict:
+    if run_dir is None:
+        return {}
+    try:
+        with open(os.path.join(run_dir, "summary.json"), encoding="utf-8") as f:
+            summary = json.load(f)
+    except (OSError, ValueError):
+        return {}
+    out = {}
+    for name in ("input_tokens", "output_tokens"):
+        value = summary.get(name)
+        if isinstance(value, int) and not isinstance(value, bool) and value >= 0:
+            out[name] = value
+    cost = summary.get("cost_usd")
+    if isinstance(cost, (int, float)) and not isinstance(cost, bool) and math.isfinite(cost) and cost >= 0:
+        out["cost_usd"] = float(cost)
+    return out
+
+
+def public_job(record: dict) -> dict:
+    """The hosted job shape (harness-composer.jsx `asJob`) for one local run."""
+    inner = _app().JOBS.get(record["jobs_id"], {})
+    raw = inner.get("status", "queued")
+    status = _STATUS.get(raw, "failed")
+    results = inner.get("results") or []
+    errors = [_redact(str(e)) for e in inner.get("errors") or []]
+    run_id = results[0]["run_id"] if results else (inner.get("running") or [None])[0]
+    if raw == "finished" and errors and not results:
+        status = "failed"
+    if errors or (results and results[0].get("exit") == "error"):
+        grade = "error"
+    elif status in ("succeeded", "failed") and results and results[0].get("hidden_pass") is not None:
+        grade = "passed" if results[0]["hidden_pass"] else "failed"
+    else:
+        grade = "ungraded"
+    issues = list(errors)
+    if inner.get("stop_reason"):
+        issues.append(_redact(str(inner["stop_reason"])))
+    terminal = status in ("succeeded", "failed", "cancelled")
+    run_dir = _run_dir(run_id) if run_id else None
+    artifacts = []
+    if terminal:
+        for name in ARTIFACTS:
+            data = _artifact_bytes(record, run_dir, name)
+            if data is not None:
+                artifacts.append({"name": name, "bytes": len(data), "sha256": hashlib.sha256(data).hexdigest()})
+    job = {"id": record["id"], "status": status, "created_at": record["created_at"], "grade": grade,
+           "manifest": record["manifest"], "manifest_sha256": record["manifest_sha256"], "issues": issues,
+           "artifacts": artifacts, "results_dir": RESULTS_DIR, "run_id": run_id}
+    usage = _usage(run_dir) if terminal else {}
+    if usage:
+        job["usage"] = usage
+    if not terminal and inner.get("cancel"):
+        job["cancellation_requested"] = True
+    return job
+
+
+def _record(job_id: str) -> dict:
+    if not isinstance(job_id, str) or not JOB_ID.fullmatch(job_id) or job_id not in _JOBS:
+        raise L.LibraryError("Job not found.", 404)
+    return _JOBS[job_id]
+
+
+def submit(body: dict) -> dict:
+    if set(body) - {"configuration", "manifest_sha256", "idempotency_key"} or not {"configuration", "manifest_sha256", "idempotency_key"} <= set(body):
+        raise L.LibraryError("Invalid request body.")
+    key = body["idempotency_key"]
+    if not isinstance(key, str) or not IDEMPOTENCY_KEY.fullmatch(key):
+        raise L.LibraryError("Invalid idempotency key.")
+    configuration = body["configuration"]
+    app = _app()
+    model = configuration.get("model_id") if isinstance(configuration, dict) else None
+    with _LOCK:
+        if key in _BY_KEY:
+            record = _JOBS[_BY_KEY[key]]
+            if record["manifest_sha256"] != body["manifest_sha256"]:
+                raise L.LibraryError("This idempotency key already started a different run.", 409)
+            return {"job": public_job(record)}
+        if isinstance(model, str) and not model.startswith("mock") and not app.SETTINGS["openrouter_key"]:
+            raise L.LibraryError(LIVE_MODEL_NEEDS_KEY, 400)
+        result = preflight(configuration)
+        if not result["ok"]:
+            raise L.LibraryError("Run configuration did not pass preflight.", 409)
+        if not isinstance(body["manifest_sha256"], str) or body["manifest_sha256"] != result["manifest_sha256"]:
+            raise L.LibraryError("Run configuration changed after review. Review it again before launching.", 409)
+        manifest = result["manifest"]
+        harness = manifest["harness"]["configuration"]
+        hid = harness["id"]
+        try:
+            inner = app.create_job(app.JobIn(out=RESULTS_DIR, models=[manifest["model_id"]], harnesses=[hid],
+                                             tasks=[manifest["task_id"]], repeats=1, parallel=1,
+                                             max_cost_usd=manifest["limits"]["max_cost_usd"], harness_inline={hid: harness}))
+        except HTTPException as error:
+            raise L.LibraryError(str(error.detail), error.status_code) from None
+        record = {"id": secrets.token_hex(24), "jobs_id": inner["id"], "manifest": manifest,
+                  "manifest_sha256": result["manifest_sha256"], "created_at": time.time(), "key": key}
+        _JOBS[record["id"]] = record
+        _BY_KEY[key] = record["id"]
+    return {"job": public_job(record)}
+
+
+def list_jobs() -> dict:
+    rows = sorted(_JOBS.values(), key=lambda r: r["created_at"], reverse=True)
+    return {"jobs": [public_job(r) for r in rows]}
+
+
+def get_job(job_id: str) -> dict:
+    return {"job": public_job(_record(job_id))}
+
+
+def cancel(job_id: str) -> dict:
+    record = _record(job_id)
+    inner = _app().JOBS.get(record["jobs_id"])
+    if inner is not None:
+        inner["cancel"] = True
+    return {"job": public_job(record)}
+
+
+def artifact(job_id: str, name: str) -> dict:
+    record = _record(job_id)
+    if name not in ARTIFACTS:
+        raise L.LibraryError("Artifact not found.", 404)
+    job = public_job(record)
+    if job["status"] not in ("succeeded", "failed", "cancelled"):
+        raise L.LibraryError("Artifact not found.", 404)
+    data = _artifact_bytes(record, _run_dir(job["run_id"]) if job["run_id"] else None, name)
+    if data is None:
+        raise L.LibraryError("Artifact not found.", 404)
+    return {"name": name, "encoding": "base64", "bytes": len(data), "sha256": hashlib.sha256(data).hexdigest(),
+            "content": base64.b64encode(data).decode("ascii")}
+
+
+# --------------------------------------------------------------------------- routes
+async def _call(fn, *args):
+    try:
+        return await run_in_threadpool(fn, *args)
+    except L.LibraryError as error:
+        raise HTTPException(error.status, error.message) from None
+
+
+async def _body(request: Request, *, null_credential: bool = False) -> dict:
+    try:
+        body = await L.read_json(request)
+        if null_credential and "credential_id" in body:
+            if body["credential_id"] is not None:
+                raise L.LibraryError("This computer runs with the key set in Settings; it takes no credential_id.")
+            del body["credential_id"]
+        L.refuse_secrets(body)
+    except L.LibraryError as error:
+        raise HTTPException(error.status, error.message) from None
+    return body
+
+
+@router.get("/catalog")
+async def runner_catalog():
+    return await _call(catalog)
+
+
+@router.post("/preflight")
+async def runner_preflight(request: Request):
+    body = await _body(request)
+    if set(body) != {"configuration"}:
+        raise HTTPException(400, "Invalid request body.")
+    return await _call(preflight, body["configuration"])
+
+
+@router.post("/jobs")
+async def runner_submit(request: Request):
+    return await _call(submit, await _body(request, null_credential=True))
+
+
+@router.get("/jobs")
+async def runner_jobs():
+    return await _call(list_jobs)
+
+
+@router.get("/jobs/{job_id}")
+async def runner_job(job_id: str):
+    return await _call(get_job, job_id)
+
+
+@router.post("/jobs/{job_id}/cancel")
+async def runner_cancel(job_id: str, request: Request):
+    body = await _body(request)
+    if body:
+        raise HTTPException(400, "Invalid cancellation request.")
+    return await _call(cancel, job_id)
+
+
+@router.get("/jobs/{job_id}/artifacts/{name}")
+async def runner_artifact(job_id: str, name: str):
+    return await _call(artifact, job_id, name)
+
+
+# Registered last: credentials, experiments, prompt inventories and every other path or method
+# under /api/runner (and the bare prefix) are a JSON 404 here, never the console's HTML.
+@router.api_route("", methods=["GET", "POST", "PUT", "PATCH", "DELETE"], include_in_schema=False)
+@router.api_route("/{rest:path}", methods=["GET", "POST", "PUT", "PATCH", "DELETE"], include_in_schema=False)
+async def runner_not_found(rest: str = ""):
+    raise HTTPException(404, L.NOT_FOUND)
