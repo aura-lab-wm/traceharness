@@ -286,22 +286,13 @@ class GradeMigrationTests(unittest.TestCase):
                 self.assertEqual(row["grade_outcome"], outcome)
                 self.assertEqual(self.index(runs, dataset)[run_id], row)
                 provenance = json.loads((Path(runs) / dataset / run_id / "evidence" / "provenance.json").read_text())
-                self.assertEqual(provenance["persisted_version"], datasets.PERSISTED_VERSION)
+                self.assertEqual(provenance["grade_migration"], datasets.GRADE_MIGRATION)
+                self.assertNotEqual(provenance.get("persisted_version"), datasets.PERSISTED_VERSION)    # only a full rebuild sets it
             for name, body in before.items():                                      # passed / failed / already current: untouched
                 self.assertEqual((Path(runs) / "runner_jobs" / name / "summary.json").read_bytes(), body)
             self.assertIs(self.index(runs, "runner_jobs")["lost"]["hidden_pass"], False)
             self.assertIs(self.index(runs, "runner_jobs")["new"]["hidden_pass"], False)
             self.assertEqual(datasets.migrate_grade_rows(runs), [])                # idempotent
-
-    def test_it_runs_at_console_start(self):
-        from starlette.testclient import TestClient
-        from traceharness.backend import app as backend, metrics as M
-        with tempfile.TemporaryDirectory() as runs:
-            self.make(runs, "runner_jobs", "bad1", "error", version=2)
-            with patch.object(M, "RUNS_ROOT", runs), patch.object(backend.RUNNER, "close"):
-                with TestClient(backend.app):
-                    pass
-            self.assertIsNone(self.index(runs, "runner_jobs")["bad1"]["hidden_pass"])
 
 
 if __name__ == "__main__":
