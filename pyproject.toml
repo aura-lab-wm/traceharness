@@ -67,6 +67,8 @@ zip-safe = false
 # The Field template. It is a fragment rendered by backend/field.py, not a static asset,
 # so it lives in the package and must ship with the wheel.
 "traceharness.backend" = ["field.html", "fonts.css"]
+# The shared-sources bundle (SPEC 4.1): read by `traceharness version` and GET /api/version.
+"traceharness.shared" = ["shared-sources.json"]
 "traceharness.data" = ["*.txt"]
 "traceharness.data.models" = ["*.json"]
 # The built UI. Absent until `npm run build` has been run in traceharness/frontend.
