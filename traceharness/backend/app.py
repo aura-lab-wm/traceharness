@@ -46,6 +46,10 @@ def _stop_paused_runs():
 @contextlib.asynccontextmanager
 async def _lifespan(_app):
     _SHUTDOWN.clear()          # a fresh start (and a test that enters the app twice) begins un-stopped
+    try:                       # own the runner state and migrate recorded grades, with or without Docker
+        RUNNER.claim_state_and_migrate()
+    except Exception:
+        pass                   # never stops the console; the runner app retries at its first build
     yield
     _stop_paused_runs()
     RUNNER.close()             # the local runner's job pool and experiment scheduler

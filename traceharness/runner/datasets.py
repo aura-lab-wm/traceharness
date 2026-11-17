@@ -513,6 +513,7 @@ def migrate_grade_rows(runs_root) -> list:
                     if not isinstance(row, dict):
                         continue
                     row.update(hidden_pass=None, grade_outcome=outcome)
+                    json.dumps(row, ensure_ascii=False, allow_nan=False)    # a malformed run (NaN/Infinity) is skipped, marker unset
                     todo.append((run_id, run_dir, row, provenance, outcome))
                 except (OSError, ValueError):
                     continue            # one unreadable run never stops the others

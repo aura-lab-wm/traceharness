@@ -212,16 +212,15 @@ class LocalRunner:
         # cannot get the lock (a second console) serves recorded jobs read-only and reconciles nothing.
         from dataclasses import replace
         from traceharness.runner_service.ownership import StateOwnership
-        ownership = StateOwnership(settings.state_dir)
-        if not ownership.acquire():
-            settings = replace(settings, read_only=True)
+        if self._ownership is not None:
+            pass                       # owned and migrated at console startup (claim_state_and_migrate): no release, no second pass
         else:
-            self._ownership = ownership
-            try:       # rows persisted before the grader-error fix, whose jobs are purged; only the owning process
-                from .datasets import migrate_grade_rows
-                migrate_grade_rows(Path(self.lab_root) / "data" / "runs")
-            except Exception:
-                pass   # never stops the console; retried at the next start
+            ownership = StateOwnership(settings.state_dir)
+            if not ownership.acquire():
+                settings = replace(settings, read_only=True)
+            else:
+                self._ownership = ownership
+                self._migrate_grades()
         try:
             scripted = scripted_selected()
             vault = LocalKeyVault(self._key, keyless=scripted)
@@ -239,6 +238,28 @@ class LocalRunner:
                 self._ownership = None
             raise
         return app
+
+    def _migrate_grades(self):
+        try:       # rows persisted before the grader-error fix, whose jobs are purged; only the owning process
+            from .datasets import migrate_grade_rows
+            migrate_grade_rows(Path(self.lab_root) / "data" / "runs")
+        except Exception:
+            pass   # never stops the console; retried at the next start
+
+    def claim_state_and_migrate(self) -> bool:
+        """Console startup, independent of Docker: take ownership of the runner state directory and migrate persisted
+        grades under the dataset-writing lock, so recorded runs are correct even when no runner app is ever built.
+        The ownership is kept for build_app. False (and nothing migrated) when another process owns the state."""
+        with self._lock:
+            if self._ownership is not None:
+                return True
+            from traceharness.runner_service.ownership import StateOwnership
+            ownership = StateOwnership(runner_dir(self.lab_root) / "jobs")
+            if not ownership.acquire():
+                return False
+            self._ownership = ownership
+        self._migrate_grades()
+        return True
 
     def dataset_hook(self):
         """Finished jobs are written to data/runs/<dataset>/ before retention may remove them. The hook is
