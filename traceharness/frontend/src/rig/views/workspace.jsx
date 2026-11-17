@@ -33,6 +33,7 @@ import { can, MODE } from '../../environment'
 import { LABELS, LOCAL_APP } from '../../shared/index.js'
 import { Unavailable } from '../unavailable'
 import { MemberCapture } from '../MemberCapture'
+import { AboutConsole } from '../AboutConsole'
 import schoolPackage from '../../../../school-package.json'
 import { arrival, suggestResultsDir, cleanResultsDir, detectState, progressPct, progressKnown, progressPhrase, verdictTile } from '../../method/importing'
 import { browserStores, readMate, writeKey, forgetKey, writeModel, isKeyRemembered, setCaptured, DEFAULT_MODEL } from '../../matekey'
@@ -1278,6 +1279,7 @@ function Settings() {
 </>
 )}
       </div>
+      <div className="rg-ws-set" data-panes><AboutConsole /></div>
     </div>
   )
 }

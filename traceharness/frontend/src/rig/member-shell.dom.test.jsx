@@ -107,7 +107,9 @@ describe('hosted workbench navigation', () => {
     fireEvent.click(rail.getByRole('button', { name: 'Settings' }))
     expect(container.querySelector('[data-el="member-local-keys"]')).toBeTruthy()
     expect(container.querySelectorAll('input[type="password"]')).toHaveLength(0)
-    expect(requests).toEqual([{ url: '/api/onboarding', method: 'GET' }])
+    // About this console asks the site for its stamp once (SPEC 4.3); nothing else is requested
+    expect(container.querySelector('[data-el="about-console"]').textContent).toContain('member')
+    expect(requests).toEqual([{ url: '/api/onboarding', method: 'GET' }, { url: '/api/version', method: 'GET' }])
   })
 
   it('names the school datasets this member snapshot lacks, and says they open on the local console', () => {
