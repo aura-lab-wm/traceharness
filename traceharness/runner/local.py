@@ -125,7 +125,15 @@ class LocalRunner:
         settings = local_settings(self.lab_root, docker, isolation)
         scripted = scripted_selected()
         vault = LocalKeyVault(self._key, keyless=scripted)
-        return create_app(settings, provider=ScriptedProvider() if scripted else OpenRouter(), vault=vault)
+        app = create_app(settings, provider=ScriptedProvider() if scripted else OpenRouter(), vault=vault)
+        self.attach_datasets(app)
+        return app
+
+    def attach_datasets(self, app):
+        """Finished jobs are written to data/runs/<dataset>/ before retention may remove them."""
+        from .datasets import persist_job
+        runs_root = Path(self.lab_root) / "data" / "runs"
+        app.state.jobs.persist = lambda row, job_dir: persist_job(runs_root, row, job_dir)
 
     async def app_async(self):
         import asyncio

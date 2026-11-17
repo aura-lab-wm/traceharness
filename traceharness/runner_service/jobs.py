@@ -281,6 +281,9 @@ class Jobs:
         self.lock = threading.RLock()
         self.rows, self.idempotency, self.events = {}, {}, {}
         self.blocked_reason = None
+        #: Optional callable(row, job_dir) that writes a finished job somewhere durable and returns True. A
+        #: terminal job is not removed by retention until this has succeeded for it.
+        self.persist = None
         self.restore_pending = set()    # local: jobs from an earlier session whose containers are not yet confirmed removed
         self.pool = ThreadPoolExecutor(max_workers=settings.max_workers, thread_name_prefix="private-runner")
         for directory in self.root.iterdir():
@@ -343,10 +346,26 @@ class Jobs:
         temp.chmod(0o600)
         temp.replace(directory / "job.json")
 
+    def _persisted(self, row):
+        if self.persist is None or row.get("persisted"):
+            return True
+        try:
+            if self.persist(row, self.root / row["job"]["id"]):
+                row["persisted"] = True
+                self._save(row)
+                return True
+        except Exception:
+            pass
+        return False
+
     def _purge(self):
         now = self.clock()
         for jid, row in list(self.rows.items()):
+            if self.persist is not None and row["job"]["status"] in TERMINAL - {"needs_attention"}:
+                self._persisted(row)        # a job that ended on an early path is written at the next look
             if row["job"]["status"] in TERMINAL - {"needs_attention"} and now - row["job"]["updated_at"] > self.settings.job_ttl:
+                if not self._persisted(row):
+                    continue        # still the only copy of this result: keep it until it is written durably
                 shutil.rmtree(self.root / jid)
                 del self.rows[jid]
                 self.idempotency.pop((row["owner"], row["idempotency_key"]), None)
@@ -666,6 +685,8 @@ class Jobs:
                 row["job"]["usage"] = dict(zero_usage)
             row["job"]["updated_at"] = int(self.clock())
             self._save(row)
+            if row["job"]["status"] != "needs_attention":
+                self._persisted(row)
 
     def close(self):
         with self.lock:
