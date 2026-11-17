@@ -36,6 +36,20 @@ class Api(unittest.TestCase):
         self.assertEqual(a, ["go", "rust"])
         self.assertEqual(a, b)
 
+    def test_languages_named_only_when_the_query_names_them(self):
+        a = self.c.get("/api/recommend").json()["params"]
+        b = self.c.get("/api/recommend?languages=python").json()["params"]
+        self.assertEqual((a["languages"], a["languages_named"]), (["python"], False))
+        self.assertEqual((b["languages"], b["languages_named"]), (["python"], True))
+
+    def test_every_estimate_is_one_shape(self):
+        j = self.c.get("/api/recommend?goal=run&budget_usd=50").json()
+        for key in ("pick", "runner_up", "not_this"):
+            est = j[key]["estimate"]
+            self.assertIsInstance(est, dict)
+            self.assertLessEqual({"known", "basis", "cost_usd", "hours", "runs", "text"}, set(est))
+            self.assertFalse(est["known"])
+
     def test_same_query_same_answer(self):
         q = "/api/recommend?goal=analyse&compare_public=true"
         self.assertEqual(self.c.get(q).json(), self.c.get(q).json())

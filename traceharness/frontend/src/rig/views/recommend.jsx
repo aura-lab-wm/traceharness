@@ -31,7 +31,7 @@ export function buildQuery(f) {
   q.set('where', f.where)
   const langs = f.languages.split(',').map((s) => s.trim()).filter(Boolean)
   if (langs.length > 20 || langs.some((l) => l.length > 40)) return { error: 'Languages: up to 20 short names, separated by commas.' }
-  q.set('languages', (langs.length ? langs : ['python']).join(','))
+  if (langs.length) q.set('languages', langs.join(','))   // blank: not named, the server assumes python
   if (f.model.trim()) {
     if (f.model.trim().length > 200) return { error: 'Model: at most 200 characters.' }
     q.set('model', f.model.trim())
@@ -55,15 +55,17 @@ export function buildQuery(f) {
   return { query: q.toString() }
 }
 
-const hours = (s) => (s == null ? 'unknown' : `${(s / 3600).toFixed(2)} h`)
+const hoursText = (h) => (h == null ? 'unknown' : `${h.toFixed(2)} h`)
 const usd = (x) => (x == null ? 'unknown' : `$${x.toFixed(2)}`)
 
+/** The estimate is always an object { known, basis, cost_usd, hours, runs, text }. Unknown says why; it never shows a figure. */
 function Estimate({ est }) {
-  if (est === 'unknown') return <p className="rg-rec-est" data-el="rec-estimate">Estimate: unknown. The lab has no costed runs to estimate from.</p>
-  if (est && est.basis === 'not_applicable') return <p className="rg-rec-est" data-el="rec-estimate">{est.text}</p>
+  if (!est.known) {
+    return <p className="rg-rec-est" data-el="rec-estimate" data-known="false">{est.basis === 'unknown' ? `Estimate unknown. ${est.text}` : est.text}</p>
+  }
   return (
-    <p className="rg-rec-est" data-el="rec-estimate">
-      <b>{usd(est.cost_usd)}</b> and <b>{hours(est.seconds)}</b> for both conditions.
+    <p className="rg-rec-est" data-el="rec-estimate" data-known="true">
+      <b>{usd(est.cost_usd)}</b> and <b>{hoursText(est.hours)}</b> for both conditions, from {est.runs} recorded runs on this dataset.
       <span className="rg-rec-calc">{est.arithmetic}</span>
     </p>
   )

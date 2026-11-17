@@ -27,15 +27,15 @@ def get_recommendation(
     model_cutoff: Annotated[Optional[str], Query(pattern=r"^\d{4}-(0[1-9]|1[0-2])$")] = None,
     budget_usd: Annotated[Optional[float], Query(ge=0, allow_inf_nan=False)] = None,
     hours: Annotated[Optional[float], Query(gt=0, allow_inf_nan=False)] = None,
-    languages: Annotated[list[Annotated[str, Query(max_length=40)]], Query(max_length=20)] = ["python"],
+    languages: Annotated[Optional[list[Annotated[str, Query(max_length=40)]]], Query(max_length=20)] = None,
     where: Literal["laptop", "runner"] = "laptop",
     compare_public: bool = False,
     license_required: bool = False,
     detect_points: Annotated[float, Query(gt=0, le=100, allow_inf_nan=False)] = 10.0,
 ):
-    langs = [x for item in languages for x in item.split(",") if x.strip()]
+    langs = [x for item in (languages or []) for x in item.split(",") if x.strip()]
     params = {"goal": goal, "model": model, "model_cutoff": model_cutoff, "budget_usd": budget_usd, "hours": hours,
-              "languages": langs or ["python"], "where": where, "compare_public": compare_public,
+              "languages": langs or None, "where": where, "compare_public": compare_public,
               "license_required": license_required, "detect_points": detect_points}
     try:
         result = recommend.recommend(params, hf.load(), evidence.collect())

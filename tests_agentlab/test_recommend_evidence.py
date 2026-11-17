@@ -21,6 +21,13 @@ def row(i, model="m/a", harness="baseline", task="t1", rep=0, passed=True, cost=
             "hidden_pass": passed, "strong_pass": passed, "tests_modified": False, "patch_bytes": 10, "error": ""}
 
 
+def card_for(result, dataset_id):
+    for key in ("pick", "runner_up", "not_this"):
+        if result[key] and result[key]["id"] == dataset_id:
+            return result[key]
+    raise AssertionError(dataset_id + " is not one of the three")
+
+
 def write(root, name, rows):
     d = os.path.join(root, name)
     os.makedirs(d)
@@ -39,10 +46,11 @@ class Evidence(unittest.TestCase):
     def test_empty_lab_is_unknown(self):
         ev = E.collect(self.root)
         self.assertEqual(ev["costed_runs"], 0)
-        self.assertIsNone(E.cost_basis(ev, "m/a"))
+        self.assertIsNone(E.cost_basis(ev, "princeton-nlp/SWE-bench_Verified"))
         from traceharness.catalog import hf, recommend as R
         r = R.recommend({"goal": "run", "model": "m/a"}, hf.load(), ev)
-        self.assertEqual(r["pick"]["estimate"], "unknown")
+        self.assertFalse(r["pick"]["estimate"]["known"])
+        self.assertIn("no costed runs of any kind", r["pick"]["estimate"]["text"])
         self.assertEqual(r["size_advice"]["baseline_pass_rate"], 0.5)
 
     def test_missing_runs_root_is_an_empty_lab(self):
@@ -60,12 +68,50 @@ class Evidence(unittest.TestCase):
         self.assertAlmostEqual(b["median_cost_usd"], 0.15)
         self.assertEqual(ev["pooled"]["costed_runs"], 5)
         self.assertEqual(ev["pooled"]["median_cost_usd"], 0.03)
-        own = E.cost_basis(ev, "m/a")
-        self.assertEqual((own["scope"], own["runs"]), ("model", 3))
-        self.assertIn("3 recorded runs of m/a", own["text"])
-        pooled = E.cost_basis(ev, "someone/else")
-        self.assertEqual((pooled["scope"], pooled["runs"]), ("pooled", 5))
-        self.assertIn("from 5 recorded runs of other models", pooled["text"])
+        # built-in-task runs name no dataset, so they never price a dataset
+        self.assertIsNone(E.cost_basis(ev, "m/a"))
+        self.assertIsNone(E.cost_basis(ev, "princeton-nlp/SWE-bench_Verified"))
+        self.assertEqual(ev["datasets"], {})
+
+    def test_a_directory_whose_provenance_names_a_dataset_prices_that_dataset_only(self):
+        ds = "princeton-nlp/SWE-bench_Lite"
+        write(self.root, "builtin", [row(i, cost=0.002, task=f"b{i}") for i in range(4)])
+        write(self.root, "lite", [row(10, cost=1.0, wall=100000, task="x1"), row(11, cost=3.0, wall=300000, task="x2"),
+                                  row(12, cost=2.0, wall=200000, task="x3")])
+        with open(os.path.join(self.root, "lite", "provenance.json"), "w") as f:
+            json.dump({"dataset": ds}, f)
+        ev = E.collect(self.root)
+        basis = E.cost_basis(ev, ds)
+        self.assertEqual((basis["scope"], basis["runs"], basis["median_cost_usd"], basis["median_seconds"]), ("dataset", 3, 2.0, 200.0))
+        self.assertIn("3 recorded runs on " + ds, basis["text"])
+        self.assertIsNone(E.cost_basis(ev, "princeton-nlp/SWE-bench_Verified"))
+        self.assertEqual(ev["pooled"]["costed_runs"], 4)          # built-in tasks stay separate
+        self.assertEqual(ev["pooled"]["median_cost_usd"], 0.002)
+        from traceharness.catalog import hf, recommend as R
+        small = {"schema": 1, "refreshed": "2026-11-16", "datasets": [hf.get(ds), hf.get("princeton-nlp/SWE-bench_Verified"), hf.get("nebius/SWE-rebench")]}
+        r = R.recommend({"goal": "run"}, small, ev)
+        card = card_for(r, ds)
+        self.assertTrue(card["estimate"]["known"])
+        self.assertEqual(card["estimate"]["runs"], 3)
+        self.assertIn("3 recorded runs", card["estimate"]["text"])
+        self.assertTrue(card["estimate"]["cost_usd"] > 1)
+        other = card_for(r, "princeton-nlp/SWE-bench_Verified")
+        self.assertFalse(other["estimate"]["known"])
+        self.assertIsNone(other["estimate"]["cost_usd"])
+
+    def test_a_dataset_named_by_the_rows_themselves_counts_too(self):
+        write(self.root, "d1", [dict(row(1, cost=0.5), dataset="a/b"), dict(row(2, cost=0.7, task="t2"), provider="c/d")])
+        ev = E.collect(self.root)
+        self.assertEqual(sorted(ev["datasets"]), ["a/b", "c/d"])
+        self.assertEqual(E.cost_basis(ev, "a/b")["runs"], 1)
+
+    def test_the_baseline_comes_from_the_dataset_s_own_runs(self):
+        ds = "a/b"
+        write(self.root, "d1", [dict(row(i, task=f"t{i}", passed=(i < 3)), dataset=ds) for i in range(4)])
+        ev = E.collect(self.root)
+        self.assertEqual(ev["datasets"][ds]["baseline"], {"runs": 4, "pass_rate": 0.75})
+        adv = E.size_advice(10, ev, __import__("traceharness.catalog.recommend", fromlist=["x"]).load_rules(), ds)
+        self.assertEqual(adv["baseline_pass_rate"], 0.75)
 
     def test_mock_and_uncosted_runs_are_not_evidence(self):
         write(self.root, "d1", [row(1, "mock", provider="mock", cost=0.0001), row(2, "x", cost=0.0),
@@ -90,6 +136,7 @@ class Evidence(unittest.TestCase):
         self.assertEqual((v["repeated_cells"], v["disagreeing_cells"], v["flip_rate"]), (2, 1, 0.5))
         self.assertEqual(ev["baseline"]["pooled"]["runs"], 7)
         self.assertAlmostEqual(ev["baseline"]["pooled"]["pass_rate"], 5 / 7)
+        self.assertEqual(v["scope"], "lab-wide")
 
     def test_no_repeats_means_unknown_variation(self):
         write(self.root, "d1", [row(1, task="t1"), row(2, task="t2")])

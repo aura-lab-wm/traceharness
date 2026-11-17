@@ -12,8 +12,8 @@ const el = (c, id) => c.querySelector(`[data-el~="${id}"]`)
 const card = (id, title, extra = {}) => ({
   id, title, url: `https://huggingface.co/datasets/${id}`, score: 7, excluded: false,
   subset: { rows: 120, repeats: 1, of_rows: 500, demoted: false },
-  estimate: { basis: 'pooled', basis_text: 'from 5 recorded runs of other models', tasks: 120, repeats: 1, conditions: 2, runs: 240, median_cost_usd: 0.01, median_seconds: 10, cost_usd: 2.4, seconds: 2400,
-    arithmetic: '120 tasks x 1 repeats x 2 conditions x median $0.0100 per run and 10.0 s per run (from 5 recorded runs of other models)' },
+  estimate: { known: true, basis: 'dataset', runs: 5, hours: 2400 / 3600, cost_usd: 2.4, text: 'About $2.40 and 0.67 h, from 5 recorded runs on a/alpha.',
+    arithmetic: '120 tasks x 1 repeats x 2 conditions x median $0.0100 per run and 10.0 s per run (from 5 recorded runs on a/alpha)' },
   reasons: [{ rule: 'after-cutoff', text: 'All tasks are dated 2026-04 to 2026-09, after your model\'s cutoff (2026-03).', weight: 20, method: 'm' },
     { rule: 'gated', text: 'It is gated: access needs a request on the Hub.', weight: -10, method: 'm' }],
   size_advice: {}, ...extra,
@@ -22,7 +22,7 @@ const RESULT = {
   rules_version: 1, catalog_refreshed: '2026-11-16', method: 'We selected Alpha (a/alpha) as the task set to run our agents on because it is new.',
   params: {},
   pick: card('a/alpha', 'Alpha'),
-  runner_up: card('b/beta', 'Beta', { score: 3, estimate: 'unknown', subset: { rows: 60, repeats: 2, of_rows: null, demoted: true } }),
+  runner_up: card('b/beta', 'Beta', { score: 3, estimate: { known: false, basis: 'unknown', runs: null, hours: null, cost_usd: null, text: 'Cost and time are unknown: this lab has no recorded runs on Beta. Its own built-in tasks cost a median of $0.0017 per run (5065 runs), which is not a guide for issue-fix tasks.' }, subset: { rows: 60, repeats: 2, of_rows: null, demoted: true } }),
   not_this: card('c/gamma', 'Gamma', { score: -150, excluded: true, reasons: [{ rule: 'seen-in-training', text: 'Possibly seen in training: its tasks are dated 2017-02 to 2025-03.', weight: -60, method: 'm' }] }),
   size_advice: { detect_points: 10, alpha: 0.05, power: 0.8, tasks: 120, repeats: 1, baseline_pass_rate: 0.5, baseline_basis: 'no recorded baseline: 0.5 assumed', repeats_reason: 'no recorded repeated cells: one run per task', arithmetic: 'n = 385 runs per condition' },
   considered: [
@@ -56,8 +56,12 @@ describe('recommend view', () => {
     expect(el(pick, 'rec-subset').textContent).toContain('Subset: 120 rows x 1 repeat of 500')
     expect(el(pick, 'rec-estimate').textContent).toContain('$2.40')
     expect(el(pick, 'rec-estimate').textContent).toContain('0.67 h')
+    expect(el(pick, 'rec-estimate').textContent).toContain('from 5 recorded runs on this dataset')
     expect(el(pick, 'rec-reasons').querySelectorAll('li')).toHaveLength(2)
-    expect(el(second, 'rec-estimate').textContent).toContain('unknown')
+    const unk = el(second, 'rec-estimate')
+    expect(unk.getAttribute('data-known')).toBe('false')
+    expect(unk.textContent).toContain('Cost and time are unknown: this lab has no recorded runs on Beta.')
+    expect(unk.textContent).not.toMatch(/\$\d+\.\d\d(?!\d)/)   // no price for the dataset; only the built-in median to 4 places
     expect(el(second, 'rec-subset').textContent).toContain('dataset size unknown')
     expect(el(second, 'rec-subset').textContent).toContain('smaller than the sizing asks for')
     expect(not.textContent).toContain('excluded')

@@ -16,6 +16,7 @@ no network, no clock, no randomness; the same inputs give the same result. Stand
 from __future__ import annotations
 
 import argparse
+import datetime as _dt
 import json
 import math
 import os
@@ -52,6 +53,7 @@ def _num(value, name, lo=None, hi=None, positive=False):
 def normalise(params: dict | None) -> dict:
     """The parameters with defaults filled in; ValueError names the first bad one."""
     p = dict(DEFAULTS)
+    named = (params or {}).get("languages") is not None
     p.update({k: v for k, v in (params or {}).items() if k in DEFAULTS and v is not None})
     unknown = sorted(set(params or {}) - set(DEFAULTS))
     if unknown:
@@ -74,6 +76,7 @@ def normalise(params: dict | None) -> dict:
     if not isinstance(langs, (list, tuple)) or len(langs) > 20 or not all(isinstance(x, str) and 0 < len(x.strip()) <= 40 for x in langs):
         raise ValueError("languages must be a list of up to 20 short names")
     p["languages"] = sorted({x.strip().lower() for x in langs}) or ["python"]
+    p["languages_named"] = named
     for flag in ("compare_public", "license_required"):
         if not isinstance(p[flag], bool):
             raise ValueError(f"{flag} must be true or false")
@@ -85,7 +88,14 @@ def _fmt(x, nd=2):
     return "unknown" if x is None else f"{x:.{nd}f}"
 
 
-def _design(entry: dict, p: dict, advice: dict, basis: dict | None, rules: dict) -> dict:
+def _estimate(known: bool, basis: str, text: str, **kw) -> dict:
+    """The one shape of an estimate: {known, basis, cost_usd, hours, runs, text, ...}."""
+    out = {"known": known, "basis": basis, "cost_usd": None, "hours": None, "runs": None, "text": text}
+    out.update(kw)
+    return out
+
+
+def _design(entry: dict, p: dict, advice: dict, basis: dict | None, rules: dict, evidence: dict | None) -> dict:
     """tasks x repeats for this dataset, the cost estimate, and what a budget does to it."""
     rows = entry.get("rows")
     tasks, repeats = advice["tasks"], advice["repeats"]
@@ -93,28 +103,30 @@ def _design(entry: dict, p: dict, advice: dict, basis: dict | None, rules: dict)
     if rows is not None and rows < tasks:
         tasks = rows
         repeats = max(repeats, math.ceil(n / rows))
-    d = {"tasks": tasks, "repeats": repeats, "demoted": False, "limit": None, "estimate": None, "category": None}
+    d = {"tasks": tasks, "repeats": repeats, "demoted": False, "estimate": None, "category": None}
     if p["goal"] != "run":
         d["repeats"] = 1
         d["tasks"] = min(advice["tasks"] * advice["repeats"], rows) if rows is not None else advice["tasks"] * advice["repeats"]
-        d["estimate"] = {"basis": "not_applicable", "text": "No model calls: analysing recorded runs spends nothing on the lab's side."}
+        d["estimate"] = _estimate(False, "not_applicable", "No model calls: analysing recorded runs spends nothing on the lab's side.")
         return d
     conditions = rules["conditions"]
     limited = p["budget_usd"] is not None or p["hours"] is not None
-    if basis is None or basis["median_cost_usd"] is None:
-        d["estimate"] = "unknown"
+    if basis is None:
+        text = E.unknown_cost_text(evidence, entry["title"], entry.get("task_kind"))
+        d["estimate"] = _estimate(False, "unknown", text, tasks=tasks, repeats=repeats, conditions=conditions)
         d["category"] = "unknown" if limited else "unlimited"
         return d
 
     def est(t, r):
         runs = t * r * conditions
         secs = runs * basis["median_seconds"] if basis["median_seconds"] is not None else None
-        return {"basis": basis["scope"], "basis_text": basis["text"], "tasks": t, "repeats": r, "conditions": conditions,
-                "runs": runs, "median_cost_usd": basis["median_cost_usd"], "median_seconds": basis["median_seconds"],
-                "cost_usd": runs * basis["median_cost_usd"], "seconds": secs,
-                "arithmetic": f"{t} tasks x {r} repeats x {conditions} conditions x median ${basis['median_cost_usd']:.4f} per run"
-                              + (f" and {basis['median_seconds']:.1f} s per run" if secs is not None else "")
-                              + f" ({basis['text']})"}
+        return _estimate(True, basis["scope"], f"About ${runs * basis['median_cost_usd']:.2f}" + (f" and {secs / 3600.0:.2f} h" if secs is not None else "")
+                         + f", {basis['text']}.",
+                         cost_usd=runs * basis["median_cost_usd"], hours=None if secs is None else secs / 3600.0, runs=basis["runs"],
+                         tasks=t, repeats=r, conditions=conditions, planned_runs=runs, seconds=secs,
+                         median_cost_usd=basis["median_cost_usd"], median_seconds=basis["median_seconds"], basis_text=basis["text"],
+                         arithmetic=f"{t} tasks x {r} repeats x {conditions} conditions x median ${basis['median_cost_usd']:.4f} per run"
+                                    + (f" and {basis['median_seconds']:.1f} s per run" if secs is not None else "") + f" ({basis['text']})")
 
     full = est(tasks, repeats)
     d["estimate"] = full
@@ -154,7 +166,8 @@ def _checks(entry: dict, p: dict, design: dict, advice: dict) -> dict:
     out["kind"] = ("other" if entry["kind"] != wanted else "goal_kind", {"kind": entry["kind"], "wanted": wanted, "goal": p["goal"]})
     langs = entry.get("languages")
     if not langs:
-        out["language"] = ("unknown", {"wanted_languages": ", ".join(p["languages"])})
+        named = p["goal"] == "run" and p.get("languages_named")
+        out["language"] = ("unknown_named" if named else "unknown", {"wanted_languages": ", ".join(p["languages"])})
     else:
         overlap = sorted(set(l.lower() for l in langs) & set(p["languages"]))
         out["language"] = (("overlap" if overlap else "disjoint"),
@@ -177,7 +190,7 @@ def _checks(entry: dict, p: dict, design: dict, advice: dict) -> dict:
         out["license"] = (("stated" if entry.get("license") else "missing"), {"license": entry.get("license")})
     runs = entry.get("public_runs")
     if p["goal"] == "run":
-        out["public_runs"] = (("has" if runs else "none"),
+        out["public_runs"] = (("none" if not runs else ("has_compared" if p["compare_public"] else "has")),
                               {"public_source": (runs or {}).get("source"), "public_entries": _fmt((runs or {}).get("entries"), 0)})
     if p["goal"] == "analyse":
         imp = entry.get("importer")
@@ -194,12 +207,12 @@ def _checks(entry: dict, p: dict, design: dict, advice: dict) -> dict:
         cat = design["category"]
         est = design.get("estimate")
         full = design.get("full") or {}
-        shown = design.get("smallest") if cat == "none_fits" else (est if isinstance(est, dict) else {})
+        shown = design.get("smallest") if cat == "none_fits" else est
         out["budget"] = (cat, {
-            "cost": _fmt(shown.get("cost_usd")), "hours": _fmt(None if shown.get("seconds") is None else shown["seconds"] / 3600.0),
-            "full_cost": _fmt(full.get("cost_usd")), "full_hours": _fmt(None if full.get("seconds") is None else full["seconds"] / 3600.0),
+            "cost": _fmt(shown.get("cost_usd")), "hours": _fmt(shown.get("hours")),
+            "full_cost": _fmt(full.get("cost_usd")), "full_hours": _fmt(full.get("hours")),
             "tasks": design["tasks"], "repeats": design["repeats"], "min_tasks": 20,
-            "estimate_basis": (shown.get("basis_text") or "no basis")})
+            "estimate_basis": (shown.get("basis_text") or "no basis"), "estimate_text": est["text"]})
     return out
 
 
@@ -208,8 +221,8 @@ class _Vals(dict):
         return "unknown"
 
 
-def _score_one(entry: dict, p: dict, rules: dict, advice: dict, basis: dict | None) -> dict:
-    design = _design(entry, p, advice, basis, rules)
+def _score_one(entry: dict, p: dict, rules: dict, advice: dict, basis: dict | None, evidence: dict | None) -> dict:
+    design = _design(entry, p, advice, basis, rules, evidence)
     checks = _checks(entry, p, design, advice)
     fired, score, positive, excluded = [], 0, 0, False
     for rule in rules["rules"]:
@@ -225,26 +238,65 @@ def _score_one(entry: dict, p: dict, rules: dict, advice: dict, basis: dict | No
         positive += max(rule["weight"], 0)
         excluded = excluded or rule["effect"] == "exclude"
     return {"id": entry["id"], "title": entry["title"], "kind": entry["kind"], "score": score, "positive": positive,
-            "excluded": excluded, "rules": fired, "design": design}
+            "excluded": excluded, "rules": fired, "design": design, "advice": advice, "entry": entry}
 
 
-def _card(c: dict, entry: dict, advice: dict) -> dict:
+def _card(c: dict, entry: dict, advice: dict | None = None) -> dict:
     d = c["design"]
+    advice = c["advice"]
     return {"id": c["id"], "title": c["title"], "url": entry.get("url"), "score": c["score"], "excluded": c["excluded"],
             "subset": {"rows": d["tasks"], "repeats": d["repeats"], "of_rows": entry.get("rows"), "demoted": d["demoted"]},
             "reasons": [{"rule": r["rule"], "text": r["text"], "weight": r["weight"], "method": r["method"]} for r in c["rules"]],
             "estimate": d["estimate"], "size_advice": advice}
 
 
+def _date_rank(value) -> tuple:
+    try:
+        return (0, -_dt.date.fromisoformat(str(value)[:10]).toordinal())
+    except (TypeError, ValueError):
+        return (1, 0)
+
+
+#: the order that settles equal scores, each (name, sort key of an entry, how to say it)
+TIE_BREAKS = (
+    ("rows known", lambda e: e.get("rows") is None, lambda e: "known" if e.get("rows") is not None else "unknown"),
+    ("license stated", lambda e: not e.get("license"), lambda e: e.get("license") or "none stated"),
+    ("not gated", lambda e: {False: 0, None: 1, True: 2}[e.get("gated")],
+     lambda e: {False: "not gated", None: "gating unknown", True: "gated"}[e.get("gated")]),
+    ("most recently refreshed upstream", lambda e: _date_rank(e.get("refreshed_upstream")),
+     lambda e: str(e.get("refreshed_upstream") or "unknown")[:10]),
+)
+
+
+def _tie_key(c: dict) -> tuple:
+    e = c["entry"]
+    return tuple(k(e) for _, k, _ in TIE_BREAKS) + (c["id"],)
+
+
+def _tie_reason(first: dict, second: dict) -> dict:
+    """The reason line for a runner-up that tied with the pick: what decided the order."""
+    a, b = first["entry"], second["entry"]
+    for name, key, say in TIE_BREAKS:
+        if key(a) != key(b):
+            how = f"{name}: {first['title']} is {say(a)}, this one is {say(b)}"
+            break
+    else:
+        how = "nothing else differs, so dataset id order"
+    return {"rule": "tie-break", "weight": 0,
+            "text": f"Tied with {first['title']} at score {first['score']}; the order was decided by {how}.",
+            "method": f"it tied with {first['title']} and ranked second by {how}"}
+
+
 def recommend(params: dict, catalog: dict, evidence: dict | None) -> dict:
     """The three calls and the whole table. `catalog` is hf.load(); `evidence` is evidence.collect() (or None)."""
     p = normalise(params)
     rules = load_rules()
-    advice = E.size_advice(p["detect_points"], evidence, rules, p["model"])
-    basis = E.cost_basis(evidence, p["model"]) if p["goal"] == "run" else None
-    entries = {d["id"]: d for d in catalog["datasets"]}
-    scored = [_score_one(d, p, rules, advice, basis) for d in catalog["datasets"]]
-    order = sorted(scored, key=lambda c: (c["excluded"], -c["score"], c["id"]))
+    scored = []
+    for d in catalog["datasets"]:
+        advice = E.size_advice(p["detect_points"], evidence, rules, d["id"])
+        basis = E.cost_basis(evidence, d["id"]) if p["goal"] == "run" else None
+        scored.append(_score_one(d, p, rules, advice, basis, evidence))
+    order = sorted(scored, key=lambda c: (c["excluded"], -c["score"], _tie_key(c)))
     live = [c for c in order if not c["excluded"]]
     pick = live[0] if live else None
     runner = live[1] if len(live) > 1 else None
@@ -253,14 +305,17 @@ def recommend(params: dict, catalog: dict, evidence: dict | None) -> dict:
     rest = [c for c in order if c["id"] not in taken and c["kind"] == GOAL_KIND[p["goal"]]]
     rest = rest or [c for c in order if c["id"] not in taken]
     not_this = min(rest, key=lambda c: (c["score"] - c["positive"], c["score"], c["id"])) if rest else None
+    runner_card = _card(runner, runner["entry"]) if runner else None
+    if runner_card and pick and runner["score"] == pick["score"]:
+        runner_card["reasons"].append(_tie_reason(pick, runner))
     return {
         "rules_version": rules["version"],
         "params": p,
-        "pick": _card(pick, entries[pick["id"]], advice) if pick else None,
-        "runner_up": _card(runner, entries[runner["id"]], advice) if runner else None,
-        "not_this": _card(not_this, entries[not_this["id"]], advice) if not_this else None,
-        "size_advice": advice,
-        "cost_basis": basis,
+        "pick": _card(pick, pick["entry"]) if pick else None,
+        "runner_up": runner_card,
+        "not_this": _card(not_this, not_this["entry"]) if not_this else None,
+        "size_advice": pick["advice"] if pick else E.size_advice(p["detect_points"], evidence, rules, None),
+        "cost_basis": E.cost_basis(evidence, pick["id"]) if pick and p["goal"] == "run" else None,
         "catalog_refreshed": catalog.get("refreshed"),
         "considered": [{"id": c["id"], "title": c["title"], "kind": c["kind"], "score": c["score"], "excluded": c["excluded"],
                         "rules": [{"rule": r["rule"], "weight": r["weight"], "text": r["text"]} for r in c["rules"]]} for c in order],
@@ -293,6 +348,11 @@ def method_paragraph(result: dict) -> str:
     s += (f"The study uses {sub['rows']} tasks with {sub['repeats']} repeat(s) per task, sized to detect a difference of "
           f"{adv['detect_points']:g} percentage points between two conditions (alpha {adv['alpha']}, power {adv['power']}, "
           f"two-proportion normal approximation, baseline pass rate {adv['baseline_pass_rate']:.2f}: {adv['baseline_basis']}).")
+    est = pick.get("estimate") or {}
+    if p["goal"] == "run" and not est.get("known"):
+        s += " " + est.get("text", "")
+    elif p["goal"] == "run" and est.get("known"):
+        s += " " + est["text"]
     if sub["demoted"]:
         s += " The subset is smaller than the sizing requires, because the budget or time limit would otherwise be exceeded."
     ru = result.get("runner_up")
@@ -317,13 +377,11 @@ def _card_text(label: str, c: dict | None) -> list[str]:
              f"  subset: {sub['rows']} rows x {sub['repeats']} repeats" + (f" of {sub['of_rows']}" if sub["of_rows"] is not None else " (dataset size unknown)")
              + ("  [smaller than the sizing requires]" if sub["demoted"] else "")]
     est = c["estimate"]
-    if est == "unknown":
-        lines.append("  estimate: unknown (the lab has no costed runs)")
-    elif est.get("basis") == "not_applicable":
-        lines.append(f"  estimate: {est['text']}")
+    if est["known"]:
+        h = "unknown" if est["hours"] is None else f"{est['hours']:.2f} h"
+        lines.append(f"  estimate: ${est['cost_usd']:.2f}, {h}  = {est['arithmetic']}")
     else:
-        sec = "unknown" if est["seconds"] is None else f"{est['seconds'] / 3600.0:.2f} h"
-        lines.append(f"  estimate: ${est['cost_usd']:.2f}, {sec}  = {est['arithmetic']}")
+        lines.append(f"  estimate: unknown. {est['text']}" if est["basis"] == "unknown" else f"  estimate: {est['text']}")
     for r in c["reasons"]:
         lines.append(f"  - [{r['rule']}] {r['text']}")
     return lines
@@ -361,7 +419,7 @@ def main(argv: list[str] | None = None) -> int:
     a = build_parser().parse_args(argv)
     from . import hf
     params = {"goal": a.goal, "model": a.model, "model_cutoff": a.model_cutoff, "budget_usd": a.budget, "hours": a.hours,
-              "languages": a.lang or ["python"], "where": a.where, "compare_public": a.compare_public,
+              "languages": a.lang, "where": a.where, "compare_public": a.compare_public,
               "license_required": a.license_required, "detect_points": a.detect}
     try:
         normalise(params)

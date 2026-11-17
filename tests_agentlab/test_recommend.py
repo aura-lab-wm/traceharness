@@ -26,11 +26,15 @@ def cat(*entries):
     return {"schema": 1, "refreshed": "2026-11-16", "datasets": list(entries)}
 
 
-def ev(cost=0.01, secs=10.0, n=50, model="m/x", base=0.5, flips=(0, 10)):
-    return {"directories": ["d"], "costed_runs": n,
-            "pooled": {"costed_runs": n, "median_cost_usd": cost, "timed_runs": n, "median_seconds": secs},
-            "per_model": {model: {"costed_runs": n, "median_cost_usd": cost, "timed_runs": n, "median_seconds": secs}},
-            "baseline": {"pooled": {"runs": 40, "pass_rate": base}, "per_model": {model: {"runs": 40, "pass_rate": base}}},
+BUILTIN = {"costed_runs": 5065, "median_cost_usd": 0.0017, "timed_runs": 5065, "median_seconds": 14.4}
+
+
+def ev(cost=0.01, secs=10.0, n=50, ids=("a/e",), base=0.5, flips=(0, 10)):
+    """Evidence with recorded runs on the datasets `ids`, plus the lab's tiny built-in tasks."""
+    ds = {i: {"costed_runs": n, "median_cost_usd": cost, "timed_runs": n, "median_seconds": secs,
+              "baseline": {"runs": 40, "pass_rate": base}} for i in ids}
+    return {"directories": ["d"], "costed_runs": n + 5065, "pooled": dict(BUILTIN), "per_model": {},
+            "baseline": {"pooled": {"runs": 640, "pass_rate": 0.86}, "per_model": {}}, "datasets": ds,
             "variation": {"repeated_cells": flips[1], "disagreeing_cells": flips[0],
                           "flip_rate": (flips[0] / flips[1]) if flips[1] else None}}
 
@@ -70,7 +74,11 @@ class Rules(unittest.TestCase):
         p = {"languages": ["go"]}
         self.rule_pair("language-mismatch", p, entry("a/py", languages=["python"]), entry("a/go", languages=["go", "rust"]))
         self.rule_pair("language-match", p, entry("a/go", languages=["go"]), entry("a/py", languages=["python"]))
-        self.rule_pair("language-unknown", p, entry("a/n", languages=None), entry("a/go", languages=["go"]))
+        self.rule_pair("language-unknown-named", p, entry("a/n", languages=None), entry("a/go", languages=["go"]))
+        # languages not named: the milder penalty; on an analysis the milder penalty too
+        self.rule_pair("language-unknown", {}, entry("a/n", languages=None), entry("a/go", languages=["python"]))
+        t = entry("a/n", kind="trajectories", languages=None)
+        self.assertTrue(fired(card_of(run({"goal": "analyse", "languages": ["go"]}, t), "a/n"), "language-unknown"))
         self.assertTrue(card_of(run(p, entry("a/py", languages=["python"])), "a/py")["excluded"])
 
     def test_training_cutoff_rules(self):
@@ -162,7 +170,7 @@ class Rules(unittest.TestCase):
 
 
 class Budget(unittest.TestCase):
-    P = {"model": "m/x", "detect_points": 10}
+    P = {"detect_points": 10}
 
     def test_over_budget_demotes_to_a_subset_before_excluding(self):
         e = entry("a/e", rows=5000)
@@ -192,7 +200,7 @@ class Budget(unittest.TestCase):
         n = run(self.P, e, evidence=ev(secs=60))["pick"]["subset"]["rows"]
         r = run(dict(self.P, hours=n * 2 * 60 / 3600 / 2), e, evidence=ev(secs=60))
         self.assertTrue(r["pick"]["subset"]["demoted"])
-        self.assertLessEqual(r["pick"]["estimate"]["seconds"] / 3600, n * 2 * 60 / 3600 / 2 + 1e-9)
+        self.assertLessEqual(r["pick"]["estimate"]["hours"], n * 2 * 60 / 3600 / 2 + 1e-9)
 
     def test_within_limits_and_no_limits(self):
         e = entry("a/e")
@@ -201,20 +209,55 @@ class Budget(unittest.TestCase):
         self.assertFalse(fired(run(self.P, e)["pick"], "within-limits"), "no limit given: nothing to be within")
         self.assertFalse(fired(run(self.P, e, evidence={"costed_runs": 0})["pick"], "cost-unknown"), "no limit given: no budget to skip")
 
-    def test_unknown_cost_says_so_and_applies_no_budget(self):
-        r = run(dict(self.P, budget_usd=0.01), entry("a/e"), evidence={"costed_runs": 0})
-        self.assertEqual(r["pick"]["estimate"], "unknown")
-        self.assertTrue(fired(r["pick"], "cost-unknown"))
-        self.assertFalse(r["pick"]["subset"]["demoted"])
+    def test_the_estimate_is_one_shape_always(self):
+        keys = {"known", "basis", "cost_usd", "hours", "runs", "text"}
+        for evid in (ev(), {"costed_runs": 0}, None):
+            for goal, kind in (("run", "benchmark"), ("analyse", "trajectories")):
+                est = run({"goal": goal}, entry("a/e", kind=kind), evidence=evid if evid is not None else {})["pick"]["estimate"]
+                self.assertIsInstance(est, dict)
+                self.assertLessEqual(keys, set(est))
+                self.assertIsInstance(est["known"], bool)
 
-    def test_estimate_names_what_it_was_computed_from(self):
-        mine = run(self.P, entry("a/e"))["pick"]["estimate"]
-        self.assertEqual(mine["basis"], "model")
-        self.assertIn("recorded runs of m/x", mine["arithmetic"])
-        other = run({"model": "someone/else"}, entry("a/e"))["pick"]["estimate"]
-        self.assertEqual(other["basis"], "pooled")
-        self.assertIn("recorded runs of other models", other["arithmetic"])
-        self.assertEqual(other["cost_usd"], other["tasks"] * other["repeats"] * 2 * 0.01)
+    def test_a_dataset_with_no_recorded_runs_has_an_unknown_estimate_and_no_figure(self):
+        # the lab has plenty of built-in-task runs, none on this dataset
+        r = run(dict(self.P, budget_usd=50, hours=4), entry("a/other", title="Other Bench", task_kind="issue-fix"), evidence=ev(ids=("a/e",)))
+        c = r["pick"]
+        est = c["estimate"]
+        self.assertFalse(est["known"])
+        self.assertIsNone(est["cost_usd"])
+        self.assertIsNone(est["hours"])
+        self.assertEqual(est["text"], "Cost and time are unknown: this lab has no recorded runs on Other Bench. "
+                                      "Its own built-in tasks cost a median of $0.0017 per run (5065 runs), "
+                                      "which is not a guide for issue-fix tasks.")
+        for rule in ("within-limits", "subset-for-budget", "over-limits"):
+            self.assertFalse(fired(c, rule), rule + " must not fire from the built-in-task median")
+        cu = fired(c, "cost-unknown")
+        self.assertTrue(cu)
+        self.assertEqual(cu[0]["weight"], 0)
+        self.assertIn(est["text"], cu[0]["text"])
+        self.assertIn("could not be checked", cu[0]["text"])
+        self.assertFalse(c["subset"]["demoted"])
+        self.assertFalse(c["excluded"])
+        self.assertIn(est["text"], R.method_paragraph(r))
+
+    def test_unknown_with_no_limit_prints_the_sentence_but_fires_no_cost_rule(self):
+        c = run(self.P, entry("a/other"), evidence=ev(ids=()))["pick"]
+        self.assertFalse(c["estimate"]["known"])
+        self.assertFalse(fired(c, "cost-unknown"))
+
+    def test_a_lab_with_no_costed_runs_at_all(self):
+        est = run(dict(self.P, budget_usd=5), entry("a/e"), evidence={"costed_runs": 0})["pick"]["estimate"]
+        self.assertFalse(est["known"])
+        self.assertIn("no costed runs of any kind", est["text"])
+
+    def test_a_known_estimate_names_its_dataset_and_run_count(self):
+        est = run(self.P, entry("a/e"))["pick"]["estimate"]
+        self.assertTrue(est["known"])
+        self.assertEqual((est["basis"], est["runs"]), ("dataset", 50))
+        self.assertIn("50 recorded runs on a/e", est["arithmetic"])
+        self.assertEqual(est["cost_usd"], est["tasks"] * est["repeats"] * 2 * 0.01)
+        # the same lab says nothing about another dataset
+        self.assertFalse(run(self.P, entry("a/f"))["pick"]["estimate"]["known"])
 
 
 class Whole(unittest.TestCase):
@@ -270,6 +313,93 @@ class Whole(unittest.TestCase):
         self.assertIn("no benchmark was selected", R.method_paragraph(r))
 
 
+class Fixes(unittest.TestCase):
+    def test_public_runs_score_only_when_compare_public_is_set(self):
+        has = entry("a/h", public_runs={"source": "x/y", "entries": 5})
+        plain = entry("a/n")
+        off = run({}, has, plain)
+        r = fired(card_of(off, "a/h"), "public-runs-available")
+        self.assertEqual(r[0]["weight"], 0)
+        self.assertIn("x/y", r[0]["text"])
+        self.assertFalse(fired(card_of(off, "a/h"), "public-runs"))
+        on = run({"compare_public": True}, has, plain)
+        self.assertEqual(fired(card_of(on, "a/h"), "public-runs")[0]["weight"], 20)
+        self.assertEqual(card_of(on, "a/h")["score"] - card_of(off, "a/h")["score"], 20)
+        self.assertEqual(card_of(off, "a/h")["score"], card_of(off, "a/n")["score"])
+
+    def test_a_dataset_that_states_the_language_outranks_one_with_unknown_languages(self):
+        p = {"languages": ["python"]}
+        r = run(p, entry("a/unknown", languages=None), entry("a/states", languages=["python"]))
+        self.assertEqual(r["pick"]["id"], "a/states")
+        self.assertEqual(fired(card_of(r, "a/unknown"), "language-unknown-named")[0]["weight"], -8)
+        self.assertGreater(card_of(r, "a/states")["score"] - card_of(r, "a/unknown")["score"], 11)
+
+    def test_unnamed_languages_keep_the_milder_penalty(self):
+        r = run({}, entry("a/unknown", languages=None))
+        self.assertEqual(fired(card_of(r, "a/unknown"), "language-unknown")[0]["weight"], -3)
+
+    def cand(self, **kw):
+        e = entry(kw.pop("id", "a/x"), **kw)
+        return {"id": e["id"], "title": e["id"], "score": 10, "entry": e}
+
+    def test_tie_break_order_is_rows_known_license_gating_freshness_id(self):
+        # each pair differs in exactly one criterion (or only the id) and the earlier criterion always wins
+        pairs = [
+            ("rows known", self.cand(id="z/a", rows=10), self.cand(id="a/a", rows=None)),
+            ("license stated", self.cand(id="z/b", license="mit"), self.cand(id="a/b", license=None)),
+            ("not gated", self.cand(id="z/c", gated=False), self.cand(id="a/c", gated=True)),
+            ("not gated", self.cand(id="z/c", gated=False), self.cand(id="a/c", gated=None)),
+            ("most recently refreshed upstream", self.cand(id="z/d", refreshed_upstream="2026-05-01"), self.cand(id="a/d", refreshed_upstream="2025-05-01")),
+            ("most recently refreshed upstream", self.cand(id="z/d", refreshed_upstream="2026-05-01"), self.cand(id="a/d", refreshed_upstream=None)),
+            ("dataset id order", self.cand(id="a/e"), self.cand(id="b/e")),
+        ]
+        for name, win, lose in pairs:
+            with self.subTest(name=name, win=win["id"]):
+                self.assertEqual(sorted([lose, win], key=R._tie_key)[0], win)
+                line = R._tie_reason(win, lose)
+                self.assertEqual(line["rule"], "tie-break")
+                self.assertEqual(line["weight"], 0)
+                self.assertIn(name, line["text"])
+                self.assertIn("Tied with", line["text"])
+        # an earlier criterion outranks a later one
+        early = self.cand(id="z/f", rows=10, license=None, gated=True)
+        late = self.cand(id="a/f", rows=None, license="mit", gated=False)
+        self.assertEqual(sorted([late, early], key=R._tie_key)[0], early)
+
+    def test_a_real_tie_orders_by_the_chain_and_the_runner_up_says_so(self):
+        # equal scores (10 each: language match + enough rows); the license is stated on one only
+        a, b = entry("a/nolicense", license=None), entry("z/licensed", license="mit")
+        r = run({}, a, b)
+        self.assertEqual(card_of(r, "a/nolicense")["score"], card_of(r, "z/licensed")["score"])
+        self.assertEqual(r["pick"]["id"], "z/licensed")
+        tie = fired(r["runner_up"], "tie-break")
+        self.assertEqual(len(tie), 1)
+        self.assertIn("license stated", tie[0]["text"])
+        # rows known beats id order too
+        r = run({}, entry("a/x", rows=None, license="mit"), entry("z/y", rows=1000, license="mit"))
+        self.assertEqual(card_of(r, "a/x")["score"], card_of(r, "z/y")["score"] - 8)   # not a tie: rows-unknown is scored
+
+    def test_no_tie_line_when_scores_differ(self):
+        r = run({}, entry("a/x", gated=True), entry("a/y"))
+        self.assertFalse(fired(r["runner_up"], "tie-break"))
+
+    def test_the_repository_s_own_lab_gives_no_dollar_estimate_for_a_benchmark(self):
+        r = R.recommend({"goal": "run", "model_cutoff": "2026-03", "budget_usd": 50, "hours": 4, "languages": ["python"], "where": "laptop"},
+                        hf.load(), E.collect())
+        for key in ("pick", "runner_up", "not_this"):
+            est = r[key]["estimate"]
+            self.assertFalse(est["known"], key)
+            self.assertIsNone(est["cost_usd"])
+            self.assertIsNone(est["hours"])
+            # the one "$" is the built-in-task median the sentence must name, never a price for the dataset
+            self.assertEqual(est["text"].count("$"), 1)
+            self.assertIn("built-in tasks cost a median of $", est["text"])
+            self.assertIn("which is not a guide for issue-fix tasks", est["text"])
+            self.assertFalse(fired(r[key], "within-limits"))
+        self.assertNotIn("$0.41", json.dumps(r))
+        self.assertEqual(r["size_advice"]["baseline_pass_rate"], 0.5)
+
+
 class Packaging(unittest.TestCase):
     def test_the_rules_ship_as_package_data(self):
         with open(os.path.join(LAB, "pyproject.toml"), encoding="utf-8") as f:
@@ -292,28 +422,30 @@ class Power(unittest.TestCase):
         for a, b in ((0.5, 0.6), (0.2, 0.35), (0.7, 0.9)):
             self.assertEqual(E.runs_per_arm(a, b), power_n(a, b))
 
-    def test_advice_uses_the_recorded_baseline_else_one_half(self):
+    def test_advice_uses_a_baseline_recorded_on_the_dataset_else_one_half(self):
         rules = R.load_rules()
-        a = E.size_advice(10, ev(base=0.3), rules, "m/x")
+        a = E.size_advice(10, ev(base=0.3), rules, "a/e")
         self.assertEqual((a["baseline_pass_rate"], a["other_pass_rate"], a["runs_per_condition"]), (0.3, 0.4, 354))
-        b = E.size_advice(10, None, rules)
-        self.assertEqual((b["baseline_pass_rate"], b["runs_per_condition"], b["baseline_runs"]), (0.5, 385, 0))
-        self.assertIn("0.5 assumed", b["baseline_basis"])
-        self.assertIn("385 runs per condition", b["arithmetic"])
+        self.assertIn("recorded pass rate on a/e", a["baseline_basis"])
+        for other in ("a/other", None):   # the lab's built-in tasks (0.86 in this evidence) are never a baseline
+            b = E.size_advice(10, ev(base=0.3), rules, other)
+            self.assertEqual((b["baseline_pass_rate"], b["runs_per_condition"], b["baseline_runs"]), (0.5, 385, 0))
+            self.assertIn("0.5 assumed", b["baseline_basis"])
+        self.assertIn("385 runs per condition", E.size_advice(10, None, rules)["arithmetic"])
 
     def test_a_high_baseline_looks_downward(self):
-        a = E.size_advice(10, ev(base=0.95), R.load_rules(), "m/x")
+        a = E.size_advice(10, ev(base=0.95), R.load_rules(), "a/e")
         self.assertAlmostEqual(a["other_pass_rate"], 0.85)
 
     def test_repeats_only_when_recorded_variation_says_so(self):
         rules = R.load_rules()
-        calm = E.size_advice(10, ev(base=0.5, flips=(1, 10)), rules, "m/x")
+        calm = E.size_advice(10, ev(base=0.5, flips=(1, 10)), rules, "a/e")
         self.assertEqual((calm["repeats"], calm["tasks"]), (1, 385))
-        noisy = E.size_advice(10, ev(base=0.5, flips=(5, 10)), rules, "m/x")
+        noisy = E.size_advice(10, ev(base=0.5, flips=(5, 10)), rules, "a/e")
         self.assertEqual(noisy["repeats"], 3)
         self.assertEqual(noisy["tasks"], 129)
-        self.assertIn("5 of 10", noisy["repeats_reason"])
-        none = E.size_advice(10, ev(base=0.5, flips=(0, 0)), rules, "m/x")
+        self.assertIn("lab-wide, 5 of 10", noisy["repeats_reason"])
+        none = E.size_advice(10, ev(base=0.5, flips=(0, 0)), rules, "a/e")
         self.assertEqual(none["repeats"], 1)
 
 
