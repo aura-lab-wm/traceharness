@@ -862,7 +862,8 @@ def judge_state():
 
 def main():
     import uvicorn
-    port = int(os.environ.get("TRACEHARNESS_PORT", "8765"))
+    from traceharness.shared import contract
+    port = int(os.environ.get("TRACEHARNESS_PORT", str(contract.PORT)))
     print(f"traceharness -> http://127.0.0.1:{port}   (lab root: {LAB_ROOT}; OpenRouter key: {'set' if SETTINGS['openrouter_key'] else 'NOT set'})")
     uvicorn.run(app, host="127.0.0.1", port=port, log_level="warning")
 
@@ -977,4 +978,13 @@ def get_settings():
 
 app.include_router(assist_router)
 # Same reason as every router above: keep the SPA catch-all last (stable sort).
+app.router.routes.sort(key=lambda r: 1 if getattr(r, "path", "") == "/{path:path}" else 0)
+
+# --- environment and version stamp; local harness saves and runs (SPEC 4.2, 4.3, 3(b)) ---
+from traceharness.backend.environment_api import router as environment_router
+from traceharness.backend.shallow_api import router as shallow_router
+from traceharness.backend.local_runner_api import router as local_runner_router
+app.include_router(environment_router)
+app.include_router(shallow_router)
+app.include_router(local_runner_router)
 app.router.routes.sort(key=lambda r: 1 if getattr(r, "path", "") == "/{path:path}" else 0)

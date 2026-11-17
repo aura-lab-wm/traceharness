@@ -27,6 +27,9 @@ from __future__ import annotations
 import base64, gzip, json, os, re, time
 from urllib.parse import quote
 
+from traceharness.shared.contract import environment
+from traceharness.shared.versions import version_stamp
+
 from .paths import DIST, RUNS_ROOT
 from .private_guard import OPT_IN_HEADER
 from .results_scope import is_private, list_results_dirs
@@ -116,6 +119,9 @@ _GLOBAL_URLS = ["/api/overview", "/api/tasks", "/api/harnesses", "/api/models",
                 # The block builder fetches these with no static-export guard, so a
                 # frozen page still needs the preset catalog and the blank palette.
                 "/api/blocks/catalog", "/api/blocks/palette"]
+#: Keys build() writes itself with the export's own answers (mode "export"), never fetched: the
+#: live routes answer for the local console. Listed so _urls() names every key the file carries.
+_WRITTEN_URLS = ["/api/environment", "/api/version"]
 
 
 def _dir_urls(client, d: str, n_runs: int) -> list[str]:
@@ -184,7 +190,7 @@ def _dir_urls(client, d: str, n_runs: int) -> list[str]:
         # module already accepts the size of): the per-call detail RepeatsChart fetches only
         # for the opened/highlighted run. A run outside this sample still renders its step
         # line from the /api/repeats/{d} series above; only its hover tooltip's per-call
-        # command text needs the live app (RepeatsChart.jsx degrades that path already --
+        # command text needs the local console (RepeatsChart.jsx degrades that path already --
         # `detail` stays null and the tooltip just omits the command line).
         out += [f"/api/results/{d}/runs/{r['run_id']}", f"/api/fork/{d}/state/{r['run_id']}",
                 f"/api/repeats/{d}/run/{r['run_id']}"]
@@ -202,6 +208,7 @@ def _urls(client, dirs: list[str], n_runs: int) -> list[str]:
     out = list(_GLOBAL_URLS)
     for d in dirs:
         out += _dir_urls(client, d, n_runs)
+    out += _WRITTEN_URLS
     seen, uniq = set(), []
     for u in out:
         if u not in seen:
@@ -366,8 +373,8 @@ window.__TRACEHARNESS_DATA_READY__.catch(function (error) {
     const member = window.__TRACEHARNESS_MEMBER__;
     if (member?.version === 1 && /^[a-f0-9]{24}$/.test(member.scope) && /^https?:$/.test(location.protocol)) {
       const link = document.createElement('a');
-      link.href = '/app/shallow';
-      link.textContent = 'Open the simple harness editor';
+      link.href = '/app/shallow?plain=1';
+      link.textContent = 'Open the plain harness editor';
       panel.append(link);
     }
     root.replaceChildren(panel);
@@ -446,6 +453,11 @@ def build(out_path: str, results: list[str] | None = None, n_runs: int = DEFAULT
                                f"attempts; {d}'s study-aggregate endpoints were skipped rather "
                                f"than baked from a mixed generation"))
 
+    # What this file can do and which build it is (SPEC 4.2, 4.3): the export's own answers,
+    # written directly -- never fetched, so the live server's "local" answers cannot leak in.
+    data["/environment"] = environment("export")
+    data["/version"] = version_stamp("export")
+
     _list_only_exported(data, dirs)
     coverage = ledger_coverage(data, dirs)
     data["__meta__"] = {"generated_at": time.strftime("%Y-%m-%d %H:%M"), "results": dirs,
@@ -479,8 +491,8 @@ def build(out_path: str, results: list[str] | None = None, n_runs: int = DEFAULT
   const member = window.__TRACEHARNESS_MEMBER__;
   if (member?.version === 1 && /^[a-f0-9]{24}$/.test(member.scope) && /^https?:$/.test(location.protocol)) {
     const link = document.createElement('a');
-    link.href = '/app/shallow';
-    link.textContent = 'Open the simple harness editor';
+    link.href = '/app/shallow?plain=1';
+    link.textContent = 'Open the plain harness editor';
     panel.append(document.createElement('br'), link);
   }
   (document.getElementById('root') || document.body || document.documentElement).replaceChildren(panel);

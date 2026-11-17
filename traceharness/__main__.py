@@ -11,6 +11,8 @@ import re
 import sys
 import time
 
+from traceharness.shared import contract
+
 __version__ = "0.5.3"
 
 
@@ -40,8 +42,8 @@ def build_parser() -> argparse.ArgumentParser:
     )
     p.add_argument("--host", default=os.environ.get("TRACEHARNESS_HOST", "127.0.0.1"),
                    help="interface to bind (default 127.0.0.1; use 0.0.0.0 in a container)")
-    p.add_argument("--port", type=int, default=int(os.environ.get("TRACEHARNESS_PORT", "8765")),
-                   help="port to bind (default 8765)")
+    p.add_argument("--port", type=int, default=int(os.environ.get("TRACEHARNESS_PORT", str(contract.PORT))),
+                   help=f"port to bind (default {contract.PORT})")
     p.add_argument("--lab", default=None, metavar="DIR",
                    help="lab root holding harnesses/, tasks/ and data/runs/. Defaults to the "
                         "checkout when running from one, else ~/.traceharness (seeded on first run).")
@@ -778,6 +780,9 @@ def main(argv: list[str] | None = None) -> int:
         return patterns_cli(argv[1:])
     if argv and argv[0] == "sources":
         return sources_cli(argv[1:])
+    if argv and argv[0] == "version":
+        from traceharness.shared.versions import main as version_main  # noqa: E402
+        return version_main(argv[1:])
     if argv and argv[0] == "capture":
         if len(argv) > 1 and argv[1] == "push":
             from traceharness.capture.push import push_main  # noqa: E402
