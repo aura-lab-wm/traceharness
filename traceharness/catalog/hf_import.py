@@ -174,8 +174,15 @@ def _write_messages(rows, offsets, dataset_id, out_dir, progress=None) -> dict:
             "outcomes_known": known, "outcomes_unknown": len(index) - known}
 
 
+_SAFE_ID = re.compile(r"[^A-Za-z0-9._@+=-]")
+
+
 def _write_swe_agent(rows, dataset_id, out_dir) -> dict:
     from traceharness.core.real_traj import to_results_dir
+    # real_traj names each run's folder after the row's instance id (only "/" replaced); a hostile id with a
+    # backslash or other separator must not shape a path, so the id is cut to a plain alphabet first. The
+    # Hub's real ids (owner__repo-123) are unchanged by this.
+    rows = [{**r, "instance_id": _SAFE_ID.sub("_", str(r.get("instance_id") or "row"))[:120]} for r in rows]
     n = to_results_dir(rows, out_dir)
     resolved = sum(bool(r.get("target")) for r in rows)
     return {"imported": n, "errors": [], "harness_ids": ["swe-agent"], "n_tasks": len({r.get("instance_id") for r in rows}),
