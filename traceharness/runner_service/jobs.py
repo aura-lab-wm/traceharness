@@ -281,6 +281,7 @@ class Jobs:
         self.lock = threading.RLock()
         self.rows, self.idempotency, self.events = {}, {}, {}
         self.blocked_reason = None
+        self.restore_pending = set()    # local: jobs from an earlier session whose containers are not yet confirmed removed
         self.pool = ThreadPoolExecutor(max_workers=settings.max_workers, thread_name_prefix="private-runner")
         for directory in self.root.iterdir():
             path = directory / "job.json"
@@ -294,12 +295,13 @@ class Jobs:
                     self.blocked_reason = "Invalid runner state requires operator reconciliation."
                     continue
                 if settings.local and (row["job"]["status"] == "needs_attention" or row["job"]["status"] not in TERMINAL):
-                    # A restart is the local runner's reconciliation: leftover job containers are removed at
-                    # start (executor.reconcile_startup), so an earlier session's unfinished or flagged job
-                    # is recorded as failed rather than blocking every later run.
-                    row["job"].update(status="failed", issues=[*row["job"].get("issues", []),
-                                      "The console restarted before this job finished; its containers were removed."],
+                    # A restart is the local runner's reconciliation, but only once the executor has confirmed
+                    # that no container of this runner remains (settle_restored). Until then the job stays in
+                    # needs_attention, which also keeps new runs from starting.
+                    row["job"].update(status="needs_attention", issues=[*row["job"].get("issues", []),
+                                      "The console restarted before this job finished; waiting for its containers to be removed."],
                                       updated_at=int(clock()))
+                    self.restore_pending.add(path.parent.name)
                 elif row["job"]["status"] not in TERMINAL:
                     row["job"].update(status="needs_attention", issues=["Runner restarted. Inspect prior execution before starting another run."], updated_at=int(clock()))
                 self.rows[path.parent.name] = row
@@ -310,6 +312,28 @@ class Jobs:
         if sum(len(canonical(row)) for row in self.rows.values()) > 64 * 1024 * 1024:
             self.blocked_reason = "Runner state exceeds its retention limit."
         self._purge()
+
+    def settle_restored(self):
+        """Ask the executor to remove earlier containers; only on confirmed removal do the restored jobs become failed."""
+        with self.lock:
+            if not self.restore_pending:
+                return True
+        try:
+            done = bool(self.executor.reconcile_startup())
+        except Exception:
+            done = False
+        if not done:
+            return False
+        with self.lock:
+            for jid in sorted(self.restore_pending):
+                row = self.rows.get(jid)
+                if row is not None and row["job"]["status"] == "needs_attention":
+                    row["job"].update(status="failed", updated_at=int(self.clock()),
+                                      issues=[i for i in row["job"].get("issues", []) if "waiting for its containers" not in i]
+                                      + ["The console restarted before this job finished; its containers were removed."])
+                    self._save(row)
+            self.restore_pending.clear()
+        return True
 
     def _save(self, row):
         directory = self.root / row["job"]["id"]

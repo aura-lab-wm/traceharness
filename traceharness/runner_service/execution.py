@@ -103,6 +103,41 @@ def pinned_image_matches(reference, inspected):
     return reference in inspected.get("RepoDigests", [])
 
 
+def measure_tree(paths, *, stop_after_bytes=None, stop_after_entries=200_000):
+    """(bytes, entries) written under these directories. Symlinks are counted, never followed, and a
+    file's allocated size counts, so a sparse file cannot hide its blocks. Stops early once over a bound."""
+    total = entries = 0
+    pending = [str(path) for path in paths]
+    while pending:
+        try:
+            with os.scandir(pending.pop()) as scan:
+                for entry in scan:
+                    entries += 1
+                    try:
+                        info = entry.stat(follow_symlinks=False)
+                    except OSError:
+                        continue
+                    if stat.S_ISDIR(info.st_mode):
+                        pending.append(entry.path)
+                    else:
+                        total += max(info.st_size, getattr(info, "st_blocks", 0) * 512)
+                    if entries > stop_after_entries or (stop_after_bytes is not None and total > stop_after_bytes):
+                        return total, entries
+        except OSError:
+            continue
+    return total, entries
+
+
+class StorageLimitError(ExecutionError):
+    """The job wrote more than its storage cap to a host directory."""
+
+
+#: Seconds between measurements of a running job's writable host directories.
+STORAGE_CHECK_SECONDS = 1.0
+#: Files and directories one job may create in them (a million tiny files fill inodes, not bytes).
+STORAGE_ENTRY_LIMIT = 200_000
+
+
 class DockerExecutor:
     def __init__(self, settings, registry, command=subprocess.run):
         self.settings, self.registry, self.command = settings, registry, command
@@ -112,6 +147,12 @@ class DockerExecutor:
         """Names this runner's state directory, so two consoles never reap each other's containers."""
         return hashlib.sha256(str(Path(self.settings.state_dir).resolve()).encode()).hexdigest()[:16]
 
+    def _labelled_containers(self):
+        listed = self.command([self.settings.docker_binary, "ps", "--all", "--quiet", "--no-trunc",
+                               "--filter", "label=org.traceharness.state=" + self._state_label()],
+                              capture_output=True, timeout=8, check=True)
+        return [line for line in listed.stdout.decode().split() if re.fullmatch(r"[a-f0-9]{64}", line)]
+
     def reconcile_startup(self):
         if self._startup_blocked:
             return False
@@ -120,12 +161,17 @@ class DockerExecutor:
         if self.settings.local:
             # A crashed earlier session may have left job containers. They carry this runner's own
             # label, so remove exactly those (by id), never a pattern over unrelated containers.
-            listed = self.command([self.settings.docker_binary, "ps", "--all", "--quiet", "--no-trunc",
-                                   "--filter", "label=org.traceharness.state=" + self._state_label()],
-                                  capture_output=True, timeout=8, check=True)
-            ids = [line for line in listed.stdout.decode().split() if re.fullmatch(r"[a-f0-9]{64}", line)]
+            # Success is what Docker reports afterwards, not the exit status of `docker rm`: any
+            # matching container that remains keeps the runner not reconciled (retried on the next call).
+            try:
+                ids = self._labelled_containers()
+                if ids:
+                    self.command([self.settings.docker_binary, "rm", "--force", *ids], capture_output=True, timeout=60, check=False)
+                    ids = self._labelled_containers()
+            except (OSError, subprocess.SubprocessError):
+                return False
             if ids:
-                self.command([self.settings.docker_binary, "rm", "--force", *ids], capture_output=True, timeout=60, check=False)
+                return False
             self._reconciled = True
             return True
         result = self.command([self.settings.docker_binary, "ps", "--all", "--filter", "name=^/traceharness-", "--format", "{{.ID}}"],
@@ -261,7 +307,8 @@ class DockerExecutor:
             args += ["--mount", f"type=bind,src={source},dst={target}" + (",readonly" if readonly else "")]
         return args + [image]
 
-    def _run(self, args, name, cancel, deadline, *, capture=False):
+    def _run(self, args, name, cancel, deadline, *, capture=False, watch=None):
+        """`watch` = (directories, byte cap): the job is stopped when what it wrote there exceeds the cap."""
         if cancel.is_set() or time.monotonic() >= deadline:
             raise ExecutionError("Execution was cancelled." if cancel.is_set() else "Execution reached its deadline.")
         # Container output is an untrusted artifact, not a service log. Only the local grader's stdout is
@@ -269,8 +316,17 @@ class DockerExecutor:
         process = subprocess.Popen(args, stdin=subprocess.DEVNULL, stdout=subprocess.PIPE if capture else subprocess.DEVNULL,
                                    stderr=subprocess.DEVNULL)
         captured = b""
+        next_check = time.monotonic() + STORAGE_CHECK_SECONDS if watch else 0
         try:
             while process.poll() is None:
+                if watch and time.monotonic() >= next_check:
+                    next_check = time.monotonic() + STORAGE_CHECK_SECONDS
+                    used, entries = measure_tree(watch[0], stop_after_bytes=watch[1], stop_after_entries=STORAGE_ENTRY_LIMIT)
+                    if used > watch[1] or entries > STORAGE_ENTRY_LIMIT:
+                        self.command([self.settings.docker_binary, "rm", "--force", name], capture_output=True, timeout=15, check=False)
+                        process.kill()          # the container is gone; end the docker client too
+                        process.wait(timeout=5)
+                        raise StorageLimitError("The job exceeded its storage limit of %d MiB and was stopped." % (watch[1] // (1024 * 1024)))
                 if cancel.is_set() or time.monotonic() >= deadline:
                     self.command([self.settings.docker_binary, "rm", "--force", name], capture_output=True, timeout=15, check=False)
                     process.wait(timeout=15)
@@ -468,7 +524,8 @@ class DockerExecutor:
                 args = self.container_args(name, manifest["image_digest"], mounts,
                     entrypoint="python") + ["-m", "traceharness.runner_service.container_entrypoint"]
                 try:
-                    self._run(args, name, cancel, deadline)
+                    cap = manifest["limits"].get("storage_bytes")
+                    self._run(args, name, cancel, deadline, watch=([work, output], cap) if self.settings.local and cap else None)
                 except ExecutionError as error:
                     if type(error) is not ExecutionError or str(error) != RUNTIME_FAILURE or error.grade is not None:
                         raise

@@ -70,6 +70,8 @@ def create_app(settings: Settings, *, registry=None, provider=None, executor=Non
             readiness_lock.release()
 
     async def health():
+        if jobs.restore_pending:
+            await asyncio.to_thread(jobs.settle_restored)
         with jobs.lock:
             if jobs.blocked_reason or any(row["job"]["status"] == "needs_attention" for row in jobs.rows.values()):
                 return {"available": False, "runtimes": {}, "tasks": {}}, []
