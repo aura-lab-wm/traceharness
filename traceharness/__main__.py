@@ -785,6 +785,12 @@ def main(argv: list[str] | None = None) -> int:
     if argv and argv[0] == "version":
         from traceharness.shared.versions import main as version_main  # noqa: E402
         return version_main(argv[1:])
+    if argv and argv[0] == "hf":
+        from traceharness.catalog.hf import main as hf_main  # noqa: E402
+        return hf_main(argv[1:])
+    if argv and argv[0] == "import-swebench":
+        from traceharness.importers_swebench import main as swebench_main  # noqa: E402
+        return swebench_main(argv[1:])
     if argv and argv[0] == "doctor":
         from traceharness.shared.doctor import main as doctor_main  # noqa: E402
         return doctor_main(argv[1:])

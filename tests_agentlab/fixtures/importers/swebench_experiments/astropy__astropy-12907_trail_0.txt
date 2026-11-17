@@ -1,0 +1,44 @@
+user: 
+<uploaded_files>
+/testbed
+</uploaded_files>
+
+I've uploaded a python code repository named astropy/astropy in the directory /testbed. Consider the following PR description:
+<pr_description>
+Modeling's `separability_matrix` does not compute separability correctly for nested CompoundModels
+Consider the following model:
+
+```python
+from astropy.modeling import models as m
+from astropy.modeling.separable import separability_matrix
+
+cm = m.Linear1D(10) & m.Linear1D(5)
+```
+
+It's separability matrix as you might expect is a diagonal:
+
+```python
+>>> separability_matrix(cm)
+array([[ True, False],
+       [False,  True]])
+```
+
+If I make the model more complex:
+```python
+>>> separability_matrix(m.Pix2Sky_TAN() & m.Linear1D(10) & m.Linear1D(5))
+array([[ True,  True, False, False],
+       [ True,  
+[...]
+
+SolverAgent: I'll help create and run a test script to reproduce the issue with the `separability_matrix` function for nested CompoundModels. Let me analyze the issue and create the test script.
+
+First, let me create the test script that reproduces the issue:
+[
+    {
+        "id": "toolu_01LXvyPa386TPJcFXjQRpnGm",
+        "input": {
+            "command": "create",
+            "file_text": "from astropy.modeling import models as m\nfrom astropy.modeling.separable import separability_matrix\nimport numpy as np\n\ndef test_separability_matrix_nested_compound():\n    # Test case 1: Simple compound model\n    cm = m.Linear1D(10) & m.Linear1D(5)\n    result1 = separability_matrix(cm)\n    expected1 = np.array([[True, False],\n                         [False, True]])\n    print(\"\\nTest case 1 - Simple compound model:\")\n    print(\"Expected:\")\n    print(expected1)\n    print(\"Got:\")\n    print(result1)\n    assert np.array_equal(result1, expected1)\n\n    # Test case 2: Complex non-nested compound model\n    model2 = m.Pix2Sky_TAN() & m.Linear1D(10) & m.Linear1D(5)\n    result2 = separability_matrix(model2)\n    expected2 = np.array([[True, True, False, False],\n                         [True, True, False, False],\n                         [False, False, True, False],\n                         [False, False, False, True]])\n    print(\"\\nTest case 2 - Complex non-nested compound model:\")\n    print(\"Expected:\")\n    print(expected2)\n    print(\"Got:\")\n    print(resul
+[...]
+     elif isinstance(transform, CompoundModel):\n-        sepleft = _separable(transform.left)\n-        sepright = _separable(transform.right)\n-        return _operators[transform.op](sepleft, sepright)\n+        if transform.op == '&':\n+            # For & operator, we want to preserve independence of components\n+            sepleft = _separable(transform.left)\n+            sepright = _separable(transform.right)\n+            # Create output matrix that preserves independence\n+            result = np.zeros((transform.n_outputs, transform.n_inputs))\n+            n_left = transform.left.n_outputs\n+            n_right = transform.right.n_outputs\n+            # Position left and right matrices to preserve independence\n+            result[:n_left, :transform.left.n_inputs] = sepleft\n+            result[n_left:, transform.left.n_inputs:] = sepright\n+            return result\n+        else:\n+            sepleft = _separable(transform.left)\n+            sepright = _separable(transform.right)\n+            return _operators[transform.op](sepleft, sepright)\n     elif isinstance(transform, Model):\n         return _coord_matrix(transform, 'left', transform.n_outputs)\n \n"
+}
