@@ -1,18 +1,16 @@
-"""`traceharness doctor`: do the package, the UI build, the shared sources, the runner image and the
-site agree? (SPEC 4.3)
+"""`traceharness doctor`: do the package, the UI build and the shared sources agree, and is the local
+runner set up? (SPEC 4.3)
 
-    traceharness doctor                          the local checks, as a table
-    traceharness doctor --site ../traceharness-site
-    traceharness doctor --compare https://traceharness.dev
+    traceharness doctor
     traceharness doctor --json
 
-Every check is a row {check, status, detail}; status is ok, drift, not_applicable (the check has
+Every check is a row {check, status, detail}; status is ok, drift, not_set_up (the optional runner), not_applicable (the check has
 nothing to look at here, e.g. an installed package has no console source) or failed (the check
 could not run). Exit 0 when no row drifted or failed, 1 on any drift, 2 when a check failed.
 
-`--compare URL` is the only network use in the package, and only when asked for: it reads
-URL/api/version once, over https (or http on 127.0.0.1 / localhost), with no credentials in the URL,
-a 5 s timeout, no redirect followed and at most 64 KiB read. Standard library only.
+The `runner` row reports whether `traceharness runner setup` has been run on this machine. The runner
+is optional: its row is ok, or not_set_up with the hint, and never changes the exit code.
+`doctor` makes no network call (the runner check asks the local Docker daemon, nothing else).
 """
 from __future__ import annotations
 
@@ -21,26 +19,16 @@ import json
 import os
 import re
 import sys
-import urllib.error
-import urllib.parse
-import urllib.request
 
 from . import generate
 
 #: The directory that holds the `traceharness` package (a checkout's root, or site-packages).
 ROOT = generate.BASE
-STATUSES = ("ok", "drift", "not_applicable", "failed")
-TIMEOUT_S = 5.0
-MAX_BYTES = 64 * 1024
-LOOPBACK = ("127.0.0.1", "localhost")
+STATUSES = ("ok", "drift", "not_applicable", "failed", "not_set_up")
 
-_HEX64 = re.compile(r"^[0-9a-f]{64}$")
-_WHEEL = re.compile(r"traceharness-([0-9][0-9A-Za-z.+!-]*?)-py3-none-any\.whl")
 _PYPROJECT_VERSION = re.compile(r'^version = "([^"]+)"', re.M)
 _PYPROJECT_NAME = re.compile(r'^name = "([^"]+)"', re.M)
 _TEST_FILE = re.compile(r"\.test\.[jt]sx?$")
-_SITE_KEYS = ("schema", "component", "shared_sources_sha256", "shared_sources_package_version",
-              "compiler_oracle_sha256", "app_snapshot", "runner")
 
 
 def row(check: str, status: str, detail: str) -> dict:
@@ -148,182 +136,29 @@ def check_shared_sources(root: str = ROOT) -> dict:
     return row("shared_sources", "ok", f"both copies current ({_short(bundle['content_sha256'])})")
 
 
-def check_runner_image(root: str = ROOT, version: str | None = None) -> dict:
-    """The wheel deploy/runner/fly/Dockerfile installs is this package's version."""
-    version = version or _version()
-    path = os.path.join(root, "deploy", "runner", "fly", "Dockerfile")
-    if not os.path.isfile(path):
-        return row("runner_image", "not_applicable", "no deploy/runner/fly/Dockerfile here")
+def check_runner(root: str = ROOT) -> dict:
+    """The local runner's readiness (traceharness/runner/local.py). Optional: never drift, never failed."""
+    hint = "traceharness runner setup"
     try:
-        pins = sorted(set(_WHEEL.findall(_read_text(path))))
-    except OSError as e:
-        return row("runner_image", "failed", f"cannot read deploy/runner/fly/Dockerfile: {e.strerror}")
-    if not pins:
-        return row("runner_image", "failed", "deploy/runner/fly/Dockerfile names no traceharness-<version>-py3-none-any.whl")
-    if pins != [version]:
-        return row("runner_image", "drift", f"the runner image installs the traceharness {' and '.join(pins)} wheel; "
-                                            f"the package is {version} (the pin moves at release, SPEC 7 step 3)")
-    return row("runner_image", "ok", f"the runner image installs the traceharness {version} wheel")
+        from traceharness.runner import local
+        from traceharness.backend.labroot import resolve_lab_root
+        lab = resolve_lab_root(seed=False)
+        state = local.LocalRunner(lab, lambda: None).readiness()
+        if state.get("ready"):
+            return row("runner", "ok", f"ready (Docker answers, registry set up, isolation: {state.get('isolation')})")
+        missing = [name for name in ("docker", "registry") if not state.get(name)]
+        return row("runner", "not_set_up", f"not_set_up ({', '.join(missing) or 'not ready'} missing): {hint}")
+    except Exception:
+        return row("runner", "not_set_up", f"not_set_up: {hint}")
 
 
 def local_checks(root: str = ROOT) -> list[dict]:
-    return [check_package(root), check_ui_build(root), check_shared_sources(root), check_runner_image(root)]
-
-
-# --------------------------------------------------------------------------- the site
-def check_site_checkout(site: str, root: str = ROOT) -> dict:
-    """SITE/auth/shared/shared-sources.json is this package's bundle (hash and version)."""
-    path = os.path.join(site, "auth", "shared", "shared-sources.json")
-    try:
-        mine = local_bundle(root)
-    except (OSError, ValueError):
-        return row("site_checkout", "failed", "this package has no readable shared-sources.json")
-    try:
-        theirs = _read_json(path)
-    except OSError:
-        return row("site_checkout", "failed", f"no readable auth/shared/shared-sources.json under {site}")
-    except ValueError:
-        return row("site_checkout", "failed", f"{path} is not JSON")
-    if not isinstance(theirs, dict):
-        return row("site_checkout", "failed", f"{path} is not a JSON object")
-    problems = []
-    if generate.content_sha256(theirs) != theirs.get("content_sha256"):
-        problems.append("its content no longer matches its own content_sha256 (edited by hand?)")
-    if theirs.get("content_sha256") != mine.get("content_sha256"):
-        problems.append(f"content_sha256 {_short(theirs.get('content_sha256'))}, this package {_short(mine.get('content_sha256'))}")
-    if theirs.get("package_version") != mine.get("package_version"):
-        problems.append(f"package_version {theirs.get('package_version')}, this package {mine.get('package_version')}")
-    if problems:
-        return row("site_checkout", "drift", "the site's vendored bundle differs: " + "; ".join(problems)
-                   + ": python3 tools/sync_shared.py --from <this checkout>")
-    return row("site_checkout", "ok", f"the site vendors this bundle ({_short(mine['content_sha256'])}, "
-                                      f"traceharness {mine['package_version']})")
-
-
-def compare_base(url: str) -> str:
-    """The base URL for --compare, or ValueError naming why it is refused: https, or http on
-    127.0.0.1 / localhost only; no credentials, query or fragment; no whitespace or control
-    characters. A trailing slash is dropped."""
-    if not isinstance(url, str) or not url or any(c.isspace() or ord(c) < 0x20 or ord(c) == 0x7F for c in url):
-        raise ValueError("the URL is empty or contains whitespace or control characters")
-    parts = urllib.parse.urlsplit(url)
-    if parts.scheme not in ("https", "http"):
-        raise ValueError("only https:// URLs are compared (http:// only on 127.0.0.1 or localhost)")
-    if "@" in parts.netloc:
-        raise ValueError("credentials in the URL are refused")
-    try:
-        host, _port = parts.hostname, parts.port
-    except ValueError:
-        raise ValueError("the URL's host or port is malformed") from None
-    if not host:
-        raise ValueError("the URL names no host")
-    if parts.scheme == "http" and host not in LOOPBACK:
-        raise ValueError("http:// is allowed only on 127.0.0.1 or localhost; use https://")
-    if parts.query or parts.fragment or url.endswith(("?", "#")):
-        raise ValueError("a query or fragment is refused")
-    return f"{parts.scheme}://{parts.netloc}{parts.path.rstrip('/')}"
-
-
-class _NoRedirect(urllib.request.HTTPRedirectHandler):
-    """Never follow a redirect: urllib then raises HTTPError carrying the 3xx status."""
-
-    def redirect_request(self, req, fp, code, msg, headers, newurl):
-        return None
-
-
-def http_fetch(url: str, timeout: float = TIMEOUT_S, limit: int = MAX_BYTES):
-    """(status, headers, at most limit + 1 body bytes) for one GET, with no redirect followed."""
-    host = urllib.parse.urlsplit(url).hostname
-    handlers = [_NoRedirect()]
-    if host in LOOPBACK:
-        handlers.append(urllib.request.ProxyHandler({}))      # a loopback check never goes through a proxy
-    opener = urllib.request.build_opener(*handlers)
-    request = urllib.request.Request(url, method="GET", headers={"Accept": "application/json",
-                                                                "User-Agent": "traceharness-doctor"})
-    try:
-        with opener.open(request, timeout=timeout) as response:
-            return response.status, dict(response.headers.items()), response.read(limit + 1)
-    except urllib.error.HTTPError as e:                        # a 3xx (not followed) or an error status
-        try:
-            body = e.read(limit + 1)
-        except Exception:
-            body = b""
-        return e.code, dict(e.headers.items()) if e.headers else {}, body
-
-
-def _site_schema_problem(body) -> str | None:
-    if not isinstance(body, dict):
-        return "the answer is not a JSON object"
-    missing = [k for k in _SITE_KEYS if k not in body]
-    if missing:
-        return f"the answer lacks {', '.join(missing)}"
-    if body["schema"] != 1 or body["component"] != "site":
-        return "the answer is not the site's version stamp (schema 1, component site)"
-    for key in ("shared_sources_sha256", "compiler_oracle_sha256"):
-        if not isinstance(body[key], str) or not _HEX64.match(body[key]):
-            return f"{key} is not a 64-hex digest"
-    if body["app_snapshot"] is not None and not isinstance(body["app_snapshot"], dict):
-        return "app_snapshot is neither an object nor null"
-    return None
-
-
-def check_site_live(url: str, fetch=http_fetch, root: str = ROOT, version: str | None = None) -> dict:
-    """URL/api/version answers the site schema with this package's shared sources, compiler oracle
-    and package version."""
-    try:
-        target = compare_base(url) + "/api/version"
-    except ValueError as e:
-        return row("site_live", "failed", f"refused URL: {e}")
-    try:
-        mine = local_bundle(root)
-    except (OSError, ValueError):
-        return row("site_live", "failed", "this package has no readable shared-sources.json")
-    version = version or _version()
-    try:
-        status, headers, raw = fetch(target, TIMEOUT_S, MAX_BYTES)
-    except Exception as e:                                     # refused, unreachable, timed out, bad TLS
-        return row("site_live", "failed", f"{target} could not be read: {type(e).__name__}")
-    if 300 <= status < 400:
-        location = {k.lower(): v for k, v in (headers or {}).items()}.get("location", "")
-        where = urllib.parse.urlsplit(location).netloc or "the same host"
-        return row("site_live", "failed", f"{target} answered a redirect ({status}) to {where[:80]}; redirects are not followed")
-    if status != 200:
-        return row("site_live", "failed", f"{target} answered HTTP {status}")
-    if len(raw) > MAX_BYTES:
-        return row("site_live", "failed", f"{target} answered more than {MAX_BYTES} bytes")
-    try:
-        body = json.loads(raw.decode("utf-8"))
-    except (UnicodeDecodeError, ValueError):
-        return row("site_live", "failed", f"{target} did not answer JSON")
-    problem = _site_schema_problem(body)
-    if problem:
-        return row("site_live", "failed", f"{target}: {problem}")
-    snapshot = body["app_snapshot"]
-    differ = []
-    if body["shared_sources_sha256"] != mine.get("content_sha256"):
-        differ.append(f"shared sources {_short(body['shared_sources_sha256'])}, here {_short(mine.get('content_sha256'))}")
-    if body["shared_sources_package_version"] != mine.get("package_version"):
-        differ.append(f"the vendored bundle is from {body['shared_sources_package_version']!s:.20}, here {mine.get('package_version')}")
-    if body["compiler_oracle_sha256"] != (mine.get("compiler_oracle") or {}).get("sha256"):
-        differ.append(f"compiler oracle {_short(body['compiler_oracle_sha256'])}, here "
-                      f"{_short((mine.get('compiler_oracle') or {}).get('sha256'))}")
-    if snapshot is None:
-        differ.append("the site reports no /app snapshot record")
-    elif snapshot.get("package_version") != version:
-        differ.append(f"/app is a traceharness {snapshot.get('package_version')!s:.20} snapshot, here {version}")
-    if differ:
-        return row("site_live", "drift", "; ".join(differ))
-    return row("site_live", "ok", f"{target} serves this bundle and a traceharness {version} /app snapshot")
+    return [check_package(root), check_ui_build(root), check_shared_sources(root), check_runner(root)]
 
 
 # --------------------------------------------------------------------------- command
-def run(root: str = ROOT, site: str | None = None, compare: str | None = None, fetch=http_fetch) -> list[dict]:
-    rows = local_checks(root)
-    if site is not None:
-        rows.append(check_site_checkout(site, root))
-    if compare is not None:
-        rows.append(check_site_live(compare, fetch=fetch, root=root))
-    return rows
+def run(root: str = ROOT) -> list[dict]:
+    return local_checks(root)
 
 
 def exit_code(rows: list[dict]) -> int:
@@ -337,17 +172,14 @@ def table(rows: list[dict]) -> str:
     return "\n".join(f"{r['check']:<{width_check}}  {r['status']:<{width_status}}  {r['detail']}" for r in rows)
 
 
-def main(argv: list[str] | None = None, fetch=http_fetch, root: str = ROOT) -> int:
+def main(argv: list[str] | None = None, root: str = ROOT) -> int:
     import argparse
     p = argparse.ArgumentParser(prog="traceharness doctor",
-                                description="Check that the package, the UI build, the shared sources, the runner "
-                                            "image and (optionally) the site agree.")
-    p.add_argument("--site", metavar="PATH", help="also compare a traceharness-site checkout's vendored bundle")
-    p.add_argument("--compare", metavar="URL", help="also read URL/api/version (https, or http on 127.0.0.1/localhost); "
-                                                    "the only network use, never by default")
+                                description="Check that the package, the UI build and the shared sources agree, and "
+                                            "report whether the local runner is set up (offline; the runner is optional).")
     p.add_argument("--json", action="store_true", help="print the rows as JSON")
     args = p.parse_args(argv)
-    rows = run(root, site=args.site, compare=args.compare, fetch=fetch)
+    rows = run(root)
     code = exit_code(rows)
     if args.json:
         print(json.dumps({"schema": 1, "result": {0: "ok", 1: "drift", 2: "failed"}[code], "rows": rows}, indent=2))

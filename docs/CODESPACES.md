@@ -61,6 +61,13 @@ If you skipped the key in step 2, paste it under **Settings → The lab's key**.
 memory until the codespace stops. For a key that survives restarts, add it as a Codespaces secret
 named `OPENROUTER_API_KEY` (github.com → Settings → Codespaces), then restart the codespace.
 
+## The local runner in a Codespace
+
+Container runs (third-party agents, experiment matrices, paired native-prompt experiments) need Docker. The dev container
+includes the Docker-in-Docker feature, so in the terminal `traceharness runner setup` works. It builds the runtime and grader
+images inside the codespace: **a few GB of images, and the first run takes a while** (it is slow and large on the default 2-core
+machine). Skip it if you only analyse recorded data. `traceharness runner status` shows whether it is ready.
+
 ## Good to know
 
 - **Privacy.** The TraceHarness URL (`…-8765.app.github.dev`) is private to your GitHub account.

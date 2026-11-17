@@ -1,6 +1,6 @@
 # The lab in one hour — run sheet
 
-> **Platform note (2026-11-16).** This run sheet now targets **traceharness 0.5.5**, not the older
+> **Platform note (2026-11-16).** This run sheet now targets **traceharness 0.6.0**, not the older
 > `traceharness.core.serve` console. Page names changed: Board → **Runs**, Comparison folded into
 > **Harnesses**, Trajectories → **Explorer**. The Field is the console's own page now (**The Field**, second in
 > the nav, and slide 2 of Present) — no separate file to open; it follows the console's results dir, oracle and theme.
