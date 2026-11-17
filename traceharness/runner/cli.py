@@ -60,6 +60,14 @@ def main(argv: list[str] | None = None) -> int:
         return 0 if report["ready"] else 1
     if command == "verify":
         p = _parser("traceharness runner verify", "Write a compatibility receipt from one paid, isolated run.")
+        if any(a in ("-h", "--help") for a in rest):
+            # The outer parser only knows --lab; the verification parser holds every other argument.
+            from . import verify
+            print("traceharness runner verify also accepts --lab DIR (default: the console's lab root).\n")
+            try:
+                verify.main(["--help"], lab_root=None)
+            except SystemExit as done:
+                return done.code or 0
         known, remaining = p.parse_known_args(rest)
         lab = _lab(known)
         from . import verify

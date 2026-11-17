@@ -281,6 +281,10 @@ class Jobs:
         self.lock = threading.RLock()
         self.rows, self.idempotency, self.events = {}, {}, {}
         self.blocked_reason = None
+        #: Optional callable(row, job_dir) that writes a finished job somewhere durable and returns True. A
+        #: terminal job is not removed by retention until this has succeeded for it.
+        self.persist = None
+        self.restore_pending = set()    # local: jobs from an earlier session whose containers are not yet confirmed removed
         self.pool = ThreadPoolExecutor(max_workers=settings.max_workers, thread_name_prefix="private-runner")
         for directory in self.root.iterdir():
             path = directory / "job.json"
@@ -294,12 +298,13 @@ class Jobs:
                     self.blocked_reason = "Invalid runner state requires operator reconciliation."
                     continue
                 if settings.local and (row["job"]["status"] == "needs_attention" or row["job"]["status"] not in TERMINAL):
-                    # A restart is the local runner's reconciliation: leftover job containers are removed at
-                    # start (executor.reconcile_startup), so an earlier session's unfinished or flagged job
-                    # is recorded as failed rather than blocking every later run.
-                    row["job"].update(status="failed", issues=[*row["job"].get("issues", []),
-                                      "The console restarted before this job finished; its containers were removed."],
+                    # A restart is the local runner's reconciliation, but only once the executor has confirmed
+                    # that no container of this runner remains (settle_restored). Until then the job stays in
+                    # needs_attention, which also keeps new runs from starting.
+                    row["job"].update(status="needs_attention", issues=[*row["job"].get("issues", []),
+                                      "The console restarted before this job finished; waiting for its containers to be removed."],
                                       updated_at=int(clock()))
+                    self.restore_pending.add(path.parent.name)
                 elif row["job"]["status"] not in TERMINAL:
                     row["job"].update(status="needs_attention", issues=["Runner restarted. Inspect prior execution before starting another run."], updated_at=int(clock()))
                 self.rows[path.parent.name] = row
@@ -311,6 +316,28 @@ class Jobs:
             self.blocked_reason = "Runner state exceeds its retention limit."
         self._purge()
 
+    def settle_restored(self):
+        """Ask the executor to remove earlier containers; only on confirmed removal do the restored jobs become failed."""
+        with self.lock:
+            if not self.restore_pending:
+                return True
+        try:
+            done = bool(self.executor.reconcile_startup())
+        except Exception:
+            done = False
+        if not done:
+            return False
+        with self.lock:
+            for jid in sorted(self.restore_pending):
+                row = self.rows.get(jid)
+                if row is not None and row["job"]["status"] == "needs_attention":
+                    row["job"].update(status="failed", updated_at=int(self.clock()),
+                                      issues=[i for i in row["job"].get("issues", []) if "waiting for its containers" not in i]
+                                      + ["The console restarted before this job finished; its containers were removed."])
+                    self._save(row)
+            self.restore_pending.clear()
+        return True
+
     def _save(self, row):
         directory = self.root / row["job"]["id"]
         directory.mkdir(mode=0o700, exist_ok=True)
@@ -319,10 +346,26 @@ class Jobs:
         temp.chmod(0o600)
         temp.replace(directory / "job.json")
 
+    def _persisted(self, row):
+        if self.persist is None or row.get("persisted"):
+            return True
+        try:
+            if self.persist(row, self.root / row["job"]["id"]):
+                row["persisted"] = True
+                self._save(row)
+                return True
+        except Exception:
+            pass
+        return False
+
     def _purge(self):
         now = self.clock()
         for jid, row in list(self.rows.items()):
+            if self.persist is not None and row["job"]["status"] in TERMINAL - {"needs_attention"}:
+                self._persisted(row)        # a job that ended on an early path is written at the next look
             if row["job"]["status"] in TERMINAL - {"needs_attention"} and now - row["job"]["updated_at"] > self.settings.job_ttl:
+                if not self._persisted(row):
+                    continue        # still the only copy of this result: keep it until it is written durably
                 shutil.rmtree(self.root / jid)
                 del self.rows[jid]
                 self.idempotency.pop((row["owner"], row["idempotency_key"]), None)
@@ -369,7 +412,9 @@ class Jobs:
     def submit(self, owner, manifest, credential_id, idempotency_key, model):
         if not isinstance(idempotency_key, str) or not re.fullmatch(r"[A-Za-z0-9_-]{16,128}", idempotency_key):
             raise JobError("Supply a fresh idempotency key.")
-        fingerprint = digest({"manifest": manifest, "credential_id": credential_id})
+        # Locally a credential handle is minted per request and resolves to the same saved key, so the
+        # identity of a retried submission is its manifest alone.
+        fingerprint = digest({"manifest": manifest, "credential_id": None if self.settings.local else credential_id})
         with self.lock:
             self._purge()
             existing = self.idempotency.get((owner, idempotency_key))
@@ -640,6 +685,8 @@ class Jobs:
                 row["job"]["usage"] = dict(zero_usage)
             row["job"]["updated_at"] = int(self.clock())
             self._save(row)
+            if row["job"]["status"] != "needs_attention":
+                self._persisted(row)
 
     def close(self):
         with self.lock:

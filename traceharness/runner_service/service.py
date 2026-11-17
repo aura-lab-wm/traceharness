@@ -70,6 +70,8 @@ def create_app(settings: Settings, *, registry=None, provider=None, executor=Non
             readiness_lock.release()
 
     async def health():
+        if jobs.restore_pending:
+            await asyncio.to_thread(jobs.settle_restored)
         with jobs.lock:
             if jobs.blocked_reason or any(row["job"]["status"] == "needs_attention" for row in jobs.rows.values()):
                 return {"available": False, "runtimes": {}, "tasks": {}}, []
@@ -101,6 +103,7 @@ def create_app(settings: Settings, *, registry=None, provider=None, executor=Non
 
     app = FastAPI(docs_url=None, redoc_url=None, openapi_url=None, lifespan=lifespan)
     app.state.jobs, app.state.vault, app.state.registry = jobs, vault, registry
+    app.state.executor = executor
     app.state.readiness = readiness
     app.state.experiments = experiments
     app.state.close = close

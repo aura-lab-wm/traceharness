@@ -28,3 +28,8 @@ class Settings:
             raise ValueError("The local runner isolates with runsc or runc")
         if not 1 <= self.max_workers <= 8 or self.job_ttl < 3600:
             raise ValueError("Invalid runner capacity")
+
+
+#: Bytes one local job may write across its workspace and output host directories (enforced by the
+#: executor's watchdog; recorded in the manifest's limits as storage_bytes).
+LOCAL_STORAGE_BYTES = 2 * 1024 ** 3
