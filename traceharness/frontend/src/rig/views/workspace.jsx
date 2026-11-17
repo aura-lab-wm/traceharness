@@ -33,6 +33,7 @@ import { can, MODE } from '../../environment'
 import { LABELS, LOCAL_APP } from '../../shared/index.js'
 import { Unavailable } from '../unavailable'
 import { MemberCapture } from '../MemberCapture'
+import { HuggingFaceSource } from '../HuggingFaceSource'
 import { AboutConsole } from '../AboutConsole'
 import schoolPackage from '../../../../school-package.json'
 import { arrival, suggestResultsDir, cleanResultsDir, detectState, progressPct, progressKnown, progressPhrase, verdictTile } from '../../method/importing'
@@ -232,6 +233,9 @@ function Sources({ spec }) {
           <p className="rg-ws-lead">Session capture follows Claude Code, Codex, Cursor, agy and Qwen Code on this machine by itself, so nobody types a path for those.</p>
           <NextSteps actions={[{ label: 'Open Session capture', spec: 'capture' }]} />
         </Road>
+      </Sec>
+      <Sec title="Hugging Face" el="hugging-face" meta="public datasets · license and source recorded">
+        <HuggingFaceSource spec={spec} />
       </Sec>
       {vdir && <HarnessVersions dir={vdir} />}
     </div>

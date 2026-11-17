@@ -2,6 +2,8 @@
  "datasets": [
   {
    "gated": false,
+   "hf_adapter": null,
+   "hf_import": null,
    "id": "princeton-nlp/SWE-bench_Verified",
    "importer": null,
    "kind": "benchmark",
@@ -38,6 +40,8 @@
   },
   {
    "gated": false,
+   "hf_adapter": null,
+   "hf_import": null,
    "id": "princeton-nlp/SWE-bench_Lite",
    "importer": null,
    "kind": "benchmark",
@@ -76,6 +80,8 @@
   },
   {
    "gated": false,
+   "hf_adapter": null,
+   "hf_import": null,
    "id": "princeton-nlp/SWE-bench",
    "importer": null,
    "kind": "benchmark",
@@ -116,6 +122,8 @@
   },
   {
    "gated": false,
+   "hf_adapter": null,
+   "hf_import": null,
    "id": "SWE-bench/SWE-bench_Multilingual",
    "importer": null,
    "kind": "benchmark",
@@ -157,10 +165,15 @@
   },
   {
    "gated": false,
+   "hf_adapter": null,
+   "hf_import": null,
    "id": "SWE-bench/SWE-bench_Multimodal",
    "importer": null,
    "kind": "benchmark",
-   "languages": null,
+   "languages": [
+    "javascript",
+    "typescript"
+   ],
    "license": null,
    "needs": {
     "containers": true,
@@ -193,6 +206,8 @@
   },
   {
    "gated": false,
+   "hf_adapter": null,
+   "hf_import": null,
    "id": "ScaleAI/SWE-bench_Pro",
    "importer": null,
    "kind": "benchmark",
@@ -236,6 +251,8 @@
   },
   {
    "gated": false,
+   "hf_adapter": null,
+   "hf_import": null,
    "id": "SWE-bench-Live/SWE-bench-Live",
    "importer": null,
    "kind": "benchmark",
@@ -284,10 +301,21 @@
   },
   {
    "gated": false,
+   "hf_adapter": null,
+   "hf_import": null,
    "id": "SWE-bench-Live/MultiLang",
    "importer": null,
    "kind": "benchmark",
-   "languages": null,
+   "languages": [
+    "c",
+    "c#",
+    "c++",
+    "go",
+    "java",
+    "javascript",
+    "rust",
+    "typescript"
+   ],
    "license": "mit",
    "needs": {
     "containers": true,
@@ -350,10 +378,33 @@
   },
   {
    "gated": false,
+   "hf_adapter": null,
+   "hf_import": null,
    "id": "nebius/SWE-rebench-V2",
    "importer": null,
    "kind": "benchmark",
-   "languages": null,
+   "languages": [
+    "c",
+    "c#",
+    "c++",
+    "clojure",
+    "dart",
+    "elixir",
+    "go",
+    "java",
+    "javascript",
+    "julia",
+    "kotlin",
+    "lua",
+    "ocaml",
+    "php",
+    "python",
+    "r",
+    "rust",
+    "scala",
+    "swift",
+    "typescript"
+   ],
    "license": "cc-by-4.0",
    "needs": {
     "containers": true,
@@ -381,6 +432,8 @@
   },
   {
    "gated": false,
+   "hf_adapter": null,
+   "hf_import": null,
    "id": "nebius/SWE-rebench",
    "importer": null,
    "kind": "benchmark",
@@ -419,6 +472,8 @@
   },
   {
    "gated": false,
+   "hf_adapter": null,
+   "hf_import": null,
    "id": "SWE-bench/SWE-smith",
    "importer": null,
    "kind": "benchmark",
@@ -449,6 +504,8 @@
   },
   {
    "gated": false,
+   "hf_adapter": null,
+   "hf_import": null,
    "id": "SWE-Gym/SWE-Gym",
    "importer": null,
    "kind": "benchmark",
@@ -482,6 +539,8 @@
   },
   {
    "gated": false,
+   "hf_adapter": null,
+   "hf_import": null,
    "id": "ByteDance-Seed/Multi-SWE-bench",
    "importer": null,
    "kind": "benchmark",
@@ -512,6 +571,8 @@
   },
   {
    "gated": false,
+   "hf_adapter": null,
+   "hf_import": null,
    "id": "AmazonScience/SWE-PolyBench",
    "importer": null,
    "kind": "benchmark",
@@ -538,13 +599,18 @@
     }
    ],
    "summary": "Repository-level issue-fix tasks in four programming languages.",
-   "task_dates": null,
+   "task_dates": {
+    "first": "2016-01-11",
+    "last": "2024-10-18"
+   },
    "task_kind": "issue-fix",
    "title": "SWE-PolyBench",
    "url": "https://huggingface.co/datasets/AmazonScience/SWE-PolyBench"
   },
   {
    "gated": false,
+   "hf_adapter": null,
+   "hf_import": null,
    "id": "harborframework/terminal-bench-2.1",
    "importer": null,
    "kind": "benchmark",
@@ -573,6 +639,8 @@
   },
   {
    "gated": false,
+   "hf_adapter": null,
+   "hf_import": null,
    "id": "harborframework/terminal-bench-3.0",
    "importer": null,
    "kind": "benchmark",
@@ -595,6 +663,11 @@
   },
   {
    "gated": false,
+   "hf_adapter": "swe_agent",
+   "hf_import": {
+    "config": "default",
+    "split": "train"
+   },
    "id": "nebius/SWE-agent-trajectories",
    "importer": null,
    "kind": "trajectories",
@@ -625,6 +698,11 @@
   },
   {
    "gated": false,
+   "hf_adapter": "messages",
+   "hf_import": {
+    "config": "default",
+    "split": "train"
+   },
    "id": "nebius/SWE-rebench-openhands-trajectories",
    "importer": null,
    "kind": "trajectories",
@@ -655,6 +733,11 @@
   },
   {
    "gated": false,
+   "hf_adapter": "messages",
+   "hf_import": {
+    "config": "default",
+    "split": "tool"
+   },
    "id": "SWE-bench/SWE-smith-trajectories",
    "importer": null,
    "kind": "trajectories",
@@ -695,6 +778,8 @@
   },
   {
    "gated": false,
+   "hf_adapter": null,
+   "hf_import": null,
    "id": "ByteDance-Seed/Multi-SWE-bench_trajs",
    "importer": null,
    "kind": "trajectories",
@@ -717,6 +802,8 @@
   },
   {
    "gated": true,
+   "hf_adapter": null,
+   "hf_import": null,
    "id": "SALT-NLP/SWE-chat",
    "importer": null,
    "kind": "trajectories",
@@ -739,6 +826,8 @@
   },
   {
    "gated": false,
+   "hf_adapter": null,
+   "hf_import": null,
    "id": "aura-lab-wm/traceharness-runs",
    "importer": null,
    "kind": "trajectories",

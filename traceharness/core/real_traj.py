@@ -226,6 +226,18 @@ def _action_of(span: dict) -> str:
             "run_tests": "run", "submit": "submit"}.get(name, "other")
 
 
+def normalize_outcome(value):
+    """True / False for a stated outcome (a boolean, 0 or 1, or the strings true / false / 1 / 0 in any case);
+    None for anything else, null and missing included. An outcome nobody stated is unknown, never a failure."""
+    if isinstance(value, bool):
+        return value
+    if isinstance(value, (int, float)) and value in (0, 1):
+        return bool(value)
+    if isinstance(value, str) and value.strip().lower() in ("true", "false", "1", "0"):
+        return value.strip().lower() in ("true", "1")
+    return None
+
+
 def to_results_dir(rows: list[dict], out_dir: str, harness_id: str = "swe-agent") -> int:
     """Write real trajectories as a results directory the console (and trajtest) can read.
 
@@ -256,7 +268,7 @@ def to_results_dir(rows: list[dict], out_dir: str, harness_id: str = "swe-agent"
                               files_touched=re.findall(r"^\+\+\+ b/(\S+)", row.get("generated_patch") or "", re.M),
                               tests_run_by_agent=sum(a == "run" for a in actions),
                               ran_tests_before_submit=any(a == "run" for a in actions[last_edit + 1:]) if last_edit >= 0 else False,
-                              hidden_pass=bool(row.get("target")), visible_pass=None, strong_pass=None,
+                              hidden_pass=normalize_outcome(row.get("target")), visible_pass=None, strong_pass=None,
                               tests_modified=ps["test_files_edited"] > 0, patch_bytes=len(row.get("generated_patch") or ""))
             base = {"run_id": run_id, "task_id": summ.task_id, "harness_id": harness_id, "gen_ai.request.model": model}
             spans, seq = [], 0

@@ -5,10 +5,10 @@
     get(dataset_id)       -> one entry or None
     search(text)          -> [{id, title, summary}] whose id, title or summary contain the text
     is_fresh(today, days) -> whether the file was refreshed within `days` of `today`
-    main(argv)            -> `traceharness hf list|info|search`
+    main(argv)            -> `traceharness hf list|info|search` (offline) and `preview|import` (read the Hub, via hf_fetch)
 
-Standard library only; nothing here touches the network. scripts/refresh_hf_catalog.py is the only
-code that does, and it is run by a maintainer, not by the console.
+Standard library only; nothing in the catalog functions touches the network. The code that does is
+scripts/refresh_hf_catalog.py (a maintainer's) and catalog/hf_fetch.py (the console's preview and import).
 """
 from __future__ import annotations
 
@@ -98,6 +98,8 @@ def _info_text(d: dict) -> str:
         f"  hub updated    {v(d.get('refreshed_upstream'))}",
         "  needs          " + ", ".join(f"{k}={'yes' if x else 'no'}" for k, x in sorted((d.get("needs") or {}).items())),
         f"  importer       {v(d.get('importer'))}",
+        "  hf import      " + (f"importable: traceharness hf import {d['id']}  (adapter {d['hf_adapter']}, default "
+                              f"{d['hf_import']['config']}/{d['hf_import']['split']})" if d.get("hf_adapter") else "-"),
         "  public runs    " + (f"{runs['source']} ({v(runs.get('entries'))} entries)" if runs else "-"),
         f"  url            {d['url']}",
     ]
@@ -117,11 +119,64 @@ def build_parser() -> argparse.ArgumentParser:
     se = sub.add_parser("search", help="datasets whose id, title or summary contain the text")
     se.add_argument("text")
     se.add_argument("--json", action="store_true", help="print JSON")
+    pv = sub.add_parser("preview", help="size, columns and the first rows of a public dataset (reads the Hub)")
+    pv.add_argument("id", help="a Hugging Face dataset id")
+    pv.add_argument("--json", action="store_true", help="print JSON")
+    im = sub.add_parser("import", help="sample rows of a public dataset into data/runs/<name>/ (reads the Hub)")
+    im.add_argument("id", help="a Hugging Face dataset id")
+    im.add_argument("--config", default=None, help="config name (default: the first train split's)")
+    im.add_argument("--split", default=None, help="split name (default: train, else the first)")
+    im.add_argument("--n", type=int, default=200, help="rows to sample (1..2000, default 200)")
+    im.add_argument("--seed", type=int, default=0, help="seed of the random row offsets (default 0)")
+    im.add_argument("--name", default=None, help="results directory name (default hf_<owner>_<name>)")
+    im.add_argument("--force", action="store_true", help="replace a directory an earlier Hugging Face import wrote")
+    im.add_argument("--json", action="store_true", help="print JSON")
     return p
+
+
+def _hub_command(a) -> int:
+    """`preview` and `import`: the only subcommands that reach the Hub. A refusal is one line on stderr, exit 2."""
+    from . import hf_fetch, hf_import
+    try:
+        if a.cmd == "preview":
+            p = hf_fetch.preview(a.id)
+            if a.json:
+                print(json.dumps(p, indent=2, sort_keys=True))
+                return 0
+            print(f"{p['dataset']}   revision {str(p['revision'])[:12]}   license {p['license'] or 'not stated'}   "
+                  f"rows {p['rows']}   {_fmt_bytes(p['parquet_bytes'])}")
+            print("  splits   " + "; ".join(f"{s['config']}/{s['split']} {s['rows']}" for s in p["splits"]))
+            print(f"  columns  (config {p['config']}, split {p['split']})")
+            for c in p["columns"]:
+                print(f"    {c['name']:<28} {c['type']}")
+            for i, r in enumerate(p["first_rows"]):
+                print(f"  row {i}: " + json.dumps(r, ensure_ascii=False)[:400])
+            return 0
+        res = hf_import.import_dataset(a.id, a.config, a.split, a.n, a.seed, name=a.name, force=a.force,
+                                       progress=None if a.json else _progress)
+    except hf_fetch.HFError as e:
+        print(f"traceharness hf: {e}", file=sys.stderr)
+        return 2
+    if a.json:
+        print(json.dumps(res, indent=2, sort_keys=True))
+    else:
+        pv = res["provenance"]
+        print(f"imported {res['imported']} runs into data/runs/{res['results_dir']} ({res['adapter']} rows, "
+              f"{res['n_skipped']} skipped, license {pv['license'] or 'not stated'}, "
+              f"{'redistributable' if pv['redistributable'] else 'NOT redistributable: left out of a default export'})")
+    for x in res["skipped"][:10]:
+        print(f"  skipped row {x['offset']}: {x['reason']}", file=sys.stderr)
+    return 0
+
+
+def _progress(done, total, what) -> None:
+    print(f"  {what}: {done}/{total}", file=sys.stderr)
 
 
 def main(argv: list[str] | None = None) -> int:
     a = build_parser().parse_args(argv)
+    if a.cmd in ("preview", "import"):
+        return _hub_command(a)
     if a.cmd == "list":
         items = datasets(a.kind)
         if a.json:

@@ -1,0 +1,47 @@
+/* views/recommend.jsx — "Which benchmark?". Classes: rg-rec-*. Tokens only (UI contract v1): colour
+   var(--rig-*), spacing --rig-s0..s8, type --rig-fs-*, radius --rig-r-*. Layout answers to the nearest
+   container (the pane), never to the window: unnamed @container queries at 640 / 900 / 1200, the same
+   steps the other documents use. Cards share one grid row, so they start and end together. */
+.rg-rec{display:flex;flex-direction:column;gap:var(--rig-s6);min-width:0}
+.rg-rec>*{margin-top:0;margin-bottom:0}
+.rg-rec-form{display:grid;grid-template-columns:minmax(0,1fr);gap:var(--rig-s4);align-items:end;min-width:0}
+.rg-rec-goal{grid-column:1/-1}
+.rg-rec-checks{display:flex;flex-wrap:wrap;gap:var(--rig-s2) var(--rig-s5);grid-column:1/-1}
+.rg-rec-check{display:inline-flex;align-items:center;gap:var(--rig-s2);font-size:var(--rig-fs-sm);color:var(--rig-text)}
+.rg-rec-go{display:flex;align-items:center;gap:var(--rig-s4);flex-wrap:wrap;grid-column:1/-1}
+@container (min-width:640px){.rg-rec-form{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@container (min-width:900px){.rg-rec-form{grid-template-columns:repeat(4,minmax(0,1fr))}}
+@container (min-width:1200px){.rg-rec-form{grid-template-columns:repeat(8,minmax(0,1fr))}.rg-rec-form .rg-rec-goal{grid-column:span 4}}
+
+.rg-rec-cards{display:grid;grid-template-columns:minmax(0,1fr);gap:var(--rig-s4);align-items:stretch;min-width:0}
+@container (min-width:900px){.rg-rec-cards{grid-template-columns:repeat(3,minmax(0,1fr))}}
+.rg-rec-card{display:flex;flex-direction:column;gap:var(--rig-s3);min-width:0;padding:var(--rig-s4);border:1px solid var(--rig-line2);border-top-width:3px;border-radius:var(--rig-r-md);background:var(--rig-panel)}
+.rg-rec-card.pick{border-top-color:var(--rig-sel)}
+.rg-rec-card.second{border-top-color:var(--rig-line3)}
+.rg-rec-card.not{border-top-color:var(--rig-red)}
+.rg-rec-kicker{display:flex;justify-content:space-between;align-items:baseline;gap:var(--rig-s3);font:var(--rig-fw-semi) var(--rig-fs-xs)/var(--rig-lh-snug) var(--rig-sans);text-transform:uppercase;letter-spacing:.06em;color:var(--rig-dim)}
+.rg-rec-score{text-transform:none;letter-spacing:0;font-weight:var(--rig-fw-medium);color:var(--rig-mute)}
+.rig .rg-rec-title{margin:0;font:var(--rig-fw-medium) var(--rig-fs-xl)/var(--rig-lh-snug) var(--rig-sans);color:var(--rig-text);overflow-wrap:anywhere}
+.rg-rec-id{font-size:var(--rig-fs-xs);color:var(--rig-mute);overflow-wrap:anywhere}
+.rg-rec-sub,.rg-rec-est,.rg-rec-none,.rg-rec-import{margin:0;font-size:var(--rig-fs-sm);line-height:var(--rig-lh-body);color:var(--rig-text)}
+.rg-rec-calc{display:block;margin-top:var(--rig-s1);font-size:var(--rig-fs-xs);color:var(--rig-mute);overflow-wrap:anywhere}
+p.rg-rec-calc{margin:0}
+.rg-rec-cmd{font-size:var(--rig-fs-xs);overflow-wrap:anywhere}
+.rig .rg-rec-h{margin:var(--rig-s2) 0 0;font:var(--rig-fw-medium) var(--rig-fs-sm)/var(--rig-lh-snug) var(--rig-sans);color:var(--rig-dim)}
+.rg-rec-reasons{display:flex;flex-direction:column;gap:var(--rig-s2);margin:0;padding:0;list-style:none;flex:1 1 auto}
+.rg-rec-why{display:grid;grid-template-columns:5ch minmax(0,1fr);gap:var(--rig-s2);font-size:var(--rig-fs-sm);line-height:var(--rig-lh-body);color:var(--rig-text);overflow-wrap:anywhere}
+.rg-rec-rule{font-size:var(--rig-fs-xs);color:var(--rig-mute)}
+.rg-rec-w{font:var(--rig-fw-semi) var(--rig-fs-xs)/var(--rig-lh-body) var(--rig-mono);text-align:right}
+.rg-rec-w.pos,.rg-rec-chip.pos{color:var(--rig-sel-t)}
+.rg-rec-w.neg,.rg-rec-chip.neg{color:var(--rig-red-t)}
+.rg-rec-w.zero,.rg-rec-chip.zero{color:var(--rig-mute)}
+
+.rg-rec-sec{display:flex;flex-direction:column;gap:var(--rig-s3);min-width:0}
+.rig .rg-rec-h2{margin:0;font:var(--rig-fw-medium) var(--rig-fs-lg)/var(--rig-lh-snug) var(--rig-sans);color:var(--rig-text)}
+.rg-rec-lead{margin:0;max-width:var(--rig-measure);font-size:var(--rig-fs-md);line-height:var(--rig-lh-prose);color:var(--rig-dim)}
+.rg-rec-sm{font-size:var(--rig-fs-xs);color:var(--rig-mute);line-height:var(--rig-lh-body);margin:0;overflow-wrap:anywhere}
+.rg-rec-bar{display:flex;align-items:center;justify-content:space-between;gap:var(--rig-s3);flex-wrap:wrap}
+.rg-rec-method{margin:0;max-width:calc(var(--rig-measure) + 24rem);font-size:var(--rig-fs-md);line-height:var(--rig-lh-prose);color:var(--rig-text);user-select:text;overflow-wrap:anywhere}
+.rg-rec-chip{display:inline-block;margin:0 var(--rig-s2) var(--rig-s1) 0;padding:1px var(--rig-s2);border:1px solid var(--rig-line2);border-radius:var(--rig-r-sm);font:var(--rig-fw-medium) var(--rig-fs-xs)/var(--rig-lh-body) var(--rig-mono);white-space:nowrap}
+.rg-rec-ex td:first-child b,.rg-rec-ex td.rg-num{color:var(--rig-mute)}
+.rg-rec .rg-tbl td{vertical-align:top}

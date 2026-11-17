@@ -131,11 +131,24 @@ def scrub_machine_traces(content: bytes) -> bytes:
     return _LS_OWNER_RE.sub(lambda m: m.group(1) + (m.group(2) if m.group(2) == b'root' else b'user') + m.group(3) + m.group(4), content)
 
 
+def _redistributable(directory: Path) -> bool:
+    """False when the directory's provenance.json (a Hugging Face import) says redistributable is not true."""
+    path = directory / 'provenance.json'
+    if not path.exists():
+        return True
+    try:
+        return json.loads(path.read_text()).get('redistributable') is not False
+    except (OSError, ValueError, AttributeError):
+        return False
+
+
 def build(root: Path, output: Path) -> dict:
     scope = json.loads((root / 'traceharness/school-package.json').read_text())
     for name in scope['datasets']:
         if not (root / 'data/runs' / name / 'index.jsonl').is_file():
             raise ValueError(f'Missing dataset index: {name}')
+        if not _redistributable(root / 'data/runs' / name):
+            raise ValueError(f'Dataset {name} is not redistributable (its provenance.json says so): the school package never carries it')
     if not (root / 'traceharness/frontend/dist/index.html').is_file():
         raise ValueError('Build the dashboard first: cd traceharness/frontend && npm ci && npm run build')
     payload = {p.relative_to(root).as_posix(): p.read_bytes() for p in files_for(root, scope)}

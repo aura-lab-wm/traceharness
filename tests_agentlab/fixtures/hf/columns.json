@@ -1,0 +1,123 @@
+{
+ "SWE-bench/SWE-smith-trajectories": {
+  "columns": [
+   [
+    "messages",
+    "string"
+   ],
+   [
+    "instance_id",
+    "string"
+   ],
+   [
+    "resolved",
+    "bool"
+   ],
+   [
+    "model",
+    "string"
+   ],
+   [
+    "traj_id",
+    "string"
+   ],
+   [
+    "patch",
+    "string"
+   ]
+  ],
+  "config": "default",
+  "license": "mit",
+  "rows": 76002,
+  "split": "tool"
+ },
+ "_not_read": {
+  "ByteDance-Seed/Multi-SWE-bench_trajs": "preview answered HTTP 500 on 2026-11-17",
+  "SALT-NLP/SWE-chat": "gated: refused",
+  "aura-lab-wm/traceharness-runs": "the Hub lists no splits (no preview)"
+ },
+ "nebius/SWE-agent-trajectories": {
+  "columns": [
+   [
+    "instance_id",
+    "string"
+   ],
+   [
+    "model_name",
+    "string"
+   ],
+   [
+    "target",
+    "bool"
+   ],
+   [
+    "trajectory",
+    "list<struct{cutoff_date,mask,role,system_prompt,text}>"
+   ],
+   [
+    "exit_status",
+    "string"
+   ],
+   [
+    "generated_patch",
+    "string"
+   ],
+   [
+    "eval_logs",
+    "string"
+   ]
+  ],
+  "config": "default",
+  "license": "cc-by-4.0",
+  "rows": 80036,
+  "split": "train"
+ },
+ "nebius/SWE-rebench-openhands-trajectories": {
+  "columns": [
+   [
+    "trajectory_id",
+    "string"
+   ],
+   [
+    "instance_id",
+    "string"
+   ],
+   [
+    "repo",
+    "string"
+   ],
+   [
+    "trajectory",
+    "list<struct{content,name,role,tool_call_id,tool_calls}>"
+   ],
+   [
+    "tools",
+    "list<struct{function,type}>"
+   ],
+   [
+    "model_patch",
+    "string"
+   ],
+   [
+    "exit_status",
+    "string"
+   ],
+   [
+    "resolved",
+    "int64"
+   ],
+   [
+    "gen_tests_correct",
+    "float64"
+   ],
+   [
+    "pred_passes_gen_tests",
+    "float64"
+   ]
+  ],
+  "config": "default",
+  "license": "cc-by-4.0",
+  "rows": 67074,
+  "split": "train"
+ }
+}
