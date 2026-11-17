@@ -60,7 +60,13 @@ function ShallowCards({ args } = {}) {
         memberUnconfirmed: (library.unconfirmed || []).includes(row.id),
       }))
       const restored = readDraft('fixed') || {}
-      const valid = Object.fromEntries(rows.filter((row) => typeof restored[row.id]?.prompt === 'string' && /^[a-f0-9]{12}$/.test(restored[row.id]?.baseHash)).map((row) => [row.id, { ...restored[row.id], restored: true }]))
+      const stock = new Map(catalog.harnesses.map((row) => [row.id, row]))
+      // A draft typed on the compiled-in card before the library answered has no base yet: it was
+      // written against the stock prompt with no saved copy, so it saves create-only (if_absent)
+      // and a copy saved meanwhile comes back as a conflict instead of being overwritten.
+      const based = (row) => /^[a-f0-9]{12}$/.test(restored[row.id]?.baseHash) ? restored[row.id]
+        : restored[row.id]?.baseHash === undefined && /^[a-f0-9]{12}$/.test(stock.get(row.id)?.hash) ? { ...restored[row.id], baseHash: stock.get(row.id).hash, basePresent: false } : null
+      const valid = Object.fromEntries(rows.filter((row) => typeof restored[row.id]?.prompt === 'string' && based(row)).map((row) => [row.id, { ...based(row), restored: true }]))
       setCards(rows)
       setAccountLoaded(library.loaded === true)
       setDrafts(valid)

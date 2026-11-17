@@ -53,7 +53,7 @@ beforeEach(() => {
     const method = opts.method || 'GET'
     const body = opts.body ? JSON.parse(opts.body) : null
     requests.push({ url, method, body, headers: opts.headers })
-    if (url === '/api/shallow/catalog') return json({ harnesses: CARDS })
+    if (url === '/api/shallow/catalog') return json({ harnesses: CARDS.map((row, index) => ({ ...row, hash: index + 'f'.repeat(11) })) })
     if (url === '/api/shallow/harnesses' && method === 'GET') return json({ harnesses: [...library.values()], loaded: true, unconfirmed: [] })
     if (url === '/api/shallow/harnesses' && method === 'POST') {
       const current = library.get(body.id)
@@ -111,6 +111,29 @@ describe('local console: harnesses save to this computer', () => {
     expect(JSON.parse(sessionStorage.getItem('traceharness.shallow.fixed')).codex.prompt).toBe('My unsaved local draft')
     expect(library.get('codex').prompt).toBe('Another tab saved first')
     expect(card.queryByRole('link', { name: 'Account' })).toBeNull()
+  })
+
+  it('a prompt typed before the library answers is kept and saves create-only', async () => {
+    library.set('kimi', { ...CARDS.find((row) => row.id === 'kimi'), prompt: 'Saved earlier in another tab.', hash: 'dddddddddddd' })
+    let answer
+    const gate = new Promise((resolve) => { answer = resolve })
+    const real = fetch
+    vi.stubGlobal('fetch', vi.fn(async (url, opts = {}) => {
+      if (url === '/api/shallow/harnesses' && (opts.method || 'GET') === 'GET') await gate
+      return real(url, opts)
+    }))
+    const Cards = (await loadViews('local')).shallowCards.render
+    const view = render(<Cards />)
+    const card = within(view.container.querySelector('[data-agent="kimi"]'))
+    fireEvent.change(card.getByRole('textbox'), { target: { value: 'Typed while the library was loading.' } })
+    answer()
+    const save = card.getByRole('button', { name: 'Save prompt' })
+    await waitFor(() => expect(save.disabled).toBe(false))
+    expect(card.getByRole('textbox').value).toBe('Typed while the library was loading.')
+    fireEvent.click(save)
+    expect((await card.findByRole('alert')).textContent).toBe(CONFLICT)
+    expect(requests.filter((r) => r.method === 'POST').at(-1).body).toEqual({ id: 'kimi', prompt: 'Typed while the library was loading.', if_absent: true })
+    expect(library.get('kimi').prompt).toBe('Saved earlier in another tab.')
   })
 
   it('loads a saved prompt from this computer into its card', async () => {
