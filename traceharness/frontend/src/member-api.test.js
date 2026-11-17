@@ -17,6 +17,21 @@ afterEach(() => {
 })
 
 describe('hosted member API boundary', () => {
+  it('names the shared start command, and the save check speaks for the library this console has', async () => {
+    await load()
+    const { memberRequest, requireStored } = await import('./member-api')
+    const { LOCAL_APP } = await import('./shared/index.js')
+    vi.stubGlobal('fetch', vi.fn())
+    const refused = await memberRequest('/blocks/run', { method: 'POST' }).catch((error) => error)
+    expect(refused.message).toBe(`This action needs the local console. Start it with ${LOCAL_APP.command}.`)
+    expect(refused.message).not.toMatch(/8742|the local app/)
+    expect(fetch).not.toHaveBeenCalled()
+    expect(() => requireStored({ stored: false, harness: {} })).toThrow('Your account did not confirm this save.')
+    await load(null, null)
+    const local = await import('./member-api')
+    expect(() => local.requireStored({ stored: false, harness: {} })).toThrow('This computer did not confirm this save.')
+  })
+
   it('reads the snapshot without network, and sends only scoped same-origin member requests', async () => {
     const { api, IS_MEMBER, IS_STATIC } = await load()
     const fetch = vi.fn(async () => ({ ok: true, json: async () => ({ harnesses: [] }) }))
@@ -41,12 +56,12 @@ describe('hosted member API boundary', () => {
     const fetch = vi.fn()
     vi.stubGlobal('fetch', fetch)
     for (const path of ['/blocks/run', '/launch', '/import', '/judge', '/shallow/jobs', '/shallow/harnesses/claude', '/shallow/compile?save=1', '//outside.test/shallow/wizard']) {
-      await expect(api(path, { method: 'POST' })).rejects.toThrow('local app')
+      await expect(api(path, { method: 'POST' })).rejects.toThrow('This action runs on your computer.')
     }
     for (const path of ['/shallow/jobs', '/capture/sessions', '/shallow/harnesses/../jobs', '/shallow/catalog?unknown=1']) {
-      await expect(api(path)).rejects.toThrow('Not in this static export')
+      await expect(api(path)).rejects.toThrow('This view runs on your computer.')
     }
-    await expect(captureControl('resume')).rejects.toThrow('local app')
+    await expect(captureControl('resume')).rejects.toThrow('This action runs on your computer.')
     expect(fetch).not.toHaveBeenCalled()
   })
 
@@ -56,7 +71,7 @@ describe('hosted member API boundary', () => {
     for (const marker of [null, { version: 2, scope }, { version: 1, scope: 'bad' }]) {
       const { api, IS_MEMBER } = await load(marker)
       expect(IS_MEMBER).toBe(false)
-      await expect(api('/shallow/wizard', { method: 'POST', body: {} })).rejects.toThrow('static export')
+      await expect(api('/shallow/wizard', { method: 'POST', body: {} })).rejects.toThrow('is not available in a read-only export')
     }
     expect(fetch).not.toHaveBeenCalled()
   })
@@ -76,8 +91,8 @@ describe('hosted member API boundary', () => {
     const { api } = await load({ version: 1, scope }, null)
     const fetch = vi.fn()
     vi.stubGlobal('fetch', fetch)
-    await expect(api('/overview')).rejects.toThrow('Not in this static export')
-    await expect(api('/launch', { method: 'POST' })).rejects.toThrow('local app')
+    await expect(api('/overview')).rejects.toThrow('This view is not available right now.')
+    await expect(api('/launch', { method: 'POST' })).rejects.toThrow('This action is not available right now.')
     expect(fetch).not.toHaveBeenCalled()
   })
 

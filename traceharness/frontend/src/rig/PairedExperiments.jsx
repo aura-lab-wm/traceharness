@@ -1,5 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { runnerRequest } from '../runner-api'
+import { can } from '../environment'
+import { Unavailable } from './unavailable'
 import { VARIANT_CREDENTIAL_ISSUE, armProfileSummary, captureArm, checkedExperiment, experimentActive, experimentDraft, hasCredentialShape, makeReference, pairAgainstBaseline, stableJSON } from './paired-experiments-state'
 import { ActionBar, Id } from './primitives'
 import { planBudget } from './native/budget'
@@ -236,6 +238,7 @@ export function PairedExperiments({ configuration, credential, available, disabl
     <summary>Compare prompt variants <span>Paired native experiments</span></summary>
     {open && <div className="rg-pnl-b rg-cq rg-pe">
       <p className="rg-pe-lede">Compare native prompt profiles on the same runtime, model, task, additional instructions and limits; only the profile differs between arms. The first arm is the reference.</p>
+      {!available && <Unavailable capability="run.experiments" what="A paired experiment" el="experiments-unavailable" />}
       {waiting && blocker && <p role="status" className="rg-pe-notice">A pairing request from the Native Prompts workbench is waiting. {blocker}</p>}
       <ol className="rg-pe-steps">
         <li className="rg-pe-step">
@@ -306,7 +309,7 @@ export function PairedExperiments({ configuration, credential, available, disabl
         </li>
       </ol>
       <div className="rg-pe-result-head"><h3>Saved experiments</h3><button type="button" className="rg-btn" onClick={() => setRevision((value) => value + 1)}>Refresh experiments</button></div>
-      {!recent.length && <p className="rg-pe-note">{available ? 'No saved experiment yet.' : 'No execution service is connected.'}</p>}
+      {!recent.length && (available || can('run.experiments')) && <p className="rg-pe-note">{available ? 'No saved experiment yet.' : 'No execution service is connected.'}</p>}
       {!!recent.length && <ul className="rg-pe-saved">{recent.map((row) => <li key={row.id}><button type="button" className="rg-pe-saved-row" disabled={busy} onClick={() => load(row.id)}>
         <span>{names[row.id] || 'name not loaded'} · {row.id.slice(0, 8)} · {String(row.status).replaceAll('_', ' ')} · {plural(row.trial_count, 'trial')}</span>
         <span className="rg-pe-note">{row.created_at === undefined ? 'date not reported' : formatDate(row.created_at)}</span>

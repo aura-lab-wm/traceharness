@@ -1,3 +1,6 @@
+import { LIBRARY } from './environment.js'
+import { LABELS, LOCAL_APP } from './shared/index.js'
+
 // The authenticated worker inserts this marker before the snapshot scripts. It
 // carries no credential; the worker still checks the session, origin and scope.
 const marker = typeof window === 'undefined' ? null : window.__TRACEHARNESS_MEMBER__
@@ -24,7 +27,7 @@ export function memberRoute(path, method = 'GET') {
 
 export async function memberRequest(path, opts = {}) {
   const method = (opts.method || 'GET').toUpperCase()
-  if (!MEMBER || !memberRoute(path, method)) throw new Error('This action needs the local app. Start it with python -m traceharness --host 127.0.0.1 --port 8742.')
+  if (!MEMBER || !memberRoute(path, method)) throw new Error(`This action needs the ${LABELS.local_console}. Start it with ${LOCAL_APP.command}.`)
   if (opts.signal?.aborted) throw new Error('The member request was cancelled. Your draft has been kept.')
   const headers = new Headers(opts.headers)
   headers.set('content-type', 'application/json')
@@ -76,8 +79,14 @@ export async function memberRequest(path, opts = {}) {
   }
 }
 
+/** Where saved harnesses live in this console, as the start of a sentence: "Your account", "This computer". */
+export function libraryPlace() {
+  const label = LIBRARY.label || 'the harness library'
+  return label[0].toUpperCase() + label.slice(1)
+}
+
 export function requireStored(result) {
-  if (result?.stored !== true) throw new Error('Account storage did not confirm this save. Your draft has been kept; retry before leaving this tab.')
+  if (result?.stored !== true) throw new Error(`${libraryPlace()} did not confirm this save. Your draft has been kept; retry before leaving this tab.`)
   if (!result.harness || typeof result.harness.id !== 'string' || typeof result.harness.prompt !== 'string') throw new Error('The save response was incomplete. Your draft has been kept; reload before retrying.')
   return result
 }

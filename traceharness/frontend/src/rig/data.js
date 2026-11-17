@@ -15,7 +15,11 @@
      so they can be called unconditionally.
    * Normalised shapes (same names the prototype's D used):
        Dataset row  { name, runs, harnesses[], models[], tasks[], pass_rate, updated,
-                      kind: 'recorded'|'mock' }
+                      kind: 'recorded'|'mock',
+                      availability,           // subset of ['hosted', 'school'] (SPEC 4.8), or null
+                                              //   when the server did not say (never guessed)
+                      updated_source }        // 'runs' | 'unknown' (SPEC 4.7), or null; an empty
+                                              //   `updated` is shown as "not recorded" 
        Run          { id, ds, task, harness, model, rep, exit,
                       vis, hid, str,          // true | false | null (null = unknown, never fail)
                       in, out, cost, wall,    // null when not recorded (imports have no ledger
@@ -227,11 +231,17 @@ function once(obj, tag, fn) {
   return m[tag]
 }
 
+/** Where a dataset is published besides this computer (SPEC 4.8). Unknown words are dropped. */
+const PLACES = ['hosted', 'school']
+const placesOf = (a) => (Array.isArray(a) ? PLACES.filter((p) => a.includes(p)) : null)
+const DATE_SOURCES = ['runs', 'unknown']
+
 export function normOverview(raw) {
   return once(raw, 'ov', () => {
     const results = ((raw && raw.results) || []).map((r) => ({
       name: r.name, runs: r.runs, harnesses: r.harnesses || [], models: r.models || [], model_runs: r.model_runs || null, tasks: r.tasks || [],
       pass_rate: r.pass_rate ?? null, updated: r.updated || '', kind: datasetKind(r),
+      availability: placesOf(r.availability), updated_source: DATE_SOURCES.includes(r.updated_source) ? r.updated_source : null,
     }))
     return { results, harnesses: (raw && raw.harnesses) || [], tasks: (raw && raw.tasks) || [], key_present: !!(raw && raw.key_present), jobs: (raw && raw.jobs) || [] }
   })
@@ -363,7 +373,7 @@ export function useTasks() { return useApi(paths.tasks()) }
 export function useModels() { return useApi(paths.models()) }
 export function useSettings() { return useApi(IS_STATIC ? null : paths.settings()) }
 export function useStatus() { return useApi(paths.status()) }
-/** Jobs, polled every 5 s on the live app. `running` = run ids executing right now. */
+/** Jobs, polled every 5 s by the local console. `running` = run ids executing right now. */
 export function useJobs(poll = 5000) {
   const r = useApi(IS_STATIC ? null : paths.jobs(), { poll })
   const data = useMemo(() => {

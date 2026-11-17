@@ -9,3 +9,6 @@ traceharness/data/cache/
 data/.traceharness_index.sqlite
 .DS_Store
 .env
+
+# The local harness library (SPEC 3(b)): harness saves on this computer
+data/harness-library/

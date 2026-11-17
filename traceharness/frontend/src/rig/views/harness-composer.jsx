@@ -1,7 +1,8 @@
 import { useEffect, useId, useMemo, useRef, useState } from 'react'
 import { below } from '../displayClasses'
 import { api, IS_MEMBER } from '../../api'
-import { requireStored, encodeMemberJSON } from '../../member-api'
+import { HAS_LIBRARY, LIBRARY } from '../../environment'
+import { libraryPlace, requireStored, encodeMemberJSON } from '../../member-api'
 import { runnerRequest, runnerCatalog, decodeRunnerArtifact, RUNNER_ARTIFACT_NAMES, UNAVAILABLE_RUNNER } from '../../runner-api'
 import { taskCompatibility } from '../../runner-compatibility'
 import { nativeInventoryResponse, nativeProfileIssue } from '../../native-prompts-contract'
@@ -9,6 +10,8 @@ import { ByteMeter, NumericField, ToolChips } from '../harnessWorkspace'
 import { fieldIssues, numberIssue } from '../harnessFields'
 import { EvidenceOrigin } from '../shallowEvidence'
 import { Go, Icon, PageHeader } from '../ui'
+import { invalidate } from '../data'
+import { makeSpec } from '../route'
 import { BlockCard } from './blocks'
 import { CARDS, QUESTIONS, blocksFromAnswers } from './shallow-data'
 import { blocksFromHarness, readDraft, writeDraft } from './shallow-drafts'
@@ -46,6 +49,8 @@ const asJob = (value, expectedId) => {
   return value
 }
 const harnessContentKey = (blocks = []) => jsonKey([...blocks].sort((a, b) => a.type.localeCompare(b.type)).map((block) => Object.fromEntries(Object.entries(block).sort(([a], [b]) => a.localeCompare(b)).map(([key, value]) => [key, key === 'names' ? [...value].sort() : value]))))
+const LIMIT_NAMES = { max_steps: 'step cap', wall_time_seconds: 'time limit', max_cost_usd: 'model budget', max_output_tokens: 'output token cap' }
+const SAFE_NAME = /^[A-Za-z0-9_.-]{1,80}$/
 const LIMIT_FIELDS = [
   { key: 'max_steps', label: 'Step cap', min: 1, max: 200 },
   { key: 'wall_time_seconds', label: 'Time limit (seconds)', min: 30, max: 3600 },
@@ -64,7 +69,7 @@ export function HarnessComposer({ args = [] }) {
   const [cards, setCards] = useState(CARDS)
   const [library, setLibrary] = useState([])
   const [fixedDrafts, setFixedDrafts] = useState(fixedComposerDrafts)
-  const [accountLoaded, setAccountLoaded] = useState(!IS_MEMBER)
+  const [accountLoaded, setAccountLoaded] = useState(!HAS_LIBRARY)
   const [accountError, setAccountError] = useState('')
   const [accountRevision, setAccountRevision] = useState(0)
   const [catalog, setCatalog] = useState(UNAVAILABLE_RUNNER)
@@ -131,6 +136,8 @@ export function HarnessComposer({ args = [] }) {
   const card = cards.find((c) => c.id === state.selection.slice(6))
   const nativeChoices = catalog.runtimes.filter((r) => r.kind === 'native')
   const credentialsAvailable = catalog.runner.available && catalog.credentials_available
+  // The local runner uses the key set in Settings on this computer: no credential, no vault.
+  const needsCredential = catalog.credential_required !== false
   const runtimes = nativeChoices.length ? nativeChoices : NATIVE_DRAFTS
   const runtime = native ? runtimes.find((r) => r.id === state.selection.slice(7)) : catalog.runtimes.find((r) => r.id === 'traceharness')
   const nativeDraft = native ? state.native_prompt_drafts?.[state.selection.slice(7)] : null
@@ -161,6 +168,17 @@ export function HarnessComposer({ args = [] }) {
   const selectedModelAllowed = !!task && !compatibility.reason && compatibility.modelIds.includes(state.model_id)
   const editLocked = saving || launching || importing || !!openingJob
   const jobActive = job && !terminal.has(job.status)
+  // A finished local run changed what is on disk: its dataset now exists, or holds one more run. The
+  // shell caches the overview and each dataset's answers until told otherwise, so drop the overview and
+  // this dataset's answers once per finished job; the Datasets and run links then read the new state.
+  const finishedLocalJob = job && terminal.has(job.status) && SAFE_NAME.test(job.results_dir || '') ? job.id + ' ' + job.results_dir : ''
+  const refreshedJobs = useRef(new Set())
+  useEffect(() => {
+    if (!finishedLocalJob || refreshedJobs.current.has(finishedLocalJob)) return
+    refreshedJobs.current.add(finishedLocalJob)
+    const dir = encodeURIComponent(finishedLocalJob.split(' ')[1])
+    for (const prefix of ['/overview', `/results/${dir}/`, `/outcomes/${dir}`, `/repeats/${dir}`, `/real/${dir}/`, `/harness/versions?dir=${dir}`]) invalidate(prefix)
+  }, [finishedLocalJob])
   const blocksIssues = native || fixed ? [] : fieldIssues(state.blocks)
   const readyIssues = [
     ...(jsonPending ? ['Apply or discard the pending JSON edits before reviewing or dispatching.'] : []),
@@ -181,6 +199,10 @@ export function HarnessComposer({ args = [] }) {
   ]
   const currentReview = !jsonPending && !forkError && preflight?.key === configurationKey && preflight.catalog === catalog && preflight.revision === catalogRevision && preflight.nativeInventoryRevision === nativeInventoryRevision && !catalogLoading
   const reviewed = currentReview && preflight.result?.ok === true && preflight.result.issues.length === 0
+  const enforcedLimits = reviewed && Array.isArray(preflight.result.manifest?.local?.enforced_limits) ? preflight.result.manifest.local.enforced_limits : null
+  const limitNames = (keys) => LIMIT_FIELDS.filter((field) => keys.includes(field.key)).map((field) => LIMIT_NAMES[field.key])
+  const recordedOnly = enforcedLimits ? limitNames(Object.keys(configuration.limits).filter((key) => !enforcedLimits.includes(key))) : []
+  const limitsSentence = enforcedLimits && `Enforced on this computer: ${limitNames(enforcedLimits).join(', ') || 'none'}.${recordedOnly.length ? ` Recorded in the manifest but not enforced: ${recordedOnly.join(', ')}.` : ''}`
 
   useEffect(() => {
     setStorageError(writeDraft('composer-source', forkSource), 'source')
@@ -245,7 +267,7 @@ export function HarnessComposer({ args = [] }) {
     return () => { live = false; controller.abort() }
   }, [native, runtime, catalog, catalogLoading, nativeInventoryRevision])
   useEffect(() => {
-    if (!IS_MEMBER) return
+    if (!HAS_LIBRARY) return
     let live = true
     const controller = new AbortController()
     setAccountLoaded(false); setAccountError('')
@@ -256,7 +278,7 @@ export function HarnessComposer({ args = [] }) {
         memberSaved: savedRows.has(r.id) && !(savedData.unconfirmed || []).includes(r.id), memberUnconfirmed: (savedData.unconfirmed || []).includes(r.id) })))
       setLibrary(savedData.harnesses.filter((r) => r.lane === 'minimal'))
       setAccountLoaded(savedData.loaded === true)
-      if (savedData.loaded !== true) setAccountError('Account storage has not loaded. Your draft is still here; saving is unavailable.')
+      if (savedData.loaded !== true) setAccountError(`Your harnesses saved to ${LIBRARY.label} have not loaded. Your draft is still here; saving is unavailable.`)
     }).catch((failure) => { if (live) setAccountError(failure.message) })
     return () => { live = false; controller.abort() }
   }, [accountRevision])
@@ -264,7 +286,7 @@ export function HarnessComposer({ args = [] }) {
     setPreflight(null); setChecking(false); preflightRequest.current?.abort(); retry.current = null
   }, [configurationKey, catalog, catalogRevision, nativeInventoryRevision])
   useEffect(() => {
-    if (native || fixed || !IS_MEMBER || blocksIssues.length) { setPreview(null); setPreviewError(''); return }
+    if (native || fixed || !HAS_LIBRARY || blocksIssues.length) { setPreview(null); setPreviewError(''); return }
     let live = true
     const controller = new AbortController()
     setPreview(null); setPreviewError('')
@@ -427,7 +449,7 @@ export function HarnessComposer({ args = [] }) {
         setPreview(result); setLibrary((rows) => [...rows.filter((r) => r.id !== result.harness.id), result.harness])
         writeDraft('customize-draft', state.blocks)
       }
-      setSaved({ key: harnessContentKey(confirmedBlocks), message: 'Harness saved to your account. Model, task and run limits remain in this tab.' })
+      setSaved({ key: harnessContentKey(confirmedBlocks), message: `Harness saved to ${LIBRARY.label}. Model, task and run limits remain in this tab.` })
     } catch (failure) { if (active.current) setError(failure.message) }
     finally { if (active.current) setSaving(false) }
   }
@@ -469,16 +491,16 @@ export function HarnessComposer({ args = [] }) {
     finally { if (active.current && stillCurrent() && preflightRequest.current === controller) setChecking(false) }
   }
   async function run() {
-    if (editLocked || !reviewed || readyIssues.length || !credential || expiryTime(credential.expires_at) <= Date.now() || launching || jobActive) return
+    if (editLocked || !reviewed || readyIssues.length || needsCredential && (!credential || expiryTime(credential.expires_at) <= Date.now()) || launching || jobActive) return
     const manifestHash = preflight.result.manifest_sha256
-    const identity = configurationKey + ':' + manifestHash + ':' + credential.credential_id
+    const identity = configurationKey + ':' + manifestHash + ':' + (needsCredential ? credential.credential_id : 'settings-key')
     if (retry.current?.identity !== identity || retry.current.confirmed) retry.current = { identity, key: crypto.randomUUID() }
     const request = ++jobRequest.current
     const submission = retry.current
     const lease = 'unconfirmed:' + submission.key
     setLaunching(true); setError(''); submittedRunLeases.current.add(lease)
     try {
-      const data = await runnerRequest('/jobs', { method: 'POST', body: { configuration, manifest_sha256: manifestHash, credential_id: credential.credential_id, idempotency_key: submission.key } })
+      const data = await runnerRequest('/jobs', { method: 'POST', body: { configuration, manifest_sha256: manifestHash, ...(needsCredential ? { credential_id: credential.credential_id } : {}), idempotency_key: submission.key } })
       if (active.current && request === jobRequest.current) {
         const next = asJob(data.job)
         submittedRunLeases.current.delete(lease)
@@ -565,7 +587,7 @@ export function HarnessComposer({ args = [] }) {
       result.fixedDrafts = { ...fixedDrafts }
       if (value.prompt === originalCard.prompt) delete result.fixedDrafts[originalCard.id]
       else result.fixedDrafts[originalCard.id] = { prompt: value.prompt, baseHash: originalCard.hash, basePresent: !!originalCard.memberSaved }
-      result.notice = 'Restored the checkpoint as a fixed-preset draft. Account saves are unchanged.'
+      result.notice = 'Restored the checkpoint as a fixed-preset draft. Saved harnesses are unchanged.'
     } else result.notice = 'Restored checkpoint. ' + result.notice
     applyDraft(result); setComparedCheckpoint(id)
     setTimeout(() => promptInput.current?.focus(), 0)
@@ -598,7 +620,7 @@ export function HarnessComposer({ args = [] }) {
   }
   function resetFixedPrompt() {
     if (!card || editLocked) return
-    setUndoConfiguration(editorSnapshot()); editPrompt(card.prompt); setConfigNotice('Restored the account prompt. Undo is available.')
+    setUndoConfiguration(editorSnapshot()); editPrompt(card.prompt); setConfigNotice('Restored the saved prompt. Undo is available.')
   }
   function applyDraft(result) {
     setUndoConfiguration(editorSnapshot(result.previousState || state))
@@ -608,7 +630,8 @@ export function HarnessComposer({ args = [] }) {
   function forkHostedRun() {
     if (!job?.manifest || editLocked || jsonPending) return
     try {
-      const value = parseConfiguration(encodeMemberJSON(configurationFromManifest(job.manifest)))
+      // `local` (results directory, enforced limits) describes where a local run went, not what it ran.
+      const value = parseConfiguration(encodeMemberJSON(configurationFromManifest(Object.fromEntries(Object.entries(job.manifest).filter(([key]) => key !== 'local')))))
       const prepared = prepareHarnessJSON(job.manifest)
       const source = { kind: 'Recorded run manifest', title: `Run ${job.id}`, hash: job.manifest_sha256 || null, value: JSON.parse(prepared.json), redacted: prepared.redactions > 0,
         note: 'Forked from the recorded manifest. The original runtime/task pins remain in the source document; the new dispatch must pass current compatibility and manifest review.' }
@@ -660,10 +683,10 @@ export function HarnessComposer({ args = [] }) {
     <PageHeader eyebrow="Harness workspace" title="Harnesses"
       meta={<span className={`rg-composer-connection${catalog.runner.available ? ' connected' : ''}`}><span aria-hidden="true" />{catalogLoading ? 'Checking runner' : catalog.runner.available ? 'Runner connected' : 'Runner not connected'}</span>}
       lede="Compose the agent, model, task and instructions for a reproducible run. Start from a preset, reopen a saved harness, or import a configuration."
-      actions={<div className="rg-composer-head-actions"><button type="button" className="rg-btn" aria-label="Configuration checkpoints" aria-expanded={showCheckpoints} aria-controls={instanceId + '-checkpoints'} onClick={toggleCheckpoints}><span>Checkpoints<span aria-hidden="true">{checkpoints.length ? ` (${checkpoints.length})` : ''}</span></span></button><button className="rg-btn" disabled={editLocked} onClick={() => importInput.current?.click()}>{importing ? 'Importing…' : <span>Import <span className="rg-cq-hide-xs">configuration</span></span>}</button><button className="rg-btn" disabled={importing} onClick={exportConfiguration}><span>Export <span className="rg-cq-hide-xs">configuration</span></span></button>{IS_MEMBER && !native && <button className="rg-btn" onClick={saveHarness} disabled={!accountLoaded || editLocked || fixed && !card || !prompt.trim() || !fixed && (!preview?.ok || !!blocksIssues.length)}>{saving ? 'Saving…' : 'Save harness'}</button>}</div>} />
+      actions={<div className="rg-composer-head-actions"><button type="button" className="rg-btn" aria-label="Configuration checkpoints" aria-expanded={showCheckpoints} aria-controls={instanceId + '-checkpoints'} onClick={toggleCheckpoints}><span>Checkpoints<span aria-hidden="true">{checkpoints.length ? ` (${checkpoints.length})` : ''}</span></span></button><button className="rg-btn" disabled={editLocked} onClick={() => importInput.current?.click()}>{importing ? 'Importing…' : <span>Import <span className="rg-cq-hide-xs">configuration</span></span>}</button><button className="rg-btn" disabled={importing} onClick={exportConfiguration}><span>Export <span className="rg-cq-hide-xs">configuration</span></span></button>{HAS_LIBRARY && !native && <button className="rg-btn" onClick={saveHarness} disabled={!accountLoaded || editLocked || fixed && !card || !prompt.trim() || !fixed && (!preview?.ok || !!blocksIssues.length)}>{saving ? 'Saving…' : 'Save harness'}</button>}</div>} />
     <input ref={importInput} type="file" accept="application/json,.json" aria-label="Import configuration file" hidden onChange={importConfiguration} />
     <EvidenceOrigin args={args} />
-    {saved && saved.key === harnessContentKey(configuration.harness.blocks) && <p role="status">{saved.message}</p>}{error && <p role="alert">{error}{error.includes('account changed') && <> <a href="/login">Account</a></>}</p>}
+    {saved && saved.key === harnessContentKey(configuration.harness.blocks) && <p role="status">{saved.message}</p>}{error && <p role="alert">{error}{IS_MEMBER && error.includes('account changed') && <> <a href="/login">Account</a></>}</p>}
     {mobileSetup && <section className="rg-composer-setup-summary" aria-label="Selected configuration"><dl><div><dt>Harness</dt><dd>{harnessOptions.find((row) => row.value === state.selection)?.label || state.selection}</dd></div><div><dt>Model</dt><dd>{model?.name || state.model_id || 'Not selected'}</dd></div><div><dt>Task</dt><dd>{task?.title || state.task_id || 'Not selected'}</dd></div></dl><button type="button" className="rg-btn" aria-expanded={setupExpanded} aria-controls={instanceId + '-selections'} onClick={() => setSetupExpanded((value) => !value)}>{setupExpanded ? 'Done selecting' : 'Edit selections'}</button></section>}
     <div id={instanceId + '-selections'} className="rg-composer-setup" hidden={mobileSetup && !setupExpanded}>
     <div className="rg-composer-selectors" data-panes data-fill>
@@ -676,7 +699,7 @@ export function HarnessComposer({ args = [] }) {
     </div>
     {configNotice && <div className="rg-note rg-composer-import-status" role="status"><p>{configNotice}</p>{undoConfiguration && <button className="rg-btn" disabled={editLocked} onClick={undoEditorChange}>Undo configuration change</button>}</div>}
     {(model || task) && <details className="rg-composer-details"><summary>Selection details</summary><dl>{model && <><div><dt>Model</dt><dd>{model.id}</dd></div>{Number.isFinite(model.context_length) && <div><dt>Context window</dt><dd>{model.context_length.toLocaleString()} tokens</dd></div>}<div><dt>Task/runtime compatibility</dt><dd>{selectedModelAllowed ? 'Verified for this task and runtime' : !task ? 'Choose a task to check this model' : compatibility.status}</dd></div></>}{task && <><div><dt>Repository</dt><dd>{task.repository || 'Not supplied'}</dd></div><div><dt>Revision</dt><dd>{task.revision || 'Not verified'}</dd></div>{(task.environment_digests?.[configuration.runtime_id] || task.environment_digest) && <div><dt>Environment</dt><dd>{task.environment_digests?.[configuration.runtime_id] || task.environment_digest}</dd></div>}{Array.isArray(task.runtime_ids) && <div><dt>Task runtimes</dt><dd>{task.runtime_ids.join(', ') || 'None registered'}</dd></div>}{task.reason && <div><dt>Task status</dt><dd>{task.reason}</dd></div>}</>}</dl></details>}
-    {(storageError || accountError) && <div className="rg-note" role="alert">{storageError || accountError}{accountError && <><button className="rg-btn" onClick={() => setAccountRevision((n) => n + 1)}>Retry account data</button><a href="/login">Account</a></>}</div>}
+    {(storageError || accountError) && <div className="rg-note" role="alert">{storageError || accountError}{accountError && <><button className="rg-btn" onClick={() => setAccountRevision((n) => n + 1)}>Retry saved harnesses</button>{IS_MEMBER && <a href="/login">Account</a>}</>}</div>}
     <div className="rg-split rg-split-end rg-composer-layout" data-panes>
       <section className="rg-split-main rg-composer-editor" aria-label="Configuration editor">
         <section className={`rg-pnl rg-composer-prompt${expandedPrompt ? ' is-expanded' : ''}`}><div className="rg-pnl-h"><h2>{native && configuration.prompt_mode === 'append' ? 'Additional instructions' : 'Standing prompt'}</h2><span className="meta">{native ? configuration.prompt_mode === 'append' ? 'Appended to native instructions' : 'Runtime prompt override' : fixed ? 'Fixed shell · prompt only' : 'TraceHarness instructions'}</span></div><div className="rg-pnl-b">
@@ -686,7 +709,7 @@ export function HarnessComposer({ args = [] }) {
           </div>
           <label className="rg-fld"><span className="rg-composer-sr">Prompt</span><textarea ref={promptInput} className="rg-inp" aria-label="Prompt" value={prompt} rows={12} spellCheck={false} disabled={editLocked || fixed && (!card || !accountLoaded)} onChange={(e) => editPrompt(e.target.value)} placeholder={native ? configuration.version === 2 ? 'Optional additional instructions, separate from the native prompt profile below.' : 'Add the instructions this task needs. Native built-in instructions remain in place.' : 'Describe how the agent should inspect, edit and verify the repository.'} /></label>
           {fixed && card ? <ByteMeter used={new TextEncoder().encode(prompt).length} cap={card.cap_bytes} name={card.name} /> : <span className="rg-small rg-mute rg-mono">{new TextEncoder().encode(prompt).length.toLocaleString()} UTF-8 bytes · {native ? 'runtime validates the prompt limit' : 'compiled with the harness'}</span>}
-          {fixed && card && <><ToolChips tools={card.tools} /><p className="rg-small rg-mute">Tools, permissions and byte caps belong to this TraceHarness preset, not the vendor’s native runtime.</p>{(!prompt.includes('verify') || !prompt.includes('modify the tests') || new TextEncoder().encode(prompt).length > card.cap_bytes) && <p className="rg-harness-warning">This prompt exceeds the preset’s byte cap or omits its verification and test-edit safeguards. Saving clips to the byte cap; review the saved text.</p>}{fixedDrafts[card.id] && <p className="rg-small">Unsaved draft in this tab</p>}{card.memberUnconfirmed && <p role="alert">Account storage has not confirmed this prompt. Your draft is still pending.</p>}</>}
+          {fixed && card && <><ToolChips tools={card.tools} /><p className="rg-small rg-mute">Tools, permissions and byte caps belong to this TraceHarness preset, not the vendor’s native runtime.</p>{(!prompt.includes('verify') || !prompt.includes('modify the tests') || new TextEncoder().encode(prompt).length > card.cap_bytes) && <p className="rg-harness-warning">This prompt exceeds the preset’s byte cap or omits its verification and test-edit safeguards. Saving clips to the byte cap; review the saved text.</p>}{fixedDrafts[card.id] && <p className="rg-small">Unsaved draft in this tab</p>}{card.memberUnconfirmed && <p role="alert">{libraryPlace()} has not confirmed this prompt. Your draft is still pending.</p>}</>}
 
         </div></section>
         {native && runtime && <NativePrompts key={runtime.id} runtime={runtime} response={inventoryForRuntime} loading={catalogLoading || nativeInventoryLoading} error={nativeInventoryError} draft={nativeDraft} disabled={editLocked}
@@ -697,7 +720,7 @@ export function HarnessComposer({ args = [] }) {
         {native && <div className="rg-note"><p>Native runtime settings are controlled by its verified adapter. TraceHarness block settings are not applied to this agent.</p>{runtime?.reason && <p className="rg-small">{runtime.reason}</p>}</div>}
         {[...(preview?.warnings || []), ...blocksIssues].map((warning) => <p className="rg-harness-warning" role="status" key={warning}>{warning}</p>)}
         {previewError && <p role="alert">{previewError}</p>}
-        {credentialsAvailable ? <section className="rg-pnl rg-composer-key"><div className="rg-pnl-h"><Icon name="sent" /><h2>OpenRouter connection</h2></div><div className="rg-pnl-b">
+        {!needsCredential ? <p className="rg-small rg-mute" data-el="runner-settings-key">Models other than mock use the key set in Settings on this computer.</p> : credentialsAvailable ? <section className="rg-pnl rg-composer-key"><div className="rg-pnl-h"><Icon name="sent" /><h2>OpenRouter connection</h2></div><div className="rg-pnl-b">
           {!credentialsAvailable ? <p className="rg-small">Connect an execution service before adding a key. No key is collected while the runner is unavailable.</p>
             : credential ? <><p role="status">Connected for this session · expires at {readableTime(credential.expires_at)}</p><button className="rg-btn" onClick={clearKey}>Disconnect OpenRouter</button>{hasPendingRun() && <p className="rg-small">Disconnecting blocks future model calls for runs started with this connection. Use Cancel run to stop execution.</p>}</>
               : <><label className="rg-fld">OpenRouter API key<input className="rg-inp" type="password" autoComplete="off" spellCheck={false} value={key} disabled={connecting} onChange={(e) => setKey(e.target.value)} /></label><div className="rg-row rg-wrap"><button className="rg-btn" disabled={!key.trim() || connecting} onClick={connectKey}>{connecting ? 'Verifying key…' : 'Connect OpenRouter'}</button><button className="rg-btn ghost" onClick={clearKey}>Clear key</button></div></>}
@@ -709,17 +732,17 @@ export function HarnessComposer({ args = [] }) {
         <div><dt>Model</dt><dd>{state.model_id || 'Choose a model'}</dd></div><div><dt>Task</dt><dd>{task?.title || state.task_id || 'Choose a task'}{task?.revision && <small>{task.revision}</small>}</dd></div>
         <div><dt>Prompt</dt><dd>{new TextEncoder().encode(prompt).length.toLocaleString()} bytes · {configuration.prompt_mode}</dd></div>
         {nativeDraft?.enabled && <div><dt>Native profile</dt><dd>{nativeCounts ? `${nativeCounts.included} / ${nativeCounts.patchable} patchable included` : 'Exact inventory required'}<small>{nativeCounts ? `${nativeCounts.baseline} baseline · ${nativeCounts.replaced} replacement · ${nativeCounts.disabled} disabled` : 'Draft preserved; execution unavailable'}</small><small className="rg-mono">{nativeDraft.profile.inventory_sha256}</small></dd></div>}
-      </dl><fieldset className="rg-composer-limits" disabled={editLocked}><legend>Run limits</legend>{LIMIT_FIELDS.filter((field) => native || field.key !== 'max_steps').map((field) => <NumericField key={field.key} field={native && field.key === 'max_steps' ? { ...field, label: 'Model request cap' } : field.key === 'max_output_tokens' && configuration.runtime_id === 'native-claude-code' ? { ...field, min: 2049 } : field} value={state.limits[field.key]} onChange={(value) => setState((s) => ({ ...s, limits: { ...s.limits, [field.key]: value } }))} />)}{native ? <p className="rg-small rg-mute">The request cap counts model calls; native tool actions are controlled by the runtime. The output cap clamps each provider request and its cost reservation. A low output cap can truncate a reply. Claude requires at least 2049 output tokens to retain its fixed 2048-token thinking budget.</p> : <p className="rg-small rg-mute">{configuration.limits.max_steps} steps · set by this harness</p>}</fieldset><div className="rg-composer-readiness" aria-live="polite"><strong>{reviewed ? 'Configuration verified' : 'Before this can run'}</strong>{readyIssues.length ? <ul>{[...new Set(readyIssues)].map((issue) => <li key={issue}>{issue}</li>)}</ul> : !reviewed ? <p>Review the configuration with the runner before launching.</p> : <p>The server validated this exact configuration. Running may spend your OpenRouter credits.</p>}{!credential && credentialsAvailable && <p>Connect your OpenRouter key to run.</p>}{currentReview && preflight.result.issues.map((issue) => <p key={issue} role="alert">{issue}</p>)}</div>
-      <div className="rg-composer-actions"><button className="rg-btn" onClick={reviewRun} disabled={editLocked || !!readyIssues.length || checking}>{checking ? 'Reviewing…' : 'Review run'}</button><button className="rg-btn pri" onClick={run} disabled={editLocked || !reviewed || !!readyIssues.length || !credential || !!jobActive}>{launching ? 'Starting…' : job && terminal.has(job.status) ? 'Run again' : 'Run'}</button>
+      </dl><fieldset className="rg-composer-limits" disabled={editLocked}><legend>Run limits</legend>{LIMIT_FIELDS.filter((field) => native || field.key !== 'max_steps').map((field) => <NumericField key={field.key} field={native && field.key === 'max_steps' ? { ...field, label: 'Model request cap' } : field.key === 'max_output_tokens' && configuration.runtime_id === 'native-claude-code' ? { ...field, min: 2049 } : field} value={state.limits[field.key]} onChange={(value) => setState((s) => ({ ...s, limits: { ...s.limits, [field.key]: value } }))} />)}{native ? <p className="rg-small rg-mute">The request cap counts model calls; native tool actions are controlled by the runtime. The output cap clamps each provider request and its cost reservation. A low output cap can truncate a reply. Claude requires at least 2049 output tokens to retain its fixed 2048-token thinking budget.</p> : <p className="rg-small rg-mute">{configuration.limits.max_steps} steps · set by this harness</p>}{limitsSentence && <p className="rg-small rg-mute" data-el="runner-enforced-limits">{limitsSentence}</p>}</fieldset><div className="rg-composer-readiness" aria-live="polite"><strong>{reviewed ? 'Configuration verified' : 'Before this can run'}</strong>{readyIssues.length ? <ul>{[...new Set(readyIssues)].map((issue) => <li key={issue}>{issue}</li>)}</ul> : !reviewed ? <p>Review the configuration with the runner before launching.</p> : <p>The server validated this exact configuration.{needsCredential ? ' Running may spend your OpenRouter credits.' : ''}</p>}{needsCredential && !credential && credentialsAvailable && <p>Connect your OpenRouter key to run.</p>}{currentReview && preflight.result.issues.map((issue) => <p key={issue} role="alert">{issue}</p>)}</div>
+      <div className="rg-composer-actions"><button className="rg-btn" onClick={reviewRun} disabled={editLocked || !!readyIssues.length || checking}>{checking ? 'Reviewing…' : 'Review run'}</button><button className="rg-btn pri" onClick={run} disabled={editLocked || !reviewed || !!readyIssues.length || needsCredential && !credential || !!jobActive}>{launching ? 'Starting…' : job && terminal.has(job.status) ? 'Run again' : 'Run'}</button>
 
 
-      </div><p className="rg-small rg-mute">Selections stay in this account’s tab. Saving a harness does not run a model.</p>
+      </div><p className="rg-small rg-mute">Selections stay in this tab. Saving a harness does not run a model.</p>
 
       <div className="rg-composer-service-note">{catalogError && <p role="alert">{catalogError}</p>}<button className="rg-btn" disabled={catalogLoading} onClick={() => setCatalogRevision((n) => n + 1)}>Refresh runner</button></div>
       </aside>
     </div>
     {/* the main workflow sits directly under the run configuration, above history and the JSON editor */}
-    <section aria-label="Experiment dispatch"><ExperimentWorkspace configuration={configuration} catalog={catalog} credential={credential} available={catalog.execution_available} disabled={editLocked || jsonPending || !!forkError} lease={experimentLease} onOpenJob={openJob} /></section>
+    <section aria-label="Experiment dispatch"><ExperimentWorkspace configuration={configuration} catalog={catalog} credential={credential} available={catalog.execution_available && catalog.experiments_available !== false} disabled={editLocked || jsonPending || !!forkError} lease={experimentLease} onOpenJob={openJob} /></section>
     {forkError && <p role="alert">{forkError} <button className="rg-btn" onClick={() => setForkError('')}>Keep previous draft</button></p>}
     {forkSource?.value && <aside className="rg-pnl rg-pnl-b" aria-label="Draft source"><strong>Derived from {forkSource.title}</strong><p className="rg-small">{forkSource.note}</p>{forkSource.redacted && <p className="rg-small">Credential-shaped source values were redacted before copying this provenance into the draft.</p>}</aside>}
     <details className="rg-composer-details"><summary>Edit configuration JSON</summary><section aria-label="Configuration JSON editor"><ConfigurationEditor configuration={configuration} disabled={editLocked} onApply={(value) => applyDraft({ ...applyConfiguration(state, value), source: forkSource })} onPendingChange={setJsonPending} /></section></details>
@@ -738,8 +761,8 @@ export function HarnessComposer({ args = [] }) {
     </div>}
     {(catalog.runner.available || recentJobs.length > 0 || jobsError) && <section className="rg-pnl rg-composer-history" aria-label="Recent runs">
       <div className="rg-pnl-h"><h2>Recent runs</h2><button type="button" className="rg-btn" disabled={jobsLoading} onClick={() => setJobsRevision((value) => value + 1)}>{jobsLoading ? 'Refreshing runs…' : 'Refresh runs'}</button></div>
-      <div className="rg-pnl-b"><p className="rg-small rg-mute">Runs retained for this signed-in account. Opening a result leaves your editor configuration unchanged.</p>
-        {jobsError && <p role="alert">{jobsError}</p>}{!jobsLoading && !recentJobs.length && !jobsError && <p>No submitted runs in this account.</p>}
+      <div className="rg-pnl-b"><p className="rg-small rg-mute">Runs retained for {LIBRARY.label || 'this runner'}.{catalog.scope === 'local' ? ' This list covers this server session; every run also stays in Datasets.' : ''} Opening a result leaves your editor configuration unchanged.</p>
+        {jobsError && <p role="alert">{jobsError}</p>}{!jobsLoading && !recentJobs.length && !jobsError && <p>No submitted runs for {LIBRARY.label || 'this runner'}.</p>}
         {!!recentJobs.length && <ul className="rg-composer-run-list">{recentJobs.slice(0, jobsVisible).map((row) => <li key={row.id} aria-current={job?.id === row.id ? 'true' : undefined}>
           <div><strong className="rg-mono">{row.id}</strong><span>{row.status.replaceAll('_', ' ')} · {gradeLabels[row.grade] || 'Not graded'}</span><time>{runTime(row.created_at)}</time></div>
           <button type="button" className="rg-btn" disabled={launching || !!openingJob} aria-label={'Open run ' + row.id} onClick={() => openJob(row.id)}>{openingJob === row.id ? 'Opening…' : 'Open run'}</button>
@@ -756,6 +779,7 @@ export function HarnessComposer({ args = [] }) {
         <HarnessJson key={job.id} source="Recorded run manifest" identity={`Run ${job.id}${job.manifest_sha256 ? ' · manifest SHA-256 ' + job.manifest_sha256 : ''}`}
           description="The complete manifest returned for this run: harness, prompts, runtime pins, model, task, limits and native interventions when recorded. Your editor draft is separate. The manifest artifact below provides the SHA-256-verified original file."
           documents={[{ id: 'manifest', label: 'Run manifest', value: job.manifest, filename: `manifest-${job.id}.json` }]} />
+        {terminal.has(job.status) && SAFE_NAME.test(job.results_dir || '') && SAFE_NAME.test(job.run_id || '') && <div className="rg-row rg-wrap" data-el="runner-local-run"><Go spec={makeSpec('ds', job.results_dir)} className="rg-btn" label={'Open ' + job.results_dir + ' in Datasets'}>Open in Datasets</Go><Go spec={makeSpec('run', job.run_id)} className="rg-btn" label={'Open run ' + job.run_id}>Open the run</Go></div>}
         {job.manifest && <button className="rg-btn" disabled={editLocked || jsonPending} onClick={forkHostedRun}>Fork this run configuration</button>}
         {job.manifest_sha256 && <p className="rg-small rg-mono">Configuration {job.manifest_sha256}</p>}{(job.issues || []).map((issue) => <p key={issue} role="alert">{issue}</p>)}{jobError && <p role="alert">{jobError}</p>}
         <div className="rg-row rg-wrap"><button className="rg-btn" disabled={launching || !!openingJob} onClick={() => refreshJob()}>Refresh status</button>{!terminal.has(job.status) && <button className="rg-btn" disabled={cancelling || job.cancellation_requested || !!openingJob} onClick={() => refreshJob(true)}>{cancelling ? 'Requesting cancellation…' : 'Cancel run'}</button>}</div>
@@ -764,7 +788,7 @@ export function HarnessComposer({ args = [] }) {
         {job.artifacts?.length > 0 && <ul className="rg-composer-artifacts" aria-label="Run artifacts">{job.artifacts.map((artifact) => <li key={artifact.name}><div><strong>{artifact.name}</strong><span>{artifact.bytes.toLocaleString()} bytes · SHA-256 verified before download</span></div><button type="button" className="rg-btn" aria-label={'Download ' + artifact.name} disabled={!!downloadingArtifact} onClick={() => downloadArtifact(artifact)}>{downloadingArtifact === artifact.name ? 'Verifying…' : 'Download'}</button></li>)}</ul>}
       </div>
     </section>}
-    <PairedExperiments configuration={configuration} credential={credential} available={catalog.execution_available} disabled={editLocked || !!readyIssues.length} lease={experimentLease} />
+    <PairedExperiments configuration={configuration} credential={credential} available={catalog.execution_available && catalog.experiments_available !== false} disabled={editLocked || !!readyIssues.length} lease={experimentLease} />
     <footer className="rg-composer-footer"><Go spec="shallowApply" className="rg-tlink">Compare one prompt across the six TraceHarness shells</Go><span>Native runtimes and lab stand-ins are distinct engines.</span></footer>
   </div>
 }

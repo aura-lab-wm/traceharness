@@ -116,3 +116,27 @@ describe('exact task/runtime/model maps', () => {
     expect(() => runnerCatalog(catalog)).toThrow('catalog is incomplete')
   })
 })
+
+// Recorded from GET /api/runner/catalog on the local console (`python -m traceharness`, no key set),
+// with the task list trimmed to its first two rows. tests_agentlab/test_local_runner_api.py holds
+// the server to this shape.
+const LOCAL = {"version":1,"scope":"local","runner":{"available":true,"message":"Runs on this computer with the TraceHarness engine."},"runtimes":[{"id":"traceharness","name":"TraceHarness engine","kind":"traceharness","available":true,"prompt_mode":"replace","version":"0.5.3","model_ids":["mock"]},{"id":"native-claude-code","name":"Claude Code","kind":"native","available":false,"prompt_mode":"append","version":null,"reason":"Native runtimes run on the hosted runner only."},{"id":"native-codex","name":"Codex CLI","kind":"native","available":false,"prompt_mode":"append","version":null,"reason":"Native runtimes run on the hosted runner only."}],"models":[{"id":"mock","name":"Mock (offline)"}],"tasks":[{"id":"t01_slugify","title":"slugify collapses hyphens incorrectly","ready":true,"runtime_ids":["traceharness"],"model_ids_by_runtime":{"traceharness":["mock"]}},{"id":"t02_intervals","title":"merge_intervals drops touching intervals","ready":true,"runtime_ids":["traceharness"],"model_ids_by_runtime":{"traceharness":["mock"]}}],"credentials_available":false,"credential_required":false,"execution_available":true,"experiments_available":false}
+
+describe('the local runner catalog', () => {
+  it('passes the validator unchanged', () => {
+    const catalog = structuredClone(LOCAL)
+    expect(runnerCatalog(catalog)).toBe(catalog)
+    expect(catalog).toEqual(LOCAL)
+  })
+
+  it('reads credential_required and experiments_available as optional booleans', () => {
+    for (const key of ['credential_required', 'experiments_available']) {
+      const absent = structuredClone(LOCAL); delete absent[key]
+      expect(runnerCatalog(absent)).toBe(absent)
+      for (const value of [true, false]) expect(runnerCatalog({ ...structuredClone(LOCAL), [key]: value })[key]).toBe(value)
+      for (const value of [null, 'false', 0, 1, {}]) {
+        expect(() => runnerCatalog({ ...structuredClone(LOCAL), [key]: value })).toThrow('catalog is incomplete')
+      }
+    }
+  })
+})

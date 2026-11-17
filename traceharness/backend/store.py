@@ -40,6 +40,9 @@ import threading
 import time
 from typing import Iterable, Optional
 
+from traceharness.shared.contract import availability
+
+from .dataset_dates import dataset_updated
 from .paths import INDEX_DB, RUNS_ROOT
 from .results_scope import is_private, list_results_dirs
 from .safe_paths import PathRefused, confine
@@ -394,11 +397,19 @@ def overview(runs_root: Optional[str] = None, db_path: Optional[str] = None) -> 
                 f"SELECT DISTINCT {col} FROM runs WHERE dir = ? ORDER BY {col}", (name,)) if r[0] is not None]
         model_runs = {r[0]: r[1] for r in cx.execute(
             "SELECT model, COUNT(*) FROM runs WHERE dir = ? AND model IS NOT NULL GROUP BY model ORDER BY model", (name,))}
+        # When the runs happened (SPEC 4.7), the same rule as metrics.results_dirs: only text values
+        # reach dataset_updated, as only strings do there; never the index file's mtime.
+        times = cx.execute(
+            "SELECT CASE WHEN json_type(row_json, '$.finished_at') = 'text' THEN json_extract(row_json, '$.finished_at') END,"
+            " CASE WHEN json_type(row_json, '$.started_at') = 'text' THEN json_extract(row_json, '$.started_at') END"
+            " FROM runs WHERE dir = ?", (name,))
+        updated, updated_source = dataset_updated({"finished_at": f, "started_at": s} for f, s in times)
         out.append({
             "name": name, "runs": agg["n"],
             "harnesses": distinct("harness_id"), "models": distinct("model"), "model_runs": model_runs, "tasks": distinct("task_id"),
             "pass_rate": (agg["p"] if agg["n"] else None),
-            "updated": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime(src["mtime"])),
+            "updated": updated, "updated_source": updated_source,
+            "availability": availability(name),
         })
     return _clean(out)
 

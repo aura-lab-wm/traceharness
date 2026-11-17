@@ -1,0 +1,604 @@
+{
+ "capture_sources": [
+  "agy",
+  "claude_code",
+  "codex",
+  "cursor",
+  "qwen_code"
+ ],
+ "compiler_oracle": {
+  "files": {
+   "traceharness/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+   "traceharness/core/__init__.py": "ebc186c146969df2b767a373da3a639e62d3215b49d8746e96390568f26e73ef",
+   "traceharness/core/blocks.py": "718d4dfc25b814b917e03728d4d3c44d90845331ee88455b8bfb1a4bd39667bc",
+   "traceharness/core/grader.py": "583ad79810e21098baec2e2809f8d9cca0080812513b4aba3f97b29c1894cfa2",
+   "traceharness/core/harness.py": "315ba1f1432e26562b754cbde3f83eefe48ed9668c24e13ee4eac672af71838f",
+   "traceharness/core/ledger.py": "bf0791472ab9b3e0045f773ea2c736beaa054f99d2f3a0f066ef7e57fc3070c7",
+   "traceharness/core/providers.py": "80108e2a43f2d6349d4c21f720d75c24d26a98d2cfefa4f8092cef6178d4777f",
+   "traceharness/core/tools.py": "237d713b2c42d9561b892d10ea3e39a1ac50d0cf9dc9e53b9de88fa672f939c9",
+   "traceharness/shallow/__init__.py": "db1989ade8b8fcbc5916fd724e746d902349c88b8120407c1868096863413fa3",
+   "traceharness/shallow/wizard.py": "0fbd91ad4a6f986fafa8349181cb21174163a393d3f2f7520c245122ee99fbaf"
+  },
+  "sha256": "1a22738c915dd698d8f2592d019dd25244707f7e382a9b945c032b79c638e0a9"
+ },
+ "content_sha256": "3e9e990c7efbf501c16e18d4693e74042ad94112c96078cf32536c94e1d8284a",
+ "datasets": {
+  "hosted": [
+   "demo_mock",
+   "families_mock",
+   "prerecorded_mock",
+   "prerecorded_mock_weak",
+   "study_v04"
+  ],
+  "school": [
+   "llma4se_live",
+   "live",
+   "real_swe_agent_500",
+   "prerecorded_mock",
+   "prerecorded_mock_weak",
+   "families_mock",
+   "demo_mock",
+   "captured_claude_code"
+  ]
+ },
+ "display_classes": {
+  "desktop": 1440,
+  "full-hd": 1920,
+  "laptop": 1280,
+  "large-phone": 480,
+  "phone": 360,
+  "qhd": 2560,
+  "small-phone": 0,
+  "tablet": 768,
+  "tablet-wide": 1024,
+  "ultrawide": 3440
+ },
+ "drafts": {
+  "names": [
+   "fixed",
+   "answers",
+   "customize",
+   "customize-draft",
+   "composer",
+   "composer-source",
+   "apply"
+  ],
+  "prefix_local": "traceharness.shallow.",
+  "prefix_member": "traceharness.shallow.member.{scope}."
+ },
+ "environment": {
+  "capabilities": [
+   "data.read",
+   "data.import",
+   "data.live_events",
+   "harness.compile",
+   "harness.save",
+   "run.local",
+   "run.hosted",
+   "run.native",
+   "run.experiments",
+   "judge.run",
+   "capture.local",
+   "capture.computers",
+   "settings.server_key",
+   "assistant.model",
+   "account"
+  ],
+  "library": {
+   "export": {
+    "available": false,
+    "label": null,
+    "store": null
+   },
+   "local": {
+    "available": true,
+    "label": "this computer",
+    "store": "local"
+   },
+   "member": {
+    "available": true,
+    "label": "your account",
+    "store": "account"
+   }
+  },
+  "messages": {
+   "export_read_only": "{what} is not available in a read-only export. Start the local console: {command}",
+   "hosted_only": "{what} runs on traceharness.dev for signed-in members.",
+   "local_only": "{what} runs on your computer. Start the local console with {command} and open {url}.",
+   "not_configured": "{what} is not set up on this server.",
+   "unavailable": "{what} is not available right now."
+  },
+  "table": {
+   "account": {
+    "export": "hosted_only",
+    "local": "hosted_only",
+    "member": "ok"
+   },
+   "assistant.model": {
+    "export": "export_read_only",
+    "local": "ok",
+    "member": "local_only"
+   },
+   "capture.computers": {
+    "export": "hosted_only",
+    "local": "hosted_only",
+    "member": "ok"
+   },
+   "capture.local": {
+    "export": "export_read_only",
+    "local": "ok",
+    "member": "local_only"
+   },
+   "data.import": {
+    "export": "export_read_only",
+    "local": "ok",
+    "member": "local_only"
+   },
+   "data.live_events": {
+    "export": "export_read_only",
+    "local": "ok",
+    "member": "local_only"
+   },
+   "data.read": {
+    "export": "ok",
+    "local": "ok",
+    "member": "ok"
+   },
+   "harness.compile": {
+    "export": "export_read_only",
+    "local": "ok",
+    "member": "ok"
+   },
+   "harness.save": {
+    "export": "export_read_only",
+    "local": "ok",
+    "member": "ok"
+   },
+   "judge.run": {
+    "export": "export_read_only",
+    "local": "ok",
+    "member": "local_only"
+   },
+   "run.experiments": {
+    "export": "hosted_only",
+    "local": "hosted_only",
+    "member": "ok"
+   },
+   "run.hosted": {
+    "export": "hosted_only",
+    "local": "hosted_only",
+    "member": "ok"
+   },
+   "run.local": {
+    "export": "export_read_only",
+    "local": "ok",
+    "member": "local_only"
+   },
+   "run.native": {
+    "export": "hosted_only",
+    "local": "hosted_only",
+    "member": "ok"
+   },
+   "settings.server_key": {
+    "export": "export_read_only",
+    "local": "ok",
+    "member": "local_only"
+   }
+  }
+ },
+ "glossary": {
+  "labels": {
+   "account": "Account",
+   "admin": "Admin",
+   "capture_local": "Session capture",
+   "capture_member": "Capture computers",
+   "console": "console",
+   "console_link": "Console",
+   "fixed": "Fixed harnesses",
+   "harnesses": "Harnesses",
+   "local_console": "local console",
+   "minimal": "Minimal harness",
+   "plain_editor": "Plain harness editor",
+   "runner": "runner"
+  },
+  "retired": [
+   {
+    "phrase": "8742",
+    "scope": "all",
+    "use": "8765"
+   },
+   {
+    "phrase": "8794",
+    "scope": "site",
+    "use": "8765"
+   },
+   {
+    "phrase": "Simple harness editor",
+    "scope": "all",
+    "use": "Plain harness editor"
+   },
+   {
+    "phrase": "simple harness editor",
+    "scope": "all",
+    "use": "plain harness editor"
+   },
+   {
+    "phrase": "Shallow harnesses",
+    "scope": "all",
+    "use": "Harnesses"
+   },
+   {
+    "phrase": "shallow harness editor",
+    "scope": "all",
+    "use": "plain harness editor"
+   },
+   {
+    "phrase": "Full workbench",
+    "scope": "all",
+    "use": "Console"
+   },
+   {
+    "phrase": "Minimal wizard",
+    "scope": "all",
+    "use": "Minimal harness"
+   },
+   {
+    "phrase": "local workbench",
+    "scope": "all",
+    "use": "local console"
+   },
+   {
+    "phrase": "Local workbench",
+    "scope": "all",
+    "use": "Local console"
+   },
+   {
+    "phrase": "the local app",
+    "scope": "all",
+    "use": "the local console"
+   },
+   {
+    "phrase": "the live app",
+    "scope": "all",
+    "use": "the local console"
+   },
+   {
+    "phrase": "local lab",
+    "scope": "all",
+    "use": "local console"
+   }
+  ]
+ },
+ "limits": {
+  "prompt_max_bytes": 20000,
+  "run": {
+   "max_cost_usd": [
+    0.01,
+    100
+   ],
+   "max_output_tokens": [
+    1,
+    8192
+   ],
+   "max_steps": [
+    1,
+    200
+   ],
+   "wall_time_seconds": [
+    30,
+    3600
+   ]
+  },
+  "runner_prompt_max_bytes": 250000
+ },
+ "local_app": {
+  "command": "python -m traceharness --host 127.0.0.1 --port 8765",
+  "port": 8765,
+  "url": "http://127.0.0.1:8765"
+ },
+ "package_version": "0.5.4",
+ "port": 8765,
+ "save_protocol": {
+  "fixed": "if_hash|if_absent",
+  "minimal": "content-addressed",
+  "version": 1
+ },
+ "schema": 1,
+ "shallow": {
+  "agents": [
+   {
+    "cap_bytes": 250000,
+    "id": "claude",
+    "max_steps": 20,
+    "name": "Claude Code",
+    "policy": "strict",
+    "prompt": "You are the TraceHarness stand-in for Claude Code. List the repository, read the files the task names, and edit those files. You may run the existing tests and a shell command that stays inside the repository. When the edit is in place, verify the result with the tools you have, then call submit. Do not modify the tests. Network, privilege, secret access, and path escape stay blocked. Stay on the files the task names. Do not invent a tool. If the step cap arrives first, call submit with the edit you have and say what is still open. This copy belongs to the signed-in member. It does not read a home directory and it does not patch a local agent install.",
+    "tools": [
+     "list_files",
+     "read_file",
+     "write_file",
+     "edit_file",
+     "run_tests",
+     "bash",
+     "submit"
+    ]
+   },
+   {
+    "cap_bytes": 128000,
+    "id": "codex",
+    "max_steps": 16,
+    "name": "Codex",
+    "policy": "strict",
+    "prompt": "You are the TraceHarness stand-in for Codex. List the repository, read the files the task names, and edit those files. You may run the existing tests and a shell command that stays inside the repository. When the edit is in place, verify the result with the tools you have, then call submit. Do not modify the tests. Network, privilege, secret access, and path escape stay blocked. Stay on the files the task names. Do not invent a tool. If the step cap arrives first, call submit with the edit you have and say what is still open. This copy belongs to the signed-in member. It does not read a home directory and it does not patch a local agent install.",
+    "tools": [
+     "list_files",
+     "read_file",
+     "edit_file",
+     "run_tests",
+     "bash",
+     "submit"
+    ]
+   },
+   {
+    "cap_bytes": 128000,
+    "id": "qwen",
+    "max_steps": 12,
+    "name": "Qwen",
+    "policy": "strict",
+    "prompt": "You are the TraceHarness stand-in for Qwen. List the repository, read the files the task names, and edit those files. You may run the existing tests. You have no shell. When the edit is in place, verify the result with the tools you have, then call submit. Do not modify the tests. Network, privilege, secret access, and path escape stay blocked. Stay on the files the task names. Do not invent a tool. If the step cap arrives first, call submit with the edit you have and say what is still open. This copy belongs to the signed-in member. It does not read a home directory and it does not patch a local agent install.",
+    "tools": [
+     "list_files",
+     "read_file",
+     "edit_file",
+     "run_tests",
+     "submit"
+    ]
+   },
+   {
+    "cap_bytes": 32768,
+    "id": "kimi",
+    "max_steps": 12,
+    "name": "Kimi",
+    "policy": "strict",
+    "prompt": "You are the TraceHarness stand-in for Kimi. List the repository, read the files the task names, and edit those files. You may run the existing tests. You have no shell. Keep the edit small enough for the short prompt cap. When the edit is in place, verify the result with the tools you have, then call submit. Do not modify the tests. Network, privilege, secret access, and path escape stay blocked. Stay on the files the task names. Do not invent a tool. If the step cap arrives first, call submit with the edit you have and say what is still open. This copy belongs to the signed-in member. It does not read a home directory and it does not patch a local agent install.",
+    "tools": [
+     "list_files",
+     "read_file",
+     "edit_file",
+     "run_tests",
+     "submit"
+    ]
+   },
+   {
+    "cap_bytes": 24000,
+    "id": "agy",
+    "max_steps": 12,
+    "name": "Antigravity",
+    "policy": "strict",
+    "prompt": "You are the TraceHarness stand-in for Antigravity. List the repository, read the files the task names, and edit those files. You may run a shell command that stays inside the repository. You have no separate test tool. When the edit is in place, verify the result with the tools you have, then call submit. Do not modify the tests. Network, privilege, secret access, and path escape stay blocked. Stay on the files the task names. Do not invent a tool. If the step cap arrives first, call submit with the edit you have and say what is still open. This copy belongs to the signed-in member. It does not read a home directory and it does not patch a local agent install.",
+    "tools": [
+     "list_files",
+     "read_file",
+     "edit_file",
+     "bash",
+     "submit"
+    ]
+   },
+   {
+    "cap_bytes": 10000,
+    "id": "grok",
+    "max_steps": 8,
+    "name": "Grok",
+    "policy": "strict",
+    "prompt": "You are the TraceHarness stand-in for Grok. List the repository, read the files the task names, and edit those files. You have no shell and no test tool. Keep the edit small enough for the shortest prompt cap. When the edit is in place, verify the result with the tools you have, then call submit. Do not modify the tests. Network, privilege, secret access, and path escape stay blocked. Stay on the files the task names. Do not invent a tool. If the step cap arrives first, call submit with the edit you have and say what is still open. This copy belongs to the signed-in member. It does not read a home directory and it does not patch a local agent install.",
+    "tools": [
+     "list_files",
+     "read_file",
+     "edit_file",
+     "submit"
+    ]
+   }
+  ],
+  "questions": [
+   {
+    "id": "touch",
+    "options": [
+     [
+      "read_edit_test",
+      "Read, edit, run tests. No shell."
+     ],
+     [
+      "read_only",
+      "Read only."
+     ],
+     [
+      "with_shell",
+      "Read, edit, run tests, and a shell."
+     ]
+    ],
+    "prompt": "What may it touch?",
+    "recommended": "read_edit_test"
+   },
+   {
+    "id": "dangerous",
+    "options": [
+     [
+      "strict",
+      "Strict. Destructive shell and test edits stay blocked."
+     ],
+     [
+      "permissive",
+      "Permissive for destructive shell and test edits only."
+     ]
+    ],
+    "prompt": "Dangerous command?",
+    "recommended": "strict"
+   },
+   {
+    "id": "verify",
+    "options": [
+     [
+      "yes",
+      "Yes. One sentence in the prompt."
+     ],
+     [
+      "no",
+      "No extra verify sentence."
+     ]
+    ],
+    "prompt": "Verify before submit?",
+    "recommended": "yes"
+   },
+   {
+    "id": "history",
+    "options": [
+     [
+      "full",
+      "Full history."
+     ],
+     [
+      "last2",
+      "Only the last two observations."
+     ]
+    ],
+    "prompt": "How much history?",
+    "recommended": "full"
+   },
+   {
+    "id": "stop",
+    "options": [
+     [
+      "steps_12",
+      "12 steps."
+     ],
+     [
+      "steps_6",
+      "6 steps."
+     ],
+     [
+      "steps_20",
+      "20 steps."
+     ]
+    ],
+    "prompt": "When does it stop?",
+    "recommended": "steps_12"
+   },
+   {
+    "id": "mcp",
+    "options": [
+     [
+      "none",
+      "None. No MCP tools are mounted."
+     ]
+    ],
+    "prompt": "MCP?",
+    "recommended": "none"
+   }
+  ],
+  "recommended": {
+   "dangerous": "strict",
+   "history": "full",
+   "mcp": "none",
+   "stop": "steps_12",
+   "touch": "read_edit_test",
+   "verify": "yes"
+  }
+ },
+ "tokens": {
+  "console": {
+   "cx-acc": "#52a8ff",
+   "cx-amb": "#ffb224",
+   "cx-bad": "#ff6166",
+   "cx-bg": "#0b0b0c",
+   "cx-bg2": "#111113",
+   "cx-bg3": "#18181b",
+   "cx-dim": "#a1a1a1",
+   "cx-k-b": "#ffc861",
+   "cx-k-b-bg": "#3a2a0c",
+   "cx-k-e": "#a9c1ff",
+   "cx-k-e-bg": "#16254a",
+   "cx-k-i": "#a1a1a1",
+   "cx-k-i-bg": "#1f1f22",
+   "cx-k-s": "#000000",
+   "cx-k-s-bg": "#ededed",
+   "cx-k-t": "#6fd48a",
+   "cx-k-t-bg": "#12301c",
+   "cx-line": "#232326",
+   "cx-line2": "#303034",
+   "cx-mute": "#828288",
+   "cx-ok": "#3fb950",
+   "cx-shadow": "0 0 0 1px #1f1f22,0 30px 80px -20px rgba(0,98,230,.28)",
+   "cx-text": "#ededed"
+  },
+  "dark": {
+   "amb": "#f5a524",
+   "amb-t": "#ffb224",
+   "bg": "#000000",
+   "brand": "#3d8bff",
+   "dim": "#a1a1a1",
+   "dot": "rgba(255,255,255,.07)",
+   "line": "#1c1c1c",
+   "line2": "#2a2a2a",
+   "line3": "#454545",
+   "mute": "#8f8f8f",
+   "on-accent": "#000000",
+   "panel": "#0a0a0a",
+   "panel2": "#111111",
+   "panel3": "#1a1a1a",
+   "qty": "#7d8aa3",
+   "red": "#e5484d",
+   "red-t": "#ff6166",
+   "scrim": "rgba(0,0,0,.6)",
+   "sel": "#0062e6",
+   "sel-h": "#0a6cf5",
+   "sel-ink": "#ffffff",
+   "sel-t": "#52a8ff",
+   "ser1": "#a3b3d6",
+   "ser2": "#6d83b6",
+   "ser3": "#4a5f8f",
+   "ser4": "#9aa0a9",
+   "ser5": "#6b717a",
+   "ser6": "#464b53",
+   "shadow": "0 12px 32px rgba(0,0,0,.5)",
+   "sky": "#2ea043",
+   "sky-t": "#3fb950",
+   "text": "#ededed",
+   "unk": "#8f8f8f"
+  },
+  "light": {
+   "amb": "#f5a524",
+   "amb-t": "#915100",
+   "bg": "#fafafa",
+   "brand": "#1d6ae5",
+   "dim": "#4d4d4d",
+   "dot": "rgba(0,0,0,.075)",
+   "line": "#e8e8e8",
+   "line2": "#dadada",
+   "line3": "#a8a8a8",
+   "mute": "#666666",
+   "on-accent": "#ffffff",
+   "panel": "#ffffff",
+   "panel2": "#f5f5f5",
+   "panel3": "#ededed",
+   "qty": "#5a6a8a",
+   "red": "#da2f35",
+   "red-t": "#c0262c",
+   "scrim": "rgba(24,24,27,.25)",
+   "sel": "#0062e6",
+   "sel-h": "#0a6cf5",
+   "sel-ink": "#ffffff",
+   "sel-t": "#005bc0",
+   "ser1": "#233c78",
+   "ser2": "#4e67a3",
+   "ser3": "#9aaed6",
+   "ser4": "#4d525b",
+   "ser5": "#8a8f98",
+   "ser6": "#c3c7cd",
+   "shadow": "0 12px 32px rgba(24,24,27,.12)",
+   "sky": "#2da44e",
+   "sky-t": "#156b2d",
+   "text": "#171717",
+   "unk": "#666666"
+  }
+ }
+}

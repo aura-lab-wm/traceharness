@@ -24,6 +24,28 @@ from test_no_dead_surface import registered_routes           # noqa: E402
 #: dropped from here is a route _urls() must cover instead -- this file's own test below fails
 #: loudly the moment that stops being true, in either direction.
 EXCLUDED_FROM_EXPORT = {
+    "/api/shallow/catalog":
+        "the local harness library: an export has no library and must carry no /shallow/ key",
+    "/api/shallow/harnesses":
+        "the local harness library: an export has no library and must carry no /shallow/ key",
+    "/api/shallow/harnesses/{harness_id}":
+        "the local harness library: an export has no library and must carry no /shallow/ key",
+    "/api/runner/catalog":
+        "the local runner's live job state: runner-api.js answers for itself in an export, and a run cannot be frozen",
+    "/api/runner/jobs":
+        "the local runner's live job state: runner-api.js answers for itself in an export, and a run cannot be frozen",
+    "/api/runner/jobs/{job_id}":
+        "the local runner's live job state: runner-api.js answers for itself in an export, and a run cannot be frozen",
+    "/api/runner/jobs/{job_id}/artifacts/{name}":
+        "the local runner's live job state: runner-api.js answers for itself in an export, and a run cannot be frozen",
+    "/api/shallow":
+        "a JSON 404 catch-all under the prefix, never a page read",
+    "/api/shallow/{rest:path}":
+        "a JSON 404 catch-all under the prefix, never a page read",
+    "/api/runner":
+        "a JSON 404 catch-all under the prefix, never a page read",
+    "/api/runner/{rest:path}":
+        "a JSON 404 catch-all under the prefix, never a page read",
     "/api/paused":
         "the runs waiting for a human decision right now: live state with a decision button, "
         "meaningless once frozen into a file",

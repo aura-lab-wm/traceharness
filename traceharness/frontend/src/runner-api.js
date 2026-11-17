@@ -27,6 +27,9 @@ const allowed = (path, method) => method === 'GET' && ['/catalog', '/jobs'].incl
   || method === 'POST' && /^\/jobs\/[A-Za-z0-9_-]{1,100}\/cancel$/.test(path)
   || method === 'DELETE' && /^\/credentials\/[A-Za-z0-9_-]{1,100}$/.test(path)
 
+// The member snapshot reaches the hosted runner through the Worker, with its scope header. The local
+// console reaches the local runner (backend/local_runner_api.py) at the same paths with no header.
+// A read-only export has no runner at all.
 export async function runnerRequest(path, { method = 'GET', body, signal } = {}) {
   if (!allowed(path, method)) throw new Error('This runner action is not supported.')
   if (IS_STATIC && !MEMBER) {
@@ -74,7 +77,9 @@ export async function runnerRequest(path, { method = 'GET', body, signal } = {})
 export function runnerCatalog(data) {
   if (data?.version !== 1 || !data.runner || typeof data.runner.available !== 'boolean'
     || !['runtimes', 'models', 'tasks'].every((key) => Array.isArray(data[key]) && data[key].every((row) => row && typeof row.id === 'string'))
-    || typeof data.credentials_available !== 'boolean' || typeof data.execution_available !== 'boolean') {
+    || typeof data.credentials_available !== 'boolean' || typeof data.execution_available !== 'boolean'
+    // Optional: a runner without a credential vault (the local console) sends both as false; absent means true.
+    || ['credential_required', 'experiments_available'].some((key) => data[key] !== undefined && typeof data[key] !== 'boolean')) {
     throw new Error('The runner catalog is incomplete. Execution remains unavailable.')
   }
   const text = (value) => typeof value === 'string'

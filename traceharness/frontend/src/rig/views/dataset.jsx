@@ -131,7 +131,7 @@ function Dataset({ spec, args }) {
   return (
     <div className="rg-dpad">
       <div className="rg-dh">
-        <div className="t"><div className="rg-eyebrow">{row.kind === 'mock' ? 'Mock control' : 'Recorded dataset'} · updated {String(row.updated).slice(0, 10) || '—'}</div>
+        <div className="t"><div className="rg-eyebrow">{row.kind === 'mock' ? 'Mock control' : 'Recorded dataset'} · updated {String(row.updated || '').slice(0, 10) || 'not recorded'}</div>
           <h1 className="rg-mono rg-break">{dir}</h1>
           <div className="rg-cluster rg-ds-tags" data-el="dataset-stats"><Tag tone={row.kind === 'mock' ? 'dash' : undefined} el="dataset-kind">{row.kind === 'mock' ? 'Mock control' : 'Recorded'}</Tag><Tag nc>{int(row.runs)} runs</Tag><Tag nc>{row.models.length} models</Tag><Tag nc>{row.harnesses.length} harnesses</Tag><Tag nc>{row.tasks.length} tasks</Tag></div>
           {row.kind === 'mock' && <p>Mock control: scripted agents with designed failure rates. All-pass or all-fail here would mean the grader broke, not the model.</p>}</div>

@@ -27,6 +27,10 @@ BLOCK_TYPES = ("prompt", "tools", "policy", "context", "stop", "sampling", "list
 _ID = re.compile(r"^[a-z][a-z0-9_]{0,40}$")
 _BUILT = re.compile(r"^built_[a-f0-9]{12}$")
 _SECRET_KEYS = {"api_key", "key", "password", "token", "authorization", "secret"}
+#: A block prompt's cap, in UTF-8 bytes, as the Worker counts it. The same number as
+#: traceharness.shared.contract.PROMPT_MAX_BYTES; this file is a compiler-oracle source and does
+#: not import that package (tests_agentlab/test_prompt_limit_bytes.py keeps the two equal).
+PROMPT_MAX_BYTES = 20_000
 
 
 def _prompt(text: str) -> dict:
@@ -270,8 +274,8 @@ def _apply(cfg: HarnessConfig, kind: str, block: dict) -> None:
         text = block.get("text")
         if not isinstance(text, str) or not text.strip():
             raise ValueError("prompt text is empty")
-        if len(text) > 20_000:
-            raise ValueError("prompt is longer than 20000 characters")
+        if len(text.encode("utf-8")) > PROMPT_MAX_BYTES:
+            raise ValueError("prompt is longer than 20000 UTF-8 bytes")
         cfg.system_prompt = text
     elif kind == "tools":
         names = block.get("names")
