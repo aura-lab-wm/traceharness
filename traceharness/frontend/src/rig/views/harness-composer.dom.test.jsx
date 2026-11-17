@@ -1209,6 +1209,21 @@ it('shows the entire historical run manifest without substituting the editor dra
 })
 
 
+describe('a hosted-shaped catalog still asks for a credential', () => {
+  it('keeps Run disabled after review until OpenRouter is connected, and sends credential_id', async () => {
+    render(<Composer />); await ready()
+    expect(screen.getByRole('heading', { name: 'OpenRouter connection' })).toBeTruthy()
+    fireEvent.click(screen.getByRole('button', { name: 'Review run' }))
+    await screen.findByText('Configuration verified')
+    expect(screen.getByText('Connect your OpenRouter key to run.')).toBeTruthy()
+    expect(screen.getByRole('button', { name: 'Run', exact: true }).disabled).toBe(true)
+    await connect()
+    fireEvent.click(screen.getByRole('button', { name: 'Run', exact: true }))
+    await waitFor(() => expect(calls.some((c) => c.url === '/api/runner/jobs' && c.method === 'POST')).toBe(true))
+    expect(calls.find((c) => c.url === '/api/runner/jobs' && c.method === 'POST').body.credential_id).toBe('fixture-credential')
+  })
+})
+
 describe('integrated configuration editing and dispatch', () => {
   it('applies a JSON draft atomically and blocks run review until unapplied edits are resolved', async () => {
     render(<Composer />); await ready()
@@ -1251,8 +1266,18 @@ function environmentFor(mode) {
 const localJson = (data, status = 200) => ({ ok: status >= 200 && status < 300, status, statusText: status === 200 ? 'OK' : 'Error',
   headers: { get: () => 'application/json' }, json: async () => data })
 
+// GET /api/runner/catalog as the local console answers it (tasks trimmed to two; see runner-catalog.test.js).
+const LOCAL_CATALOG = () => ({ version: 1, scope: 'local', runner: { available: true, message: 'Runs on this computer with the TraceHarness engine.' },
+  runtimes: [{ id: 'traceharness', name: 'TraceHarness engine', kind: 'traceharness', available: true, prompt_mode: 'replace', version: '0.5.3', model_ids: ['mock'] },
+    { id: 'native-claude-code', name: 'Claude Code', kind: 'native', available: false, prompt_mode: 'append', version: null, reason: 'Native runtimes run on the hosted runner only.' },
+    { id: 'native-codex', name: 'Codex CLI', kind: 'native', available: false, prompt_mode: 'append', version: null, reason: 'Native runtimes run on the hosted runner only.' }],
+  models: [{ id: 'mock', name: 'Mock (offline)' }],
+  tasks: [{ id: 't01_slugify', title: 'slugify collapses hyphens incorrectly', ready: true, runtime_ids: ['traceharness'], model_ids_by_runtime: { traceharness: ['mock'] } },
+    { id: 't02_intervals', title: 'merge_intervals drops touching intervals', ready: true, runtime_ids: ['traceharness'], model_ids_by_runtime: { traceharness: ['mock'] } }],
+  credentials_available: false, credential_required: false, execution_available: true, experiments_available: false })
+
 describe('the Harnesses view on the local console and in a read-only export', () => {
-  let localCalls, library, counter, runnerCatalogAnswer
+  let localCalls, library, counter, runnerCatalogAnswer, localJobs
   async function loadComposer(mode) {
     vi.resetModules()
     delete window.__TRACEHARNESS_MEMBER__
@@ -1262,7 +1287,7 @@ describe('the Harnesses view on the local console and in a read-only export', ()
     return (await import('./harness-composer')).HarnessComposer
   }
   beforeEach(() => {
-    localCalls = []; library = new Map(); counter = 0
+    localCalls = []; library = new Map(); counter = 0; localJobs = []
     runnerCatalogAnswer = () => localJson({ detail: 'Not found.' }, 404)
     vi.stubGlobal('fetch', vi.fn(async (url, opts = {}) => {
       const method = opts.method || 'GET'
@@ -1270,6 +1295,17 @@ describe('the Harnesses view on the local console and in a read-only export', ()
       const headers = opts.headers instanceof Headers ? Object.fromEntries(opts.headers.entries()) : { ...opts.headers }
       const call = { url, method, body, headers }; localCalls.push(call)
       if (url === '/api/runner/catalog') return runnerCatalogAnswer(call)
+      if (url === '/api/runner/preflight') return localJson({ ok: true, issues: [], manifest_sha256: 'b'.repeat(64),
+        manifest: { ...body.configuration, runtime_version: '0.5.3', local: { results_dir: 'harness_runs', enforced_limits: ['max_steps'] } } })
+      if (url === '/api/runner/jobs' && method === 'GET') return localJson({ jobs: localJobs })
+      if (url === '/api/runner/jobs' && method === 'POST') {
+        const job = { id: 'c'.repeat(48), status: 'succeeded', created_at: 1794891036, grade: 'passed', manifest_sha256: body.manifest_sha256,
+          manifest: { runtime_id: 'traceharness', model_id: 'mock', task_id: body.configuration.task_id }, issues: [], artifacts: [],
+          usage: { input_tokens: 10, output_tokens: 5, cost_usd: 0 }, results_dir: 'harness_runs', run_id: '20261116-000000-abcdef' }
+        localJobs = [job]
+        return localJson({ job })
+      }
+      if (url.startsWith('/api/runner/experiments')) throw new Error('the local console never asks for experiments')
       if (url === '/api/shallow/catalog') return localJson({ harnesses: catalogCards })
       if (url === '/api/shallow/harnesses' && method === 'GET') return localJson({ harnesses: [...library.values()], loaded: true, unconfirmed: [] })
       if (url === '/api/shallow/harnesses' && method === 'POST') {
@@ -1326,4 +1362,53 @@ describe('the Harnesses view on the local console and in a read-only export', ()
     expect(localCalls.filter((c) => c.method !== 'GET')).toEqual([])
     expect(localCalls.some((c) => c.url.startsWith('/api/shallow/'))).toBe(false)
   })
+
+  it('runs with no credential on the local console: Review, then Run, and the POST has no credential_id', async () => {
+    runnerCatalogAnswer = () => localJson(LOCAL_CATALOG())
+    const Local = await loadComposer('local')
+    render(<Local />)
+    await screen.findByText('Runner connected')
+    await catalogReady()
+    choose('Model', 'Mock (offline)')
+    choose('Task', 'slugify collapses hyphens incorrectly')
+    const review = screen.getByRole('button', { name: 'Review run' })
+    await waitFor(() => expect(review.disabled).toBe(false))
+    expect(screen.queryByRole('heading', { name: 'OpenRouter connection' })).toBeNull()
+    expect(screen.queryByText('OpenRouter connection')).toBeNull()
+    expect(screen.queryByLabelText('OpenRouter API key')).toBeNull()
+    expect(screen.getByText('Models other than mock use the key set in Settings on this computer.')).toBeTruthy()
+    fireEvent.click(review)
+    await screen.findByText('Configuration verified')
+    expect(screen.getByText(/Enforced on this computer: step cap\./).getAttribute('data-el')).toBe('runner-enforced-limits')
+    const run = screen.getByRole('button', { name: 'Run', exact: true })
+    expect(run.disabled).toBe(false)
+    fireEvent.click(run)
+    await screen.findByText('Run ' + 'c'.repeat(48))
+    const post = localCalls.find((c) => c.url === '/api/runner/jobs' && c.method === 'POST')
+    expect(post.body).not.toHaveProperty('credential_id')
+    expect(Object.keys(post.body).sort()).toEqual(['configuration', 'idempotency_key', 'manifest_sha256'])
+    expect(post.body.manifest_sha256).toBe('b'.repeat(64))
+    expect(post.headers).not.toHaveProperty('x-traceharness-member-scope')
+    expect(screen.getByRole('button', { name: 'Open harness_runs in Datasets' }).getAttribute('data-spec')).toBe('ds:harness_runs')
+    expect(screen.getByRole('button', { name: 'Open run 20261116-000000-abcdef' }).getAttribute('data-spec')).toBe('run:20261116-000000-abcdef')
+    expect(screen.getByText(/Runs retained for this computer\./)).toBeTruthy()
+    expect(localCalls.some((c) => c.url.includes('/credentials'))).toBe(false)
+  })
+
+  it('the experiment panels say they are hosted only and never ask the local runner', async () => {
+    runnerCatalogAnswer = () => localJson(LOCAL_CATALOG())
+    const Local = await loadComposer('local')
+    render(<Local />)
+    await catalogReady()
+    fireEvent.click(screen.getByText('Experiment matrix'))
+    fireEvent.click(screen.getByText('Compare prompt variants'))
+    const notes = await waitFor(() => { const found = document.querySelectorAll('[data-capability="run.experiments"]'); expect(found).toHaveLength(2); return found })
+    for (const note of notes) {
+      expect(note.getAttribute('data-reason')).toBe('hosted_only')
+      expect(note.textContent).toMatch(/runs on traceharness\.dev for signed-in members\.$/)
+    }
+    expect(screen.queryByText('No execution service is connected.')).toBeNull()
+    expect(localCalls.some((c) => c.url.startsWith('/api/runner/experiments'))).toBe(false)
+  })
 })
+

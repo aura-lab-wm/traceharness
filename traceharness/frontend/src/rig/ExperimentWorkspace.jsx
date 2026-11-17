@@ -15,6 +15,7 @@ import {
   stableJSON,
 } from './experiment-matrix-state'
 import { HarnessJson } from './HarnessJson'
+import { Unavailable } from './unavailable'
 import './ExperimentWorkspace.css'
 
 const cellIdentity = cell => `${cell.snapshotId}:${cell.modelId}:${cell.taskId}`
@@ -651,6 +652,7 @@ export function ExperimentWorkspace({
           <p className="rg-matrix-lede">
             Capture immutable harness snapshots from the composer above, choose models and runnable tasks, verify the worst-case budget ceiling, then freeze and run an interleaved trial schedule.
           </p>
+          {!available && <Unavailable capability="run.experiments" what="The experiment matrix" el="experiments-unavailable" />}
 
           <div className="rg-matrix-group">
             <Field label="Experiment name" htmlFor={`${uid}-name`}>

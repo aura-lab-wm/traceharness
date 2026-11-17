@@ -10,6 +10,7 @@ import { ByteMeter, NumericField, ToolChips } from '../harnessWorkspace'
 import { fieldIssues, numberIssue } from '../harnessFields'
 import { EvidenceOrigin } from '../shallowEvidence'
 import { Go, Icon, PageHeader } from '../ui'
+import { makeSpec } from '../route'
 import { BlockCard } from './blocks'
 import { CARDS, QUESTIONS, blocksFromAnswers } from './shallow-data'
 import { blocksFromHarness, readDraft, writeDraft } from './shallow-drafts'
@@ -47,6 +48,8 @@ const asJob = (value, expectedId) => {
   return value
 }
 const harnessContentKey = (blocks = []) => jsonKey([...blocks].sort((a, b) => a.type.localeCompare(b.type)).map((block) => Object.fromEntries(Object.entries(block).sort(([a], [b]) => a.localeCompare(b)).map(([key, value]) => [key, key === 'names' ? [...value].sort() : value]))))
+const LIMIT_NAMES = { max_steps: 'step cap', wall_time_seconds: 'time limit', max_cost_usd: 'model budget', max_output_tokens: 'output token cap' }
+const SAFE_NAME = /^[A-Za-z0-9_.-]{1,80}$/
 const LIMIT_FIELDS = [
   { key: 'max_steps', label: 'Step cap', min: 1, max: 200 },
   { key: 'wall_time_seconds', label: 'Time limit (seconds)', min: 30, max: 3600 },
@@ -132,6 +135,8 @@ export function HarnessComposer({ args = [] }) {
   const card = cards.find((c) => c.id === state.selection.slice(6))
   const nativeChoices = catalog.runtimes.filter((r) => r.kind === 'native')
   const credentialsAvailable = catalog.runner.available && catalog.credentials_available
+  // The local runner uses the key set in Settings on this computer: no credential, no vault.
+  const needsCredential = catalog.credential_required !== false
   const runtimes = nativeChoices.length ? nativeChoices : NATIVE_DRAFTS
   const runtime = native ? runtimes.find((r) => r.id === state.selection.slice(7)) : catalog.runtimes.find((r) => r.id === 'traceharness')
   const nativeDraft = native ? state.native_prompt_drafts?.[state.selection.slice(7)] : null
@@ -182,6 +187,10 @@ export function HarnessComposer({ args = [] }) {
   ]
   const currentReview = !jsonPending && !forkError && preflight?.key === configurationKey && preflight.catalog === catalog && preflight.revision === catalogRevision && preflight.nativeInventoryRevision === nativeInventoryRevision && !catalogLoading
   const reviewed = currentReview && preflight.result?.ok === true && preflight.result.issues.length === 0
+  const enforcedLimits = reviewed && Array.isArray(preflight.result.manifest?.local?.enforced_limits) ? preflight.result.manifest.local.enforced_limits : null
+  const limitNames = (keys) => LIMIT_FIELDS.filter((field) => keys.includes(field.key)).map((field) => LIMIT_NAMES[field.key])
+  const recordedOnly = enforcedLimits ? limitNames(Object.keys(configuration.limits).filter((key) => !enforcedLimits.includes(key))) : []
+  const limitsSentence = enforcedLimits && `Enforced on this computer: ${limitNames(enforcedLimits).join(', ') || 'none'}.${recordedOnly.length ? ` Recorded in the manifest but not enforced: ${recordedOnly.join(', ')}.` : ''}`
 
   useEffect(() => {
     setStorageError(writeDraft('composer-source', forkSource), 'source')
@@ -470,16 +479,16 @@ export function HarnessComposer({ args = [] }) {
     finally { if (active.current && stillCurrent() && preflightRequest.current === controller) setChecking(false) }
   }
   async function run() {
-    if (editLocked || !reviewed || readyIssues.length || !credential || expiryTime(credential.expires_at) <= Date.now() || launching || jobActive) return
+    if (editLocked || !reviewed || readyIssues.length || needsCredential && (!credential || expiryTime(credential.expires_at) <= Date.now()) || launching || jobActive) return
     const manifestHash = preflight.result.manifest_sha256
-    const identity = configurationKey + ':' + manifestHash + ':' + credential.credential_id
+    const identity = configurationKey + ':' + manifestHash + ':' + (needsCredential ? credential.credential_id : 'settings-key')
     if (retry.current?.identity !== identity || retry.current.confirmed) retry.current = { identity, key: crypto.randomUUID() }
     const request = ++jobRequest.current
     const submission = retry.current
     const lease = 'unconfirmed:' + submission.key
     setLaunching(true); setError(''); submittedRunLeases.current.add(lease)
     try {
-      const data = await runnerRequest('/jobs', { method: 'POST', body: { configuration, manifest_sha256: manifestHash, credential_id: credential.credential_id, idempotency_key: submission.key } })
+      const data = await runnerRequest('/jobs', { method: 'POST', body: { configuration, manifest_sha256: manifestHash, ...(needsCredential ? { credential_id: credential.credential_id } : {}), idempotency_key: submission.key } })
       if (active.current && request === jobRequest.current) {
         const next = asJob(data.job)
         submittedRunLeases.current.delete(lease)
@@ -609,7 +618,8 @@ export function HarnessComposer({ args = [] }) {
   function forkHostedRun() {
     if (!job?.manifest || editLocked || jsonPending) return
     try {
-      const value = parseConfiguration(encodeMemberJSON(configurationFromManifest(job.manifest)))
+      // `local` (results directory, enforced limits) describes where a local run went, not what it ran.
+      const value = parseConfiguration(encodeMemberJSON(configurationFromManifest(Object.fromEntries(Object.entries(job.manifest).filter(([key]) => key !== 'local')))))
       const prepared = prepareHarnessJSON(job.manifest)
       const source = { kind: 'Recorded run manifest', title: `Run ${job.id}`, hash: job.manifest_sha256 || null, value: JSON.parse(prepared.json), redacted: prepared.redactions > 0,
         note: 'Forked from the recorded manifest. The original runtime/task pins remain in the source document; the new dispatch must pass current compatibility and manifest review.' }
@@ -698,7 +708,7 @@ export function HarnessComposer({ args = [] }) {
         {native && <div className="rg-note"><p>Native runtime settings are controlled by its verified adapter. TraceHarness block settings are not applied to this agent.</p>{runtime?.reason && <p className="rg-small">{runtime.reason}</p>}</div>}
         {[...(preview?.warnings || []), ...blocksIssues].map((warning) => <p className="rg-harness-warning" role="status" key={warning}>{warning}</p>)}
         {previewError && <p role="alert">{previewError}</p>}
-        {credentialsAvailable ? <section className="rg-pnl rg-composer-key"><div className="rg-pnl-h"><Icon name="sent" /><h2>OpenRouter connection</h2></div><div className="rg-pnl-b">
+        {!needsCredential ? <p className="rg-small rg-mute" data-el="runner-settings-key">Models other than mock use the key set in Settings on this computer.</p> : credentialsAvailable ? <section className="rg-pnl rg-composer-key"><div className="rg-pnl-h"><Icon name="sent" /><h2>OpenRouter connection</h2></div><div className="rg-pnl-b">
           {!credentialsAvailable ? <p className="rg-small">Connect an execution service before adding a key. No key is collected while the runner is unavailable.</p>
             : credential ? <><p role="status">Connected for this session · expires at {readableTime(credential.expires_at)}</p><button className="rg-btn" onClick={clearKey}>Disconnect OpenRouter</button>{hasPendingRun() && <p className="rg-small">Disconnecting blocks future model calls for runs started with this connection. Use Cancel run to stop execution.</p>}</>
               : <><label className="rg-fld">OpenRouter API key<input className="rg-inp" type="password" autoComplete="off" spellCheck={false} value={key} disabled={connecting} onChange={(e) => setKey(e.target.value)} /></label><div className="rg-row rg-wrap"><button className="rg-btn" disabled={!key.trim() || connecting} onClick={connectKey}>{connecting ? 'Verifying key…' : 'Connect OpenRouter'}</button><button className="rg-btn ghost" onClick={clearKey}>Clear key</button></div></>}
@@ -710,8 +720,8 @@ export function HarnessComposer({ args = [] }) {
         <div><dt>Model</dt><dd>{state.model_id || 'Choose a model'}</dd></div><div><dt>Task</dt><dd>{task?.title || state.task_id || 'Choose a task'}{task?.revision && <small>{task.revision}</small>}</dd></div>
         <div><dt>Prompt</dt><dd>{new TextEncoder().encode(prompt).length.toLocaleString()} bytes · {configuration.prompt_mode}</dd></div>
         {nativeDraft?.enabled && <div><dt>Native profile</dt><dd>{nativeCounts ? `${nativeCounts.included} / ${nativeCounts.patchable} patchable included` : 'Exact inventory required'}<small>{nativeCounts ? `${nativeCounts.baseline} baseline · ${nativeCounts.replaced} replacement · ${nativeCounts.disabled} disabled` : 'Draft preserved; execution unavailable'}</small><small className="rg-mono">{nativeDraft.profile.inventory_sha256}</small></dd></div>}
-      </dl><fieldset className="rg-composer-limits" disabled={editLocked}><legend>Run limits</legend>{LIMIT_FIELDS.filter((field) => native || field.key !== 'max_steps').map((field) => <NumericField key={field.key} field={native && field.key === 'max_steps' ? { ...field, label: 'Model request cap' } : field.key === 'max_output_tokens' && configuration.runtime_id === 'native-claude-code' ? { ...field, min: 2049 } : field} value={state.limits[field.key]} onChange={(value) => setState((s) => ({ ...s, limits: { ...s.limits, [field.key]: value } }))} />)}{native ? <p className="rg-small rg-mute">The request cap counts model calls; native tool actions are controlled by the runtime. The output cap clamps each provider request and its cost reservation. A low output cap can truncate a reply. Claude requires at least 2049 output tokens to retain its fixed 2048-token thinking budget.</p> : <p className="rg-small rg-mute">{configuration.limits.max_steps} steps · set by this harness</p>}</fieldset><div className="rg-composer-readiness" aria-live="polite"><strong>{reviewed ? 'Configuration verified' : 'Before this can run'}</strong>{readyIssues.length ? <ul>{[...new Set(readyIssues)].map((issue) => <li key={issue}>{issue}</li>)}</ul> : !reviewed ? <p>Review the configuration with the runner before launching.</p> : <p>The server validated this exact configuration. Running may spend your OpenRouter credits.</p>}{!credential && credentialsAvailable && <p>Connect your OpenRouter key to run.</p>}{currentReview && preflight.result.issues.map((issue) => <p key={issue} role="alert">{issue}</p>)}</div>
-      <div className="rg-composer-actions"><button className="rg-btn" onClick={reviewRun} disabled={editLocked || !!readyIssues.length || checking}>{checking ? 'Reviewing…' : 'Review run'}</button><button className="rg-btn pri" onClick={run} disabled={editLocked || !reviewed || !!readyIssues.length || !credential || !!jobActive}>{launching ? 'Starting…' : job && terminal.has(job.status) ? 'Run again' : 'Run'}</button>
+      </dl><fieldset className="rg-composer-limits" disabled={editLocked}><legend>Run limits</legend>{LIMIT_FIELDS.filter((field) => native || field.key !== 'max_steps').map((field) => <NumericField key={field.key} field={native && field.key === 'max_steps' ? { ...field, label: 'Model request cap' } : field.key === 'max_output_tokens' && configuration.runtime_id === 'native-claude-code' ? { ...field, min: 2049 } : field} value={state.limits[field.key]} onChange={(value) => setState((s) => ({ ...s, limits: { ...s.limits, [field.key]: value } }))} />)}{native ? <p className="rg-small rg-mute">The request cap counts model calls; native tool actions are controlled by the runtime. The output cap clamps each provider request and its cost reservation. A low output cap can truncate a reply. Claude requires at least 2049 output tokens to retain its fixed 2048-token thinking budget.</p> : <p className="rg-small rg-mute">{configuration.limits.max_steps} steps · set by this harness</p>}{limitsSentence && <p className="rg-small rg-mute" data-el="runner-enforced-limits">{limitsSentence}</p>}</fieldset><div className="rg-composer-readiness" aria-live="polite"><strong>{reviewed ? 'Configuration verified' : 'Before this can run'}</strong>{readyIssues.length ? <ul>{[...new Set(readyIssues)].map((issue) => <li key={issue}>{issue}</li>)}</ul> : !reviewed ? <p>Review the configuration with the runner before launching.</p> : <p>The server validated this exact configuration.{needsCredential ? ' Running may spend your OpenRouter credits.' : ''}</p>}{needsCredential && !credential && credentialsAvailable && <p>Connect your OpenRouter key to run.</p>}{currentReview && preflight.result.issues.map((issue) => <p key={issue} role="alert">{issue}</p>)}</div>
+      <div className="rg-composer-actions"><button className="rg-btn" onClick={reviewRun} disabled={editLocked || !!readyIssues.length || checking}>{checking ? 'Reviewing…' : 'Review run'}</button><button className="rg-btn pri" onClick={run} disabled={editLocked || !reviewed || !!readyIssues.length || needsCredential && !credential || !!jobActive}>{launching ? 'Starting…' : job && terminal.has(job.status) ? 'Run again' : 'Run'}</button>
 
 
       </div><p className="rg-small rg-mute">Selections stay in this tab. Saving a harness does not run a model.</p>
@@ -720,7 +730,7 @@ export function HarnessComposer({ args = [] }) {
       </aside>
     </div>
     {/* the main workflow sits directly under the run configuration, above history and the JSON editor */}
-    <section aria-label="Experiment dispatch"><ExperimentWorkspace configuration={configuration} catalog={catalog} credential={credential} available={catalog.execution_available} disabled={editLocked || jsonPending || !!forkError} lease={experimentLease} onOpenJob={openJob} /></section>
+    <section aria-label="Experiment dispatch"><ExperimentWorkspace configuration={configuration} catalog={catalog} credential={credential} available={catalog.execution_available && catalog.experiments_available !== false} disabled={editLocked || jsonPending || !!forkError} lease={experimentLease} onOpenJob={openJob} /></section>
     {forkError && <p role="alert">{forkError} <button className="rg-btn" onClick={() => setForkError('')}>Keep previous draft</button></p>}
     {forkSource?.value && <aside className="rg-pnl rg-pnl-b" aria-label="Draft source"><strong>Derived from {forkSource.title}</strong><p className="rg-small">{forkSource.note}</p>{forkSource.redacted && <p className="rg-small">Credential-shaped source values were redacted before copying this provenance into the draft.</p>}</aside>}
     <details className="rg-composer-details"><summary>Edit configuration JSON</summary><section aria-label="Configuration JSON editor"><ConfigurationEditor configuration={configuration} disabled={editLocked} onApply={(value) => applyDraft({ ...applyConfiguration(state, value), source: forkSource })} onPendingChange={setJsonPending} /></section></details>
@@ -739,8 +749,8 @@ export function HarnessComposer({ args = [] }) {
     </div>}
     {(catalog.runner.available || recentJobs.length > 0 || jobsError) && <section className="rg-pnl rg-composer-history" aria-label="Recent runs">
       <div className="rg-pnl-h"><h2>Recent runs</h2><button type="button" className="rg-btn" disabled={jobsLoading} onClick={() => setJobsRevision((value) => value + 1)}>{jobsLoading ? 'Refreshing runs…' : 'Refresh runs'}</button></div>
-      <div className="rg-pnl-b"><p className="rg-small rg-mute">Runs retained for this signed-in account. Opening a result leaves your editor configuration unchanged.</p>
-        {jobsError && <p role="alert">{jobsError}</p>}{!jobsLoading && !recentJobs.length && !jobsError && <p>No submitted runs in this account.</p>}
+      <div className="rg-pnl-b"><p className="rg-small rg-mute">Runs retained for {LIBRARY.label || 'this runner'}.{catalog.scope === 'local' ? ' This list covers this server session; every run also stays in Datasets.' : ''} Opening a result leaves your editor configuration unchanged.</p>
+        {jobsError && <p role="alert">{jobsError}</p>}{!jobsLoading && !recentJobs.length && !jobsError && <p>No submitted runs for {LIBRARY.label || 'this runner'}.</p>}
         {!!recentJobs.length && <ul className="rg-composer-run-list">{recentJobs.slice(0, jobsVisible).map((row) => <li key={row.id} aria-current={job?.id === row.id ? 'true' : undefined}>
           <div><strong className="rg-mono">{row.id}</strong><span>{row.status.replaceAll('_', ' ')} · {gradeLabels[row.grade] || 'Not graded'}</span><time>{runTime(row.created_at)}</time></div>
           <button type="button" className="rg-btn" disabled={launching || !!openingJob} aria-label={'Open run ' + row.id} onClick={() => openJob(row.id)}>{openingJob === row.id ? 'Opening…' : 'Open run'}</button>
@@ -757,6 +767,7 @@ export function HarnessComposer({ args = [] }) {
         <HarnessJson key={job.id} source="Recorded run manifest" identity={`Run ${job.id}${job.manifest_sha256 ? ' · manifest SHA-256 ' + job.manifest_sha256 : ''}`}
           description="The complete manifest returned for this run: harness, prompts, runtime pins, model, task, limits and native interventions when recorded. Your editor draft is separate. The manifest artifact below provides the SHA-256-verified original file."
           documents={[{ id: 'manifest', label: 'Run manifest', value: job.manifest, filename: `manifest-${job.id}.json` }]} />
+        {terminal.has(job.status) && SAFE_NAME.test(job.results_dir || '') && SAFE_NAME.test(job.run_id || '') && <div className="rg-row rg-wrap" data-el="runner-local-run"><Go spec={makeSpec('ds', job.results_dir)} className="rg-btn" label={'Open ' + job.results_dir + ' in Datasets'}>Open in Datasets</Go><Go spec={makeSpec('run', job.run_id)} className="rg-btn" label={'Open run ' + job.run_id}>Open the run</Go></div>}
         {job.manifest && <button className="rg-btn" disabled={editLocked || jsonPending} onClick={forkHostedRun}>Fork this run configuration</button>}
         {job.manifest_sha256 && <p className="rg-small rg-mono">Configuration {job.manifest_sha256}</p>}{(job.issues || []).map((issue) => <p key={issue} role="alert">{issue}</p>)}{jobError && <p role="alert">{jobError}</p>}
         <div className="rg-row rg-wrap"><button className="rg-btn" disabled={launching || !!openingJob} onClick={() => refreshJob()}>Refresh status</button>{!terminal.has(job.status) && <button className="rg-btn" disabled={cancelling || job.cancellation_requested || !!openingJob} onClick={() => refreshJob(true)}>{cancelling ? 'Requesting cancellation…' : 'Cancel run'}</button>}</div>
@@ -765,7 +776,7 @@ export function HarnessComposer({ args = [] }) {
         {job.artifacts?.length > 0 && <ul className="rg-composer-artifacts" aria-label="Run artifacts">{job.artifacts.map((artifact) => <li key={artifact.name}><div><strong>{artifact.name}</strong><span>{artifact.bytes.toLocaleString()} bytes · SHA-256 verified before download</span></div><button type="button" className="rg-btn" aria-label={'Download ' + artifact.name} disabled={!!downloadingArtifact} onClick={() => downloadArtifact(artifact)}>{downloadingArtifact === artifact.name ? 'Verifying…' : 'Download'}</button></li>)}</ul>}
       </div>
     </section>}
-    <PairedExperiments configuration={configuration} credential={credential} available={catalog.execution_available} disabled={editLocked || !!readyIssues.length} lease={experimentLease} />
+    <PairedExperiments configuration={configuration} credential={credential} available={catalog.execution_available && catalog.experiments_available !== false} disabled={editLocked || !!readyIssues.length} lease={experimentLease} />
     <footer className="rg-composer-footer"><Go spec="shallowApply" className="rg-tlink">Compare one prompt across the six TraceHarness shells</Go><span>Native runtimes and lab stand-ins are distinct engines.</span></footer>
   </div>
 }
