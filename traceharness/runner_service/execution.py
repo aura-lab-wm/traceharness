@@ -27,6 +27,33 @@ def short_tmp() -> str:
     return "/tmp" if os.path.isdir("/tmp") else tempfile.gettempdir()
 
 
+def open_workspace_for_grading(root):
+    """Add read (and directory/exec-preserving traverse) permission for group and others on a finished candidate
+    workspace, so the capability-dropped trusted grader can enumerate and read it. Only r/x bits are added, never
+    w, so the tree is writable by nobody but its owner; symlinks are never followed or chmod-ed."""
+    root = Path(root)
+    def widen(path, info):
+        mode = stat.S_IMODE(info.st_mode)
+        extra = 0o044 | (0o011 if stat.S_ISDIR(info.st_mode) or mode & 0o111 else 0)
+        if mode | extra != mode:
+            os.chmod(path, mode | extra)
+    info = os.lstat(root)
+    if stat.S_ISDIR(info.st_mode):
+        widen(root, info)
+    for directory, dirs, names in os.walk(root, followlinks=False):
+        for name in dirs + names:
+            child = os.path.join(directory, name)
+            try:
+                info = os.lstat(child)
+            except OSError:
+                continue
+            if stat.S_ISDIR(info.st_mode) or stat.S_ISREG(info.st_mode):
+                try:
+                    widen(child, info)
+                except OSError:
+                    pass
+
+
 class ExecutionError(Exception):
     def __init__(self, message, *, artifacts=None, grade=None):
         super().__init__(message)
@@ -623,6 +650,10 @@ class DockerExecutor:
             raise ExecutionError("Execution was cancelled.")
         # Grading is a separate offline process. The agent never sees hidden tests.
         grading = directory / "grading"
+        # The agent has exited. Under a root console the workspace belongs to uid 10001 with modes the agent chose
+        # (0700), and the grader (root, capabilities dropped, so no DAC override) could not even list it: every
+        # candidate graded "failed". Give it read/traverse access only; nothing becomes writable.
+        open_workspace_for_grading(work)
         if self.settings.local:
             args = self.container_args(name + "-grade", manifest["grader_image_digest"],
                 [(work, "/workspace", True), (source, "/task", True)], entrypoint="sh", grader=True, output_tmpfs=True)

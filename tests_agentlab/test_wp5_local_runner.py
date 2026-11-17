@@ -117,6 +117,7 @@ class DurableResultTests(BackendBase):
         self.wait(job["id"])
         jobs = self.runner.app.state.jobs
         jobs.rows[job["id"]].pop("persisted", None)
+        jobs.rows[job["id"]].pop("persisted_version", None)
         jobs.persist = lambda row, directory: (_ for _ in ()).throw(OSError("disk full"))
         jobs.clock = lambda: job["updated_at"] + jobs.settings.job_ttl + 10
         jobs.list("local")

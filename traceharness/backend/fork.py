@@ -205,7 +205,8 @@ def steps_of(spans: list[dict]) -> list[dict]:
             st["requested"] = [t.get("name") for t in (sp.get("tool_calls") or [])]
         elif kind == "execute_tool" and cur >= 0:
             tool = sp.get("gen_ai.tool.name")
-            args = sp.get("args") or {}
+            args = sp.get("args") if isinstance(sp.get("args"), dict) else {}
+            args = {k: (v if isinstance(v, str) or k not in ("command", "path") else "") for k, v in args.items()}
             slot(cur)["tools"].append({
                 "tool": tool, "args": args_summary(tool, args), "canon": canon_args(args),
                 "status": sp.get("status", "ok"), "tests_passed": sp.get("tests_passed"),

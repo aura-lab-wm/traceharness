@@ -101,15 +101,27 @@ def _schedule(base):
 
 def review_plan(value, review):
     """Pure: resolve all exact manifests, then freeze one reproducible schedule."""
-    failure=lambda message:{'ok':False,'issues':[message],'plan':None,'plan_sha256':None,'maximum_cost_usd':None,'trial_count':0}
+    failure=lambda message,**more:{'ok':False,'issues':[message],'plan':None,'plan_sha256':None,'maximum_cost_usd':None,'trial_count':0,
+                                   'consent_required':False,'consent_arms':[],**more}
     try:
-        draft=_core_plan(value);arms=[]
+        draft=_core_plan(value);arms=[];refused=[];consent_arms=[];notes=[]
         for arm in draft['arms']:
             result,_=review(arm['configuration'])
-            _require(isinstance(result,dict) and result.get('ok') is True,f"Configuration {arm['label']} did not pass current runner review.")
+            if not (isinstance(result,dict) and result.get('ok') is True):
+                refused.append(arm['label'])
+                found=[str(i)[:300] for i in (result.get('issues') if isinstance(result,dict) and isinstance(result.get('issues'),list) else [])][:3]
+                notes+=[f"{arm['label']}: {i}" for i in found]
+                if isinstance(result,dict) and result.get('consent_required') is True:consent_arms.append(arm['id'])
+                continue
             _require(isinstance(result.get('manifest'),dict) and digest(result['manifest'])==result.get('manifest_sha256'),
                      'An experiment arm manifest could not be verified.')
             arms.append({**arm,'manifest':result['manifest'],'manifest_sha256':result['manifest_sha256']})
+        if refused:
+            # Bounded per-arm diagnostics. consent_arms are the arms refused only for a missing receipt (unverified_ok
+            # would pass them); consent_required says at least one such arm exists.
+            return failure(f"Configuration {refused[0]} did not pass current runner review.",
+                           issues=[f"Configuration {refused[0]} did not pass current runner review."]+notes[:12],
+                           consent_required=bool(consent_arms),consent_arms=consent_arms[:64])
         total=sum((Decimal(str(a['configuration']['limits']['max_cost_usd'])) for a in arms),Decimal('0'))*draft['repeats']
         _require(total.is_finite() and Decimal('0') < total <= Decimal('100'),'The maximum aggregate experiment budget must be at most $100.')
         if draft['version']==2:
@@ -118,7 +130,8 @@ def review_plan(value, review):
               'maximum_cost_usd':float(total),'trial_count':len(arms)*draft['repeats']}
         plan['schedule']=_schedule(plan)
         _require(len(canonical(plan))<=MAX_PLAN_BYTES,'The frozen experiment plan exceeds its retention limit. Use fewer or smaller arms.')
-        return {'ok':True,'issues':[],'plan':plan,'plan_sha256':digest(plan),'maximum_cost_usd':float(total),'trial_count':plan['trial_count']}
+        return {'ok':True,'issues':[],'plan':plan,'plan_sha256':digest(plan),'maximum_cost_usd':float(total),'trial_count':plan['trial_count'],
+                'consent_required':False,'consent_arms':[]}
     except JobError as error:return failure(str(error))
     except (ValueError,TypeError,KeyError,UnicodeError,RecursionError,OverflowError,InvalidOperation):return failure('The experiment plan is incomplete or invalid.')
 

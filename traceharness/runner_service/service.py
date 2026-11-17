@@ -87,7 +87,7 @@ def create_app(settings: Settings, *, registry=None, provider=None, executor=Non
         result = preflight(configuration, registry, status)
         model = next((row for row in models if row["id"] == configuration.get("model_id")), None)
         if result["ok"] and model is None:
-            result = {"ok": False, "issues": ["The selected model is not currently available."]}
+            result = {"ok": False, "issues": ["The selected model is not currently available."], "consent_required": False}
         return result, model
 
     experiments = Experiments(settings, jobs, vault, review_current, clock)
@@ -197,7 +197,7 @@ def create_app(settings: Settings, *, registry=None, provider=None, executor=Non
         status, models = await health()
         result = preflight(configuration, registry, status)
         if result["ok"] and configuration["model_id"] not in {row.get("id") for row in models}:
-            result = {"ok": False, "issues": ["The selected model is not currently available."]}
+            result = {"ok": False, "issues": ["The selected model is not currently available."], "consent_required": False}
         return result, models
 
     @app.post("/api/runner/preflight")
@@ -211,7 +211,7 @@ def create_app(settings: Settings, *, registry=None, provider=None, executor=Non
             result = preflight(configuration, registry, status)
             model = next((row for row in models if row["id"] == configuration.get("model_id")), None)
             if result["ok"] and model is None:
-                result = {"ok": False, "issues": ["The selected model is not currently available."]}
+                result = {"ok": False, "issues": ["The selected model is not currently available."], "consent_required": False}
             return result, model
         return review_plan(plan, resolved)
 

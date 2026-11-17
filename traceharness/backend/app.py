@@ -299,7 +299,7 @@ def run_detail(name: str, run_id: str):
     model = S.load_model()
     out = {"summary": rd_("summary.json", True), "spans": spans, "patch": rd_("patch.diff"),
            "messages": rd_("messages.json", True), "replay": S.replay(spans, model),
-           "issue": _issue_for(spans[0]["task_id"]) if spans else ""}
+           "issue": _issue_for(spans[0].get("task_id")) if spans else ""}
     # A third-party agent run in a container (traceharness/agents): the broker's record of every model
     # call (host, tokens, cache, cost, latency) and where the run happened (image, limits, exit).
     if os.path.exists(os.path.join(rd, "container.json")):
@@ -308,7 +308,9 @@ def run_detail(name: str, run_id: str):
     return out
 
 
-def _issue_for(tid: str) -> str:
+def _issue_for(tid) -> str:
+    if not isinstance(tid, str) or not tid or "/" in tid or tid in (".", ".."):
+        return "(this run's first span names no task: the issue text is unavailable)"
     p = os.path.join(TASK_DIR, tid)
     if os.path.isdir(p) and os.path.exists(os.path.join(p, "task.json")):
         return load_task(p)["issue"]

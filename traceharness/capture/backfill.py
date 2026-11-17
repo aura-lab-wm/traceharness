@@ -94,6 +94,14 @@ def _append_index(index_path: str, rows: list[dict]) -> None:
         f.flush()
         os.fsync(f.fileno())
     os.replace(tmp, index_path)
+    try:                                    # the swap itself is only durable once its directory entry is
+        dfd = os.open(os.path.dirname(os.path.abspath(index_path)), os.O_RDONLY | getattr(os, "O_DIRECTORY", 0))
+        try:
+            os.fsync(dfd)
+        finally:
+            os.close(dfd)
+    except OSError:
+        pass
 
 
 def _indexed_run_ids(index_path: str) -> set[str]:

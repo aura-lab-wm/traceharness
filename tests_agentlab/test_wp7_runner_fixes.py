@@ -381,7 +381,7 @@ class DurableEvidenceTests(unittest.TestCase):
         self.assertIs(meta["runner_receipt"], False)
 
     def test_a_ledger_shaped_trace_is_published_and_kept(self):
-        spans = [{"span": "invoke_agent", "seq": 0, "status": "start", "harness": {}}, {"span": "chat", "seq": 1, "step": 0, "text": "hi"},
+        spans = [{"span": "invoke_agent", "seq": 0, "status": "start", "harness": {}, "task_id": "fixture-task"}, {"span": "chat", "seq": 1, "step": 0, "text": "hi"},
                  {"span": "invoke_agent", "seq": 2, "status": "end"}]
         trace = "".join(json.dumps(s) + "\n" for s in spans).encode()
         row, directory = finished_job(self.root, trace=trace)
@@ -423,18 +423,19 @@ class UntrustedRuntimeJsonTests(unittest.TestCase):
         from traceharness.backend import app as backend
         row, directory = finished_job(self.root, messages=b"[NaN]")
         self.persist(row, directory)
+        # The built-in default risk model is the explicit stand-in for a trained one; any exception from the
+        # request itself (serialization, replay) is a failure, never a skip.
+        if not hasattr(backend.S.RiskModel, "default"):
+            self.skipTest("the sentinel has no default risk model in this build")
         with patch.object(backend, "_dir", return_value=str(Path(self.runs) / "runner_jobs")), \
-                patch.object(backend.S, "load_model", return_value=backend.S.RiskModel() if hasattr(backend.S, "RiskModel") else None):
-            try:
-                response = TestClient(backend.app).get(f"/api/results/runner_jobs/runs/{row['job']['id']}")
-            except Exception as exc:                                  # a model-less environment: the point is the JSON read
-                self.skipTest(f"run-detail needs a sentinel model here: {exc}")
+                patch.object(backend.S, "load_model", return_value=backend.S.RiskModel.default()):
+            response = TestClient(backend.app).get(f"/api/results/runner_jobs/runs/{row['job']['id']}")
         self.assertEqual(response.status_code, 200, response.text[:300])
         self.assertIsNone(response.json()["messages"])
 
     def test_non_finite_and_schema_invalid_ledger_spans_are_quarantined_with_a_safe_ledger(self):
         from traceharness.core.span_schema import span_problem
-        good = {"span": "invoke_agent", "seq": 0, "status": "start", "harness": {}}
+        good = {"span": "invoke_agent", "seq": 0, "status": "start", "harness": {}, "task_id": "fixture-task"}
         for label, bad in (("NaN", b'{"span": "chat", "seq": 1, "step": 0, "cost_usd": NaN}'),
                            ("1e999", b'{"span": "chat", "seq": 1, "step": 0, "duration_ms": 1e999}'),
                            ("a chat without its step", b'{"span": "chat", "seq": 1}'),

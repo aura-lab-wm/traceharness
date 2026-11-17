@@ -18,6 +18,9 @@ from .credentials import CredentialUnavailable
 from .execution import ExecutionError
 from .provider import ProviderError, provider_status
 
+#: Format of what the persistence hook writes (runner/datasets.py). Bump it when that format changes: jobs marked
+#: persisted under an older version are written again before retention may delete them.
+PERSISTED_VERSION = 2
 TERMINAL = {"succeeded", "failed", "cancelled", "needs_attention"}
 
 # Only these adapter-authored literals may become pretransport diagnostics.
@@ -353,13 +356,16 @@ class Jobs:
         temp.replace(directory / "job.json")
 
     def _persisted(self, row):
-        if row.get("persisted"):
+        # The acknowledgement is versioned: a job marked persisted by an older format (a bare `persisted: true`)
+        # is written again in the current format before retention may delete it.
+        if row.get("persisted_version") == PERSISTED_VERSION:
             return True
         if self.persist is None:
             return False
         try:
             if self.persist(row, self.root / row["job"]["id"]):
                 row["persisted"] = True
+                row["persisted_version"] = PERSISTED_VERSION
                 self._save(row)
                 return True
         except Exception:
