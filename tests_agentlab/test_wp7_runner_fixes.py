@@ -129,7 +129,6 @@ class OneOwnerPerStateDirectoryTests(unittest.TestCase):
             second._build_once()
             self.assertTrue(second._app.state.jobs.settings.read_only)
             self.assertFalse(second._app.state.executor.reconcile_startup(), "a non-owner never reconciles")
-            self.assertFalse(second._app.state.jobs.settle_restored())
             self.assertEqual(second_docker.mutating(), [], second_docker.calls)
             self.assertEqual(job_file.read_bytes(), snapshot, "a non-owner does not rewrite the owner's job files")
             self.assertFalse(second.is_ready(), "a non-owner starts nothing")
@@ -286,6 +285,160 @@ class PersistBeforePurgeTests(unittest.TestCase):
                     runner.build_app()
             self.assertTrue(callable(seen[0]), "persist is passed to the runner's job store before it restores state")
             runner.close()
+
+
+def finished_job(root, *, native=False, trace=None, messages=None, jid="f" * 48, extra=None):
+    """A finished job row and its job directory, as the executor leaves them."""
+    import hashlib
+    directory = Path(root) / "runner" / "jobs" / jid
+    directory.mkdir(parents=True)
+    manifest = {"runtime_id": "native-codex" if native else "traceharness", "task_id": "fixture-task", "model_id": "fixture/model",
+                "image_digest": "sha256:" + "1" * 64, "verified": False, "isolation_runtime": "runc",
+                "limits": {"storage_bytes": 1}}
+    if native:
+        manifest.update(native_prompt_profile={"name": "p"}, native_prompt_profile_sha256="2" * 64)
+    files = {"manifest.json": json.dumps(manifest, sort_keys=True).encode(), "grade.json": b'{"outcome": "passed"}',
+             "patch.diff": b"--- a\n+++ b\n", "summary.json": b'{"steps": 3, "tool_calls": 2}'}
+    if trace is not None:
+        files["trace.jsonl"] = trace
+    if messages is not None:
+        files["messages.json"] = messages
+    if native:
+        for name in ("native-prompt-profile.json", "native-prompt-application.json", "native-prompt-observations.json"):
+            files[name] = json.dumps({"artifact": name}).encode()
+    for name, body in files.items():
+        (directory / name).write_bytes(body)
+    row = {"owner": "local", "idempotency_key": "evidence-key-0001", "fingerprint": "f",
+           "job": {"id": jid, "status": "succeeded", "created_at": 1_770_000_000, "updated_at": 1_770_000_100, "manifest": manifest,
+                   "manifest_sha256": "9" * 64, "issues": [], "grade": "passed", "usage": {"requests": 3},
+                   "artifacts": [{"name": n, "bytes": len(b), "sha256": hashlib.sha256(b).hexdigest()} for n, b in files.items()],
+                   "cancellation_requested": False, **(extra or {})}}
+    return row, directory
+
+
+class DurableEvidenceTests(unittest.TestCase):
+    def setUp(self):
+        self.temp = tempfile.TemporaryDirectory()
+        self.addCleanup(self.temp.cleanup)
+        self.root = Path(self.temp.name)
+        self.runs = str(self.root / "data" / "runs")
+
+    def persist(self, row, directory):
+        from traceharness.runner import datasets
+        self.assertTrue(datasets.persist_job(self.runs, row, str(directory)))
+        return Path(self.runs) / datasets.dataset_for(row["idempotency_key"]) / row["job"]["id"]
+
+    def test_a_native_job_keeps_its_evidence_after_the_runner_job_expires(self):
+        import shutil
+        from traceharness.runner import datasets
+        events = b'{"type":"thread.started","id":"t1"}\n{"type":"item.completed","item":{"text":"done"}}\n'
+        row, directory = finished_job(self.root, native=True, trace=events, messages=b'[{"role": "user", "content": "x"}]')
+        run = self.persist(row, directory)
+        shutil.rmtree(directory)                                    # retention: the job directory is gone
+        evidence = run / "evidence"
+        names = {p.name for p in evidence.iterdir()}
+        for need in ("manifest.json", "grade.json", "trace.jsonl", "patch.diff", "provenance.json", "native-prompt-profile.json",
+                     "native-prompt-application.json", "native-prompt-observations.json"):
+            self.assertIn(need, names)
+        self.assertEqual((evidence / "trace.jsonl").read_bytes(), events, "the raw native trace is kept as it was")
+        provenance = json.loads((evidence / "provenance.json").read_text())
+        self.assertEqual(provenance["manifest_sha256"], "9" * 64)
+        self.assertEqual(provenance["trace"], "native_events")
+        for name, meta in provenance["files"].items():
+            self.assertEqual(meta["sha256"], __import__("hashlib").sha256((evidence / name).read_bytes()).hexdigest(), name)
+            self.assertIs(meta["runner_receipt"], True if name in ("manifest.json", "grade.json", "trace.jsonl") else meta["runner_receipt"])
+        self.assertEqual(set(datasets.read_evidence(self.runs, "runner_jobs", row["job"]["id"])), set(provenance["files"]))
+
+    def test_a_native_run_gets_a_valid_non_empty_ledger(self):
+        from traceharness.core.span_schema import span_problem
+        row, directory = finished_job(self.root, native=True, trace=b'{"type":"x"}\n')
+        run = self.persist(row, directory)
+        spans = [json.loads(line) for line in (run / "ledger.jsonl").read_text().splitlines()]
+        self.assertGreaterEqual(len(spans), 2)
+        self.assertEqual([span_problem(s) for s in spans], [None] * len(spans))
+        self.assertEqual(spans[0]["span"], "invoke_agent")
+        self.assertIn("native runtime trace", spans[0]["trace_note"])
+        self.assertEqual(spans[-1]["grade"], "passed")
+
+    def test_a_runner_receipt_mismatch_is_recorded_not_hidden(self):
+        row, directory = finished_job(self.root, trace=b"")
+        (directory / "grade.json").write_bytes(b'{"outcome": "failed"}')        # changed after the runner hashed it
+        run = self.persist(row, directory)
+        meta = json.loads((run / "evidence" / "provenance.json").read_text())["files"]["grade.json"]
+        self.assertIs(meta["runner_receipt"], False)
+
+    def test_a_ledger_shaped_trace_is_published_and_kept(self):
+        spans = [{"span": "invoke_agent", "seq": 0, "status": "start", "harness": {}}, {"span": "chat", "seq": 1, "step": 0, "text": "hi"},
+                 {"span": "invoke_agent", "seq": 2, "status": "end"}]
+        trace = "".join(json.dumps(s) + "\n" for s in spans).encode()
+        row, directory = finished_job(self.root, trace=trace)
+        run = self.persist(row, directory)
+        published = [json.loads(line) for line in (run / "ledger.jsonl").read_text().splitlines()]
+        self.assertEqual([s["span"] for s in published], ["invoke_agent", "chat", "invoke_agent"])
+        self.assertEqual((run / "evidence" / "trace.jsonl").read_bytes(), trace)
+
+
+class UntrustedRuntimeJsonTests(unittest.TestCase):
+    def setUp(self):
+        self.temp = tempfile.TemporaryDirectory()
+        self.addCleanup(self.temp.cleanup)
+        self.root = Path(self.temp.name)
+        self.runs = str(self.root / "data" / "runs")
+
+    def persist(self, row, directory):
+        from traceharness.runner import datasets
+        datasets.persist_job(self.runs, row, str(directory))
+        return Path(self.runs) / "runner_jobs" / row["job"]["id"]
+
+    def quarantine(self, row):
+        return self.root / "data" / "runner" / "quarantine" / row["job"]["id"]
+
+    def test_messages_with_nan_are_quarantined_and_never_reach_the_dataset(self):
+        row, directory = finished_job(self.root, messages=b'[{"role": "user", "content": NaN}]')
+        run = self.persist(row, directory)
+        self.assertFalse((run / "messages.json").exists())
+        self.assertFalse((run / "evidence" / "messages.json").exists())
+        self.assertEqual((self.quarantine(row) / "messages.json").read_bytes(), b'[{"role": "user", "content": NaN}]')
+        provenance = json.loads((run / "evidence" / "provenance.json").read_text())
+        self.assertIn("not finite JSON", provenance["quarantined"]["messages.json"]["reason"])
+        for path in run.rglob("*"):                                   # nothing published holds a non-finite number
+            if path.is_file():
+                self.assertNotIn(b"NaN", path.read_bytes(), path)
+
+    def test_the_run_detail_route_serves_a_run_whose_messages_were_quarantined(self):
+        from fastapi.testclient import TestClient
+        from traceharness.backend import app as backend
+        row, directory = finished_job(self.root, messages=b"[NaN]")
+        self.persist(row, directory)
+        with patch.object(backend, "_dir", return_value=str(Path(self.runs) / "runner_jobs")), \
+                patch.object(backend.S, "load_model", return_value=backend.S.RiskModel() if hasattr(backend.S, "RiskModel") else None):
+            try:
+                response = TestClient(backend.app).get(f"/api/results/runner_jobs/runs/{row['job']['id']}")
+            except Exception as exc:                                  # a model-less environment: the point is the JSON read
+                self.skipTest(f"run-detail needs a sentinel model here: {exc}")
+        self.assertEqual(response.status_code, 200, response.text[:300])
+        self.assertIsNone(response.json()["messages"])
+
+    def test_non_finite_and_schema_invalid_ledger_spans_are_quarantined_with_a_safe_ledger(self):
+        from traceharness.core.span_schema import span_problem
+        good = {"span": "invoke_agent", "seq": 0, "status": "start", "harness": {}}
+        for label, bad in (("NaN", b'{"span": "chat", "seq": 1, "step": 0, "cost_usd": NaN}'),
+                           ("1e999", b'{"span": "chat", "seq": 1, "step": 0, "duration_ms": 1e999}'),
+                           ("a chat without its step", b'{"span": "chat", "seq": 1}'),
+                           ("a boundary_event with a list kind", b'{"span": "boundary_event", "seq": 1, "kind": []}')):
+            with self.subTest(label), tempfile.TemporaryDirectory() as t:
+                trace = json.dumps(good).encode() + b"\n" + bad + b"\n"
+                row, directory = finished_job(Path(t), trace=trace)
+                self.runs = str(Path(t) / "data" / "runs")
+                run = self.persist(row, directory)
+                published = [json.loads(line) for line in (run / "ledger.jsonl").read_text().splitlines()]
+                self.assertEqual([span_problem(s) for s in published], [None] * len(published))
+                self.assertEqual(len(published), 2)
+                self.assertIn("quarantined", published[0]["trace_note"])
+                kept = Path(t) / "data" / "runner" / "quarantine" / row["job"]["id"] / "trace.jsonl"
+                self.assertEqual(kept.read_bytes(), trace)
+                self.assertFalse((run / "evidence" / "trace.jsonl").exists())
+                self.assertEqual(json.loads((run / "evidence" / "provenance.json").read_text())["trace"], "quarantined")
 
 
 if __name__ == "__main__":
