@@ -66,7 +66,22 @@ def assert_no_machine_names(case: unittest.TestCase, payload) -> None:
         case.assertNotIn(needle, text)
     user = os.environ.get("USER") or os.environ.get("LOGNAME")
     if user and len(user) > 2:
-        case.assertNotIn(user, text)
+        # The account name must not appear as a value or as a path segment. A plain substring test would fail
+        # on CI, where the account is literally "runner" and the contract has the reason "runner_not_ready".
+        def strings(value):
+            if isinstance(value, dict):
+                for v in value.values():
+                    yield from strings(v)
+            elif isinstance(value, list):
+                for v in value:
+                    yield from strings(v)
+            elif isinstance(value, str):
+                yield value
+        for value in strings(payload):
+            case.assertNotEqual(value, user)
+            for sep in ("/", "\\"):
+                case.assertNotIn(sep + user + sep, value)
+                case.assertFalse(value.endswith(sep + user), value)
 
 
 class TestEnvironmentRoute(unittest.TestCase):
