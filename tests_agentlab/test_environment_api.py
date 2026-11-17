@@ -114,6 +114,11 @@ class TestEnvironmentRoute(unittest.TestCase):
 
 class TestExportEmbedsTheExportAnswers(unittest.TestCase):
     def test_an_export_carries_mode_export_and_no_machine_path(self):
+        # build() enters the app's lifespan, and leaving it sets the process-wide shutdown flag
+        # that stops paused runs; put the flag back so later tests start from a running app.
+        from traceharness.backend import app as appmod
+        if not appmod._SHUTDOWN.is_set():
+            self.addCleanup(appmod._SHUTDOWN.clear)
         with tempfile.TemporaryDirectory() as td:
             out = os.path.join(td, "export.html")
             SE.build(out, results=["demo_mock"], n_runs=0)
