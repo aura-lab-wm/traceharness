@@ -1,9 +1,8 @@
 """No retired phrase (SPEC 4.4) in the console sources or the named documents.
 
-`PENDING` lists the files that still carry one, each with the package that rewrites it. Test 1
-holds every other file in scope clean, so a new retired phrase fails here at once. Test 2 is an
-expected failure until `PENDING` is empty; the lead empties it at integration, and then an
-unexpected success makes this file fail until the decorator is removed.
+`PENDING` named the files that still carried one while the uniformity round was in flight. It is
+empty now and stays empty: every file in scope is held clean, so a new retired phrase fails here
+at once.
 """
 import os
 import subprocess
@@ -16,22 +15,7 @@ sys.path.insert(0, LAB)
 
 from traceharness.shared import vocabulary as V            # noqa: E402
 
-PENDING = {
-    "traceharness/frontend/src/member-api.js",                  # WP1
-    "traceharness/frontend/src/rig/views/blocks.jsx",           # WP1
-    "traceharness/frontend/src/api.js",                         # WP2
-    "traceharness/frontend/src/rig/RigApp.jsx",                 # WP2
-    "traceharness/frontend/src/rig/data.js",                    # WP2
-    "traceharness/frontend/src/rig/guidance.js",                # WP2
-    "traceharness/frontend/src/rig/views/analysis.jsx",         # WP2
-    "traceharness/frontend/src/rig/views/buddy.jsx",            # WP2
-    "traceharness/frontend/src/rig/views/home.jsx",             # WP2
-    "traceharness/frontend/src/rig/views/workspace.jsx",        # WP2
-    "deploy/runner/README.md",                                  # WP3
-    "deploy/runner/fly/README.md",                              # WP3
-    "docs/NATIVE_PROMPT_INTERVENTIONS.md",                      # WP3
-    "docs/member-workbench.md",                                 # WP3
-}
+PENDING: set[str] = set()
 
 
 class TestVocabularyGate(unittest.TestCase):
@@ -45,7 +29,6 @@ class TestVocabularyGate(unittest.TestCase):
     def test_every_pending_file_is_in_scope(self):
         self.assertEqual(sorted(PENDING - set(V.scope_files(LAB))), [])
 
-    @unittest.expectedFailure
     def test_pending_is_empty(self):
         self.assertEqual(sorted(PENDING), [])
 
