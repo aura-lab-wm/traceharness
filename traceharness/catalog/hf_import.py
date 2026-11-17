@@ -353,7 +353,7 @@ def import_dataset(dataset_id: str, config=None, split=None, n: int = 200, seed:
             why = "; ".join(f"offset {x['offset']}: {x['reason']}" for x in skipped[:3])
             raise F.HFError(f"{len(skipped)} of {sampled} sampled rows were skipped (more than half), so no dataset was written. {why}")
         prov = {"source": "huggingface", "dataset": dataset_id, "url": f"{F.HUB}/datasets/{dataset_id}",
-                "revision": meta["revision"], "config": meta["config"], "split": meta["split"], "offsets": offsets,
+                "revision": meta["revision"], "revision_verified": bool(meta.get("revision_verified")), "config": meta["config"], "split": meta["split"], "offsets": offsets,
                 "seed": seed, "n": n, "n_imported": res["imported"], "skipped": skipped, "adapter": adapter,
                 "total_rows": meta["total_rows"], "license": meta["license"],
                 "redistributable": F.is_redistributable(meta["license"]), "fetched_at": _now()}

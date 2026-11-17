@@ -210,6 +210,7 @@ class Provenance(Case):
         self.assertEqual(prov, res["provenance"])
         self.assertEqual(prov["source"], "huggingface")
         self.assertEqual((prov["dataset"], prov["revision"], prov["config"], prov["split"]), ("acme/data", "b" * 40, "default", "train"))
+        self.assertIs(prov["revision_verified"], True)       # the Hub was asked again after the last row: same revision
         self.assertEqual((prov["seed"], prov["n"], prov["n_imported"]), (5, 12, 12))
         self.assertEqual(prov["offsets"], F.offsets_for(100, 12, 5))
         self.assertEqual((prov["license"], prov["redistributable"]), ("mit", True))
