@@ -110,6 +110,16 @@ describe('hosted workbench navigation', () => {
     expect(requests).toEqual([{ url: '/api/onboarding', method: 'GET' }])
   })
 
+  it('names the school datasets this member snapshot lacks, and says they open on the local console', () => {
+    const { container } = renderRig('#/rig/home', { data })
+    const line = container.querySelector('[data-el="datasets-not-here"]')
+    expect(line.textContent).toMatch(/^Not in this snapshot: /)
+    expect(line.textContent).toContain('llma4se_live')
+    expect(line.textContent).not.toContain(dir)
+    expect(line.textContent).toContain('Opening them runs on your computer.')
+    expect(line.textContent).toContain('127.0.0.1:8765')
+  })
+
   it('names the plain harness editor the same way in the status popover and the phone sheet', () => {
     const { container } = renderRig('#/rig/home', { data })
     fireEvent.click(container.querySelector('[data-el="runtime-status"]'))

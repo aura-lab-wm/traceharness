@@ -9,6 +9,9 @@
    ==================================================================================== */
 import { useMemo } from 'react'
 import { IS_STATIC, IS_MEMBER } from '../../api'
+import { MODE, why } from '../../environment'
+import { DATASETS } from '../../shared/index.js'
+import { Unavailable } from '../unavailable'
 import { makeSpec } from '../route'
 import { useDatasets, short, fmt } from '../data'
 import { useRig, useTabState } from '../context'
@@ -18,6 +21,14 @@ import './home.css'
 /** A dataset name with a line-break opportunity after each _ and -, so a narrow column wraps it
  *  between words ("captured_claude_" / "code") instead of mid-word. Text content is unchanged. */
 const breakable = (name) => String(name).split(/(?<=[_-])/).flatMap((part, i) => (i ? [<wbr key={i} />, part] : [part]))
+
+/** Where a dataset can also be opened (SPEC 4.8). No chip when the server did not say. */
+const PLACE = { hosted: 'on traceharness.dev', school: 'school package' }
+function Availability({ places }) {
+  if (!Array.isArray(places)) return null
+  const labels = places.length ? places.map((p) => PLACE[p]).filter(Boolean) : ['this computer only']
+  return labels.map((label) => <Tag key={label} nc el="dataset-availability">{label}</Tag>)
+}
 
 function Home({ spec }) {
   const ds = useDatasets()
@@ -32,12 +43,14 @@ function Home({ spec }) {
   if (!ds.data) return <Loading label="Reading the dataset library (/api/overview)…" />
   const total = all.reduce((a, r) => a + (r.runs || 0), 0)
   const cnt = (k) => all.filter((r) => k === 'all' || r.kind === k).length
+  // a snapshot (export or member) names the school datasets it does not carry; the local console has what it has
+  const lacking = MODE === 'local' ? [] : DATASETS.school.filter((name) => !all.some((r) => r.name === name))
   if (!all.length) {
     return (
       <div className="rg-dpad">
         <div className="rg-dh"><div className="t"><div className="rg-eyebrow">Library · data/runs</div><h1>Datasets</h1></div></div>
         <Empty title="No datasets yet." actions={[!IS_STATIC && { label: 'Load trajectories', spec: 'sources', primary: true }, !IS_STATIC && { label: 'Capture sessions on this machine', spec: 'capture' }, { label: 'Fixed harnesses', spec: 'shallowCards' }, { label: 'Minimal harness', spec: 'shallowWizard' }].filter(Boolean)}>
-          {IS_STATIC ? 'This snapshot contains no trajectory sets. You can still design a harness; import and capture run in the local workbench.' : 'data/runs on this machine holds no trajectory sets. Import another harness\'s traces, or capture the coding-agent sessions already on this machine.'}
+          {IS_STATIC ? `This snapshot contains no trajectory sets. You can still design a harness. ${why('data.import', 'Importing')}` : 'data/runs on this machine holds no trajectory sets. Import another harness\'s traces, or capture the coding-agent sessions already on this machine.'}
         </Empty>
       </div>
     )
@@ -83,7 +96,7 @@ function Home({ spec }) {
                   onClick={(e) => { if (!e.target.closest('button')) openTab(makeSpec('ds', r.name), { side: e.metaKey || e.ctrlKey }) }}>
                   <td className="rg-home-name">
                     {/* every row has the same two-line shape: the name, then its kind tag and its models */}
-                    <div className="rg-home-nl"><Go spec={makeSpec('ds', r.name)} className="rg-tlink rg-home-dn"><b>{breakable(r.name)}</b></Go></div>
+                    <div className="rg-home-nl"><Go spec={makeSpec('ds', r.name)} className="rg-tlink rg-home-dn"><b>{breakable(r.name)}</b></Go><Availability places={r.availability} /></div>
                     <div className="rg-home-meta"><Tag tone={r.kind === 'mock' ? 'dash' : undefined} el="dataset-kind">{r.kind === 'mock' ? 'Mock control' : 'Recorded'}</Tag>
                       <span className="rg-home-models rg-ell" data-el="dataset-models" title={r.models.join(', ')}>{r.models.map(short).join(' · ')}</span></div>
                   </td>
@@ -105,6 +118,12 @@ function Home({ spec }) {
             </PanelState>
           )}
         </div>
+        {lacking.length > 0 && (
+          <div className="rg-home-nothere" data-el="datasets-not-here">
+            <p className="rg-small rg-dim">Not in this snapshot: {lacking.join(', ')}.</p>
+            <Unavailable capability="data.import" what="Opening them" el="datasets-not-here-why" />
+          </div>
+        )}
       </section>
       <About summary="About recorded datasets and mock controls" el="dataset-kind-about">
         <p><b>Recorded</b> datasets hold real agent trajectories: each run is a ledger of model calls and tool actions. Test-suite grades are shown where recorded; captured sessions and imported runs can have unknown outcomes.</p>

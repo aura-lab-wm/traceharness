@@ -58,3 +58,6 @@
 .rg-home-list-cell{max-width:26rem;overflow:hidden;text-overflow:ellipsis;color:var(--rig-dim);font:var(--rig-fs-xs)/var(--rig-lh-snug) var(--rig-mono)}
 @media (min-width:1920px){.rg-home-xl{display:table-cell}.rg-home-tbl .rg-home-name{width:30%}}
 @media (min-width:2560px){.rg-home-xxl{display:table-cell}}
+/* SPEC 4.8: in a snapshot, the school datasets it does not carry and why they open only locally. */
+.rg-home-nothere{display:grid;gap:var(--rig-s2);margin-top:var(--rig-s3)}
+.rg-home-nothere>p{margin:0}

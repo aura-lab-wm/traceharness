@@ -53,7 +53,8 @@ const NOTES = schoolPackage.dataset_notes || {}
 const PRIV = { private: true }
 const cx = (...a) => a.filter(Boolean).join(' ')
 const errText = (e) => String((e && e.message) || e || 'unknown error')
-const day = (iso) => { const d = new Date(iso); return Number.isFinite(d.getTime()) ? d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '—' }
+/** A dataset date, or "not recorded" (SPEC 4.7): never "null", "Invalid Date" or 1970. */
+const day = (iso) => { const d = new Date(iso || NaN); return iso && Number.isFinite(d.getTime()) ? d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : 'not recorded' }
 /** An epoch second as its own timestamp, never "2 hours ago" (method/Capture.jsx stamp()). */
 const stamp = (at) => { const d = new Date((at || 0) * 1000); return at && Number.isFinite(d.getTime()) ? d.toISOString().slice(0, 19).replace('T', ' ') : '—' }
 
