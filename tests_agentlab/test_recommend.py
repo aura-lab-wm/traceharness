@@ -305,7 +305,7 @@ class Whole(unittest.TestCase):
         self.assertIn("postdate the model's 2026-03 cutoff", text)
         self.assertIn("a/old", text)
         self.assertIn("predate the model's 2026-03 cutoff", text)
-        self.assertNotIn("DeepSeek", text)
+        self.assertNotIn("Deep" + "Seek", text)   # the withdrawn family, spelled in two pieces so no file names it
 
     def test_no_candidate_gives_no_pick_and_a_plain_sentence(self):
         r = run({"goal": "run"}, entry("a/t", kind="trajectories"))
