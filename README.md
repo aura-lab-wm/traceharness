@@ -15,6 +15,48 @@
 
 ![Record, compare, read](docs/img/readme/path.svg)
 
+## Quick start
+
+TraceHarness runs on your machine; there is no hosted service. Pick one of three ways, then open
+**http://127.0.0.1:8765**.
+
+| Way | What works | Needs |
+|---|---|---|
+| **From the repository** | everything, including Claude Code and Codex in containers, experiment matrices and paired native-prompt experiments | Python 3.10+ (3.12 recommended); Docker for the container features |
+| **GitHub Codespaces** | everything (Docker is included) | a GitHub account |
+| **Container image** | datasets, analysis, imports and in-process runs; no container runs | Docker |
+
+**From the repository**
+
+```bash
+git clone https://github.com/aura-lab-wm/traceharness && cd traceharness
+python3 -m venv .venv && source .venv/bin/activate
+python3 -m pip install -e '.[real]'
+python3 -m traceharness --no-browser
+```
+
+To run agents in containers, experiment matrices or paired experiments, set up the local runner once (Docker must be
+running; it builds a few GB of images on your machine), then add your OpenRouter key in **Settings**:
+
+```bash
+traceharness runner setup
+traceharness runner status     # Ready: yes
+```
+
+**GitHub Codespaces:** use the badge above. The console starts in the codespace; run `traceharness runner setup` in its
+terminal for the container features.
+
+**Container image:**
+
+```bash
+docker run --rm -p 127.0.0.1:8765:8765 ghcr.io/aura-lab-wm/traceharness:latest
+```
+
+**Upgrading from 0.5.x:** `git pull`, `python3 -m pip install -e '.[real]'`, then `traceharness runner setup` once. The
+hosted console at traceharness.dev is gone: everything it ran now runs in your local console, and captured sessions move
+between machines with `traceharness capture export --out FILE.zip` and `traceharness capture import FILE.zip`. Releases
+(wheel, school package, image) are on the [Releases page](https://github.com/aura-lab-wm/traceharness/releases).
+
 ## Check that it works
 
 Run the offline self-check (about ten seconds, no API key):
