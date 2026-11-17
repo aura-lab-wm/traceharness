@@ -149,14 +149,21 @@ FREE_BYTES_FLOOR = 1024 ** 3
 FREE_INODES_FLOOR = 20_000
 
 
+#: The filesystem backstop allows this many times a job's storage limit, and this many inodes, because any
+#: other writer on the same disk counts too: a tighter budget would stop jobs for someone else's download.
+FILESYSTEM_SLACK = 4
+FILESYSTEM_INODE_BUDGET = 5 * 200_000
+
+
 class FilesystemGuard:
-    """What a job consumed, read from the filesystem itself (statvfs), so unlinked-but-open files, sparse
-    files and inodes all count. Measured against free space at job start; any other writer on the same
-    filesystem counts too, which makes this a conservative budget rather than an exact quota."""
+    """A backstop read from the filesystem itself (statvfs), so unlinked-but-open files, sparse files and inodes
+    all count. The exact per-job accounting is the directory scan; this guard stops a job when the filesystem's
+    free space shrinks by more than FILESYSTEM_SLACK times its limit (or free inodes by FILESYSTEM_INODE_BUDGET)
+    while it runs, or falls below the floors. Other writers on the disk count too: a budget, not a quota."""
 
     def __init__(self, path, cap_bytes, *, statvfs=os.statvfs, floor_bytes=FREE_BYTES_FLOOR, floor_inodes=FREE_INODES_FLOOR,
-                 inode_cap=STORAGE_ENTRY_LIMIT):
-        self.path, self.cap, self.statvfs = str(path), cap_bytes, statvfs
+                 inode_cap=FILESYSTEM_INODE_BUDGET, slack=FILESYSTEM_SLACK):
+        self.path, self.cap, self.statvfs = str(path), (None if cap_bytes is None else cap_bytes * slack), statvfs
         self.floor_bytes, self.floor_inodes, self.inode_cap = floor_bytes, floor_inodes, inode_cap
         self.start_bytes, self.start_inodes, self.has_inodes = self._free()
 
@@ -178,11 +185,12 @@ class FilesystemGuard:
         free_bytes, free_inodes, _ = self._free()
         used, used_inodes = self.start_bytes - free_bytes, self.start_inodes - free_inodes
         if self.cap is not None and used > self.cap:
-            return "The job used more than its storage budget of %d MiB on the filesystem and was stopped." % (self.cap // 2**20)
+            return ("While the job ran, the filesystem's free space shrank by more than its storage budget of %d MiB;"
+                    " the job was stopped." % (self.cap // 2**20))
         if free_bytes < self.floor_bytes:
             return "Free disk space fell below %d MiB; the job was stopped." % (self.floor_bytes // 2**20)
         if self.has_inodes and (used_inodes > self.inode_cap or free_inodes < self.floor_inodes):
-            return "The job used too many inodes (or free inodes fell too low) and was stopped."
+            return "While the job ran, free inodes shrank by more than its budget (or fell below the floor); the job was stopped."
         return None
 
 

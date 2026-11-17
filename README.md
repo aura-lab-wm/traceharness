@@ -96,9 +96,9 @@ whether the runner is set up (it only reads: it never touches a running job or a
 
 Storage limits are a budget, not an exact per-job quota. A job's workspace and output directories are scanned
 (2 GiB, 200,000 entries), and the filesystem holding the job directories is measured with `statvfs` at job start and
-while it runs, which also counts files the job opened and then unlinked. A job is stopped when the free space or free
-inodes fall by more than its budget, or when the filesystem drops below 1 GiB or 20,000 inodes free; a new job does not
-start below those floors. On a filesystem shared with other writers, their writes count against the running job, so the
+while it runs, which also counts files the job opened and then unlinked. A job is stopped when, while it runs, the
+filesystem's free space shrinks by more than four times its storage limit or its free inodes by more than 1,000,000, or
+when the filesystem drops below 1 GiB or 20,000 inodes free; a new job does not start below those floors. On a filesystem shared with other writers, their writes count against the running job, so the
 guard can stop a job early; it cannot give each job its own quota. Each manifest records which enforcement applied
 (`limits.storage_enforcement`). A second console on the same data directory serves recorded jobs read-only and does not
 restart or remove anything: one process owns the runner state at a time.

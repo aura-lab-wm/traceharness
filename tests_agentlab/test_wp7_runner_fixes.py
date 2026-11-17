@@ -162,7 +162,7 @@ class FilesystemBudgetTests(unittest.TestCase):
         return fd
 
     def test_statvfs_sees_an_unlinked_open_file_the_directory_scan_cannot(self):
-        guard = FilesystemGuard(self.root, 32 * 2**20, floor_bytes=0, floor_inodes=0)
+        guard = FilesystemGuard(self.root, 8 * 2**20, floor_bytes=0, floor_inodes=0)
         self.assertIsNone(guard.violation())
         fd = self.write_unlinked(160)
         try:
@@ -177,7 +177,7 @@ class FilesystemBudgetTests(unittest.TestCase):
                                   command=lambda args, **kw: removed.append(args) or SimpleNamespace(returncode=0, stdout=b"", stderr=b""))
         work = self.root / "workspace"
         work.mkdir()
-        guard = FilesystemGuard(self.root, 32 * 2**20, floor_bytes=0, floor_inodes=0)
+        guard = FilesystemGuard(self.root, 8 * 2**20, floor_bytes=0, floor_inodes=0)
         fds = []
         stop = threading.Event()
 
