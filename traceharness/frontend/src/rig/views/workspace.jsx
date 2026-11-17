@@ -29,6 +29,9 @@
    ==================================================================================== */
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { api, IS_STATIC, IS_MEMBER, captureControl } from '../../api'
+import { can } from '../../environment'
+import { LOCAL_APP } from '../../shared/index.js'
+import { Unavailable } from '../unavailable'
 import schoolPackage from '../../../../school-package.json'
 import { arrival, suggestResultsDir, cleanResultsDir, detectState, progressPct, progressKnown, progressPhrase, verdictTile } from '../../method/importing'
 import { browserStores, readMate, writeKey, forgetKey, writeModel, isKeyRemembered, setCaptured, DEFAULT_MODEL } from '../../matekey'
@@ -59,7 +62,9 @@ const stamp = (at) => { const d = new Date((at || 0) * 1000); return at && Numbe
 function Head({ eyebrow, title, meta, children, actions, el }) {
   return <PageHeader eyebrow={eyebrow} title={title} meta={meta} lede={children || null} actions={actions} el={el} />
 }
-const StaticNote = ({ what }) => <Note el="read-only-export-state"><div><b>{IS_MEMBER ? 'Local workbench required.' : 'Read-only export.'}</b> {what} needs the local app (<span className="rg-mono">python -m traceharness{IS_MEMBER ? ' --port 8742' : ''}</span>){IS_MEMBER ? ' at 127.0.0.1:8742' : ''}.</div></Note>
+/** "Not available here" for a machine-side control: the mode's sentence for `capability`
+ *  (environment.why), under the data-el the tests and the site's proofs select. */
+const LocalOnly = ({ capability, what }) => <Unavailable capability={capability} what={what} el="read-only-export-state" />
 
 /** <Sec title meta? lead? el?>…</Sec> — a section of a document: a heading and whitespace, no box.
  *  Boxes stay for units of data (a table, a list); sections are separated by the page rhythm. */
@@ -244,14 +249,14 @@ function Road({ n, title, el, children }) {
  *  GET /import/sources · GET /import/status (polled while running) · GET /import/detect ·
  *  POST /import {path, results_dir, source} behind a confirm. */
 function ImportTrace({ spec, datasets }) {
-  const srcs = useApi(IS_STATIC ? null : '/import/sources')
+  const srcs = useApi(can('data.import') ? '/import/sources' : null)
   const [path, setPath] = useTabState(spec, 'imp.path', '')
   const [source, setSource] = useTabState(spec, 'imp.src', '')
   const [typed, setTyped] = useTabState(spec, 'imp.dir', null)
   const [sniffed, setSniffed] = useState(null)
   const [msg, setMsg] = useState('')
   const [pollOn, setPollOn] = useState(false)
-  const st = useApi(IS_STATIC ? null : '/import/status', { poll: pollOn ? 800 : 0 })
+  const st = useApi(can('data.import') ? '/import/status' : null, { poll: pollOn ? 800 : 0 })
   const s = st.data || {}
   const running = s.status === 'running'
   useEffect(() => { setPollOn(running) }, [running])
@@ -270,9 +275,9 @@ function ImportTrace({ spec, datasets }) {
     }, now ? 0 : 350)
     return () => { dead = true; clearTimeout(t) }
   }
-  useEffect(() => { const q = path.trim(); if (!q || IS_STATIC) return undefined; return sniff(q, false) }, [path]) // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => { const q = path.trim(); if (!q || !can('data.import')) return undefined; return sniff(q, false) }, [path]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  if (IS_STATIC) return <Road n={1} title="Import files you already have" el="import-trace"><StaticNote what="Importing" /></Road>
+  if (!can('data.import')) return <Road n={1} title="Import files you already have" el="import-trace"><LocalOnly capability="data.import" what="Importing" /></Road>
   const adapters = (srcs.data && srcs.data.sources) || []
   const derived = sessionFolders(adapters)
   const chips = [...(derived.length ? derived : DOCUMENTED_FOLDERS)].sort((x, y) => tool(x.source).localeCompare(tool(y.source)))
@@ -436,7 +441,7 @@ function ImportResult({ r, onAgain }) {
  *  index of a directory that already exists (backend/real_import.py opens index.jsonl with "w"). */
 function SweAgentImport({ spec, datasets }) {
   const [pollOn, setPollOn] = useState(false)
-  const st = useApi(IS_STATIC ? null : '/real/status', { poll: pollOn ? 1500 : 0 })
+  const st = useApi(can('data.import') ? '/real/status' : null, { poll: pollOn ? 1500 : 0 })
   // Tab state, not useState: a finished download refreshes the dataset list, Sources shows its
   // loading state meanwhile, and the form remounts; plain state would reset Runs to 500 beside the result.
   const [n, setN] = useTabState(spec, 'swe.n', 500)
@@ -451,7 +456,7 @@ function SweAgentImport({ spec, datasets }) {
     if (was.current === 'running' && (s.status === 'done' || s.status === 'error')) invalidate('/overview')
     was.current = s.status
   }, [s.status])
-  if (IS_STATIC) return <Road n={2} title="Download a public sample" el="swe-agent-import"><StaticNote what="Downloading public samples" /></Road>
+  if (!can('data.import')) return <Road n={2} title="Download a public sample" el="swe-agent-import"><LocalOnly capability="data.import" what="Downloading public samples" /></Road>
   const has = (x) => datasets.some((d) => d.name === x)
   const freeOf = (b) => { let k = 2; while (has(`${b}_${k}`)) k++; return `${b}_${k}` }
   const auto0 = `real_swe_agent_${n}` + (model ? `_${model.split('/').pop()}` : '')
@@ -539,7 +544,7 @@ const STATE_WORD = { never_started: 'Not running', idle: 'Watching', scanning: '
 const stateWord = (sn) => { const k = (sn || {}).state; return STATE_WORD[k] || (k ? String(k).replace(/_/g, ' ') : 'Not running') }
 
 function useCapture(poll = 0) {
-  return useApi(IS_STATIC ? null : '/capture/status', { ...PRIV, poll })
+  return useApi(can('capture.local') ? '/capture/status' : null, { ...PRIV, poll })
 }
 /** The watcher's state sentence (after method/Capture.jsx), in plain words. */
 function watcherSentence(sn) {
@@ -566,7 +571,7 @@ function WatcherControls({ st, compact }) {
     setErr(null)
     try { await captureControl(action); setAsked(action); st.reload() } catch (e) { setErr(errText(e)) }
   }
-  if (IS_STATIC) return <StaticNote what="The capture controls" />
+  if (!can('capture.local')) return <LocalOnly capability="capture.local" what="The capture controls" />
   const detail = compact ? null : 'Writes captured/control.json; the watcher reads it between passes.'
   return (
     <div className="rg-col rg-ws-ctl" data-el="capture-controls">
@@ -588,10 +593,11 @@ function WatcherControls({ st, compact }) {
 }
 
 function Capture() {
-  const st = useCapture(IS_STATIC ? 0 : 5000)
-  const runs = useApi(IS_STATIC ? null : '/capture/runs?limit=25', PRIV)
-  const rel = useApi(IS_STATIC ? null : '/capture/relations', PRIV)
-  if (IS_STATIC) return <div className="rg-dpad rg-ws rg-ws-doc" data-el="capture"><Head eyebrow="On this machine" title="Session capture">Captured sessions are private and are excluded from every export.</Head><StaticNote what="Session capture" /></div>
+  const local = can('capture.local')
+  const st = useCapture(local ? 5000 : 0)
+  const runs = useApi(local ? '/capture/runs?limit=25' : null, PRIV)
+  const rel = useApi(local ? '/capture/relations' : null, PRIV)
+  if (!local) return <div className="rg-dpad rg-ws rg-ws-doc" data-el="capture"><Head eyebrow="On this machine" title="Session capture">Captured sessions are private and are excluded from every export.</Head><LocalOnly capability="capture.local" what="Session capture" /></div>
   if (st.error && !st.data) return <ErrorState error={st.error} onRetry={st.reload} what="Session capture" />
   if (!st.data) return <Loading label="Reading /api/capture/status (private)…" />
   const s = st.data
@@ -665,8 +671,8 @@ function Capture() {
 }
 
 function CaptureDock() {
-  const st = useCapture(IS_STATIC ? 0 : 5000)
-  if (IS_STATIC) return <div className="rg-ws-dock"><StaticNote what="The capture watcher" /></div>
+  const st = useCapture(can('capture.local') ? 5000 : 0)
+  if (!can('capture.local')) return <div className="rg-ws-dock"><LocalOnly capability="capture.local" what="The capture watcher" /></div>
   if (st.error && !st.data) return <div className="rg-ws-dock"><Failed what="Could not read the capture watcher." error={st.error} onRetry={st.reload} back={false} /></div>
   if (!st.data) return <div className="rg-ws-dock"><span className="rg-small rg-mute">Reading the watcher (private)…</span></div>
   const s = st.data, sn = s.sniffer || {}
@@ -1223,7 +1229,7 @@ function Settings() {
 </>
 ) : (
       <Sec title="Paths in use" meta={IS_STATIC ? 'export' : 'GET /api/settings'} el="paths-in-use">
-        {IS_STATIC ? <StaticNote what="The server's paths" /> : st.error ? <Failed what="Could not read the server's settings." error={st.error} onRetry={st.reload} /> : !s ? <div className="rg-skel rg-ws-sk" /> : (
+        {!can('settings.server_key') ? <LocalOnly capability="settings.server_key" what="The server's paths" /> : st.error ? <Failed what="Could not read the server's settings." error={st.error} onRetry={st.reload} /> : !s ? <div className="rg-skel rg-ws-sk" /> : (
           <dl className="rg-kv rg-ws-kv">
             <dt>base URL</dt><dd>{s.base_url}</dd>
             <dt>lab root</dt><dd>{s.lab_root}</dd>
@@ -1236,12 +1242,13 @@ function Settings() {
       </div>
       {/* The two key panels share their rows: key field beside key field, buttons beside buttons. */}
       <div className="rg-ws-set rg-ws-keys" data-panes>
-        {IS_MEMBER ? <Sec title="Local model integrations" el="member-local-keys"><p>Connect your OpenRouter key in Harnesses for hosted runs. Configure Buddy, the narrator and local judging in your local workbench at <code>127.0.0.1:8742</code>.</p><CopyCmd cmd="python -m traceharness --host 127.0.0.1 --port 8742" /></Sec> : <><BuddyPanel /><LabKeyPanel st={st} /></>}
+        {IS_MEMBER ? <Sec title="Local model integrations" el="member-local-keys"><p>Connect your OpenRouter key in Harnesses for hosted runs. Buddy, the narrator and the judge use keys held by the local console.</p><Unavailable capability="assistant.model" what="Asking a model" /><CopyCmd cmd={LOCAL_APP.command} /></Sec>
+          : can('assistant.model') ? <><BuddyPanel /><LabKeyPanel st={st} /></> : <><Sec title="Buddy · OpenRouter" el="buddy-settings"><Unavailable capability="assistant.model" what="Asking a model" /></Sec><LabKeyPanel st={st} /></>}
       </div>
       <div className="rg-ws-set" data-panes>
       {IS_MEMBER ? (
       <Sec title="Paths in use" meta={IS_STATIC ? 'export' : 'GET /api/settings'} el="paths-in-use">
-        {IS_STATIC ? <StaticNote what="The server's paths" /> : st.error ? <Failed what="Could not read the server's settings." error={st.error} onRetry={st.reload} /> : !s ? <div className="rg-skel rg-ws-sk" /> : (
+        {!can('settings.server_key') ? <LocalOnly capability="settings.server_key" what="The server's paths" /> : st.error ? <Failed what="Could not read the server's settings." error={st.error} onRetry={st.reload} /> : !s ? <div className="rg-skel rg-ws-sk" /> : (
           <dl className="rg-kv rg-ws-kv">
             <dt>base URL</dt><dd>{s.base_url}</dd>
             <dt>lab root</dt><dd>{s.lab_root}</dd>
@@ -1262,7 +1269,7 @@ function Settings() {
         {labFail && <Note tone="red"><div><b>Could not save the preference.</b> This browser blocks storage — Student Lab is {rig.lab ? 'on' : 'off'} for this visit only.</div></Note>}
         {rig.lab && <div className="rg-row rg-wrap" data-el="guidance-links"><Go spec="guide" className="rg-btn"><Icon name="guide" size={14} /> Reading guide</Go><Go spec="package" className="rg-btn"><Icon name="pkg" size={14} /> Reference materials</Go></div>}
       </Sec>
-      <NarratorPanel />
+      {can('assistant.model') ? <NarratorPanel /> : <Sec title="The narrator" el="narrator-key"><Unavailable capability="assistant.model" what="Asking a model" /></Sec>}
 </>
 )}
       </div>
@@ -1341,9 +1348,9 @@ function LabKeyPanel({ st }) {
             : 'The server holds no key.'}</dd>
           <dt>used for</dt><dd>live model runs and the LLM judge</dd>
         </dl>}
-      field={IS_STATIC ? <StaticNote what="Setting the server key" />
+      field={!can('settings.server_key') ? <LocalOnly capability="settings.server_key" what="Setting the server key" />
         : <div className="rg-col rg-ws-keyf"><input className="rg-inp" type="password" autoComplete="off" aria-label="traceharness key" value={draft} placeholder={KEY_PH} onChange={(e) => setDraft(e.target.value)} /></div>}
-      actions={IS_STATIC ? null :
+      actions={!can('settings.server_key') ? null :
         <div className="rg-row rg-wrap rg-ws-acts">
           <ConfirmAction label="Save server key" confirmLabel="Send to the server" disabled={!draft.trim()} why="Paste a key first" detail="POST /api/settings/key" onConfirm={() => send(draft.trim(), 'Saved on the server.')} el="lab-key-save" />
           <ConfirmAction label="Clear" confirmLabel="Clear the server key" danger disabled={!s.key_present} why="Nothing to clear: the server holds no key" onConfirm={() => send('', 'Cleared on the server.')} />
@@ -1495,8 +1502,8 @@ function Package() {
       </Sec>
       <Sec title="Reproduce from this directory">
         <h3 className="rg-ws-h3">1 · Install and run</h3>
-        <pre className="rg-pre">{'python3 -m pip install -e .\npython3 -m traceharness --no-browser' + (IS_MEMBER ? ' --host 127.0.0.1 --port 8742' : '')}</pre>
-        <p className="rg-small rg-mute">Open <span className="rg-mono">{IS_MEMBER ? "http://127.0.0.1:8742" : "http://127.0.0.1:8765"}</span>. No API key is needed to inspect the included results.</p>
+        <pre className="rg-pre">{'python3 -m pip install -e .\n' + LOCAL_APP.command}</pre>
+        <p className="rg-small rg-mute">Open <span className="rg-mono">{LOCAL_APP.url}</span>. No API key is needed to inspect the included results.</p>
         <h3 className="rg-ws-h3">2 · Reproduce the exercises</h3>
         <pre className="rg-pre">{'python3 exercises/ex1_variance.py\npython3 exercises/ex2_harness.py\npython3 exercises/ex7_real_trajectories.py --offline\npython3 exercises/ex8_experiment.py'}</pre>
         <p className="rg-small rg-mute">Read <span className="rg-mono">HANDOUT.md</span> for exercises 3–6, or open the <Go spec="guide" className="rg-tlink">reading guide</Go>.</p>
