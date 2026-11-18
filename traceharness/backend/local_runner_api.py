@@ -15,8 +15,9 @@ answers a JSON 404. A container job's credential_id may be null: the runner read
 
 Limits, as `core/harness.py:run_task` and `app._run_one` really apply them (READ): the step cap
 (`limits.max_steps`, written into the stop block) is enforced inside the run. `max_cost_usd` is
-handed to the job, whose cap is checked only after a run completes, so it cannot stop a one-run
-job; there is no wall-time parameter; and the output-token limit is not applied (each model call is
+handed to the job, which ends a run before its next model call once the job's spend reaches it
+(app._run_one, exit_reason cost_cap): the last call made can still pass it by its own cost; there is
+no wall-time parameter; and the output-token limit is not applied (each model call is
 capped by the harness's own sampling block). The manifest lists only the enforced limit.
 
 Jobs live in memory for this server session, keyed by a 48-hex id (the shape the console's

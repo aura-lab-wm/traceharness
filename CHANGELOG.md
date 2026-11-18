@@ -15,6 +15,10 @@
 - **`data/console.json`.** A console records its pid and port when it starts and removes the file when it stops, so
   other programs on the machine can find the console of a lab.
 - **`traceharness doctor`** has an `mcp` row (optional, never changes the exit code).
+- **A sweep's spend cap stops runs between model calls.** It used to be checked only after a run finished, so one
+  run (or a few in parallel) could go far past it. A run now ends before its next model call once the sweep's spend
+  (finished runs plus running ones) reaches the cap, with exit reason `cost_cap`; the last call can still pass the cap
+  by its own cost.
 
 ## 0.6.0 (2026-11-17): local only
 

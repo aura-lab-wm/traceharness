@@ -101,6 +101,32 @@ class ShapeAndTargetsTest(unittest.TestCase):
                              "model": "openai/gpt-5.1-codex-miniscript"})
 
 
+class LiveSweepBodyTest(unittest.TestCase):
+    """A live-model sweep reaches the console one run at a time, with the reserved cap (the console stops a run
+    before the model call after the cap, so one run in flight means the cap is passed by one call at most)."""
+
+    def test_the_sweep_body(self):
+        posted = []
+
+        class FakeConsole:
+            url, started = "http://testserver", None
+
+            def post(self, path, body=None):
+                posted.append((path, body))
+                return {"id": "j1", "status": "queued"}
+
+        guard = SpendGuard(budget_usd=1.0, allowed=True)
+        tools = Tools(Config.from_flags(None, False, True, 1.0), guard, lambda: FakeConsole())
+        tools.sweep_start(out="d", harnesses=["baseline"], tasks=["t01_slugify"], models=["openai/gpt-4.1-mini"],
+                          max_cost_usd=0.2)
+        tools.sweep_start(out="d", harnesses=["baseline"], tasks=["t01_slugify"], models=["mock"])
+        (p1, live), (_, mock_) = posted
+        self.assertEqual((p1, live["parallel"], live["max_cost_usd"]), ("/api/jobs", 1, 0.2))
+        self.assertEqual(mock_["parallel"], 3)
+        self.assertNotIn("max_cost_usd", mock_)
+        self.assertAlmostEqual(guard.report()["left_usd"], 0.8)
+
+
 class DiscoveryTest(unittest.TestCase):
     def test_only_loopback_consoles_are_accepted(self):
         self.assertEqual(C.check_loopback("http://127.0.0.1:8765/"), "http://127.0.0.1:8765")

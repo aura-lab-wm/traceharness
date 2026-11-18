@@ -396,11 +396,14 @@ class Tools:
                     repeats: Annotated[int, Field(ge=1, le=20)] = 1, seed: int = 0,
                     max_cost_usd: Annotated[Optional[float], Field(description="Required for live models: the most this sweep may spend.")] = None) -> dict:
         """Run harnesses x tasks x models in the local console, writing runs into a dataset. Mock models are free;
-        live models use the key in Settings, need --allow-spend and a max_cost_usd within the session budget."""
+        live models use the key in Settings, need --allow-spend and a max_cost_usd within the session budget.
+        A live sweep runs one run at a time and stops before the model call after its spend reaches the cap
+        (the last call can pass it by its own cost)."""
         body = {"out": out, "models": models, "harnesses": harnesses, "tasks": tasks, "repeats": repeats,
                 "parallel": 3, "seed": seed}
         if any(not _is_mock(m) for m in models):
             body["max_cost_usd"] = self.guard.reserve(max_cost_usd, "A sweep with a live model")
+            body["parallel"] = 1           # one run in flight: the cap can be passed by one model call, not three
         return {"sweep": self.c.post("/api/jobs", body), "spend": self.guard.report()}
 
     @tool("run", "write", "Cancel a sweep", destructive=True)

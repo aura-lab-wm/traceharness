@@ -43,8 +43,11 @@ Settings in the console, **Connect an agent**, shows both with your own lab path
 - A tool that is off is not listed at all. `traceharness mcp --list-tools [flags]` prints what an agent would get.
 - **Spending.** Every paid call states the most it may spend (`max_cost_usd`, or the run configuration's
   `limits.max_cost_usd`, or the experiment's reviewed worst case). That amount is reserved from the session's budget
-  (`--budget`, default $1.00) before the call reaches the console and is never given back, so the budget bounds the
-  worst case. A call whose cap does not fit is refused.
+  (`--budget`, default $1.00) before the call reaches the console and is never given back, and a call whose cap does
+  not fit is refused. The console holds each run to its cap: Claude Code and Codex jobs reserve before every model
+  request and refuse one that would pass it; sweeps and TraceHarness-engine jobs stop before the model call after the
+  cap is reached, so they can pass it by the cost of that last call (a live sweep from the connector runs one run at a
+  time, so it is one call per sweep).
 - **Runs not verified on this machine.** A runner job whose combination has no compatibility receipt runs only when
   the agent passes `accept_unverified: true`, the same as ticking the box in the console; the job records it.
 - **The key never travels.** No tool takes or returns an OpenRouter key; `lab_status` says only whether one is saved.

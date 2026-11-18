@@ -6,9 +6,13 @@ Levels (docs/superpowers/specs/2026-11-18-mcp-connector-design.md, decisions 3 a
   spend   can cost money (a live-model sweep, a runner job, an experiment start). `--allow-spend`, which
           implies writes, and a session budget (`--budget`, default 1.00 USD).
 
-A spend reserves its cap before the call and never gives it back: the budget bounds the worst case,
-whatever the run then reports. A cap that does not fit in what is left is refused before anything
-reaches the console.
+A spend reserves its cap before the call and never gives it back, and a cap that does not fit in what
+is left is refused before anything reaches the console: the budget bounds the sum of the caps. The
+console enforces each cap. A container runtime (Claude Code, Codex) reserves before every model request
+and refuses one that would pass it. The TraceHarness engine (sweeps, the `traceharness` runtime) ends a
+run before its next model call once the cap is reached, so it can pass a cap by the cost of one model
+call; the connector runs live sweeps one run at a time, so that is one call per sweep, not one per
+parallel run.
 """
 from __future__ import annotations
 

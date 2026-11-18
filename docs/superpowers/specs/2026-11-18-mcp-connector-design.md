@@ -30,7 +30,11 @@ an HTTP transport and recording MCP sessions as datasets come later.
 4. **Spending guard.** A spend tool needs `--allow-spend`, an explicit `max_cost_usd` (for runner jobs, the
    configuration's `limits.max_cost_usd`; for experiments, the plan's reviewed total), and that cap must fit in what
    is left of the session budget (`--budget`, default 1.00 USD). The cap is reserved before the call and never
-   released, so the budget bounds the worst case. A combination without a compatibility receipt runs only when the
+   released, so the budget bounds the sum of the caps. The console holds each run to its cap: container runtimes
+   reserve before every model request; the engine (sweeps, the `traceharness` runtime) stops a run before the model
+   call after the cap is reached (`run_task(cost_cap_reached=...)`, exit_reason `cost_cap`, added after the code
+   review found the sweep cap was only checked between runs), so it can pass a cap by one model call. Live sweeps
+   from the connector run with `parallel: 1`. A combination without a compatibility receipt runs only when the
    call passes `accept_unverified: true` (it sets `unverified_ok` in the configuration, as the console's tick does).
    MCP elicitation is not used: under SDK 2.x and protocol 2026-07-28 it needs a back-channel many clients do not
    offer (tested: `NoBackChannelError` in-process), so the human's consent is the `--allow-spend` flag and the budget
