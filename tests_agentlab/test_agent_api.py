@@ -122,6 +122,24 @@ class ConsoleFileTest(unittest.TestCase):
         console_file.release(self.root, os.getpid() + 1)
         self.assertIsNotNone(console_file.read(self.root))
 
+    def test_the_package_gate_skips_what_its_own_running_console_writes(self):
+        """verify_school_package scans the extracted tree while its console runs there: the console's
+        discovery file and agent log hold that run's temp path and are never shipped (the builder walks
+        named roots only), so the scan skips them, and only them."""
+        import sys
+        sys.path.insert(0, os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "scripts"))
+        try:
+            from verify_school_package import scan_for_leaks
+        finally:
+            sys.path.pop(0)
+        trace = '{"lab_root": "/var/folders/ab/xyz/T/traceharness-school"}\n'
+        os.makedirs(os.path.join(self.root, "data", "agent"))
+        for rel in ("data/console.json", "data/agent/console.log", "data/elsewhere.json"):
+            with open(os.path.join(self.root, rel), "w") as fh:
+                fh.write(trace)
+        found = scan_for_leaks(__import__("pathlib").Path(self.root))
+        self.assertEqual([f.split(":")[0] for f in found], ["data/elsewhere.json"])
+
     def test_malformed_files_read_as_none(self):
         for text in ("", "{", "[]", json.dumps({"schema": 2, "pid": 1, "port": 1, "url": "x"}),
                      json.dumps({"schema": 1, "pid": "1", "port": 1, "url": "x"})):

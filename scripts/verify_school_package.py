@@ -114,6 +114,10 @@ def scan_for_leaks(root: Path) -> list[str]:
             rel = path.relative_to(root).as_posix()
             if rel.startswith("data/runs/verify/"):
                 continue                                        # this gate's own mock run, written on this machine: not shipped
+            if rel == "data/console.json" or rel.startswith("data/agent/"):
+                continue                                        # written by this gate's running console (the MCP connector's
+                                                                # discovery file and call log): never shipped, the builder
+                                                                # walks named roots only
             try:
                 text = path.read_text(encoding="utf-8")
             except (UnicodeDecodeError, OSError):
