@@ -78,7 +78,7 @@ class RunSummary:
     repeat_index: int
     started_at: str
     finished_at: str = ""
-    exit_reason: str = ""            # submitted | max_steps | budget_exceeded | error | no_action | sentinel_abort
+    exit_reason: str = ""            # submitted | max_steps | budget_exceeded | cost_cap | error | no_action | sentinel_abort
     sentinel_interventions: int = 0  # nudges / blocks / aborts issued by an early-warning hook
     sentinel_max_risk: float = 0.0   # highest risk score the hook reported during the run
     sentinel_cost_usd: float = 0.0   # spend of the LLM layer of the hook, if any (not included in cost_usd)

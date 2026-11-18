@@ -1,5 +1,25 @@
 # Changelog
 
+## Unreleased: agents in the console
+
+- **`traceharness mcp`.** An MCP server (stdio) that lets Claude Code, Codex or any MCP client read datasets, run the
+  console's analyses, start sweeps and runner jobs, and answer paused runs in the local console: 58 tools in nine
+  domains, plus resources for datasets, runs, trajectories and report cards. It calls the lab's console on
+  127.0.0.1 (starting one when none runs), so the console stays the runner's one owner and every call passes its
+  guards. Read tools only by default; `--allow-writes` adds free changes, `--allow-spend --budget N` adds paid runs,
+  each reserving its stated cap from the session budget before it reaches the console. No tool takes or returns the
+  OpenRouter key. Optional extra: `pip install -e '.[mcp]'`. See `docs/MCP.md`.
+- **Agent panel.** The console records every connector call (tool, level, what it touched, ok or the console's
+  reason, time, amount reserved; never free text or keys) under `data/agent/` and shows them in a new Agent side
+  panel. Settings has a **Connect an agent** section with the Claude Code and Codex commands for this lab.
+- **`data/console.json`.** A console records its pid and port when it starts and removes the file when it stops, so
+  other programs on the machine can find the console of a lab.
+- **`traceharness doctor`** has an `mcp` row (optional, never changes the exit code).
+- **A sweep's spend cap stops runs between model calls.** It used to be checked only after a run finished, so one
+  run (or a few in parallel) could go far past it. A run now ends before its next model call once the sweep's spend
+  (finished runs plus running ones) reaches the cap, with exit reason `cost_cap`; the last call can still pass the cap
+  by its own cost.
+
 ## 0.6.0 (2026-11-17): local only
 
 TraceHarness now runs only on your machine (package, container image, Codespaces, school package). traceharness.dev is a

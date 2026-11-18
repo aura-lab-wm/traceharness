@@ -1,5 +1,5 @@
-"""`traceharness doctor`: do the package, the UI build and the shared sources agree, and is the local
-runner set up? (SPEC 4.3)
+"""`traceharness doctor`: do the package, the UI build and the shared sources agree, is the local
+runner set up, and is the MCP SDK installed for `traceharness mcp`? (SPEC 4.3)
 
     traceharness doctor
     traceharness doctor --json
@@ -9,7 +9,8 @@ nothing to look at here, e.g. an installed package has no console source) or fai
 could not run). Exit 0 when no row drifted or failed, 1 on any drift, 2 when a check failed.
 
 The `runner` row reports whether `traceharness runner setup` has been run on this machine. The runner
-is optional: its row is ok, or not_set_up with the hint, and never changes the exit code.
+is optional: its row is ok, or not_set_up with the hint, and never changes the exit code. The `mcp`
+row is the same for the MCP SDK (the optional extra `mcp`, needed by `traceharness mcp` only).
 `doctor` makes no network call (the runner check asks the local Docker daemon, nothing else).
 """
 from __future__ import annotations
@@ -152,8 +153,22 @@ def check_runner(root: str = ROOT) -> dict:
         return row("runner", "not_set_up", f"not_set_up: {hint}")
 
 
+def check_mcp() -> dict:
+    """The MCP SDK for `traceharness mcp` (the optional extra). Optional: never drift, never failed."""
+    hint = "python3 -m pip install -e '.[mcp]'"
+    try:
+        from importlib import metadata
+        version = metadata.version("mcp")
+    except Exception:
+        return row("mcp", "not_set_up", f"not_set_up (the MCP SDK is not installed): {hint}")
+    parts = (version.split(".") + ["0"])[:2]
+    if not all(p.isdigit() for p in parts) or (int(parts[0]), int(parts[1])) < (2, 3):
+        return row("mcp", "not_set_up", f"not_set_up (mcp {version} is older than 2.3): {hint}")
+    return row("mcp", "ok", f"ready (mcp {version}): traceharness mcp")
+
+
 def local_checks(root: str = ROOT) -> list[dict]:
-    return [check_package(root), check_ui_build(root), check_shared_sources(root), check_runner(root)]
+    return [check_package(root), check_ui_build(root), check_shared_sources(root), check_runner(root), check_mcp()]
 
 
 # --------------------------------------------------------------------------- command
@@ -176,7 +191,8 @@ def main(argv: list[str] | None = None, root: str = ROOT) -> int:
     import argparse
     p = argparse.ArgumentParser(prog="traceharness doctor",
                                 description="Check that the package, the UI build and the shared sources agree, and "
-                                            "report whether the local runner is set up (offline; the runner is optional).")
+                                            "report whether the local runner and the MCP SDK are set up (offline; both "
+                                            "are optional).")
     p.add_argument("--json", action="store_true", help="print the rows as JSON")
     args = p.parse_args(argv)
     rows = run(root)

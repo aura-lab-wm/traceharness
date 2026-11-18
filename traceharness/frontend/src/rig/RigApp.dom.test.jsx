@@ -15,9 +15,9 @@ describe('Rig shell', () => {
     // a closed dock takes no row: its launchers sit in the status bar, each a toggle
     expect(container.querySelector('.rg-dock')).toBeNull()
     const dock = within(screen.getByRole('group', { name: 'Dock panels' }))
-    expect(dock.getAllByRole('button').map((t) => t.textContent.trim())).toEqual(['Buddy', 'Event log', 'Capture watcher', 'Case file'])
+    expect(dock.getAllByRole('button').map((t) => t.textContent.trim())).toEqual(['Buddy', 'Event log', 'Capture watcher', 'Agent', 'Case file'])
     expect(dock.getAllByRole('button').every((b) => b.getAttribute('aria-pressed') === 'false')).toBe(true)
-    for (const el of ['dock-log', 'dock-capture', 'dock-case']) expect(container.querySelector(`.rg-sb [data-el="${el}"]`), el).toBeTruthy()
+    for (const el of ['dock-log', 'dock-capture', 'dock-agent', 'dock-case']) expect(container.querySelector(`.rg-sb [data-el="${el}"]`), el).toBeTruthy()
     expect(container.querySelector('[data-el="runtime-status"]').textContent).toContain('local workspace · connected')
     // no uninformative "0 running": the jobs item appears only while something runs
     expect(container.querySelector('.rg-sb').textContent).not.toMatch(/0 running|—/)
@@ -209,8 +209,8 @@ describe('Rig shell', () => {
     expect(container.querySelector('.rig').classList.contains('has-side')).toBe(true)
     expect(container.querySelector('#rig-dock').classList.contains('side')).toBe(true)
     const tabs = within(screen.getByRole('tablist', { name: 'Panels' }))
-    expect(tabs.getAllByRole('tab').map((t) => t.textContent)).toEqual(['Buddy', 'Event log', 'Capture watcher', 'Case file'])
-    for (const name of ['Buddy', 'Capture watcher', 'Case file']) {
+    expect(tabs.getAllByRole('tab').map((t) => t.textContent)).toEqual(['Buddy', 'Event log', 'Capture watcher', 'Agent', 'Case file'])
+    for (const name of ['Buddy', 'Capture watcher', 'Agent', 'Case file']) {
       fireEvent.click(tabs.getByRole('tab', { name }))
       expect(tabs.getByRole('tab', { name }).getAttribute('aria-selected')).toBe('true')
       expect(container.querySelector('#rig-dock.side'), name).toBeTruthy()

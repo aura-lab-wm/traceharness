@@ -34,6 +34,7 @@ import { LOCAL_APP } from '../../shared/index.js'
 import { Unavailable } from '../unavailable'
 import { HuggingFaceSource } from '../HuggingFaceSource'
 import { AboutConsole } from '../AboutConsole'
+import { AgentConnect } from './agent.jsx'
 import schoolPackage from '../../../../school-package.json'
 import { arrival, suggestResultsDir, cleanResultsDir, detectState, progressPct, progressKnown, progressPhrase, verdictTile } from '../../method/importing'
 import { browserStores, readMate, writeKey, forgetKey, writeModel, isKeyRemembered, setCaptured, DEFAULT_MODEL } from '../../matekey'
@@ -1252,6 +1253,7 @@ function Settings() {
       {can('assistant.model') ? <NarratorPanel /> : <Sec title="The narrator" el="narrator-key"><Unavailable capability="assistant.model" what="Asking a model" /></Sec>}
 </>
       </div>
+      <div className="rg-ws-set" data-panes><AgentConnect /></div>
       <div className="rg-ws-set" data-panes><AboutConsole /></div>
     </div>
   )

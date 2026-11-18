@@ -4,7 +4,7 @@
     python scripts/release_all.py --check
     python scripts/release_all.py --offline-gates
 
-`--check` runs `traceharness doctor`'s local checks (package, UI build, shared sources, local runner),
+`--check` runs `traceharness doctor`'s local checks (package, UI build, shared sources, local runner, MCP SDK),
 then the retired-phrase check and `tests_agentlab.test_version_alignment`. It prints one line per
 check, then the release step, and exits 1 naming every check that differs (2 when one could not run).
 

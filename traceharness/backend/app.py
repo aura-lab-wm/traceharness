@@ -53,6 +53,15 @@ async def _lifespan(_app):
     yield
     _stop_paused_runs()
     RUNNER.close()             # the local runner's job pool and experiment scheduler
+    for hook in list(SHUTDOWN_HOOKS):   # e.g. __main__ releasing data/console.json; uvicorn re-raises SIGTERM
+        try:                            # after a graceful shutdown, so atexit alone would never run
+            hook()
+        except Exception:
+            pass
+
+
+#: Called once at the end of a graceful shutdown (registered by __main__).
+SHUTDOWN_HOOKS: list = []
 
 
 from traceharness.__main__ import __version__ as _VERSION   # one version for the API docs and the package
@@ -632,12 +641,29 @@ def _run_one(job: dict, cell: dict, task: dict, harness: HarnessConfig, repeat: 
         BUS.publish("span", job=job["id"], run_id=run_id, span=rec)
 
     hook = S.hook_for(harness, task, rmodel, api_key=SETTINGS["openrouter_key"], base_url=SETTINGS["base_url"])
+    cap = job.get("max_cost_usd")
+
+    def over_cap(cost_so_far: float) -> bool:
+        # The job's spend: finished runs plus what every running run has spent so far. Checked before each
+        # model call, so the cap stops runs between calls, not only between runs (the last call made can
+        # still pass it by its own cost). Reaching it also stops the cells not started yet.
+        live = job.setdefault("_live_cost", {})
+        live[run_id] = cost_so_far
+        spent = sum((r.get("cost") or 0.0) for r in job["results"]) + sum(live.values())
+        if spent < cap:
+            return False
+        if not job.get("cancel"):
+            job["cancel"] = True
+            job["stop_reason"] = f"spend cap ${cap:.2f} reached"
+        return True
+
     try:
         # A run paused for a human holds this worker (the pool has 8). That is acceptable only because the
         # wait is bounded by harness.pause["timeout_s"] and ends at once, as an abort, when the job is
         # cancelled or the server shuts down (should_stop below).
         s = run_task(task, harness, provider, out_dir, repeat_index=repeat, seed=seed, span_listener=listener, step_hook=hook, run_id=run_id,
-                     should_stop=lambda: bool(job.get("cancel")) or _SHUTDOWN.is_set())
+                     should_stop=lambda: bool(job.get("cancel")) or _SHUTDOWN.is_set(),
+                     cost_cap_reached=over_cap if cap is not None else None)
         with _INDEX_LOCK:
             with open(os.path.join(out_dir, "index.jsonl"), "a") as f:
                 f.write(json.dumps(asdict(s)) + "\n")
@@ -646,13 +672,13 @@ def _run_one(job: dict, cell: dict, task: dict, harness: HarnessConfig, repeat: 
         job["results"].append({"run_id": run_id, "task": task["id"], "harness": harness.id, "model": cell["model"], "repeat": repeat,
                                "hidden_pass": s.hidden_pass, "steps": s.steps, "exit": s.exit_reason, "cost": s.cost_usd,
                                "interventions": s.sentinel_interventions, "max_risk": s.sentinel_max_risk, "boundary": s.boundary_events})
-        cap = job.get("max_cost_usd")
+        job.get("_live_cost", {}).pop(run_id, None)      # counted in results now (appended first: never under-counted)
         if cap is not None and not job.get("cancel") and job_public(job)["spent"] >= cap:
             job["cancel"] = True
             job["stop_reason"] = f"spend cap ${cap:.2f} reached"
         BUS.publish("run_end", job=job["id"], run_id=run_id, summary=asdict(s))
     except Exception as e:
-        job["done"] += 1
+        job["done"] += 1                                  # its spend stays in _live_cost: still counted against the cap
         if run_id in job["running"]:
             job["running"].remove(run_id)
         err = _redact_job_secret(job, f"{task['id']}/{harness.id}/{cell['model']}: {e}")
@@ -1007,3 +1033,10 @@ app.router.routes.sort(key=lambda r: 1 if getattr(r, "path", "") == "/{path:path
 # SETTINGS only when a model request is made.
 from traceharness.runner.local import LocalRunner, activate as _activate_runner
 RUNNER = _activate_runner(LocalRunner(lambda: LAB_ROOT, lambda: SETTINGS["openrouter_key"]))
+
+# --- what agents did through `traceharness mcp` (docs/superpowers/specs/2026-11-18-mcp-connector-design.md) ---
+# The connector posts one record per tool call; the console's Agent panel reads them back. Behind the same
+# guards as every route. Records go to <lab>/data/agent/ and out on /api/events.
+from traceharness.backend.agent_api import agent_router   # noqa: E402
+app.include_router(agent_router(lambda: os.path.join(LAB_ROOT, "data"), BUS.publish))
+app.router.routes.sort(key=lambda r: 1 if getattr(r, "path", "") == "/{path:path}" else 0)

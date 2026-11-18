@@ -56,6 +56,7 @@ const IC = {
   pkg: <><path d="M3 7l9-4 9 4v10l-9 4-9-4z" /><path d="M3 7l9 4 9-4M12 11v10" /></>,
   more: <><circle cx="5" cy="12" r="1" /><circle cx="12" cy="12" r="1" /><circle cx="19" cy="12" r="1" /></>,
   info: <><circle cx="12" cy="12" r="9" /><path d="M12 11v6M12 7.5v.01" /></>,
+  agent: <><rect x="3" y="5" width="18" height="14" /><path d="M7 10l3 2-3 2M13 15h4" /></>,
 }
 /** <Icon name="search" size={16}/> — stroke icon, aria-hidden. */
 export function Icon({ name, size = 18 }) {

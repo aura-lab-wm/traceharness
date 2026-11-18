@@ -12,16 +12,16 @@
    "traceharness/core/__init__.py": "ebc186c146969df2b767a373da3a639e62d3215b49d8746e96390568f26e73ef",
    "traceharness/core/blocks.py": "718d4dfc25b814b917e03728d4d3c44d90845331ee88455b8bfb1a4bd39667bc",
    "traceharness/core/grader.py": "583ad79810e21098baec2e2809f8d9cca0080812513b4aba3f97b29c1894cfa2",
-   "traceharness/core/harness.py": "315ba1f1432e26562b754cbde3f83eefe48ed9668c24e13ee4eac672af71838f",
-   "traceharness/core/ledger.py": "bf0791472ab9b3e0045f773ea2c736beaa054f99d2f3a0f066ef7e57fc3070c7",
+   "traceharness/core/harness.py": "bc27e32bbcf2dc78f94cb46357190b5c8053434a6919bdec81fcea188fd235ee",
+   "traceharness/core/ledger.py": "8866de59bea5c711a7532b60416cebbba69d22511ed4636478063fed4e616efe",
    "traceharness/core/providers.py": "80108e2a43f2d6349d4c21f720d75c24d26a98d2cfefa4f8092cef6178d4777f",
    "traceharness/core/tools.py": "237d713b2c42d9561b892d10ea3e39a1ac50d0cf9dc9e53b9de88fa672f939c9",
    "traceharness/shallow/__init__.py": "db1989ade8b8fcbc5916fd724e746d902349c88b8120407c1868096863413fa3",
    "traceharness/shallow/wizard.py": "b4d57bf988eaf7bc722dee55b36b3e31cdc554bc49ce0163ed96c7da3a7ce43c"
   },
-  "sha256": "49b541f7c770fe6fb53ac0ff938e9f62be29b281821ae81662b892288dc3691a"
+  "sha256": "e3347242400241964c26ae0827e7d5407557435e201adc49afef5b2a9edc7bba"
  },
- "content_sha256": "a139fb0d06c985749f1614e528095d7c66e57e0d73631ae0ba6a2a6f850ff9a9",
+ "content_sha256": "9bc72037418e77c47231e158b9c4a0705c1ae5214cc8fcd00f7941817061fbbd",
  "datasets": {
   "school": [
    "llma4se_live",

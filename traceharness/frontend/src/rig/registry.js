@@ -32,6 +32,7 @@
 // Explicit imports, not import.meta.glob: tests_agentlab/test_no_dead_surface.py proves every .jsx is
 // reachable by following import statements, and a glob is invisible to it. A new view file is added here.
 import * as m_pending from './views/_pending.jsx'
+import * as m_agent from './views/agent.jsx'
 import * as m_analysis from './views/analysis.jsx'
 import * as m_blocks from './views/blocks.jsx'
 import * as m_buddy from './views/buddy.jsx'
@@ -49,6 +50,7 @@ import * as m_trajectory from './views/trajectory.jsx'
 import * as m_workspace from './views/workspace.jsx'
 export const modules = {
   './views/_pending.jsx': m_pending,
+  './views/agent.jsx': m_agent,
   './views/analysis.jsx': m_analysis,
   './views/blocks.jsx': m_blocks,
   './views/buddy.jsx': m_buddy,

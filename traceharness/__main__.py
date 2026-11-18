@@ -812,6 +812,9 @@ def main(argv: list[str] | None = None) -> int:
     if argv and argv[0] == "native-prompts":
         from traceharness.runner_service.native_prompt_cli import main as native_prompts_main  # noqa: E402
         return native_prompts_main(argv[1:])
+    if argv and argv[0] == "mcp":
+        from traceharness.mcp_server.cli import main as mcp_main  # noqa: E402
+        return mcp_main(argv[1:])
     if argv and argv[0] == "serve":
         argv = argv[1:]
 
@@ -893,6 +896,19 @@ def main(argv: list[str] | None = None) -> int:
             threading.Timer(1.0, lambda: webbrowser.open(url)).start()
         except Exception:  # pragma: no cover - headless hosts
             pass
+
+    # Tell `traceharness mcp` (and anything else on this machine) where this lab's console listens.
+    from traceharness.backend import console_file  # noqa: E402
+    from traceharness.backend.app import SHUTDOWN_HOOKS  # noqa: E402
+    import atexit
+    try:
+        if console_file.claim(paths.DATA_ROOT, pid=os.getpid(), port=args.port, host=args.host, url=url,
+                              version=__version__, lab_root=paths.LAB_ROOT):
+            pid = os.getpid()
+            SHUTDOWN_HOOKS.append(lambda: console_file.release(paths.DATA_ROOT, pid))    # SIGTERM / Ctrl-C
+            atexit.register(console_file.release, paths.DATA_ROOT, pid)                   # any other exit
+    except OSError as e:  # a read-only lab still serves; agents then find it by probing the port
+        print(f"  note: could not write {console_file.file_path(paths.DATA_ROOT)}: {e}", file=sys.stderr)
 
     import uvicorn
     uvicorn.run(app, host=args.host, port=args.port, log_level=args.log_level)

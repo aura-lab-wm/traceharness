@@ -168,7 +168,8 @@ def _human_pause(ledger, run_dir: str, step: int, reasons: list, pending: list, 
 
 def run_task(task: dict, harness: HarnessConfig, provider: Provider, out_root: str,
              repeat_index: int = 0, seed: Optional[int] = None, keep_workdir: bool = False, verbose: bool = False,
-             span_listener=None, step_hook=None, run_id: Optional[str] = None, should_stop=None) -> RunSummary:
+             span_listener=None, step_hook=None, run_id: Optional[str] = None, should_stop=None,
+             cost_cap_reached=None) -> RunSummary:
     """Run one task under one harness.
 
     span_listener(rec)  optional: called for every ledger span as it is written (live streaming).
@@ -182,6 +183,11 @@ def run_task(task: dict, harness: HarnessConfig, provider: Provider, out_root: s
     should_stop()       optional: polled while the run waits for a human decision (HarnessConfig.pause);
                         when it returns True the wait ends as an abort (the web app passes "job cancelled
                         or server shutting down", so a paused run never outlives its job).
+    cost_cap_reached(c) optional: called before every model call with this run's cost so far (USD). When it
+                        returns True the run ends there, before that call, with exit_reason = cost_cap. The
+                        web app passes its sweep's spend cap (backend/app.py), so a cap stops a run between
+                        model calls instead of after the run: the last call made can still pass the cap by
+                        its own cost, nothing more.
     """
     pause_cfg = _pause.normalize(harness.pause)       # a bad pause config fails before anything is written
     run_id = run_id or new_run_id()
@@ -208,6 +214,9 @@ def run_task(task: dict, harness: HarnessConfig, provider: Provider, out_root: s
     last_edit_step, last_test_step = -1, -1
     try:
         for step in range(harness.max_steps):
+            if cost_cap_reached is not None and cost_cap_reached(summary.cost_usd):
+                summary.exit_reason = "cost_cap"
+                break
             view = _apply_context_window(messages, harness.context_window)
             t0 = time.time()
             resp = provider.chat(view, tools, max_tokens=harness.max_tokens_per_call)
