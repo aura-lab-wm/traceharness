@@ -61905,8 +61905,8 @@
     },
     {
       "path": "scripts/verify_school_package.py",
-      "bytes": 14134,
-      "sha256": "ff07fe2ec371976b6b4e157af0a9e020376231f21b14a3588363020a58e6199f"
+      "bytes": 14548,
+      "sha256": "c1d84356073a6a0f0a5175a6ecc87f6effbeb60627460f3c1cbb766f93649fa1"
     },
     {
       "path": "setup.py",
@@ -63700,8 +63700,8 @@
     },
     {
       "path": "tests_agentlab/test_agent_api.py",
-      "bytes": 6777,
-      "sha256": "d71b3b940c78bf7b15ee1c894d239d49cb42eb14d9aadaa91e6ab3cf4e99d1d1"
+      "bytes": 7864,
+      "sha256": "96c7c589a63f0b7347b1287c995c30f47a3ba54199493d3410b675014d488afa"
     },
     {
       "path": "tests_agentlab/test_agentlab.py",
