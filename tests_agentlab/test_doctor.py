@@ -152,7 +152,7 @@ class Command(unittest.TestCase):
             code, out = _main("--json")
         doc = json.loads(out)
         names = [r["check"] for r in doc["rows"]]
-        self.assertEqual(names, ["package", "ui_build", "shared_sources", "runner"])
+        self.assertEqual(names, ["package", "ui_build", "shared_sources", "runner", "mcp"])
         for r in doc["rows"]:
             self.assertEqual(set(r), {"check", "status", "detail"})
             self.assertIn(r["status"], D.STATUSES)

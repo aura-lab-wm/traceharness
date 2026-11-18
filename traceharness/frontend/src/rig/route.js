@@ -32,7 +32,7 @@
    ==================================================================================== */
 
 export const SUITES = ['visible', 'hidden', 'strengthened']
-export const DOCKS = ['buddy', 'log', 'capture', 'case']
+export const DOCKS = ['buddy', 'log', 'capture', 'case', 'agent']
 export const THEMES = ['dark', 'light', 'system']
 
 export const DEFAULT_STATE = Object.freeze({

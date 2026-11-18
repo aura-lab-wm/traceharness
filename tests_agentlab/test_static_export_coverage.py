@@ -24,6 +24,12 @@ from test_no_dead_surface import registered_routes           # noqa: E402
 #: dropped from here is a route _urls() must cover instead -- this file's own test below fails
 #: loudly the moment that stops being true, in either direction.
 EXCLUDED_FROM_EXPORT = {
+    "/api/agent/calls":
+        "what agents did through `traceharness mcp` against a running console: an export has no agent and no "
+        "console, and its Agent panel says so without asking",
+    "/api/agent/status":
+        "the last MCP connector's report to a running console: an export has none, and the Agent panel and "
+        "Settings say so without asking",
     "/api/recommend":
         "the benchmark recommender reads the live lab (its recorded runs set the cost and time estimates): "
         "an export has no lab to read and the console shows a not-available note there",

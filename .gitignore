@@ -12,3 +12,8 @@ data/.traceharness_index.sqlite
 
 # The local harness library (SPEC 3(b)): harness saves on this computer
 data/harness-library/
+
+# The MCP connector (docs/superpowers/specs/2026-11-18-mcp-connector-design.md): which console serves this lab,
+# and the log of agent calls the console shows in its Agent panel
+data/console.json
+data/agent/

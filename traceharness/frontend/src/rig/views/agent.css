@@ -1,0 +1,11 @@
+/* Rig · views/agent.css — the Agent panel and the Connect an agent section (views/agent.jsx). Tokens only. */
+.rg-agent-calls{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;border-top:1px solid var(--rig-line)}
+.rg-agent-call{display:flex;flex-wrap:wrap;align-items:baseline;gap:var(--rig-s1) var(--rig-s2);padding:var(--rig-s2) 0;border-bottom:1px solid var(--rig-line);min-width:0}
+.rg-agent-call.err .rg-agent-tool{color:var(--rig-red)}
+.rg-agent-tool{font-size:var(--rig-fs-sm);font-weight:var(--rig-fw-medium);color:var(--rig-text)}
+.rg-agent-targets{min-width:0;overflow-wrap:anywhere}
+.rg-agent-error{flex-basis:100%;color:var(--rig-red);overflow-wrap:anywhere}
+.rg-agent-codex{display:flex;flex-direction:column;gap:var(--rig-s1)}
+.rg-agent-codex pre{margin:0;padding:var(--rig-s2) var(--rig-s3);border:1px solid var(--rig-line);background:var(--rig-panel2);white-space:pre-wrap;overflow-wrap:anywhere}
+.rg-agent-levels{margin:0;padding-left:var(--rig-s4);display:flex;flex-direction:column;gap:var(--rig-s1)}
+.rg-agent-cmd{white-space:nowrap}

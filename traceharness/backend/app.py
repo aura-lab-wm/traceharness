@@ -53,6 +53,15 @@ async def _lifespan(_app):
     yield
     _stop_paused_runs()
     RUNNER.close()             # the local runner's job pool and experiment scheduler
+    for hook in list(SHUTDOWN_HOOKS):   # e.g. __main__ releasing data/console.json; uvicorn re-raises SIGTERM
+        try:                            # after a graceful shutdown, so atexit alone would never run
+            hook()
+        except Exception:
+            pass
+
+
+#: Called once at the end of a graceful shutdown (registered by __main__).
+SHUTDOWN_HOOKS: list = []
 
 
 from traceharness.__main__ import __version__ as _VERSION   # one version for the API docs and the package
@@ -1007,3 +1016,10 @@ app.router.routes.sort(key=lambda r: 1 if getattr(r, "path", "") == "/{path:path
 # SETTINGS only when a model request is made.
 from traceharness.runner.local import LocalRunner, activate as _activate_runner
 RUNNER = _activate_runner(LocalRunner(lambda: LAB_ROOT, lambda: SETTINGS["openrouter_key"]))
+
+# --- what agents did through `traceharness mcp` (docs/superpowers/specs/2026-11-18-mcp-connector-design.md) ---
+# The connector posts one record per tool call; the console's Agent panel reads them back. Behind the same
+# guards as every route. Records go to <lab>/data/agent/ and out on /api/events.
+from traceharness.backend.agent_api import agent_router   # noqa: E402
+app.include_router(agent_router(lambda: os.path.join(LAB_ROOT, "data"), BUS.publish))
+app.router.routes.sort(key=lambda r: 1 if getattr(r, "path", "") == "/{path:path}" else 0)

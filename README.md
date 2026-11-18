@@ -166,6 +166,23 @@ traceharness capture import sessions.zip                            # on another
 
 An export is one zip of the captured sessions, redacted (known key and token shapes, `Bearer` tokens, URL passwords, private keys, secret-looking values), with a `manifest.json` that records a SHA-256 for every file. Import checks every hash and refuses archives with unsafe names, links, oversize members or an unknown version; it writes nothing unless the whole archive verifies, and runs nothing from it. Redaction is pattern-based and cannot know every secret format, so read an export before you share it. See [`docs/CAPTURE.md`](docs/CAPTURE.md).
 
+## Let an agent drive the console (MCP)
+
+`traceharness mcp` is an MCP server for Claude Code, Codex or any MCP client: the agent reads your datasets, runs the
+console's analyses, starts sweeps and runner jobs, and answers paused runs, in your local console. It talks to the
+console over 127.0.0.1 (starting one when none runs), opens no port of its own, and never sees your key.
+
+```bash
+python3 -m pip install -e '.[mcp]'
+claude mcp add traceharness -- traceharness mcp --lab /path/to/your/lab     # read tools only
+traceharness mcp --allow-writes                     # + mock sweeps, imports, decisions on paused runs
+traceharness mcp --allow-spend --budget 2           # + paid runs; each states its cap, the session stops at $2
+traceharness mcp --selftest                         # every read tool against your console
+```
+
+Every call shows in the console's **Agent** panel, and Settings, **Connect an agent**, has the commands for your lab.
+See [`docs/MCP.md`](docs/MCP.md).
+
 ## Local server security
 
 The local server binds to `127.0.0.1` by default and applies two request checks ahead of every route:

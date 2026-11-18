@@ -12,8 +12,8 @@ describe('view registry', () => {
   it('Phase 1 kinds are real views, the rest may be pending', () => {
     for (const k of ['home', 'ds', 'q']) expect(getView(k).pending, k).toBe(false)
   })
-  it('has the four dock tabs in order', () => {
-    expect(listDocks().map((d) => d.id)).toEqual(['buddy', 'log', 'capture', 'case'])
+  it('has the five dock tabs in order', () => {
+    expect(listDocks().map((d) => d.id)).toEqual(['buddy', 'log', 'capture', 'agent', 'case'])
   })
   it('a real module overrides a pending one without touching it; two real owners conflict', () => {
     const R = () => null

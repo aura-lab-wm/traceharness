@@ -28,7 +28,7 @@ const SPECS = {
   recommend: 'recommend', sources: 'sources', capture: 'capture', sentinel: 'sentinel', canvas: 'canvas', settings: 'settings', guide: 'guide', package: 'package',
   blocks: 'blocks', harnesses: 'harnesses', shallowApply: 'shallowApply', shallowCards: 'shallowCards', shallowWizard: 'shallowWizard',
 }
-const DOCKS = ['buddy', 'log', 'capture', 'case']
+const DOCKS = ['buddy', 'log', 'capture', 'case', 'agent']
 
 function setMode(mode) {
   delete window.__TRACEHARNESS_DATA__
