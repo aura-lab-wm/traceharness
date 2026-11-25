@@ -5,7 +5,10 @@
   </picture>
 </p>
 
-![TraceHarness: treat the agent harness as a controlled experimental variable](docs/img/readme/hero.svg)
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/img/readme/home-dark.png">
+  <img alt="TraceHarness Home: the dataset in focus, its counts, and one run shown phase by phase" src="docs/img/readme/home-light.png">
+</picture>
 
 [![CI](https://github.com/aura-lab-wm/traceharness/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/aura-lab-wm/traceharness/actions/workflows/ci.yml) [![CodeQL](https://github.com/aura-lab-wm/traceharness/actions/workflows/codeql.yml/badge.svg?branch=main)](https://github.com/aura-lab-wm/traceharness/actions/workflows/codeql.yml)
 
@@ -13,7 +16,20 @@
 
 **TraceHarness** measures coding agents from their trajectories and treats the harness as an experimental variable. This repository is the replication and teaching package for the evaluation lab: it bundles the local console, the session-capture CLI, recorded multi-harness datasets, and step-by-step lab exercises for loading and analysing 1,000 real SWE-agent trajectories at <https://traceharness.dev/guide/> (also in [`docs/GUIDE.md`](docs/GUIDE.md), [`docs/STUDENT_GUIDE.md`](docs/STUDENT_GUIDE.md), [`docs/CODESPACES.md`](docs/CODESPACES.md), `HANDOUT.md`, and `LAB_1H.md`). Open it directly in GitHub Codespaces with the badge above; an OpenRouter key is needed only when running new experiments against live models.
 
-![Record, compare, read](docs/img/readme/path.svg)
+## The console
+
+The left list holds Home, Datasets, the pages of the dataset in focus (Overview, Tasks, Runs, Analysis), Harnesses and
+Add data. **Tour**, at the top right of every page, walks through that page. **Learn** has 14 short articles on reading
+runs and comparing harnesses, with figures drawn from the included runs, their sources and a short quiz.
+
+| | |
+|---|---|
+| ![Overview of study_v04](docs/img/readme/overview.png) | ![All runs of one task, step by step](docs/img/readme/lanes.png) |
+| **Overview.** What stands out in a dataset; each number says what it counts. | **All runs of a task.** One lane per run: where the runs part, and the work after the fix. |
+| ![One run, step by step](docs/img/readme/run.png) | ![Family matrix: model by harness](docs/img/readme/family.png) |
+| **One run.** Its phases, how it failed, and every model call and tool call. | **Model × harness.** pass@1 for every pair, with its 95% interval. |
+| ![A Learn article with its figure](docs/img/readme/learn.png) | ![A page tour](docs/img/readme/tour.png) |
+| **Learn.** Short articles with figures from the included runs. | **Tour.** A guided walk through any page. |
 
 ## Quick start
 
@@ -80,7 +96,7 @@ python3 -m traceharness --no-browser
 
 Open **http://127.0.0.1:8765**. No API key is needed to inspect the included results. Prebuilt frontend assets (`traceharness/frontend/dist`) ship in the repository, so Node.js is required only if you modify frontend source.
 
-The UI opens on **Datasets**, listing every directory under `data/runs/` (the included datasets below plus any runs you generate locally). Optional guided teaching notes beside each attempt can be enabled under **Settings → Student Lab · Guided Analysis**. When distributing the teaching handoff, share the built `dist/traceharness-school.zip` archive, which physically omits excluded local data.
+The UI opens on **Home**; **Datasets** lists every directory under `data/runs/` (the included datasets below plus any runs you generate locally). Optional guided teaching notes beside each attempt can be enabled under **Settings → Student Lab · Guided Analysis**. When distributing the teaching handoff, share the built `dist/traceharness-school.zip` archive, which physically omits excluded local data.
 
 ## Container and Compose
 
@@ -156,7 +172,7 @@ under `data/runner/quarantine/<job id>/`.
 
 ## Capture your coding-agent sessions
 
-Capture runs on your machine only: no account, no upload. It supports **Claude Code**, **Codex**, **agy** (Antigravity CLI), **Qwen Code**, and **Cursor**, reads only the folders you allow, and writes ledgers into the local console (the Capture page of `traceharness serve`).
+Capture runs on your machine only: no account, no upload. It supports **Claude Code**, **Codex**, **agy** (Antigravity CLI), **Qwen Code**, and **Cursor**, reads only the folders you allow, and writes ledgers into the local console (**Add data › Session capture**).
 
 ```bash
 traceharness capture --watch --path /path/to/session-directory      # follow sessions as they are written
