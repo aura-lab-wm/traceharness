@@ -1,0 +1,209 @@
+/* Rig · views/start.css — Home (start.jsx and its parts). TraceHarness's own look: Paper and Graphite tokens, the system
+   face for words and Plex Mono for the small labels, 1px line borders with the 6px radius, links underlined at rest,
+   the Learn index's cards and drawings. The hero, "You are here" and the closing band are dark bands: inside them the
+   theme tokens take the Graphite primitives (the -d set), so every part drawn there (links, counts, the kind tag, model
+   dots, the interval bar, buttons, the focus ring) has the contrast Graphite is tested for; in Graphite a band is
+   deeper than the page and edged with a line, so it still stands apart. The small labels are mono small capitals on
+   the caps tracking token: the words stay as written, so a screen reader and a copy read words, and no stylesheet
+   sets text upper-case (rig-css.test.js). Tokens only. */
+
+/* ---------------------------------------------------------------- the column and the rhythm */
+.rig .rg-start{min-width:0;--rig-start-gut:var(--rig-s6)}
+@container rgdoc (max-width:640px){.rig .rg-start{--rig-start-gut:var(--rig-s4)}}
+/* the page grows with a wide window (up to 1680 px) instead of sitting in a 1180 px column between empty bands */
+.rig .rg-start-in{box-sizing:border-box;width:100%;max-width:min(100%,clamp(1180px,88cqi,1680px));margin:0 auto;padding:0 var(--rig-start-gut)}
+.rig .rg-start-sec{margin-top:var(--rig-s7)}
+.rig .rg-start :where(p){margin:0}
+
+/* the small labels: mono small capitals, tracked */
+.rig .rg-start-kick{margin:0 0 var(--rig-s2);font:var(--rig-fw-medium) var(--rig-fs-lg)/var(--rig-lead-sm) var(--rig-mono);font-variant-caps:all-small-caps;letter-spacing:var(--rig-track-caps);color:var(--rig-mute)}
+.rig .rg-start-h2{--rig-lead-h2:32px;margin:0 0 var(--rig-s4);display:flex;flex-wrap:wrap;align-items:baseline;gap:var(--rig-s1) var(--rig-s3);font:var(--rig-fw-bold) 24px/var(--rig-lead-h2) var(--rig-sans);letter-spacing:-.01em;color:var(--rig-text)}
+.rig .rg-start-h2 .n,.rig .rg-start-h .n{font:var(--rig-fw-regular) var(--rig-fs-sm)/var(--rig-lead-md) var(--rig-sans);letter-spacing:0;color:var(--rig-mute);font-variant-numeric:tabular-nums}
+.rig .rg-start-h{display:flex;flex-wrap:wrap;align-items:baseline;gap:var(--rig-s1) var(--rig-s3);margin:0 0 var(--rig-s3);font:var(--rig-fw-bold) var(--rig-fs-lg)/var(--rig-lead-lg) var(--rig-sans);color:var(--rig-text)}
+.rig .rg-start-sub{max-width:52rem;margin:calc(var(--rig-s2) * -1) 0 var(--rig-s4);font-size:var(--rig-fs-sm);line-height:var(--rig-lead-md);color:var(--rig-dim)}
+.rig .rg-start-sub code{font-size:var(--rig-fs-xs)}
+
+/* ---------------------------------------------------------------- the dark bands: Graphite's tokens inside */
+@media screen{
+  .rig .rg-start-band{
+    --rig-text:var(--rig-text-d);--rig-dim:var(--rig-dim-d);--rig-mute:var(--rig-mute-d);--rig-unk:var(--rig-unk-d);--rig-faint:var(--rig-faint-d);
+    --rig-bg:var(--rig-bg-d);--rig-panel:var(--rig-panel-d);--rig-panel2:var(--rig-panel2-d);--rig-panel3:var(--rig-panel3-d);--rig-code:var(--rig-code-d);--rig-wash:var(--rig-wash-d);
+    --rig-line-soft:var(--rig-line-soft-d);--rig-line:var(--rig-line-d);--rig-line2:var(--rig-line2-d);--rig-line3:var(--rig-line3-d);
+    --rig-sel:var(--rig-sel-d);--rig-sel-h:var(--rig-sel-h-d);--rig-sel-t:var(--rig-sel-t-d);--rig-sel-ink:var(--rig-sel-ink-d);--rig-on-accent:var(--rig-on-accent-d);--rig-brand:var(--rig-brand-d);
+    --rig-sky:var(--rig-sky-d);--rig-sky-t:var(--rig-sky-t-d);--rig-red:var(--rig-red-d);--rig-red-t:var(--rig-red-t-d);--rig-amb:var(--rig-amb-d);--rig-amb-t:var(--rig-amb-t-d);--rig-qty:var(--rig-qty-d);
+    --rig-ser1:var(--rig-ser1-d);--rig-ser5:var(--rig-ser5-d);
+    --rig-ph-explore:var(--rig-ph-explore-d);--rig-ph-reproduce:var(--rig-ph-reproduce-d);--rig-ph-edit:var(--rig-ph-edit-d);--rig-ph-test:var(--rig-ph-test-d);--rig-ph-lookup:var(--rig-ph-lookup-d);--rig-ph-env:var(--rig-ph-env-d);--rig-ph-submit:var(--rig-ph-submit-d);--rig-ph-other:var(--rig-ph-other-d);
+    /* what rig.css derives from those on .rig, derived again here (start-band.test.js keeps these lines equal to its) */
+    --rig-sel-bg:var(--rig-wash);--rig-sel-mark:var(--rig-text);--rig-focus-ring:2px solid var(--rig-sel);
+    --rig-row-hover:color-mix(in srgb,var(--rig-text) 3%,transparent);
+    --rig-em-1:var(--rig-ser1);--rig-em-2:var(--rig-ph-reproduce);--rig-em-3:var(--rig-ph-edit);--rig-em-4:var(--rig-ph-test);
+    --rig-em-5:var(--rig-ph-lookup);--rig-em-6:var(--rig-ph-explore);--rig-em-7:var(--rig-ph-submit);--rig-em-8:var(--rig-ph-env);
+    --rig-eh-1:var(--rig-ph-test);--rig-eh-2:var(--rig-ph-lookup);--rig-eh-3:var(--rig-ser1);--rig-eh-4:var(--rig-ph-reproduce);--rig-eh-5:var(--rig-ph-submit);
+    --rig-eh-6:var(--rig-ph-edit);--rig-eh-7:var(--rig-ph-explore);--rig-eh-8:var(--rig-ph-env);--rig-eh-9:var(--rig-ser5);
+    /* the band itself: Paper's ink */
+    --rig-band:var(--rig-text-l);--rig-band-raise:color-mix(in srgb,var(--rig-text) 7%,var(--rig-band));
+    background:var(--rig-band);color:var(--rig-text);color-scheme:dark;
+  }
+  /* Graphite: deeper than the page (between its ground and black) and edged, so the band does not melt into it */
+  .rig[data-rig-theme="dark"] .rg-start-band{--rig-band:color-mix(in srgb,var(--rig-bg-d) 45%,var(--rig-bg-hc));border-color:var(--rig-line)}
+  /* High contrast: the band takes that theme's own white-on-black set */
+  .rig:is([data-rig-theme="contrast"],[data-rig-theme="contrast-light"]) .rg-start-band{
+    --rig-text:var(--rig-text-hc);--rig-dim:var(--rig-dim-hc);--rig-mute:var(--rig-mute-hc);--rig-line:var(--rig-line-hc);--rig-line2:var(--rig-line2-hc);--rig-line3:var(--rig-line3-hc);
+    --rig-panel:var(--rig-panel-hc);--rig-panel2:var(--rig-panel2-hc);--rig-panel3:var(--rig-panel3-hc);--rig-sel:var(--rig-sel-hc);--rig-sel-h:var(--rig-sel-h-hc);--rig-sel-t:var(--rig-sel-t-hc);--rig-sel-ink:var(--rig-sel-ink-hc);
+    --rig-sky:var(--rig-sky-hc);--rig-sky-t:var(--rig-sky-t-hc);--rig-amb:var(--rig-amb-hc);--rig-qty:var(--rig-qty-hc);
+    --rig-band:var(--rig-bg-hc);border-color:var(--rig-line-hc);
+  }
+  /* colour-blind status colours in the band, as rig.css sets them on a Graphite page */
+  .rig[data-rig-cvd="1"] .rg-start-band{
+    --rig-sky:var(--rig-sky-cvd-d);--rig-sky-t:var(--rig-sky-t-cvd-d);--rig-red:var(--rig-red-cvd-d);--rig-red-t:var(--rig-red-t-cvd-d);--rig-amb:var(--rig-amb-cvd-d);--rig-amb-t:var(--rig-amb-t-cvd-d);
+    --rig-sel:var(--rig-sel-cvd-d);--rig-sel-h:var(--rig-sel-h-cvd-d);--rig-sel-t:var(--rig-sel-t-cvd-d);--rig-wash:var(--rig-wash-cvd-d);
+  }
+}
+.rig .rg-start-band{border:0 solid transparent;border-block-width:1px}
+
+/* buttons on a band: the accent (the logo's dot) and an outline */
+.rig .rg-start-acts{display:flex;flex-wrap:wrap;align-items:center;gap:var(--rig-s3);margin-top:var(--rig-s5)}
+.rig :is(.rg-start-go,.rg-start-out){min-height:var(--rig-h-md);padding:0 var(--rig-s4);gap:var(--rig-s2);font-size:var(--rig-fs-sm)}
+.rig a.rg-start-go{background:var(--rig-sel);border-color:var(--rig-sel);color:var(--rig-sel-ink)}
+.rig a.rg-start-go .rg-ico{color:inherit}
+.rig a.rg-start-go:hover{background:var(--rig-sel-h);border-color:var(--rig-sel-h);color:var(--rig-sel-ink)}
+.rig .rg-start-out{background:transparent;border-color:var(--rig-line3);color:var(--rig-text)}
+.rig .rg-start-out:hover{background:var(--rig-band-raise);border-color:var(--rig-text)}
+.rig .rg-start-acts .rg-ph-help{margin:0}
+
+/* ---------------------------------------------------------------- the hero */
+.rig .rg-start-hero{padding:var(--rig-s7) 0 var(--rig-s7);border-top-width:0}
+.rig .rg-start-herog{display:grid;grid-template-columns:minmax(0,1fr) minmax(17rem,clamp(23rem,24cqi,30rem));gap:var(--rig-s7);align-items:start}
+.rig .rg-start-herog.solo{grid-template-columns:minmax(0,1fr)}
+@container rgdoc (max-width:900px){.rig .rg-start-herog{grid-template-columns:minmax(0,1fr);gap:var(--rig-s6)}}
+.rig .rg-start-head{min-width:0}
+.rig .rg-start-pills{display:flex;flex-wrap:wrap;gap:var(--rig-s2);margin-bottom:var(--rig-s4)}
+.rig .rg-start-pill{display:inline-flex;align-items:baseline;gap:var(--rig-s2);margin:0;padding:2px var(--rig-s3);border:1px solid var(--rig-line2);border-radius:var(--rig-r-full);font:var(--rig-fw-medium) var(--rig-fs-lg)/var(--rig-lead-sm) var(--rig-mono);font-variant-caps:all-small-caps;letter-spacing:var(--rig-track-caps);color:var(--rig-text)}
+/* the page's own name beside the logo's period */
+.rig .rg-start-pill h1{margin:0;font:inherit;letter-spacing:inherit}
+.rig .rg-start-pill .rg-mark-dot{font-size:var(--rig-fs-2xs)}
+.rig .rg-start-pill.dim{border-color:var(--rig-line);color:var(--rig-mute)}
+.rig .rg-start-hl{--rig-lead-hero:clamp(50px,3.1cqi,66px);max-width:20em;font:var(--rig-fw-regular) clamp(42px,2.6cqi,56px)/var(--rig-lead-hero) var(--rig-sans);letter-spacing:-.025em;color:var(--rig-text);text-wrap:balance}
+@container rgdoc (max-width:640px){.rig .rg-start-hl{--rig-lead-hero:36px;font-size:30px}}
+.rig .rg-start-hl b{font-weight:var(--rig-fw-bold)}
+/* the accent word: the one link in the headline, to the article on wasted work, in the accent (a link may wear it) */
+.rig .rg-start-hl em{font-style:normal;font-weight:var(--rig-fw-medium)}
+.rig .rg-start-hl a.rg-start-acc{font-weight:var(--rig-fw-medium);color:var(--rig-sel-t);text-decoration:underline;text-decoration-thickness:2px;text-decoration-color:color-mix(in srgb,currentColor 35%,transparent);text-underline-offset:6px;transition:text-decoration-color var(--rig-dur-1) var(--rig-ease)}
+.rig .rg-start-hl a.rg-start-acc:hover{text-decoration-color:currentColor}
+.rig .rg-start-lede{max-width:min(100%,clamp(44rem,40cqi,56rem));margin-top:var(--rig-s4);font-size:var(--rig-fs-lg);line-height:var(--rig-lead-lg);color:var(--rig-dim)}
+
+/* the counts as one mono line of links */
+.rig .rg-nums.rg-start-meta{gap:var(--rig-s1) 0;margin:var(--rig-s5) 0 0 -1.5em;font:var(--rig-fw-regular) var(--rig-fs-lg)/var(--rig-lead-md) var(--rig-mono);font-variant-caps:all-small-caps;letter-spacing:var(--rig-track-caps);color:var(--rig-mute)}
+.rig .rg-start-meta .rg-num-chip{min-height:0;padding:0;border-radius:0;background:none;color:var(--rig-dim)}
+.rig .rg-start-meta .rg-num-chip>b{color:var(--rig-text);font-weight:var(--rig-fw-semi)}
+.rig .rg-start-meta .rg-num-chip:hover{background:none;color:var(--rig-text)}
+/* a line of words with a dot between them: every item keeps a gap with its dot, and the line is shifted left by that gap
+   and clipped there, so a line that wraps never starts with a dot (the clip leaves the focus ring its room) */
+.rig :is(.rg-start-meta,.rg-start-dots){margin-left:-1.5em;clip-path:inset(-8px -8px -8px calc(1.5em - 6px))}
+.rig :is(.rg-start-meta,.rg-start-dots)>*{position:relative;margin-left:1.5em}
+.rig :is(.rg-start-meta,.rg-start-dots)>*::before{content:"·";position:absolute;left:-1.05em;color:var(--rig-mute)}
+.rig .rg-start-meta .rg-nums-t{color:var(--rig-mute)}
+
+/* the search, raised a step off the band */
+.rig .rg-start-find{max-width:min(100%,clamp(44rem,40cqi,56rem));margin-top:var(--rig-s6)}
+.rig .rg-start-search{display:flex;align-items:center;gap:var(--rig-s2);width:100%;min-width:0;height:var(--rig-h-md);padding:0 6px 0 var(--rig-s3);border:1px solid var(--rig-line2);border-radius:var(--rig-r-md);background:var(--rig-band-raise);color:var(--rig-mute);text-align:left;cursor:text;font:var(--rig-fw-regular) var(--rig-fs-sm)/var(--rig-lead-xs) var(--rig-sans);transition:border-color var(--rig-dur-1) var(--rig-ease),color var(--rig-dur-1) var(--rig-ease)}
+.rig .rg-start-search:hover{border-color:var(--rig-line3);color:var(--rig-dim)}
+.rig .rg-start-search:focus-visible{outline:var(--rig-focus-ring);outline-offset:2px}
+.rig .rg-start-search .rg-ico{flex:none}
+.rig .rg-start-search .rg-start-ph{flex:1 1 auto;min-width:0}
+.rig .rg-start-search .rg-kbd{flex:none;background:var(--rig-band);border-color:var(--rig-line2)}
+.rig .rg-start-qs{display:flex;flex-wrap:wrap;align-items:baseline;gap:var(--rig-s1) var(--rig-s2);margin-top:var(--rig-s2);font-size:var(--rig-fs-sm);line-height:var(--rig-lead-md);color:var(--rig-dim)}
+.rig .rg-start-qs .lbl{color:var(--rig-mute)}
+.rig .rg-start-qs .q{display:inline-flex;align-items:baseline;gap:var(--rig-s2)}
+.rig .rg-start-qs .sep{color:var(--rig-mute)}
+
+/* the dataset in focus: a framed table of facts */
+.rig .rg-start-facts{min-width:0;padding:var(--rig-s4) var(--rig-s5) var(--rig-s2);border:1px solid var(--rig-line2);border-radius:var(--rig-r-md);background:var(--rig-band-raise)}
+.rig .rg-start-facts dl{margin:0}
+.rig .rg-start-facts dl>div{display:grid;grid-template-columns:7.5rem minmax(0,1fr);gap:var(--rig-s3);padding:var(--rig-s3) 0;border-top:1px solid var(--rig-line)}
+.rig .rg-start-facts dt{font:var(--rig-fw-medium) var(--rig-fs-lg)/var(--rig-lead-md) var(--rig-mono);font-variant-caps:all-small-caps;letter-spacing:var(--rig-track-caps);color:var(--rig-mute)}
+.rig .rg-start-facts dd{min-width:0;margin:0;font-size:var(--rig-fs-sm);line-height:var(--rig-lead-md);color:var(--rig-text);overflow-wrap:anywhere}
+.rig .rg-start-facts dd .rg-tag{margin-left:var(--rig-s1);vertical-align:1px}
+.rig .rg-start-fl{display:flex;flex-wrap:wrap;align-items:baseline;gap:2px var(--rig-s2);color:var(--rig-text);text-decoration:none}
+.rig .rg-start-fl>b{font-weight:var(--rig-fw-semi);font-variant-numeric:tabular-nums}
+.rig .rg-start-fl:hover .rg-start-names{text-decoration:underline;text-underline-offset:3px}
+.rig .rg-start-fl:focus-visible{outline:var(--rig-focus-ring);outline-offset:2px}
+.rig .rg-start-names{display:inline-flex;flex-wrap:wrap;align-items:baseline;gap:0 var(--rig-s3);color:var(--rig-dim);text-decoration:underline;text-decoration-thickness:1px;text-decoration-color:color-mix(in srgb,var(--rig-text) 35%,transparent);text-underline-offset:3px}
+.rig .rg-start-names .more{color:var(--rig-mute)}
+@container rgdoc (max-width:900px){.rig .rg-start-facts{max-width:44rem}}
+
+/* ---------------------------------------------------------------- "You are here": a dark panel */
+.rig .rg-start-here{padding:var(--rig-s5) var(--rig-s6) var(--rig-s6);border-width:1px;border-radius:var(--rig-r-md)}
+.rig .rg-start-hereg{display:grid;grid-template-columns:minmax(0,5fr) minmax(0,7fr);gap:var(--rig-s7);align-items:start}
+.rig .rg-start-here.solo .rg-start-hereg{grid-template-columns:minmax(0,1fr)}
+@container rgdoc (max-width:900px){.rig .rg-start-hereg{grid-template-columns:minmax(0,1fr);gap:var(--rig-s6)}}
+@container rgdoc (max-width:640px){.rig .rg-start-here{padding:var(--rig-s4)}}
+.rig .rg-start-rl,.rig .rg-start-dl,.rig .rg-start-parts,.rig .rg-start-sq{list-style:none;margin:0;padding:0}
+.rig .rg-start-rl{display:flex;flex-direction:column;gap:var(--rig-s2)}
+.rig .rg-start-row{display:flex;align-items:baseline;gap:var(--rig-s3);box-sizing:border-box;min-width:0;padding:var(--rig-s2) var(--rig-s3);border:1px solid var(--rig-line);border-radius:var(--rig-r-md);background:var(--rig-band-raise);color:var(--rig-text);text-decoration:none;transition:border-color var(--rig-dur-1) var(--rig-ease)}
+.rig .rg-start-row:hover{border-color:var(--rig-line3)}
+.rig .rg-start-row .k{flex:none;min-width:4.6em;font:var(--rig-fw-medium) var(--rig-fs-lg)/var(--rig-lead-sm) var(--rig-mono);font-variant-caps:all-small-caps;letter-spacing:var(--rig-track-caps);color:var(--rig-mute)}
+.rig .rg-start-row .t{display:flex;flex-direction:column;flex:1 1 auto;min-width:0}
+.rig .rg-start-row .t b{font-weight:var(--rig-fw-semi);font-size:var(--rig-fs-sm);line-height:var(--rig-lead-sm);overflow-wrap:anywhere}
+.rig .rg-start-row .t b.rg-mono{font-size:var(--rig-fs-xs)}
+.rig .rg-start-row .w{font-size:var(--rig-fs-xs);line-height:var(--rig-lead-xs);color:var(--rig-mute);overflow-wrap:anywhere}
+.rig .rg-start-row>.rg-ico{flex:none;align-self:center;color:var(--rig-mute)}
+.rig .rg-start-row:hover>.rg-ico{color:var(--rig-text)}
+.rig :is(.rg-start-row,.rg-start-card,.rg-start-ds,.rg-start-part,.rg-start-sqb):focus-visible{outline:var(--rig-focus-ring);outline-offset:2px}
+
+/* Learn as squares: read in the pass colour, the next in the accent, the rest a line; the parts under them */
+.rig .rg-start-parts{display:flex;flex-wrap:wrap;gap:var(--rig-s4) var(--rig-s5)}
+.rig .rg-start-pg{display:flex;flex-direction:column;gap:var(--rig-s2);min-width:0;max-width:100%}
+.rig .rg-start-sq{display:flex;gap:6px}
+.rig .rg-start-sqb{display:grid;place-items:center;width:34px;height:34px;box-sizing:border-box;border:1px solid var(--rig-line2);border-radius:var(--rig-r-sm);background:transparent;color:var(--rig-mute);font:var(--rig-fw-medium) var(--rig-fs-xs)/var(--rig-lead-xs) var(--rig-mono);font-variant-numeric:tabular-nums;text-decoration:none;transition:border-color var(--rig-dur-1) var(--rig-ease),background-color var(--rig-dur-1) var(--rig-ease)}
+.rig .rg-start-sqb:hover{border-color:var(--rig-text);color:var(--rig-text)}
+.rig .rg-start-sqb.read{background:var(--rig-sky);border-color:var(--rig-sky);color:var(--rig-panel)}
+.rig a.rg-start-sqb.next{background:var(--rig-sel);border-color:var(--rig-sel);color:var(--rig-sel-ink)}
+.rig .rg-start-part{display:flex;flex-direction:column;max-width:15rem;padding:2px 0;color:var(--rig-text);text-decoration:none}
+.rig .rg-start-part .pt{font-weight:var(--rig-fw-semi);font-size:var(--rig-fs-xs);line-height:var(--rig-lead-xs);text-decoration:underline;text-decoration-thickness:1px;text-decoration-color:color-mix(in srgb,var(--rig-text) 35%,transparent);text-underline-offset:3px}
+.rig .rg-start-part:hover .pt{text-decoration-color:currentColor}
+.rig .rg-start-part .pm{font-size:var(--rig-fs-xs);line-height:var(--rig-lead-xs);color:var(--rig-mute);font-variant-numeric:tabular-nums}
+.rig .rg-start-cont{margin-top:var(--rig-s5);max-width:100%;white-space:normal;text-align:left;height:auto;padding-top:6px;padding-bottom:6px;line-height:var(--rig-lead-sm);background:transparent;border-color:var(--rig-line3);color:var(--rig-text)}
+.rig .rg-start-cont:hover{background:var(--rig-band-raise);border-color:var(--rig-text)}
+.rig .rg-start-cont .rg-ico{flex:none}
+.rig .rg-start-learn .rg-start-h{margin-bottom:var(--rig-s4)}
+
+/* ---------------------------------------------------------------- three ways to start, the newest datasets */
+.rig .rg-start-lower{display:flex;flex-direction:column;gap:var(--rig-s7)}
+.rig .rg-start-blk{min-width:0}
+.rig :is(.rg-start-card,.rg-start-ds){box-sizing:border-box;min-width:0;border:1px solid var(--rig-line);border-radius:var(--rig-r-md);background:var(--rig-panel);color:var(--rig-text);text-decoration:none;transition:border-color var(--rig-dur-1) var(--rig-ease)}
+.rig :is(.rg-start-card,.rg-start-ds):hover{border-color:var(--rig-line3)}
+.rig .rg-start-cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(17rem,100%),1fr));gap:var(--rig-s3)}
+.rig .rg-start-card{display:flex;flex-direction:column;height:100%;overflow:hidden}
+.rig .rg-start-card .fig{display:block;padding:var(--rig-s3) var(--rig-s4);background:var(--rig-panel2);border-bottom:1px solid var(--rig-line);transition:background-color var(--rig-dur-1) var(--rig-ease)}
+.rig .rg-start-card:hover .fig{background:var(--rig-panel3)}
+.rig .rg-start-card .txt{display:flex;flex-direction:column;gap:var(--rig-s2);flex:1;padding:var(--rig-s3) var(--rig-s4) var(--rig-s4)}
+.rig .rg-start-card .top{display:flex;align-items:center;gap:var(--rig-s2)}
+.rig .rg-start-card .top .no{font:var(--rig-fw-medium) var(--rig-fs-xs)/var(--rig-lead-xs) var(--rig-mono);color:var(--rig-mute);font-variant-numeric:tabular-nums}
+.rig .rg-start-card .top .rg-ico{flex:none;color:var(--rig-dim)}
+.rig .rg-start-card .top b{font:var(--rig-fw-bold) var(--rig-fs-md)/var(--rig-lead-md) var(--rig-sans)}
+.rig .rg-start-card:hover .top b{text-decoration:underline;text-underline-offset:3px}
+.rig .rg-start-card .body{font-size:var(--rig-fs-sm);line-height:var(--rig-lead-md);color:var(--rig-dim)}
+.rig .rg-start-card .where{display:inline-flex;align-items:center;gap:4px;margin-top:auto;font-size:var(--rig-fs-xs);line-height:var(--rig-lead-xs);color:var(--rig-mute)}
+.rig .rg-start-card:hover .where{color:var(--rig-text)}
+.rig .rg-start-dl{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(17rem,100%),1fr));gap:var(--rig-s3)}
+.rig .rg-start-ds{display:flex;flex-direction:column;gap:var(--rig-s2);height:100%;padding:var(--rig-s3) var(--rig-s4)}
+.rig .rg-start-ds .nm{display:flex;flex-wrap:wrap;align-items:center;gap:var(--rig-s1) var(--rig-s2)}
+.rig .rg-start-ds .nm b{font:var(--rig-fw-semi) var(--rig-fs-sm)/var(--rig-lead-sm) var(--rig-sans)}
+.rig .rg-start-ds:hover .nm b{text-decoration:underline;text-underline-offset:3px}
+.rig .rg-start-ds .desc{font-size:var(--rig-fs-xs);line-height:var(--rig-lead-xs);color:var(--rig-dim)}
+.rig .rg-start-ds .meta{display:flex;flex-wrap:wrap;align-items:center;gap:var(--rig-s1) var(--rig-s2);margin-top:auto}
+.rig .rg-start-ds .dots{display:inline-flex;align-items:center;gap:3px}
+.rig .rg-start-ds .dots .more{font-size:var(--rig-fs-2xs);line-height:var(--rig-lead-xs);color:var(--rig-mute)}
+.rig .rg-start-ds .c{font-size:var(--rig-fs-xs);line-height:var(--rig-lead-xs);color:var(--rig-dim);font-variant-numeric:tabular-nums}
+.rig .rg-start-ds .rate{font-size:var(--rig-fs-xs)}
+.rig .rg-start-all{display:inline-block;margin-top:var(--rig-s3)}
+
+/* ---------------------------------------------------------------- the closing band and the footer */
+.rig .rg-start-close{margin-top:var(--rig-s8);padding:var(--rig-s7) 0}
+.rig .rg-start-big{--rig-lead-big:40px;max-width:24em;margin:0 0 var(--rig-s5);font:var(--rig-fw-regular) 32px/var(--rig-lead-big) var(--rig-sans);letter-spacing:-.02em;color:var(--rig-text);text-wrap:balance}
+@container rgdoc (max-width:640px){.rig .rg-start-big{--rig-lead-big:32px;font-size:25px}}
+.rig .rg-start-big b{font-weight:var(--rig-fw-bold)}
+.rig .rg-start-foot{padding:var(--rig-s4) 0 var(--rig-s5)}
+.rig .rg-start-foot .rg-start-dots{display:flex;flex-wrap:wrap;align-items:baseline;gap:var(--rig-s1) 0;font:var(--rig-fw-medium) var(--rig-fs-lg)/var(--rig-lead-md) var(--rig-mono);font-variant-caps:all-small-caps;letter-spacing:var(--rig-track-caps);color:var(--rig-mute)}
+.rig .rg-start-foot .rg-tlink{font:inherit}

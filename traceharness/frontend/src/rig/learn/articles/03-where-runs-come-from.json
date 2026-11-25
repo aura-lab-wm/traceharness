@@ -1,0 +1,355 @@
+{
+ "id": "where-runs-come-from",
+ "number": 3,
+ "part": 1,
+ "kind": "how-to",
+ "checked": "2026-11-23",
+ "title": "Where runs come from: datasets, imports, and what an import keeps",
+ "question": "How do I bring my own runs into TraceHarness, and what does an import keep or lose?",
+ "what_you_learn": [
+  "The four ways runs get into TraceHarness, and which one to use for your own files.",
+  "What an import keeps from its source, what it cannot keep, and how it marks the gaps.",
+  "How to check a dataset's record before you trust the numbers on its pages."
+ ],
+ "prerequisites": {
+  "read": [
+   "reading-a-trajectory",
+   "outcome-labels"
+  ],
+  "know": [
+   "Where your own agent saves its session files, if you plan to import them."
+  ]
+ },
+ "sections": [
+  {
+   "heading": "A dataset is a folder of runs",
+   "body": [
+    "In TraceHarness a dataset is one folder under data/runs. Each run in it has a ledger, a patch, its messages and a summary. The ledger lists what happened, one line per action: each model call, tool call, edit, blocked action and grade.",
+    "Runs reach that folder in two ways. TraceHarness's own runner writes them while an agent works. An import writes them afterwards, from another tool's files. Both end in the same format, so every page reads them the same way. The bundled study_v04 came from the runner: 3,240 runs, 3 models x 9 harnesses x 24 tasks x 5 runs each.",
+    "The ledger's field names follow the OpenTelemetry conventions for generative AI. OpenTelemetry is a common standard for tracing software. Its GenAI part has the status Development, so its names may still change. In OpenTelemetry a span is one timed operation in a trace, and it defines a span called gen_ai.execute_tool for one tool call. Each line of the ledger is a span in this sense. A trace from a production system therefore maps onto a TraceHarness run with little renaming."
+   ]
+  },
+  {
+   "heading": "Four ways in",
+   "body": [
+    "Click Add data in the left list. Its four tabs are the four ways in.",
+    {
+     "list": [
+      "Import files. Point at a session file or a folder of them. Pick an adapter, the converter for one tool's file format, or let TraceHarness detect one. Each session becomes one run. Inspect shows what it found before anything is written.",
+      "Public sample. A catalog of recorded agent runs on Hugging Face. Preview shows a dataset's columns and first rows. Importing writes a sample, with its source and licence beside it.",
+      "Session capture. Your own coding-agent sessions on this computer, read back as runs. They stay private: hidden from every listing and left out of every export.",
+      "Results on disk. The datasets already here, each with the harness versions its runs recorded."
+     ]
+    },
+    "To study your own agent, start with Import files and one session. Check that one run looks right before you import a hundred."
+   ]
+  },
+  {
+   "heading": "What an import keeps, and what it cannot",
+   "body": [
+    "An import keeps what the source recorded and marks the rest unknown. It never fills a gap with a guess. Four things happen to a source's fields.",
+    {
+     "list": [
+      "Kept when present: the model, each message, each tool call with its output, the final patch, and the source's own verdict, such as a resolved flag.",
+      "Marked unknown when missing: token counts, timestamps, the step limit and the temperature (the setting for how much chance goes into each word the model picks). Pages then show unknown or a dash, never a made-up 0.",
+      "Mapped into TraceHarness words: the source's tool names become lab tools, and its exit status becomes an exit reason when its words allow that.",
+      "Kept only as a fingerprint: a long system prompt can be stored as a hash and a length, without its text. A hash is a short code computed from the text, and any change to the text changes it."
+     ]
+    },
+    "Some formats hold less than you might hope. A SWE-bench predictions file has three fields per task: the task id, the model name and the patch. It has no steps at all, so it can be graded but not read as a trajectory. Compare the two bundled datasets: the runner's study_v04 has token counts for 3,240 of 3,240 runs, the SWE-rebench import for 0 of 2,174.",
+    "Every import also writes a provenance record beside the dataset. It names the source, its exact revision (the version of the source it read), the licence, how rows were chosen and which rows were skipped, with the reason."
+   ]
+  },
+  {
+   "heading": "Check the record before the numbers",
+   "body": [
+    "Read the source's own description first. On Hugging Face that is the dataset card, a page that says what the data holds and how to use it. The card tells you which fields exist at all.",
+    "After an import, look at what the pages say was recorded. A line such as token counts for 0 of 2,174 runs means no run has token counts, so no token chart can be drawn. Its hover hint says the same in older words: usage recorded 0/2,174. A page can only be as complete as its source.",
+    "Session files can hold more than you think. Hugging Face's guide to agent traces warns that they may contain prompts, command output, local paths, secrets, private code and personal data. Review and redact them before you share anything."
+   ]
+  }
+ ],
+ "figures": [
+  {
+   "id": "a03-pipeline",
+   "after_section": 0,
+   "kind": "import_pipeline",
+   "data_file": "a03-pipeline",
+   "title": "Two ways into one dataset folder",
+   "caption": "Runs reach a dataset folder through an import or through the runner, and both write the same files. The SWE-rebench import read 2,181 runs of 200 tasks, drawn from a source of 67,074 runs, wrote 2,174 and skipped 7; the runner wrote study_v04's 3,240 runs while the agents worked. Pick a way in to follow its path.",
+   "data_note": "swe_rebench_openhands_qwen3coder, provenance.json and 2,174 ledgers; study_v04, 3,240 ledgers",
+   "headline": [
+    {
+     "key": "source_runs",
+     "as_written": "67,074"
+    },
+    {
+     "key": "source_tasks",
+     "as_written": "6,306"
+    },
+    {
+     "key": "tasks_3plus",
+     "as_written": "6,264"
+    },
+    {
+     "key": "drawn",
+     "as_written": "200"
+    },
+    {
+     "key": "selected",
+     "as_written": "2,181"
+    },
+    {
+     "key": "written",
+     "as_written": "2,174"
+    },
+    {
+     "key": "skipped",
+     "as_written": "7"
+    },
+    {
+     "key": "runner_runs",
+     "as_written": "3,240"
+    }
+   ]
+  },
+  {
+   "id": "a03-keeps",
+   "after_section": 2,
+   "kind": "keep_matrix",
+   "data_file": "a03-keeps",
+   "title": "What each source kept, field by field",
+   "caption": "Each field of a run, in the runner's study_v04, the SWE-rebench import and a SWE-bench predictions file: kept, marked unknown, mapped into TraceHarness words, or kept only as a fingerprint. Token counts are recorded for 3,240 of 3,240 runs in study_v04 and 0 of 2,174 in the import; the import keeps the 11,547-character system prompt only as a fingerprint. The predictions column is the format of the SWE-bench evaluation guide, not a dataset.",
+   "data_note": "study_v04, 3,240 runs; swe_rebench_openhands_qwen3coder, 2,174 runs; the predictions format from the SWE-bench evaluation guide",
+   "headline": [
+    {
+     "key": "tokens_0",
+     "as_written": "3,240 of 3,240"
+    },
+    {
+     "key": "tokens_1",
+     "as_written": "0 of 2,174"
+    },
+    {
+     "key": "prompt_chars",
+     "as_written": "11,547"
+    },
+    {
+     "key": "fields_pred",
+     "as_written": "three fields"
+    }
+   ]
+  }
+ ],
+ "worked_example": {
+  "title": "What the public SWE-rebench import kept",
+  "dataset": {
+   "name": "swe_rebench_openhands_qwen3coder",
+   "what": "A 200-task, 2,174-run subset of nebius/SWE-rebench-openhands-trajectories. The runs are OpenHands (an open-source agent harness for coding tasks) driving Qwen3-Coder-480B-A35B-Instruct on SWE-rebench tasks.",
+   "credit": "Trofimova, Shevtsov, Badertdinov, Pyaev, Karasik, Golubev (Nebius), SWE-rebench-OpenHands-Trajectories, 2025, CC BY 4.0, https://huggingface.co/datasets/nebius/SWE-rebench-openhands-trajectories"
+  },
+  "open": [
+   "Click the dataset name at the top of the left list and choose swe_rebench_openhands_qwen3coder.",
+   "Click Runs in the left list and open any run. Read its header and step 1.",
+   "Click Add data, then the Results on disk tab, and find the dataset in the list."
+  ],
+  "body": [
+   "The source holds 67,074 runs of 6,306 tasks. The import drew 200 tasks with a fixed seed, from the 6,264 tasks that have at least 3 runs. It took every run of those tasks: 2,181 runs.",
+   "2,174 runs were written. The other 7 were skipped, each for the same stated reason: a message came after an assistant text turn, and the converter allows such a turn only at the end.",
+   "It kept what the source has. Every run has its messages, tool calls and final patch, and the source's resolved flag; 1,092 of the 2,174 are resolved.",
+   "It marked what the source lacks. Token counts are recorded for 0 of 2,174 runs, and start times for 0. No run has a strengthened grade, because the source ran only its own tests.",
+   "It kept the system prompt only as a fingerprint. All 2,174 runs share one fingerprint and one length, 11,547 characters, but the text is not stored.",
+   "It mapped the exit status where the words allowed it: 1,999 runs submitted, 161 reached the 100-iteration limit (max_steps) and 14 ended in an error.",
+   "The provenance record names the source revision, 35455389ab51, the licence, CC BY 4.0, and the day it was fetched, 2026-11-20."
+  ],
+  "links": [
+   "ds:swe_rebench_openhands_qwen3coder",
+   "field:swe_rebench_openhands_qwen3coder",
+   "sources:disk"
+  ]
+ },
+ "try_it": {
+  "clicks": [
+   "Click the dataset name at the top of the left list and choose swe_rebench_openhands_qwen3coder.",
+   "Click Tokens in the left list.",
+   "Read the first row of boxes, then the table Tokens by phase."
+  ],
+  "question": "What do the token boxes show for this import, and why? What does the table Tokens by phase still count?",
+  "answer": "The token boxes say not recorded, because the source has no token counts. The Overview's model table says token counts for 0 of 2,174 runs. Tokens by phase still counts each phase's tool calls and the characters of tool output, because those are in the record. Its token columns say unknown.",
+  "answer_measured_from": "GET /api/results/swe_rebench_openhands_qwen3coder/tokens: totals prompt, generated, cached and computed all null; by_phase keeps calls and output_chars, with generated and prompt_read null. data/runs/swe_rebench_openhands_qwen3coder/index.jsonl: input_tokens null in 2,174 of 2,174 rows.",
+  "links": [
+   "ds:swe_rebench_openhands_qwen3coder",
+   "an:swe_rebench_openhands_qwen3coder:tokens",
+   null
+  ]
+ },
+ "quiz": [
+  {
+   "q": "A source has no token counts. What does an import write for them?",
+   "options": [
+    "Zero, so the charts can still be drawn",
+    "An estimate from the length of each message",
+    "Unknown, and the pages say so",
+    "The average of the other datasets"
+   ],
+   "answer": 2,
+   "why": "An import keeps what the source recorded and marks the rest unknown; it never fills a gap with a guess."
+  },
+  {
+   "q": "You want to study your own coding agent. Which tab of Add data comes first?",
+   "options": [
+    "Public sample, to see someone else's runs",
+    "Import files, starting with one session",
+    "Results on disk, to see the bundled data",
+    "Which benchmark, to pick a set of tasks"
+   ],
+   "answer": 1,
+   "why": "Import files turns your own session files into runs; check one run before you import many."
+  },
+  {
+   "q": "Why can a SWE-bench predictions file not be read as a trajectory?",
+   "options": [
+    "It holds only the task id, the model name and the patch",
+    "Its patches are written in a format that cannot be read",
+    "Its runs were graded by a different set of tests",
+    "It is too large for TraceHarness to open at once"
+   ],
+   "answer": 0,
+   "why": "The predictions format has three fields per task and no steps, so the patch can be graded but not read step by step."
+  }
+ ],
+ "sources": [
+  {
+   "title": "Evaluation Guide (SWE-bench documentation)",
+   "authors": "SWE-bench maintainers",
+   "year": "n.d. (living documentation page)",
+   "url": "https://www.swebench.com/SWE-bench/guides/evaluation/",
+   "what_we_took": "A SWE-bench predictions file is JSONL with three fields per task: instance_id, model_name_or_path and model_patch.",
+   "quote": "Your predictions should be in JSONL format",
+   "licence": "Documentation of the SWE-bench repository (MIT). Paraphrased, one short quote.",
+   "checked": "2026-11-23"
+  },
+  {
+   "title": "nebius/SWE-rebench-openhands-trajectories (dataset card)",
+   "authors": "Maria Trofimova, Anton Shevtsov, Ibragim Badertdinov, Konstantin Pyaev, Simon Karasik, Alexander Golubev (Nebius)",
+   "year": "2025",
+   "url": "https://huggingface.co/datasets/nebius/SWE-rebench-openhands-trajectories",
+   "what_we_took": "The runs of the worked example, and what the source holds: messages, the final patch, an exit status and a resolved flag, with a maximum of 100 turns.",
+   "quote": "Contains 'submit' in case the agent completes trajectory with a terminating action, or an error message of the OpenHands agent otherwise.",
+   "licence": "CC BY 4.0. TraceHarness's swe_rebench_openhands_qwen3coder is a subset; credit is required wherever its runs appear.",
+   "checked": "2026-11-23"
+  },
+  {
+   "title": "Semantic conventions for generative AI tool execution (OpenTelemetry GenAI semantic conventions)",
+   "authors": "OpenTelemetry authors",
+   "year": "n.d. (living specification, status Development)",
+   "url": "https://github.com/open-telemetry/semantic-conventions-genai/blob/main/docs/gen-ai/execute-tool.md",
+   "what_we_took": "The OpenTelemetry names for agent telemetry (status Development), such as the gen_ai.execute_tool span for one tool call, which the TraceHarness ledger follows. The older opentelemetry.io page now points to this repository.",
+   "quote": "Describes tool execution span.",
+   "licence": "Apache-2.0 (repository). Paraphrased, one short quote.",
+   "checked": "2026-11-24"
+  },
+  {
+   "title": "Dataset Cards (Hugging Face Hub documentation)",
+   "authors": "Hugging Face",
+   "year": "n.d. (living documentation page)",
+   "url": "https://huggingface.co/docs/hub/datasets-cards",
+   "what_we_took": "A dataset card is the README of a dataset repository; it says what the data holds and how it should be used, and its metadata carries the licence.",
+   "quote": "Each dataset may be documented by the README.md file in the repository.",
+   "licence": "Hugging Face documentation; reuse terms not stated on the page. Paraphrased, one short quote.",
+   "checked": "2026-11-23"
+  },
+  {
+   "title": "Agent Traces (Hugging Face Hub documentation)",
+   "authors": "Hugging Face",
+   "year": "n.d. (living documentation page)",
+   "url": "https://huggingface.co/docs/hub/agent-traces",
+   "what_we_took": "Trace files can hold prompts, command output, local paths, secrets, private code and personal data, so review and redact them before publishing.",
+   "quote": "Review and redact traces before publishing them publicly",
+   "licence": "Hugging Face documentation; reuse terms not stated on the page. Paraphrased, one short quote.",
+   "checked": "2026-11-23"
+  }
+ ],
+ "glossary_terms": [
+  "dataset",
+  "import",
+  "provenance",
+  "dataset card",
+  "usage recorded",
+  "ledger",
+  "Session capture",
+  "exit reason",
+  "span",
+  "temperature"
+ ],
+ "see_also": [
+  {
+   "kind": "article",
+   "target": "reading-a-trajectory"
+  },
+  {
+   "kind": "article",
+   "target": "how-swe-bench-grades"
+  },
+  {
+   "kind": "page",
+   "label": "Add data: import files, a public sample, session capture",
+   "spec": "sources"
+  },
+  {
+   "kind": "page",
+   "label": "Public sample: the Hugging Face catalog",
+   "spec": "sources:sample"
+  }
+ ],
+ "numbers": [
+  {
+   "as_written": [
+    "67,074",
+    "6,306",
+    "6,264",
+    "200",
+    "2,181",
+    "2,174",
+    "7"
+   ],
+   "meaning": "source rows and tasks, the draw, the runs selected, written and skipped",
+   "source": "data/runs/swe_rebench_openhands_qwen3coder/provenance.json (total_rows, selection.source_counts, subset_counts, n, n_imported, skipped)"
+  },
+  {
+   "as_written": [
+    "1,092",
+    "0 of 2,174",
+    "11,547",
+    "1,999",
+    "161",
+    "14"
+   ],
+   "meaning": "resolved runs, runs with token counts, system prompt length, exit reasons",
+   "source": "index.jsonl (hidden_pass, input_tokens, exit_reason) and each ledger's invoke_agent fingerprint (system_prompt_chars)"
+  },
+  {
+   "as_written": [
+    "35455389ab51",
+    "2026-11-20",
+    "100"
+   ],
+   "meaning": "source revision, fetch date, the card's maximum turn count",
+   "source": "provenance.json (revision, fetched_at); dataset card"
+  },
+  {
+   "as_written": [
+    "3,240 runs",
+    "3 models x 9 harnesses x 24 tasks x 5 runs",
+    "3,240 of 3,240"
+   ],
+   "meaning": "study_v04, written by the runner; runs with token counts",
+   "source": "data/runs/study_v04/index.jsonl (traceharness-study): 3,240 rows, input_tokens recorded in all; scripts/learn_figures.py a03-keeps"
+  }
+ ],
+ "in_short": [
+  "A dataset is **one folder of runs in one format**, whether TraceHarness's runner wrote it during the run or an import wrote it afterwards from another tool's files.",
+  "**An import keeps what the source recorded and marks the rest unknown**: the SWE-rebench import has token counts for 0 of 2,174 runs, and its pages say so.",
+  "**Check the record before the numbers**: read the dataset card and the provenance record, and review session files for secrets before you share them."
+ ]
+}

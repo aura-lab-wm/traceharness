@@ -700,6 +700,7 @@
    "gated": false,
    "hf_adapter": "messages",
    "hf_import": {
+    "card_model": "Qwen/Qwen3-Coder-480B-A35B-Instruct",
     "config": "default",
     "split": "train"
    },

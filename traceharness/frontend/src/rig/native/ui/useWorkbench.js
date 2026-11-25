@@ -132,8 +132,18 @@ export function useWorkbench({ runtime, response, draft = null, disabled = false
   // A digest that was requested for an older draft must never be applied to a newer one.
   useEffect(() => { generation.current++; setBusy('') }, [draft, disabled, inventory])
   const mounted = useRef(false)
+  // A new inventory (another digest, or another runtime) starts the workbench again. A refresh that is still
+  // loading (no inventory yet) or that brings the same digest back keeps the unapplied edits and their Undo.
+  const seenInventory = useRef({ sha: null, runtimeId })
   useEffect(() => {
-    if (!mounted.current) { mounted.current = true; return }
+    const sha = inventory?.inventory_sha256 ?? null
+    const seen = seenInventory.current
+    if (!mounted.current) { mounted.current = true; seenInventory.current = { sha, runtimeId }; return }
+    if (runtimeId === seen.runtimeId && (sha == null || seen.sha == null || sha === seen.sha)) {
+      if (sha != null) seenInventory.current = { sha, runtimeId }
+      return
+    }
+    seenInventory.current = { sha, runtimeId }
     setUi((previous) => ({ ...INITIAL, view: previous.view, focusMode: previous.focusMode }))
     setEdits({}); setHistory(createHistory()); setNotice(''); setError(''); setReport(null)
   }, [inventory?.inventory_sha256, runtimeId])

@@ -1,0 +1,9 @@
+/* Rig · learn/figures/kinds/after-hist.css — runs by the work they did after a mark (after-hist.jsx). The first model is grey,
+   the second the factor. The bars rise once, one after another;
+   rig.css stops it under prefers-reduced-motion. Tokens only. */
+.rg-lfig-sw.fa-m0{background:var(--rig-ser4)}
+.rg-lfig-sw.fa-m1{background:var(--rig-ser1)}
+.rg-ahist-bar .rg-bar-grow{transform-box:fill-box;transform-origin:50% 100%;transform:scaleY(0);transition:transform calc(var(--rig-dur-2) * 3) var(--rig-ease) calc(var(--rig-dur-1) * var(--rig-fig-i))}
+.rg-ahist-svg.seen .rg-ahist-bar .rg-bar-grow{transform:none}
+.rg-ahist-bar.m0 .rg-bar-grow{fill:var(--rig-ser4)}
+.rg-ahist-bar.m1 .rg-bar-grow{fill:var(--rig-ser1)}

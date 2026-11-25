@@ -1,21 +1,20 @@
 /* Rig · views/blocks.jsx — build a harness from blocks and run it.
    A live model needs a key typed into this page. The key stays in component
    state and is sent only on Run. It is not written into the tab store.
-   Customize keeps its seven blocks in the harness library when this console has one (this
-   computer or the member's account); the member snapshot has no runner, so Customize is its
-   only builder there. */
+   Build keeps its own editor (blocks can be added and removed) and its own launcher. Customize
+   (blocks:customize, the Minimal harness's way on) opens One run › Advanced settings, the one editor
+   of the seven blocks. */
 import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { api } from '../../api'
-import { HAS_LIBRARY, LIBRARY, can } from '../../environment'
 import { HarnessJson } from '../HarnessJson'
-import { libraryPlace, requireStored } from '../../json'
-import { Unavailable } from '../unavailable'
-import { Btn, Empty, ErrorState, Go, Icon, Loading, Note, Tag } from '../ui'
+import { Btn, Empty, ErrorState, Icon, Loading, Note, PageHeader, Tag } from '../ui'
 import { EvidenceOrigin, evidenceOrigin, withEvidenceOrigin } from '../shallowEvidence'
-import { blocksFromHarness, readDraft, wizardBlocks, writeDraft } from './shallow-drafts'
+import { blocksFromHarness } from './shallow-drafts'
 import { HarnessNav, HarnessSummary, NumericField, focusWorkspaceSection } from '../harnessWorkspace'
 import { NUMBER_FIELDS, fieldIssues } from '../harnessFields'
+import { HarnessComposer } from './harness-composer'
 import './blocks.css'
+import { standInName } from '../harnessNames'
 
 const TYPE_LABEL = {
   prompt: 'Prompt',
@@ -27,10 +26,6 @@ const TYPE_LABEL = {
   listing: 'File list',
 }
 
-const CUSTOMIZE_TYPES = ['prompt', 'tools', 'policy', 'context', 'stop', 'sampling', 'listing']
-/** A library and no runner on this machine (the member snapshot): Customize is the only builder. */
-const LIBRARY_ONLY = HAS_LIBRARY && !can('run.local')
-
 function fresh(type, tools) {
   if (type === 'prompt') return { type, text: 'You are an autonomous software engineer. Inspect, edit, verify, then call submit.' }
   if (type === 'tools') return { type, names: ['list_files', 'read_file', 'edit_file', 'run_tests', 'submit'] }
@@ -41,19 +36,7 @@ function fresh(type, tools) {
   return { type, include: true, _tools: tools }
 }
 
-function readCustomizeBlocks(tools, restoreDraft = true) {
-  const stored = (restoreDraft && readDraft('customize-draft')) || readDraft('customize') || (HAS_LIBRARY ? wizardBlocks() : null)
-  const usable = Array.isArray(stored) && stored.every((block) => (
-    block && typeof block === 'object' && !Array.isArray(block) && typeof block.type === 'string'
-  ))
-  if (!usable) return CUSTOMIZE_TYPES.map((type) => fresh(type, tools))
-  return stored.map((block) => ({
-    ...block,
-    names: Array.isArray(block.names) ? block.names.filter((name) => typeof name === 'string') : block.names,
-  }))
-}
-
-export function BlockCard({ block, index, count, tools, onChange, onMove, onRemove, allowRemove = true }) {
+export function BlockCard({ block, index, number = index + 1, count, tools, onChange, onMove, onRemove, allowRemove = true, first = index === 0, last = index === count - 1 }) {
   const set = (patch) => onChange(index, { ...block, ...patch })
   const moveButtons = useRef({})
   const focusAfterMove = useRef(null)
@@ -68,11 +51,11 @@ export function BlockCard({ block, index, count, tools, onChange, onMove, onRemo
   return (
     <article className="rg-pnl" data-el="harness-block" data-block-type={block.type}>
       <div className="rg-pnl-h rg-blk-h">
-        <span className="rg-lbl rg-blk-t">{index + 1} · {TYPE_LABEL[block.type] || block.type}</span>
+        <span className="rg-lbl rg-blk-t">{number == null ? '' : `${number} · `}{TYPE_LABEL[block.type] || block.type}</span>
         <span className="rg-blk-acts">
-          <button ref={(node) => { moveButtons.current.up = node }} type="button" className="rg-btn ghost rg-blk-ico" disabled={index === 0} onClick={() => { focusAfterMove.current = 'up'; onMove(index, -1) }} aria-label="Move block up" title="Move up"><Icon name="up" size={16} /></button>
-          <button ref={(node) => { moveButtons.current.down = node }} type="button" className="rg-btn ghost rg-blk-ico" disabled={index === count - 1} onClick={() => { focusAfterMove.current = 'down'; onMove(index, 1) }} aria-label="Move block down" title="Move down"><Icon name="chev" size={16} /></button>
-          {allowRemove && <button type="button" className="rg-btn ghost rg-blk-ico rg-blk-rm" onClick={() => onRemove(index)} aria-label="Remove" title="Remove block"><Icon name="x" size={16} /></button>}
+          <button ref={(node) => { moveButtons.current.up = node }} type="button" className="rg-btn ghost rg-blk-ico" disabled={first} onClick={() => { focusAfterMove.current = 'up'; onMove(index, -1) }} aria-label="Move block up" data-hint={first ? 'First block' : 'Move up'}><Icon name="up" size={16} /></button>
+          <button ref={(node) => { moveButtons.current.down = node }} type="button" className="rg-btn ghost rg-blk-ico" disabled={last} onClick={() => { focusAfterMove.current = 'down'; onMove(index, 1) }} aria-label="Move block down" data-hint={last ? 'Last block' : 'Move down'}><Icon name="chev" size={16} /></button>
+          {allowRemove && <button type="button" className="rg-btn ghost rg-blk-ico rg-blk-rm" onClick={() => onRemove(index)} aria-label="Remove" data-hint="Remove block"><Icon name="x" size={16} /></button>}
         </span>
       </div>
       <div className="rg-pnl-b rg-col">
@@ -119,16 +102,14 @@ export function BlockCard({ block, index, count, tools, onChange, onMove, onRemo
 }
 
 function Blocks({ args } = {}) {
-  const customize = LIBRARY_ONLY || (Array.isArray(args) && args[0] === 'customize')
-  // Seven fixed blocks saved through /shallow: no block is added or removed in this mode.
-  const libraryMode = customize && HAS_LIBRARY
-  const libraryRef = useRef(null)
   const summaryRef = useRef(null)
   const editorRef = useRef(null)
   const [catalog, setCatalog] = useState(null)
   const [tools, setTools] = useState([])
   const [types, setTypes] = useState([])
   const [blocks, setBlocks] = useState(null)
+  const [blank, setBlank] = useState([])
+  const [cleared, setCleared] = useState(null)
   const [preset, setPreset] = useState('')
   const [model, setModel] = useState('mock')
   const [basis, setBasis] = useState('')
@@ -139,17 +120,7 @@ function Blocks({ args } = {}) {
   const [job, setJob] = useState(null)
   const [busy, setBusy] = useState(false)
   const [loadError, setLoadError] = useState(null)
-  const [library, setLibrary] = useState([])
-  const [selected, setSelected] = useState('')
-  const [libraryQuery, setLibraryQuery] = useState('')
-  const [unconfirmed, setUnconfirmed] = useState([])
-  const [saved, setSaved] = useState('')
-  const [storageError, setStorageError] = useState('')
   const [revision, setRevision] = useState(0)
-  const [previewRevision, setPreviewRevision] = useState(0)
-  const [restored, setRestored] = useState(() => readDraft('customize-draft') !== null)
-  const [accountLoaded, setAccountLoaded] = useState(!libraryMode)
-  const [accountError, setAccountError] = useState('')
   const blockKeys = useRef(new WeakMap())
   const nextBlockKey = useRef(0)
   const blockKey = (block) => {
@@ -160,50 +131,25 @@ function Blocks({ args } = {}) {
   useEffect(() => {
     let live = true
     setLoadError(null)
-    // The member snapshot's tools come from the Worker's catalog; this lab's from its palette.
-    const loads = LIBRARY_ONLY ? [api('/shallow/catalog')]
-      : customize ? [api('/blocks/palette')] : [api('/blocks/catalog'), api('/blocks/palette')]
-    Promise.all(loads).then((rows) => {
+    Promise.all([api('/blocks/catalog'), api('/blocks/palette')]).then(([cat, pal]) => {
       if (!live) return
-      if (LIBRARY_ONLY) {
-        const names = [...new Set(rows[0].harnesses.flatMap((row) => row.tools))]
-        setTools(names)
-        setTypes(CUSTOMIZE_TYPES)
-        setBlocks(readCustomizeBlocks(names))
-        return
-      }
-      const pal = customize ? rows[0] : rows[1]
-      if (!customize) setCatalog(rows[0].harnesses)
+      setCatalog(cat.harnesses)
       setTools(pal.tools)
       setTypes(pal.types)
-      if (!customize) {
-        setBlocks(pal.blank)
-        return
-      }
-      setBlocks(readCustomizeBlocks(pal.tools))
+      setBlank(pal.blank || [])
+      setBlocks(pal.blank)
     }).catch((e) => { if (live) setLoadError(e) })
     return () => { live = false }
-  }, [customize, revision])
+  }, [revision])
+  // the "back to blank" note belongs to the stack it describes; any later edit clears it
+  useEffect(() => { setCleared((note) => (note && blocks !== note.blocks ? null : note)) }, [blocks])
 
-  useEffect(() => {
-    if (!libraryMode) return
-    let live = true
-    setAccountLoaded(false); setAccountError('')
-    api('/shallow/harnesses').then((result) => {
-      if (!live) return
-      if (!Array.isArray(result?.harnesses)) throw new Error('The saved harness list could not be read.')
-      setLibrary(result.harnesses.filter((row) => row.lane === 'minimal'))
-      setUnconfirmed(result.unconfirmed || [])
-      setAccountLoaded(result.loaded === true)
-      if (result.loaded !== true) setAccountError(`Your harnesses saved to ${LIBRARY.label} have not loaded. Saving is unavailable.`)
-    }).catch((failure) => { if (live) setAccountError(failure.message) })
-    return () => { live = false }
-  }, [libraryMode, revision])
-
-  useEffect(() => {
-    if (customize && blocks) setStorageError(writeDraft('customize-draft', blocks))
-    setSaved('')
-  }, [customize, blocks])
+  function blankStack() {
+    const next = blank.map((b) => ({ ...b, names: b.names ? [...b.names] : b.names }))
+    setBlocks(next)
+    setPreset(''); setBasis(''); setModel('mock'); setJob(null); setError('')
+    setCleared({ blocks: next, text: `Back to the blank stack: the ${next.length} default blocks, no preset, model mock.` })
+  }
 
   function loadPreset(id) {
     const row = (catalog || []).find((r) => r.id === id)
@@ -234,14 +180,6 @@ function Blocks({ args } = {}) {
       return next
     })
   }
-  function resetToWizard() {
-    setBlocks(readCustomizeBlocks(tools, false))
-    setPreset('')
-    setJob(null)
-    setError('')
-    setRestored(false)
-  }
-
   function onRemove(index) {
     setBlocks((cur) => cur.filter((_, i) => i !== index))
     setPreset('')
@@ -261,45 +199,16 @@ function Blocks({ args } = {}) {
     const controller = new AbortController()
     setCompiled(null)
     const body = { blocks }
-    if (preset && !customize) body.preset_id = preset
-    const compile = () => api(libraryMode ? '/shallow/compile' : '/blocks/compile', { method: 'POST', body, signal: controller.signal })
+    if (preset) body.preset_id = preset
+    api('/blocks/compile', { method: 'POST', body, signal: controller.signal })
       .then((res) => { if (!cancel) setCompiled(res) })
       .catch((e) => { if (!cancel) setCompiled({ ok: false, errors: [String(e.message || e)], warnings: [] }) })
-    const timer = libraryMode ? setTimeout(compile, 180) : null
-    if (!libraryMode) compile()
-    return () => { cancel = true; clearTimeout(timer); controller.abort() }
-  }, [blocks, preset, customize, libraryMode, previewRevision])
+    return () => { cancel = true; controller.abort() }
+  }, [blocks, preset])
 
   const liveModel = model !== 'mock' && !model.startsWith('mock')
   const missingKey = liveModel && !key.trim()
   const stackBroken = !compiled?.ok || (blocks && fieldIssues(blocks).length > 0)
-
-  async function save() {
-    if (!accountLoaded) return
-    setBusy(true); setError(''); setSaved('')
-    try {
-      const result = requireStored(await api('/shallow/wizard', { method: 'POST', body: { blocks } }))
-      setCompiled(result)
-      setLibrary((cur) => [result.harness, ...cur.filter((row) => row.id !== result.harness.id)])
-      setUnconfirmed((cur) => cur.filter((id) => id !== result.harness.id))
-      setSelected(result.harness.id)
-      setLibraryQuery('')
-      setRestored(false)
-      setSaved(`Saved ${result.harness.id} to ${LIBRARY.label}.`)
-    } catch (failure) { setError(failure.message) }
-    finally { setBusy(false) }
-  }
-
-  async function reopen() {
-    setBusy(true); setError(''); setSaved('')
-    try {
-      const result = await api(`/shallow/harnesses/${encodeURIComponent(selected)}`)
-      setBlocks(blocksFromHarness(result.harness))
-      setPreset('')
-      setRestored(false)
-    } catch (failure) { setError(failure.message) }
-    finally { setBusy(false) }
-  }
 
   async function run() {
     setBusy(true)
@@ -307,7 +216,7 @@ function Blocks({ args } = {}) {
     setJob(null)
     try {
       const body = { blocks, model, task, repeats: 1 }
-      if (preset && !customize) body.preset_id = preset
+      if (preset) body.preset_id = preset
       if (key.trim()) body.api_key = key.trim()
       const res = await api('/blocks/run', { method: 'POST', body })
       setJob(res)
@@ -321,56 +230,43 @@ function Blocks({ args } = {}) {
 
   if (loadError) return <><ErrorState error={loadError} what="The harness builder" onRetry={() => setRevision((n) => n + 1)} /></>
   if (!blocks) return <Loading label="Reading the harness catalog…" />
-  const query = libraryQuery.trim().toLowerCase()
-  const filteredLibrary = library.filter((row) => [row.id, row.prompt, row.policy, ...(row.tools || [])].join(' ').toLowerCase().includes(query))
 
   return (
     <div className="rg-dpad rg-harness" data-el="harness-builder">
       <HarnessNav active="custom" args={args} />
-      <div className="rg-dh">
-        <div className="t">
-          <div className="rg-eyebrow">{LIBRARY_ONLY ? 'Harness workspace / Flexible' : 'Runner / Flexible'}</div>
-          <h1>{customize ? 'Customize minimal harness' : 'Build a harness'}</h1>
-          <p>{libraryMode ? `Shape the whole configuration. Edit the seven blocks, review how they fit together, and save your harness to ${LIBRARY.label}. MCP stays off. Previewing and saving do not run a model.` : 'Start from a common harness, or stack the blocks yourself. This lab runs the stack. A live model uses a key you paste here. The key is not saved.'}</p>
-          {customize && (
-            <div className="rg-row rg-wrap" data-el="minimal-customize-nav">
-              <button type="button" className="rg-btn pri" onClick={() => focusWorkspaceSection(summaryRef)}>Review configuration</button>
-              {libraryMode && <button type="button" className="rg-btn" onClick={() => libraryRef.current?.querySelector('input')?.focus()}>Open a saved harness</button>}
-              <Go spec={withEvidenceOrigin('shallowWizard', evidenceOrigin(args))} className="rg-btn" el="back-to-wizard">Back to Minimal Wizard</Go>
-              <button type="button" className="rg-btn" disabled={busy} data-el="reset-wizard-answers" onClick={resetToWizard}>Reset to Wizard Answers</button>
-            </div>
-          )}
-        </div>
-      </div>
+      <PageHeader title="Build a harness"
+        subtitle="Start from a common harness, or stack the blocks yourself."
+        lede="This lab runs the stack. A live model uses a key you paste here. The key is not saved." />
       <EvidenceOrigin args={args} />
-      {storageError && <p role="alert">{storageError}</p>}
-      {libraryMode && accountError && <p role="alert">{accountError} <button type="button" className="rg-btn" onClick={() => setRevision((n) => n + 1)}>Retry saved harnesses</button></p>}
-      {libraryMode && restored && <p role="status" className="rg-small">Restored the editor draft from this tab. Use Save to keep it on {LIBRARY.label}, or Reset to Wizard Answers to discard these edits.</p>}
-      {!customize && <div className="rg-row rg-wrap" data-el="harness-catalog">
+      <div className="rg-row rg-wrap" data-el="harness-catalog" role="group" aria-labelledby="rg-blk-presets">
+        <span className="rg-small rg-dim" id="rg-blk-presets">Start from a preset:</span>
         {(catalog || []).map((row) => (
-          <button type="button" key={row.id} className={preset === row.id ? 'rg-btn pri' : 'rg-btn'} onClick={() => loadPreset(row.id)}>
-            {row.name}
+          <button type="button" key={row.id} className={preset === row.id ? 'rg-btn pri' : 'rg-btn'} aria-pressed={preset === row.id} onClick={() => loadPreset(row.id)}>
+            {standInName(row.name)}
           </button>
         ))}
-        <button type="button" className="rg-btn" onClick={() => { setPreset(''); setBasis(''); setModel('mock'); setJob(null) }}>Blank stack</button>
-      </div>}
+        <span className="rg-small rg-dim">or</span>
+        <button type="button" className="rg-btn" data-el="blank-stack" onClick={blankStack}>Blank stack</button>
+        {cleared && <span className="rg-small" role="status" data-el="blank-stack-done">{cleared.text}</span>}
+      </div>
+      <p className="rg-small rg-mute" data-el="copy-not-app">The presets are TraceHarness copies of each app's loop. Your installed apps run from One run (“— your installed app”).</p>
       {preset && basis && <Note>{basis}{catalog.find((r) => r.id === preset)?.same_loop_as?.length ? ` Same loop as ${catalog.find((r) => r.id === preset).same_loop_as.join(', ')}.` : ''}</Note>}
       <div className="rg-harness-layout" data-panes>
       <div>
-      <fieldset ref={editorRef} tabIndex={-1} className="rg-harness-blocks rg-blk-fs" aria-label="Harness blocks" disabled={busy}>
+      <fieldset ref={editorRef} tabIndex={-1} className="rg-harness-blocks rg-blk-fs" aria-label="Harness blocks" data-tour="harness-blocks" disabled={busy}>
         {blocks.map((block, i) => (
-          <BlockCard key={blockKey(block)} block={block} index={i} count={blocks.length} tools={tools} onChange={onChange} onMove={onMove} onRemove={onRemove} allowRemove={!libraryMode} />
+          <BlockCard key={blockKey(block)} block={block} index={i} count={blocks.length} tools={tools} onChange={onChange} onMove={onMove} onRemove={onRemove} />
         ))}
         {blocks.length === 0 && <Empty title="No blocks yet.">Add a block, or start from a common harness.</Empty>}
       </fieldset>
       <div className="rg-row rg-wrap">
-        {!libraryMode && <label className="rg-fld">Add a block
+        <label className="rg-fld">Add a block
           <select className="rg-selc" value="" disabled={busy} onChange={(e) => { if (e.target.value) { setBlocks((cur) => cur.concat([fresh(e.target.value, tools)])); setPreset('') } }}>
             <option value="">Choose</option>
             {types.map((t) => <option key={t} value={t}>{TYPE_LABEL[t] || t}</option>)}
           </select>
-        </label>}
-        {!LIBRARY_ONLY && <><label className="rg-fld">Model
+        </label>
+        <label className="rg-fld">Model
           <input className="rg-inp" value={model} onChange={(e) => { setModel(e.target.value); setBasis('') }} spellCheck={false} />
         </label>
         <label className="rg-fld">Task
@@ -378,26 +274,20 @@ function Blocks({ args } = {}) {
         </label>
         <label className="rg-fld">Your LLM key
           <input className="rg-inp" type="password" autoComplete="off" value={key} onChange={(e) => setKey(e.target.value)} placeholder={liveModel ? 'required for this model' : 'not used for mock'} />
-        </label></>}
+        </label>
       </div>
       </div>
       <HarnessSummary blocks={compiled?.ok && compiled.harness ? blocksFromHarness(compiled.harness) : blocks} headingRef={summaryRef} title="Configuration preview">
       <button type="button" className="rg-btn" onClick={() => focusWorkspaceSection(editorRef)}>Back to blocks</button>
       {!compiled && blocks.length > 0 && <p role="status" className="rg-small">Checking configuration…</p>}
-      {libraryMode && <div className="rg-col">
-        <button type="button" className="rg-btn pri" disabled={!accountLoaded || busy || !compiled?.ok || fieldIssues(blocks).length > 0} onClick={save}>{busy ? 'Saving…' : 'Save minimal harness'}</button>
-        {compiled?.ok && <p className="rg-small">Cell {compiled.harness.id}</p>}
-        {saved && <p role="status">{saved}</p>}
-        <Unavailable capability="run.local" what="Harness execution" />
-      </div>}
-      {!LIBRARY_ONLY && <div className="rg-row rg-wrap">
+      <div className="rg-row rg-wrap">
         <Btn className="pri" disabled={busy || !blocks.length || missingKey || stackBroken} why={missingKey ? 'Paste your own LLM key. The lab does not keep one for you.' : (stackBroken ? (compiled?.errors || ['Checking configuration…']).join(' ') : '')} onClick={run} data-el="harness-run">
           {busy ? 'Running…' : 'Run'}
         </Btn>
         {model === 'mock' && <Tag tone="dash">mock · no key</Tag>}
-        {compiled && compiled.ok && !libraryMode && <span className="rg-small rg-dim">Cell {customize ? `min_${compiled.hash}` : compiled.harness.id}</span>}
-      </div>}
-      {compiled && compiled.ok === false && <Note tone="bad"><span role="alert">{(compiled.errors || []).join(' ')}</span>{libraryMode && !fieldIssues(blocks).length && <button type="button" className="rg-btn" onClick={() => setPreviewRevision((n) => n + 1)}>Retry preview</button>}</Note>}
+        {compiled && compiled.ok && <span className="rg-small rg-dim">Cell {compiled.harness.id}</span>}
+      </div>
+      {compiled && compiled.ok === false && <Note tone="bad"><span role="alert">{(compiled.errors || []).join(' ')}</span></Note>}
       {compiled && (compiled.warnings || []).length > 0 && compiled.ok && (compiled.warnings || []).map((w) => <p key={w} className="rg-harness-warning">{w}</p>)}
       {error && <Note tone="bad" el="harness-error"><span role="alert">{error}</span></Note>}
       {job && (
@@ -414,36 +304,25 @@ function Blocks({ args } = {}) {
         documents={[{ id: 'blocks', label: 'Block configuration', value: { blocks }, filename: 'harness-blocks.json' }, { id: 'compiled', label: 'Compiled harness', value: compiled?.ok ? compiled.harness : null, filename: 'compiled-harness.json' }]} />
       </HarnessSummary>
       </div>
-      {libraryMode && <div className="rg-harness-library" ref={libraryRef} data-el="member-harness-library">
-        <h2>Your saved harnesses</h2>
-        <label className="rg-fld">Find a saved harness
-          <input type="search" className="rg-inp" value={libraryQuery} disabled={busy} onChange={(event) => { setLibraryQuery(event.target.value); setSelected('') }} placeholder="Prompt, content ID, tool, or policy" />
-        </label>
-        <label className="rg-fld">Saved minimal harnesses
-          <select className="rg-selc" value={selected} onChange={(event) => setSelected(event.target.value)} disabled={busy}>
-            <option value="">{filteredLibrary.length ? 'Choose a saved harness' : library.length ? 'No saved harness matches this search' : 'No minimal harnesses saved yet'}</option>
-            {filteredLibrary.map((row) => <option key={row.id} value={row.id}>{(row.prompt || '').replace(/\s+/g, ' ').slice(0, 80)} · {row.policy} · {row.max_steps} steps · {row.id}{unconfirmed.includes(row.id) ? ' · storage unconfirmed' : ''}</option>)}
-          </select>
-        </label>
-        <button type="button" className="rg-btn" disabled={!selected || busy} onClick={reopen}>Open selected harness</button>
-        <p className="rg-small">Showing {filteredLibrary.length} of {library.length} saved minimal harnesses.</p>
-        <p className="rg-small">Opening a saved harness replaces the current editor draft. Drafts stay in this tab until you save them.</p>
-        {unconfirmed.length > 0 && <p role="alert">{libraryPlace()} has not confirmed every listed harness. Save again before relying on another browser or session.</p>}
-      </div>}
-
     </div>
   )
+}
+
+/** blocks:customize is One run with Advanced settings open (the Customize page folded into it); a bare
+ *  blocks is Build. */
+function BlocksView({ args = [] }) {
+  return Array.isArray(args) && args[0] === 'customize' ? <HarnessComposer args={args} /> : <Blocks args={args} />
 }
 
 export const views = {
   blocks: {
     tag: 'build',
-    title: (args = []) => LIBRARY_ONLY || args[0] === 'customize' ? 'Customize minimal harness' : 'Build a harness',
+    title: (args = []) => args[0] === 'customize' ? 'Harnesses' : 'Build a harness',
     crumbs: (args = []) => [
-      ['Harnesses', withEvidenceOrigin('shallowCards', evidenceOrigin(args))],
-      ...(LIBRARY_ONLY || args[0] === 'customize' ? [['Minimal', withEvidenceOrigin('shallowWizard', evidenceOrigin(args))], ['Customize']] : [['Build']]),
+      ['Harnesses', withEvidenceOrigin('harnesses', evidenceOrigin(args))],
+      ...(args[0] === 'customize' ? [['One run'], ['Advanced settings']] : [['Build a harness']]),
     ],
-    render: Blocks,
+    render: BlocksView,
     palette: () => [{ title: 'Build a harness', detail: 'stack blocks and run them', spec: 'blocks', keywords: 'claude codex harness' }],
   },
 }

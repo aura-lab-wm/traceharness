@@ -1,0 +1,10 @@
+/* Rig · palette.css — the command palette's rows (RigApp.jsx Palette), after rig.css: a long detail
+   (a run's task · model · harness · dataset · outcome) wraps under its own slot instead of being cut
+   off, so the outcome at its end is always read. The row's title holds the whole line too. */
+.rig .rg-pal-it{padding-block:5px}
+.rig .rg-pal-it .t{flex:1 1 40%}
+.rig .rg-pal-it .d{flex:0 1 auto;max-width:62%;white-space:normal;overflow:visible;overflow-wrap:anywhere;text-align:right;line-height:var(--rig-lead-xs)}
+/* counts per kind as chips under the field (one press shows one kind); suggestions when nothing matches */
+.rg-pal-kinds{display:flex;flex-wrap:wrap;gap:var(--rig-s1);padding:var(--rig-s2) var(--rig-s3);border-bottom:1px solid var(--rig-line-soft)}
+.rg-pal-empty p{margin:0 0 var(--rig-s3)}
+.rg-pal-tips{display:flex;flex-wrap:wrap;gap:var(--rig-s2)}

@@ -1,0 +1,50 @@
+/* Rig · brand/brand.css — the logo beside a name (BrandMark.jsx; which logo: brands.js). The files are in this
+   folder (LICENSE-THIRD-PARTY) and the build inlines them, so the app and an export need no network.
+   About the size of the text (14–16 px), on its baseline, before the name. data-ink says how it is drawn:
+   color      its own colours; the text's ink in both High contrast themes
+   dark-mono  its own colours on Paper; the text's ink on Graphite (its colour is under 3:1 there) and High contrast
+   mono       the text's ink everywhere
+   art        its own drawing everywhere (it brings its own tile) */
+.rig .rg-logo{display:inline-block;flex:none;width:clamp(14px,1.08em,16px);height:clamp(14px,1.08em,16px);margin:0 .3em 0 0;vertical-align:-.2em;
+  background:var(--rg-logo-c) center/contain no-repeat}
+.rig .rg-logo[data-ink="mono"],
+.rig[data-rig-theme="dark"] .rg-logo[data-ink="dark-mono"],
+.rig[data-rig-theme="contrast"] .rg-logo:not([data-ink="art"]),
+.rig[data-rig-theme="contrast-light"] .rg-logo:not([data-ink="art"]){
+  background:currentColor;-webkit-mask:var(--rg-logo-m) center/contain no-repeat;mask:var(--rg-logo-m) center/contain no-repeat}
+/* after a model's dot or a harness's ring: the pair reads as one mark */
+.rig .rg-ent + .rg-logo{margin-left:-.05em}
+
+.rig .rg-logo[data-brand="claude"]{--rg-logo-c:url(./claude-color.svg);--rg-logo-m:url(./claude.svg)}
+.rig .rg-logo[data-brand="claudecode"]{--rg-logo-c:url(./claudecode-color.svg);--rg-logo-m:url(./claudecode.svg)}
+.rig .rg-logo[data-brand="openai"]{--rg-logo-m:url(./openai.svg)}
+.rig .rg-logo[data-brand="codex"]{--rg-logo-m:url(./codex.svg)}
+.rig .rg-logo[data-brand="gemini"]{--rg-logo-c:url(./gemini-color.svg);--rg-logo-m:url(./gemini.svg)}
+.rig .rg-logo[data-brand="qwen"]{--rg-logo-c:url(./qwen-color.svg);--rg-logo-m:url(./qwen.svg)}
+.rig .rg-logo[data-brand="minimax"]{--rg-logo-c:url(./minimax-color.svg);--rg-logo-m:url(./minimax.svg)}
+.rig .rg-logo[data-brand="deepseek"]{--rg-logo-c:url(./deepseek-color.svg);--rg-logo-m:url(./deepseek.svg)}
+.rig .rg-logo[data-brand="meta"]{--rg-logo-c:url(./meta-color.svg);--rg-logo-m:url(./meta.svg)}
+.rig .rg-logo[data-brand="mistral"]{--rg-logo-c:url(./mistral-color.svg);--rg-logo-m:url(./mistral.svg)}
+.rig .rg-logo[data-brand="kimi"]{--rg-logo-m:url(./kimi.svg)}
+.rig .rg-logo[data-brand="grok"]{--rg-logo-m:url(./grok.svg)}
+.rig .rg-logo[data-brand="huggingface"]{--rg-logo-c:url(./huggingface-color.svg);--rg-logo-m:url(./huggingface.svg)}
+.rig .rg-logo[data-brand="openhands"]{--rg-logo-c:url(./openhands-color.svg);--rg-logo-m:url(./openhands.svg)}
+.rig .rg-logo[data-brand="sweagent"]{--rg-logo-c:url(./swe-agent.svg)}
+.rig .rg-logo[data-brand="minisweagent"]{--rg-logo-c:url(./mini-swe-agent.svg)}
+.rig .rg-logo[data-brand="swebench"]{--rg-logo-c:url(./swe-bench.svg)}
+.rig .rg-logo[data-brand="cursor"]{--rg-logo-m:url(./cursor.svg)}
+.rig .rg-logo[data-brand="copilot"]{--rg-logo-m:url(./githubcopilot.svg)}
+.rig .rg-logo[data-brand="antigravity"]{--rg-logo-c:url(./antigravity-color.svg);--rg-logo-m:url(./antigravity.svg)}
+
+/* a name with its logo: the logo stays with the name's first part */
+.rig .rg-logo-n{white-space:nowrap}
+/* a dataset's model logos before its counts (the dataset picker) */
+.rig .rg-logos{display:inline-flex;gap:.2em;vertical-align:-.2em;margin-right:.35em}
+.rig .rg-logos .rg-logo{margin:0}
+/* where a dataset was fetched from, under its kind */
+.rig .rg-logo-src{display:flex;align-items:center;width:fit-content;margin-top:var(--rig-s1);white-space:nowrap;font-size:var(--rig-fs-xs);color:var(--rig-dim)}
+/* a name with its marks inside a one-line control (the Change menu's choices): one piece, and a long name wraps at its
+   hyphens on lines that do not touch */
+.rig .rg-ent-line{white-space:normal;line-height:var(--rig-lead-sm)}
+/* a picker option's name with its logo can take two lines in a narrow pane: no word is left alone on the second */
+.rig .rg-harness-picker-option-copy>strong:has(.rg-logo-n){text-wrap:pretty}

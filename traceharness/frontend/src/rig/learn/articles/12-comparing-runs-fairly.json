@@ -1,0 +1,395 @@
+{
+ "id": "comparing-runs-fairly",
+ "number": 12,
+ "part": 5,
+ "kind": "concept",
+ "checked": "2026-11-23",
+ "title": "Comparing runs fairly",
+ "question": "How do I tell whether one setup really beats another, and not just by luck?",
+ "what_you_learn": [
+  "Why a comparison should use the same tasks, matched task by task.",
+  "How to read an interval, and what it means when a difference separates from zero.",
+  "Why the number of runs per task, and the way tasks are weighted, must match before you compare."
+ ],
+ "prerequisites": {
+  "read": [
+   "why-runs-differ",
+   "what-a-harness-is"
+  ],
+  "know": []
+ },
+ "sections": [
+  {
+   "heading": "Same tasks, matched pairs",
+   "body": [
+    "Tasks differ a lot in difficulty. If setup A ran on easier tasks than setup B, A wins for the wrong reason. So compare on the same tasks and take the difference task by task: A's pass rate on task 1 minus B's on task 1, and so on, then average. This is a paired comparison. TraceHarness's Comparison page does this against the baseline harness.",
+    "Difficulty can fool you inside one setup too. Mehtiyev and Assunção (2026, preprint) looked at 9,374 trajectories from 19 agents and found that the usual link between long runs and failure reverses once task difficulty is controlled. Long runs were not failing because they were long; hard tasks produced both. If two setups ran on partly different tasks, compare them only on the tasks they share, and say how many that leaves."
+   ]
+  },
+  {
+   "heading": "Put an interval on the difference",
+   "body": [
+    "A difference measured on 24 tasks would come out differently on 24 other tasks. An interval says by how much. TraceHarness uses a 95% bootstrap over tasks: it redraws the set of tasks many times, with replacement, and records how the average moves. If the whole interval sits on one side of zero, the Comparison page marks the difference separates. If it includes zero, it says covers 0: the data cannot tell the change apart from no change.",
+    "Miller (2024) treats the questions in an evaluation as a sample from a larger pool and gives formulas for comparing two models and for planning how many questions you need. Agents add a second source of noise, the repeats. Bjarnason et al. (2026) ran agents on SWE-bench Verified (500 real GitHub issues that developers screened). Single-run pass@1 moved by 2.2 to 6.0 points depending on which run was picked, so an improvement of 2 or 3 points can be noise.",
+    "Also count how many intervals you look at. With 8 comparisons and no real effect anywhere, the chance that at least one 95% interval misses zero is about 1 in 3 (1 minus 0.95 to the power 8).",
+    "Why resample tasks and not runs? Runs of the same task are not independent: they share the same code, the same issue and the same difficulty. Treating 120 runs as 120 separate pieces of evidence pretends you saw far more variety than you did, and the interval comes out too narrow. The task is the unit; runs of a task only make each task's own rate more exact.",
+    "Watch for a ceiling too. In study_v04, gpt-5.6-luna passes 118 of 120 baseline runs, so no harness can raise its pass rate by much, and none of the 8 contrasts in its row separates. That says nothing about whether the harnesses matter; it says this model and these tasks cannot show it.",
+    "Pairing narrows the interval, because each task's difficulty cancels out. In the figure below, gemini-2.5-flash-lite under reprompt gains +19.2 points over baseline, with a paired interval of [+5.8, +35.0]. Compared unpaired, as two separate sets of 24 task rates, it widens to [-4.2, +43.3]: it covers 0, and none of the 8 intervals separates."
+   ]
+  },
+  {
+   "heading": "Same number of runs, same weights",
+   "body": [
+    "Averages hide two choices. The first is weighting. For the SWE-rebench set, the Overview page reports 50.2%, which is 1,092 of 2,174 runs pooled together. The Outcomes page reports 49.2%, the average of each task's own pass rate, so a task with 25 runs counts as much as a task with 4. Both are correct; they answer different questions. Pick one and say which.",
+    "The second is the number of runs per task. Spreads grow with it, as the article on run differences shows, and pass@k for a given k can only use tasks with at least k runs. When tasks have different numbers of runs, the set of tasks behind each number can change from one k to the next.",
+    "Unknown is not failure. A run with no grade leaves the denominator instead of counting as a fail, so always give the number of graded runs, as in 61 / 64 known. If one setup has many more ungraded runs than the other, say so, because the two pass rates then rest on different runs."
+   ]
+  },
+  {
+   "heading": "Before you write the sentence",
+   "body": [
+    "A fair claim names the model, the harness and the oracle. Then it gives the number of tasks, the runs per task, the paired difference and its interval. To plan how many runs you need before spending anything, read the article on that question. Run setup, under Analysis, shows the smallest difference a planned cell can detect."
+   ]
+  }
+ ],
+ "figures": [
+  {
+   "id": "a7-forest",
+   "after_section": 1,
+   "kind": "paired_ci",
+   "data_file": "a12-paired",
+   "title": "Eight harnesses against baseline, paired and unpaired",
+   "caption": "gemini-2.5-flash-lite, each harness against baseline on the same 24 tasks (5 runs each, hidden oracle). Dot: paired change in points. Line: 95% interval. Only reprompt clears zero. The Unpaired tab throws the pairing away: reprompt's interval widens to [-4.2, +43.3] and none of the 8 clears zero. Pick a harness to see its 24 tasks.",
+   "data_note": "study_v04, 1,080 runs of gemini-2.5-flash-lite; bootstrap over tasks, 5,000 draws",
+   "headline": [
+    {
+     "key": "reprompt",
+     "as_written": "+19.2"
+    },
+    {
+     "key": "reprompt_lo",
+     "as_written": "+5.8"
+    },
+    {
+     "key": "reprompt_hi",
+     "as_written": "+35.0"
+    },
+    {
+     "key": "terse_prompt",
+     "as_written": "-10.0"
+    },
+    {
+     "key": "terse_prompt_lo",
+     "as_written": "-30.8"
+    },
+    {
+     "key": "terse_prompt_hi",
+     "as_written": "+10.0"
+    },
+    {
+     "key": "long_output_hi",
+     "as_written": "+15.8"
+    },
+    {
+     "key": "reprompt_better",
+     "as_written": "6 tasks better"
+    },
+    {
+     "key": "reprompt_un_lo",
+     "as_written": "-4.2"
+    },
+    {
+     "key": "reprompt_un_hi",
+     "as_written": "+43.3"
+    }
+   ]
+  },
+  {
+   "id": "a12-weights",
+   "after_section": 2,
+   "kind": "pool_weights",
+   "data_file": "a12-weights",
+   "title": "Pooled runs against averaged tasks",
+   "caption": "The 200 SWE-rebench tasks, each a column as wide as the weight it gets and filled to its pass rate. Counting every run once gives 1,092 of 2,174, 50.2%. Counting every task once gives 49.2%: a task with 25 runs then counts as much as a task with 4.",
+   "data_note": "swe_rebench_openhands_qwen3coder, 200 tasks, 2,174 runs",
+   "headline": [
+    {
+     "key": "pooled",
+     "as_written": "50.2%"
+    },
+    {
+     "key": "averaged",
+     "as_written": "49.2%"
+    },
+    {
+     "key": "passes",
+     "as_written": "1,092"
+    },
+    {
+     "key": "runs",
+     "as_written": "2,174"
+    }
+   ]
+  }
+ ],
+ "worked_example": {
+  "title": "Eight harnesses against baseline, one model",
+  "dataset": {
+   "name": "study_v04",
+   "what": "Bundled with the study copy: 3,240 recorded runs, 3 models x 9 harnesses x 24 small Python tasks x 5 runs. They were collected through OpenRouter (a paid service that passes requests on to many model providers) at temperature 0.",
+   "credit": "TraceHarness bundled data (AURA lab, William & Mary)."
+  },
+  "open": [
+   "Click the dataset name at the top of the left list and choose study_v04.",
+   "Click Comparison in the left list and read the gemini-2.5-flash-lite row."
+  ],
+  "body": [
+   "The row compares 8 harnesses with baseline on the same 24 tasks, 5 runs per task, graded by the hidden oracle.",
+   "reprompt: +19.2 points, interval [+5.8, +35.0], 6 tasks better and none worse. It separates.",
+   "terse_prompt: -10.0 points, interval [-30.8, +10.0], 3 tasks better and 6 worse. More tasks got worse than better, but the interval covers zero, so the data cannot tell this apart from no change.",
+   "long_output: +5.8 points, interval [0.0, +15.8]. The interval touches zero, so it is marked covers 0.",
+   "So 1 of the 8 contrasts in this row separates, and its interval sits well above zero (figure above)."
+  ],
+  "links": [
+   "ds:study_v04",
+   "an:study_v04:delta:gemini-2.5-flash-lite:baseline"
+  ]
+ },
+ "try_it": {
+  "clicks": [
+   "Click the dataset name at the top of the left list and choose swe_rebench_openhands_qwen3coder.",
+   "Click Outcomes in the left list.",
+   "Scroll to Retries against consistency and click Table."
+  ],
+  "question": "pass@5 and pass@8 are both 59.6%. Do three extra tries add nothing?",
+  "answer": "You cannot tell from this table. Each row averages only over tasks that have at least k runs: 199 of the 200 tasks have 5 or more runs, but only 150 have 8 or more. The two rows describe different sets of tasks. To see what extra tries add, compare at a k that every task supports (here up to 4), or cut every task to the same number of runs first.",
+  "answer_measured_from": "data/runs/swe_rebench_openhands_qwen3coder/index.jsonl: runs per task 4 to 25; tasks with at least 5 runs: 199; at least 8: 150; at least 10: 121. The per-task rule (k must not exceed the task's runs) is in traceharness/core/analysis.py, task_table. GET /api/results/swe_rebench_openhands_qwen3coder/metrics, passk_curve: pass@5 0.5960 and pass@8 0.5964, both shown as 59.6% on the page.",
+  "links": [
+   "ds:swe_rebench_openhands_qwen3coder",
+   "an:swe_rebench_openhands_qwen3coder:outcomes",
+   null
+  ]
+ },
+ "quiz": [
+  {
+   "q": "Why compare two harnesses task by task?",
+   "options": [
+    "It is faster",
+    "To get a bigger number",
+    "It cancels task difficulty",
+    "Every task has equal runs"
+   ],
+   "answer": 2,
+   "why": "A paired difference compares each harness on the same task, so easy and hard tasks cancel out."
+  },
+  {
+   "q": "A difference is -10.0 points with interval [-30.8, +10.0]. What can you say?",
+   "options": [
+    "The harness hurts",
+    "It cannot be told from no change",
+    "The harness helps, but only a little",
+    "The interval is wrong"
+   ],
+   "answer": 1,
+   "why": "The interval includes zero."
+  },
+  {
+   "q": "Setup A has 4 runs per task and setup B has 20. How should you compare their longest-to-shortest step spreads?",
+   "options": [
+    "Use only B’s first 4 runs of each task",
+    "Compare the two spreads directly",
+    "Double A’s spread to match B",
+    "Spreads can never be compared"
+   ],
+   "answer": 0,
+   "why": "Spreads grow with the number of runs, so compare at the same number."
+  }
+ ],
+ "sources": [
+  {
+   "title": "Adding Error Bars to Evals: A Statistical Approach to Language Model Evaluations",
+   "authors": "Evan Miller",
+   "year": "2024",
+   "url": "https://arxiv.org/abs/2411.00640",
+   "what_we_took": "Treat the questions in an eval as a sample from a larger pool; formulas for the difference between two models and for planning how many questions are needed.",
+   "quote": "Conceptualizing evaluation questions as having been drawn from an unseen super-population",
+   "licence": "arXiv non-exclusive distribution licence (not CC). Paraphrased; one short quote for citation.",
+   "checked": "2026-11-23"
+  },
+  {
+   "title": "On Randomness in Agentic Evals",
+   "authors": "Bjarni Haukur Bjarnason, André Silva, Martin Monperrus",
+   "year": "2026 (preprint)",
+   "url": "https://arxiv.org/abs/2602.07150",
+   "licence": "CC BY 4.0 (arXiv).",
+   "what_we_took": "Single-run pass@1 on SWE-bench Verified moved by 2.2 to 6.0 points depending on which run was picked; improvements of 2 to 3 points can be noise.",
+   "quote": "reported improvements of 2--3 percentage points may reflect evaluation noise rather than genuine algorithmic progress",
+   "checked": "2026-11-23"
+  },
+  {
+   "title": "Beyond Resolution Rates: Behavioral Drivers of Coding Agent Success and Failure",
+   "authors": "Tural Mehtiyev, Wesley Assunção",
+   "year": "2026 (preprint)",
+   "url": "https://arxiv.org/abs/2604.02547",
+   "what_we_took": "Across 9,374 trajectories from 19 agents on 500 tasks, the link between long runs and failure reverses once task difficulty is controlled: an argument for comparing on the same tasks.",
+   "quote": "The widely reported correlation between trajectory length and failure reverses direction once task difficulty is controlled",
+   "licence": "CC BY 4.0 (arXiv).",
+   "checked": "2026-11-23"
+  },
+  {
+   "title": "nebius/SWE-rebench-openhands-trajectories (dataset card)",
+   "authors": "Maria Trofimova, Anton Shevtsov, Ibragim Badertdinov, Konstantin Pyaev, Simon Karasik, Alexander Golubev (Nebius)",
+   "year": "2025",
+   "url": "https://huggingface.co/datasets/nebius/SWE-rebench-openhands-trajectories",
+   "licence": "CC BY 4.0. TraceHarness's swe_rebench_openhands_qwen3coder is a subset; credit is required wherever its runs appear.",
+   "what_we_took": "The runs behind the pooled-versus-averaged example and the challenge (TraceHarness's 200-task subset).",
+   "quote": "Each trajectory contains the agent's step-by-step reasoning, actions, and environmental observations.",
+   "checked": "2026-11-23"
+  }
+ ],
+ "glossary_terms": [
+  "paired comparison",
+  "interval (95% bootstrap over tasks)",
+  "separates / covers 0",
+  "pooled",
+  "cell",
+  "ungraded",
+  "known / unknown",
+  "pass@k"
+ ],
+ "see_also": [
+  {
+   "kind": "article",
+   "target": "how-many-runs"
+  },
+  {
+   "kind": "article",
+   "target": "model-or-harness"
+  },
+  {
+   "kind": "page",
+   "label": "Comparison: paired differences against baseline",
+   "spec": "an:study_v04:delta:gemini-2.5-flash-lite:baseline"
+  },
+  {
+   "kind": "page",
+   "label": "Run setup: plan runs and see what they can detect",
+   "spec": "an:study_v04:setup"
+  }
+ ],
+ "numbers": [
+  {
+   "as_written": [
+    "118 of 120",
+    "200 tasks"
+   ],
+   "meaning": "gpt-5.6-luna baseline passes (ceiling); tasks in the SWE-rebench subset",
+   "source": "data/runs/study_v04/index.jsonl (traceharness-study); data/runs/swe_rebench_openhands_qwen3coder/index.jsonl (traceharness-study)"
+  },
+  {
+   "as_written": [
+    "9,374",
+    "19"
+   ],
+   "meaning": "trajectories and agents in Beyond Resolution Rates",
+   "source": "arXiv 2604.02547 abstract"
+  },
+  {
+   "as_written": [
+    "24",
+    "95%"
+   ],
+   "meaning": "tasks per comparison; interval level",
+   "source": "Comparison page"
+  },
+  {
+   "as_written": [
+    "2.2",
+    "6.0",
+    "2 or 3"
+   ],
+   "meaning": "pass@1 movement from run choice",
+   "source": "arXiv 2602.07150 abstract"
+  },
+  {
+   "as_written": [
+    "8 comparisons",
+    "1 in 3",
+    "0.95",
+    "8"
+   ],
+   "meaning": "chance at least one of 8 independent 95% intervals misses zero: 1 - 0.95^8 = 0.34",
+   "source": "arithmetic"
+  },
+  {
+   "as_written": [
+    "50.2%",
+    "1,092",
+    "2,174",
+    "49.2%",
+    "25",
+    "4"
+   ],
+   "meaning": "pooled vs task-averaged pass@1",
+   "source": "Overview and Outcomes pages, swe_rebench_openhands_qwen3coder"
+  },
+  {
+   "as_written": [
+    "8 harnesses",
+    "5 runs"
+   ],
+   "meaning": "Comparison row size",
+   "source": "Comparison page"
+  },
+  {
+   "as_written": [
+    "+19.2",
+    "+5.8",
+    "+35.0",
+    "-10.0",
+    "-30.8",
+    "+10.0",
+    "6 worse",
+    "3 tasks better",
+    "+15.8",
+    "0.0",
+    "1 of the 8"
+   ],
+   "meaning": "gemini-2.5-flash-lite row",
+   "source": "GET /api/results/study_v04/comparisons; Comparison page"
+  },
+  {
+   "as_written": [
+    "59.6%",
+    "199",
+    "150",
+    "up to 4",
+    "at least 8",
+    "5 or more"
+   ],
+   "meaning": "pass@5 / pass@8 and task counts",
+   "source": "data/runs/swe_rebench_openhands_qwen3coder/index.jsonl (traceharness-study); metrics passk_curve; Outcomes page"
+  },
+  {
+   "as_written": [
+    "20"
+   ],
+   "meaning": "made-up value in a quiz question",
+   "source": "invented for the question"
+  },
+  {
+   "as_written": [
+    "-4.2",
+    "+43.3",
+    "none of the 8"
+   ],
+   "meaning": "reprompt against baseline with the pairing thrown away: each arm's 24 task rates resampled on their own (5,000 draws, seed 0); unpaired, no interval of the row clears 0",
+   "source": "scripts/learn_figures.py a12-paired (_unpaired_bootstrap)"
+  }
+ ],
+ "in_short": [
+  "**Compare setups on the same tasks, task by task**: a paired difference cancels task difficulty, so its interval is narrower and fairer.",
+  "**A difference counts only when its 95% interval sits clear of zero**; with 8 comparisons and no real effect, at least one misses zero about 1 in 3 times.",
+  "Match the runs per task and say how tasks are weighted: **pooled runs and averaged task rates answer different questions**."
+ ]
+}

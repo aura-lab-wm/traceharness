@@ -13,17 +13,18 @@
    ==================================================================================== */
 import { MODE } from '../../environment'
 import { useApi } from '../data'
-import { CopyCmd, Empty, Note, Tag } from '../ui'
+import { CopyCmd, Empty, Go, Note, Tag } from '../ui'
 import './dock.css'
 import './agent.css'
 
-const LEVEL_TONE = { read: undefined, write: 'amb', spend: 'red' }
+// amber marks the level that can cost money; red stays for calls that failed
+const LEVEL_TONE = { read: 'dash', write: undefined, spend: 'amb' }
 const TARGET_ORDER = ['dataset', 'run_id', 'job_id', 'experiment_id', 'harness', 'model', 'task', 'path_name']
 
 /** A POSIX-shell-quoted argument (the lab path may hold spaces or quotes). */
 const shq = (s) => (/^[A-Za-z0-9_./:@%+=-]+$/.test(s) ? s : `'${String(s).replace(/'/g, `'\\''`)}'`)
 
-const clock = (t) => (typeof t === 'number' ? new Date(t * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }) : '')
+const clock = (t) => (typeof t === 'number' ? new Date(t * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false }) : '')
 const ago = (t) => {
   if (typeof t !== 'number') return 'never'
   const s = Math.max(0, Math.round(Date.now() / 1000 - t))
@@ -40,33 +41,70 @@ export function connectCommands(labRoot) {
   }
 }
 
-function SessionLine({ status }) {
+const Level = ({ level }) => <Tag tone={LEVEL_TONE[level]} nc>{String(level)}</Tag>
+
+/** The connector's last report: its domains, levels, budget and when it attached. */
+function SessionFacts({ status }) {
   const s = status && status.session
   if (!s) return <p className="rg-small rg-mute" data-el="agent-session">No agent has connected to this console yet.</p>
-  const levels = Array.isArray(s.levels) ? s.levels : []
+  const levels = Array.isArray(s.levels) && s.levels.length ? s.levels : ['read']
   return (
-    <p className="rg-small rg-dim" data-el="agent-session">
-      Last connector: {Array.isArray(s.domains) ? s.domains.join(', ') : ''} · {levels.join(', ') || 'read'}
-      {levels.includes('spend') && typeof s.budget_usd === 'number' ? ` · budget ${money(s.budget_usd)}` : ''}
-      {typeof s.tools === 'number' ? ` · ${s.tools} tools` : ''} · {ago(s.at)}
-    </p>
+    <dl className="rg-kv rg-agent-kv" data-el="agent-session">
+      <dt>Domains</dt><dd>{Array.isArray(s.domains) && s.domains.length ? s.domains.join(', ') : 'all'}{typeof s.tools === 'number' ? ` · ${s.tools} tools` : ''}</dd>
+      <dt>Levels</dt>
+      <dd className="rg-agent-lv">
+        {levels.map((l) => <Level key={l} level={l} />)}
+        {levels.includes('spend') && typeof s.budget_usd === 'number' && <span className="rg-mute">budget {money(s.budget_usd)}</span>}
+      </dd>
+      <dt>Connected</dt><dd>{ago(s.at)}</dd>
+    </dl>
   )
 }
 
-function CallRow({ c }) {
+/** One call: the tool, a pill when it could change files or spend (read is the default and stays
+ *  quiet), the amount it reserved, what it touched, and the console's reason when it failed. */
+function CallRow({ c, sameAs }) {
   const targets = c.targets && typeof c.targets === 'object' ? c.targets : {}
   const shown = TARGET_ORDER.filter((k) => typeof targets[k] === 'string').map((k) => targets[k])
   return (
-    <li className={c.ok ? 'rg-agent-call' : 'rg-agent-call err'} data-el="agent-call">
-      <span className="rg-mono rg-small rg-mute">{clock(c.at)}</span>
-      <span className="rg-agent-tool rg-mono">{String(c.tool || '')}</span>
-      {c.level && c.level !== 'read' && <Tag tone={LEVEL_TONE[c.level]} nc>{String(c.level)}</Tag>}
-      {shown.length > 0 && <span className="rg-small rg-dim rg-agent-targets">{shown.join(' · ')}</span>}
-      <span className="rg-grow" />
-      {typeof c.reserved_usd === 'number' && <span className="rg-small rg-mono">{money(c.reserved_usd)}</span>}
-      <span className="rg-small rg-mute rg-mono">{typeof c.ms === 'number' ? `${c.ms} ms` : ''}</span>
-      {!c.ok && c.error && <span className="rg-agent-error rg-small">{String(c.error)}</span>}
-    </li>
+    <tr className={c.ok ? 'rg-agent-call' : 'rg-agent-call err'} data-el="agent-call">
+      <td className="rg-agent-at">{clock(c.at)}</td>
+      <td>
+        <div className="rg-agent-what">
+          <span className="rg-agent-line">
+            <span className="rg-agent-tool">{String(c.tool || '')}</span>
+            {c.level && c.level !== 'read' && <Level level={c.level} />}
+            {typeof c.reserved_usd === 'number' && <span className="rg-agent-cost">{money(c.reserved_usd)}</span>}
+          </span>
+          {shown.length > 0 && <span className="rg-agent-targets">{shown.join(' · ')}</span>}
+          {!c.ok && c.error && (sameAs != null
+            // the same sentence as a newer failed call above: said once, this row points back to it
+            ? <span className="rg-agent-again" data-el="agent-error-again" data-hint={String(c.error)}>{sameAs === 'above' ? 'Same error as above' : `Same error as at ${clock(sameAs)}`}<span className="sr-only">: {String(c.error)}</span></span>
+            : <span className="rg-agent-error">{String(c.error)}</span>)}
+        </div>
+      </td>
+      <td className="rg-num rg-agent-ms">{typeof c.ms === 'number' ? `${c.ms} ms` : ''}</td>
+    </tr>
+  )
+}
+
+function CallTable({ rows }) {
+  // an error sentence is written out at its newest call; older calls that failed the same way point back to it
+  const first = new Map()
+  const sameAs = rows.map((c) => {
+    if (c.ok || !c.error) return null
+    const k = String(c.error)
+    if (first.has(k)) return first.get(k)
+    first.set(k, typeof c.at === 'number' ? c.at : 'above')
+    return null
+  })
+  return (
+    <div className="rg-tblwrap">
+      <table className="rg-tbl rg-agent-tbl" aria-label="Agent calls, newest first">
+        <thead><tr><th scope="col">Time</th><th scope="col">Tool</th><th scope="col" className="rg-num">Took</th></tr></thead>
+        <tbody>{rows.map((c, i) => <CallRow key={`${c.at}-${i}`} c={c} sameAs={sameAs[i]} />)}</tbody>
+      </table>
+    </div>
   )
 }
 
@@ -75,35 +113,43 @@ function AgentDock() {
   const calls = useApi(MODE === 'local' ? '/agent/calls?limit=60' : null, { poll: 3000 })
   if (MODE !== 'local') {
     return (
-      <div className="rg-ws-dock" data-el="agent-dock">
+      <div className="rg-agent" data-el="agent-dock">
         <p className="rg-small rg-dim">Agent calls are recorded by a running local console, when an agent works through <span className="rg-mono">traceharness mcp</span>. This snapshot has none.</p>
       </div>
     )
   }
   const st = status.data || null
+  const active = !!(st && st.active)
   const rows = calls.data && Array.isArray(calls.data.calls) ? calls.data.calls : []
   const total = calls.data && typeof calls.data.total === 'number' ? calls.data.total : rows.length
   return (
-    <div className="rg-ws-dock" data-el="agent-dock">
-      <div className="rg-row rg-wrap rg-ws-dockh">
-        <span className={st && st.active ? 'rg-ws-dot on' : 'rg-ws-dot'} />
-        <b>{st && st.active ? 'An agent is working here' : 'No agent active'}</b>
-        <span className="rg-small rg-mute">{total} {total === 1 ? 'call' : 'calls'} recorded · last {ago(st && st.last_call_at)}</span>
+    <div className="rg-agent" data-el="agent-dock">
+      <div className="rg-agent-head">
+        <span className={active ? 'rg-agent-dot on' : 'rg-agent-dot'} aria-hidden="true" />
+        <b>{active ? 'An agent is working here' : 'No agent active'}</b>
+        <span className="rg-grow" />
+        <span className="rg-agent-count">{total} {total === 1 ? 'call' : 'calls'} recorded · last {ago(st && st.last_call_at)}</span>
       </div>
-      <SessionLine status={st} />
+      <SessionFacts status={st} />
       {(status.error || calls.error) && !rows.length
         ? <Note tone="amb" el="agent-unreadable"><div>The console did not answer with its agent record. Reload this tab after updating the console.</div></Note>
         : !calls.data
           ? <p className="rg-small rg-mute" data-el="agent-loading">Reading the agent record…</p>
           : rows.length === 0
           ? <Empty title="No agent calls yet.">
-              <p className="rg-small rg-dim">Add the connector to an agent; Settings, Connect an agent, has the commands.</p>
+              <p className="rg-small rg-dim">Add the connector to an agent; <Go spec="settings" className="rg-tlink">Settings, Connect an agent</Go> has the commands for this lab.</p>
               <CopyCmd cmd={connectCommands(null).claude} />
             </Empty>
-          : <ol className="rg-agent-calls" aria-label="Agent calls, newest first">{rows.map((c, i) => <CallRow key={`${c.at}-${i}`} c={c} />)}</ol>}
+          : <CallTable rows={rows} />}
     </div>
   )
 }
+
+const LEVELS = [
+  ['read', <span key="f" className="rg-mute">none (default)</span>, "Read datasets, runs, trajectories, every analysis and the runner's catalog. Nothing changes, nothing is spent."],
+  ['write', <span key="f" className="rg-mono">--allow-writes</span>, 'Also mock sweeps, imports, decisions on paused runs and cancellations. Free, but they change files in this lab.'],
+  ['spend', <span key="f" className="rg-mono">--allow-spend --budget 2</span>, 'Also runs with real models through the key in Settings. Each paid call states its cap; the session stops at the budget.'],
+]
 
 /** Settings: how to connect an agent, what each level allows, and the last connector's report. */
 export function AgentConnect() {
@@ -111,22 +157,28 @@ export function AgentConnect() {
   const status = useApi(MODE === 'local' ? '/agent/status' : null, { poll: 10000 })
   const lab = settings.data && typeof settings.data.lab_root === 'string' ? settings.data.lab_root : null
   const cmd = connectCommands(lab)
+  const st = status.data || null
+  const meta = st && st.active ? <Tag tone="sky">agent active</Tag> : st && st.session ? <Tag tone="dash">idle</Tag> : <Tag tone="dash">not connected</Tag>
   return (
     <section className="rg-ws-sec" data-el="agent-connect" aria-label="Connect an agent">
-      <div className="rg-ws-sech"><h2>Connect an agent</h2><span className="rg-ws-meta">MCP</span></div>
+      <div className="rg-ws-sech"><h2>Connect an agent</h2>{MODE === 'local' && <span className="rg-ws-meta">{meta}</span>}</div>
       <p className="rg-ws-lead">Claude Code, Codex or any MCP client can read the datasets, run the analyses and start runs in this console through <span className="rg-mono">traceharness mcp</span>. Every call shows in the Agent panel.</p>
       {MODE !== 'local'
         ? <p className="rg-small rg-dim">The connector works with a running local console, not with this snapshot.</p>
         : <>
-            <CopyCmd label="Claude Code" cmd={cmd.claude} />
-            <div className="rg-agent-codex"><span className="rg-small rg-dim">Codex (<span className="rg-mono">~/.codex/config.toml</span>)</span><pre className="rg-mono rg-small">{cmd.codex}</pre></div>
-            <ul className="rg-small rg-dim rg-agent-levels">
-              <li><b>Read</b> (the default): datasets, runs, trajectories, every analysis, the runner&apos;s catalog. Nothing changes, nothing is spent.</li>
-              <li><b><span className="rg-mono">--allow-writes</span></b>: mock sweeps, imports, decisions on paused runs, cancellations. Free, but changes files in this lab.</li>
-              <li><b><span className="rg-mono">--allow-spend --budget 2</span></b>: runs with real models through the key in Settings. Each paid call states its cap, and the session stops at the budget.</li>
-            </ul>
+            <div className="rg-agent-cmds">
+              <CopyCmd label="Claude Code" cmd={cmd.claude} />
+              <div className="rg-agent-codex"><span className="rg-copy-l">Codex, in <span className="rg-mono">~/.codex/config.toml</span></span><pre className="rg-pre">{cmd.codex}</pre></div>
+            </div>
+            <div className="rg-tblwrap">
+              <table className="rg-tbl rg-agent-levels" aria-label="What each level allows">
+                <thead><tr><th scope="col">Level</th><th scope="col">Flag</th><th scope="col">The agent may</th></tr></thead>
+                <tbody>{LEVELS.map(([l, flag, what]) => <tr key={l}><td><Level level={l} /></td><td className="rg-agent-flag">{flag}</td><td>{what}</td></tr>)}</tbody>
+              </table>
+            </div>
             <p className="rg-small rg-mute">The key is never sent to the agent. Install the connector once with <span className="rg-mono rg-agent-cmd">python3 -m pip install -e &apos;.[mcp]&apos;</span>.</p>
-            <SessionLine status={status.data} />
+            <h3 className="rg-ws-h3">Last connector</h3>
+            <SessionFacts status={st} />
           </>}
     </section>
   )

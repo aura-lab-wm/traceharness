@@ -104,7 +104,8 @@ export function PausePanel({ run, config, token, onDecided, now: nowProp }) {
   const [argsText, setArgsText] = useState(() => JSON.stringify(Object.fromEntries(argLines(calls[0] && calls[0].arguments)), null, 2))
   const [busy, setBusy] = useState(false)
   const [err, setErr] = useState(null)
-  const [done, setDone] = useState(null)
+  const [sent, setSent] = useState(null)              // { kind, step }: what was sent for which pause
+  const done = sent && sent.step === run.step ? sent.kind : null   // a later pause of the same run gets fresh buttons
   const left = secondsLeft(run.deadline_ts, now)
   const url = `/runs/${encodeURIComponent(run.dir)}/${encodeURIComponent(run.run_id)}/decision`
 
@@ -116,7 +117,7 @@ export function PausePanel({ run, config, token, onDecided, now: nowProp }) {
     try {
       const headers = config && config.token_required && token ? { [config.header || 'X-Pause-Token']: token } : {}
       await api(url, { method: 'POST', body, headers })
-      setDone(kind)
+      setSent({ kind, step: run.step })
       if (onDecided) onDecided(kind)
     } catch (e) { setErr(e.message || String(e)) } finally { setBusy(false) }
   }
@@ -126,7 +127,7 @@ export function PausePanel({ run, config, token, onDecided, now: nowProp }) {
       <header className="rg-pause-h">
         <span className="rg-pulse" aria-hidden="true" />
         <b className="rg-mono">WAITING FOR YOU</b>
-        <span className="rg-mono rg-small rg-pause-id">{run.dir}/{run.run_id}</span>
+        <span className="rg-hash rg-small rg-pause-id">{run.dir}/{run.run_id}</span>
         <span className="rg-grow" />
         <span className="rg-small rg-mute" role="timer">{left == null ? '' : `${clock(left)} left · then ${run.on_timeout || 'abort'}`}</span>
       </header>
@@ -187,11 +188,22 @@ export function PausedRuns({ quiet = false }) {
         </form></div></Note>
     )
   }
+  // a token the server refused (403) is said, with a way to type it again, never as "nothing is waiting"
+  const refused = p.error && /\b40[13]\b|forbidden|unauthori[sz]ed|token/i.test(String(p.error.message || p.error))
+  if (refused && p.token) {
+    return (
+      <Note tone="red" el="pause-token-refused"><div role="alert">
+        <b>The server refused the pause token.</b> It answered: <span className="rg-mono">{String(p.error.message || p.error)}</span>. Runs that wait for you cannot be listed until the token matches the one it printed when it started.
+        <div className="rg-row rg-wrap rg-pause-tok"><button type="button" className="rg-btn pri" onClick={() => { setDraft(''); p.setToken('') }}>Change token</button></div>
+      </div></Note>
+    )
+  }
   if (!p.runs.length) {
     if (quiet) return null
     return <Empty title="No run is waiting for you." el="paused-empty">A harness with <span className="rg-mono">pause</span> set stops before a tool call and waits here, and for <span className="rg-mono">traceharness decide</span> in a terminal.</Empty>
   }
-  return <div className="rg-pause-list" data-el="paused-runs">{p.runs.map((r) => <PausePanel key={`${r.dir}/${r.run_id}`} run={r} config={p.config} token={p.token} onDecided={() => setTimeout(p.reload, 600)} />)}</div>
+  // keyed by run AND pause step: when a run stops again later, its card starts fresh (no stale "Sent", no old draft)
+  return <div className="rg-pause-list" data-el="paused-runs">{p.runs.map((r) => <PausePanel key={`${r.dir}/${r.run_id}/${r.step}`} run={r} config={p.config} token={p.token} onDecided={() => setTimeout(p.reload, 600)} />)}</div>
 }
 
 /** How many runs wait, for the status bar. Asks only while `enabled` (the shell passes "a job is running", so an idle

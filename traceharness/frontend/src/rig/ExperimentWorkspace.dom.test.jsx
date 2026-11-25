@@ -12,6 +12,10 @@ import { configurationFor, DEFAULT_LIMITS } from './views/harness-composer-state
 import { blocksFromAnswers, RECOMMENDED_ANSWERS } from './views/shallow-data'
 import { runnerRequest } from '../runner-api'
 
+/* a number box takes what was typed when it is left (NumberField): type, then leave the box */
+const typeNumber = (node, value) => { fireEvent.change(node, { target: { value } }); fireEvent.blur(node) }
+
+
 vi.mock('../runner-api', () => ({ runnerRequest: vi.fn() }))
 
 const deferred = () => {
@@ -174,6 +178,24 @@ afterEach(() => {
 })
 
 describe('ExperimentWorkspace matrix authoring, compatibility, and budget guards', () => {
+  it('Update with current says what it did: nothing changed, or updated', async () => {
+    const catalog = catalogFixture()
+    const lease = { current: false }
+    const { rerender } = render(<ExperimentWorkspace configuration={customConfiguration('Original custom prompt', 2)} catalog={catalog} available lease={lease} />)
+    await openMatrix()
+    fireEvent.change(screen.getByLabelText('Harness snapshot name'), { target: { value: 'Harness 1' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Capture current harness' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Update harness Harness 1' }))
+    const note = () => document.querySelector('[data-el="snapshot-note"]')
+    expect(note().textContent).toBe('Harness 1 already matches the current harness · nothing changed')
+    expect(note().getAttribute('role')).toBe('status')
+    rerender(<ExperimentWorkspace configuration={customConfiguration('Updated custom prompt', 2)} catalog={catalog} available lease={lease} />)
+    fireEvent.click(screen.getByRole('button', { name: 'Update harness Harness 1' }))
+    expect(note().textContent).toBe('Updated Harness 1 from the current harness')
+    // an edit to the current harness makes the note stale: it goes
+    rerender(<ExperimentWorkspace configuration={customConfiguration('Edited again', 2)} catalog={catalog} available lease={lease} />)
+    expect(note()).toBeNull()
+  })
   it('captures immutable harness snapshots ignoring model/task, updates explicitly, expands cells deterministically, and blocks incompatible cells by label', async () => {
     const catalog = catalogFixture()
     const lease = { current: false }
@@ -215,7 +237,7 @@ describe('ExperimentWorkspace matrix authoring, compatibility, and budget guards
 
     expect(screen.getAllByRole('heading', { name: /Captured configuration/ })).toHaveLength(2)
     // Explicitly include only verified cells for heterogeneous runtime/model support.
-    fireEvent.change(screen.getByLabelText('Experiment budget (USD)'), { target: { value: '20' } })
+    typeNumber(screen.getByLabelText('Experiment budget (USD)'), '20')
     fireEvent.click(screen.getByRole('button', { name: 'Select verified cells' }))
     expect(within(matrix).getAllByRole('checkbox').filter(row => row.checked)).toHaveLength(6)
     expect(within(matrix).getAllByRole('listitem')).toHaveLength(8)
@@ -231,7 +253,7 @@ describe('ExperimentWorkspace matrix authoring, compatibility, and budget guards
     runnerRequest.mockImplementation(async (path, options) =>
       path === '/experiments/preflight' ? preflightOk(options.body.plan) : { experiments: [] }
     )
-    fireEvent.change(screen.getByLabelText('Experiment budget (USD)'), { target: { value: '20' } })
+    typeNumber(screen.getByLabelText('Experiment budget (USD)'), '20')
     fireEvent.click(screen.getByRole('button', { name: 'Review matrix experiment' }))
     await screen.findByLabelText('Matrix experiment review')
     const firstPlan = runnerRequest.mock.calls.findLast(([path]) => path === '/experiments/preflight')[1].body.plan
@@ -277,18 +299,19 @@ describe('ExperimentWorkspace matrix authoring, compatibility, and budget guards
     fireEvent.click(screen.getByRole('checkbox', { name: 'Select model Model A' }))
     fireEvent.click(screen.getByRole('checkbox', { name: 'Select task Task Alpha' }))
     fireEvent.click(screen.getByRole('checkbox', { name: 'Select task Task Beta' }))
-    fireEvent.change(screen.getByLabelText('Repetitions'), { target: { value: '2' } })
+    typeNumber(screen.getByLabelText('Repetitions'), '2')
 
     // 2 arms × $4 × 2 repeats = $16 worst-case ceiling > default $10 budget.
     expect(screen.getByRole('button', { name: 'Review matrix experiment' }).disabled).toBe(true)
     expect(screen.getByText(/\$16/)).toBeTruthy()
 
-    // Raising budget above $100 is also refused.
-    fireEvent.change(screen.getByLabelText('Experiment budget (USD)'), { target: { value: '120' } })
-    expect(screen.getByRole('button', { name: 'Review matrix experiment' }).disabled).toBe(true)
+    // A budget above $100 is held to $100 when the box is left, and the line under it says so.
+    typeNumber(screen.getByLabelText('Experiment budget (USD)'), '120')
+    expect(screen.getByLabelText('Experiment budget (USD)').value).toBe('100')
+    expect(screen.getByText('Up to 100 USD, so this is set to 100.')).toBeTruthy()
 
     // Valid budget $20 enables Review.
-    fireEvent.change(screen.getByLabelText('Experiment budget (USD)'), { target: { value: '20' } })
+    typeNumber(screen.getByLabelText('Experiment budget (USD)'), '20')
     expect(screen.getByRole('button', { name: 'Review matrix experiment' }).disabled).toBe(false)
     fireEvent.click(screen.getByRole('button', { name: 'Review matrix experiment' }))
     await screen.findByText(/4 planned trials · maximum \$16/)
@@ -302,7 +325,7 @@ describe('ExperimentWorkspace matrix authoring, compatibility, and budget guards
     rerender(<ExperimentWorkspace configuration={draft} catalog={catalog} available lease={{ current: false }} />)
 
     // Seed change invalidates review immediately.
-    fireEvent.change(screen.getByLabelText('Schedule seed'), { target: { value: '99' } })
+    typeNumber(screen.getByLabelText('Schedule seed'), '99')
     expect(screen.queryByLabelText('Matrix experiment review')).toBeNull()
     expect(screen.getByRole('button', { name: 'Freeze matrix experiment' }).disabled).toBe(true)
 
@@ -476,7 +499,7 @@ describe('ExperimentWorkspace freeze/start idempotency, credentials, lease, canc
     expect(screen.getByRole('button', { name: 'Start experiment' }).disabled).toBe(true)
 
     // Change seed, re-review, and hit 409 on Freeze => review is invalidated and next review gets a fresh idempotency_key.
-    fireEvent.change(screen.getByLabelText('Schedule seed'), { target: { value: '7' } })
+    typeNumber(screen.getByLabelText('Schedule seed'), '7')
     fireEvent.click(screen.getByRole('button', { name: 'Review matrix experiment' }))
     await screen.findByLabelText('Matrix experiment review')
     fireEvent.click(screen.getByRole('button', { name: 'Freeze matrix experiment' }))

@@ -35,7 +35,8 @@ from .private_guard import OPT_IN_HEADER
 from .results_scope import is_private, is_redistributable, list_results_dirs
 
 # How many per-run detail payloads to embed. Trajectories needs one per run it can open; all 576
-# of a live directory would make the file unwieldy, so this is a bounded, stated sample.
+# of a live directory would make the file unwieldy, so this is a bounded, stated sample, taken by
+# whole tasks (whole_task_runs), so a task that is in the file opens offline with all its runs.
 DEFAULT_RUNS = 40
 
 # These are limits on the snapshot, independent of any web host's HTML limit. Check both
@@ -126,6 +127,24 @@ _GLOBAL_URLS = ["/api/overview", "/api/tasks", "/api/harnesses", "/api/models",
 _WRITTEN_URLS = ["/api/environment", "/api/version"]
 
 
+def whole_task_runs(rows: list[dict], n_runs: int) -> list[dict]:
+    """The runs whose details an export embeds: every run of the first tasks, while they fit in `n_runs`.
+
+    A task is one model, harness and task id (one all-runs view). Tasks go in index order and the first that
+    does not fit ends the sample, so every task in the file is whole; if the first alone is too big, its first
+    `n_runs` runs go in.
+    """
+    tasks: dict[tuple, list[dict]] = {}
+    for r in rows:
+        tasks.setdefault((r.get("model"), r.get("harness_id"), r.get("task_id")), []).append(r)
+    picked: list[dict] = []
+    for runs in tasks.values():
+        if len(picked) + len(runs) > n_runs:
+            break
+        picked += runs
+    return picked or rows[:n_runs]
+
+
 def _dir_urls(client, d: str, n_runs: int) -> list[str]:
     """Every read-only URL ONE results dir's pages actually request.
 
@@ -163,7 +182,11 @@ def _dir_urls(client, d: str, n_runs: int) -> list[str]:
            f"/api/results/{d}/comparisons",
            # The frontend's historical default is explicit even when this dataset's
            # actual harness is named swe-agent or claude-code. The live API resolves it.
-           f"/api/results/{d}/comparisons?baseline=baseline"]
+           f"/api/results/{d}/comparisons?baseline=baseline",
+           # The Tokens view and its spread list, at their defaults
+           f"/api/results/{d}/tokens", f"/api/results/{d}/tokens/tasks",
+           # the paired comparison under the other two oracles (the hidden one is the bare URL)
+           f"/api/results/{d}/metrics?outcome=visible_pass", f"/api/results/{d}/metrics?outcome=strong_pass"]
     for h in harnesses:
         out.append(f"/api/results/{d}/comparisons?baseline={q(h)}")
     for h in harnesses:
@@ -187,15 +210,24 @@ def _dir_urls(client, d: str, n_runs: int) -> list[str]:
         for a, b in (("model", "harness_id"), ("harness_id", "model"),
                      ("model", "task_id"), ("harness_id", "task_id")):
             out.append(f"/api/results/{d}/experiment?a={a}&b={b}&outcome={oracle}")
-    for r in rows[:n_runs]:
-        # Same sample as the two per-run URLs above (rows[:n_runs], the bounded set this
+    # With more than one model or harness the token views ask for the selected condition
+    # (token-model.js tokenScope), and a task's run comparison only when it has two runs or more.
+    cells = sorted({(r["model"], r["harness_id"]) for r in rows})
+    if len({m for m, _ in cells}) > 1 or len({h for _, h in cells}) > 1:
+        for m, h in cells:
+            scope = f"model={q(m)}&harness={q(h)}"
+            out += [f"/api/results/{d}/tokens?{scope}", f"/api/results/{d}/tokens/tasks?{scope}"]
+            tasks = [r["task_id"] for r in rows if r["model"] == m and r["harness_id"] == h]
+            out += [f"/api/results/{d}/tokens/task/{q(t)}?{scope}" for t in sorted(set(tasks)) if tasks.count(t) > 1]
+    for r in whole_task_runs(rows, n_runs):
+        # Same sample as the two per-run URLs above (whole_task_runs, the bounded set this
         # module already accepts the size of): the per-call detail RepeatsChart fetches only
         # for the opened/highlighted run. A run outside this sample still renders its step
         # line from the /api/repeats/{d} series above; only its hover tooltip's per-call
         # command text needs the local console (RepeatsChart.jsx degrades that path already --
         # `detail` stays null and the tooltip just omits the command line).
         out += [f"/api/results/{d}/runs/{r['run_id']}", f"/api/fork/{d}/state/{r['run_id']}",
-                f"/api/repeats/{d}/run/{r['run_id']}"]
+                f"/api/repeats/{d}/run/{r['run_id']}", f"/api/results/{d}/tokens/task/{q(r['task_id'])}"]
     return list(dict.fromkeys(out))
 
 

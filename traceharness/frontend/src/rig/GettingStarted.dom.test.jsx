@@ -6,6 +6,8 @@ import { applyRuntime } from '../environment';
 
 afterEach(resetRig);
 const response = value => ({ ok: true, status: 200, json: async () => value });
+// the voice tour lives in the sidebar's Help menu
+const openVoiceTour = () => { fireEvent.click(screen.getByRole('button', { name: 'Help' })); fireEvent.click(screen.getByRole('menuitem', { name: 'Voice tour' })); };
 it('offers the tour on request without playing audio, and reopens it', async () => {
   const requests = [];
   const fetchImpl = vi.fn(async (url, options = {}) => { requests.push({ url, method: options.method || 'GET' }); return { ok: false, status: 404, json: async () => ({ error: 'Not primed' }) }; });
@@ -13,15 +15,17 @@ it('offers the tour on request without playing audio, and reopens it', async () 
   vi.spyOn(HTMLMediaElement.prototype, 'pause').mockImplementation(() => {});
   renderRig('#/rig/home', { fetchImpl });
   expect(screen.queryByRole('dialog')).toBeNull();
-  fireEvent.click(await screen.findByRole('button', { name: 'Voice tour' }));
+  await screen.findByRole('button', { name: 'Help' }); openVoiceTour();
   const tour = await screen.findByRole('dialog', { name: 'Find your way around TraceHarness' });
   expect(play).not.toHaveBeenCalled();
+  expect(within(tour).getByText(/^Chapter 1 of \d+$/)).toBeTruthy();   // sentence case, no uppercase kicker
+  expect(tour.textContent).not.toMatch(/FIRST STEPS|CHAPTER/);
   expect(within(tour).getByRole('region', { name: 'Narration transcript' }).textContent).toContain('recorded');
   fireEvent.click(within(tour).getByRole('button', { name: 'Play narration' }));
   expect(play).toHaveBeenCalledTimes(1);
   fireEvent.click(within(tour).getByRole('button', { name: 'Explore on my own' }));
   expect(screen.queryByRole('dialog')).toBeNull();
-  fireEvent.click(screen.getByRole('button', { name: 'Voice tour' }));
+  openVoiceTour();
   expect(screen.getByRole('dialog')).toBeTruthy();
   expect(requests.some(x => x.url === '/api/onboarding')).toBe(false);
 });
@@ -35,8 +39,8 @@ it('answers workflow questions and navigates without sending a model request', a
   fireEvent.click(screen.getByRole('button', { name: 'Show me how' }));
   const answer = screen.getByRole('region', { name: 'Buddy guidance' });
   expect(answer.textContent).toContain('Apply JSON');
-  fireEvent.click(within(answer).getByRole('button', { name: 'Open Harnesses' }));
-  expect(location.hash).toContain('harnesses');
+  fireEvent.click(within(answer).getByRole('button', { name: 'Open Harnesses › Configuration file' }));
+  expect(location.hash).toContain('harnesses:view:file');
   expect(requests.every(x => x.method === 'GET')).toBe(true);
   expect(requests.every(x => !String(x.url).includes('openrouter'))).toBe(true);
 });
@@ -46,7 +50,7 @@ it('a late playback promise cannot mark the next chapter as playing', async () =
   vi.spyOn(HTMLMediaElement.prototype, 'play').mockImplementation(() => new Promise(r => { resolve = r }));
   vi.spyOn(HTMLMediaElement.prototype, 'pause').mockImplementation(() => {});
   renderRig('#/rig/home', { fetchImpl: async () => response({ version: 1, seen: true }) });
-  fireEvent.click(screen.getByRole('button', { name: 'Voice tour' }));
+  openVoiceTour();
   fireEvent.click(screen.getByRole('button', { name: 'Play narration' }));
   fireEvent.click(screen.getByRole('button', { name: 'Next chapter' }));
   await act(async () => resolve());
@@ -57,7 +61,7 @@ it('a late playback promise cannot mark the next chapter as playing', async () =
 it('contains keyboard focus, prevents shell shortcuts and restores the opener on Escape', async () => {
   vi.spyOn(HTMLMediaElement.prototype, 'pause').mockImplementation(() => {});
   renderRig('#/rig/home', { fetchImpl: async () => response({ version: 1, seen: true }) });
-  const opener = screen.getByRole('button', { name: 'Voice tour' });opener.focus();fireEvent.click(opener);
+  const opener = screen.getByRole('button', { name: 'Help' });opener.focus();openVoiceTour();
   const tour = screen.getByRole('dialog'); const buttons = within(tour).getAllByRole('button').filter(b => !b.disabled);buttons.at(-1).focus();
   fireEvent.keyDown(buttons.at(-1), { key: 'Tab' });expect(document.activeElement).toBe(buttons[0]);
   fireEvent.keyDown(buttons[0], { key: 'k', ctrlKey: true });expect(screen.queryByRole('dialog', { name: 'Command palette' })).toBeNull();
@@ -75,7 +79,7 @@ it('checks live runner availability without treating a disconnected catalog as r
 it('the Buddy chapter opens the actual workflow guide, not a different dock', async () => {
   vi.spyOn(HTMLMediaElement.prototype, 'pause').mockImplementation(() => {});
   renderRig('#/rig/home', { fetchImpl: async () => response({ version: 1, seen: true }) });
-  fireEvent.click(screen.getByRole('button', { name: 'Voice tour' }));
+  openVoiceTour();
   for (let n = 0; n < 4; n++) fireEvent.click(screen.getByRole('button', { name: 'Next chapter' }));
   fireEvent.click(screen.getByRole('button', { name: 'Show me this workflow →' }));
   expect(await screen.findByRole('textbox', { name: 'Ask Buddy how to use TraceHarness' })).toBeTruthy();

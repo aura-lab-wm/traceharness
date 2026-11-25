@@ -1,0 +1,10 @@
+/* Rig · learn/figures/kinds/var-share.css — var_share: shares of the spread (var-share.jsx).
+   The model and harness parts take the factor colour (--rig-ser1), task and noise a grey (--rig-ser4). Bars grow
+   once on reveal and move to a new design with transform. Tokens only. */
+.rg-vs-bar rect{fill:var(--rig-ser4);transform-origin:0 0;transition:transform calc(var(--rig-dur-2) * 3) var(--rig-ease) calc(var(--rig-dur-1) * var(--rig-fig-i) / 2)}
+.rg-vs-bar.factor rect{fill:var(--rig-ser1)}
+.rg-vs-val{transition:transform calc(var(--rig-dur-2) * 3) var(--rig-ease) calc(var(--rig-dur-1) * var(--rig-fig-i) / 2)}
+.rg-vs-name{fill:var(--rig-dim);font-size:var(--rig-fs-xs)}
+.rg-vs-bar.factor .rg-vs-name{fill:var(--rig-text);font-weight:var(--rig-fw-medium)}
+.rg-vs-svg .rg-vs-bar{opacity:0;transition:opacity var(--rig-dur-2) var(--rig-ease) calc(var(--rig-dur-1) * var(--rig-fig-i) / 2)}
+.rg-vs-svg.seen .rg-vs-bar{opacity:1}

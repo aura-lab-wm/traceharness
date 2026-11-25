@@ -16,6 +16,9 @@
    * Normalised shapes (same names the prototype's D used):
        Dataset row  { name, runs, harnesses[], models[], tasks[], pass_rate, updated,
                       kind: 'recorded'|'mock',
+                      origin,                 // one of datasetInfo.KIND_ORDER (the picker's badge)
+                      display_name, summary, description, bundled, source, harness_notes,
+                                              //   what the dataset is (backend/dataset_meta.py); null = unknown
                       availability,           // subset of ['school'] (SPEC 4.8), or null
                                               //   when the server did not say (never guessed)
                       updated_source }        // 'runs' | 'unknown' (SPEC 4.7), or null; an empty
@@ -24,6 +27,7 @@
                       vis, hid, str,          // true | false | null (null = unknown, never fail)
                       in, out, cost, wall,    // null when not recorded (imports have no ledger
                                               //   cost: cost/wall are null there, never 0)
+                      cached,                 // prompt tokens served from a cache; null = not recorded
                       steps, tools, edits, bnd, bkinds[], tests, rtbs, started, error,
                       mode,                   // outcomes mode id (hidden suite) or null
                       cutoffCalls, lastFinish, hasLedger, raw }  // raw = the /runs record
@@ -32,6 +36,8 @@
    ==================================================================================== */
 import { useCallback, useEffect, useMemo, useSyncExternalStore } from 'react'
 import { api, IS_STATIC, PRIVATE } from '../api'
+import { can } from '../environment'
+import { originOf } from './datasetInfo'
 
 /* ------------------------------------------------------------------ cache core */
 const cache = new Map()          // key -> { status, data, error, promise }
@@ -107,6 +113,8 @@ export function primeError(path, message = 'failed') {
 export function resetCache() { cache.clear(); online = true; emit() }
 
 const NONE = { status: 'none', data: null, error: null }
+/** Two polled answers say the same thing (they are small JSON documents). */
+export const sameAnswer = (a, b) => { try { return JSON.stringify(a) === JSON.stringify(b) } catch { return false } }
 
 /** Generic hook: any GET path. opts: { private: true } adds the private-results header;
  *  { poll: ms } refetches on an interval (never in a static export). */
@@ -125,9 +133,15 @@ export function useApi(path, opts = {}) {
     const t = setInterval(() => {
       const e = cache.get(key)
       if (e && e.status === 'loading') return
-      // keep the old data visible while refetching: swap the entry only when the answer lands
+      // keep the old data visible while refetching: swap the entry only when the answer lands, and only
+      // when it says something new (an idle console answers the same every 5 s: nothing redraws)
       api(path, opts.private ? { headers: PRIVATE } : {}).then(
-        (data) => { settle(null); cache.set(key, { status: 'ok', data, error: null, promise: Promise.resolve(data) }); emit() },
+        (data) => {
+          settle(null)
+          const was = cache.get(key)
+          if (was && was.status === 'ok' && sameAnswer(was.data, data)) return
+          cache.set(key, { status: 'ok', data, error: null, promise: Promise.resolve(data) }); emit()
+        },
         (error) => settle(error),
       )
     }, poll)
@@ -159,7 +173,7 @@ export function tally(list, oracle = 'hidden') {
   for (const r of list || []) { const v = verdict(r, oracle); if (v === true) p++; else if (v === false) f++; else u++ }
   return { p, f, u, n: p + f + u, known: p + f, rate: p + f ? p / (p + f) : null }
 }
-/** Repeat comparisons need two known selected-suite grades in a single condition/task. */
+/** Repeat comparisons need two known grades under the selected oracle in a single condition/task. */
 export function repeatEvidence(list, oracle = 'hidden') {
   const groups = new Map()
   for (const run of list || []) {
@@ -174,7 +188,7 @@ export function repeatEvidence(list, oracle = 'hidden') {
   return {
     total: counts.length, eligible: eligible.length, excluded: counts.length - eligible.length,
     mixed, unknown, rate: eligible.length ? mixed / eligible.length : null,
-    coverage: `${eligible.length} of ${counts.length} tasks eligible (at least two known ${oracle}-suite grades); ${counts.length - eligible.length} excluded; ${unknown} unknown attempt${unknown === 1 ? '' : 's'}.`,
+    coverage: `${eligible.length} of ${counts.length} tasks eligible (at least two ${oracle}-oracle grades); ${counts.length - eligible.length} excluded; ${unknown} ungraded run${unknown === 1 ? '' : 's'}.`,
   }
 }
 /** Mean available tokens; rec counts supplied values, estimated separates importer estimates from measured usage. */
@@ -219,7 +233,16 @@ export const fmt = {
   int: (n) => (n == null || Number.isNaN(n) ? '—' : Math.round(n).toLocaleString('en-US')),
   fx: (n, d = 2) => (n == null || Number.isNaN(n) ? '—' : (+n).toFixed(d)),
   usd: (x, d = 4) => (x == null || !Number.isFinite(+x) ? '—' : '$' + (+x).toLocaleString('en-US', { minimumFractionDigits: d, maximumFractionDigits: d })),
-  plural: (n, w, p) => `${n} ${n === 1 ? w : p || w + 's'}`,
+  /** "1,240 runs": a whole count gets its thousands separator */
+  plural: (n, w, p) => `${Number.isInteger(n) ? n.toLocaleString('en-US') : n} ${n === 1 ? w : p || w + 's'}`,
+  /* One percent rule. A rate says how often something happens among the runs or tasks
+     that could (pass, flip, recall, agreement): one decimal. A share is one part of a whole split into
+     parts (failures by mode, variance, tokens, runs by exit): no decimals. */
+  rate: (x) => fmt.pct(x, 1),
+  share: (x) => fmt.pct(x, 0),
+  /* One fraction rule: "a of b" in a sentence, "a / b" in a table cell, a figure's unit or a tight line. */
+  of: (a, b) => `${fmt.int(a)} of ${fmt.int(b)}`,
+  frac: (a, b) => `${fmt.int(a)} / ${fmt.int(b)}`,
 }
 
 /* ------------------------------------------------------------------ normalisers (memoised) */
@@ -236,12 +259,21 @@ const PLACES = ['school']
 const placesOf = (a) => (Array.isArray(a) ? PLACES.filter((p) => a.includes(p)) : null)
 const DATE_SOURCES = ['runs', 'unknown']
 
+const str = (v) => (typeof v === 'string' && v.trim() ? v : null)
+/** A plain object from the server, else null (an array or a value is not a lookup table). */
+const plainObject = (v) => (v && typeof v === 'object' && !Array.isArray(v) ? v : null)
+/** A 95% interval [lo, hi] inside 0..1 with lo <= hi, or null for anything else the server sent. */
+export const intervalOf = (ci) => (Array.isArray(ci) && ci.length === 2 && ci.every((v) => typeof v === 'number' && v >= 0 && v <= 1) && ci[0] <= ci[1] ? [ci[0], ci[1]] : null)
 export function normOverview(raw) {
   return once(raw, 'ov', () => {
     const results = ((raw && raw.results) || []).map((r) => ({
       name: r.name, runs: r.runs, harnesses: r.harnesses || [], models: r.models || [], model_runs: r.model_runs || null, tasks: r.tasks || [],
-      pass_rate: r.pass_rate ?? null, updated: r.updated || '', kind: datasetKind(r),
+      pass_rate: r.pass_rate ?? null, graded: Number.isInteger(r.graded) && r.graded >= 0 ? r.graded : null, pass_ci95: intervalOf(r.pass_ci95),
+      updated: r.updated || '', kind: datasetKind(r),
       availability: placesOf(r.availability), updated_source: DATE_SOURCES.includes(r.updated_source) ? r.updated_source : null,
+      // what the dataset is, from its own files (backend/dataset_meta.py); null where no file says
+      origin: originOf(r), display_name: str(r.display_name), summary: str(r.summary), description: str(r.description),
+      bundled: r.bundled === true, source: plainObject(r.source), harness_notes: plainObject(r.harness_notes),
     }))
     return { results, harnesses: (raw && raw.harnesses) || [], tasks: (raw && raw.tasks) || [], key_present: !!(raw && raw.key_present), jobs: (raw && raw.jobs) || [] }
   })
@@ -254,14 +286,14 @@ export function normRun(r, ds) {
   return {
     id: r.run_id, ds, task: r.task_id, harness: r.harness_id, model: r.model, rep: r.repeat_index, exit: r.exit_reason,
     vis: nb(r.visible_pass), hid: nb(r.hidden_pass), str: nb(r.strong_pass),
-    in: r.input_tokens ?? null, out: r.output_tokens ?? null,
+    in: r.input_tokens ?? null, out: r.output_tokens ?? null, cached: r.cache_read_tokens ?? null,
     usageEstimated: r.provider === 'nebius/SWE-agent-trajectories',
     // a person (or a timeout / cancel that changed what the agent did) decided something mid-run; rows written before the fields existed have neither
     human: !!r.human_intervened || (r.human_interventions || 0) > 0, humanN: r.human_interventions || 0,
     cost: imported ? null : (r.cost_usd ?? null), wall: imported ? null : (r.wall_ms ?? null),
     steps: r.steps, tools: r.tool_calls, edits: r.edits, bnd: r.boundary_events, bkinds: r.boundary_kinds || [],
     tests: r.tests_run_by_agent, rtbs: nb(r.ran_tests_before_submit), started: r.started_at || '', error: r.error || '',
-    mode: null, cutoffCalls: null, lastFinish: null, hasLedger: null, raw: r,
+    mode: null, cutoffCalls: null, lastFinish: null, hasLedger: null, modelCalls: null, raw: r,
   }
 }
 export function normRuns(raw, ds) { return once(raw, 'runs:' + ds, () => (Array.isArray(raw) ? raw : []).map((r) => normRun(r, ds))) }
@@ -271,7 +303,7 @@ export function joinOutcomes(runs, outcomes) {
   // when a results-only refresh replaces the run index.
   return runs.map((r) => {
     const o = outcomes.runs[r.id]
-    return o ? { ...r, mode: o.mode ?? null, cutoffCalls: o.cutoff_calls ?? null, lastFinish: o.last_finish ?? null, hasLedger: o.ledger ?? null } : r
+    return o ? { ...r, mode: o.mode ?? null, cutoffCalls: o.cutoff_calls ?? null, lastFinish: o.last_finish ?? null, hasLedger: o.ledger ?? null, modelCalls: Number.isInteger(o.model_calls) ? o.model_calls : null } : r
   })
 }
 
@@ -292,6 +324,10 @@ export const paths = {
   report: (dir, harness, model) => `/results/${E(dir)}/report${harness || model ? '?' + [harness && 'harness=' + E(harness), model && 'model=' + E(model)].filter(Boolean).join('&') : ''}`,
   patterns: (dir, harness, outcome) => `/results/${E(dir)}/patterns${qs({ harness, outcome })}`,
   query: (dir, pattern, harness, outcome) => `/results/${E(dir)}/query${qs({ pattern, harness, outcome })}`,
+  // the query is appended outside the template so tests_agentlab/test_no_dead_surface.py sees the route
+  tokens: (dir, q = {}) => `/results/${E(dir)}/tokens` + qs(q),
+  tokensTasks: (dir, q = {}) => `/results/${E(dir)}/tokens/tasks` + qs(q),
+  tokensTask: (dir, task, q = {}) => `/results/${E(dir)}/tokens/task/${E(task)}` + qs(q),
   repeats: (dir, harness) => `/repeats/${E(dir)}${harness ? '?harness=' + E(harness) : ''}`,
   runRepeats: (dir, id) => `/repeats/${E(dir)}/run/${E(id)}`,
   harnessVersions: (dir) => `/harness/versions?dir=${E(dir)}`,
@@ -317,7 +353,7 @@ export function useDataset(dir) {
   return { ...r, data: row, missing: !!(r.data && dir && !row) }
 }
 export function useOutcomes(dir) {
-  const r = useApi(dir ? paths.outcomes(dir) : null)
+  const r = useApi(dir ? paths.outcomes(dir) : null, privateOpts(dir))
   const data = useMemo(() => {
     if (!r.data) return null
     const meaning = Object.fromEntries((r.data.modes || []).map((m) => [m.id, m]))
@@ -329,18 +365,20 @@ export function useOutcomes(dir) {
 /** Runs of a dataset, normalised and joined with /api/outcomes. The outcomes join is
  *  best-effort: if that endpoint fails, runs still load with mode null (`outcomesError` set). */
 export function useRuns(dir) {
-  const r = useApi(dir ? paths.runs(dir) : null)
-  const o = useApi(dir ? paths.outcomes(dir) : null)
+  const r = useApi(dir ? paths.runs(dir) : null, privateOpts(dir))
+  const o = useApi(dir ? paths.outcomes(dir) : null, privateOpts(dir))
   const data = useMemo(() => (r.data ? joinOutcomes(normRuns(r.data, dir), o.data) : null), [r.data, o.data, dir])
   return { data, error: r.error, loading: r.loading || (o.loading && !o.error), outcomesError: o.error, reload: () => { r.reload(); o.reload() } }
 }
-export function useRunDetail(dir, id) { return useApi(dir && id ? paths.runDetail(dir, id) : null) }
+export function useRunDetail(dir, id) { return useApi(dir && id ? paths.runDetail(dir, id) : null, privateOpts(dir)) }
 export function useMetrics(dir, baseline) { return useApi(dir ? paths.metrics(dir, baseline) : null) }
 export function useComparisons(dir, baseline = 'baseline') { return useApi(dir ? paths.comparisons(dir, baseline) : null) }
 /** Exact directory name `captured`, after trimming slashes. `captured_claude_code` is a public stand-in. */
 export function isCapturedDir(dir) {
   return String(dir || '').replace(/\/+$/, '').trim().toLowerCase() === 'captured'
 }
+/** The private directory is read only with the opt-in header (backend/private_guard.py). */
+const privateOpts = (dir) => (isCapturedDir(dir) ? { private: true } : undefined)
 /** Experiment URL. Defaults (model × harness_id, hidden_pass, no hold) stay the bare path so
  *  Report, Comparison, and the question stack keep the response they already prime.
  *  A static export ignores the query: the snapshot was taken without holds. */
@@ -356,7 +394,7 @@ export function experimentPath(dir, query) {
 }
 export function useExperiment(dir, query) {
   const path = dir ? experimentPath(dir, query) : null
-  return useApi(path, isCapturedDir(dir) ? { private: true } : undefined)
+  return useApi(path, privateOpts(dir))
 }
 export function useOracle(dir) { return useApi(dir ? paths.oracle(dir) : null) }
 export function useIntegrity(dir, harness) { return useApi(dir ? paths.integrity(dir, harness) : null) }
@@ -367,6 +405,12 @@ export function usePatterns(dir, harness, outcome) { return useApi(dir ? paths.p
 /** A regex over each run's action string: matched vs the rest. Live server only (a static export has no queries). */
 export function useQuery(dir, pattern, harness, outcome) { return useApi(dir && pattern && !IS_STATIC ? paths.query(dir, pattern, harness, outcome) : null) }
 export function useRepeats(dir, harness) { return useApi(dir ? paths.repeats(dir, harness) : null) }
+/** Token accounting of a dataset (totals, shares, by phase, context growth). `q` = {model, harness} or {}. */
+export function useTokens(dir, q) { return useApi(dir ? paths.tokens(dir, q) : null) }
+/** Every task's run-to-run token spread, largest first. */
+export function useTokenSpread(dir, q) { return useApi(dir ? paths.tokensTasks(dir, q) : null) }
+/** The runs of one task side by side: tokens by phase, cumulative curves, where they part. */
+export function useTaskTokens(dir, task, q) { return useApi(dir && task ? paths.tokensTask(dir, task, q) : null) }
 export function useHarnessVersions(dir) { return useApi(dir ? paths.harnessVersions(dir) : null) }
 export function useSentinel() { return useApi(paths.sentinel()) }
 export function useTasks() { return useApi(paths.tasks()) }
@@ -440,14 +484,31 @@ export function findRunCached(key) {
 }
 
 /** Resolve `run:<key>` (full id or unique 6-char suffix) across every dataset.
- *  data: { dir, run } once found; null while searching or when absent (`missing` then true). */
-export function useFindRun(key) {
-  const snap = useAllRuns(!!key)
+ *  data: { dir, run } once found; null while searching or when absent (`missing` then true).
+ *  `hint` names the dataset the reader came from: when its run list is already loaded and holds the full
+ *  id, that is the answer and no other dataset's run list is downloaded. Otherwise (not loaded yet, a
+ *  miss, a 6-character suffix) every dataset is searched at once: a hint never adds a wait. */
+export function useFindRun(key, hint) {
   const ov = useOverview()
+  const hintOk = !!key && !!hint && !!ov.data && ov.data.results.some((r) => r.name === hint)
+  const hinted = hintOk ? peek(paths.runs(hint), privateOpts(hint)) : undefined
+  const hintHit = Array.isArray(hinted) ? normRuns(hinted, hint).find((r) => r.id === key) || null : null
+  const snap = useAllRuns(!!key && !hintHit)
+  const hit = key ? hintHit || snap.index.byId.get(key) || snap.index.bySfx.get(key) || null : null
+  // A captured session is held back from the overview: after the public sweep misses, ask the
+  // private directory by name (full id only), and only where capture runs on this machine. The
+  // answer does not hold up "missing": Capture sessions loads that index before it opens a run.
+  const swept = !!key && !!ov.data && !snap.loading && !hit
+  const cap = useRuns(swept && can('capture.local') ? 'captured' : null)
   if (!key) return { data: null, loading: false, error: null, missing: false }
   if (ov.error) return { data: null, loading: false, error: ov.error, missing: false }
-  const hit = snap.index.byId.get(key) || snap.index.bySfx.get(key) || null
   if (hit) return { data: { dir: hit.ds, run: hit }, loading: false, error: null, missing: false }
+  const own = cap.data ? cap.data.find((r) => r.id === key) || null : null
+  if (own) return { data: { dir: own.ds, run: own }, loading: false, error: null, missing: false }
   const loading = !ov.data || snap.loading
   return { data: null, loading, error: null, missing: !loading }
+}
+/** Load the private captured index into the cache (so a run page finds a captured run at once). */
+export function loadCaptured() {
+  return Promise.all([load(paths.runs('captured'), { private: true }), load(paths.outcomes('captured'), { private: true })])
 }

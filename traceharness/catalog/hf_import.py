@@ -36,6 +36,7 @@ ID_COLUMNS = ("instance_id", "task_id", "problem_id", "id")
 RESOLVED_COLUMNS = ("resolved", "target", "success", "passed")
 MODEL_COLUMNS = ("model", "model_name")
 PATCH_COLUMNS = ("patch", "model_patch", "generated_patch")
+EXIT_COLUMNS = ("exit_status",)
 
 _NAME_RE = re.compile(r"[A-Za-z0-9][A-Za-z0-9._-]{0,127}")
 
@@ -191,6 +192,8 @@ def message_session(row: dict, offset: int, dataset_id: str):
         raise ValueError("no messages in this row")
     inst = str(row.get(_first(cols, ID_COLUMNS)) or f"row-{offset}")
     model = str(row.get(_first(cols, MODEL_COLUMNS) or "", "") or "")
+    card = "" if model else card_model(dataset_id)
+    ec = _first(cols, EXIT_COLUMNS)
     rc = _first(cols, RESOLVED_COLUMNS)
     resolved = _as_bool(row.get(rc)) if rc else None
     events, system, turns, open_calls = [], "", 0, []
@@ -235,10 +238,19 @@ def message_session(row: dict, offset: int, dataset_id: str):
     if not events:
         raise ValueError("no usable messages in this row")
     pc = _first(cols, PATCH_COLUMNS)
-    return Session(source="huggingface", session_id=f"{inst}@{offset}", path=f"{dataset_id}#{offset}", model=model,
+    return Session(source="huggingface", session_id=f"{inst}@{offset}", path=f"{dataset_id}#{offset}", model=model or card,
                    agent="huggingface-messages", events=events, system_prompt=system, task_id_hint=inst,
                    hidden_pass=resolved, outcome_source=f"dataset column {rc}" if rc and resolved is not None else "",
-                   patch=str(row.get(pc) or "") if pc else "", extra={"assistant_turns": turns})
+                   exit_status=str(row.get(ec) or "") if ec else "",
+                   patch=str(row.get(pc) or "") if pc else "", extra={"assistant_turns": turns},
+                   run_extra={"model_source": "dataset card"} if card else {})
+
+
+def card_model(dataset_id: str) -> str:
+    """The model the dataset card names, as the catalog records it (hf_import.card_model), else ""."""
+    from traceharness.catalog import hf as catalog
+    entry = catalog.get(dataset_id) or {}
+    return str((entry.get("hf_import") or {}).get("card_model") or "")
 
 
 def completeness(turns: int, steps: int):

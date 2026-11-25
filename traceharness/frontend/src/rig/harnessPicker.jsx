@@ -1,7 +1,11 @@
 import { useCallback, useEffect, useId, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import { BrandName } from './brand/BrandMark'
 
 // A searchable single-choice control. Display text never replaces the caller's stable ID.
-export function HarnessPicker({ label, value, options = [], onChange, placeholder = 'Choose an option', searchPlaceholder, emptyMessage = 'No matching options', disabled = false, loading = false, hint, step }) {
+// `renderOption(option)` draws an option's body instead of label / description / meta (the dataset picker);
+// `hideLabel` keeps the label for screen readers only (a compact toolbar). An option's `brand` ({ kind, name }) puts
+// the logo of the agent or model it names before its label (brand/brands.js; none when no rule claims the name).
+export function HarnessPicker({ label, value, options = [], onChange, placeholder = 'Choose an option', searchPlaceholder, emptyMessage = 'No matching options', disabled = false, loading = false, hint, note, step, renderOption, hideLabel = false, className }) {
   const id = useId()
   const root = useRef(null)
   const input = useRef(null)
@@ -159,10 +163,10 @@ export function HarnessPicker({ label, value, options = [], onChange, placeholde
     setActiveValue(enabled[index].value)
   }
 
-  return <div ref={root} className={`rg-fld rg-harness-picker${shown ? ' is-open' : ''}${disabled ? ' is-disabled' : ''}`} onBlur={(event) => {
+  return <div ref={root} className={`rg-fld rg-harness-picker${shown ? ' is-open' : ''}${disabled ? ' is-disabled' : ''}${className ? ' ' + className : ''}`} onBlur={(event) => {
     if (!event.currentTarget.contains(event.relatedTarget)) { setOpen(false); setQuery('') }
   }}>
-    <label id={`${id}-label`} className="rg-composer-step" htmlFor={`${id}-input`}>{step && <span aria-hidden="true">{step} · </span>}{label}</label>
+    <label id={`${id}-label`} className={hideLabel ? 'sr-only' : 'rg-composer-step'} htmlFor={`${id}-input`}>{step && <span aria-hidden="true">{step} · </span>}{label}</label>
     <div ref={control} className="rg-harness-picker-control">
       <input ref={input} id={`${id}-input`} role="combobox" aria-label={label} aria-autocomplete="list" aria-expanded={shown} aria-haspopup="listbox"
         aria-controls={shown ? `${id}-list` : undefined} aria-activedescendant={shown && activeIndex >= 0 ? `${id}-option-${activeIndex}` : undefined}
@@ -178,6 +182,7 @@ export function HarnessPicker({ label, value, options = [], onChange, placeholde
     {hint && <small id={`${id}-hint`} className="rg-harness-picker-hint">{hint}</small>}
     {shown && <div ref={popup} className="rg-harness-picker-popup" data-placement={placement?.side}
       style={{ top: placement?.top ?? 'auto', bottom: placement?.bottom ?? 'auto', maxHeight: placement?.maxHeight, visibility: placement ? undefined : 'hidden' }}>
+      {note && <p className="rg-harness-picker-note" data-el="picker-note">{note}</p>}
       <div className="rg-harness-picker-resultline" aria-live="polite">{loading ? 'Loading choices…' : `${visible.length} ${visible.length === 1 ? 'choice' : 'choices'}`}<span aria-hidden="true">↑ ↓ navigate · Enter select</span></div>
       <div ref={list} id={`${id}-list`} role="listbox" aria-label={`${label} options`} className="rg-harness-picker-list">
         {groups.map(([group, rows]) => <div key={group} role={group ? 'group' : undefined} aria-label={group || undefined}>
@@ -196,7 +201,8 @@ export function HarnessPicker({ label, value, options = [], onChange, placeholde
                 if (!pointerGesture.current || pointerGesture.current.value === option.value) choose(option)
                 releasePointer()
               }}>
-              <span className="rg-harness-picker-option-copy"><strong>{option.label}</strong>{option.description && <span id={`${id}-description-${index}`}>{option.description}</span>}{option.meta && <small id={`${id}-meta-${index}`}>{option.meta}</small>}</span>
+              {renderOption ? <span className="rg-harness-picker-option-copy" id={`${id}-description-${index}`}>{renderOption(option)}</span>
+                : <span className="rg-harness-picker-option-copy"><strong>{option.brand ? <BrandName kind={option.brand.kind} name={option.brand.name}>{option.label}</BrandName> : option.label}</strong>{option.description && <span id={`${id}-description-${index}`}>{option.description}</span>}{option.meta && <small id={`${id}-meta-${index}`}>{option.meta}</small>}</span>}
               <span className="rg-harness-picker-option-trailing">{option.status && <small id={`${id}-status-${index}`}>{option.status}</small>}{option.value === value && <span className="rg-harness-picker-check" aria-hidden="true">✓</span>}</span>
             </div>
           })}

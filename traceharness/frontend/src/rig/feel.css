@@ -1,0 +1,93 @@
+/* ====================================================================================
+   Rig · feel.css — how the workbench answers a hand, in one place (loaded after rig.css).
+   * Colours: every control eases its background, edge and ink in --rig-dur-1 on --rig-ease; nothing snaps.
+   * Press: every control answers the pointer going down (it dims to --rig-press; a button also sinks), no layout.
+   * One disabled look: the label stays readable (muted ink, not a faded box), and the cursor says no.
+   * Waits: a placeholder holds the final size and shows only after --rig-wait, so a short wait never flashes;
+     what replaces it fades in (.rg-landed). A page reached by navigation does not fade: it is just there.
+   * Motion: --rig-dur-1 / --rig-dur-2 on --rig-ease, opacity and transform only — a view coming in, panels,
+     popovers, notices. Data tables never move. prefers-reduced-motion turns all of it off (rig.css).
+   ==================================================================================== */
+@keyframes rg-fade-in{from{opacity:0}to{opacity:1}}
+@keyframes rg-rise-in{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+@keyframes rg-drop-in{from{opacity:0;transform:translateY(-4px) scale(.98)}to{opacity:1;transform:none}}
+@keyframes rg-side-in{from{opacity:0;transform:translateX(12px)}to{opacity:1;transform:none}}
+@keyframes rg-up-in{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
+
+/* ---------------------------------------------------------------- press, hover, disabled */
+/* every control eases its colours (zero specificity: a view's own transition wins) */
+.rig :where(button,a[href],summary,[role="button"],[role="tab"],[role="link"],[role="switch"],[role="menuitem"],select){transition-property:background-color,border-color,color,text-decoration-color,opacity,box-shadow;transition-duration:var(--rig-dur-1);transition-timing-function:var(--rig-ease)}
+/* every control answers a press: it dims while held (buttons, tabs and rows also sink or darken, below) */
+.rig :is(button,a[href],summary,[role="button"],[role="tab"],[role="link"],[role="switch"],[role="menuitem"]):active:not(:disabled,[aria-disabled="true"]){opacity:var(--rig-press)}
+.rig .rg-btn{transition-property:background-color,border-color,color,transform,opacity;transition-duration:var(--rig-dur-1);transition-timing-function:var(--rig-ease)}
+.rig .rg-btn:active:not(:disabled){transform:scale(.97)}
+.rig .rg-btn:not(.pri):not(.warn):active:not(:disabled){background:var(--rig-panel3);border-color:var(--rig-line2)}
+/* rows and cards that open or select something: hover tints in 120 ms, a press darkens in 80 ms */
+.rig :is(.rg-tbl tr.hov td,.rg-ds-next,.rg-ds-find,.rg-cx-rowb,.rg-traj-att,.rg-tok-run,.rg-traj-nav-it){transition:background-color var(--rig-dur-1) var(--rig-ease),border-color var(--rig-dur-1) var(--rig-ease)}
+.rig :is(.rg-tbl tr.hov:active td,.rg-ds-next:active,.rg-ds-find:active,.rg-cx-rowb:active,.rg-traj-att:active){background:var(--rig-panel3);transition-duration:var(--rig-dur-1)}
+.rig .rg-btn:disabled,.rig .rg-btn:disabled:hover{opacity:1;filter:none;background:var(--rig-panel2);border-color:var(--rig-line);color:var(--rig-mute);cursor:not-allowed;transform:none}
+.rig .rg-btn.ghost:disabled,.rig .rg-btn.ghost:disabled:hover{background:none;border-color:transparent}
+.rig .rg-btn.pri:disabled,.rig .rg-btn.pri:disabled:hover{background:var(--rig-panel3);border-color:var(--rig-line2);color:var(--rig-mute)}
+.rig .rg-btn:disabled .rg-ico{color:inherit}
+/* a button busy with its own request (Reviewing…, Starting…, Working…) says so without moving */
+.rig .rg-btn[aria-busy="true"]{cursor:progress}
+.rig .rg-btn[aria-busy="true"]::after{content:'';flex:none;width:6px;height:6px;margin-left:2px;border-radius:50%;background:currentColor;animation:rg-pl 1s infinite}
+/* a disclosure is a control at rest: a caret that turns (a view that draws its own keeps it), ink on hover */
+.rig :where(details:not(.rg-composer-promptbox))>:where(summary){cursor:pointer;list-style:none}
+.rig :where(details:not(.rg-composer-promptbox))>:where(summary)::-webkit-details-marker{display:none}
+.rig :where(details:not(.rg-composer-promptbox))>:where(summary)::before{content:"▸";display:inline-block;flex:none;width:1ch;margin-inline-end:var(--rig-s2);font-size:var(--rig-fs-xs);line-height:var(--rig-lead-xs);text-align:center;transition:transform var(--rig-dur-1) var(--rig-ease)}
+.rig :where(details[open]:not(.rg-composer-promptbox))>:where(summary)::before{transform:rotate(90deg)}
+.rig :where(summary):hover{color:var(--rig-text)}
+/* tabs, segmented controls, page list rows and step rows: the same press */
+.rig .rg-tabs-tab,.rig .rg-seg button,.rig .rg-nav-it{transition-property:background-color,color,border-color,transform,opacity;transition-duration:var(--rig-dur-1);transition-timing-function:var(--rig-ease)}
+.rig .rg-tabs-tab:active,.rig .rg-seg button:active{transform:scale(.97)}
+.rig .rg-nav-it:active:not(:disabled){background:var(--rig-panel3)}
+.rig :where(button,[role="button"],[role="tab"],a,summary):disabled{cursor:not-allowed}
+
+/* ---------------------------------------------------------------- waits */
+/* a placeholder takes its space at once and shows itself only if the wait outlasts --rig-wait */
+.rig .rg-loading,.rig .rg-skel-stack,.rig .rg-pstate[aria-busy="true"]{animation:rg-fade-in var(--rig-dur-2) var(--rig-ease) var(--rig-wait) both}
+/* what replaces a wait fades in, once (useLanded): the answer arriving is the only thing that moves */
+.rig .rg-landed{animation:rg-fade-in var(--rig-dur-2) var(--rig-ease) both}
+/* the page list while the library loads: the pages hold their places, not yet pressable */
+.rig .rg-rail .rg-nav-it.rg-nav-wait{opacity:.5;cursor:default;background:none}
+.rg-dsw-wait .rg-dsw-b{cursor:default}
+.rg-dsw-wait .rg-dsw-t .rg-skel{display:block;width:8rem;height:12px;margin:2px 0}
+.rg-dsw-wait .rg-dsw-t small.rg-skel{width:5rem;height:10px}
+/* the overview's findings while they are answered: three rows and the two summary lines keep their places */
+.rg-ds-find-wait{display:flex;align-items:center;min-height:var(--rig-h-row);padding:0 var(--rig-s3)}
+.rg-ds-find-wait .rg-q-skel{width:60%}
+.rg-ds-more-wait{display:flex;flex-direction:column}
+.rg-ds-more-wait .rg-skel{display:block;width:16rem;max-width:70%;height:12px;margin-top:calc(var(--rig-s2) + var(--rig-s1) + 3px);margin-bottom:3px}
+
+/* the task page's token comparison while it loads: a row per run and the chart */
+.rg-tok-wait{min-height:calc(var(--rig-tok-n) * 60px + 300px)}
+/* an analysis page names where its recordings come from at its end: drawn once the page's answer is in,
+   so it is never pushed below the fold by the answer arriving above it */
+.rig .rg-an-main:has(.rg-loading,.rg-skel-stack,.rg-pstate[aria-busy="true"])>.rg-prov{display:none}
+
+/* ---------------------------------------------------------------- motion */
+/* one of a page's views comes in (a page reached by navigation does not: see .rg-landed) */
+.rig .rg-composer-view:not([hidden]){animation:rg-rise-in var(--rig-dur-2) var(--rig-ease) both}
+/* panels */
+.rig .rg-dock.open{animation:rg-up-in var(--rig-dur-2) var(--rig-ease) both}
+.rig .rg-dock.open.side{animation-name:rg-side-in}
+.rig .rg-insp-slide-over,.rig .rg-cx-facts:not([hidden]){animation:rg-side-in var(--rig-dur-2) var(--rig-ease) both}
+.rig .rg-insp-column{animation:rg-fade-in var(--rig-dur-2) var(--rig-ease) both}
+/* popovers, menus, the palette */
+.rig .rg-menu-list,.rig .rg-pop,.rig .rg-dsw-m,.rig .rg-traj-tnav-pop{transform-origin:top left;animation:rg-drop-in var(--rig-dur-1) var(--rig-ease) both}
+.rig .rg-menu-list{transform-origin:top right}
+.rig .rg-pal{animation:rg-drop-in var(--rig-dur-2) var(--rig-ease) both}
+.rig .rg-modal[open]{animation:rg-rise-in var(--rig-dur-2) var(--rig-ease) both}
+/* notices next to the button pressed */
+.rig [role="status"]:where(p,span,div):not(:empty):not(.rg-toast):not(.rg-pill):not(.rg-state):not(.rg-skel):not(.rg-skel-stack):not(.rg-pstate){animation:rg-fade-in var(--rig-dur-2) var(--rig-ease) both}
+.rig .rg-pe-notice,.rig .rg-native-notice,.rig .rg-hjson-notice{animation:rg-rise-in var(--rig-dur-2) var(--rig-ease) both}
+/* a toast sits under the control that set it off (desktop); without one, above the status bar */
+.rig .rg-toast.at{left:var(--rig-toast-x);top:var(--rig-toast-y);right:auto;bottom:auto;margin:0;max-width:min(28rem,calc(100vw - var(--rig-toast-x) - var(--rig-s4)));transform:translateY(-4px)}
+.rig .rg-toast.at.up{top:auto;bottom:var(--rig-toast-yb);transform:translateY(4px)}
+.rig .rg-toast.at.show{transform:none}
+
+/* ---------------------------------------------------------------- re-ordered rows glide (Datasets sort) */
+.rig .rg-flip-go{transition:transform var(--rig-dur-2) var(--rig-ease)}
+/* "you are here": a control that would open the page in view (or the option in focus) is inert, so it is not pointed at */
+.rig [data-here],.rig [data-here] *{cursor:default!important}

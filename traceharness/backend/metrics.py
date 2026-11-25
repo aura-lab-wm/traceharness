@@ -7,16 +7,18 @@ from collections import Counter, defaultdict
 from traceharness.core.analysis import (unattended_only, exclude_human, load_index, filter_rows, task_table, aggregate, bootstrap_ci, paired_bootstrap, flip_rate,
                                boundary_rate, exit_reasons, tokens_per_solve, cost_of_pass, mean, summarize, ochiai_attribution,
                                factorial, factorial_ci, power_n, wrong_winner, per_task_rates, tokens_of,
-                               cohens_kappa, comparisons_for, factor_summary)
+                               cohens_kappa, comparisons_for, factor_summary, load_ledger)
 from traceharness.core.grader import load_task
 from traceharness.core.trajtest import load_runs
 from traceharness.core.real_traj import ledger_rows_as_features
 from traceharness.core import patterns as P
+from traceharness.core import tokens as T
 from traceharness.core.reportcard import build_card, card_markdown, added_lines, similarity
 
 from traceharness.shared.contract import availability
 
 from .dataset_dates import dataset_updated
+from .dataset_meta import describe as describe_dataset
 from .paths import LAB_ROOT, RUNS_ROOT   # checkout or installed wheel
 from .results_scope import count_runs, list_results_dirs
 
@@ -44,7 +46,13 @@ def results_dirs() -> list[dict]:
     out = []
     for name in list_results_dirs(RUNS_ROOT):
         rows = load_index(_rd(name))
-        known = [r["hidden_pass"] for r in exclude_human(rows) if isinstance(r.get("hidden_pass"), bool)]   # an aggregate: unattended runs only
+        graded = [r for r in exclude_human(rows) if isinstance(r.get("hidden_pass"), bool)]   # an aggregate: unattended runs only
+        known = [r["hidden_pass"] for r in graded]
+        per_task = defaultdict(lambda: [0, 0])
+        for r in graded:
+            per_task[r["task_id"]][0] += r["hidden_pass"]
+            per_task[r["task_id"]][1] += 1
+        ci = P.pooled_wilson([tuple(per_task[t]) for t in sorted(per_task)])
         # when the runs happened (SPEC 4.7), never the file's mtime, which a clone or a copy resets
         updated, updated_source = dataset_updated(rows)
         out.append({"name": name, "runs": len(rows),
@@ -53,14 +61,22 @@ def results_dirs() -> list[dict]:
                     "model_runs": dict(sorted(Counter(r["model"] for r in rows).items())),
                     "tasks": sorted({r["task_id"] for r in rows}),
                     "pass_rate": mean(float(verdict) for verdict in known) if known else None,
+                    "graded": len(known), "pass_ci95": list(ci) if ci else None,
                     "updated": updated, "updated_source": updated_source,
-                    "availability": availability(name)})
+                    "availability": availability(name),
+                    # what the dataset is, in plain words, from its own files (dataset_meta.py)
+                    **describe_dataset(RUNS_ROOT, name, rows)})
     return _clean(out)
 
 
 def rows_for(name: str, **filters) -> list[dict]:
     d = _rd(name)
     return filter_rows(load_index(d), **{k: v for k, v in filters.items() if v})
+
+
+def _timed(r: dict) -> bool:
+    """The run was timed by the lab (data.js normRun reads an untimed one as imported: wall and cost unknown)."""
+    return bool(r.get("started_at")) or bool(r.get("wall_ms"))
 
 
 @unattended_only("rows")
@@ -89,8 +105,10 @@ def cells(rows: list[dict]) -> list[dict]:
                                 "outcomes": [r["hidden_pass"] for r in sorted(R, key=lambda r: r["repeat_index"])
                                              if r["task_id"] == t and r.get("hidden_pass") is not None]} for t, v in tt.items()},
                   "boundary": boundary_rate(R),
-                  "sentinel_interventions": mean(r.get("sentinel_interventions", 0) for r in R),
-                  "mean_wall_s": mean(r["wall_ms"] for r in R) / 1000})
+                  # a run nobody timed (an import: no started_at, wall_ms 0) records neither its wall time nor a
+                  # sentinel; it is left out, and a cell of such runs gets a blank, not 0.0
+                  "sentinel_interventions": mean(r.get("sentinel_interventions", 0) if _timed(r) else None for r in R),
+                  "mean_wall_s": mean(r["wall_ms"] if _timed(r) else None for r in R) / 1000})
         # cost/efficiency detail (the console's Telemetry view): spread, not just the mean
         # over runs whose usage / tool execution was RECORDED: a null is unknown, and read as zero it
         # would pull every mean toward "calls no tools, spends nothing" (importers.common.UNMEASURED_FIELDS)
@@ -115,14 +133,15 @@ def cells(rows: list[dict]) -> list[dict]:
 
 
 @unattended_only("rows")
-def harness_comparison(rows: list[dict], baseline: str, model: str | None = None) -> dict:
+def harness_comparison(rows: list[dict], baseline: str, model: str | None = None,
+                       outcome: str = "hidden_pass") -> dict:
     R = filter_rows(rows, model=model) if model else rows
     base = filter_rows(R, harness_id=baseline)
     out = {}
     for h in sorted({r["harness_id"] for r in R}):
         if h == baseline:
             continue
-        pb = paired_bootstrap(base, filter_rows(R, harness_id=h))
+        pb = paired_bootstrap(base, filter_rows(R, harness_id=h), outcome)
         out[h] = pb
     return _clean(out)
 
@@ -640,3 +659,75 @@ def run_query(name: str, pattern: str, harness: str | None = None, model: str | 
         q["unittest"] = P.as_unittest(pattern, name=f"query_{abs(hash(pattern)) % 10000}")
         q["total"] = len(runs)
     return _clean(q)
+
+
+# --------------------------------------------------------------------------- tokens
+def token_profiles(name: str, rows: list[dict]) -> dict:
+    """{run_id: core.tokens.run_profile} for every indexed run whose ledger can be read."""
+    d = _rd(name)
+    out = {}
+    for r in rows:
+        try:
+            spans = load_ledger(d, r["run_id"])
+        except (OSError, ValueError):
+            continue                     # no readable ledger: the run is left out, not counted as zero
+        out[r["run_id"]] = T.run_profile(spans, r.get("task_id") or "", estimated=r.get("provider") in T.ESTIMATED_USAGE)
+    return out
+
+
+def token_runs(rows: list[dict], profiles: dict, model: str | None = None, harness: str | None = None,
+               task: str | None = None, oracle: str = "hidden", graded_only: bool = False,
+               include_human: bool = False) -> list:
+    """[(index row, profile)] of the selected runs. `graded_only` keeps the runs whose verdict under
+    `oracle` is known; runs a person intervened in are left out unless `include_human`, as in /metrics."""
+    verdict = T.verdict_field(oracle)
+    rows = filter_rows(exclude_human(rows, include_human), harness_id=harness, task_id=task, model=model)
+    return [(r, profiles[r["run_id"]]) for r in rows
+            if r["run_id"] in profiles and (not graded_only or r.get(verdict) is not None)]
+
+
+def tokens(runs: list, oracle: str = "hidden") -> dict:
+    return _clean(T.dataset_tokens(runs, T.verdict_field(oracle)))
+
+
+def tokens_tasks(runs: list, oracle: str = "hidden") -> dict:
+    return _clean(T.task_spreads(runs, T.verdict_field(oracle)))
+
+
+def tokens_task(task_id: str, runs: list) -> dict:
+    return _clean(T.task_detail(task_id, runs))
+
+
+def task_trajectory(name: str, run_ids: list) -> dict:
+    """{run_id: {after_fix_share, first_lookup_step, after_fix, axis}} for the runs with a tool call; axis
+    is the run on one axis of model calls (trajectory_fields.call_axis). Read as the run page reads them (an estimated
+    provider's usage is unknown), so both pages show the same numbers."""
+    from traceharness.core.safe_paths import confine
+    from traceharness.core.trajectory_fields import call_axis, trajectory_fields
+    d = _rd(name)
+    out = {}
+    for rid in run_ids:
+        try:
+            spans = load_ledger(d, rid)
+        except (OSError, ValueError):
+            continue
+        p = confine(d, rid, "patch.diff")
+        patch = ""
+        if os.path.isfile(p):
+            with open(p, encoding="utf-8") as f:
+                patch = f.read()
+        estimated = _provider(confine(d, rid, "summary.json")) in T.ESTIMATED_USAGE
+        _, run = trajectory_fields(spans, patch, estimated=estimated)
+        if run:
+            out[rid] = {"after_fix_share": run["after_fix"].get("share_after"), "first_lookup_step": run["first_lookup"]["step"],
+                        "after_fix": run["after_fix"], "axis": call_axis(spans, run, estimated)}
+    return out
+
+
+def _provider(path: str) -> str | None:
+    """summary.json's provider, or None when the file is missing or unreadable."""
+    try:
+        with open(path, encoding="utf-8") as f:
+            return (json.load(f) or {}).get("provider")
+    except (OSError, ValueError, AttributeError):
+        return None

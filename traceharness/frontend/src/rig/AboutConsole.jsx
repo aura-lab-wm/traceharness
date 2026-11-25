@@ -43,7 +43,7 @@ export function AboutConsole() {
       <dl className="rg-kv rg-ws-kv">
         <dt>package version</dt><dd className="rg-mono">{SHARED.package_version}</dd>
         <dt>UI build</dt><dd className="rg-mono">{short(BUILD) || 'not stamped'}</dd>
-        <dt>shared sources</dt><dd className="rg-mono">{short(SHARED_SHA256)}</dd>
+        <dt>shared sources</dt><dd className="rg-hash">{short(SHARED_SHA256)}</dd>
         <dt>mode</dt><dd className="rg-mono">{MODE}</dd>
       </dl>
       {MODE === 'local' && <LocalServer />}

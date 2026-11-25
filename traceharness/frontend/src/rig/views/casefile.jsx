@@ -16,8 +16,8 @@ import { Icon, Tag, ConfirmAction, Btn, Empty } from '../ui'
 import './dock.css'
 import './casefile.css'
 
-const KIND_LABEL = { answer: 'answer', figure: 'figure', cell: 'cell', run: 'run', event: 'event' }
-const vWord = (v) => (v === true ? 'pass' : v === false ? 'fail' : 'unknown')
+const KIND_LABEL = { answer: 'answer', figure: 'figure', cell: 'condition', run: 'run', event: 'event' }
+const vWord = (v) => (v === true ? 'Pass' : v === false ? 'Fail' : 'Ungraded')
 
 /** Ways to put the first thing in the case file, from what the focused tab is about. */
 function useFirstPins(ctx) {
@@ -28,7 +28,7 @@ function useFirstPins(ctx) {
   const acts = []
   if (run) {
     const item = { id: `run:${run.id}`, kind: 'run', label: `run ${sfx(run.id)} · ${run.task}`, spec: makeSpec('run', run.id),
-      value: `${short(run.model)} · ${run.harness} · ${vWord(verdict(run, oracle))} (${oracle})`, dir: run.ds, run: run.id, model: run.model, harness: run.harness, task: run.task }
+      value: `${short(run.model)} · ${run.harness} · ${vWord(verdict(run, oracle))} (${oracle} oracle)`, dir: run.ds, run: run.id, model: run.model, harness: run.harness, task: run.task }
     acts.push({ label: `Pin run ${sfx(run.id)} (in focus)`, primary: true, onClick: () => { togglePin(item); toast(`Pinned ${item.label} to the case file`, { label: 'Ask Buddy about it', onClick: () => setDock('buddy') }) } })
   }
   if (dir) {
@@ -41,7 +41,7 @@ function useFirstPins(ctx) {
 
 function CaseFile({ ctx = {} }) {
   const items = useCaseFile()
-  const { openTab, oracle, toast, setDock } = useRig()
+  const { openTab, oracle, toast, setDock, isHere } = useRig()
   const runs = items.filter((x) => x.kind === 'run' || (x.kind === 'event' && x.run))
   const runIds = [...new Set(runs.map((x) => x.run).filter(Boolean))]
   const [picked, setPicked] = useState([])
@@ -83,9 +83,9 @@ function CaseFile({ ctx = {} }) {
           <Btn onClick={exportMd} data-el="export-review"><Icon name="down" size={14} /> Export review</Btn>
         </div>
         <div className="rg-case-row">
-          <Btn disabled={!pair} why={cmpWhy} title={pair ? `Compare ${pair.map((x) => x.slice(-6)).join(' ↔ ')}` : undefined}
+          <Btn disabled={!pair} why={cmpWhy} tip={pair ? `Compare ${pair.map((x) => x.slice(-6)).join(' ↔ ')}` : undefined}
             onClick={() => pair && openTab(makeSpec('cmp', pair[0], pair[1]))}><Icon name="cmp" size={14} /> Compare</Btn>
-          <Btn disabled={!one} why={forkWhy} title={one ? `Fork run ${one.slice(-6)} (proposed capability)` : undefined}
+          <Btn disabled={!one} why={forkWhy} tip={one ? `Fork run ${one.slice(-6)} (proposed capability)` : undefined}
             onClick={() => one && openTab(makeSpec('fork', one))}><Icon name="fork" size={14} /> Fork</Btn>
           <span className="rg-grow" />
           <ConfirmAction label="Clear" confirmLabel="Clear all pins" danger onConfirm={() => { clearCase(); setPicked([]) }} />
@@ -101,14 +101,16 @@ function CaseFile({ ctx = {} }) {
             <div className="rg-case-main">
               <div className="rg-case-head">
                 <Tag tone={x.kind === 'answer' || x.kind === 'figure' ? 'acc' : undefined}>{KIND_LABEL[x.kind] || x.kind}</Tag>
-                {x.spec && parseSpec(x.spec).kind
+                {x.spec && parseSpec(x.spec).kind && isHere(x.spec)
+                  ? <button type="button" className="rg-tlink rg-case-ttl" aria-current="page" aria-disabled="true" data-here="" data-hint={`${x.label} · you are here`} onClick={(e) => { if (e.metaKey || e.ctrlKey) openTab(x.spec, { side: true }) }}>{x.label}</button>
+                  : x.spec && parseSpec(x.spec).kind
                   ? <button type="button" className="rg-tlink rg-case-ttl" onClick={(e) => openTab(x.spec, { side: e.metaKey || e.ctrlKey })}>{x.label}</button>
                   : <span className="rg-case-ttl">{x.label}</span>}
               </div>
               {x.value && <div className="rg-case-val">{x.value}</div>}
               <input className="rg-inp rg-case-memo" aria-label={`Note on ${x.label}`} placeholder="Add a note…" value={x.note || ''} onChange={(e) => setNote(x.id, e.target.value)} />
             </div>
-            <button type="button" className="rg-btn ghost rg-case-x" aria-label={`Unpin ${x.label}`} title="Unpin" onClick={() => unpin(x.id)}><Icon name="x" size={14} /></button>
+            <button type="button" className="rg-btn ghost rg-case-x" aria-label={`Unpin ${x.label}`} data-hint="Unpin" onClick={() => unpin(x.id)}><Icon name="x" size={14} /></button>
           </li>
         ))}
       </ul>

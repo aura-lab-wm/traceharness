@@ -48,7 +48,7 @@ export function MacroDialog({ wb, ids, scopeLabel, onClose }) {
   }
   return <Modal open onClose={onClose} title="Macros: generate replacements" width="820px" el="native-macros"
     footer={<><button type="button" className="rg-btn" onClick={onClose}>Cancel</button>
-      <button type="button" className="rg-btn pri" disabled={working || wb.locked || !edits.length || !fits} onClick={apply}>{working ? 'Applying…' : 'Apply to ' + plural(edits.length, 'fragment')}</button></>}>
+      <button type="button" className="rg-btn pri" disabled={working || wb.locked || !edits.length || !fits} aria-busy={working || undefined} onClick={apply}>{working ? 'Applying…' : 'Apply to ' + plural(edits.length, 'fragment')}</button></>}>
     <div className="rg-stack rg-native-macro">
       <p className="rg-native-lede">Scope: <b>{plural(ids.length, 'fragment')}</b> ({scopeLabel}). A macro rewrites the text a fragment currently contributes and proposes it as a replacement. Fenced code and native placeholders are never altered; leading and trailing whitespace is kept.</p>
       <fieldset className="rg-native-macro-list"><legend>Macros</legend>
@@ -58,7 +58,7 @@ export function MacroDialog({ wb, ids, scopeLabel, onClose }) {
       {!preview ? <p className="rg-native-empty">Choose at least one macro to see what it would change. Nothing is applied until you confirm.</p>
         : preview.issue ? <p className="rg-native-notice" role="alert">{preview.issue}</p> : <>
           <p className="rg-native-macro-sum" role="status"><b>{plural(edits.length, 'fragment')} would change</b>{fitted?.for === preview ? ' (largest savings first, ' + formatCount(preview.edits.length - edits.length) + ' left out to fit)' : ''}
-            {' · '}{formatSigned(totals.bytes, formatBytes)} exact · <span title={ESTIMATE_TOOLTIP}>{formatSigned(totals.tokens)} tokens (estimate)</span> · {plural(preview.skipped.length, 'fragment')} skipped</p>
+            {' · '}{formatSigned(totals.bytes, formatBytes)} exact · <span data-hint={ESTIMATE_TOOLTIP}>{formatSigned(totals.tokens)} tokens (estimate)</span> · {plural(preview.skipped.length, 'fragment')} skipped</p>
           {projected && <div className="rg-native-meters">
             <LimitMeter label="Profile after applying" used={projected.profile_bytes} max={LIMITS.profile_bytes} kind="exact" state={state(projected.profile_bytes, LIMITS.profile_bytes)} />
             <LimitMeter label="Overrides after applying" unit="count" used={projected.overrides} max={LIMITS.overrides} kind="exact" state={state(projected.overrides, LIMITS.overrides)} />
@@ -68,7 +68,7 @@ export function MacroDialog({ wb, ids, scopeLabel, onClose }) {
           {edits.length > 0 && <TableScroll label="Macro preview" maxHeight={320} stickyCol={false}><table className="rg-tbl rg-keep rg-native-macro-table">
             <thead><tr><th scope="col">Fragment</th><th scope="col" className="rg-num">Bytes (exact)</th><th scope="col" className="rg-num">≈ Tokens (estimate)</th></tr></thead>
             <tbody>{edits.slice(0, PREVIEW_ROWS).map((edit) => <tr key={edit.block_id}><th scope="row">{promptDisplay(wb.blockById.get(edit.block_id)).title}</th>
-              <td className="rg-num">{formatCount(edit.before_bytes)} → {formatCount(edit.after_bytes)}</td><td className="rg-num" title={ESTIMATE_TOOLTIP}>≈ {formatCount(edit.before_tokens)} → ≈ {formatCount(edit.after_tokens)}</td></tr>)}</tbody>
+              <td className="rg-num">{formatCount(edit.before_bytes)} → {formatCount(edit.after_bytes)}</td><td className="rg-num" data-hint={ESTIMATE_TOOLTIP}>≈ {formatCount(edit.before_tokens)} → ≈ {formatCount(edit.after_tokens)}</td></tr>)}</tbody>
           </table></TableScroll>}
           {edits.length > PREVIEW_ROWS && <p className="rg-native-footnote">The first {PREVIEW_ROWS} of {formatCount(edits.length)} fragments are listed. Every one is applied and appears in the Changes view.</p>}
           {skipped.length > 0 && <div className="rg-native-skipped"><h4 className="rg-native-subhead">Skipped</h4><ul>{skipped.map(([reason, count]) => <li key={reason}>{plural(count, 'fragment')}: {REASONS[reason] || reason}</li>)}</ul></div>}

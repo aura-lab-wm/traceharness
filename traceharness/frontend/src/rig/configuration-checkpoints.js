@@ -156,6 +156,14 @@ function semanticFields(configuration) {
   ]
 }
 
+// Where two versions of a line first differ, in characters.
+function firstDifference(a = '', b = '') {
+  const x = [...a], y = [...b]
+  let i = 0
+  while (i < x.length && i < y.length && x[i] === y[i]) i++
+  return i
+}
+
 function promptDiff(before, after) {
   const left = before === '' ? [] : before.split('\n'), right = after === '' ? [] : after.split('\n')
   const output = { changed: before !== after, lines: [], truncated: false, beforeLines: left.length, afterLines: right.length, beforeBytes: bytes(before), afterBytes: bytes(after) }
@@ -164,16 +172,19 @@ function promptDiff(before, after) {
   while (start < left.length && start < right.length && left[start] === right[start]) start++
   while (end < left.length - start && end < right.length - start && left[left.length - 1 - end] === right[right.length - 1 - end]) end++
   const leftEnd = left.length - end, rightEnd = right.length - end
-  const append = (kind, text, beforeLine, afterLine) => {
+  // A long line shows 240 characters around its first change, so an edit late in a long line stays visible.
+  const append = (kind, text, beforeLine, afterLine, at = 0) => {
     const characters = [...text]
     const clipped = characters.length > 240
     output.truncated ||= clipped
-    output.lines.push({ kind, text: clipped ? characters.slice(0, 240).join('') + '…' : text, beforeLine, afterLine })
+    const from = clipped ? Math.max(0, Math.min(at - 60, characters.length - 240)) : 0
+    const shown = (from > 0 ? '…' : '') + characters.slice(from, from + 240).join('') + (from + 240 < characters.length ? '…' : '')
+    output.lines.push({ kind, text: clipped ? shown : text, beforeLine, afterLine })
   }
   for (let i = Math.max(0, start - 3); i < start; i++) append('context', left[i], i + 1, i + 1)
   // Linear prefix/suffix comparison, bounded output; no quadratic line matching.
-  for (let i = start; i < Math.min(leftEnd, start + 36); i++) append('removed', left[i], i + 1, null)
-  for (let i = start; i < Math.min(rightEnd, start + 36); i++) append('added', right[i], null, i + 1)
+  for (let i = start; i < Math.min(leftEnd, start + 36); i++) append('removed', left[i], i + 1, null, firstDifference(left[i], right[i]))
+  for (let i = start; i < Math.min(rightEnd, start + 36); i++) append('added', right[i], null, i + 1, firstDifference(left[i], right[i]))
   output.truncated ||= leftEnd - start > 36 || rightEnd - start > 36
   for (let i = 0; i < Math.min(end, 3); i++) append('context', left[leftEnd + i], leftEnd + i + 1, rightEnd + i + 1)
   return output

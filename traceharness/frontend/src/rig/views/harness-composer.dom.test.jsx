@@ -6,6 +6,12 @@ import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vite
 import { CARDS, RECOMMENDED_ID, VERIFY_NO, blocksFromAnswers } from './shallow-data'
 import { nativeInventoryFixture, nativeResponseFixture, nativeRuntimeFixture } from '../../../test/native-prompts-fixture'
 import { SHARED, LOCAL_APP } from '../../shared/index.js'
+import { RigContext } from '../context'
+import { requestPairing, takePairing } from '../native/ui/pairing-bus'
+
+/* a number box takes what was typed when it is left (NumberField): type, then leave the box */
+const typeNumber = (node, value) => { fireEvent.change(node, { target: { value } }); fireEvent.blur(node) }
+
 
 const draftKey = (name) => SHARED.drafts.prefix_local + name
 const json = (data, status = 200) => ({ ok: status >= 200 && status < 300, status, headers: { get: () => 'application/json' }, json: async () => data })
@@ -75,6 +81,7 @@ beforeEach(() => {
 })
 afterEach(() => { cleanup(); vi.restoreAllMocks(); vi.unstubAllGlobals() })
 function choose(label, option) {
+  ensureSetup()
   const input = screen.getByRole('combobox', { name: label, exact: true })
   fireEvent.click(input)
   fireEvent.change(input, { target: { value: option } })
@@ -95,11 +102,12 @@ async function connect() {
   await screen.findByRole('button', { name: 'Disconnect OpenRouter' })
 }
 function switchHarness(value, carry = false) {
+  ensureSetup()
   const toggle = screen.getByRole('checkbox', { name: 'Keep prompt when switching harnesses' })
   if (toggle.checked !== carry) fireEvent.click(toggle)
   const label = value === 'custom' ? 'Custom TraceHarness harness'
-    : value.startsWith('fixed:') ? CARDS.find((card) => card.id === value.slice(6)).name + ' stand-in'
-      : value === 'native:native-claude-code' ? 'Claude Code' : 'Codex'
+    : value.startsWith('fixed:') ? standIn(CARDS.find((card) => card.id === value.slice(6)).name)
+      : value === 'native:native-claude-code' ? native('Claude Code') : native('Codex')
   choose('Harness', label)
   expect(screen.getByRole('combobox', { name: 'Harness', exact: true }).value).toBe(label)
   expect(screen.queryByRole('listbox', { name: 'Harness options', exact: true })).toBeNull()
@@ -109,17 +117,27 @@ function importFile(contents, name = 'configuration.json') {
   Object.defineProperty(file, 'text', { value: () => Promise.resolve(contents) })
   fireEvent.change(screen.getByLabelText('Import configuration file'), { target: { files: [file] } })
 }
+// The page has one job per view: Export lives in Saved versions, so a download visits it and comes back.
+const standIn = (name) => name + ' — TraceHarness copy'
+const native = (name, connected = true) => name + ' — your installed app' + (connected ? '' : ' (not connected)')
+const views = () => within(screen.getByRole('tablist', { name: 'Harnesses views' }))
+function showView(name) { fireEvent.click(views().getByRole('tab', { name: new RegExp('^' + name) })) }
+function ensureSetup() { if (views().getByRole('tab', { selected: true }).firstChild.textContent !== 'One run') showView('One run') }
+async function currentJob() { showView('Recent runs'); return screen.findByRole('region', { name: 'Current job' }) }
 function captureDownload() {
   let blob
   vi.stubGlobal('URL', class extends URL { static createObjectURL(value) { blob = value; return 'blob:fixture' } static revokeObjectURL() {} })
   vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(() => {})
   return async () => {
+    const back = views().getByRole('tab', { selected: true }).firstChild.textContent
+    showView('Saved versions')
     fireEvent.click(screen.getByRole('button', { name: 'Export configuration' }))
+    showView(back)
     expect(blob).toBeTruthy()
     return await new Promise((resolve) => { const reader = new FileReader(); reader.onload = () => resolve(reader.result); reader.readAsText(blob) })
   }
 }
-const prompt = () => screen.getByRole('textbox', { name: 'Prompt', exact: true })
+const prompt = () => { ensureSetup(); return screen.getByRole('textbox', { name: 'Prompt', exact: true }) }
 
 describe('native prompt profiles in the member composer', () => {
   function withInventory(execution = true) {
@@ -185,13 +203,16 @@ describe('native prompt profiles in the member composer', () => {
     const noneIncluded = JSON.parse(await download())
     expect(noneIncluded.native_prompt_profile).toMatchObject({ default_action: 'disable', overrides: [] })
     expect(JSON.stringify(noneIncluded)).not.toContain('First exact baseline')
-    fireEvent.click(screen.getByRole('button', { name: 'Configuration checkpoints', exact: true }))
+    showView('Saved versions')
     fireEvent.change(screen.getByRole('textbox', { name: 'Checkpoint name', exact: true }), { target: { value: 'Native none included' } })
     fireEvent.click(screen.getByRole('button', { name: 'Create checkpoint', exact: true }))
     await screen.findByRole('heading', { name: 'Native none included', exact: true })
+    showView('One run')
     fireEvent.change(screen.getByLabelText('Action scope'), { target: { value: 'all' } })
     fireEvent.click(screen.getByRole('button', { name: 'Restore all patchable prompts' }))
+    showView('Saved versions')
     fireEvent.click(screen.getByRole('button', { name: 'Restore checkpoint Native none included', exact: true }))
+    showView('One run')
     await waitFor(() => expect(screen.getByLabelText('Prompt inclusion counts').textContent).toContain('0 / 3'))
     expect(JSON.parse(await download())).toEqual(noneIncluded)
     switchHarness('custom')
@@ -315,9 +336,9 @@ describe('the unified member Harnesses composer', () => {
     render(<Composer />); await ready()
     const input = screen.getByRole('combobox', { name: 'Harness', exact: true })
     const choices = [
-      ['Claude Code stand-in', 'traceharness', { id: 'claude', lane: 'fixed' }],
-      ['Claude Code', 'native-claude-code', {}],
-      ['Codex', 'native-codex', {}],
+      [standIn('Claude Code'), 'traceharness', { id: 'claude', lane: 'fixed' }],
+      [native('Claude Code'), 'native-claude-code', {}],
+      [native('Codex'), 'native-codex', {}],
       ['Custom TraceHarness harness', 'traceharness', { lane: 'minimal' }],
     ]
     for (const [label, runtime, harness] of choices) {
@@ -339,14 +360,46 @@ describe('the unified member Harnesses composer', () => {
     expect(calls.some((call) => call.url === '/api/runner/jobs' && call.method === 'POST')).toBe(false)
   })
 
+  it('Refresh runs and Refresh runner say they asked again and what came back', async () => {
+    render(<Composer />)
+    await catalogReady()
+    fireEvent.click(screen.getByRole('button', { name: 'Refresh runner' }))
+    await waitFor(() => expect(document.querySelector('[data-el="runner-refresh-note"]').textContent).toBe('Refreshed · runner connected · nothing changed · just now'))
+    showView('Recent runs')
+    fireEvent.click(await screen.findByRole('button', { name: 'Refresh runs' }))
+    await waitFor(() => expect(document.querySelector('[data-el="runs-refresh-note"]').textContent).toBe('Refreshed · 0 runs · nothing changed · just now'))
+    handler = (call) => (call.url === '/api/runner/jobs' && call.method === 'GET' ? json({ jobs: [{ id: 'fixture-job-1', status: 'succeeded', created_at: 1 }] }) : undefined)
+    fireEvent.click(screen.getByRole('button', { name: 'Refresh runs' }))
+    await waitFor(() => expect(document.querySelector('[data-el="runs-refresh-note"]').textContent).toBe('Refreshed · 1 run · just now'))
+  })
+
+  it('an installed app that is not connected says why and how to connect it, in the option itself', async () => {
+    const why = 'Native runtimes need the local runner. Run traceharness runner setup (Docker required).'
+    // the gateway's shape for runtimes it cannot run (see 'keeps public models selectable…' below)
+    catalog = { ...catalog, runner: { available: false, message: 'No execution service is connected.' }, tasks: [], credentials_available: false, execution_available: false,
+      runtimes: [
+        { id: 'traceharness', name: 'TraceHarness engine', kind: 'traceharness', prompt_mode: 'replace', reason: 'No execution service is connected.' },
+        { id: 'native-claude-code', name: 'Claude Code', kind: 'native', prompt_mode: 'append', reason: 'No container runtime is connected.' },
+        { id: 'native-codex', name: 'Codex', kind: 'native', prompt_mode: 'append', reason: why },
+      ].map((runtime) => ({ ...runtime, available: false, version: null, image_digest: null, supports_advanced: false })) }
+    render(<Composer />)
+    await catalogReady()
+    fireEvent.click(screen.getByRole('combobox', { name: 'Harness', exact: true }))
+    const codex = screen.getByRole('option', { name: native('Codex', false), exact: true })
+    expect(codex.textContent).toContain(why + ' Choosing it drafts its prompt; it runs once connected.')
+    expect(codex.textContent).toContain('Unavailable')
+    const claude = screen.getByRole('option', { name: native('Claude Code', false), exact: true })
+    expect(claude.textContent).toContain('No container runtime is connected. To connect it, run traceharness runner setup (Docker required), then Refresh runner.')
+  })
+
   it('shows a truthful disconnected state, six stand-ins and no credential input or fake tasks', async () => {
     catalog = { ...defaultCatalog(), runner: { available: false, message: 'No runner configured.' }, runtimes: [], models: [], tasks: [], credentials_available: false, execution_available: false }
     render(<Composer />)
     await screen.findByText('Runner not connected')
     expect(screen.getAllByRole('textbox', { name: 'Prompt', exact: true })).toHaveLength(1)
     fireEvent.click(screen.getByRole('combobox', { name: 'Harness', exact: true }))
-    for (const card of CARDS) expect(screen.getByRole('option', { name: card.name + ' stand-in', exact: true })).toBeTruthy()
-    expect(screen.getByRole('option', { name: 'Claude Code', exact: true }).textContent).toContain('Unavailable')
+    for (const card of CARDS) expect(screen.getByRole('option', { name: standIn(card.name), exact: true })).toBeTruthy()
+    expect(screen.getByRole('option', { name: native('Claude Code', false), exact: true }).textContent).toContain('Unavailable')
     fireEvent.keyDown(screen.getByRole('combobox', { name: 'Harness', exact: true }), { key: 'Escape' })
     expect(screen.getByRole('combobox', { name: 'Task', exact: true }).placeholder).toBe('No runnable task packages connected')
     expect(screen.queryByLabelText('OpenRouter API key')).toBeNull()
@@ -360,7 +413,7 @@ describe('the unified member Harnesses composer', () => {
     fireEvent.change(prompt(), { target: { value: 'My custom prompt.' } })
     switchHarness('fixed:claude', true)
     expect(prompt().value).toBe('My custom prompt.')
-    expect(screen.getByText('TraceHarness preset. This is not the vendor runtime.')).toBeTruthy()
+    expect(screen.getByText('TraceHarness runs its own copy of this agent’s tools and prompt, not the installed app.')).toBeTruthy()
     expect(screen.getByRole('meter').getAttribute('aria-valuetext')).toContain('250000 bytes')
     switchHarness('native:native-claude-code', true)
     expect(screen.getByRole('spinbutton', { name: 'Model request cap' })).toBeTruthy()
@@ -448,7 +501,9 @@ describe('the unified member Harnesses composer', () => {
     render(<Composer />); await ready(); await connect()
     fireEvent.click(screen.getByRole('button', { name: 'Review run' }))
     await screen.findByText('Configuration verified')
+    showView('Saved versions')
     fireEvent.click(screen.getByRole('button', { name: 'Export configuration' }))
+    showView('One run')
     const exported = await new Promise((resolve) => { const reader = new FileReader(); reader.onload = () => resolve(reader.result); reader.readAsText(blob) })
     for (const text of [exported, JSON.stringify(sessionStorage), JSON.stringify(localStorage), location.href]) {
       expect(text).not.toContain('fixture-secret-do-not-persist')
@@ -484,13 +539,18 @@ describe('the unified member Harnesses composer', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Run', exact: true }))
     await screen.findByText('Connection ended; outcome unconfirmed.')
     fireEvent.click(screen.getByRole('button', { name: 'Run', exact: true }))
-    await screen.findByRole('region', { name: 'Current job' })
+    // the run's status shows beside the Run button, with the way to its details
+    // (named in words: harness · model · task; its job ID one click away in its details)
+    await waitFor(() => expect(document.querySelector('[data-el="run-started"] p').textContent).toBe('Run Custom TraceHarness harness · Model A · Registered task fixture: needs attention. Follow it in Recent runs'))
+    expect(document.querySelector('[data-el="run-started"] details').textContent).toContain('fixture-job')
+    await currentJob()
     const submitted = calls.filter((c) => c.url === '/api/runner/jobs' && c.method === 'POST')
     expect(submitted).toHaveLength(2)
     expect(submitted[0].body.idempotency_key).toBe(submitted[1].body.idempotency_key)
     expect(submitted[0].body.manifest_sha256).toBe('a'.repeat(64))
     expect(within(screen.getByRole('region', { name: 'Current job' })).getByText('needs attention')).toBeTruthy()
     expect(screen.queryByRole('button', { name: 'Cancel run' })).toBeNull()
+    showView('One run')
     fireEvent.click(screen.getByRole('button', { name: 'Run again' }))
     await waitFor(() => expect(calls.filter((c) => c.url === '/api/runner/jobs' && c.method === 'POST')).toHaveLength(3))
     expect(calls.filter((c) => c.url === '/api/runner/jobs' && c.method === 'POST')[2].body.idempotency_key).not.toBe(submitted[1].body.idempotency_key)
@@ -514,7 +574,7 @@ describe('the unified member Harnesses composer', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Review run' }))
     await screen.findByText('Configuration verified')
     fireEvent.click(screen.getByRole('button', { name: 'Run', exact: true }))
-    await screen.findByRole('region', { name: 'Current job' })
+    await currentJob()
     expect(within(screen.getByRole('region', { name: 'Current job' })).getByText('succeeded')).toBeTruthy()
     expect(container.querySelector('[data-el="runner-job-grade"]').textContent).toBe('Task grade: Failed')
     expect(screen.getByText('Execution completed. The task grade is reported separately below.')).toBeTruthy()
@@ -537,7 +597,7 @@ describe('the unified member Harnesses composer', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Review run' }))
     await screen.findByText('Configuration verified')
     fireEvent.click(screen.getByRole('button', { name: 'Run', exact: true }))
-    await screen.findByRole('region', { name: 'Current job' })
+    await currentJob()
     const submitted = calls.filter((call) => call.url === '/api/runner/jobs' && call.method === 'POST')
     expect(submitted.map((call) => call.body.manifest_sha256)).toEqual(['a'.repeat(64), 'b'.repeat(64)])
     expect(submitted[0].body.idempotency_key).not.toBe(submitted[1].body.idempotency_key)
@@ -545,7 +605,7 @@ describe('the unified member Harnesses composer', () => {
 
   it('keeps cleared run limits visible and prevents review until corrected', async () => {
     render(<Composer />); await ready()
-    fireEvent.change(screen.getByRole('spinbutton', { name: 'Time limit (seconds)' }), { target: { value: '' } })
+    typeNumber(screen.getByRole('spinbutton', { name: 'Time limit (seconds)' }), '')
     expect(screen.getByRole('button', { name: 'Review run' }).disabled).toBe(true)
     expect(JSON.parse(sessionStorage.getItem(draftKey('composer'))).limits.wall_time_seconds).toBe('')
     cleanup(); render(<Composer />)
@@ -634,7 +694,7 @@ describe('the unified member Harnesses composer', () => {
     render(<Composer />); await ready()
     fireEvent.change(prompt(), { target: { value: 'Portable instructions with Unicode: λ 🧪.' } })
     fireEvent.click(screen.getByRole('button', { name: 'Advanced settings' }))
-    fireEvent.change(screen.getByRole('spinbutton', { name: 'Temperature' }), { target: { value: '0.7' } })
+    typeNumber(screen.getByRole('spinbutton', { name: 'Temperature' }), '0.7')
     const exported = await download()
     fireEvent.change(prompt(), { target: { value: 'Keep this newer working draft.' } })
     importFile(exported)
@@ -642,6 +702,7 @@ describe('the unified member Harnesses composer', () => {
     expect(screen.getByRole('spinbutton', { name: 'Temperature' }).value).toBe('0.7')
     expect(screen.getByRole('combobox', { name: 'Model', exact: true }).value).toBe('Model A')
     expect(screen.getByRole('combobox', { name: 'Task', exact: true }).value).toBe('Registered task fixture')
+    showView('Saved versions')
     fireEvent.click(screen.getByRole('button', { name: 'Undo configuration change' }))
     expect(prompt().value).toBe('Keep this newer working draft.')
     expect(calls.filter((call) => call.url.startsWith('/api/runner/') && call.method !== 'GET')).toHaveLength(0)
@@ -721,9 +782,9 @@ describe('the unified member Harnesses composer', () => {
     expect(screen.getByRole('combobox', { name: 'Harness', exact: true }).value).toBe('Custom TraceHarness harness')
     expect(prompt().value).toBe('Edited Codex stand-in draft.')
     for (const name of CARDS.find((card) => card.id === 'codex').tools) expect(screen.getByRole('checkbox', { name, exact: true }).checked).toBe(true)
-    fireEvent.change(screen.getByRole('spinbutton', { name: 'Step cap' }), { target: { value: '31' } })
+    typeNumber(screen.getByRole('spinbutton', { name: 'Step cap' }), '31')
     fireEvent.click(screen.getByRole('button', { name: 'Undo configuration change' }))
-    expect(screen.getByRole('combobox', { name: 'Harness', exact: true }).value).toBe('Codex stand-in')
+    expect(screen.getByRole('combobox', { name: 'Harness', exact: true }).value).toBe(standIn('Codex'))
     expect(prompt().value).toBe('Edited Codex stand-in draft.')
     switchHarness('custom')
     expect(prompt().value).toBe('Original custom working draft.')
@@ -733,8 +794,8 @@ describe('the unified member Harnesses composer', () => {
   it('preserves unrelated advanced sampling values when a guided tools answer changes', async () => {
     render(<Composer />); await ready()
     fireEvent.click(screen.getByRole('button', { name: 'Advanced settings' }))
-    fireEvent.change(screen.getByRole('spinbutton', { name: 'Temperature' }), { target: { value: '0.7' } })
-    fireEvent.change(screen.getByRole('spinbutton', { name: 'Tokens per call' }), { target: { value: '4096' } })
+    typeNumber(screen.getByRole('spinbutton', { name: 'Temperature' }), '0.7')
+    typeNumber(screen.getByRole('spinbutton', { name: 'Tokens per call' }), '4096')
     fireEvent.click(screen.getByRole('button', { name: 'Guide me' }))
     fireEvent.click(screen.getByRole('radio', { name: 'Read only.', exact: true }))
     fireEvent.click(screen.getByRole('button', { name: 'Advanced settings' }))
@@ -789,9 +850,9 @@ describe('the unified member Harnesses composer', () => {
     render(<Composer />); await ready()
     fireEvent.change(prompt(), { target: { value: 'Keep my prompt and advanced limits together.' } })
     fireEvent.click(screen.getByRole('button', { name: 'Advanced settings' }))
-    fireEvent.change(screen.getByRole('spinbutton', { name: 'Temperature' }), { target: { value: '0.7' } })
-    fireEvent.change(screen.getByRole('spinbutton', { name: 'Tokens per call' }), { target: { value: '4096' } })
-    fireEvent.change(screen.getByRole('spinbutton', { name: 'Step cap' }), { target: { value: '31' } })
+    typeNumber(screen.getByRole('spinbutton', { name: 'Temperature' }), '0.7')
+    typeNumber(screen.getByRole('spinbutton', { name: 'Tokens per call' }), '4096')
+    typeNumber(screen.getByRole('spinbutton', { name: 'Step cap' }), '31')
     const before = JSON.parse(await download())
     fireEvent.click(screen.getByRole('button', { name: 'Reset to Wizard Answers' }))
     expect(prompt().value).not.toBe(before.prompt)
@@ -812,8 +873,10 @@ describe('the unified member Harnesses composer', () => {
     await waitFor(() => expect(prompt().value).toBe(imported.prompt))
     switchHarness('fixed:claude')
     fireEvent.change(prompt(), { target: { value: 'Later fixed draft B.' } })
+    showView('Saved versions')
     fireEvent.click(screen.getByRole('button', { name: 'Undo configuration change' }))
-    expect(screen.getByRole('combobox', { name: 'Harness', exact: true }).value).toBe('Claude Code stand-in')
+    showView('One run')
+    expect(screen.getByRole('combobox', { name: 'Harness', exact: true }).value).toBe(standIn('Claude Code'))
     expect(prompt().value).toBe('Fixed draft A at the moment of import.')
     expect(JSON.parse(sessionStorage.getItem(draftKey('fixed'))).claude.prompt).toBe('Fixed draft A at the moment of import.')
     expect(calls.filter((call) => call.url === '/api/shallow/harnesses' && call.method === 'POST')).toHaveLength(0)
@@ -830,7 +893,7 @@ describe('the unified member Harnesses composer', () => {
     expect(screen.getByText('Harness saved to this computer. Model, task and run limits remain in this tab.')).toBeTruthy()
     fireEvent.click(screen.getByRole('checkbox', { name: 'Keep prompt when switching harnesses', exact: true }))
     expect(screen.getByText('Harness saved to this computer. Model, task and run limits remain in this tab.')).toBeTruthy()
-    fireEvent.change(screen.getByRole('spinbutton', { name: 'Temperature' }), { target: { value: '0.7' } })
+    typeNumber(screen.getByRole('spinbutton', { name: 'Temperature' }), '0.7')
     expect(screen.queryByText('Harness saved to this computer. Model, task and run limits remain in this tab.')).toBeNull()
     expect(calls.filter((call) => call.url === '/api/shallow/wizard' && call.method === 'POST')).toHaveLength(1)
   })
@@ -857,8 +920,8 @@ describe('the unified member Harnesses composer', () => {
     render(<Composer />); await ready()
     fireEvent.change(prompt(), { target: { value: 'Keep these explicit repository instructions until I apply a template.' } })
     fireEvent.click(screen.getByRole('button', { name: 'Advanced settings' }))
-    fireEvent.change(screen.getByRole('spinbutton', { name: 'Temperature' }), { target: { value: '0.7' } })
-    fireEvent.change(screen.getByRole('spinbutton', { name: 'Step cap' }), { target: { value: '31' } })
+    typeNumber(screen.getByRole('spinbutton', { name: 'Temperature' }), '0.7')
+    typeNumber(screen.getByRole('spinbutton', { name: 'Step cap' }), '31')
     fireEvent.click(screen.getByRole('checkbox', { name: 'bash', exact: true }))
     const before = JSON.parse(await download())
     fireEvent.click(screen.getByRole('button', { name: 'Guide me' }))
@@ -878,13 +941,14 @@ describe('the unified member Harnesses composer', () => {
 
   it('creates, compares, restores and renames a complete checkpoint that survives this tab reload', async () => {
     render(<Composer />); await ready()
-    fireEvent.click(screen.getByRole('button', { name: 'Configuration checkpoints', exact: true }))
     fireEvent.change(prompt(), { target: { value: 'Checkpoint baseline instructions.' } })
+    showView('Saved versions')
     fireEvent.change(screen.getByRole('textbox', { name: 'Checkpoint name', exact: true }), { target: { value: 'Baseline experiment' } })
     fireEvent.click(screen.getByRole('button', { name: 'Create checkpoint', exact: true }))
     await screen.findByRole('heading', { name: 'Baseline experiment', exact: true })
     fireEvent.change(prompt(), { target: { value: 'Alternative instructions under comparison.' } })
     choose('Model', 'Model B')
+    showView('Saved versions')
     const compareButton = screen.getByRole('button', { name: 'Compare checkpoint Baseline experiment', exact: true })
     await waitFor(() => expect(compareButton.disabled).toBe(false))
     fireEvent.click(compareButton)
@@ -896,9 +960,11 @@ describe('the unified member Harnesses composer', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Restore checkpoint Baseline experiment', exact: true }))
     await waitFor(() => expect(prompt().value).toBe('Checkpoint baseline instructions.'))
     expect(screen.getByRole('combobox', { name: 'Model', exact: true }).value).toBe('Model A')
+    showView('Saved versions')
     fireEvent.click(screen.getByRole('button', { name: 'Undo configuration change', exact: true }))
     expect(prompt().value).toBe('Alternative instructions under comparison.')
     expect(screen.getByRole('combobox', { name: 'Model', exact: true }).value).toBe('Model B')
+    showView('Saved versions')
     await waitFor(() => expect(screen.getByRole('button', { name: 'Rename checkpoint Baseline experiment', exact: true }).disabled).toBe(false))
     fireEvent.click(screen.getByRole('button', { name: 'Rename checkpoint Baseline experiment', exact: true }))
     fireEvent.change(screen.getByRole('textbox', { name: 'New checkpoint name', exact: true }), { target: { value: 'Reviewed baseline' } })
@@ -909,7 +975,7 @@ describe('the unified member Harnesses composer', () => {
     expect(persisted.checkpoints).toHaveLength(1)
     expect(persisted.checkpoints[0].name).toBe('Reviewed baseline')
     cleanup(); render(<Composer />); await catalogReady()
-    fireEvent.click(screen.getByRole('button', { name: 'Configuration checkpoints', exact: true }))
+    showView('Saved versions')
     expect(screen.getByRole('heading', { name: 'Reviewed baseline', exact: true })).toBeTruthy()
     expect(prompt().value).toBe('Alternative instructions under comparison.')
     expect(calls.filter((call) => call.url.startsWith('/api/runner/') && call.method !== 'GET')).toHaveLength(0)
@@ -918,8 +984,8 @@ describe('the unified member Harnesses composer', () => {
 
   it('retains existing checkpoints and the editor when checkpoint storage refuses a write', async () => {
     render(<Composer />); await ready()
-    fireEvent.click(screen.getByRole('button', { name: 'Configuration checkpoints', exact: true }))
     fireEvent.change(prompt(), { target: { value: 'Keep this editor draft even if checkpoint storage fails.' } })
+    showView('Saved versions')
     fireEvent.change(screen.getByRole('textbox', { name: 'Checkpoint name', exact: true }), { target: { value: 'Stored checkpoint' } })
     fireEvent.click(screen.getByRole('button', { name: 'Create checkpoint', exact: true }))
     await screen.findByRole('heading', { name: 'Stored checkpoint', exact: true })
@@ -942,8 +1008,8 @@ describe('the unified member Harnesses composer', () => {
 
   it('undoes checkpoint deletion without dropping checkpoints created afterward or changing the editor', async () => {
     render(<Composer />); await ready()
-    fireEvent.click(screen.getByRole('button', { name: 'Configuration checkpoints', exact: true }))
     fireEvent.change(prompt(), { target: { value: 'Current editor stays independent of checkpoint deletion.' } })
+    showView('Saved versions')
     fireEvent.change(screen.getByRole('textbox', { name: 'Checkpoint name', exact: true }), { target: { value: 'First checkpoint' } })
     fireEvent.click(screen.getByRole('button', { name: 'Create checkpoint', exact: true }))
     await screen.findByRole('heading', { name: 'First checkpoint', exact: true })
@@ -964,7 +1030,7 @@ describe('the unified member Harnesses composer', () => {
     render(<Composer />); await ready()
     switchHarness('fixed:claude')
     fireEvent.change(prompt(), { target: { value: 'Fixed configuration in the checkpoint.' } })
-    fireEvent.click(screen.getByRole('button', { name: 'Configuration checkpoints', exact: true }))
+    showView('Saved versions')
     fireEvent.change(screen.getByRole('textbox', { name: 'Checkpoint name', exact: true }), { target: { value: 'Fixed baseline' } })
     fireEvent.click(screen.getByRole('button', { name: 'Create checkpoint', exact: true }))
     await screen.findByRole('heading', { name: 'Fixed baseline', exact: true })
@@ -972,10 +1038,12 @@ describe('the unified member Harnesses composer', () => {
     fireEvent.change(prompt(), { target: { value: 'My unrelated custom working configuration.' } })
     fireEvent.click(screen.getByRole('button', { name: 'Advanced settings', exact: true }))
     fireEvent.click(screen.getByRole('checkbox', { name: 'write_file', exact: true }))
-    fireEvent.change(screen.getByRole('spinbutton', { name: 'Step cap', exact: true }), { target: { value: '27' } })
+    typeNumber(screen.getByRole('spinbutton', { name: 'Step cap', exact: true }), '27')
+    showView('Saved versions')
     await waitFor(() => expect(screen.getByRole('button', { name: 'Restore checkpoint Fixed baseline', exact: true }).disabled).toBe(false))
     fireEvent.click(screen.getByRole('button', { name: 'Restore checkpoint Fixed baseline', exact: true }))
-    await waitFor(() => expect(screen.getByRole('combobox', { name: 'Harness', exact: true }).value).toBe('Claude Code stand-in'))
+    showView('One run')
+    await waitFor(() => expect(screen.getByRole('combobox', { name: 'Harness', exact: true }).value).toBe(standIn('Claude Code')))
     expect(prompt().value).toBe('Fixed configuration in the checkpoint.')
     switchHarness('custom')
     expect(prompt().value).toBe('My unrelated custom working configuration.')
@@ -1029,6 +1097,7 @@ describe('member execution history and evidence', () => {
     handler = (call) => call.url === '/api/runner/jobs' && call.method === 'GET' ? json({ jobs: [job] })
       : call.url === '/api/runner/jobs/' + historicalId ? json({ job }) : undefined
     render(<Composer />)
+    showView('Recent runs')
     fireEvent.click(await screen.findByRole('button', { name: 'Open run ' + historicalId }))
     const current = await screen.findByRole('region', { name: 'Current job' })
     if (cost === undefined) {
@@ -1046,16 +1115,19 @@ describe('member execution history and evidence', () => {
     handler = (call) => call.url === '/api/runner/jobs' && call.method === 'GET' ? json({ jobs: [prior, pending] })
       : call.url === '/api/runner/jobs/' + historicalId ? json({ job: { ...prior, manifest: { runtime_id: 'traceharness', model_id: 'fixture/model-a', task_id: 'fixture-task' } } }) : undefined
     const first = render(<Composer />)
-    await screen.findByRole('region', { name: 'Current job' })
+    await currentJob()
     expect(within(screen.getByRole('region', { name: 'Current job' })).getByRole('heading', { level: 2 }).textContent).toContain(activeId)
     const before = prompt().value
+    showView('Recent runs')
     fireEvent.click(screen.getByRole('button', { name: 'Open run ' + historicalId }))
     await waitFor(() => expect(within(screen.getByRole('region', { name: 'Current job' })).getByRole('heading', { level: 2 }).textContent).toContain(historicalId))
     expect(prompt().value).toBe(before)
+    showView('Recent runs')
     expect(within(screen.getByRole('region', { name: 'Current job' })).getByText('fixture/model-a')).toBeTruthy()
     expect(calls.some((call) => call.url === '/api/runner/jobs' && call.method === 'POST')).toBe(false)
     expect(calls.some((call) => call.url === '/api/runner/credentials')).toBe(false)
     first.unmount(); render(<Composer />)
+    showView('Recent runs')
     await waitFor(() => expect(within(screen.getByRole('region', { name: 'Current job' })).getByRole('heading', { level: 2 }).textContent).toContain(activeId))
   })
 
@@ -1063,6 +1135,7 @@ describe('member execution history and evidence', () => {
     handler = (call) => call.url === '/api/runner/jobs' && call.method === 'GET' ? json({ jobs: [historicalJob()] })
       : call.url === '/api/runner/jobs/' + historicalId ? json({ job: historicalJob({ id: activeId }) }) : undefined
     render(<Composer />)
+    showView('Recent runs')
     fireEvent.click(await screen.findByRole('button', { name: 'Open run ' + historicalId }))
     await screen.findByText('The runner returned a different run. Refresh the run list.')
     expect(screen.queryByRole('region', { name: 'Current job' })).toBeNull()
@@ -1073,7 +1146,7 @@ describe('member execution history and evidence', () => {
       ? json({ job: historicalJob({ id: activeId, status: 'running', grade: 'ungraded' }) }) : undefined
     const first = render(<Composer />); await ready(); await connect()
     fireEvent.click(screen.getByRole('button', { name: 'Review run' })); await screen.findByText('Configuration verified')
-    fireEvent.click(screen.getByRole('button', { name: 'Run', exact: true })); await screen.findByRole('region', { name: 'Current job' })
+    fireEvent.click(screen.getByRole('button', { name: 'Run', exact: true })); await currentJob()
     first.unmount()
     expect(calls.some((call) => call.url === '/api/runner/credentials/fixture-credential' && call.method === 'DELETE')).toBe(false)
     const second = render(<Composer />); await ready(); await connect(); second.unmount()
@@ -1099,10 +1172,12 @@ describe('member execution history and evidence', () => {
           : historicalJob({ id: '3'.repeat(48) }) }) : undefined
     const view = render(<Composer />); await ready(); await connect()
     fireEvent.click(screen.getByRole('button', { name: 'Review run' })); await screen.findByText('Configuration verified')
-    fireEvent.click(screen.getByRole('button', { name: 'Run', exact: true })); await screen.findByRole('region', { name: 'Current job' })
+    fireEvent.click(screen.getByRole('button', { name: 'Run', exact: true })); await currentJob()
     fireEvent.click(screen.getByRole('button', { name: 'Open run ' + historicalId }))
     await waitFor(() => expect(within(screen.getByRole('region', { name: 'Current job' })).getByRole('heading', { level: 2 }).textContent).toContain(historicalId))
+    showView('One run')
     fireEvent.click(screen.getByRole('button', { name: 'Run again', exact: true }))
+    showView('Recent runs')
     await waitFor(() => expect(within(screen.getByRole('region', { name: 'Current job' })).getByRole('heading', { level: 2 }).textContent).toContain('3'.repeat(48)))
     view.unmount()
     expect(calls.some((call) => call.url === '/api/runner/credentials/fixture-credential' && call.method === 'DELETE')).toBe(false)
@@ -1113,10 +1188,12 @@ describe('member execution history and evidence', () => {
       ? json({ job: historicalJob({ id: activeId, status: 'running', grade: 'ungraded' }) }) : undefined
     render(<Composer />); await ready(); await connect()
     fireEvent.click(screen.getByRole('button', { name: 'Review run' })); await screen.findByText('Configuration verified')
-    fireEvent.click(screen.getByRole('button', { name: 'Run', exact: true })); await screen.findByRole('region', { name: 'Current job' })
+    fireEvent.click(screen.getByRole('button', { name: 'Run', exact: true })); await currentJob()
+    showView('One run')
     expect(screen.getByText('Disconnecting blocks future model calls for runs started with this connection. Use Cancel run to stop execution.')).toBeTruthy()
     fireEvent.click(screen.getByRole('button', { name: 'Disconnect OpenRouter' }))
     await waitFor(() => expect(calls.some((call) => call.url === '/api/runner/credentials/fixture-credential' && call.method === 'DELETE')).toBe(true))
+    showView('Recent runs')
     expect(screen.getByRole('button', { name: 'Cancel run' })).toBeTruthy()
   })
 
@@ -1132,6 +1209,7 @@ describe('member execution history and evidence', () => {
     const clicked = vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(function () { expect(this.download).toBe('traceharness-' + historicalId + '-trace.jsonl') })
     vi.stubGlobal('URL', class extends URL { static createObjectURL(value) { downloaded = value; return 'blob:fixture-artifact' } static revokeObjectURL() {} })
     render(<Composer />)
+    showView('Recent runs')
     fireEvent.click(await screen.findByRole('button', { name: 'Open run ' + historicalId }))
     fireEvent.click(await screen.findByRole('button', { name: 'Download trace.jsonl' }))
     if (tampered) {
@@ -1161,12 +1239,14 @@ describe('member execution history and evidence', () => {
 it.each(CARDS.map(card=>[card.name,card.id,card.prompt]))('shows the complete editable configuration for the %s stock shell', async (name,id,prompt) => {
  render(<Composer args={['fixed',id]} />)
  await catalogReady()
+ showView('Configuration file')
  const json=screen.getByRole('region',{name:'Full harness JSON'})
  fireEvent.click(within(json).getByRole('button',{name:'View JSON'}))
- const source=()=>JSON.parse(within(json).getByRole('textbox',{name:'Harness JSON source'}).textContent)
+ const source=()=>{ showView('Configuration file'); return JSON.parse(within(json).getByRole('textbox',{name:'Harness JSON source'}).textContent) }
  expect(source().harness.id).toBe(id)
  expect(source().prompt).toBe(prompt)
  expect(source().harness.blocks).toHaveLength(7)
+ showView('One run')
  const editor=screen.getByRole('textbox',{name:/Standing prompt|Prompt for|Instructions|Prompt/i})
  fireEvent.change(editor,{target:{value:'An edited classroom prompt λ🙂'}})
  expect(source().prompt).toBe('An edited classroom prompt λ🙂')
@@ -1178,6 +1258,7 @@ it('shows the full native baseline inventory alongside the complete native confi
  catalog.runtimes[1]=nativeRuntimeFixture(inventory)
  handler=call=>call.url==='/api/runner/prompt-inventory/native-claude-code'?json(nativeResponseFixture(inventory)):undefined
  render(<Composer />);await catalogReady();switchHarness('native:native-claude-code')
+ showView('Configuration file')
  const panel=screen.getByRole('region',{name:'Full harness JSON'})
  fireEvent.click(within(panel).getByRole('button',{name:'View JSON'}))
  const button=await within(panel).findByRole('button',{name:'Native baseline inventory'})
@@ -1185,9 +1266,11 @@ it('shows the full native baseline inventory alongside the complete native confi
  const shown=JSON.parse(within(panel).getByRole('textbox',{name:'Harness JSON source'}).textContent)
  expect(shown).toEqual(inventory)
  expect(shown.blocks[0].baseline_utf8).toBe('First exact baseline λ🙂')
+ showView('One run')
  fireEvent.click(screen.getByRole('checkbox',{name:'Use this native prompt profile for the run'}))
  fireEvent.click(screen.getByRole('checkbox',{name:'Select prompt First fixture prompt'}))
  fireEvent.click(screen.getByRole('button',{name:'Disable selected prompts'}))
+ showView('Configuration file')
  fireEvent.click(within(panel).getByRole('button',{name:'Configuration file'}))
  const file=JSON.parse(within(panel).getByRole('textbox',{name:'Harness JSON source'}).textContent)
  expect(file.version).toBe(2)
@@ -1203,12 +1286,13 @@ it('shows the entire historical run manifest without substituting the editor dra
  handler=call=>call.url==='/api/runner/jobs'&&call.method==='GET'?json({jobs:[{id,status:'succeeded',grade:'passed'}]}):call.url==='/api/runner/jobs/'+id?json({job:{id,status:'succeeded',grade:'passed',manifest}}):undefined
  render(<Composer />);await catalogReady()
  fireEvent.change(screen.getByRole('textbox',{name:'Prompt',exact:true}),{target:{value:'Independent current draft'}})
+ showView('Recent runs')
  fireEvent.click(await screen.findByRole('button',{name:'Open run '+id}))
  const job=await screen.findByRole('region',{name:'Current job'})
  const panel=within(job).getByRole('region',{name:'Full harness JSON'})
  fireEvent.click(within(panel).getByRole('button',{name:'View JSON'}))
  expect(JSON.parse(within(panel).getByRole('textbox',{name:'Harness JSON source'}).textContent)).toEqual(manifest)
- expect(screen.getByRole('textbox',{name:'Prompt',exact:true}).value).toBe('Independent current draft')
+ expect(prompt().value).toBe('Independent current draft')
  expect(calls.filter(call=>call.method==='POST'&&call.url==='/api/runner/jobs')).toHaveLength(0)
 })
 
@@ -1231,16 +1315,21 @@ describe('a hosted-shaped catalog still asks for a credential', () => {
 describe('integrated configuration editing and dispatch', () => {
   it('applies a JSON draft atomically and blocks run review until unapplied edits are resolved', async () => {
     render(<Composer />); await ready()
-    fireEvent.click(screen.getByText('Edit configuration JSON', { exact: true }))
+    showView('Configuration file')
     const editor = screen.getByRole('region', { name: 'Configuration JSON editor' })
     const input = within(editor).getByRole('textbox')
     const value = JSON.parse(input.value)
     value.prompt = 'Inspect the repository and verify the changed behavior.'
     value.harness.blocks.find((block) => block.type === 'prompt').text = value.prompt
     fireEvent.change(input, { target: { value: JSON.stringify(value, null, 2) } })
+    ensureSetup()
     expect(screen.getByRole('button', { name: 'Review run', exact: true }).disabled).toBe(true)
     expect(prompt().value).not.toBe(value.prompt)
+    showView('Configuration file')
     fireEvent.click(within(editor).getByRole('button', { name: 'Apply JSON', exact: true }))
+    // the confirmation and its Undo sit right under Apply JSON, not at the top of the page
+    expect(within(editor).getByText('Applied the JSON. The fields now match it; Review run checks it again before it runs.')).toBeTruthy()
+    expect(within(editor).getByRole('button', { name: 'Undo configuration change' })).toBeTruthy()
     await waitFor(() => expect(prompt().value).toBe(value.prompt))
     expect(screen.getByRole('button', { name: 'Review run', exact: true }).disabled).toBe(false)
     expect(calls.some((call) => call.method === 'POST' && call.url === '/api/runner/jobs')).toBe(false)
@@ -1248,8 +1337,10 @@ describe('integrated configuration editing and dispatch', () => {
 
   it('makes general experiment dispatch available alongside current harness authoring', async () => {
     render(<Composer />); await catalogReady()
+    showView('Experiments')
     expect(screen.getByRole('region', { name: 'Experiment dispatch' })).toBeTruthy()
-    expect(screen.getByText('Edit configuration JSON', { exact: true })).toBeTruthy()
+    showView('Configuration file')
+    expect(screen.getByRole('region', { name: 'Configuration JSON editor' })).toBeTruthy()
     expect(calls.some((call) => call.method === 'POST' && call.url === '/api/runner/experiments')).toBe(false)
   })
 })
@@ -1396,6 +1487,7 @@ describe('the Harnesses view on the local console and in a read-only export', ()
     expect(Object.keys(post.body).sort()).toEqual(['configuration', 'idempotency_key', 'manifest_sha256'])
     expect(post.body.manifest_sha256).toBe('b'.repeat(64))
     expect(post.headers).not.toHaveProperty('x-traceharness-member-scope')
+    showView('Recent runs')
     expect(screen.getByRole('button', { name: 'Open harness_runs in Datasets' }).getAttribute('data-spec')).toBe('ds:harness_runs')
     expect(screen.getByRole('button', { name: 'Open run 20261116-000000-abcdef' }).getAttribute('data-spec')).toBe('run:20261116-000000-abcdef')
     // The finished run changed what is on disk, so the links must not land on answers cached before it:
@@ -1408,13 +1500,35 @@ describe('the Harnesses view on the local console and in a read-only export', ()
     expect(localCalls.some((c) => c.url.includes('/credentials'))).toBe(false)
   })
 
+  it('the run limits say beside the fields which of them stop a run: before Review, and after it', async () => {
+    runnerCatalogAnswer = () => localJson(LOCAL_CATALOG())
+    const Local = await loadComposer('local')
+    render(<Local />)
+    await catalogReady()
+    choose('Model', 'Mock (offline)')
+    choose('Task', 'slugify collapses hyphens incorrectly')
+    const limits = screen.getByRole('group', { name: 'Run limits' })
+    const firstField = within(limits).getAllByRole('spinbutton')[0] || within(limits).getAllByRole('textbox')[0]
+    const plain = within(limits).getByText(/only the step cap stops a run/)
+    expect(plain.textContent).toContain('The time limit and model budget are kept in the run\u2019s record but do not stop it.')
+    expect(plain.compareDocumentPosition(firstField) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+    const review = screen.getByRole('button', { name: 'Review run' })
+    await waitFor(() => expect(review.disabled).toBe(false))
+    fireEvent.click(review)
+    await screen.findByText('Configuration verified')
+    const after = within(limits).getByText(/Enforced on this computer: step cap\./)
+    expect(after.textContent).toContain('kept in the run\u2019s record but do not stop it')
+    expect(after.compareDocumentPosition(firstField) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+    expect(within(limits).queryByText(/only the step cap stops a run/)).toBeNull()
+  })
+
   it('the experiment panels say they need the local runner until it is set up, and only read saved history from it', async () => {
     runnerCatalogAnswer = () => localJson(LOCAL_CATALOG())
     const Local = await loadComposer('local', false)
     render(<Local />)
     await catalogReady()
-    fireEvent.click(screen.getByText('Experiment matrix'))
-    fireEvent.click(screen.getByText('Compare prompt variants'))
+    // both experiment panels are open on the Experiments view, not collapsed behind a click
+    showView('Experiments')
     const notes = await waitFor(() => { const found = document.querySelectorAll('[data-capability="run.experiments"]'); expect(found).toHaveLength(2); return found })
     for (const note of notes) {
       expect(note.getAttribute('data-reason')).toBe('runner_not_ready')
@@ -1426,3 +1540,255 @@ describe('the Harnesses view on the local console and in a read-only export', ()
   })
 })
 
+
+describe('one job per view', () => {
+  const noop = () => {}
+  const rig = (replaceTab) => ({ openTab: noop, replaceTab, toast: noop, setDock: noop, oracle: 'hidden', state: null })
+  const accessible = (role, name) => screen.queryByRole(role, { name, exact: true })
+
+  it('starts on One run and shows one job at a time; each view is its own link', async () => {
+    const replaceTab = vi.fn()
+    render(<RigContext.Provider value={rig(replaceTab)}><Composer /></RigContext.Provider>); await catalogReady()
+    expect(views().getAllByRole('tab').map((tab) => tab.firstChild.textContent)).toEqual(['One run', 'Experiments', 'Saved versions', 'Configuration file', 'Recent runs'])
+    expect(views().getByRole('tab', { selected: true }).firstChild.textContent).toBe('One run')
+    // One run: harness, model, task, prompt, Guide me / Advanced and the run configuration; nothing else
+    for (const name of ['Harness', 'Model', 'Task']) expect(accessible('combobox', name)).toBeTruthy()
+    expect(accessible('textbox', 'Prompt')).toBeTruthy()
+    expect(accessible('button', 'Guide me')).toBeTruthy()
+    expect(accessible('complementary', 'Run configuration')).toBeTruthy()
+    expect(accessible('region', 'Experiment dispatch')).toBeNull()
+    expect(accessible('textbox', 'Checkpoint name')).toBeNull()
+    expect(accessible('region', 'Configuration JSON editor')).toBeNull()
+    expect(accessible('region', 'Recent runs')).toBeNull()
+    // the header keeps one action; Checkpoints, Import and Export are in Saved versions
+    expect(accessible('button', 'Configuration checkpoints')).toBeNull()
+    expect(accessible('button', 'Import configuration')).toBeNull()
+
+    showView('Experiments')
+    expect(replaceTab).toHaveBeenLastCalledWith('harnesses:view:experiments')
+    expect(accessible('textbox', 'Prompt')).toBeNull()
+    expect(accessible('region', 'Experiment dispatch')).toBeTruthy()
+    // the matrix and paired variants are open here, not collapsed behind a click
+    expect(document.querySelector('.rg-matrix-experiments').open).toBe(true)
+    expect(document.querySelector('.rg-experiments').open).toBe(true)
+    expect(screen.getByRole('button', { name: 'Capture current harness' })).toBeTruthy()
+    expect(document.querySelector('[data-view="experiments"] [data-el="current-setup"]').textContent).toContain('Current setup: Custom TraceHarness harness')
+
+    showView('Saved versions')
+    expect(replaceTab).toHaveBeenLastCalledWith('harnesses:view:versions')
+    expect(accessible('textbox', 'Checkpoint name')).toBeTruthy()
+    expect(accessible('button', 'Import configuration')).toBeTruthy()
+    expect(accessible('button', 'Export configuration')).toBeTruthy()
+
+    showView('Configuration file')
+    expect(replaceTab).toHaveBeenLastCalledWith('harnesses:view:file')
+    expect(accessible('region', 'Configuration JSON editor')).toBeTruthy()
+    expect(accessible('region', 'Full harness JSON')).toBeTruthy()
+
+    showView('Recent runs')
+    expect(replaceTab).toHaveBeenLastCalledWith('harnesses:view:runs')
+    expect(accessible('region', 'Recent runs')).toBeTruthy()
+
+    showView('One run')
+    expect(replaceTab).toHaveBeenLastCalledWith('harnesses')
+  })
+
+  it('opens the view the link names', async () => {
+    render(<Composer args={['view', 'versions']} />)
+    expect(views().getByRole('tab', { selected: true }).firstChild.textContent).toBe('Saved versions')
+    expect(await screen.findByRole('textbox', { name: 'Checkpoint name', exact: true })).toBeTruthy()
+    expect(screen.queryByRole('textbox', { name: 'Prompt', exact: true })).toBeNull()
+  })
+
+  it('keeps work in progress when switching views: a captured matrix row survives a trip to One run', async () => {
+    render(<Composer />); await ready()
+    showView('Experiments')
+    fireEvent.click(screen.getByRole('button', { name: 'Capture current harness' }))
+    await screen.findByText('1 captured')
+    fireEvent.change(prompt(), { target: { value: 'A second harness to compare.' } })
+    showView('Experiments')
+    expect(screen.getByText('1 captured')).toBeTruthy()
+  })
+
+  it('names each harness once: TraceHarness copies and installed apps never share a label', async () => {
+    render(<Composer />); await catalogReady()
+    fireEvent.click(screen.getByRole('combobox', { name: 'Harness', exact: true }))
+    const labels = screen.getAllByRole('option').map((option) => option.getAttribute('aria-label') || option.querySelector('strong')?.textContent)
+    expect(new Set(labels).size).toBe(labels.length)
+    expect(labels).toContain('Claude Code — TraceHarness copy')
+    expect(labels).toContain('Claude Code — your installed app')
+    expect(labels.filter((label) => label === 'Claude Code')).toHaveLength(0)
+    const list = screen.getByRole('listbox', { name: 'Harness options', exact: true })
+    expect(list.textContent).toContain('Fixed starting points')
+    expect(list.textContent).toContain('Native agents')
+  })
+
+  it('every greyed run button says why right under it', async () => {
+    render(<Composer />); await catalogReady()
+    const why = (button) => document.getElementById(button.getAttribute('aria-describedby'))?.textContent || ''
+    const review = screen.getByRole('button', { name: 'Review run' }), run = screen.getByRole('button', { name: 'Run', exact: true })
+    expect(review.disabled && run.disabled).toBe(true)
+    expect(why(review)).toContain('Select a model.')
+    expect(why(run)).toContain('Select a model.')
+    expect(review.compareDocumentPosition(document.getElementById(review.getAttribute('aria-describedby'))) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+    choose('Model', 'Model A'); choose('Task', 'Registered task fixture')
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Review run' }).disabled).toBe(false))
+    expect(why(screen.getByRole('button', { name: 'Run', exact: true }))).toContain('Review the configuration with the runner before launching.')
+    showView('Experiments')
+    for (const name of ['Review matrix experiment', 'Freeze matrix experiment', 'Pair current profile against baseline', 'Capture current variant', 'Review experiment', 'Freeze experiment']) {
+      const button = screen.getByRole('button', { name, exact: true })
+      expect(button.disabled, name).toBe(true)
+      expect(why(button).length, `${name} says why`).toBeGreaterThan(10)
+    }
+    expect(why(screen.getByRole('button', { name: 'Review matrix experiment', exact: true }))).toContain('Select captured harnesses')
+    expect(why(screen.getByRole('button', { name: 'Pair current profile against baseline', exact: true }))).toBe('Enable a native prompt profile to capture variants.')
+  })
+
+  it('confirms Apply prompt template under the button, with its Undo', async () => {
+    render(<Composer args={['guided']} />); await catalogReady()
+    const template = screen.getByRole('group', { name: 'Prompt verification template', exact: true })
+    fireEvent.click(within(template).getByRole('button', { name: 'Apply prompt template' }))
+    expect(within(template).getByText('Applied the prompt template to the prompt above. Other settings are unchanged.')).toBeTruthy()
+    expect(within(template).getByRole('button', { name: 'Undo configuration change' })).toBeTruthy()
+    // and only there: the notice is not repeated at the top of the page
+    expect(screen.getAllByText(/Applied the prompt template/)).toHaveLength(1)
+  })
+
+  it('says a started run beside Run, and opens its details in Recent runs', async () => {
+    render(<Composer />); await ready(); await connect()
+    fireEvent.click(screen.getByRole('button', { name: 'Review run' })); await screen.findByText('Configuration verified')
+    fireEvent.click(screen.getByRole('button', { name: 'Run', exact: true }))
+    const started = await waitFor(() => { const line = document.querySelector('[data-el="run-started"]'); expect(line).toBeTruthy(); return line })
+    expect(started.closest('aside').getAttribute('aria-label')).toBe('Run configuration')
+    expect(why(screen.getByRole('button', { name: 'Run again' }))).toBe('')
+    fireEvent.click(within(started).getByRole('button', { name: 'Follow it in Recent runs' }))
+    expect(views().getByRole('tab', { selected: true }).firstChild.textContent).toBe('Recent runs')
+    expect(screen.getByRole('region', { name: 'Current job' })).toBeTruthy()
+    function why(button) { return document.getElementById(button.getAttribute('aria-describedby'))?.textContent || '' }
+  })
+
+  it('a pairing request from the native prompt workbench opens Experiments', async () => {
+    render(<Composer />); await catalogReady()
+    const profile = { runtime_id: 'native-claude-code', default_action: 'keep', overrides: [] }
+    act(() => { requestPairing({ profile, label: 'Edited' }) })
+    expect(views().getByRole('tab', { selected: true }).firstChild.textContent).toBe('Experiments')
+    takePairing({ version: 2, runtime_id: 'native-claude-code', native_prompt_profile: profile })
+  })
+})
+
+describe('names and a quiet console', () => {
+  let localCalls, library, experiments, localJobs
+  async function loadLocal() {
+    vi.resetModules()
+    delete window.__TRACEHARNESS_DATA__
+    vi.doMock('../../environment', () => environmentFor('local', true))
+    return (await import('./harness-composer')).HarnessComposer
+  }
+  beforeEach(() => {
+    localCalls = []; library = new Map(); experiments = false; localJobs = []
+    vi.stubGlobal('fetch', vi.fn(async (url, opts = {}) => {
+      const method = opts.method || 'GET'
+      const body = opts.body ? JSON.parse(opts.body) : null
+      localCalls.push({ url, method, body })
+      if (url === '/api/runner/catalog') return localJson({ ...LOCAL_CATALOG(), experiments_available: experiments })
+      if (url === '/api/runner/experiments') return experiments ? localJson({ experiments: [] }) : localJson({ detail: 'Not found.' }, 404)
+      if (url === '/api/runner/preflight') return localJson({ ok: true, issues: [], manifest_sha256: 'b'.repeat(64), manifest: { ...body.configuration, runtime_version: '0.5.3', local: { results_dir: 'harness_runs', enforced_limits: ['max_steps'] } } })
+      if (url === '/api/runner/jobs' && method === 'GET') return localJson({ jobs: localJobs })
+      if (url === '/api/runner/jobs' && method === 'POST') {
+        const job = { id: 'd'.repeat(40), status: 'succeeded', created_at: 1794891036, grade: 'passed', manifest_sha256: body.manifest_sha256,
+          manifest: { runtime_id: 'traceharness', model_id: 'mock', task_id: body.configuration.task_id }, issues: [], artifacts: [], usage: { input_tokens: 10, output_tokens: 5, cost_usd: 0 } }
+        localJobs = [job]
+        return localJson({ job })
+      }
+      if (url === '/api/shallow/catalog') return localJson({ harnesses: catalogCards })
+      if (url === '/api/shallow/harnesses' && method === 'GET') return localJson({ harnesses: [...library.values()], loaded: true, unconfirmed: [] })
+      if (url === '/api/shallow/compile') return localJson(compiled(body))
+      if (url === '/api/shallow/wizard') { const c = compiled(body); library.set(c.harness.id, c.harness); return localJson({ ...c, stored: true }) }
+      return localJson({ detail: 'Not found.' }, 404)
+    }))
+  })
+  afterEach(() => { vi.doUnmock('../../environment'); vi.resetModules() })
+  const harnessOptions = () => { ensureSetup(); const input = screen.getByRole('combobox', { name: 'Harness', exact: true }); fireEvent.click(input); return within(screen.getByRole('listbox', { name: 'Harness options', exact: true })) }
+
+  it('asks the runner for saved experiments only once its catalog says it keeps them: no 404 for the console', async () => {
+    const Local = await loadLocal()
+    render(<Local />); await catalogReady()
+    showView('Experiments')
+    await new Promise((r) => setTimeout(r, 30))
+    expect(localCalls.filter((c) => c.url === '/api/runner/experiments')).toEqual([])
+    cleanup(); localCalls = []; experiments = true
+    render(<Local />); await catalogReady()
+    showView('Experiments')
+    await waitFor(() => expect(localCalls.some((c) => c.url === '/api/runner/experiments')).toBe(true))
+  })
+  it('a saved harness gets a name: the field defaults to "Minimal harness · N steps", and the picker lists it by name', async () => {
+    const Local = await loadLocal()
+    render(<Local />); await catalogReady()
+    const field = screen.getByRole('textbox', { name: 'Harness name', exact: true })
+    expect(field.getAttribute('placeholder')).toMatch(/^Minimal harness · \d+ steps$/)
+    fireEvent.change(field, { target: { value: 'My careful harness' } })
+    const save = screen.getByRole('button', { name: 'Save harness', exact: true })
+    await waitFor(() => expect(save.disabled).toBe(false))
+    fireEvent.click(save)
+    await screen.findByText('Harness saved to this computer. Model, task and run limits remain in this tab.')
+    const option = harnessOptions().getByRole('option', { name: /My careful harness/ })
+    // the prompt and the content ID stay one look away, in the option's description
+    expect(option.textContent).toContain(RECOMMENDED_ID)
+    expect(option.textContent).toMatch(/You are|prompt/i)
+  })
+  it('a harness saved without a name is listed by its default name, not by its prompt text', async () => {
+    const Local = await loadLocal()
+    render(<Local />); await catalogReady()
+    const save = screen.getByRole('button', { name: 'Save harness', exact: true })
+    await waitFor(() => expect(save.disabled).toBe(false))
+    fireEvent.click(save)
+    await screen.findByText('Harness saved to this computer. Model, task and run limits remain in this tab.')
+    expect(harnessOptions().getByRole('option', { name: /^Minimal harness · \d+ steps/ })).toBeTruthy()
+  })
+  it('Mock (offline) says it is free, and a run is named in words with its ID kept in its details', async () => {
+    const Local = await loadLocal()
+    render(<Local />); await catalogReady()
+    choose('Model', 'Mock (offline)')
+    expect(screen.getByRole('combobox', { name: 'Model', exact: true }).closest('.rg-hp, [data-el], div').parentElement.textContent).toMatch(/free/)
+    choose('Task', 'slugify collapses hyphens incorrectly')
+    const review = screen.getByRole('button', { name: 'Review run' })
+    await waitFor(() => expect(review.disabled).toBe(false))
+    fireEvent.click(review)
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Run', exact: true }).disabled).toBe(false))
+    fireEvent.click(screen.getByRole('button', { name: 'Run', exact: true }))
+    const started = await waitFor(() => { const e = document.querySelector('[data-el="run-started"]'); expect(e).toBeTruthy(); return e })
+    expect(started.textContent).toContain('Custom TraceHarness harness · Mock (offline) · slugify collapses hyphens incorrectly')
+    const details = started.querySelector('details')
+    expect(details.open).toBe(false)
+    expect(details.textContent).toContain('d'.repeat(40))
+    expect(started.querySelector(':scope > :not(details) .rg-hash')).toBeNull()
+  })
+})
+
+describe('logos in the harness and model pickers', () => {
+  const logosIn = (node) => [...node.querySelectorAll('.rg-logo')].map((i) => i.dataset.brand)
+  it('an installed agent and the TraceHarness copy of one carry the agent\'s logo; the custom harness does not; each option keeps its name', async () => {
+    render(<Composer />); await catalogReady()
+    ensureSetup()
+    fireEvent.click(screen.getByRole('combobox', { name: 'Harness', exact: true }))
+    const opt = (name) => screen.getByRole('option', { name, exact: true })
+    expect(logosIn(opt(native('Claude Code')))).toEqual(['claudecode'])
+    expect(logosIn(opt(native('Codex')))).toEqual(['codex'])
+    expect(logosIn(opt(standIn('Claude Code')))).toEqual(['claudecode'])
+    expect(logosIn(opt(standIn('Qwen')))).toEqual(['qwen'])
+    expect(logosIn(opt(standIn('Antigravity')))).toEqual(['antigravity'])
+    expect(logosIn(opt('Custom TraceHarness harness'))).toEqual([])
+    for (const i of screen.getByRole('listbox', { name: 'Harness options' }).querySelectorAll('.rg-logo')) expect(i.getAttribute('aria-hidden')).toBe('true')
+    expect(opt(native('Claude Code')).querySelector('strong').textContent).toBe(native('Claude Code'))
+  })
+  it('a model whose name a rule claims has its logo in the model picker; one no rule claims has none', async () => {
+    const base = defaultCatalog()
+    catalog = { ...base, models: [...base.models, { id: 'qwen/qwen9-1b', name: 'Qwen9 1B' }],
+      runtimes: base.runtimes.map((r) => (r.id === 'traceharness' ? { ...r, model_ids: [...r.model_ids, 'qwen/qwen9-1b'] } : r)) }
+    render(<Composer />); await catalogReady()
+    ensureSetup()
+    fireEvent.click(screen.getByRole('combobox', { name: 'Model', exact: true }))
+    expect(logosIn(screen.getByRole('option', { name: 'Qwen9 1B', exact: true }))).toEqual(['qwen'])
+    expect(logosIn(screen.getByRole('option', { name: 'Model A', exact: true }))).toEqual([])
+  })
+})

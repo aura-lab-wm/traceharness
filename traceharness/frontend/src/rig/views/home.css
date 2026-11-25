@@ -1,63 +1,123 @@
 /* views/home.jsx — dataset library. Classes: rg-home-*. Tokens only (UI contract v1).
    Layout answers to the pane (unnamed container queries), never to the window.
-   Rhythm: header → design card 24 · card → library 32 · toolbar → table 12 · table → About 24. */
+   Studio Graphite: header 20/24/14, the filter row 12 under it, the table flush to a 12px inset so its
+   text lines up with the page's 24px edge, the count and key hints under the table. */
+.rg-dpad.rg-home{padding-top:20px}
 
-/* the page header stacks under 640px of pane; its button spans the width only on a phone-sized pane */
-@container (min-width:481px) and (max-width:640px){.rg-home-head>.rg-btn{align-self:flex-start}}
+/* ---- filter row: a field, the kind chips and, while they narrow the list, Reset */
+.rg-home-lib{display:flex;flex-direction:column;min-width:0}
+.rg-home-bar{display:flex;flex-wrap:wrap;align-items:center;gap:var(--rig-s2);min-width:0;margin-bottom:var(--rig-s3)}
+/* wide enough for its whole placeholder, "Filter by name, model or harness" */
+.rg-home-bar>.rg-search{flex:0 1 19rem;min-width:min(19rem,100%)}
+.rg-home-bar .rg-inp{background:var(--rig-panel)}
+.rig .rg-home-reset{border-style:solid;color:var(--rig-text)}
 
-/* ---- "Design from the evidence": the text keeps a 20rem basis, the buttons wrap under it */
-.rg-home-design{flex-direction:row;flex-wrap:wrap;align-items:center;gap:var(--rig-s4) var(--rig-s6);padding:var(--rig-s5)}
-.rg-home-design-t{flex:1 1 20rem;min-width:0;display:flex;flex-direction:column;gap:var(--rig-s1)}
-.rig .rg-home-design-t h2{margin:0;font-size:var(--rig-fs-md);line-height:var(--rig-lh-snug);font-weight:var(--rig-fw-medium);letter-spacing:0}
-.rig .rg-home-design-t p{margin:0;max-width:var(--rig-measure);color:var(--rig-dim);font-size:var(--rig-fs-sm);line-height:var(--rig-lh-body)}
-.rg-home-design-a{flex:1 1 auto;justify-content:flex-end}
-@container (max-width:640px){.rg-home-design{padding:var(--rig-s4)}}
-/* a phone-width card: the primary action on its own row, the two secondary ones share the next */
-@container (max-width:480px){.rg-home-design-a{flex:1 1 100%}.rg-home-design-a>.rg-btn{flex:1 1 0}.rg-home-design-a>.rg-btn.pri{flex-basis:100%}}
+/* ---- the table: fixed columns, rows of at least 40px on soft dividers, the row under the pointer raised.
+   The kind, the counts, the pass rate and the date get the pixels their contents need; the models and the harnesses a
+   share; the name the rest, wrapping to a second line rather than cutting */
+.rg-home-list{margin:0 calc(-1 * var(--rig-s3));min-width:0;overflow-x:auto}
+.rg-home-tbl{width:100%;min-width:720px;table-layout:fixed;border-collapse:separate;border-spacing:0}
+.rg-home-c-kind{width:124px}.rg-home-c-runs{width:68px}.rg-home-c-tasks{width:70px}.rg-home-c-models{width:17%}
+.rg-home-c-harnesses{width:15%}.rg-home-c-pass{width:16%}.rg-home-c-updated{width:96px}
+/* a wide pane (1440 px and up): the names have room, the models and harnesses take more of it */
+@container (min-width:1100px){.rg-home-c-models{width:20%}.rg-home-c-harnesses{width:17%}}
+.rg-home-tbl thead th{position:sticky;top:0;z-index:var(--rig-z-base);height:32px;padding:0 var(--rig-s3);border-bottom:1px solid var(--rig-line);text-align:left}
+.rg-home-tbl thead th.rg-num{text-align:right}
+.rg-home-tbl thead th.rg-home-sorted{color:var(--rig-text)}
+.rig .rg-home-sort{display:inline-flex;align-items:center;gap:2px;height:24px;padding:0;border:0;background:none;color:inherit;white-space:nowrap}
+.rig .rg-home-sort:hover{color:var(--rig-text)}
+.rg-home-sort .rg-ico{width:12px;height:12px;color:var(--rig-dim)}
+/* a header that sorts says so before it is chosen: a faint up-down mark (the chosen one shows its arrow) */
+.rig .rg-home-sort:not(:has(.rg-ico))::after{content:"↕";margin-left:var(--rig-s1);color:var(--rig-mute);opacity:.6;font-size:var(--rig-fs-2xs);transition:opacity var(--rig-dur-1) var(--rig-ease)}
+.rig .rg-home-sort:not(:has(.rg-ico)):hover::after{opacity:1}
+.rg-home-tbl tbody td{height:40px;padding:6px var(--rig-s3);border-bottom:1px solid var(--rig-line-soft);vertical-align:middle}
+.rg-home-tbl tbody tr{cursor:pointer}
+.rg-home-tbl tbody tr:hover td,.rg-home-tbl tbody tr:focus-visible td{background:var(--rig-row-hover)}
+.rg-home-tbl tbody tr:hover td:first-child,.rg-home-tbl tbody tr:focus-visible td:first-child{border-radius:var(--rig-r-sm) 0 0 var(--rig-r-sm)}
+.rg-home-tbl tbody tr:hover td:last-child,.rg-home-tbl tbody tr:focus-visible td:last-child{border-radius:0 var(--rig-r-sm) var(--rig-r-sm) 0}
+.rg-home-tbl tbody tr:focus-visible{outline:none}
+.rg-home-tbl tbody tr:focus-visible td{box-shadow:inset 0 1px 0 var(--rig-sel),inset 0 -1px 0 var(--rig-sel)}
+.rg-home-tbl tbody tr:focus-visible td:first-child{box-shadow:inset 1px 1px 0 var(--rig-sel),inset 0 -1px 0 var(--rig-sel)}
+.rg-home-tbl tbody tr:focus-visible td:last-child{box-shadow:inset -1px 1px 0 var(--rig-sel),inset 0 -1px 0 var(--rig-sel)}
+/* an opaque tint: a translucent one doubles up on the sub-pixel seam between cells */
+.rg-home-tbl tbody tr.rg-home-cur td{background:var(--rig-sel-bg)}
+.rg-home-tbl tbody tr.rg-home-cur:hover td{background:var(--rig-sel-bg)}
+.rg-home-tbl td.rg-num{font:var(--rig-fw-regular) var(--rig-fs-sm)/var(--rig-lead-xs) var(--rig-num);color:var(--rig-text);font-variant-numeric:tabular-nums}
+.rg-home-tbl tbody td{font-variant-numeric:tabular-nums}
 
-/* ---- library: filters, then one table */
-.rg-home-lib{display:flex;flex-direction:column;gap:var(--rig-s3);min-width:0}
-.rg-home-bar>.rg-search{flex:1 1 16rem}
-.rg-home-list{border-radius:var(--rig-r-lg);overflow:hidden}
-.rg-home-tbl tbody tr:last-child td{border-bottom:0}
-.rg-home-tbl :is(th,td){white-space:nowrap}
-.rg-home-tbl :is(th,td):first-child{padding-left:var(--rig-s5)}
-.rg-home-tbl :is(th,td):last-child{padding-right:var(--rig-s3)}
-.rg-home-tbl td{padding-top:var(--rig-s3);padding-bottom:var(--rig-s3)}
-/* the name column takes the width the figures leave; its models line truncates inside it */
-.rg-home-tbl .rg-home-name{width:100%;max-width:0;min-width:10rem;white-space:normal}
-.rg-home-nl{display:flex;flex-wrap:wrap;align-items:center;gap:var(--rig-s1) var(--rig-s2);min-width:0}
-.rig .rg-home-tbl .rg-home-dn{font:var(--rig-fw-medium) var(--rig-fs-sm)/var(--rig-lh-snug) var(--rig-mono);color:var(--rig-text);text-decoration:none;overflow-wrap:anywhere;min-width:0}
-.rig .rg-home-tbl .rg-home-dn b{font-weight:inherit}
-.rig .rg-home-tbl tr:hover .rg-home-dn,.rig .rg-home-tbl .rg-home-dn:focus-visible{text-decoration:underline;text-decoration-color:var(--rig-line3);text-underline-offset:3px}
-.rg-home-meta{display:flex;align-items:center;gap:var(--rig-s2);min-width:0;margin-top:var(--rig-s1)}
-.rg-home-meta>.rg-tag{flex:none}
-.rg-home-models{flex:1 1 auto;min-width:0;font:var(--rig-fs-xs)/var(--rig-lh-snug) var(--rig-sans);color:var(--rig-mute)}
-.rg-home-date{color:var(--rig-mute);font-size:var(--rig-fs-xs)}
+/* name: the plain name, the "open" marker for the dataset in focus, where else it can be opened, the folder under it.
+   The name wraps to a second line, never cut; the folder wraps after an underscore (<Wb>) */
+.rg-home-nl{display:flex;flex-wrap:wrap;align-items:baseline;column-gap:var(--rig-s2);row-gap:0;min-width:0}
+.rig .rg-home-dn{display:inline;padding:0;border:0;background:none;color:var(--rig-text);font:var(--rig-fw-semi) var(--rig-fs-sm)/var(--rig-lead-md) var(--rig-sans);text-align:left}
+.rig .rg-home-dn b{font-weight:inherit}
+/* "open now" is a status inside the link: it follows the name's last word, and moves to the next line whole */
+.rig .rg-home-dn .rg-home-open{display:inline-block;padding:0 6px;border-radius:999px;background:var(--rig-sel-bg);line-height:var(--rig-lead-xs);white-space:nowrap}
+.rg-home-sub{display:block;color:var(--rig-mute);font-size:var(--rig-fs-2xs);line-height:var(--rig-lead-xs)}
+.rg-home-folder{color:var(--rig-mute)}
+.rg-home-nl>.rg-hc{min-width:0}
+.rig .rg-home-tbl tr:hover .rg-home-dn b,.rig .rg-home-dn:focus-visible b{text-decoration:underline;text-decoration-color:currentColor;text-underline-offset:3px}
+.rg-home-tag{flex:none;color:var(--rig-mute);font-size:var(--rig-fs-2xs);white-space:nowrap}
+.rg-home-tag.rg-home-open{color:var(--rig-text);font-weight:var(--rig-fw-medium)}
+.rg-home-kind{gap:5px;flex:none;width:max-content}
 
-/* pass: a bar and a figure in fixed slots, so every graded row lines up; "Not graded" ends where the figures end */
-.rg-home-pr{display:inline-grid;grid-template-columns:3.5rem 6ch;align-items:center;gap:var(--rig-s3);vertical-align:middle}
-.rg-home-prt{display:block;height:var(--rig-s1);border-radius:var(--rig-r-full);background:var(--rig-panel3);overflow:hidden}
-.rg-home-prt i{display:block;height:100%;background:var(--rig-sky-fill)}
-.rg-home-ng{color:var(--rig-mute);font:var(--rig-fs-xs)/var(--rig-lh-snug) var(--rig-sans)}
-@container (max-width:480px){
-  .rg-home-pr{grid-template-columns:6ch}
-  .rg-home-prt{display:none}
-  .rg-home-tbl :is(th,td):first-child{padding-left:var(--rig-s4)}
-  .rg-home-tbl .rg-home-name{min-width:8rem}
-}
+/* models and harnesses: how many, then their short names, each whole; "+N more" names the rest on hover and focus */
+.rg-home-ml{display:flex;align-items:baseline;gap:var(--rig-s1);min-width:0}
+.rg-home-mn{flex:none;min-width:2ch;text-align:right;color:var(--rig-text);font:var(--rig-fs-sm)/var(--rig-lead-xs) var(--rig-num);font-variant-numeric:tabular-nums}
+.rg-home-models{min-width:0;color:var(--rig-mute);font-size:var(--rig-fs-2xs);line-height:var(--rig-lead-xs)}
+/* a name with no break in it at all and wider than the column breaks rather than spills */
+.rg-home-ml>.rg-home-models{overflow-wrap:break-word}
+.rg-home-more{white-space:nowrap;color:var(--rig-dim);text-decoration:underline dotted;text-underline-offset:3px;border-radius:var(--rig-r-sm);outline-offset:2px}
+.rg-home-sep{flex:none;color:var(--rig-mute);white-space:pre}
+/* the rate and what it pools fill their cell: the words wrap under the figure instead of running past the cell */
+.rg-home-rate{display:flex;flex-direction:column;gap:1px;min-width:0;border-radius:var(--rig-r-sm);outline-offset:2px}
+.rg-home-scope{font-size:var(--rig-fs-2xs);line-height:var(--rig-lead-xs);color:var(--rig-mute)}
+.rg-home-ratecard{display:block;max-width:22rem}
 
-/* the chevron column: as narrow as its target */
-.rg-home-tbl .rg-home-go{width:var(--rig-hit);text-align:right}
+/* pass rate: the figure in a fixed slot, then a thin bar, so every graded row lines up; in a narrow
+   column the bar and the dash's slot give way, never the figure or the words */
+.rg-home-pr{display:flex;align-items:center;gap:var(--rig-s2);min-width:0;white-space:nowrap}
+.rg-home-pr>.rg-mono{flex:none;min-width:44px;text-align:right;color:var(--rig-text);font-size:var(--rig-fs-sm)}
+.rg-home-prt{display:block;flex:0 1 64px;min-width:0;height:4px;border-radius:2px;background:var(--rig-panel3);overflow:hidden}
+.rg-home-prt i{display:block;height:100%;border-radius:2px;background:var(--rig-qty)}
+/* the interval's whisker stands over the bar (RateWithCI) */
+.rg-home-prt.rg-rate-bar{overflow:visible}
+/* the ± keeps one width, so the bars line up down the column */
+.rg-home-pr .rg-rate-pm{min-width:6ch}
+.rg-home-tbl tr:hover .rg-home-prt i{background:var(--rig-dim)}
+.rg-home-ng{display:flex;align-items:center;gap:var(--rig-s2);min-width:0;color:var(--rig-mute);font-size:var(--rig-fs-2xs)}
+.rg-home-ng>.rg-mono{flex:0 1 44px;min-width:0;overflow:hidden;text-align:right;font-size:var(--rig-fs-sm)}
+.rg-home-tbl td.rg-home-date{color:var(--rig-mute)}
+.rig .rg-home-tbl td.rg-home-nodate{font:var(--rig-fw-regular) var(--rig-fs-2xs)/var(--rig-lead-xs) var(--rig-sans)}
 
-.rg-home-lib+.rg-about{margin-top:var(--rig-s5)}
+/* the open hint: a ↵ key that shows on the row under the pointer or the keyboard */
+.rg-home-tbl .rg-home-go{text-align:right;padding-left:0}
+.rig .rg-home-enter{display:inline-grid;place-items:center;padding:0;border:0;background:none;opacity:0;transition:opacity var(--rig-dur-1) var(--rig-ease)}
+.rg-home-tbl tr:hover .rg-home-enter,.rg-home-tbl tr:focus-visible .rg-home-enter,.rig .rg-home-enter:focus-visible{opacity:1}
 
-/* Wide windows: the table shows what the figures summarise (full-hd: harness and task names; qhd: runs per model), so
-   the row is not a name, a long gap and six numbers. Below full-hd these columns are not rendered. */
-.rg-home-xl,.rg-home-xxl{display:none}
-.rg-home-list-cell{max-width:26rem;overflow:hidden;text-overflow:ellipsis;color:var(--rig-dim);font:var(--rig-fs-xs)/var(--rig-lh-snug) var(--rig-mono)}
-@media (min-width:1920px){.rg-home-xl{display:table-cell}.rg-home-tbl .rg-home-name{width:30%}}
-@media (min-width:2560px){.rg-home-xxl{display:table-cell}}
-/* SPEC 4.8: in a snapshot, the school datasets it does not carry and why they open only locally. */
+/* ---- under the table: the count and the keys, then the harness doors */
+.rg-home-foot{display:flex;flex-wrap:wrap;align-items:center;gap:var(--rig-s3);padding:10px 0 0;color:var(--rig-mute);font-size:var(--rig-fs-xs)}
+.rg-home-hints{display:flex;align-items:center;gap:var(--rig-s3);margin-left:auto}
+.rg-home-hints>span{display:inline-flex;align-items:center;gap:var(--rig-s1)}
+.rg-home-doors{margin-top:var(--rig-s6);padding-top:var(--rig-s3);border-top:1px solid var(--rig-line-soft)}
+.rg-home-doors-b{display:flex;flex-wrap:wrap;align-items:center;gap:6px var(--rig-s2);margin-top:var(--rig-s2);color:var(--rig-mute);font-size:var(--rig-fs-xs)}
+.rg-home-doors-t{margin-right:var(--rig-s1)}
+.rg-home-doors+.rg-about{margin-top:var(--rig-s3)}
 .rg-home-nothere{display:grid;gap:var(--rig-s2);margin-top:var(--rig-s3)}
 .rg-home-nothere>p{margin:0}
+
+/* a narrow pane (a split, a laptop with a panel open): models and harnesses keep their counts and drop
+   the names (still in the hint), giving the width to the name; then the bar beside the rate, the
+   availability notes and the key hints go. Below 640px the table scrolls inside its own box. */
+@container (max-width:900px){
+  .rg-home-tbl{min-width:640px}
+  .rg-home-models,.rg-home-sep{display:none}
+  .rg-home-c-kind{width:120px}.rg-home-c-runs{width:64px}.rg-home-c-tasks{width:64px}
+  .rg-home-c-models{width:84px}.rg-home-c-harnesses{width:104px}.rg-home-c-pass{width:144px}.rg-home-c-updated{width:92px}
+  .rg-home-sub>.rg-home-tag{display:none}
+}
+@container (max-width:640px){
+  .rg-home-prt,.rg-home-ng>.rg-mono{display:none}
+  .rg-home-hints{display:none}
+}
+.rg-home-doors>summary{display:inline-flex;align-items:center;gap:var(--rig-s1);color:var(--rig-dim);font:var(--rig-fw-regular) var(--rig-fs-sm)/var(--rig-lead-sm) var(--rig-sans);cursor:pointer}
+.rg-home-doors>summary:hover{color:var(--rig-text)}

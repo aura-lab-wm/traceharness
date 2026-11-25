@@ -1,0 +1,42 @@
+/* Rig · learn/figures/kinds/risk-steps.css — risk_steps: Sentinel's risk over two runs (risk-steps.jsx).
+   Failed is --rig-red, passed --rig-sky, the threshold a caution (--rig-amb). The failed line is drawn wider under
+   the passed one, so where the two runs agree both still show. A new segment draws itself in once; the threshold
+   line glides with transform. Tokens only; rig.css stops all of it under prefers-reduced-motion. */
+.rg-risk-run .rg-risk-seg{fill:none;stroke-linecap:round;stroke-dasharray:1;stroke-dashoffset:1;animation:rg-risk-draw calc(var(--rig-dur-2) * 2) var(--rig-ease) forwards}
+.rg-risk-run.fail .rg-risk-seg{stroke:var(--rig-red);stroke-width:6}
+.rg-risk-run.pass .rg-risk-seg{stroke:var(--rig-sky);stroke-width:2.5}
+@keyframes rg-risk-draw{to{stroke-dashoffset:0}}
+.rg-risk-ghost{fill:none;stroke-width:1.5;stroke-dasharray:3 4;opacity:.5}
+.rg-risk-run.fail .rg-risk-ghost{stroke:var(--rig-red)}
+.rg-risk-run.pass .rg-risk-ghost{stroke:var(--rig-sky)}
+.rg-risk-pt{stroke:var(--rig-panel);stroke-width:1.5}
+.rg-risk-run.fail .rg-risk-pt{fill:var(--rig-red)}
+.rg-risk-run.pass .rg-risk-pt{fill:var(--rig-sky)}
+.rg-risk-pt.now{stroke:var(--rig-text);stroke-width:1.5}
+.rg-risk-now{stroke:var(--rig-line3);stroke-dasharray:3 3}
+.rg-lfig-tick.rg-risk-on{fill:var(--rig-text);font-weight:var(--rig-fw-bold)}
+.rg-risk-thr{transition:transform var(--rig-dur-2) var(--rig-ease)}
+.rg-risk-thr line{stroke:var(--rig-amb);stroke-width:1.5;stroke-dasharray:6 4}
+.rg-risk-thr text{fill:var(--rig-amb-t);font-size:var(--rig-fs-xs);font-weight:var(--rig-fw-medium);font-variant-numeric:tabular-nums}
+.rg-risk-warn circle{fill:none;stroke:var(--rig-amb);stroke-width:2}
+.rg-risk-warn text,.rg-risk-end{font-size:var(--rig-fs-2xs);font-weight:var(--rig-fw-medium);paint-order:stroke;stroke:var(--rig-panel);stroke-width:3px;stroke-linejoin:round}
+.rg-risk-warn text{fill:var(--rig-amb-t)}
+.rg-risk-end{fill:var(--rig-red-t)}
+.rg-risk-warn{animation:rg-fade-in var(--rig-dur-2) var(--rig-ease) both}
+.rg-lfig-sw.thr{height:0;border-radius:0;background:none;border-top:2px dashed var(--rig-amb)}
+
+/* beside the chart: each run at the step */
+.rg-risk-detail{min-width:0;display:grid;gap:var(--rig-s3);padding:var(--rig-s3) var(--rig-s4);border-radius:var(--rig-r-md);background:var(--rig-panel2);animation:rg-fade-in var(--rig-dur-2) var(--rig-ease) both}
+.rig .rg-read-col .rg-risk-detail .rg-steps-k{margin:0}
+.rg-risk-at{display:grid;gap:var(--rig-s1);min-width:0}
+.rg-risk-at+.rg-risk-at{padding-top:var(--rig-s3);border-top:1px solid var(--rig-line)}
+.rig .rg-read-col .rg-risk-at p{margin:0;font-size:var(--rig-fs-sm);line-height:var(--rig-lead-md);color:var(--rig-text);overflow-wrap:anywhere}
+.rg-risk-who{display:flex;align-items:center;gap:var(--rig-s2)}
+.rg-risk-who>span{color:var(--rig-mute)}
+.rg-risk-num{font-variant-numeric:tabular-nums}
+.rg-risk-chip{display:inline-flex;align-items:center;height:18px;padding:0 var(--rig-s2);border-radius:var(--rig-r-full);background:var(--rig-panel);font-size:var(--rig-fs-2xs);line-height:var(--rig-lead-xs);font-weight:var(--rig-fw-medium);color:var(--rig-dim)}
+.rg-risk-chip.over{background:var(--rig-amb-bg);color:var(--rig-amb-t)}
+.rig .rg-read-col .rg-risk-at .rg-risk-why{color:var(--rig-dim)}
+
+/* the Learn index preview */
+.rg-prev-line .rg-prev-thr{stroke:var(--rig-amb);stroke-width:1.5;stroke-dasharray:4 3}

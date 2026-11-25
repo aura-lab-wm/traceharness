@@ -2,9 +2,10 @@
 /* views/analysis.jsx — the eight analysis steps and the trajectory explorer on the hand-countable
    `mini` fixture (testing.jsx). Extra endpoints are spread onto rigFixture(), never edited in it. */
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { act, fireEvent, screen, within } from '@testing-library/react'
+import { act, cleanup, fireEvent, screen, within } from '@testing-library/react'
 import { renderRig, resetRig, rigFixture, MINI } from '../../../test/rig-testing'
-import { views } from './analysis.jsx'
+import { views, taskShift, proposeOut } from './analysis.jsx'
+import { normRuns, prime } from '../data'
 
 afterEach(resetRig)
 
@@ -47,13 +48,14 @@ const el = (c, id) => c.querySelector(`[data-el~="${id}"]`)
 const mine = (requests) => requests.filter((r) => /\/(results|outcomes|jobs|judge)/.test(r.url))
 
 describe('an: shell', () => {
-  it('every analysis tab shows the Asking sentence and the step nav', () => {
+  it('every analysis tab shows the Asking line and its question; the page list moves between them', () => {
     const { container } = renderRig('#/rig/an:mini:fit', { data: data() })
     expect(el(container, 'asking-sentence').textContent).toContain('Asking')
-    const nav = el(container, 'analysis-nav')
-    expect(within(nav).getAllByRole('button').map((b) => b.textContent.replace(/\d$/, ''))).toEqual(
-      ['Family matrix', 'Outcomes', 'Comparison', 'Trajectories', 'Trajectory features', 'Judge & integrity', 'Experiment', 'Report', 'Run setup'])
-    act(() => { fireEvent.click(within(nav).getByText('Judge & integrity')) })
+    expect(container.querySelector('.rg-ph-sub').textContent).toBe('How much is the model, how much the harness?')
+    expect(container.querySelector('#rig-doc-main [data-el~="analysis-nav"]')).toBeNull()      // no step strip in the page
+    const nav = container.querySelector('.rg-rail [data-el~="analysis-nav"]')
+    expect(within(nav).getByRole('button', { name: 'Experiment' }).getAttribute('aria-current')).toBe('page')
+    act(() => { fireEvent.click(within(nav).getByRole('button', { name: 'Judge & integrity' })) })
     expect(location.hash).toBe('#/rig/an:mini:judge:alpha-1:baseline')     // replaces the tab in place
   })
   it('an unknown view or dataset is a not-found document, not a crash', () => {
@@ -65,7 +67,8 @@ describe('an: shell', () => {
   })
   it('a condition change in the Asking sentence retargets the analysis tab', () => {
     renderRig('#/rig/an:mini:outcomes', { data: data() })
-    fireEvent.change(screen.getByLabelText('Model'), { target: { value: M2 } })
+    fireEvent.click(screen.getByRole('button', { name: 'Change model, harness or oracle' }))
+    fireEvent.click(within(screen.getByRole('dialog', { name: 'Change model, harness or oracle' })).getByRole('button', { name: M2 }))
     expect(location.hash).toBe('#/rig/an:mini:outcomes:beta-2:baseline?c=mini:acme/beta-2:baseline')
   })
 })
@@ -76,20 +79,43 @@ describe('an: family matrix', () => {
     const mx = el(container, 'family-matrix')
     const rows = mx.querySelectorAll('tbody tr')
     expect(rows).toHaveLength(2)
-    expect(rows[0].textContent).toContain('3 / 4 known')                 // alpha-1 · baseline: ✓✓ ✓×
-    expect(rows[0].textContent).not.toContain('unknown')                 // a zero-unknown cell says nothing about it
+    // the shared denominator is said once above the matrix; a cell says "known" only when it has ungraded runs
+    expect(el(container, 'family-constants').textContent).toBe('Each cell: 4 runs = 2 tasks × 2 runs')
+    expect(rows[0].textContent).not.toContain('known')                   // alpha-1 · baseline: ✓✓ ✓×
+    expect(within(rows[0]).getByRole('button', { name: /^alpha-1 under baseline: 75.0%, 3 of 4 known$/ }).dataset.n).toBe('4')
     expect(rows[1].textContent).toContain('1 / 3 known · 1 unknown')     // beta-2 · baseline: ✓? ××
     expect(rows[1].textContent).toContain('33.3%')
-    expect(el(container, 'grade-basis').textContent).toContain('hidden suite')
+    expect(el(container, 'grade-basis').textContent).toContain('hidden oracle')
     expect(el(container, 'repeat-counts-differ')).toBeNull()            // every family has 4 runs
-    act(() => { fireEvent.click(within(rows[1]).getAllByTitle(/Open the trajectories of beta-2 under terse/)[0]) })
+    expect(mx.querySelector('[data-el="shift-chips"]')).toBeNull()      // better / worse live on Comparison and in the inspector
+    // a cell selects; the inspector shows its evidence and opens its runs and tasks; the selection is in the link
+    act(() => { fireEvent.click(within(rows[1]).getByRole('button', { name: /^beta-2 under terse/ })) })
+    expect(location.hash).toBe('#/rig/an:mini:family?sel=cell:acme/beta-2:terse')
+    const insp = el(container.ownerDocument, 'inspector')
+    expect(insp.textContent).toContain('beta-2 × terse')
+    expect(insp.textContent).toContain('3 of 4 pass')
+    expect(insp.textContent).toContain('2 tasks × 2 runs')
+    expect(el(insp, 'inspector-open-runs').getAttribute('data-spec')).toBe('field:mini:acme/beta-2:terse')
+    act(() => { fireEvent.keyDown(window, { key: 'Escape' }) })
+    expect(el(container.ownerDocument, 'inspector')).toBeNull()
+    expect(location.hash).toBe('#/rig/an:mini:family')
+    act(() => { fireEvent.click(within(rows[1]).getByRole('button', { name: /^beta-2 under terse/ })) })
+    act(() => { fireEvent.click([...el(container.ownerDocument, 'inspector').querySelectorAll('[data-hint]')].find((x) => /Open the tasks of beta-2 under terse/.test(x.getAttribute('data-hint')))) })
     expect(location.hash).toBe('#/rig/an:mini:family+!tasks:mini:beta-2:terse')
     expect(mine(requests)).toEqual([])
+  })
+  it('a link with a selection reopens the inspector on it', () => {
+    const { container } = renderRig('#/rig/an:mini:family?sel=cell:acme/alpha-1:terse', { data: data() })
+    const insp = el(container.ownerDocument, 'inspector')
+    expect(insp.getAttribute('data-mode')).toBe('slide-over')
+    expect(insp.textContent).toContain('alpha-1 × terse')
+    expect(el(container, 'family-matrix').querySelector('[aria-pressed="true"]').dataset.harness).toBe('terse')
   })
   it('the model filter narrows the rows; a cell pin goes to the case file', () => {
     const { container } = renderRig('#/rig/an:mini:family', { data: data() })
     fireEvent.change(screen.getByLabelText('Model filter'), { target: { value: M2 } })
     expect(el(container, 'family-matrix').querySelectorAll('tbody tr')).toHaveLength(1)
+    fireEvent.click(within(el(container, 'family-matrix')).getByRole('button', { name: /^beta-2 under baseline/ }))   // the pin is in the inspector
     fireEvent.click(screen.getByRole('button', { name: 'Pin beta-2 · baseline · mini' }))
     expect(JSON.parse(localStorage.getItem('rig.case')).map((x) => x.id)).toContain(`cell:mini:${M2}:baseline`)
   })
@@ -114,7 +140,7 @@ describe('an: outcomes', () => {
     const b = renderRig('#/rig/an:mini:outcomes:beta-2:baseline', { data: data() })
     const q = el(b.container, 'per-task-repeats')
     expect(q.querySelectorAll('.rg-an-c.u')).toHaveLength(1)
-    expect(q.textContent).toContain('1/1 · 1?')
+    expect(q.textContent).toContain('1 / 1 · 1?')
     expect(q.textContent).toContain('wrong patch')
     act(() => { fireEvent.click(q.querySelector('.rg-an-c.u')) })
     expect(location.hash).toContain('task:mini:beta-2:baseline:t1:1')
@@ -129,9 +155,57 @@ describe('an: comparison', () => {
     expect(d.textContent).toContain('◆ separates')
     expect(d.textContent).toContain('○ covers 0')
     act(() => { fireEvent.click(screen.getByRole('button', { name: /beta-2 terse: delta \+50.0pp, separates/ })) })
-    expect(location.hash).toBe('#/rig/an:mini:delta|tasks:mini:beta-2:terse?f=1')
+    // the selected cell is in the address too (one URL state per page)
+    expect(location.hash).toBe('#/rig/an:mini:delta:::ch.terse,cm.beta-2|tasks:mini:beta-2:terse?f=1')
     expect(el(container, 'delta-detail').textContent).toContain('+100pp')
-    expect(el(container, 'variance-decomposition').textContent).toContain('residual (repeats)')
+    expect(el(container, 'variance-decomposition').textContent).toContain('residual (runs)')
+  })
+})
+
+describe('better / worse than baseline', () => {
+  it('taskShift compares each task with the same model under the base, known grades only', () => {
+    const runs = normRuns([
+      { run_id: 'a', model: 'm', harness_id: 'base', task_id: 'x', repeat_index: 0, hidden_pass: true },
+      { run_id: 'b', model: 'm', harness_id: 'h', task_id: 'x', repeat_index: 0, hidden_pass: false },
+      { run_id: 'c', model: 'm', harness_id: 'base', task_id: 'y', repeat_index: 0, hidden_pass: false },
+      { run_id: 'd', model: 'm', harness_id: 'h', task_id: 'y', repeat_index: 0, hidden_pass: true },
+      { run_id: 'e', model: 'm', harness_id: 'base', task_id: 'z', repeat_index: 0, hidden_pass: true },
+      { run_id: 'f', model: 'm', harness_id: 'h', task_id: 'z', repeat_index: 0, hidden_pass: null },
+      { run_id: 'g', model: 'other', harness_id: 'base', task_id: 'y', repeat_index: 0, hidden_pass: true },
+    ], 'd')
+    expect(taskShift(runs, 'm', 'h', 'base', 'hidden')).toEqual({ better: ['y'], worse: ['x'], compared: 2 })
+    expect(taskShift(runs, 'm', 'base', 'base', 'hidden')).toEqual({ better: [], worse: [], compared: 0 })
+  })
+  it('a matrix cell’s inspector counts the tasks that moved against baseline; only a count above zero opens them', () => {
+    const { container } = renderRig('#/rig/an:mini:family', { data: data() })
+    const mx = el(container, 'family-matrix')
+    const insp = () => el(container.ownerDocument, 'inspector')
+    act(() => { fireEvent.click(within(mx).getByRole('button', { name: /^alpha-1 under baseline/ })) })
+    expect(insp().querySelector('[data-el="shift-chips"]')).toBeNull()               // no chips on the baseline itself
+    act(() => { fireEvent.click(within(mx).getByRole('button', { name: /^alpha-1 under terse/ })) })
+    const better = within(insp()).getByRole('button', { name: '1 task better' })
+    expect(better.getAttribute('data-spec')).toBe('tasks:mini:alpha-1:terse:better:baseline')
+    expect(within(insp()).queryByRole('button', { name: /worse/ })).toBeNull()      // a zero is not drawn
+    act(() => { fireEvent.click(better) })
+    const list = () => [...el(container, 'task-outcome-table').querySelectorAll('.rg-an-trow:not(.th) b')].map((b) => b.textContent)
+    expect(list()).toEqual(['t2'])
+    expect(el(container, 'shift-filter').textContent).toContain('1 task better than baseline')
+    act(() => { fireEvent.click(el(container, 'shift-clear')) })
+    expect(container.querySelector('.rg-doc').dataset.spec).toBe('tasks:mini:alpha-1:terse')
+    expect(list()).toEqual(['t1', 't2'])
+  })
+  it('the chips follow the oracle', () => {
+    const { container } = renderRig('#/rig/an:mini:family?o=strengthened&sel=cell:acme/alpha-1:terse', { data: data() })
+    expect(within(el(container.ownerDocument, 'inspector')).getByRole('button', { name: '2 tasks better' })).toBeTruthy()
+  })
+  it('the comparison matrix carries the same chips under each paired cell', () => {
+    const { container } = renderRig('#/rig/an:mini:delta', { data: data() })
+    const d = el(container, 'delta-matrix')
+    const chip = within(d).getByRole('button', { name: /1 task better than baseline for beta-2 under terse/ })
+    expect(chip.getAttribute('data-spec')).toBe('tasks:mini:beta-2:terse:better:baseline')
+    expect(el(container, 'shift-key').textContent).toContain('hidden oracle')
+    act(() => { fireEvent.click(chip) })
+    expect([...el(container, 'task-outcome-table').querySelectorAll('.rg-an-trow:not(.th) b')].map((b) => b.textContent)).toEqual(['t2'])
   })
 })
 
@@ -224,6 +298,16 @@ describe('tasks: trajectory explorer', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Clear filters' }))
     expect(rows()).toEqual(['t1', 't2'])
   })
+  it('ribbons, legend and counts use the run pages\' outcome words: Pass, Fail, Cut off, Ungraded', () => {
+    const { container } = renderRig('#/rig/tasks:mini:alpha-1:baseline', { data: data() })
+    const t2 = [...el(container, 'task-outcome-table').querySelectorAll('.rg-an-trow:not(.th)')].find((r) => r.querySelector('b').textContent === 't2')
+    const cells = [...t2.querySelectorAll('.rg-an-c .sr-only')].map((s) => s.textContent)
+    expect(cells).toContain('Run 2 Cut off')
+    expect(cells).not.toContain('Run 2 Fail')
+    expect(t2.querySelector('.rg-an-c[data-hint^="Run 2 · Cut off ·"]')).toBeTruthy()
+    expect(t2.querySelector('.t-cnt').getAttribute('data-hint')).toMatch(/^✓ \d+ Pass · × \d+ Fail · × 1 Cut off · \? \d+ Ungraded$/)
+    expect(el(container, 'task-legend').textContent).toMatch(/Pass.*Fail.*Cut off.*Ungraded/)
+  })
   it('a ribbon cell opens that attempt in the task investigator', () => {
     const { container } = renderRig('#/rig/tasks:mini:alpha-1:baseline', { data: data() })
     act(() => { fireEvent.click(el(container, 'task-outcome-table').querySelector('.rg-an-c.f')) })
@@ -303,7 +387,7 @@ describe('round 3 · dead ends: one harness, no strengthened grades (solo)', () 
     expect(e.textContent).toContain('solo has 2 models under a single harness (swe)')
     expect(el(container, 'variance-decomposition')).toBeNull()                   // one message, not two
     expect(everyEmptyHasAWay(container)).toBe(1)
-    act(() => { fireEvent.click(within(e).getByRole('button', { name: 'Compare its 2 models in the family matrix' })) })
+    act(() => { fireEvent.click(within(e).getByRole('button', { name: 'See its 2 models side by side in the Family matrix' })) })
     expect(location.hash).toBe('#/rig/an:solo:delta+!an:solo:family:big:swe')
   })
   it('the other dataset offered is one that can answer (several harnesses, recorded first)', () => {
@@ -315,7 +399,7 @@ describe('round 3 · dead ends: one harness, no strengthened grades (solo)', () 
     const { container } = renderRig('#/rig/an:solo:fit', { data: shapes() })
     const e = el(el(container, 'two-factor-fit'), 'empty-state')
     expect(e.textContent).toContain('fewer than two balanced harnesses')
-    expect(within(e).getByRole('button', { name: 'Compare its 2 models in the family matrix' })).toBeTruthy()
+    expect(within(e).getByRole('button', { name: 'See its 2 models side by side in the Family matrix' })).toBeTruthy()
     expect(within(e).getByRole('button', { name: /Open the fit for mini/ })).toBeTruthy()
     expect(el(container, 'cell-grid-ci').textContent).toContain('n=4')
     expect(el(container, 'pairwise-contrasts')).toBeNull()
@@ -336,7 +420,7 @@ describe('round 3 · dead ends: one harness, no strengthened grades (solo)', () 
   it('judge: no oracle pair → names the shape, links a dataset that has one, and drops the invented weak-test flag', () => {
     const { container, requests } = renderRig('#/rig/an:solo:judge', { data: shapes() })
     const o = el(container, 'oracle-comparison')
-    expect(o.textContent).toContain('Only one suite graded these runs.')
+    expect(o.textContent).toContain('Only one oracle graded these runs.')
     expect(o.textContent).toContain('mini has 15 runs graded by both')
     act(() => { fireEvent.click(within(o).getByRole('button', { name: 'Open the oracle comparison in mini' })) })
     expect(location.hash).toBe('#/rig/an:solo:judge+!an:mini:judge')
@@ -359,7 +443,7 @@ describe('round 3 · dead ends: one harness, no strengthened grades (solo)', () 
     resetRig()
     const b = renderRig('#/rig/an:solo:outcomes:big:swe', { data: shapes() })
     expect(el(b.container, 'outcomes-answer').textContent).toContain('pass@1 for big under swe is 25.0%, 95% CI [0.0%, 50.0%]')
-    expect(el(b.container, 'outcomes-headline').textContent).toContain('2 repeats')
+    expect(el(b.container, 'outcomes-headline').textContent).toContain('2 runs per task')
   })
 })
 
@@ -369,7 +453,7 @@ describe('round 3 · dead ends: one model, no baseline harness (duo)', () => {
     expect(el(container, 'delta-count').textContent).toBe('0 of 1 separate')
     const v = el(container, 'variance-decomposition')
     expect(v.textContent).toContain('duo has one model (mock) under 2 harnesses, so there is no model factor')
-    expect(within(v).getByRole('button', { name: 'Cell grid with intervals' })).toBeTruthy()
+    expect(within(v).getByRole('button', { name: 'Condition grid with intervals' })).toBeTruthy()
     expect(within(v).getByRole('button', { name: 'Open the variance split in mini' })).toBeTruthy()
     everyEmptyHasAWay(container)
   })
@@ -377,7 +461,7 @@ describe('round 3 · dead ends: one model, no baseline harness (duo)', () => {
     const { container } = renderRig('#/rig/an:duo:fit', { data: shapes() })
     const e = el(el(container, 'two-factor-fit'), 'empty-state')
     expect(el(container, 'pairwise-contrasts')).toBeTruthy()                   // its one contrast still shows
-    act(() => { fireEvent.click(within(e).getByRole('button', { name: 'Compare its 2 harnesses in Comparison' })) })
+    act(() => { fireEvent.click(within(e).getByRole('button', { name: 'See its 2 harnesses vs baseline in Comparison' })) })
     expect(location.hash).toBe('#/rig/an:duo:fit+!an:duo:delta:mock:permissive')
   })
 })
@@ -388,15 +472,15 @@ describe('round 3 · dead ends: paging never shows a disabled arrow', () => {
     expect(el(container, 'family-pages').textContent).toBe('all 2 harnesses shown')
     expect(within(el(container, 'family-pages')).queryByRole('button')).toBeNull()
   })
-  it('a paged family matrix hides the arrow at each end', () => {
+  it('the condition matrix shows every harness as a column and scrolls sideways instead of paging', () => {
     const { container } = renderRig('#/rig/an:wide:family', { data: shapes() })
-    const pg = () => el(container, 'family-pages')
-    expect(pg().textContent).toContain('harnesses 1–6 of 7')
-    expect(within(pg()).queryByRole('button', { name: '← Previous harnesses' })).toBeNull()
-    fireEvent.click(within(pg()).getByRole('button', { name: 'More harnesses →' }))
-    expect(pg().textContent).toContain('harnesses 7–7 of 7')
-    expect(within(pg()).queryByRole('button', { name: 'More harnesses →' })).toBeNull()
-    expect(within(pg()).getByRole('button', { name: '← Previous harnesses' })).toBeTruthy()
+    const mx = el(container, 'family-matrix')
+    const heads = [...mx.querySelectorAll('thead th')].slice(1).map((th) => th.querySelector('.rg-an-colh').textContent)
+    expect(heads).toEqual(['h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'h7'])
+    expect(el(container, 'family-pages').textContent).toBe('all 7 harnesses shown')
+    expect(within(el(container, 'family-pages')).queryByRole('button')).toBeNull()
+    expect(within(mx).queryByRole('button', { name: /More harnesses|Previous harnesses/ })).toBeNull()
+    expect(parseInt(mx.querySelector('table').style.minWidth, 10)).toBeGreaterThanOrEqual(7 * 104)
     everyDisabledSaysWhy(container)
   })
   it('the explorer pager hides prev on the first page and next on the last', () => {
@@ -413,7 +497,7 @@ describe('round 3 · dead ends: paging never shows a disabled arrow', () => {
     const { container } = renderRig('#/rig/tasks:wide:mock-x:h7', { data: shapes() })
     const e = el(container, 'empty-state')
     expect(e.textContent).toContain('No runs in this condition.')
-    act(() => { fireEvent.click(within(e).getByRole('button', { name: 'Pick an observed family in the matrix' })) })
+    act(() => { fireEvent.click(within(e).getByRole('button', { name: 'Pick an observed condition in the matrix' })) })
     expect(location.hash).toBe('#/rig/tasks:wide:mock-x:h7+!an:wide:family:mock-x:h7')
   })
 })
@@ -463,9 +547,89 @@ describe('round 3 · dead ends: run setup', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Launch 6 runs' }))
     await act(async () => { fireEvent.click(screen.getByRole('button', { name: 'Start 6 runs' })) })
     const r = el(container, 'launch-result')
-    expect(r.textContent).toContain('Launched job-7: 6 runs → data/runs/mini.')
+    expect(r.textContent).toContain('Launched job job-7 — 6 runs → data/runs/mini_new.')
     act(() => { fireEvent.click(within(r).getByRole('button', { name: 'Watch the run on the canvas' })) })
     expect(location.hash).toBe('#/rig/an:mini:setup+!canvas')
+  })
+})
+
+describe('run setup launch guards', () => {
+  const okJob = () => vi.stubGlobal('fetch', vi.fn(async () => ({ ok: true, status: 200, headers: { get: () => 'application/json' }, json: async () => ({ id: 'job-7' }) })))
+  const outBox = () => screen.getByRole('textbox', { name: 'Output dataset' })
+
+  it('never proposes the dataset being read as the output, and warns when the box names an existing one', () => {
+    const { container } = renderRig('#/rig/an:mini:setup', { data: data() })
+    expect(outBox().value).toBe('mini_new')
+    expect(el(container, 'out-new').textContent).toBe('A new dataset; mini is not changed.')
+    expect(el(container, 'setup-answer').textContent).toContain('data/runs/mini_new')
+    fireEvent.change(outBox(), { target: { value: 'mini' } })
+    expect(el(container, 'out-exists').textContent).toBe('Adds runs to mini, which already has 16 runs.')
+    expect(proposeOut('study_v04', ['study_v04'])).toBe('study_v04_new')
+    expect(proposeOut('study_v04', ['study_v04', 'study_v04_new', 'study_v04_new2'])).toBe('study_v04_new3')
+  })
+
+  it('says which job it launched, and a second launch of the same setup is asked for in words', async () => {
+    const { container } = renderRig('#/rig/an:mini:setup', { data: data() })
+    okJob()
+    fireEvent.click(screen.getByRole('button', { name: 'Launch 6 runs' }))
+    await act(async () => { fireEvent.click(screen.getByRole('button', { name: 'Start 6 runs' })) })
+    expect(el(container, 'launch-result').textContent).toContain('Launched job job-7 — 6 runs → data/runs/mini_new.')
+    expect(el(container, 'out-launched').textContent).toBe('Job job-7 writes its runs here.')
+    // the same cell again is not two quiet clicks
+    expect(screen.queryByRole('button', { name: 'Launch 6 runs' })).toBeNull()
+    fireEvent.click(screen.getByRole('button', { name: 'Launch again?' }))
+    const confirm = screen.getByRole('group', { name: 'Confirm: Launch again?' })
+    expect(confirm.textContent).toContain('This exact setup was launched as job job-7. Another launch adds 6 more runs to data/runs/mini_new.')
+    expect(within(confirm).getByRole('button', { name: 'Yes, start 6 more runs' })).toBeTruthy()
+    fireEvent.click(within(confirm).getByRole('button', { name: 'Cancel' }))
+    // a different setup is a fresh launch again
+    fireEvent.change(outBox(), { target: { value: 'other_sweep' } })
+    expect(screen.getByRole('button', { name: 'Launch 6 runs' })).toBeTruthy()
+  })
+
+  it('keeps asking "Launch again?" after the overview lists the new dataset and after a reload', async () => {
+    const f = data()
+    const { container } = renderRig('#/rig/an:mini:setup', { data: f })
+    okJob()
+    fireEvent.click(screen.getByRole('button', { name: 'Launch 6 runs' }))
+    await act(async () => { fireEvent.click(screen.getByRole('button', { name: 'Start 6 runs' })) })
+    // the overview refresh now lists mini_new: the default name must not move on to mini_new2
+    const listed = { ...f['/overview'], results: [...f['/overview'].results, { name: 'mini_new', runs: 6, harnesses: ['baseline'], models: [M1], tasks: ['t1', 't2'], pass_rate: 1, updated: '2026-01-03T00:00:00Z' }] }
+    act(() => { prime({ '/overview': listed }) })
+    expect(outBox().value).toBe('mini_new')
+    expect(el(container, 'out-exists').textContent).toBe('Adds runs to mini_new, which already has 6 runs.')
+    expect(screen.queryByRole('button', { name: 'Launch 6 runs' })).toBeNull()
+    fireEvent.click(screen.getByRole('button', { name: 'Launch again?' }))
+    expect(screen.getByRole('group', { name: 'Confirm: Launch again?' }).textContent).toContain('This exact setup was launched as job job-7. Another launch adds 6 more runs to data/runs/mini_new.')
+    // a reload (tab state gone, same browser tab) still knows the setup was launched
+    cleanup()
+    renderRig('#/rig/an:mini:setup', { data: { ...f, '/overview': listed } })
+    expect(outBox().value).toBe('mini_new')
+    expect(screen.getByRole('button', { name: 'Launch again?' })).toBeTruthy()
+    // a different setup after the reload gets a fresh dataset
+    const reps = screen.getByRole('spinbutton', { name: 'Runs per task' })
+    fireEvent.change(reps, { target: { value: '2' } }); fireEvent.blur(reps)
+    expect(outBox().value).toBe('mini_new2')
+    expect(screen.getByRole('button', { name: 'Launch 4 runs' })).toBeTruthy()
+  })
+
+  it('shows the Runs per task limit under the box, leaves typing alone and says when a value left in it was changed to fit', () => {
+    const { container } = renderRig('#/rig/an:mini:setup', { data: data() })
+    const box = screen.getByRole('spinbutton', { name: 'Runs per task' })
+    expect(document.getElementById(box.getAttribute('aria-describedby')).textContent).toBe('1–20')
+    fireEvent.change(box, { target: { value: '30' } })
+    expect(box.value).toBe('30')                                          // nothing changes under the cursor
+    expect(container.querySelector('[data-el="run-repeats-clamped"]')).toBeNull()
+    fireEvent.blur(box)
+    expect(box.value).toBe('20')
+    expect(el(container, 'run-repeats-clamped').textContent).toBe('Up to 20 runs per task, so this is set to 20.')
+    expect(document.getElementById(box.getAttribute('aria-describedby')).textContent).toContain('set to 20')
+    expect(screen.getByRole('button', { name: 'Increase Runs per task' }).disabled).toBe(true)
+    fireEvent.change(box, { target: { value: '0' } })
+    fireEvent.keyDown(box, { key: 'Enter' })
+    expect(box.value).toBe('1')
+    expect(el(container, 'run-repeats-clamped').textContent).toBe('At least 1, so this is set to 1.')
+    expect(screen.getByRole('spinbutton', { name: 'Parallelism' })).toBeTruthy()
   })
 })
 
@@ -475,13 +639,13 @@ describe('round 3 · breathing: every view leads with its answer and keeps metho
     const lead = el(container, id)
     expect(lead.tagName).toBe('P')
     expect(lead.textContent.length).toBeGreaterThan(20)
-    const about = container.querySelector('.rg-an-head details')
-    expect(about.open).toBe(false)
-    expect(about.querySelector('summary').textContent).toBe('About this view')
+    const about = container.querySelector('.rg-an-head [data-el="about-view"]')
+    expect(about.querySelector('.rg-hc-card').getAttribute('data-open')).toBe('false')
+    expect(about.querySelector('button').getAttribute('aria-label')).toBe('About this view')   // the "i" after the answer
   })
   it('the family answer names the highest and lowest family with denominators', () => {
     const { container } = renderRig('#/rig/an:mini:family', { data: data() })
-    expect(el(container, 'family-answer').textContent).toBe('Highest: alpha-1 under terse at 100.0% (4/4); lowest: beta-2 under baseline at 33.3% (1/3) — hidden suite among known grades, over 4 families.')
+    expect(el(container, 'family-answer').textContent).toBe('Highest: alpha-1 under terse at 100.0% (4 of 4); lowest: beta-2 under baseline at 33.3% (1 of 3) — hidden oracle among known grades, over 4 conditions.')
   })
   it('reports the interaction share without classifying the effect as additive', () => {
     const { container } = renderRig('#/rig/an:mini:fit', { data: data() })
@@ -509,7 +673,7 @@ describe('features (exercise 7 on an imported SWE-agent set)', () => {
   }
   it('names the feature that goes with failure most, and each example opens its run in the console', () => {
     const { container } = renderRig('#/rig/an:mini:features', { data: { ...data(), ...PATTERNS, [`/real/${MINI}/analysis`]: RA } })
-    expect(el(container, 'features-answer').textContent).toBe('3 of 4 runs did not resolve their issue. The feature that goes with failure most is never verified after the last edit (Ochiai 0.71): 67% of failed runs show it, against 0% of resolved ones.')
+    expect(el(container, 'features-answer').textContent).toBe('3 of 4 runs did not resolve their issue. The feature that goes with failure most is never verified after the last edit (Ochiai 0.71): 66.7% of failed runs show it, against 0.0% of resolved ones.')
     const rows = container.querySelectorAll('[data-el="feature-row"]')
     expect(rows).toHaveLength(2)
     expect(rows[1].textContent).toContain('repeated a command more than 3 times')
@@ -530,7 +694,7 @@ describe('features (exercise 7 on an imported SWE-agent set)', () => {
     const { container } = renderRig('#/rig/an:mini:features', { data: { ...data(), ...PATTERNS,
       [`/real/${MINI}/analysis`]: { error: 'no real_features.jsonl in this directory' },
       [q('[WE](?!.*T)')]: res('[WE](?!.*T)', 2), [q('^[^T]*$')]: res('^[^T]*$', 1) } })
-    expect(el(container, 'features-answer').textContent).toBe('Under baseline, the 8 runs take 2 distinct action sequences. The most common, LRTWTS, covers 6 runs and passes 67% of them under the hidden suite.')
+    expect(el(container, 'features-answer').textContent).toBe('Under baseline, the 8 runs take 2 distinct action sequences. The most common, LRTWTS, covers 6 runs and passes 66.7% of them under the hidden oracle.')
     expect([...container.querySelectorAll('[data-el="sequence-row"]')].map((r) => r.querySelector('td').textContent)).toEqual(['LRTWTS', 'LRWS'])
     expect(el(container, 'divergence').textContent).toContain('step 3')
     const qr = el(container, 'query-result')
@@ -540,7 +704,7 @@ describe('features (exercise 7 on an imported SWE-agent set)', () => {
     act(() => { fireEvent.click(within(el(container, 'query-presets')).getByRole('button', { name: /never runs the tests/ })) })
     expect(el(container, 'query-result').textContent).toContain('matched1of 8 runs')
     const note = el(container, 'features-swe-note')
-    expect(within(note).getByRole('button', { name: 'Download a SWE-agent sample' }).getAttribute('data-spec')).toBe('sources')
+    expect(within(note).getByRole('button', { name: 'Download a SWE-agent sample' }).getAttribute('data-spec')).toBe('sources:sample')
   })
 })
 
@@ -610,7 +774,7 @@ describe('mixed outcomes require repeat evidence', () => {
     Object.assign(fixture['/results/mini/metrics'].cells[0], { runs: 1, tasks: {}, 'pass@1': null, ci95: null })
     const { container } = renderRig('#/rig/an:mini:outcomes:alpha-1:baseline', { data: fixture })
     for (const target of ['outcomes-answer', 'outcomes-headline']) {
-      expect(el(container, target).textContent).toContain('1 recorded attempt')
+      expect(el(container, target).textContent).toContain('1 recorded run')
       expect(el(container, target).textContent).toContain('1 recorded task')
       expect(el(container, target).textContent).toContain('0 known hidden grades')
     }
@@ -623,7 +787,7 @@ describe('mixed outcomes require repeat evidence', () => {
     expect(el(task.container, 'task-quick-filters').textContent).toContain('Mixed outcomes unavailable')
     expect(el(task.container, 'repeat-coverage').textContent).toContain('0 of 1 tasks eligible')
     fireEvent.click(screen.getByRole('button', { name: 'Mixed outcomes unavailable' }))
-    expect(screen.getByText(/Repeat comparison unavailable/)).toBeTruthy()
+    expect(screen.getByText(/Run comparison unavailable/)).toBeTruthy()
     resetRig()
     const outcomes = renderRig('#/rig/an:mini:outcomes:alpha-1:baseline', { data: fixture })
     expect(el(outcomes.container, 'flip-rate').textContent).toContain('Unavailable')
@@ -633,7 +797,7 @@ describe('mixed outcomes require repeat evidence', () => {
     const { container } = renderRig('#/rig/tasks:mini:beta-2:baseline', { data: data() })
     expect(el(container, 'repeat-coverage').textContent).toContain('1 of 2 tasks eligible')
     expect(el(container, 'repeat-coverage').textContent).toContain('1 excluded')
-    expect(el(container, 'repeat-coverage').textContent).toContain('1 unknown attempt')
+    expect(el(container, 'repeat-coverage').textContent).toContain('1 ungraded run')
   })
 })
 
@@ -642,6 +806,6 @@ it('outcome flips use the selected suite even when hidden outcomes differ', () =
   fixture['/results/mini/runs'] = fixture['/results/mini/runs'].map((run) => ({ ...run, visible_pass: true }))
   const { container } = renderRig('#/rig/an:mini:outcomes:alpha-1:baseline?o=visible', { data: fixture })
   expect(el(container, 'flip-rate').textContent).toContain('0%')
-  expect(el(container, 'flip-rate').textContent).toContain('visible suite')
+  expect(el(container, 'flip-rate').textContent).toContain('visible oracle')
   expect(el(container, 'flip-rate').textContent).toContain('0 of 2 eligible tasks')
 })

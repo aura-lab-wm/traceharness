@@ -1,0 +1,22 @@
+/* Rig · ThresholdSlider.css — the operating-point slider (ThresholdSlider.jsx). The native range sits on top,
+   invisible, for the pointer and the keyboard; the track, the ticks of the points, the thumb and the value
+   beside it are drawn here and moved with transform only (container units give the track's width). */
+.rg-thr{position:relative;container-type:inline-size;height:24px;min-width:0;--rig-thr-x:calc(8px + (100cqw - 16px) * var(--rig-thr-p))}
+.rg-thr-track{position:absolute;left:8px;right:8px;top:10px;height:4px;border-radius:var(--rig-r-full);background:var(--rig-line2);overflow:hidden}
+.rg-thr-fill{position:absolute;inset:0;transform-origin:left center;transform:scaleX(var(--rig-thr-p))}
+/* the chosen point is a selection: the fill up to it and the thumb on it carry the accent */
+.rg-thr-fill.on{background:var(--rig-sel)}
+.rg-thr-ticks>i{position:absolute;top:8px;left:0;width:2px;height:8px;border-radius:1px;background:var(--rig-line3);transform:translateX(calc(8px + (100cqw - 16px) * var(--rig-thr-k) - 1px))}
+.rg-thr-ticks>i.on{background:var(--rig-sel)}
+.rg-thr-thumb{position:absolute;left:0;top:4px;width:16px;height:16px;border-radius:50%;background:var(--rig-panel);border:2px solid var(--rig-text);box-shadow:var(--rig-shadow);pointer-events:none;
+  transform:translateX(calc(var(--rig-thr-x) - 8px));transition:transform var(--rig-dur-1) var(--rig-ease),box-shadow var(--rig-dur-1) var(--rig-ease)}
+.rg-thr-tip{position:absolute;left:0;bottom:calc(100% + 2px);padding:1px 6px;border-radius:var(--rig-r-sm);background:var(--rig-text);color:var(--rig-panel);font:var(--rig-fw-medium) var(--rig-fs-2xs)/var(--rig-lead-xs) var(--rig-num);font-variant-numeric:tabular-nums;white-space:nowrap;pointer-events:none;
+  opacity:0;transform:translateX(calc(var(--rig-thr-x) - 50%)) translateY(2px);transition:opacity var(--rig-dur-1) var(--rig-ease),transform var(--rig-dur-1) var(--rig-ease)}
+.rg-thr-in{position:absolute;inset:0;width:100%;height:100%;margin:0;opacity:0;cursor:pointer;touch-action:none}
+.rg-thr.drag .rg-thr-thumb,.rg-thr.drag .rg-thr-tip,.rg-thr.drag .rg-thr-fill{transition:none}
+.rg-thr.drag .rg-thr-tip,.rg-thr:has(.rg-thr-in:focus-visible) .rg-thr-tip{opacity:1;transform:translateX(calc(var(--rig-thr-x) - 50%))}
+.rg-thr-thumb.on{border-color:var(--rig-sel)}
+.rg-thr.drag .rg-thr-thumb{box-shadow:0 0 0 4px color-mix(in srgb,var(--rig-text) 12%,transparent)}
+.rg-thr-fill{transition:transform var(--rig-dur-1) var(--rig-ease)}
+.rg-thr:hover .rg-thr-thumb{box-shadow:0 0 0 3px color-mix(in srgb,var(--rig-text) 10%,transparent)}
+.rg-thr:has(.rg-thr-in:focus-visible) .rg-thr-thumb{outline:var(--rig-focus-ring);outline-offset:2px}

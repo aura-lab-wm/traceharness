@@ -1,0 +1,416 @@
+{
+ "id": "what-a-harness-is",
+ "number": 9,
+ "part": 4,
+ "kind": "concept",
+ "checked": "2026-11-23",
+ "title": "What a harness is and why it changes results",
+ "question": "If I keep the model the same and change only the harness, can the result change?",
+ "what_you_learn": [
+  "What belongs to the harness and what belongs to the model.",
+  "How a single harness field changed a pass count in recorded runs.",
+  "Why a harness effect measured with one model may not hold for another."
+ ],
+ "prerequisites": {
+  "read": [
+   "outcome-labels",
+   "how-swe-bench-grades"
+  ],
+  "know": []
+ },
+ "sections": [
+  {
+   "heading": "Everything around the model",
+   "body": [
+    "The harness, also called the scaffold, is the program that turns a model into an agent. It sets:",
+    {
+     "list": [
+      "the system prompt;",
+      "which tools exist, and what they may do (the permission policy);",
+      "how much of the conversation is kept;",
+      "how many steps and tokens a run may use;",
+      "what happens when a reply asks for no tool;",
+      "the temperature."
+     ]
+    },
+    "The model is the one part that is not in it. The Configuration file page under Harnesses shows every field of the harness you have open, as JSON.",
+    "Anthropic's eval guide states the consequence: when you evaluate an agent, you evaluate the harness and the model together. A score that names no harness is missing half of what produced it.",
+    "Do not confuse it with the evaluation harness that grades patches, from the article on how SWE-bench grades a run. That one runs after the agent has finished, and a patch gets the same grade whichever agent harness produced it."
+   ]
+  },
+  {
+   "heading": "Design choices change behaviour",
+   "body": [
+    "SWE-agent (an agent harness for GitHub issues, by Yang et al., 2024) gives the model special commands for viewing and editing files. Its authors showed that the design of this interface changes how agents behave and how well they do. mini-swe-agent goes the other way: its agent has no tool except bash, and each step only adds to one growing list of messages. Its documentation reports strong scores on SWE-bench Verified (500 real GitHub issues that developers screened) all the same. Both are harnesses; they bet on different things.",
+    "Some go further. A 2026 position paper (Zhang et al., preprint) argues that for long tasks the harness often decides performance more than the model does. It limits that claim to models of comparable frontier capability. It is one argument, not a settled result, but it is a good reason to always name the harness."
+   ]
+  },
+  {
+   "heading": "Stand-ins and native agents",
+   "body": [
+    "TraceHarness can run fixed harnesses that copy how a known app drives its model, listed for example as Claude Code (TraceHarness copy). Such a copy is a stand-in: a different engine, meaning the program that runs the loop, from the real app. TraceHarness can also run or record the installed app itself, a native agent. A stand-in lets you change one field and run again; a native agent shows what the real product did, but you cannot change its insides. TraceHarness's own configurable engine is a third kind, and the bundled study runs used it. Say which kind produced a result."
+   ]
+  },
+  {
+   "heading": "Change one field at a time",
+   "body": [
+    "Each harness of study_v04 differs from baseline in one field, and its description on Run setup says what changed. That is what lets you say which change caused a difference. Before you trust a comparison, open a run's recorded harness on its run page (Recorded harness, then View JSON) and check what actually ran.",
+    "Then measure more than the pass rate. A harness change can leave pass@1 alone and still change how many steps a run takes, which tools it uses or how it ends."
+   ]
+  },
+  {
+   "heading": "Checking which harness ran",
+   "body": [
+    "Every run records a fingerprint (hash) of the exact harness it ran under, shown on the run page beside the recorded harness, for example harness hash e2fb4042aa89 for study_v04's baseline. Two runs with the same fingerprint ran the same harness, field for field. If two runs claim the same harness name but show different fingerprints, something changed between them, such as an edited prompt, and you should not pool them.",
+    "The bundled harness files live in the harnesses folder of the repository. In TraceHarness, One run under Harnesses lets you pick a harness, a model and a task and review a run before anything starts. Treat a new harness like a new experimental condition: give it its own name, change one field, and run it on the same tasks as the baseline."
+   ]
+  },
+  {
+   "heading": "The same change, different models",
+   "body": [
+    "A harness effect found with one model may vanish with another. Statisticians call this an interaction: the effect of one factor depends on the level of another. The Experiment page in TraceHarness fits model and harness together to measure it. So report a harness effect per model, and test more than one model before you call a harness better in general."
+   ]
+  }
+ ],
+ "figures": [
+  {
+   "id": "a09-fields",
+   "after_section": 0,
+   "kind": "harness_fields",
+   "data_file": "a09-fields",
+   "title": "One harness, field by field",
+   "caption": "Every field of a recorded study_v04 harness, around the model, which is not part of it. Each tab marks the one field that differs from baseline: no_action_retries in reprompt, max_steps in tight_budget and the policy in permissive. Under the card are the passing runs of 120 and the mean tokens per run of two models; baseline gives 75 and 118 passes, reprompt 98 and 117.",
+   "data_note": "study_v04, the recorded harness of each run (invoke_agent start), 960 runs of gemini-2.5-flash-lite and gpt-5.6-luna",
+   "headline": [
+    {
+     "key": "hash_baseline",
+     "as_written": "e2fb4042aa89"
+    },
+    {
+     "key": "pass_baseline_0",
+     "as_written": "75"
+    },
+    {
+     "key": "pass_reprompt_0",
+     "as_written": "98"
+    },
+    {
+     "key": "pass_baseline_1",
+     "as_written": "118"
+    },
+    {
+     "key": "pass_reprompt_1",
+     "as_written": "117"
+    }
+   ]
+  },
+  {
+   "id": "a5-labels",
+   "after_section": 3,
+   "kind": "stacked",
+   "caption": "gemini-2.5-flash-lite, 24 tasks x 5 runs under each harness (study_v04, hidden oracle). The only field that differs is no_action_retries.",
+   "data": {
+    "rows": [
+     {
+      "name": "baseline",
+      "parts": [
+       75,
+       20,
+       15,
+       10
+      ]
+     },
+     {
+      "name": "reprompt",
+      "parts": [
+       98,
+       22,
+       0,
+       0
+      ]
+     }
+    ],
+    "labels": [
+     "passed",
+     "wrong patch",
+     "cut off, no patch",
+     "no patch"
+    ],
+    "total": 120
+   }
+  },
+  {
+   "id": "a09-effect",
+   "after_section": 5,
+   "kind": "harness_effect",
+   "data_file": "a09-effect",
+   "title": "The same change, two models",
+   "caption": "Each harness against baseline in points of pass@1, with the 95% interval of a task-paired bootstrap, for gemini-2.5-flash-lite and gpt-5.6-luna. reprompt moves the first by +19.2 points [+5.8, +35.0] and the second by -0.8 [-2.5, 0.0]. Pick a harness to read its two results.",
+   "data_note": "study_v04, 2,160 runs of gemini-2.5-flash-lite and gpt-5.6-luna, hidden oracle",
+   "headline": [
+    {
+     "key": "d_reprompt_0",
+     "as_written": "+19.2"
+    },
+    {
+     "key": "lo_reprompt_0",
+     "as_written": "+5.8"
+    },
+    {
+     "key": "hi_reprompt_0",
+     "as_written": "+35.0"
+    },
+    {
+     "key": "d_reprompt_1",
+     "as_written": "-0.8"
+    },
+    {
+     "key": "lo_reprompt_1",
+     "as_written": "-2.5"
+    },
+    {
+     "key": "hi_reprompt_1",
+     "as_written": "0.0"
+    }
+   ]
+  }
+ ],
+ "worked_example": {
+  "title": "One field, 23 more passing runs",
+  "dataset": {
+   "name": "study_v04",
+   "what": "Bundled with the study copy: 3,240 recorded runs, 3 models x 9 harnesses x 24 small Python tasks x 5 runs. They were collected through OpenRouter (a paid service that passes requests on to many model providers) at temperature 0.",
+   "credit": "TraceHarness bundled data (AURA lab, William & Mary)."
+  },
+  "open": [
+   "Click the dataset name at the top of the left list and choose study_v04.",
+   "Click Outcomes. The Asking line should say gemini-2.5-flash-lite under baseline.",
+   "Read the line under Per task, runs in order (45 failed: 20 wrong patch, 15 cut off, 10 no patch). Then click Change, pick the harness reprompt and read the same line again."
+  ],
+  "body": [
+   "baseline and reprompt differ in one field, no_action_retries. Under baseline (value 0) a reply that calls no tool ends the run. Under reprompt (value 2) the harness answers such a reply with a nudge, at most twice.",
+   "gemini-2.5-flash-lite ran all 24 tasks 5 times under each, 120 runs per harness. Passing runs went from 75 to 98 of 120 (pass@1 62.5% to 81.7%). The labels show where the gain came from. Cut off, no patch fell from 15 to 0 and no patch from 10 to 0, while wrong patch went from 20 to 22. Runs that ended on a reply with no tool call (exit reason no_action) fell from 29 to 10.",
+   "gpt-5.6-luna under the same two harnesses passed 118 and 117 of 120. It seldom sends a reply without a tool call, so the field has almost nothing to act on."
+  ],
+  "links": [
+   "ds:study_v04",
+   "an:study_v04:outcomes:gemini-2.5-flash-lite:baseline",
+   "an:study_v04:outcomes:gemini-2.5-flash-lite:reprompt"
+  ]
+ },
+ "try_it": {
+  "clicks": [
+   "Click the dataset name at the top of the left list and choose study_v04.",
+   "Click Comparison in the left list.",
+   "Find the reprompt column."
+  ],
+  "question": "In the reprompt column, what change against baseline does gemini-2.5-flash-lite show, and what does gpt-5.6-luna show? Does either interval cover zero?",
+  "answer": "gemini-2.5-flash-lite: +19.2 points, interval [+5.8, +35.0], marked separates, with 6 tasks better and none worse. gpt-5.6-luna: -0.8 points, interval [-2.5, 0.0], marked covers 0, with 1 task worse. One harness change, two models, two different answers.",
+  "answer_measured_from": "GET /api/results/study_v04/comparisons: comparisons['google/gemini-2.5-flash-lite']['reprompt'] mean_diff 0.1917, ci95 [0.0583, 0.3500], per_task 6 positive, 0 negative; comparisons['openai/gpt-5.6-luna']['reprompt'] mean_diff -0.0083, ci95 [-0.025, 0.0], 1 negative. Read on the Comparison page.",
+  "links": [
+   "ds:study_v04",
+   "an:study_v04:delta:gemini-2.5-flash-lite:baseline",
+   null
+  ]
+ },
+ "quiz": [
+  {
+   "q": "Which of these is not part of the harness?",
+   "options": [
+    "The system prompt",
+    "The step limit",
+    "The list of tools",
+    "The model’s weights"
+   ],
+   "answer": 3,
+   "why": "The model is the one thing the harness does not contain."
+  },
+  {
+   "q": "Under reprompt, which label disappeared for gemini-2.5-flash-lite?",
+   "options": [
+    "wrong patch",
+    "step limit, no patch",
+    "cut off, no patch",
+    "harness error"
+   ],
+   "answer": 2,
+   "why": "15 runs were cut off with no patch under baseline and 0 under reprompt."
+  },
+  {
+   "q": "A harness change adds 19 points for one model and about 0 for another. What should you report?",
+   "options": [
+    "The average of the two effects, as one number",
+    "Only the larger of the two effects",
+    "Nothing, since the two disagree",
+    "Each model’s effect, with its interval"
+   ],
+   "answer": 3,
+   "why": "The effect depends on the model (an interaction), so an average hides it."
+  }
+ ],
+ "sources": [
+  {
+   "title": "Demystifying evals for AI agents",
+   "authors": "Mikaela Grace, Jeremy Hadfield, Rodrigo Olivares, Jiri De Jonghe (Anthropic)",
+   "year": "2026 (published 9 Jan 2026)",
+   "url": "https://www.anthropic.com/research/demystifying-evals-for-ai-agents",
+   "licence": "Vendor research blog; reuse terms not stated. Paraphrased, one short quote.",
+   "what_we_took": "When you evaluate an agent you evaluate the harness and the model together; an agent harness is the system that lets a model act as an agent.",
+   "quote": "When we evaluate “an agent,” we’re evaluating the harness and the model working together.",
+   "checked": "2026-11-24"
+  },
+  {
+   "title": "SWE-agent: Agent-Computer Interfaces Enable Automated Software Engineering",
+   "authors": "John Yang, Carlos E. Jimenez, Alexander Wettig, Kilian Lieret, Shunyu Yao, Karthik Narasimhan, Ofir Press",
+   "year": "2024",
+   "url": "https://arxiv.org/abs/2405.15793",
+   "what_we_took": "The interface a harness gives the agent (they call it the agent-computer interface) changes how the agent behaves and how well it does.",
+   "quote": "how the design of the ACI can impact agents' behavior and performance",
+   "licence": "CC BY 4.0 (arXiv).",
+   "checked": "2026-11-23"
+  },
+  {
+   "title": "mini-SWE-agent documentation (Overview)",
+   "authors": "SWE-agent team",
+   "year": "n.d. (living documentation page)",
+   "url": "https://mini-swe-agent.com/latest/",
+   "what_we_took": "A deliberately small harness: bash as the only tool and a linear message history. Its authors report strong SWE-bench Verified scores; we cite that as their claim and do not repeat the number.",
+   "quote": "Does not have any tools other than bash",
+   "licence": "Project code is MIT (github.com/SWE-agent/mini-swe-agent). Paraphrased, one short quote.",
+   "checked": "2026-11-23"
+  },
+  {
+   "title": "Stop Comparing LLM Agents Without Disclosing the Harness",
+   "authors": "Yunbei Zhang, Janet Wang, Yingqiang Ge, Weijie Xu, Jihun Hamm, Chandan K. Reddy",
+   "year": "2026 (position paper, preprint)",
+   "url": "https://arxiv.org/abs/2605.23950",
+   "what_we_took": "The argument that, for long-horizon tasks across models of comparable frontier capability, the harness often matters more than the model. One position paper, so we present it as an argument, not a result.",
+   "quote": "is often a stronger determinant of agent performance than the model it wraps",
+   "licence": "CC BY 4.0 (arXiv).",
+   "checked": "2026-11-23"
+  }
+ ],
+ "glossary_terms": [
+  "harness (scaffold)",
+  "system prompt",
+  "permission policy",
+  "context window",
+  "step limit",
+  "stand-in",
+  "native agent",
+  "engine",
+  "interaction",
+  "two-factor fit",
+  "evaluation harness",
+  "SWE-agent"
+ ],
+ "see_also": [
+  {
+   "kind": "article",
+   "target": "make-and-run-a-harness"
+  },
+  {
+   "kind": "article",
+   "target": "model-or-harness"
+  },
+  {
+   "kind": "page",
+   "label": "Harnesses: One run",
+   "spec": "harnesses:setup"
+  },
+  {
+   "kind": "page",
+   "label": "Comparison: each harness against baseline, per model",
+   "spec": "an:study_v04:delta:gemini-2.5-flash-lite:baseline"
+  }
+ ],
+ "numbers": [
+  {
+   "as_written": [
+    "0.0",
+    "45 failed"
+   ],
+   "meaning": "upper end of the gpt-5.6-luna interval; failure line on Outcomes",
+   "source": "Comparison page; Outcomes page"
+  },
+  {
+   "as_written": [
+    "0",
+    "2"
+   ],
+   "meaning": "no_action_retries in baseline and reprompt",
+   "source": "recorded harness in the ledger; harnesses/reprompt.json"
+  },
+  {
+   "as_written": [
+    "24",
+    "5 times",
+    "120"
+   ],
+   "meaning": "tasks x runs per harness",
+   "source": "data/runs/study_v04/index.jsonl (traceharness-study)"
+  },
+  {
+   "as_written": [
+    "75",
+    "98",
+    "62.5%",
+    "81.7%",
+    "23 more"
+   ],
+   "meaning": "passing runs and pass@1, baseline vs reprompt",
+   "source": "Outcomes page + index.jsonl"
+  },
+  {
+   "as_written": [
+    "15",
+    "10",
+    "20",
+    "22"
+   ],
+   "meaning": "cut off no patch, no patch, wrong patch counts",
+   "source": "GET /api/outcomes/study_v04; Outcomes page '45 failed: 20 wrong patch, 15 cut off, 10 no patch' and '22 failed: 22 wrong patch'"
+  },
+  {
+   "as_written": [
+    "29",
+    "10"
+   ],
+   "meaning": "runs with exit no_action",
+   "source": "data/runs/study_v04/index.jsonl (traceharness-study)"
+  },
+  {
+   "as_written": [
+    "118",
+    "117"
+   ],
+   "meaning": "gpt-5.6-luna passing runs, baseline vs reprompt",
+   "source": "data/runs/study_v04/index.jsonl (traceharness-study)"
+  },
+  {
+   "as_written": [
+    "+19.2",
+    "+5.8",
+    "+35.0",
+    "6 tasks",
+    "-0.8",
+    "-2.5",
+    "1 task"
+   ],
+   "meaning": "Comparison page reprompt column",
+   "source": "GET /api/results/study_v04/comparisons; Comparison page"
+  },
+  {
+   "as_written": [
+    "19 points"
+   ],
+   "meaning": "rounded value in a quiz question",
+   "source": "rounded from +19.2"
+  }
+ ],
+ "in_short": [
+  "**The harness is everything around the model**: the prompt, the tools and their policy, the history kept, the limits, and what happens when no tool is called.",
+  "In study_v04, **one field, no_action_retries, took gemini-2.5-flash-lite from 75 to 98 passing runs of 120**.",
+  "**The same change barely moved gpt-5.6-luna**, so report a harness effect per model and test more than one."
+ ]
+}

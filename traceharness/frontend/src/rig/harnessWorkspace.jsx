@@ -1,6 +1,6 @@
-import { useId } from 'react'
-import { Go, Icon } from './ui'
+import { Go, Icon, flashJumped } from './ui'
 import { numberIssue } from './harnessFields'
+import { NumberField } from './NumberField'
 import { evidenceOrigin, withEvidenceOrigin } from './shallowEvidence'
 import './harnessWorkspace.css'
 
@@ -28,17 +28,16 @@ export function focusWorkspaceSection(ref) {
   if (!ref.current) return
   ref.current.focus({ preventScroll: true })
   ref.current.scrollIntoView({ block: 'start', behavior: 'instant' })
+  // the section flashes once (data-state="jumped"), so the jump is seen even when it was already in view
+  flashJumped(ref.current.closest('aside,section,[role="group"]') || ref.current)
 }
 
+/** A harness number (step cap, time limit, temperature …): the shared number box. A cleared box stays
+ *  empty and says "Enter a value." until it is filled, so the run cannot be reviewed with a blank limit. */
 export function NumericField({ field, value, onChange }) {
-  const id = useId()
   const issue = numberIssue(value, field)
-  return <div className="rg-fld"><label htmlFor={id}>{field.label}</label>
-    <input className="rg-inp" type="number" min={field.min} max={field.max} step={field.step || 1}
-      id={id} value={value ?? ''} aria-invalid={!!issue} aria-describedby={issue ? `${id}-error` : undefined}
-      onChange={(event) => onChange(event.target.value === '' ? '' : event.target.valueAsNumber)} />
-    {issue && <span id={`${id}-error`} className="rg-harness-field-error">{issue}</span>}
-  </div>
+  return <NumberField label={field.label} min={field.min} max={field.max} step={field.step === 'any' ? 'any' : 1} unit={field.unit} noun={field.noun} nudge={field.nudge}
+    value={value ?? ''} onChange={onChange} allowEmpty issue={issue || undefined} />
 }
 
 const showNumber = (value) => value === '' || value == null ? 'Not set' : Object.is(value, -0) ? '-0' : value
@@ -47,7 +46,7 @@ export function HarnessSummary({ blocks, children, title = 'Your configuration',
   // Local stacks apply blocks in order; later blocks of a type override earlier ones.
   const find = (type) => blocks.findLast((block) => block.type === type) || {}
   const tools = find('tools').names || []
-  return <aside className="rg-harness-summary" aria-label={title}>
+  return <aside className="rg-harness-summary" aria-label={title} data-tour="harness-summary">
     <div className="rg-harness-summary-head"><Icon name="canvas" size={20} /><h2 ref={headingRef} tabIndex={-1}>{title}</h2></div>
     <div className="rg-harness-summary-body">
       <div className="rg-harness-summary-tools"><div className="rg-harness-label">Tools · {tools.length}</div><ToolChips tools={tools} /></div>

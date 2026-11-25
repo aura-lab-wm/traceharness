@@ -6,6 +6,10 @@ import { fireEvent, screen, waitFor, within } from '@testing-library/react'
 import { renderRig, resetRig, rigFixture } from '../../../test/rig-testing'
 import { buildQuery } from './recommend'
 
+/* a number box takes what was typed when it is left (NumberField): type, then leave the box */
+const typeNumber = (node, value) => { fireEvent.change(node, { target: { value } }); fireEvent.blur(node) }
+
+
 afterEach(resetRig)
 
 const el = (c, id) => c.querySelector(`[data-el~="${id}"]`)
@@ -43,7 +47,7 @@ function stub(body = RESULT) {
 }
 
 describe('recommend view: an importable dataset', () => {
-  it('shows the import command with the recommended --n and links to the Sources view', async () => {
+  it('shows the import command with the recommended --n and links to Add data', async () => {
     const importable = { ...RESULT, pick: card('n/traj', 'Traj', { command: 'traceharness hf import n/traj --n 120', sources_view: '#/rig/sources',
       reasons: [{ rule: 'readable-by-importer', text: 'TraceHarness can import it: traceharness hf import n/traj', weight: 12, method: 'm' }] }) }
     const { fetchImpl } = stub(importable)
@@ -52,7 +56,7 @@ describe('recommend view: an importable dataset', () => {
     const box = el(el(container, 'rec-pick'), 'rec-import')
     expect(box.textContent).toContain('traceharness hf import n/traj --n 120')
     expect(el(box, 'rec-import-note')).toBeNull()
-    const link = within(box).getByRole('link', { name: /Sources/ })
+    const link = within(box).getByRole('link', { name: 'Open Add data' })
     expect(link.getAttribute('href')).toBe('#/rig/sources')
     expect(el(el(container, 'rec-runner-up'), 'rec-import')).toBeNull()
   })
@@ -82,7 +86,7 @@ describe('recommend view', () => {
     expect(pick.textContent).toContain('Recommended')
     expect(pick.textContent).toContain('Alpha')
     expect(within(pick).getByText('Hugging Face').getAttribute('rel')).toBe('noopener noreferrer')
-    expect(el(pick, 'rec-subset').textContent).toContain('Subset: 120 rows x 1 repeat of 500')
+    expect(el(pick, 'rec-subset').textContent).toContain('Subset: 120 of 500 rows x 1 run per task')
     expect(el(pick, 'rec-estimate').textContent).toContain('$2.40')
     expect(el(pick, 'rec-estimate').textContent).toContain('0.67 h')
     expect(el(pick, 'rec-estimate').textContent).toContain('from 5 recorded runs on this dataset')
@@ -120,8 +124,8 @@ describe('recommend view', () => {
     await waitFor(() => expect(el(container, 'rec-cards')).not.toBeNull())
     const form = el(container, 'rec-form')
     fireEvent.change(within(form).getByLabelText('Model cutoff (YYYY-MM)'), { target: { value: '2026-03' } })
-    fireEvent.change(within(form).getByLabelText('Budget (US dollars)'), { target: { value: '50' } })
-    fireEvent.change(within(form).getByLabelText('Hours available'), { target: { value: '4' } })
+    typeNumber(within(form).getByLabelText('Budget (US dollars)'), '50')
+    typeNumber(within(form).getByLabelText('Hours available'), '4')
     fireEvent.click(within(form).getByRole('button', { name: /Analyse recorded runs/ }))
     fireEvent.click(within(form).getByLabelText('Compare with public results'))
     fireEvent.click(within(form).getByRole('button', { name: 'Recommend' }))

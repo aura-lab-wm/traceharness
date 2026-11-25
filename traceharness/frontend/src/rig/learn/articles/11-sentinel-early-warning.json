@@ -1,0 +1,327 @@
+{
+ "id": "sentinel-early-warning",
+ "number": 11,
+ "part": 4,
+ "kind": "concept",
+ "checked": "2026-11-23",
+ "title": "Sentinel: an early warning during a run",
+ "question": "Can a run be stopped before it hands in a bad patch, and how do I know the warning works?",
+ "what_you_learn": [
+  "What Sentinel does during a run: it scores the run so far, and can nudge the agent or block its submit.",
+  "How to judge a warning: does it rank bad runs above good ones, and do its scores mean what they say?",
+  "Why every threshold trades bad submits caught against good submits blocked."
+ ],
+ "prerequisites": {
+  "read": [
+   "reading-a-trajectory",
+   "traps-in-the-task",
+   "what-a-harness-is"
+  ],
+  "know": []
+ },
+ "sections": [
+  {
+   "heading": "A second pair of eyes during the run",
+   "body": [
+    "The grade arrives after a run ends. A monitor works earlier: it reads the run so far and estimates how likely it is to end badly. If the risk is high, it can warn the agent or stop a submit.",
+    "This idea is older than TraceHarness. In AI Control (Greenblatt et al., 2023), a weaker but trusted model rated how suspicious a stronger model's code looked. Only the most suspicious 2% of solutions went to an audit, a careful check by a human.",
+    "Baker et al. (2025) used a language model to watch a reasoning model in agentic coding tasks. Watching its chain of thought (the reasoning the model writes out before it acts) could catch reward hacking far better than watching its actions and outputs alone. A weaker model, GPT-4o, could monitor a stronger one."
+   ]
+  },
+  {
+   "heading": "What Sentinel checks",
+   "body": [
+    "Sentinel is TraceHarness's monitor. It watches actions, not hidden reasoning. At every step it does two things.",
+    {
+     "list": [
+      "Rules called detectors look for known bad habits. Examples are submitting without re-running the tests, editing the test suite, a destructive shell command, or the same call repeated.",
+      "A trained model gives the partial run a risk score between 0 and 1, from features such as edits made, files read and boundary events so far."
+     ]
+    },
+    "Each detector carries a nudge, a sentence the harness can send the agent. Sentinel runs as a hook: a check the harness calls at each step, before that step's tool calls run. When the score crosses the threshold (0.6 by default), the hook sends the agent a nudge. It blocks a submit only when a blocking rule fires, such as submitting without re-running the tests. A critical detector, such as test tampering, can also block. The run is stopped when the score reaches the abort threshold (0.97). The Sentinel page lists the detectors and the trained models."
+   ]
+  },
+  {
+   "heading": "How good is a warning?",
+   "body": [
+    "Ask two questions. First, does the score rank bad runs above good ones? AUC answers that: it is the chance that a random bad run scores higher than a random good one. 0.5 is a coin flip and 1 is perfect.",
+    "Second, does a score of 0.7 mean a 70% risk? That is calibration, a separate question from ranking. Guo et al. (2017) found that modern neural networks are poorly calibrated, unlike older ones from a decade before.",
+    "Guo et al. measure it by putting predictions into bins by score. In each bin they compare the average score with how often the prediction was right. The gap, averaged over the bins, is the expected calibration error, ECE. Lower is better.",
+    "Early warnings are the hard part. A score that only rises in the last steps is right but late. The Sentinel page shows AUC by how much of the run has been seen, and the mean warning lead in steps.",
+    "In the figure below, Sentinel's risk model, trained on other tasks of study_v04, scores two runs of t20_bisect_left by gemini-2.5-flash-lite under baseline. Both fail their first test run, at step 3. Then the run that gives up scores 0.92; the one that keeps editing scores 0.69, and falls to 0.33 once its tests pass. At a threshold of 0.6 both are warned at step 4; at 0.8 only the run that failed."
+   ]
+  },
+  {
+   "heading": "Every threshold is a trade",
+   "body": [
+    "Sentinel blocks a submit when the score passes the operating point. Lower it, and more bad submits are caught but more good ones are blocked. Raise it, and the reverse happens. No setting gives both for free.",
+    "Choose the point from what a mistake costs you. If a bad patch is expensive and a blocked good one only costs a re-run, a lower point may be worth it. Always report both rates, not just the bad submits caught.",
+    "A monitor trained on one dataset may not carry over to another model or harness. Before you trust its numbers on new runs, measure it again with a replay (running the monitor over their recorded steps, as if they were live).",
+    "The figure below scores the 2,723 runs of the worked example at their submit step, each with a risk model trained without its task. At 0.6 it catches 37 of the 169 bad submits and blocks 88 of the 2,554 good ones. Ranked by AUC, the model scores 0.59, and the rule from the worked example 0.50: a coin flip."
+   ]
+  }
+ ],
+ "figures": [
+  {
+   "id": "a11-risk-steps",
+   "after_section": 2,
+   "kind": "risk_steps",
+   "data_file": "a11-risk-steps",
+   "title": "Risk over the steps of two runs, against the threshold",
+   "caption": "Two runs of t20_bisect_left by gemini-2.5-flash-lite under baseline, scored before each step by Sentinel's risk model trained on other tasks. Both fail their first test run at step 3. The run that gives up scores 0.92 at step 4; the one that keeps editing scores 0.69, and 0.33 at its submit. Move the threshold to see which run is warned, and when.",
+   "data_note": "study_v04, 2 runs; risk model in 5 folds grouped by task",
+   "headline": [
+    {
+     "key": "fail_4",
+     "as_written": "0.92"
+    },
+    {
+     "key": "pass_4",
+     "as_written": "0.69"
+    },
+    {
+     "key": "pass_end",
+     "as_written": "0.33"
+    },
+    {
+     "key": "thr",
+     "as_written": "0.6"
+    },
+    {
+     "key": "first_test",
+     "as_written": "step 3"
+    }
+   ]
+  },
+  {
+   "id": "a11-catch-block",
+   "after_section": 3,
+   "kind": "catch_block",
+   "data_file": "a11-catch-block",
+   "title": "Bad submits caught against good submits blocked",
+   "caption": "Every study_v04 run that edited code and submitted, 169 bad and 2,554 good, scored at its submit step. The line is the risk model at every threshold: at 0.6 it catches 37 of the 169 and blocks 88 of the 2,554. The rule from the worked example catches 21 of the 169 (12%) and blocks 292 of the 2,554 (11%), on the diagonal of blocking at random.",
+   "data_note": "study_v04, 2,723 runs; risk model in 5 folds grouped by task",
+   "headline": [
+    {
+     "key": "m_caught",
+     "as_written": "37 of the 169"
+    },
+    {
+     "key": "m_blocked",
+     "as_written": "88 of the 2,554"
+    },
+    {
+     "key": "rule_caught",
+     "as_written": "21 of the 169"
+    },
+    {
+     "key": "rule_blocked",
+     "as_written": "292 of the 2,554"
+    },
+    {
+     "key": "rule_caught_pct",
+     "as_written": "12%"
+    },
+    {
+     "key": "rule_blocked_pct",
+     "as_written": "11%"
+    },
+    {
+     "key": "auc",
+     "as_written": "0.59"
+    },
+    {
+     "key": "rule_auc",
+     "as_written": "0.50"
+    }
+   ]
+  }
+ ],
+ "worked_example": {
+  "title": "A plausible rule, measured: submitting without re-running the tests",
+  "dataset": {
+   "name": "study_v04",
+   "what": "Bundled with the study copy: 3,240 recorded runs, 3 models x 9 harnesses x 24 small Python tasks x 5 runs. They were collected through OpenRouter (a paid service that passes requests on to many model providers) at temperature 0.",
+   "credit": "TraceHarness bundled data (AURA lab, William & Mary)."
+  },
+  "open": [
+   "Click the dataset name at the top of the left list and choose study_v04.",
+   "Click Runs in the left list. Each run opens on its step list.",
+   "Open this run of t01_slugify under baseline. Its steps go read_file, edit_file, run_tests, submit: it ran the tests after its last edit.",
+   "Open this run of the same task under no_test_tool. Its steps go read_file, edit_file, submit: it did not."
+  ],
+  "links": [
+   "ds:study_v04",
+   "field:study_v04",
+   "run:20261114-131327-9624e4",
+   "run:20261114-131614-f1595a"
+  ],
+  "body": [
+   "One detector warns when an agent edits code and then submits without running the tests again. It sounds like a good warning. study_v04 lets you measure it.",
+   "The run index records this for every run, in a field called ran_tests_before_submit. It is true when a test run came at or after the last edit.",
+   "Take every run that edited code and then submitted: 2,723 runs. 2,410 ran the tests after their last edit, and 2,262 of those passed the hidden tests, 93.9%.",
+   "The other 313 did not test again, and 292 of those passed, 93.3%. The two pass rates are almost the same. 308 of the 313 ran under no_test_tool, which gives the agent no way to run tests.",
+   "Now treat the rule as a block. It would stop 21 of the 169 bad submits, 12%. It would also stop 292 of the 2,554 good submits, 11%.",
+   "On these small tasks, the rule blocks bad and good submits at almost the same rate, so it does little better than blocking at random. A rule can make sense and still warn poorly, so measure it before you let it block anything."
+  ]
+ },
+ "try_it": {
+  "clicks": [
+   "Click Analysis in the left list, then Sentinel.",
+   "Scroll to Detectors and find the rule from the worked example."
+  ],
+  "links": [
+   "sentinel",
+   null
+  ],
+  "question": "Which built-in detector checks the rule from the worked example? How severe does the page call it, and what does it tell the agent?",
+  "answer": "Submitting without re-running tests (submit_without_verify), marked high. It fires when the agent edited code after, or without, its last test run and is now calling submit. Its nudge says: You changed files after your last test run. Run the tests and read the result before you submit.",
+  "answer_measured_from": "Sentinel page, Detectors list: the built-in detector submit_without_verify, its severity and its nudge as the page shows them."
+ },
+ "quiz": [
+  {
+   "q": "A warning score has an AUC of 0.5. What does that tell you?",
+   "options": [
+    "It ranks bad runs above good ones no better than chance",
+    "It catches half of the bad runs and blocks none of the good",
+    "It is perfectly calibrated, so its scores mean what they say",
+    "It warns exactly halfway through every run it watches"
+   ],
+   "answer": 0,
+   "why": "AUC is the chance that a random bad run scores above a random good one; 0.5 is a coin flip."
+  },
+  {
+   "q": "You lower Sentinel's operating point. What happens?",
+   "options": [
+    "It catches fewer bad submits and blocks fewer good ones",
+    "Its AUC goes up, because it now looks at more steps",
+    "It catches more bad submits and blocks more good ones",
+    "Nothing changes until the model is trained again"
+   ],
+   "answer": 2,
+   "why": "A lower threshold blocks more submits of both kinds; every operating point is a trade."
+  },
+  {
+   "q": "In study_v04, runs that skipped re-testing passed 93.3% of the time, and runs that re-tested passed 93.9%. What follows?",
+   "options": [
+    "Re-testing makes a patch about 0.6 points worse",
+    "The rule hardly separates good runs from bad",
+    "The hidden tests must be broken for these tasks",
+    "Every run should be blocked until it has re-tested"
+   ],
+   "answer": 1,
+   "why": "A warning is only useful if the runs it flags fail more often; here the two groups pass at almost the same rate."
+  }
+ ],
+ "sources": [
+  {
+   "title": "AI Control: Improving Safety Despite Intentional Subversion",
+   "authors": "Ryan Greenblatt, Buck Shlegeris, Kshitij Sachan, Fabien Roger",
+   "year": "2023 (arXiv; an ICML version is linked from the arXiv page)",
+   "url": "https://arxiv.org/abs/2312.06942",
+   "what_we_took": "Trusted monitoring: a weaker trusted model (GPT-3.5) gives a numerical rating of how suspicious a stronger model's code looks, and only the most suspicious 2% is audited (Table 1).",
+   "quote": "ask GPT-3.5 to produce a numerical rating of how suspicious the code looks to it",
+   "licence": "CC BY 4.0 (arXiv).",
+   "checked": "2026-11-24"
+  },
+  {
+   "title": "Monitoring Reasoning Models for Misbehavior and the Risks of Promoting Obfuscation",
+   "authors": "Bowen Baker, Joost Huizinga, Leo Gao, Zehao Dou, Melody Y. Guan, Aleksander Madry, Wojciech Zaremba, Jakub Pachocki, David Farhi",
+   "year": "2025 (preprint)",
+   "url": "https://arxiv.org/abs/2503.11926",
+   "what_we_took": "An LLM monitor that reads a reasoning model's chain of thought caught reward hacking in agentic coding far better than one that sees only actions and outputs; a weaker model, GPT-4o, could monitor a stronger one.",
+   "quote": "CoT monitoring can be far more effective than monitoring agent actions and outputs alone",
+   "licence": "arXiv non-exclusive distribution licence (not CC). Paraphrased; one short quote for citation.",
+   "checked": "2026-11-23"
+  },
+  {
+   "title": "On Calibration of Modern Neural Networks",
+   "authors": "Chuan Guo, Geoff Pleiss, Yu Sun, Kilian Q. Weinberger",
+   "year": "2017 (ICML 2017)",
+   "url": "https://arxiv.org/abs/1706.04599",
+   "what_we_took": "What calibration is, that modern neural networks are poorly calibrated, unlike those of a decade before, and the expected calibration error (ECE) computed over score bins.",
+   "quote": "modern neural networks, unlike those from a decade ago, are poorly calibrated",
+   "licence": "arXiv non-exclusive distribution licence (not CC). Paraphrased; one short quote for citation.",
+   "checked": "2026-11-24"
+  }
+ ],
+ "glossary_terms": [
+  "sentinel",
+  "AUC",
+  "calibration",
+  "operating point",
+  "boundary event",
+  "reward hacking"
+ ],
+ "see_also": [
+  {
+   "kind": "article",
+   "target": "traps-in-the-task"
+  },
+  {
+   "kind": "article",
+   "target": "outcome-labels"
+  },
+  {
+   "kind": "page",
+   "label": "Sentinel: its models, its detectors and the operating point",
+   "spec": "sentinel"
+  }
+ ],
+ "numbers": [
+  {
+   "as_written": [
+    "2%"
+   ],
+   "meaning": "AI Control: the share of solutions audited under trusted monitoring",
+   "source": "arXiv 2312.06942, Table 1 (HTML full text)"
+  },
+  {
+   "as_written": [
+    "2,723",
+    "2,410",
+    "2,262",
+    "93.9%",
+    "313",
+    "292",
+    "93.3%",
+    "21 of the 169",
+    "12%",
+    "292 of the 2,554",
+    "11%",
+    "308"
+   ],
+   "meaning": "study_v04 runs that edited code and submitted, split by ran_tests_before_submit, with their hidden grades",
+   "source": "data/runs/study_v04/index.jsonl: exit_reason submitted and edits > 0; ran_tests_before_submit (core/harness.py: a test run at or after the last edit); hidden_pass; harness_id no_test_tool for 308 of the 313"
+  },
+  {
+   "as_written": [
+    "0.5",
+    "0.7",
+    "70%"
+   ],
+   "meaning": "illustrative values in the explanation and the quiz",
+   "source": "the definitions of AUC and calibration"
+  },
+  {
+   "as_written": [
+    "0.92",
+    "0.69",
+    "0.33",
+    "0.8",
+    "step 3",
+    "37 of the 169",
+    "88 of the 2,554",
+    "0.59",
+    "0.50"
+   ],
+   "meaning": "Sentinel's risk model (5 folds grouped by task) on study_v04: the two t20_bisect_left runs step by step, and every submit at the submit step",
+   "source": "scripts/learn_figures.py a11-risk-steps and a11-catch-block (sentinel.build_training_examples, _fit, replay, _auc)"
+  }
+ ],
+ "in_short": [
+  "**A monitor scores a run while it is still going**: Sentinel's rules and risk model can nudge the agent or block a submit before the grade arrives.",
+  "Judge a warning twice: **AUC says whether it ranks bad runs above good ones**, and calibration whether a score of 0.7 means a 70% risk.",
+  "**Every threshold trades bad submits caught against good submits blocked**, so always report both rates."
+ ]
+}

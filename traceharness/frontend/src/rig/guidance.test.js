@@ -28,3 +28,13 @@ describe('workflow intent and truthful destinations', () => {
     expect(guideDestination(guidanceFor('family matrix'), {})).toBe('home')
   })
 })
+
+describe('each Harnesses topic opens the view that does that job', () => {
+  it.each([
+    ['Schedule several harnesses across models and tasks', 'harnesses:view:experiments'],
+    ['How do I edit the full harness JSON?', 'harnesses:view:file'],
+    ['Why is cost unknown after failure?', 'harnesses:view:runs'],
+    ['Where is my saved harness?', 'harnesses:view:versions'],
+    ['Can I select a harness?', 'harnesses'],
+  ])('%s → %s', (question, spec) => expect(guideDestination(guidanceFor(question))).toBe(spec))
+})

@@ -2,7 +2,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { ConfigurationEditor, PARSE_IMMEDIATE_BYTES, PARSE_PAUSE_MS, differences } from './ConfigurationEditor'
-import { initialComposer, configurationFor, parseConfiguration } from './views/harness-composer-state'
+import { initialComposer, configurationFor, parseConfiguration, jsonErrorPlace } from './views/harness-composer-state'
 vi.mock('./views/harness-composer-state', async (original) => {
   const actual = await original()
   return { ...actual, parseConfiguration: vi.fn(actual.parseConfiguration) }
@@ -114,5 +114,28 @@ describe('F18: keyed comparison, word diff, size, shortcut and pause-parsing', (
       fireEvent.keyDown(input(), { key: 'Enter', ctrlKey: true })
       expect(apply.mock.calls[1][0].prompt.startsWith('dbax')).toBe(true)
     } finally { vi.useRealTimers() }
+  })
+})
+
+describe('the message for JSON typed into the editor', () => {
+  it('says the text is not valid JSON and where, never "choose a file"', () => {
+    render(<ConfigurationEditor configuration={configuration()} onApply={vi.fn()} />)
+    const text = input().value
+    // a stray character after the first property, on line 2
+    const broken = text.replace('"version": 1,', '"version": 1,x')
+    fireEvent.change(input(), { target: { value: broken } })
+    const alert = screen.getByRole('alert').textContent
+    expect(alert).toMatch(/^This is not valid JSON: the error is at line 2, column \d+\.$/)
+    expect(alert).not.toMatch(/file|Choose/)
+    expect(screen.getByRole('button', { name: 'Apply JSON' }).disabled).toBe(true)
+  })
+  it('an imported file keeps the file wording', () => {
+    expect(() => parseConfiguration('{not json')).toThrow('This file is not valid JSON. Choose a TraceHarness configuration export.')
+    expect(() => parseConfiguration('{not json', { typed: true })).toThrow(/^This is not valid JSON/)
+  })
+  it('finds the line and column from either engine message', () => {
+    expect(jsonErrorPlace('{\n  "a": 1,x\n}', new SyntaxError('Unexpected token x in JSON at position 11'))).toBe('line 2, column 10')
+    expect(jsonErrorPlace('', new SyntaxError('JSON.parse: expected double-quoted property name at line 3 column 5 of the JSON data'))).toBe('line 3, column 5')
+    expect(jsonErrorPlace('{', new SyntaxError('Unexpected end of JSON input'))).toBe('')
   })
 })

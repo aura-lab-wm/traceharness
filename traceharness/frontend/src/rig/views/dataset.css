@@ -2,15 +2,24 @@
    Rhythm: the questions and the condition overview are two sections (48 apart, a hairline between);
    inside the condition overview every block sits 24 apart. Only the failure-mode comparison is 2-up.
    Layout answers to the pane (unnamed container queries), never to the window. */
-.rg-ds-tags{margin-top:var(--rig-s3)}
-.rg-ds-questions{margin-top:var(--rig-s5)}
-.rg-ds-questions>.rg-ph{margin-bottom:var(--rig-s2)}
+.rg-dpad.rg-ds{padding-top:20px}
+.rg-ds>.rg-ph{margin-bottom:var(--rig-gap-in)}
+/* the line under the name: the kind as a pill, then the counts and the date as quiet text with dots between */
+.rg-ds-meta{display:flex;flex-wrap:wrap;align-items:center;gap:var(--rig-s1) 0;margin-top:2px;color:var(--rig-mute);font-size:var(--rig-fs-sm);line-height:var(--rig-lead-md)}
+.rg-ds-tags{display:inline-flex;flex-wrap:wrap;align-items:center;gap:var(--rig-s1) 0}
+.rg-ds-kind{gap:5px;margin-right:var(--rig-s2)}
+.rig .rg-ds-tags>.rg-tag:not(.rg-ds-kind){height:auto;padding:0;border:0;background:none;color:var(--rig-mute);font:var(--rig-fw-regular) var(--rig-fs-sm)/var(--rig-lead-md) var(--rig-sans)}
+.rig .rg-ds-tags>.rg-tag:not(.rg-ds-kind)+.rg-tag::before,.rg-ds-upd::before{content:"·";margin:0 6px;color:var(--rig-mute)}
+.rg-ds>.rg-ask{margin-bottom:var(--rig-s5)}
+.rg-ds-questions{margin-top:var(--rig-s2)}
+.rg-ds-questions>.rg-ph{margin-bottom:var(--rig-s1)}
 
 /* ---- condition overview */
-.rg-ds-cond{display:flex;flex-direction:column;gap:var(--rig-s5);margin-top:var(--rig-s7);padding-top:var(--rig-s6);border-top:1px solid var(--rig-line);min-width:0}
+.rg-ds-cond{display:flex;flex-direction:column;gap:20px;margin-top:var(--rig-s6);padding-top:var(--rig-s5);border-top:1px solid var(--rig-line-soft);min-width:0}
 .rg-ds-cond>.rg-ph{margin:0;align-items:flex-end}
 .rig .rg-ds-cond>.rg-ph .rg-pin{height:var(--rig-h-ctl);padding:0 var(--rig-s3)}
-.rig .rg-ds-cond>.rg-ph .rg-ph-title{font-size:var(--rig-fs-xl);line-height:var(--rig-lh-tight);letter-spacing:-.01em}
+.rig .rg-ds-cond>.rg-ph .rg-ph-title{font-size:var(--rig-fs-lg);line-height:var(--rig-lead-lg);letter-spacing:-.01em}
+.rg-ds-cond>.rg-ph .rg-ph-meta{font-size:var(--rig-fs-xs)}
 .rg-ds-cond>.rg-ph .rg-eyebrow>span{flex:1 1 0;min-width:0}
 .rg-ds-cid{font-weight:var(--rig-fw-medium)}
 .rg-ds-under{color:var(--rig-dim);font-weight:var(--rig-fw-regular)}
@@ -31,13 +40,13 @@
 
 /* ---- model table */
 .rg-ds-mtbl .rg-ds-mname{white-space:nowrap}
-.rig .rg-ds-mtbl .rg-ds-mname .rg-tlink{font:var(--rig-fw-medium) var(--rig-fs-sm)/var(--rig-lh-snug) var(--rig-mono)}
+.rig .rg-ds-mtbl .rg-ds-mname .rg-tlink{font:var(--rig-fw-medium) var(--rig-fs-sm)/var(--rig-lead-sm) var(--rig-num);font-variant-numeric:tabular-nums}
 /* the table may be narrower than its content: the coverage line wraps before the box scrolls */
 .rg-tbl.rg-ds-mtbl{min-width:0}
 .rg-ds-mtbl td.rg-num{white-space:nowrap}
 .rg-ds-mtbl td.rg-num .rg-ds-sub{white-space:normal;min-width:9rem}
 .rg-ds-mbar{margin-top:var(--rig-s1);margin-left:auto;width:5rem}
-.rg-ds-sub{margin-top:var(--rig-s0);color:var(--rig-mute);font:var(--rig-fs-xs)/var(--rig-lh-snug) var(--rig-mono);white-space:nowrap}
+.rg-ds-sub{margin-top:var(--rig-s0);color:var(--rig-mute);font:var(--rig-fs-sm)/var(--rig-lead-sm) var(--rig-sans);white-space:nowrap}
 .rg-ds-mtbl .rg-ds-mgo{width:var(--rig-hit)}
 
 /* ---- where to look next: one column, two in a wide pane */
@@ -46,12 +55,13 @@
 .rg-ds-next{display:flex;align-items:center;gap:var(--rig-s4);width:100%;min-height:var(--rig-h-row);padding:var(--rig-s3) var(--rig-s5);border:0;border-bottom:1px solid var(--rig-line);background:none;text-align:left;color:var(--rig-text)}
 .rg-ds-nextlist>.rg-ds-next:last-child{border-bottom:0}
 .rg-ds-next>svg{flex:none;color:var(--rig-mute)}
-.rg-ds-next:hover{background:var(--rig-panel2)}
+.rig .rg-ds-next:hover{background:var(--rig-row-hover)}
 .rg-ds-next:hover>svg{color:var(--rig-text)}
 .rg-ds-next:focus-visible{outline:var(--rig-focus-ring);outline-offset:calc(-1 * var(--rig-focus-offset))}
 .rg-ds-nextb{flex:1 1 auto;min-width:0;display:flex;flex-direction:column;gap:var(--rig-s2)}
 .rg-ds-nextt{display:flex;flex-wrap:wrap;align-items:center;gap:var(--rig-s1) var(--rig-s2);min-width:0}
-.rg-ds-nextt>.rg-mono{min-width:0;overflow-wrap:anywhere;font-size:var(--rig-fs-sm)}
+.rg-ds-nextt>.rg-ds-nextn{min-width:0;overflow-wrap:anywhere;font-size:var(--rig-fs-sm);font-weight:var(--rig-fw-semi);color:var(--rig-text)}
+.rg-ds-next:hover .rg-ds-nextn,.rg-ds-find:hover .k{text-decoration:underline;text-underline-offset:3px;text-decoration-thickness:1px}
 .rg-ds-next .rg-ds-sub{white-space:normal;overflow-wrap:anywhere}
 @container (max-width:640px){.rg-ds-next{padding:var(--rig-s3) var(--rig-s4)}}
 
@@ -62,7 +72,7 @@
 .rg-ds-mlist>li{display:flex;flex-wrap:wrap;align-items:center;gap:var(--rig-s2)}
 .rg-ds-modes>.rg-pstate{padding:0}
 .rg-ds-modes>.rg-skel-stack{align-self:stretch}
-.rg-ds-more{margin-top:var(--rig-s2)}
+.rg-ds-modes>.rg-ds-more{margin-top:var(--rig-s2)}
 
 .rg-ds-disc{margin:0;max-width:var(--rig-measure)}
 
@@ -73,3 +83,85 @@
   .rg-ds-cond>[data-el="model-performance-table"]{grid-column:1}
   .rg-ds-cond>[data-el="where-to-look-next"]{grid-column:2}
 }
+
+/* figures: the success rate 20px, the rest 16px */
+.rig .rg-ds-kpis .rg-fig{color:var(--rig-text);font-family:var(--rig-num);font-size:var(--rig-fs-fig-md);letter-spacing:-.02em;font-variant-numeric:tabular-nums}
+.rig .rg-ds-kpis .rg-fig.md{font-size:var(--rig-fs-fig-sm)}
+.rg-ds-kpis>.rg-kpi{padding:var(--rig-s3) var(--rig-s4)}
+.rg-ds-cond .rg-pnl{border-radius:var(--rig-r-md)}
+.rg-ds-cond .rg-pnl-h{min-height:40px;padding:0 var(--rig-s4)}
+.rg-ds-cond .rg-pnl-b{padding:var(--rig-s4)}
+.rg-ds-next{min-height:0;padding:10px var(--rig-s4)}
+
+/* ---- the Overview: one stats row, ranked findings, worst-first tasks, counted lines */
+.rg-ds-cond{gap:var(--rig-s6);margin-top:var(--rig-s4);padding-top:0;border-top:0}
+.rg-ds-stats{display:flex;flex-wrap:wrap;gap:var(--rig-s4) 0}
+.rg-ds-stat{display:flex;flex-direction:column;gap:var(--rig-s1);flex:1 1 9rem;min-width:0;padding:0 var(--rig-s5)}
+.rg-ds-stat:first-child{padding-left:0}
+.rg-ds-stat+.rg-ds-stat{border-left:1px solid var(--rig-line-soft)}
+.rg-ds-statk{display:inline-flex;align-items:center;gap:var(--rig-s1);min-width:0;max-width:100%;color:var(--rig-mute);font:var(--rig-fw-regular) var(--rig-fs-xs)/var(--rig-lead-sm) var(--rig-sans);overflow-wrap:break-word}
+.rg-ds-statv{color:var(--rig-text);font:var(--rig-fw-bold) var(--rig-fs-fig)/var(--rig-lead-xl) var(--rig-num);font-variant-numeric:tabular-nums;letter-spacing:-.3px}
+.rg-ds-statv small{margin-left:var(--rig-s1);color:var(--rig-mute);font:var(--rig-fw-regular) var(--rig-fs-xs)/var(--rig-lead-xs) var(--rig-num);letter-spacing:0;font-variant-numeric:tabular-nums}
+.rg-ds-stats-sub{color:var(--rig-mute);font:var(--rig-fw-regular) var(--rig-fs-2xs)/var(--rig-lead-xs) var(--rig-num);font-variant-numeric:tabular-nums}
+@container (max-width:640px){.rg-ds-stat{flex-basis:45%;padding:0 var(--rig-s3)}.rg-ds-stat+.rg-ds-stat{border-left:0}}
+.rg-ds-sec{display:flex;flex-direction:column;gap:var(--rig-s2);min-width:0}
+.rg-ds-h{display:flex;align-items:center;gap:var(--rig-s1);margin:0 0 var(--rig-s1);color:var(--rig-text);font:var(--rig-fw-bold) var(--rig-fs-lg)/var(--rig-lead-lg) var(--rig-sans)}
+.rg-ds-finds{display:flex;flex-direction:column;margin:0;padding:0;list-style:none}
+/* every part of a finding wraps rather than cutting: the question, its answer, the figure's scope */
+.rig .rg-ds-find{display:grid;grid-template-columns:20px minmax(8rem,12rem) minmax(10rem,1fr) minmax(0,max-content) 16px;align-items:baseline;column-gap:var(--rig-s3);width:100%;min-height:var(--rig-h-row);padding:var(--rig-s2) var(--rig-s2) var(--rig-s2) 0;border:0;border-bottom:1px solid var(--rig-line-soft);background:none;color:var(--rig-text);text-align:left;font:var(--rig-fw-regular) var(--rig-fs-sm)/var(--rig-lead-sm) var(--rig-sans)}
+.rig .rg-ds-find:hover{background:var(--rig-row-hover)}
+.rg-ds-find .n{color:var(--rig-mute);font:var(--rig-fw-regular) var(--rig-fs-xs)/var(--rig-lead-xs) var(--rig-num);text-align:right;font-variant-numeric:tabular-nums}
+.rg-ds-find .k{min-width:0;color:var(--rig-text);font-weight:var(--rig-fw-semi)}
+/* one line, so a row is as tall at every width as the row that waited for it (the whole answer is in its hint) */
+.rg-ds-find .t{min-width:0;color:var(--rig-text)}
+.rig .rg-ds-find-wait{display:block;min-height:0;padding:0}
+.rig .rg-ds-find-ph{pointer-events:none}
+.rig .rg-ds-find-ph .k .rg-skel-cap{font-weight:var(--rig-fw-regular)}
+/* the wait words take the question and answer cells together, so they are never cut short */
+.rig .rg-ds-find-ph .k:has(>.rg-skel-cap){overflow:visible;white-space:normal}
+@container (min-width:641px){.rig .rg-ds-find-ph .k:has(>.rg-skel-cap){grid-column:span 2}.rig .rg-ds-find-ph:has(.rg-skel-cap)>.t{display:none}}
+.rg-ds-find .v{color:var(--rig-text);font-size:var(--rig-fs-md);white-space:nowrap}
+/* the figure and, beside it on the same line, what it is of ("28% of 200 tasks flip"): the row keeps its height */
+.rg-ds-find .vo{display:inline-flex;align-items:baseline;justify-content:flex-end;gap:var(--rig-s2);min-width:0;max-width:22rem;text-align:right}
+.rg-ds-find .o{color:var(--rig-mute);font:var(--rig-fw-regular) var(--rig-fs-xs)/var(--rig-lead-sm) var(--rig-sans)}
+.rg-ds-find .o .sc{color:var(--rig-dim)}
+@container (max-width:640px){.rg-ds-find .vo{flex-direction:column;align-items:flex-end;gap:0}.rg-ds-find .o{font-size:var(--rig-fs-2xs);white-space:normal;text-align:right}}
+/* pass@1 here: pooled, then per task beside it; the line under the stats says why they differ */
+.rg-ds-statp{color:var(--rig-mute);font:var(--rig-fw-regular) var(--rig-fs-xs)/var(--rig-lead-sm) var(--rig-sans)}
+.rg-ds-statp b{color:var(--rig-text);font:var(--rig-fw-semi) var(--rig-fs-sm)/var(--rig-lead-xs) var(--rig-num);font-variant-numeric:tabular-nums}
+.rg-ds-pooled{max-width:72ch;margin:0;color:var(--rig-dim);font:var(--rig-fw-regular) var(--rig-fs-xs)/var(--rig-lead-sm) var(--rig-sans)}
+.rg-ds-find>svg{align-self:center;color:var(--rig-mute)}
+@container (max-width:640px){.rig .rg-ds-find{grid-template-columns:20px minmax(0,1fr) auto}.rg-ds-find .t,.rg-ds-find>svg{display:none}}
+/* a counted line is a control at rest: a caret that turns, the action word (show, why) underlined like a link;
+   a wash on hover and a darker one while pressed */
+.rg-ds-more>summary{display:inline-flex;align-items:center;gap:var(--rig-s2);min-height:var(--rig-h-sm);margin-left:calc(-1 * var(--rig-s2));padding:0 var(--rig-s2);border-radius:var(--rig-r-sm);color:var(--rig-dim);font:var(--rig-fw-regular) var(--rig-fs-sm)/var(--rig-lead-sm) var(--rig-sans);cursor:pointer;list-style:none}
+.rg-ds-more>summary::-webkit-details-marker{display:none}
+.rg-ds-more>summary::before{content:"▸";flex:none;width:1ch;font-size:var(--rig-fs-xs);line-height:var(--rig-lead-xs);text-align:center;transition:transform var(--rig-dur-1) var(--rig-ease)}
+.rg-ds-more[open]>summary::before{transform:rotate(90deg)}
+.rg-ds-act{color:var(--rig-text);font-weight:var(--rig-fw-medium);text-decoration:underline;text-decoration-thickness:1px;text-decoration-color:color-mix(in srgb,currentColor 45%,transparent);text-underline-offset:3px;transition:text-decoration-color var(--rig-dur-1) var(--rig-ease)}
+.rg-ds-more>summary:hover{color:var(--rig-text);background:var(--rig-panel2)}
+.rg-ds-more>summary:hover .rg-ds-act{text-decoration-color:currentColor}
+.rg-ds-more>summary:active{background:var(--rig-panel3)}
+.rg-ds-more[open]>summary{margin-bottom:var(--rig-s2)}
+.rg-ds-why{margin:0;padding-left:var(--rig-s5);color:var(--rig-dim);font:var(--rig-fw-regular) var(--rig-fs-xs)/var(--rig-lead-sm) var(--rig-sans)}
+.rg-ds-why>li+li{margin-top:var(--rig-s1)}
+.rg-ds-all{align-self:flex-start}
+.rg-ds-fail{padding-top:var(--rig-s2);border-top:1px solid var(--rig-line-soft)}
+.rg-ds-meta .rg-ds-upd::before{content:none}
+.rg-ph-sub .rg-ds-meta,.rg-ph-meta .rg-ds-meta{display:inline}
+.rg-ds-cond{gap:0}
+/* the condition's blocks stand a section gap apart; the notes under the stats sit at the in-section gap, and a
+   counted line under the list it counts, at the line gap */
+.rg-ds-cond>*+*{margin-top:var(--rig-gap-sec)}
+.rg-ds-cond>.rg-ds-pooled{margin-top:var(--rig-gap-in)}
+.rg-ds-cond>:is(.rg-ds-more,.rg-ds-more-wait,.rg-ds-more-none):not(.rg-ds-fail){margin-top:var(--rig-gap-line)}
+
+/* a counted line, its stand-in while the answers load, and its quiet twin when it has nothing to open are one
+   height, so nothing under them moves when the answers land and no blank is left reserved */
+.rg-ds-more-none{display:flex;align-items:center;min-height:var(--rig-h-sm);margin:0;color:var(--rig-mute);font:var(--rig-fw-regular) var(--rig-fs-sm)/var(--rig-lead-sm) var(--rig-sans)}
+.rg-ds-more-wait>.rg-ds-more>.rg-ds-more-sk{display:flex;align-items:center;min-height:var(--rig-h-sm);font:var(--rig-fw-regular) var(--rig-fs-sm)/var(--rig-lead-sm) var(--rig-sans)}
+.rg-ds-more-wait>.rg-ds-more>.rg-ds-more-sk::before{content:"\200b"}
+.rig .rg-ds-more-wait>.rg-ds-more .rg-skel{margin:0}
+.rg-ds-mtbl .rg-ds-focus{color:var(--rig-text);font-weight:var(--rig-fw-medium)}
+/* the date closes the chip line: its separator is in the words, not drawn */
+.rig .rg-ds-nums .rg-ds-upd::before{content:none}

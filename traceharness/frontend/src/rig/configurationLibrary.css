@@ -5,38 +5,38 @@
 /* ---------------------------------------------------------------- heading */
 .rg-checkpoint-heading{display:flex;flex-wrap:wrap;align-items:flex-start;justify-content:space-between;gap:var(--rig-s2) var(--rig-s4);margin-bottom:var(--rig-s5)}
 .rg-checkpoint-heading>div{flex:1 1 20rem;min-width:0}
-.rig .rg-checkpoint-heading h2{margin:0 0 var(--rig-s1);font-size:var(--rig-fs-lg);line-height:var(--rig-lh-snug);font-weight:var(--rig-fw-medium);letter-spacing:-.01em}
-.rig .rg-checkpoint-heading p,.rig .rg-checkpoint-boundary{margin:0;max-width:var(--rig-measure);color:var(--rig-dim);font-size:var(--rig-fs-sm);line-height:var(--rig-lh-body)}
-.rg-checkpoint-scope{flex:none;display:inline-flex;align-items:center;height:var(--rig-h-xs);padding:0 var(--rig-s2);border:1px solid var(--rig-line2);border-radius:var(--rig-r-sm);color:var(--rig-dim);font:var(--rig-fw-medium) var(--rig-fs-2xs)/1 var(--rig-mono);letter-spacing:.06em;text-transform:uppercase}
+.rig .rg-checkpoint-heading h2{margin:0 0 var(--rig-s1);font-size:var(--rig-fs-lg);line-height:var(--rig-lead-lg);font-weight:var(--rig-fw-bold);letter-spacing:-.01em}
+.rig .rg-checkpoint-heading p,.rig .rg-checkpoint-boundary{margin:0;max-width:var(--rig-measure);color:var(--rig-dim);font-size:var(--rig-fs-sm);line-height:var(--rig-lead-md)}
+.rg-checkpoint-scope{flex:none;display:inline-flex;align-items:center;height:var(--rig-h-xs);padding:0 var(--rig-s2);border:1px solid var(--rig-line2);border-radius:var(--rig-r-sm);color:var(--rig-dim);font:var(--rig-fw-medium) var(--rig-fs-xs)/var(--rig-lead-xs) var(--rig-sans);letter-spacing:0;}
 
 /* ---------------------------------------------------------------- create and rename: label, then the input with its button, then the count */
 .rg-checkpoint-create,.rg-checkpoint-rename{display:flex;flex-direction:column;gap:var(--rig-s1);min-width:0}
-.rg-checkpoint-label{color:var(--rig-dim);font:var(--rig-fw-medium) var(--rig-fs-xs)/var(--rig-lh-snug) var(--rig-sans)}
+.rg-checkpoint-label{color:var(--rig-dim);font:var(--rig-fw-medium) var(--rig-fs-xs)/var(--rig-lead-sm) var(--rig-sans)}
 .rg-checkpoint-control{display:flex;flex-wrap:wrap;align-items:center;gap:var(--rig-s2);min-width:0;max-width:40rem}
 .rg-checkpoint-control>.rg-inp{flex:1 1 12rem;min-width:0;width:auto}
 .rg-checkpoint-control>.rg-btn{flex:none}
-.rg-checkpoint-name-count{color:var(--rig-mute);font:var(--rig-fs-xs)/var(--rig-lh-snug) var(--rig-mono);font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
+.rg-checkpoint-name-count{color:var(--rig-mute);font:var(--rig-fs-xs)/var(--rig-lead-sm) var(--rig-num);font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
 .rg-checkpoint-name-count.invalid{color:var(--rig-red-t)}
 .rig .rg-checkpoint-boundary{margin-top:var(--rig-s3)}
-.rig .rg-checkpoint-error{margin:var(--rig-s3) 0 0;color:var(--rig-red-t);font-size:var(--rig-fs-sm);line-height:var(--rig-lh-body);overflow-wrap:anywhere}
+.rig .rg-checkpoint-error{margin:var(--rig-s3) 0 0;color:var(--rig-red-t);font-size:var(--rig-fs-sm);line-height:var(--rig-lead-md);overflow-wrap:anywhere}
 
 /* ---------------------------------------------------------------- empty state and the list */
-.rg-checkpoint-empty{display:flex;flex-direction:column;gap:var(--rig-s1);margin-top:var(--rig-s5);padding:var(--rig-s4);background:var(--rig-panel2);border-radius:var(--rig-r-md);font-size:var(--rig-fs-sm);line-height:var(--rig-lh-body)}
+.rg-checkpoint-empty{display:flex;flex-direction:column;gap:var(--rig-s1);margin-top:var(--rig-s5);padding:var(--rig-s4);background:var(--rig-panel2);border-radius:var(--rig-r-md);font-size:var(--rig-fs-sm);line-height:var(--rig-lead-md)}
 .rg-checkpoint-empty strong{font-weight:var(--rig-fw-medium)}
 .rig .rg-checkpoint-empty p{margin:0;color:var(--rig-dim)}
 .rg-checkpoint-list{list-style:none;margin:var(--rig-s5) 0 0;padding:0;border-top:1px solid var(--rig-line)}
 .rg-checkpoint-row{display:flex;flex-direction:column;gap:var(--rig-s3);margin:0;padding:var(--rig-s4) 0;border-bottom:1px solid var(--rig-line);min-width:0}
 .rg-checkpoint-row:last-child{padding-bottom:0;border-bottom:0}
 .rg-checkpoint-row-heading{display:flex;flex-wrap:wrap;align-items:baseline;justify-content:space-between;gap:var(--rig-s1) var(--rig-s3);min-width:0}
-.rig .rg-checkpoint-row-heading h3{margin:0;min-width:0;font-size:var(--rig-fs-md);line-height:var(--rig-lh-snug);font-weight:var(--rig-fw-medium);overflow-wrap:anywhere}
-.rig .rg-checkpoint-row.is-compared .rg-checkpoint-row-heading h3{color:var(--rig-sel-t)}
+.rig .rg-checkpoint-row-heading h3{margin:0;min-width:0;font-size:var(--rig-fs-md);line-height:var(--rig-lead-md);font-weight:var(--rig-fw-medium);overflow-wrap:anywhere}
+.rig .rg-checkpoint-row.is-compared .rg-checkpoint-row-heading h3{color:var(--rig-text)}
 /* the compared row is marked by a 2px rule on the card's own edge, so its columns stay aligned */
 .rg-checkpoint-row.is-compared{box-shadow:inset 2px 0 0 var(--rig-sel);margin-left:calc(-1 * var(--rig-s5));padding-left:var(--rig-s5)}
-.rg-checkpoint-time{color:var(--rig-mute);font:var(--rig-fs-xs)/var(--rig-lh-snug) var(--rig-mono);font-variant-numeric:tabular-nums}
+.rg-checkpoint-time{color:var(--rig-mute);font:var(--rig-fs-xs)/var(--rig-lead-sm) var(--rig-num);font-variant-numeric:tabular-nums}
 .rg-checkpoint-identity{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.4fr) minmax(0,1.4fr);gap:var(--rig-s3) var(--rig-s4);margin:0}
 .rg-checkpoint-identity>div{display:flex;flex-direction:column;gap:var(--rig-s1);min-width:0}
-.rg-checkpoint-identity dt{margin:0;color:var(--rig-mute);font:var(--rig-fw-medium) var(--rig-fs-2xs)/var(--rig-lh-tight) var(--rig-mono);letter-spacing:.06em;text-transform:uppercase}
-.rg-checkpoint-identity dd{margin:0;font:var(--rig-fs-xs)/var(--rig-lh-snug) var(--rig-mono);overflow-wrap:anywhere}
+.rg-checkpoint-identity dt{margin:0;color:var(--rig-mute);font:var(--rig-fw-medium) var(--rig-fs-xs)/var(--rig-lead-xs) var(--rig-sans);letter-spacing:0;}
+.rg-checkpoint-identity dd{margin:0;font:var(--rig-fs-xs)/var(--rig-lead-sm) var(--rig-mono);overflow-wrap:anywhere}
 .rg-checkpoint-actions{display:flex;flex-wrap:wrap;align-items:center;gap:var(--rig-s2);min-width:0}
 .rg-checkpoint-delete{margin-left:auto}
 .rig .rg-checkpoint-delete:hover:not(:disabled){color:var(--rig-red-t)}
@@ -44,25 +44,25 @@
 
 /* ---------------------------------------------------------------- comparison */
 .rg-checkpoint-comparison{display:flex;flex-direction:column;gap:var(--rig-s4);margin-top:var(--rig-s5);padding-top:var(--rig-s5);border-top:1px solid var(--rig-line);min-width:0}
-.rig .rg-checkpoint-comparison-heading h3{margin:0;font-size:var(--rig-fs-md);line-height:var(--rig-lh-snug);font-weight:var(--rig-fw-medium);overflow-wrap:anywhere}
-.rig .rg-checkpoint-comparison-heading p{margin:var(--rig-s1) 0 0;color:var(--rig-mute);font:var(--rig-fs-xs)/var(--rig-lh-snug) var(--rig-mono)}
-.rig .rg-checkpoint-match{margin:0;color:var(--rig-dim);font-size:var(--rig-fs-sm);line-height:var(--rig-lh-body)}
+.rig .rg-checkpoint-comparison-heading h3{margin:0;font-size:var(--rig-fs-md);line-height:var(--rig-lead-md);font-weight:var(--rig-fw-medium);overflow-wrap:anywhere}
+.rig .rg-checkpoint-comparison-heading p{margin:var(--rig-s1) 0 0;color:var(--rig-mute);font:var(--rig-fs-xs)/var(--rig-lead-sm) var(--rig-num);font-variant-numeric:tabular-nums}
+.rig .rg-checkpoint-match{margin:0;color:var(--rig-dim);font-size:var(--rig-fs-sm);line-height:var(--rig-lead-md)}
 .rg-checkpoint-diff{display:grid;gap:var(--rig-s4);margin:0}
 .rg-checkpoint-change{min-width:0}
-.rg-checkpoint-change>dt{margin:0 0 var(--rig-s2);font-size:var(--rig-fs-sm);line-height:var(--rig-lh-snug);font-weight:var(--rig-fw-medium)}
+.rg-checkpoint-change>dt{margin:0 0 var(--rig-s2);font-size:var(--rig-fs-sm);line-height:var(--rig-lead-sm);font-weight:var(--rig-fw-medium)}
 .rg-checkpoint-change>dd{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:var(--rig-s2);margin:0}
 .rg-checkpoint-change>dd>div{min-width:0;padding:var(--rig-s3);background:var(--rig-panel2);border-radius:var(--rig-r-md)}
-.rg-checkpoint-change>dd>div>span{color:var(--rig-mute);font:var(--rig-fw-medium) var(--rig-fs-2xs)/var(--rig-lh-tight) var(--rig-mono);letter-spacing:.06em;text-transform:uppercase}
-.rg-checkpoint-change pre{margin:var(--rig-s1) 0 0;max-height:calc(3 * var(--rig-s8));overflow:auto;overscroll-behavior:contain;white-space:pre-wrap;overflow-wrap:anywhere;font:var(--rig-fs-xs)/var(--rig-lh-code) var(--rig-mono)}
+.rg-checkpoint-change>dd>div>span{color:var(--rig-mute);font:var(--rig-fw-medium) var(--rig-fs-xs)/var(--rig-lead-xs) var(--rig-sans);letter-spacing:0;}
+.rg-checkpoint-change pre{margin:var(--rig-s1) 0 0;max-height:calc(3 * var(--rig-s8));overflow:auto;overscroll-behavior:contain;white-space:pre-wrap;overflow-wrap:anywhere;font:var(--rig-fs-xs)/var(--rig-lead-md) var(--rig-mono)}
 .rg-checkpoint-prompt-diff{display:flex;flex-direction:column;gap:var(--rig-s2);min-width:0}
-.rig .rg-checkpoint-prompt-diff h4{margin:0;font-size:var(--rig-fs-sm);line-height:var(--rig-lh-snug);font-weight:var(--rig-fw-medium)}
-.rig .rg-checkpoint-prompt-diff>p{display:flex;flex-wrap:wrap;gap:var(--rig-s1) var(--rig-s4);margin:0;color:var(--rig-dim);font-size:var(--rig-fs-xs);line-height:var(--rig-lh-snug)}
-.rg-checkpoint-prompt-diff>pre{margin:0;padding:var(--rig-s2);max-height:calc(5 * var(--rig-s8));overflow:auto;overscroll-behavior:contain;background:var(--rig-panel2);border:1px solid var(--rig-line);border-radius:var(--rig-r-md);white-space:pre-wrap;overflow-wrap:anywhere;font:var(--rig-fs-xs)/var(--rig-lh-code) var(--rig-mono)}
-.rg-checkpoint-diff-line{display:block;min-height:calc(var(--rig-fs-xs) * var(--rig-lh-code));padding:0 var(--rig-s2);border-left:2px solid transparent}
-.rg-checkpoint-diff-line.added{background:var(--rig-sel-bg);color:var(--rig-text);border-left-color:var(--rig-sel)}
+.rig .rg-checkpoint-prompt-diff h4{margin:0;font-size:var(--rig-fs-sm);line-height:var(--rig-lead-sm);font-weight:var(--rig-fw-medium)}
+.rig .rg-checkpoint-prompt-diff>p{display:flex;flex-wrap:wrap;gap:var(--rig-s1) var(--rig-s4);margin:0;color:var(--rig-dim);font-size:var(--rig-fs-xs);line-height:var(--rig-lead-sm)}
+.rg-checkpoint-prompt-diff>pre{margin:0;padding:var(--rig-s2);max-height:calc(5 * var(--rig-s8));overflow:auto;overscroll-behavior:contain;background:var(--rig-panel2);border:1px solid var(--rig-line);border-radius:var(--rig-r-md);white-space:pre-wrap;overflow-wrap:anywhere;font:var(--rig-fs-xs)/var(--rig-lead-md) var(--rig-mono)}
+.rg-checkpoint-diff-line{display:block;min-height:var(--rig-lead-md);padding:0 var(--rig-s2);border-left:2px solid transparent}
+.rg-checkpoint-diff-line.added{background:var(--rig-panel3);color:var(--rig-text);border-left-color:var(--rig-line3)}
 .rg-checkpoint-diff-line.removed{background:color-mix(in srgb,var(--rig-red-t) 7%,transparent);color:var(--rig-text);border-left-color:var(--rig-red-t)}
 .rg-checkpoint-diff-line.context{color:var(--rig-dim)}
-.rig .rg-checkpoint-prompt-diff>.rg-checkpoint-truncated{margin:0;color:var(--rig-dim);font-size:var(--rig-fs-xs);line-height:var(--rig-lh-snug)}
+.rig .rg-checkpoint-prompt-diff>.rg-checkpoint-truncated{margin:0;color:var(--rig-dim);font-size:var(--rig-fs-xs);line-height:var(--rig-lead-sm)}
 .rg-checkpoint-sr{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
 
 /* ---------------------------------------------------------------- narrow containers */

@@ -14,15 +14,17 @@
 import { useMemo, useState } from 'react'
 import { can } from '../../environment'
 import { Unavailable } from '../unavailable'
-import { useApi } from '../data'
+import { useApi, fmt } from '../data'
 import { downloadText } from '../caseFile'
-import { ErrorState, Loading, PageHeader, Seg, TableScroll, Tag, toast } from '../ui'
+import { ErrorState, Go, Loading, PageHeader, Seg, TableScroll, Tag, toast } from '../ui'
 import './recommend.css'
+import { NumberField } from '../NumberField'
 
 const cx = (...a) => a.filter(Boolean).join(' ')
 const CUTOFF = /^\d{4}-(0[1-9]|1[0-2])$/
 const DEFAULTS = { goal: 'run', model: '', cutoff: '', budget: '', hours: '', languages: 'python', where: 'laptop', comparePublic: false, licenseRequired: false, detect: '10' }
 const HUB = /^https:\/\/huggingface\.co\//
+const num = (n) => fmt.int(n)
 
 /** The form as a validated query string, or { error }. Empty optional fields are left out. */
 export function buildQuery(f) {
@@ -87,15 +89,15 @@ function Card({ label, tone, card, el }) {
       <h2 className="rg-rec-title">{card.title}</h2>
       <div className="rg-rec-id rg-mono">{card.id}{card.url && HUB.test(card.url) && <> · <a href={card.url} target="_blank" rel="noopener noreferrer">Hugging Face</a></>}</div>
       <p className="rg-rec-sub" data-el="rec-subset">
-        Subset: <b>{sub.rows}</b> rows x <b>{sub.repeats}</b> repeat{sub.repeats === 1 ? '' : 's'}
-        {sub.of_rows != null ? ` of ${sub.of_rows}` : ' (dataset size unknown)'}
+        Subset: <b>{num(sub.rows)}</b>{sub.of_rows != null ? ` of ${num(sub.of_rows)} rows` : ' rows (dataset size unknown)'} x <b>{sub.repeats}</b> run{sub.repeats === 1 ? '' : 's'} per task
         {sub.demoted && <> <Tag tone="amb">smaller than the sizing asks for</Tag></>}
       </p>
       <Estimate est={card.estimate} />
       {card.command && (
         <p className="rg-rec-import" data-el="rec-import">
           Import it: <code className="rg-mono rg-rec-cmd">{card.command}</code>
-          {typeof card.sources_view === 'string' && card.sources_view.startsWith('#/rig/') && <> · <a href={card.sources_view}>Open the Sources view</a></>}
+          {/* a tab like any other link, beside the open ones: a raw href would replace every tab, the dock and the oracle */}
+          {typeof card.sources_view === 'string' && card.sources_view.startsWith('#/rig/') && <> · <Go link spec={card.sources_view.slice(6).split('?')[0] || 'sources'} className="rg-elink">Open Add data</Go></>}
           {card.import_note && <span className="rg-rec-calc" data-el="rec-import-note">{card.import_note}</span>}
         </p>
       )}
@@ -118,7 +120,7 @@ function Form({ value, onSubmit, error, busy }) {
   const set = (k) => (e) => setF((s) => ({ ...s, [k]: e.target.type === 'checkbox' ? e.target.checked : e.target.value }))
   return (
     <form className="rg-rec-form" data-el="rec-form" onSubmit={(e) => { e.preventDefault(); onSubmit(f) }} aria-label="Benchmark requirements">
-      <div className="rg-field rg-rec-goal">
+      <div className="rg-field rg-rec-goal" data-tour="rec-goal">
         <span className="rg-field-l">Goal</span>
         <Seg label="Goal" value={f.goal} onChange={(v) => setF((s) => ({ ...s, goal: v }))}
           options={[['run', 'Run tasks (what to run)'], ['analyse', 'Analyse recorded runs (what to analyse)']]} />
@@ -127,16 +129,16 @@ function Form({ value, onSubmit, error, busy }) {
         <input className="rg-inp" value={f.model} onChange={set('model')} spellCheck={false} autoComplete="off" placeholder="e.g. openai/gpt-5.6-luna" /></label>
       <label className="rg-field"><span className="rg-field-l">Model cutoff (YYYY-MM)</span>
         <input className="rg-inp" value={f.cutoff} onChange={set('cutoff')} spellCheck={false} autoComplete="off" placeholder="e.g. 2026-03" /></label>
-      <label className="rg-field"><span className="rg-field-l">Budget (US dollars)</span>
-        <input className="rg-inp" inputMode="decimal" value={f.budget} onChange={set('budget')} placeholder="e.g. 50" /></label>
-      <label className="rg-field"><span className="rg-field-l">Hours available</span>
-        <input className="rg-inp" inputMode="decimal" value={f.hours} onChange={set('hours')} placeholder="e.g. 4" /></label>
+      <NumberField className="rg-field" label={<span className="rg-field-l">Budget (US dollars)</span>} name="Budget (US dollars)" step="any" min={0} nudge={10} allowEmpty hint="optional · e.g. 50" noun="USD"
+        value={f.budget} onChange={(value) => setF((s) => ({ ...s, budget: String(value) }))} />
+      <NumberField className="rg-field" label={<span className="rg-field-l">Hours available</span>} name="Hours available" step="any" min={0} allowEmpty hint="optional · e.g. 4" noun="hours"
+        value={f.hours} onChange={(value) => setF((s) => ({ ...s, hours: String(value) }))} />
       <label className="rg-field"><span className="rg-field-l">Languages (comma separated)</span>
         <input className="rg-inp" value={f.languages} onChange={set('languages')} spellCheck={false} placeholder="python" /></label>
       <label className="rg-field"><span className="rg-field-l">Where it runs</span>
         <select className="rg-selc" value={f.where} onChange={set('where')}><option value="laptop">Laptop</option><option value="runner">Runner</option></select></label>
-      <label className="rg-field"><span className="rg-field-l">Difference to detect (points)</span>
-        <input className="rg-inp" inputMode="decimal" value={f.detect} onChange={set('detect')} /></label>
+      <NumberField className="rg-field" label={<span className="rg-field-l">Difference to detect (points)</span>} name="Difference to detect (points)" step="any" min={0} max={100} nudge={1} noun="points"
+        value={f.detect} onChange={(value) => setF((s) => ({ ...s, detect: String(value) }))} />
       <div className="rg-rec-checks">
         <label className="rg-rec-check"><input type="checkbox" checked={f.comparePublic} onChange={set('comparePublic')} /> Compare with public results</label>
         <label className="rg-rec-check"><input type="checkbox" checked={f.licenseRequired} onChange={set('licenseRequired')} /> Require a stated license</label>
@@ -166,7 +168,7 @@ function Table({ result }) {
                 <td>{c.kind}</td>
                 <td className="rg-num">{c.excluded ? 'excluded' : c.score}</td>
                 <td>{c.rules.length === 0 ? <span className="rg-rec-sm">none</span> : c.rules.map((r) => (
-                  <span key={r.rule} className={cx('rg-rec-chip', r.weight > 0 ? 'pos' : r.weight < 0 ? 'neg' : 'zero')} title={r.text}>{r.rule} {r.weight > 0 ? `+${r.weight}` : r.weight}</span>))}</td>
+                  <span key={r.rule} className={cx('rg-rec-chip', r.weight > 0 ? 'pos' : r.weight < 0 ? 'neg' : 'zero')} data-hint={r.text}>{r.rule} {r.weight > 0 ? `+${r.weight}` : r.weight}</span>))}</td>
               </tr>
             ))}
           </tbody>
@@ -190,9 +192,9 @@ function Result({ data }) {
       </div>
       <section className="rg-rec-sec" data-el="rec-sizing">
         <h2 className="rg-rec-h2">Sizing</h2>
-        <p className="rg-rec-lead">To detect {adv.detect_points} points between two conditions: <b>{adv.tasks}</b> tasks x <b>{adv.repeats}</b> repeat{adv.repeats === 1 ? '' : 's'}.</p>
+        <p className="rg-rec-lead">To detect {adv.detect_points} points between two conditions: <b>{adv.tasks}</b> tasks x <b>{adv.repeats}</b> run{adv.repeats === 1 ? '' : 's'} per task.</p>
         <p className="rg-rec-calc rg-mono">{adv.arithmetic}</p>
-        <p className="rg-rec-sm">Baseline {adv.baseline_pass_rate.toFixed(2)}: {adv.baseline_basis}. Repeats: {adv.repeats_reason}.</p>
+        <p className="rg-rec-sm">Baseline {adv.baseline_pass_rate.toFixed(2)}: {adv.baseline_basis}. Runs per task: {adv.repeats_reason}.</p>
       </section>
       <Table result={data} />
       <section className="rg-rec-sec" data-el="rec-method">
@@ -215,19 +217,23 @@ function Recommend() {
   const [query, setQuery] = useState(initial)
   const [error, setError] = useState('')
   const res = useApi(can('run.local') ? `/recommend?${query}` : null)
+  const [same, setSame] = useState(false)
   const submit = (f) => {
     const q = buildQuery(f)
     if (q.error) { setError(q.error); return }
+    // the same request again: the answer below is already its answer, and it says so
+    setSame(q.query === query)
     setError(''); setForm(f); setQuery(q.query)
   }
   return (
     <div className="rg-dpad rg-rec" data-el="recommend">
-      <PageHeader eyebrow="Tools" title="Which benchmark?"
+      <PageHeader title="Which benchmark?"
         lede="One pick, one runner-up and one to avoid, chosen by a visible rule table from the Hugging Face catalog and this lab's own recorded runs." />
       <Unavailable capability="run.local" what="The benchmark recommender" />
       {can('run.local') && (
         <>
           <Form value={form} onSubmit={submit} error={error} busy={res.loading} />
+          {same && res.data && !res.loading && <p className="rg-small rg-mute" role="status" data-el="rec-same">Same request: showing the last answer.</p>}
           {res.loading && !res.data && <Loading label="Choosing…" />}
           {res.error && <ErrorState error={res.error} onRetry={res.reload} what="The recommendation" />}
           {res.data && <Result data={res.data} />}
@@ -238,6 +244,6 @@ function Recommend() {
 }
 
 export const views = {
-  recommend: { tag: 'rec', title: () => 'Which benchmark?', render: Recommend, crumbs: () => [['which benchmark?']], outsideGuided: () => true,
+  recommend: { tag: 'rec', title: () => 'Which benchmark?', render: Recommend, crumbs: () => [['Add data', 'sources'], ['Which benchmark?']], outsideGuided: () => true,
     palette: () => [{ title: 'Which benchmark?', detail: 'a pick, a runner-up and a "not this" from a visible rule table', spec: 'recommend', keywords: 'recommend choose benchmark dataset swe-bench' }] },
 }

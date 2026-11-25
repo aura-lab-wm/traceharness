@@ -49,7 +49,7 @@ function ProfileLine({ wb }) {
   return <p className="rg-native-profile-line">
     <span>Profile <b className="rg-native-profile-name">{wb.name || 'unnamed'}</b></span>
     <button type="button" className="rg-btn ghost" disabled={wb.disabled} aria-label={wb.name ? 'Rename profile' : 'Name profile'} onClick={() => { setValue(wb.name); setEditing(true) }}>{wb.name ? 'Rename' : 'Name'}</button>
-    {wb.digest && <span className="rg-native-digest">digest <code title={'Canonical profile SHA-256: ' + wb.digest}>{shortDigest(wb.digest)}</code></span>}
+    {wb.digest && <span className="rg-native-digest">digest <code data-hint={'Canonical profile SHA-256: ' + wb.digest}>{shortDigest(wb.digest)}</code></span>}
     {wb.digest && <button type="button" className="rg-btn ghost" aria-label="Copy profile digest" onClick={wb.copyDigest}>Copy</button>}
   </p>
 }
@@ -118,7 +118,7 @@ function BulkBar({ wb }) {
   const empty = !targetIds.length
   return <div className="rg-native-bulk" role="group" aria-label="Bulk actions">
     <label className="rg-native-scope-field"><span className="sr-only">Action scope</span>
-      <select className="rg-selc" disabled={locked} value={ui.scope} aria-describedby={wb.scopeHintId} title="Filters do not change the “All” scope." onChange={(event) => wb.patch({ scope: event.target.value })}>
+      <select className="rg-selc" disabled={locked} value={ui.scope} aria-describedby={wb.scopeHintId} data-hint="Filters do not change the “All” scope." onChange={(event) => wb.patch({ scope: event.target.value })}>
         <option value="selected">Selected rows</option><option value="filtered">Filtered prompts</option><option value="all">All patchable prompts</option></select></label>
     <span className="rg-native-bulk-count" id={wb.scopeHintId}>{formatCount(targetIds.length)} in scope<span className="sr-only">: {plural(targetIds.length, 'patchable prompt')}. Filters do not change the “All” scope.</span></span>
     <span className="rg-native-bulk-actions">
@@ -216,7 +216,7 @@ function Workbench({ wb, runtime, response, openHelp }) {
   return <div className="rg-native-body" onKeyDown={onKeyDown}>
     <div className="rg-native-application" data-applied={wb.active ? 'true' : 'false'}>
       <label className="rg-native-enable"><input type="checkbox" checked={wb.active} disabled={wb.disabled} onChange={(event) => wb.toggleEnabled(event.target.checked)} />Use this native prompt profile for the run</label>
-      <span className="rg-native-mode" title={wb.active ? 'The profile is included in this configuration. Changes need a fresh runner review before execution.' : 'Editing alone does not apply the profile. Check the box to include it in your next run.'}>
+      <span className="rg-native-mode" data-hint={wb.active ? 'The profile is included in this configuration. Changes need a fresh runner review before execution.' : 'Editing alone does not apply the profile. Check the box to include it in your next run.'}>
         {wb.active ? 'Included in next review' : 'Draft only'}</span>
       <ProfileLine wb={wb} />
     </div>
@@ -237,8 +237,8 @@ function Workbench({ wb, runtime, response, openHelp }) {
           {views.map(([value, word, count]) => <option key={value} value={value}>{word}{count ? ' · ' + formatCount(count) : ''}</option>)}
         </select></label>
       <span className="rg-native-history">
-        <button type="button" className="rg-btn" aria-label="Undo prompt change" title={wb.canUndo ? 'Undo: ' + wb.history.past[wb.history.past.length - 1].label + ' (Ctrl/⌘+Z)' : 'Nothing to undo'} disabled={wb.disabled || !wb.canUndo} onClick={wb.undo}>Undo</button>
-        <button type="button" className="rg-btn" aria-label="Redo prompt change" title={wb.canRedo ? 'Redo: ' + wb.history.future[wb.history.future.length - 1].label + ' (Shift+Ctrl/⌘+Z)' : 'Nothing to redo'} disabled={wb.disabled || !wb.canRedo} onClick={wb.redo}>Redo</button>
+        <button type="button" className="rg-btn" aria-label="Undo prompt change" data-hint={wb.canUndo ? 'Undo: ' + wb.history.past[wb.history.past.length - 1].label + ' (Ctrl/⌘+Z)' : 'Nothing to undo'} disabled={wb.disabled || !wb.canUndo} onClick={wb.undo}>Undo</button>
+        <button type="button" className="rg-btn" aria-label="Redo prompt change" data-hint={wb.canRedo ? 'Redo: ' + wb.history.future[wb.history.future.length - 1].label + ' (Shift+Ctrl/⌘+Z)' : 'Nothing to redo'} disabled={wb.disabled || !wb.canRedo} onClick={wb.redo}>Redo</button>
       </span>
     </div>
     <div className="rg-native-notices">
@@ -278,14 +278,14 @@ export function NativePrompts({ runtime, response, loading, error, draft, disabl
     <header className="rg-native-heading">
       <div className="rg-native-title">
         {inventory && !loading && !error ? <p className="rg-native-identity"><span className="sr-only">Native instructions: </span><b>{runtime.name} · {inventory.runtime_version}</b>
-          <span>inventory <code title={inventory.inventory_sha256}>{shortDigest(inventory.inventory_sha256)}</code></span>
+          <span>inventory <code data-hint={inventory.inventory_sha256}>{shortDigest(inventory.inventory_sha256)}</code></span>
           <span>{runtime.native_prompts?.mode === 'overlay' ? 'Instruction overlay only' : 'Native fragments'} · {plural(inventory.blocks.length, 'fragment')}</span></p>
           : <span className="rg-lbl">Native instructions</span>}
         <h2>Native prompt inventory</h2></div>
       <span className="rg-native-heading-actions">
         <button type="button" className="rg-btn" disabled={loading || disabled} onClick={onRefresh}>Refresh inventory</button>
         {ready && <button type="button" className="rg-btn rg-native-focus-btn" ref={wb.focusButtonRef} aria-pressed={ui.focusMode} onClick={() => wb.setFocusMode(!ui.focusMode)}>{ui.focusMode ? 'Exit focus' : 'Focus'}</button>}
-        {ready && <button type="button" className="rg-btn" aria-label="Keyboard shortcuts" title="Keyboard shortcuts ( ? )" onClick={openHelp}>?</button>}
+        {ready && <button type="button" className="rg-btn" aria-label="Keyboard shortcuts" data-hint="Keyboard shortcuts ( ? )" onClick={openHelp}>?</button>}
       </span>
     </header>
     {loading ? <PanelState kind="loading" title="Reading the exact runtime inventory…"><Skeleton lines={3} label="Loading prompt rows" /></PanelState>

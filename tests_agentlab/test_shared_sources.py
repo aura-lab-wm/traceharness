@@ -134,9 +134,9 @@ class TestBundleSources(unittest.TestCase):
 
     def test_tokens_capture_sources_and_harnesses_come_from_their_sources(self):
         tokens = self.bundle["tokens"]
-        self.assertEqual(tokens["dark"]["bg"], "#000000")
-        self.assertEqual(tokens["light"]["bg"], "#fafafa")
-        self.assertEqual(tokens["console"]["cx-mute"], "#828288")
+        self.assertEqual(tokens["dark"]["bg"], "#121414")
+        self.assertEqual(tokens["light"]["bg"], "#ededea")
+        self.assertEqual(tokens["console"]["cx-k-e"], "#a9cbe6")
         self.assertFalse([k for k in (*tokens["dark"], *tokens["light"]) if k.startswith("cx-")])
         from traceharness.capture.sources import SOURCES
         self.assertEqual(self.bundle["capture_sources"], sorted(SOURCES))

@@ -7,6 +7,8 @@ __pycache__/
 traceharness/frontend/node_modules/
 traceharness/data/cache/
 data/.traceharness_index.sqlite
+# the Tokens page's profiles, kept next to each dataset's index (backend/token_cache.py)
+data/runs/*/.token_profiles.json.gz
 .DS_Store
 .env
 
@@ -17,3 +19,4 @@ data/harness-library/
 # and the log of agent calls the console shows in its Agent panel
 data/console.json
 data/agent/
+traceharness/frontend/private-words.txt

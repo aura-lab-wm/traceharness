@@ -1,0 +1,42 @@
+/* Rig · inspector.css — AnalysisLayout, the inspector (column, slide-over, sheet) and the "i" help mark. */
+.rg-al{min-width:0}
+.rg-al.rg-al-col{display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:var(--rig-s6);align-items:start}
+.rg-al-doc{min-width:0}
+/* an open slide-over covers the right of the document: scrolling into view keeps clear of it */
+.rg-doc:has(.rg-al[data-insp="slide-over"]){scroll-padding-right:360px}
+.rg-al[data-insp="slide-over"] .rg-scrollx-v{scroll-padding-right:340px}
+.rg-pane{position:relative}
+
+.rg-insp{display:flex;flex-direction:column;min-width:0;min-height:0;background:var(--rig-panel);color:var(--rig-text)}
+.rg-insp:focus{outline:none}
+.rg-insp-column{position:sticky;top:var(--rig-s4);max-height:calc(100dvh - 120px);border:1px solid var(--rig-line);border-radius:var(--rig-r-md)}
+.rg-insp-slide-over{position:absolute;top:var(--rig-head-h);right:0;bottom:0;z-index:var(--rig-z-sticky);width:min(360px,100%);border-left:1px solid var(--rig-line2);box-shadow:var(--rig-shadow)}
+.rg-insp-sheet{position:absolute;left:0;right:0;bottom:0;z-index:var(--rig-z-sticky);max-height:60%;border-top:1px solid var(--rig-line2);border-radius:var(--rig-r-md) var(--rig-r-md) 0 0;box-shadow:var(--rig-shadow)}
+.rg-insp-h{display:flex;align-items:flex-start;gap:var(--rig-s2);flex:none;padding:var(--rig-s3) var(--rig-s3) var(--rig-s2) var(--rig-s4);border-bottom:1px solid var(--rig-line-soft)}
+.rg-insp-ht{flex:1;min-width:0}
+.rg-insp-t{margin:0;font:var(--rig-fw-medium) var(--rig-fs-md)/var(--rig-lead-md) var(--rig-mono);overflow-wrap:anywhere}
+.rg-insp-s{margin:2px 0 0;color:var(--rig-mute);font:var(--rig-fw-regular) var(--rig-fs-xs)/var(--rig-lead-sm) var(--rig-sans)}
+.rg-insp-b{flex:1;min-height:0;overflow:auto;overscroll-behavior:contain;padding:var(--rig-s3) var(--rig-s4) var(--rig-s5)}
+.rg-insp-g+.rg-insp-g{margin-top:var(--rig-s4);padding-top:var(--rig-s4);border-top:1px solid var(--rig-line-soft)}
+.rg-insp-gt{margin:0 0 var(--rig-s2);color:var(--rig-dim);font:var(--rig-fw-medium) var(--rig-fs-xs)/var(--rig-lead-sm) var(--rig-sans)}
+.rg-insp-r{display:grid;grid-template-columns:minmax(0,1fr) auto;column-gap:var(--rig-s3);align-items:baseline;padding:var(--rig-s1) 0}
+.rg-insp-k{color:var(--rig-mute);font:var(--rig-fw-regular) var(--rig-fs-xs)/var(--rig-lead-sm) var(--rig-sans)}
+.rg-insp-v{color:var(--rig-text);font:var(--rig-fw-medium) var(--rig-fs-sm)/var(--rig-lead-sm) var(--rig-num);text-align:right;font-variant-numeric:tabular-nums}
+.rg-insp-sub{grid-column:1/-1;color:var(--rig-mute);font:var(--rig-fw-regular) var(--rig-fs-2xs)/var(--rig-lead-xs) var(--rig-sans)}
+.rg-insp-big{display:flex;align-items:baseline;gap:var(--rig-s2);margin:0 0 var(--rig-s1);font:var(--rig-fw-medium) var(--rig-fs-fig)/var(--rig-lead-xl) var(--rig-num);letter-spacing:-.5px;font-variant-numeric:tabular-nums}
+.rg-insp-big small{color:var(--rig-mute);font:var(--rig-fw-regular) var(--rig-fs-sm)/var(--rig-lead-xs) var(--rig-num);letter-spacing:0;font-variant-numeric:tabular-nums}
+.rg-insp-acts{display:flex;flex-wrap:wrap;gap:var(--rig-s2);margin-top:var(--rig-s4)}
+.rg-insp-list{display:flex;flex-direction:column;gap:2px;margin:0;padding:0;list-style:none}
+.rg-insp-p{margin:var(--rig-s2) 0 0;color:var(--rig-dim);font:var(--rig-fw-regular) var(--rig-fs-xs)/var(--rig-lead-sm) var(--rig-sans)}
+
+/* the "i": a small round button; its words open in a hover card under it (HoverCard.jsx) */
+.rg-info{display:inline-flex;vertical-align:middle}
+.rig .rg-info-b{display:inline-grid;place-items:center;flex:none;width:20px;height:20px;padding:0;border:0;border-radius:var(--rig-r-full);background:none;color:var(--rig-mute);cursor:pointer;font:inherit}
+.rig .rg-info-b:hover,.rig .rg-info-b[aria-expanded="true"]{background:var(--rig-panel2);color:var(--rig-text)}
+.rg-info-b .rg-ico{width:14px;height:14px}
+.rg-info>.rg-hc-card{width:min(22rem,calc(100vw - 16px));padding:var(--rig-s3);color:var(--rig-dim)}
+.rg-info-pop p{margin:0}
+.rg-info-pop p+p{margin-top:var(--rig-s2)}
+.rig .rg-insp-pick{display:grid;grid-template-columns:minmax(0,1fr) auto;column-gap:var(--rig-s3);width:100%;padding:var(--rig-s2);border:0;border-radius:var(--rig-r-sm);background:none;color:var(--rig-text);text-align:left;font:var(--rig-fw-regular) var(--rig-fs-xs)/var(--rig-lead-sm) var(--rig-sans)}
+.rig .rg-insp-pick:hover{background:var(--rig-panel2)}
+.rg-insp-cfg{margin-top:var(--rig-s4)}

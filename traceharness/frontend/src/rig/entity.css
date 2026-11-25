@@ -1,0 +1,5 @@
+/* Rig · entity.css — the mark of a model (filled dot) and of a harness (ring), in its tone (EntityDot.jsx). Tokens only. */
+.rig .rg-ent{display:inline-block;flex:none;width:.5rem;height:.5rem;margin:0 .32em 0 .06em;border-radius:var(--rig-r-full);background:var(--rig-ent);vertical-align:.04em}
+.rig .rg-ent.h{background:transparent;box-shadow:inset 0 0 0 2px var(--rig-ent)}
+/* a name with its mark: the mark never sits at the end of a line apart from its name */
+.rig .rg-ent-n{white-space:nowrap}

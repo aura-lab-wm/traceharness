@@ -2,7 +2,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { cleanup, fireEvent, render, screen, within } from '@testing-library/react'
 import { useState } from 'react'
-import { ActionBar, Card, Field, Id, Kpi, Kpis, Menu, Modal, PageHeader, PanelState, ScrollX, Skeleton, Split, TableScroll, Tabs, Tag, Toolbar } from './ui.jsx'
+import { ActionBar, Callout, Card, Field, FilterChips, Id, Kpi, KpiStat, KpiStrip, Kpis, Menu, Modal, PageHeader, PanelState, ScrollX, Skeleton, Split, TableScroll, Tabs, Tag, Toolbar } from './ui.jsx'
 import { RigContext } from './context'
 
 afterEach(() => { cleanup(); vi.restoreAllMocks() })
@@ -183,12 +183,12 @@ describe('Kpis, Id, PanelState, Skeleton and Field', () => {
     expect(tiles.map((t) => t.querySelector('.rg-kpi-v').textContent)).toEqual(['95.3%', '—', '0'])
     expect(tiles[0].querySelector('.rg-kpi-h').textContent).toBe('64 attempts')
   })
-  it('Id keeps the whole value in the title and in the text while showing head…tail', () => {
+  it('Id keeps the whole value in its hover card and in the text while showing head…tail', () => {
     const long = 'sha256:d26b2424437dabeeca94d7900b37d2df4410da0c'
     const { container } = render(<><Id value="c95aff" /><Id value={long} head={12} tail={6} /></>)
     const [short, cut] = container.querySelectorAll('.rg-id')
     expect(short.textContent).toBe('c95aff'); expect(short.querySelector('.rg-id-cut')).toBeNull()
-    expect(cut.title).toBe(long)
+    expect(cut.getAttribute('data-hint')).toBe(long)
     expect(cut.textContent).toBe(long)                               // selectable and announced in full
     expect(cut.querySelector('.rg-id-cut > .sr-only').textContent).toBe(long.slice(12, long.length - 6))
   })
@@ -250,5 +250,77 @@ describe('Modal', () => {
     render(<Modal open onClose={() => {}} drawer label="Event log">rows</Modal>)
     const dialog = document.querySelector('dialog')
     expect(dialog.className).toBe('rg-modal rg-drawer'); expect(dialog.getAttribute('aria-label')).toBe('Event log')
+  })
+})
+
+describe('FilterChips, KpiStrip, Callout (Studio Graphite)', () => {
+  it('filter chips: one pressed, each says its count, a click picks one', () => {
+    const onChange = vi.fn()
+    render(<FilterChips label="Kind" value="all" onChange={onChange} options={[{ value: 'all', label: 'All', count: 9 }, { value: 'rec', label: 'Recorded', count: 5, dot: 'rec' }, false]} />)
+    const group = screen.getByRole('group', { name: 'Kind' })
+    const chips = within(group).getAllByRole('button')
+    expect(chips.map((c) => c.textContent)).toEqual(['All 9', 'Recorded 5'])
+    expect(chips.map((c) => c.getAttribute('aria-pressed'))).toEqual(['true', 'false'])
+    expect(chips[1].querySelector('.rg-kdot.rg-kdot-rec')).toBeTruthy()
+    fireEvent.click(chips[1])
+    expect(onChange).toHaveBeenCalledWith('rec')
+  })
+  it('the KPI strip is a description list: a label above each value, an em dash for a missing one, never zero', () => {
+    const { container } = render(<KpiStrip label="Run figures"><KpiStat label="Tokens in" value="1,132" /><KpiStat label="Wall time" value="6.13" unit="s" /><KpiStat label="Cost" value={null} unit="$" /></KpiStrip>)
+    const dl = container.querySelector('dl.rg-kstrip')
+    expect(dl.getAttribute('aria-label')).toBe('Run figures')
+    expect([...dl.querySelectorAll('dt')].map((d) => d.textContent)).toEqual(['Tokens in', 'Wall time', 'Cost'])
+    expect([...dl.querySelectorAll('dd')].map((d) => d.textContent)).toEqual(['1,132', '6.13s', '—'])
+  })
+  it('a callout carries its tone, a heading, the paragraph and one action', () => {
+    const { container } = render(<Callout tone="red" title="How it failed" action={<button type="button">Show step 2</button>}>It never called an edit tool.</Callout>)
+    const box = screen.getByRole('region', { name: 'How it failed' })
+    expect(box.className).toBe('rg-callout rg-callout-red')
+    expect(within(box).getByRole('heading', { level: 3 }).textContent).toBe('How it failed')
+    expect(container.querySelector('.rg-callout-p').textContent).toBe('It never called an edit tool.')
+    expect(within(box).getByRole('button', { name: 'Show step 2' })).toBeTruthy()
+  })
+})
+
+describe('one outcome vocabulary, and the console\'s own words for failure modes', () => {
+  it('a run is Pass, Fail, Cut off or Ungraded under the chosen oracle, and the counts partition the runs', async () => {
+    const { outcomeWord, outcomeTally } = await import('./ui.jsx')
+    const runs = [{ hid: true }, { hid: false, mode: 'wrong_patch' }, { hid: false, mode: 'cutoff_no_patch' }, { hid: null }, { hid: true, str: false }]
+    expect(runs.map((r) => outcomeWord(r, 'hidden'))).toEqual(['Pass', 'Fail', 'Cut off', 'Ungraded', 'Pass'])
+    expect(outcomeTally(runs, 'hidden')).toEqual({ p: 2, f: 1, c: 1, u: 1 })
+    expect(outcomeWord(runs[4], 'strengthened')).toBe('Fail')
+  })
+  it('no mode label or meaning says "suite", under any oracle', async () => {
+    const { modeWords } = await import('./ui.jsx')
+    const fromServer = { cutoff_no_patch: { label: 'cut off · no patch', meaning: 'the harness ended the run before any edit, so the hidden suite ran on the original code.' }, other_mode: { label: 'other', meaning: 'The hidden suite and the visible suites disagree.' } }
+    for (const o of ['hidden', 'visible', 'strengthened']) {
+      for (const m of ['cutoff_no_patch', 'wrong_patch', 'no_patch', 'step_limit_no_patch', 'harness_error', 'strengthened_only', 'other_mode']) {
+        const w = modeWords(m, fromServer[m], o)
+        expect(`${w.label} ${w.meaning}`, `${m} under ${o}`).not.toMatch(/suite/)
+      }
+    }
+    expect(modeWords('cutoff_no_patch', fromServer.cutoff_no_patch, 'strengthened').label).toBe('cut off · no patch')
+    expect(modeWords('wrong_patch', null, 'strengthened').meaning).toBe('The agent produced a patch and the strengthened oracle failed on it.')
+    expect(modeWords('other_mode', fromServer.other_mode, 'hidden').meaning).toBe('The hidden oracle and the visible oracles disagree.')
+  })
+})
+
+/* A page opens at its top: the tab strip keeps its selected tab in view sideways only. scrollIntoView
+   also scrolls every vertical ancestor, so a strip below the fold would drag the whole page down. */
+describe('Tabs keep the page where it is', () => {
+  it('never calls scrollIntoView, and scrolls only its own strip sideways to the selected tab', () => {
+    const siv = vi.fn()
+    const had = Element.prototype.scrollIntoView
+    Element.prototype.scrollIntoView = siv
+    try {
+      const { container, rerender } = render(<Tabs label="Facets" value="a" onChange={() => {}} tabs={[['a', 'A'], ['b', 'B'], ['c', 'C']]} />)
+      const strip = container.querySelector('[role="tablist"]').parentElement
+      const tab = container.querySelectorAll('[role="tab"]')[2]
+      strip.getBoundingClientRect = () => ({ left: 0, right: 100, top: 0, bottom: 30, width: 100, height: 30 })
+      tab.getBoundingClientRect = () => ({ left: 140, right: 180, top: 0, bottom: 30, width: 40, height: 30 })
+      rerender(<Tabs label="Facets" value="c" onChange={() => {}} tabs={[['a', 'A'], ['b', 'B'], ['c', 'C']]} />)
+      expect(siv).not.toHaveBeenCalled()
+      expect(strip.scrollLeft).toBe(80)
+    } finally { Element.prototype.scrollIntoView = had }
   })
 })

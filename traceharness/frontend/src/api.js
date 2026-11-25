@@ -48,6 +48,35 @@ export async function api(path, opts = {}) {
   return ct.includes('json') ? r.json() : r.text()
 }
 
+/** How many run details of `dir` this static export embeds, or null when it cannot tell. */
+export function exportedRunCount(dir, data = STATIC_DATA) {
+  if (!data) return null
+  const said = data.__meta__?.ledger_coverage?.[dir]?.embedded_runs
+  if (Number.isSafeInteger(said)) return said
+  const prefix = `/results/${dir}/runs/`
+  const n = Object.keys(data).filter((key) => key.startsWith(prefix) && !key.slice(prefix.length).includes('/')).length
+  return n || null
+}
+
+/** What a run page says in a static export when that run's ledger is not in the file. */
+export function notInExportText(dir, data = STATIC_DATA) {
+  const n = exportedRunCount(dir, data)
+  return n ? `This run is not included in this export (it holds ${n.toLocaleString('en-US')} runs, whole tasks first).` : 'This run is not included in this export.'
+}
+
+/** The export's limit on run details per dataset (--export-runs N), or null when the file does not say. */
+export function exportRunLimit(data = STATIC_DATA) {
+  const n = data && data.__meta__ ? data.__meta__.runs_limit_per_dataset : null
+  return Number.isSafeInteger(n) && n >= 0 ? n : null
+}
+
+/** What the all-runs view of a task says in a static export when none of its runs' ledgers are in the file: an
+ *  export takes its run details by whole tasks (static_export.whole_task_runs). */
+export function taskNotInExportText(data = STATIC_DATA) {
+  const n = exportRunLimit(data)
+  return `An export holds every run of the first tasks of each dataset${n != null ? `, up to ${n.toLocaleString('en-US')} runs` : ''}. To include this task, export again with a larger --export-runs N.`
+}
+
 /** Opts a request in to private results (captured sessions).
  *
  * Nothing gets them by default: the backend answers 404 to any request that does not carry this,

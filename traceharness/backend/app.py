@@ -25,10 +25,14 @@ from traceharness.core.providers import make_provider, PRICES, price_for    # no
 from traceharness.core.grader import load_task, list_task_ids, task_suite, SUITES   # noqa: E402
 from traceharness.core.analysis import load_index                           # noqa: E402
 from traceharness.core.ledger import new_run_id                             # noqa: E402
+from traceharness.core import tokens as T                                   # noqa: E402
+from traceharness.core import trajectory_fields as TF                       # noqa: E402
+from traceharness.core.patch_kinds import tests_modified_of                  # noqa: E402
 from . import metrics as M                                         # noqa: E402
 from . import sentinel as S                                        # noqa: E402
 from . import real_import as RI                                    # noqa: E402
 from . import judge_runner as JR                                   # noqa: E402
+from . import token_cache as TC                                    # noqa: E402
 from .private_guard import private_results_guard                   # noqa: E402
 from .guard import security_guard                                  # noqa: E402
 from .confine import resolve_under, resolve_relative, log_error                # noqa: E402  (confined name -> path; error ids)
@@ -238,6 +242,10 @@ class _StudyCache:
             return entry[2]
         return None
 
+    def peek(self, key: tuple, fingerprint: tuple):
+        """The cached value of `key` when it is fresh, else None; never computes."""
+        return self._fresh((_STUDY_CACHE_VERSION,) + key, fingerprint)
+
     def get_or_compute(self, key: tuple, fingerprint: tuple, compute):
         key = (_STUDY_CACHE_VERSION,) + key
         hit = self._fresh(key, fingerprint)
@@ -310,9 +318,18 @@ def run_detail(name: str, run_id: str):
             return json.load(f) if js else f.read()
     spans = [json.loads(l) for l in (rd_("ledger.jsonl") or "").splitlines() if l.strip()]
     model = S.load_model()
-    out = {"summary": rd_("summary.json", True), "spans": spans, "patch": rd_("patch.diff"),
+    summary, patch = rd_("summary.json", True), rd_("patch.diff")
+    if isinstance(summary, dict) and str(summary.get("provider") or "").startswith("import:"):
+        # an importer's tests_modified counts any test-named path; the final patch says whether a test file changed
+        tm = tests_modified_of(patch)
+        summary = summary if tm is None else {**summary, "tests_modified": tm}
+    # letters, cut outputs, repeats, the work after the fix and the first lookup (core/trajectory_fields.py)
+    per, run = TF.trajectory_fields(spans, patch or "", estimated=(summary or {}).get("provider") in T.ESTIMATED_USAGE)
+    # each step with its phase, cache, reasoning and duration (null when the ledger does not record them)
+    steps = [{**s, **per[i]} if i in per else s for i, s in enumerate(T.step_fields(spans))]
+    out = {"summary": summary, "spans": steps, "patch": patch,
            "messages": rd_("messages.json", True), "replay": S.replay(spans, model),
-           "issue": _issue_for(spans[0].get("task_id")) if spans else ""}
+           "issue": _issue_for(spans[0].get("task_id")) if spans else "", **run}
     # A third-party agent run in a container (traceharness/agents): the broker's record of every model
     # call (host, tokens, cache, cost, latency) and where the run happened (image, limits, exit).
     if os.path.exists(os.path.join(rd, "container.json")):
@@ -330,13 +347,21 @@ def _issue_for(tid) -> str:
     return f"(no local task for {tid}: this run was imported; the issue text lives in the source dataset)"
 
 
+#: The oracles a paired comparison can be taken under (the outcome columns of the index).
+ORACLE_OUTCOMES = ("visible_pass", "hidden_pass", "strong_pass")
+
+
 @app.get("/api/results/{name}/metrics")
-def metrics(name: str, model: Optional[str] = None, baseline: str = "baseline", include_human: bool = False):
-    """`include_human` (default false) counts runs a person intervened in; by default they are left out."""
+def metrics(name: str, model: Optional[str] = None, baseline: str = "baseline", include_human: bool = False,
+            outcome: str = "hidden_pass"):
+    """`include_human` (default false) counts runs a person intervened in; by default they are left out.
+    `outcome` picks the oracle of the paired comparison only; the cells keep their own columns."""
     _dir(name)
+    if outcome not in ORACLE_OUTCOMES:
+        raise HTTPException(400, f"outcome must be one of {', '.join(ORACLE_OUTCOMES)}")
     rows = M.rows_for(name, model=model)
     return {"cells": M.cells(rows, include_human=include_human),
-            "comparison": M.harness_comparison(rows, baseline, model, include_human=include_human),
+            "comparison": M.harness_comparison(rows, baseline, model, outcome=outcome, include_human=include_human),
             "sentinel_pairs": M.sentinel_pairs(rows, include_human=include_human)}
 
 
@@ -380,6 +405,69 @@ def patterns(name: str, harness: Optional[str] = None, task: Optional[str] = Non
     _, fp = _study_rows_stable(name)
     return _STUDY_CACHE.get_or_compute(("patterns", name, harness, task, model, outcome, clusters), fp,
                                        lambda: M.patterns(name, harness, task, model, outcome, clusters))
+
+
+def _token_runs(name: str, **select) -> tuple[list, tuple]:
+    """The selected runs with their token profiles, and the fingerprint they were read under. The
+    profiles (every ledger of the dataset) are read once per fingerprint and shared by the three routes."""
+    d = _dir(name)
+    rows, fp = _study_rows_stable(name)
+    # the profiles of every ledger: from the file kept next to the index when it is current (token_cache.py)
+    profiles = _STUDY_CACHE.get_or_compute(("token_profiles", name), fp,
+                                           lambda: TC.load_or_build(d, lambda: M.token_profiles(name, rows)))
+    try:
+        return M.token_runs(rows, profiles, **select), fp
+    except ValueError as e:
+        raise HTTPException(400, str(e)) from None
+
+
+@app.get("/api/results/{name}/tokens")
+def tokens(name: str, model: Optional[str] = None, harness: Optional[str] = None, oracle: str = "hidden",
+           graded_only: bool = False, include_human: bool = False):
+    """Where the dataset's tokens go: totals (prompt, generated, cached, computed), shares, tokens by
+    phase, prompt size by call index, and the share used by the costliest tenth of runs. A count the
+    dataset does not record is null and named in `unknown`."""
+    sel = {"model": model, "harness": harness, "oracle": oracle, "graded_only": graded_only, "include_human": include_human}
+    runs, fp = _token_runs(name, **sel)
+    return _STUDY_CACHE.get_or_compute(("tokens", name, *sel.values()), fp, lambda: M.tokens(runs, oracle))
+
+
+@app.get("/api/results/{name}/tokens/tasks")
+def tokens_tasks(name: str, model: Optional[str] = None, harness: Optional[str] = None, oracle: str = "hidden",
+                 graded_only: bool = False, include_human: bool = False):
+    """Tasks by how far apart their runs' token totals are (costliest / cheapest), most apart first."""
+    sel = {"model": model, "harness": harness, "oracle": oracle, "graded_only": graded_only, "include_human": include_human}
+    runs, fp = _token_runs(name, **sel)
+    return _STUDY_CACHE.get_or_compute(("tokens_tasks", name, *sel.values()), fp, lambda: M.tokens_tasks(runs, oracle))
+
+
+def _task_token_runs(name: str, task_id: str, **select) -> list:
+    """The selected runs of one task with their token profiles. The dataset's profiles when they are already read;
+    else only this task's ledgers (reading every ledger of a large dataset takes seconds)."""
+    _dir(name)
+    rows, fp = _study_rows_stable(name)
+    profiles = _STUDY_CACHE.peek(("token_profiles", name), fp)
+    if profiles is None:
+        # not cached: one entry per task would push the dataset's own profiles out of the cache, and a task's
+        # ledgers read in tens of milliseconds
+        profiles = M.token_profiles(name, [r for r in rows if r.get("task_id") == task_id])
+    try:
+        return M.token_runs(rows, profiles, task=task_id, **select)
+    except ValueError as e:
+        raise HTTPException(400, str(e)) from None
+
+
+@app.get("/api/results/{name}/tokens/task/{task_id}")
+def tokens_task(name: str, task_id: str, model: Optional[str] = None, harness: Optional[str] = None,
+                include_human: bool = False):
+    """The runs of one task side by side: tokens by phase, cumulative tokens by call, where the costliest
+    run pulls away from the cheapest, and which phases make up the gap."""
+    runs = _task_token_runs(name, task_id, model=model, harness=harness, include_human=include_human)
+    if not runs:
+        raise HTTPException(404, f"no runs of task {task_id} in {name}")
+    out = M.tokens_task(task_id, runs)
+    extra = M.task_trajectory(name, [r["run_id"] for r, _ in runs])
+    return {**out, "runs": [{**r, **extra.get(r["run_id"], {})} for r in out["runs"]]}
 
 
 @app.get("/api/results/{name}/query")

@@ -344,6 +344,23 @@ def _known(r: dict, key: str, fn):
     return None if key in r and r[key] is None else fn(r)
 
 
+def _model_calls(r: dict):
+    """The run's model calls (with_model_calls: from its ledger); None when unknown. A row the ledger count was not
+    added to keeps its index `steps`, which is model calls for this lab's own runs only: an importer writes one step
+    per tool call."""
+    if "model_calls" in r:
+        return None if r["model_calls"] is None else float(r["model_calls"])
+    return float(r.get("steps") or 0)
+
+
+def with_model_calls(name: str, rows: list[dict]) -> list[dict]:
+    """`rows`, each with model_calls read from its ledger (outcomes_api: grouped by call_index; None without a
+    ledger). New dicts; the rows are not changed."""
+    from .outcomes_api import study
+    calls = study(name)["runs"]
+    return [{**r, "model_calls": (calls.get(r.get("run_id")) or {}).get("model_calls")} for r in rows]
+
+
 #: Every metric the platform computes per cell, as (key, label, extractor, higher_is_better, unit).
 #: `extractor` maps a run row to a number; `None` means the metric is task-level (flip rate).
 METRICS = [
@@ -355,7 +372,7 @@ METRICS = [
     ("tests_modified", "runs that modified tests", lambda r: _known(r, "tests_modified", lambda r: 1.0 if r.get("tests_modified") else 0.0), False, "rate"),
     ("flip_rate", "flip rate (mixed outcome across repeats)", None, False, "rate"),
     ("cost_per_run", "cost per run", lambda r: _known(r, "cost_usd", lambda r: float(r.get("cost_usd") or 0.0)), False, "usd"),
-    ("steps", "model calls per run", lambda r: float(r.get("steps") or 0), None, "count"),
+    ("steps", "model calls per run", lambda r: _model_calls(r), None, "count"),
     ("tokens", "tokens per run", lambda r: _known(r, "input_tokens", lambda r: float((r.get("input_tokens") or 0) + (r.get("output_tokens") or 0))), False, "count"),
 ]
 
@@ -393,7 +410,7 @@ def harness_diff(a: str, b: str, dir: Optional[str] = None, model: Optional[str]
         return _clean(out)
 
     d = _dir(dir)
-    rows = load_index(d)
+    rows = with_model_calls(dir, load_index(d))
     if model:
         rows = filter_rows(rows, model=model)
     A = filter_rows(rows, harness_id=a)

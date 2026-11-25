@@ -1,0 +1,331 @@
+{
+ "id": "how-many-runs",
+ "number": 13,
+ "part": 5,
+ "kind": "concept",
+ "checked": "2026-11-23",
+ "title": "How many runs do I need?",
+ "question": "How many tasks and runs does it take to see a difference, and how small a difference can I hope to see?",
+ "what_you_learn": [
+  "What power is, and how the smallest detectable difference shrinks as the number of runs grows.",
+  "Why more tasks usually help more than more runs of the same task.",
+  "How to read the detectable number on Run setup, and what it assumes."
+ ],
+ "prerequisites": {
+  "read": [
+   "why-runs-differ",
+   "comparing-runs-fairly"
+  ],
+  "know": [
+   "What a 95% interval is, from the article on comparing runs fairly."
+  ]
+ },
+ "sections": [
+  {
+   "heading": "Two ways to be wrong",
+   "body": [
+    "A comparison can go wrong in two ways. It can report a difference that is only noise, a false alarm. Or it can miss a difference that is real.",
+    "The 5% level limits false alarms: when nothing changed, a 95% interval misses zero by chance about 1 time in 20. Power limits misses. It is the chance of detecting a difference of a given size when that difference is real.",
+    "The usual target is 80% power at the 5% level. Miller (2024) uses this pair in his worked example for model evals. The classic guide to planning a study this way is Cohen's book on power analysis."
+   ]
+  },
+  {
+   "heading": "The smallest detectable difference",
+   "body": [
+    "Turn the question around. With the runs you can afford, what is the smallest true difference you would detect 80% of the time? Miller calls it the minimum detectable effect; TraceHarness says smallest detectable difference.",
+    "It shrinks with the square root of the number of runs. Four times the runs only halves it.",
+    "Run setup uses the simplest version. An arm is one side of the comparison, such as the runs under one harness. For n runs in each arm, the detectable difference is 2.8 x the square root of 0.5 / n. The 2.8 is 1.96 for the 5% level plus 0.84 for 80% power. The 0.5 assumes the worst case, a pass rate near 50%.",
+    {
+     "list": [
+      "72 runs per arm: about 23.3 points.",
+      "120 runs per arm: about 18.1 points.",
+      "360 runs per arm: about 10.4 points.",
+      "To detect 10 points you need 392 runs per arm; to detect 5 points, 1,568."
+     ]
+    }
+   ]
+  },
+  {
+   "heading": "Tasks or repeats?",
+   "body": [
+    "That formula treats every run as independent. Runs of the same task are not: they share the code, the issue and the difficulty. So the formula gives a floor, not a promise.",
+    "Miller splits the noise in two parts. Each question has its own difficulty, and each answer adds noise around it. Asking the same question again shrinks only the second part.",
+    "In his example, going from 1 to 10 answers per question cut the detectable difference from 13.2% to 7.5%. Past some point, more answers per question change little; only more questions help.",
+    "Agents add the same second part. Bjarnason et al. (2026) ran agents many times on SWE-bench Verified (500 real GitHub issues that developers screened). Their pass@1, the share of tasks one run solves, moved by 2.2 to 6.0 points depending on which run was picked.",
+    "They recommend several runs per task, and a power analysis to choose how many runs you need before you start.",
+    "The figure below shows it on gemini-2.5-flash-lite's 24 tasks under baseline. With 1 run per task, a 95% interval is about plus or minus 19.4 points if runs are counted, and 19.8 if tasks are. With 5 runs per task, the first shrinks to 8.7 and the second stays at 18.9."
+   ]
+  },
+  {
+   "heading": "Plan before you spend",
+   "body": [
+    {
+     "olist": [
+      "Decide the smallest difference that would change what you do.",
+      "Read Run setup's detectable number for your plan before you launch it.",
+      "Add tasks first. Add repeats until each task's own rate stops moving much, then stop.",
+      "If the interval covers 0, say that no difference was detected at this sample size. Do not say there was none."
+     ]
+    }
+   ]
+  }
+ ],
+ "figures": [
+  {
+   "id": "a13-detect",
+   "after_section": 1,
+   "kind": "detect_n",
+   "data_file": "a13-detect",
+   "title": "The smallest detectable difference against the runs per arm",
+   "caption": "Run setup's formula, 2.8 x the square root of 0.5 / n: about 23.3 points at 72 runs per arm, 18.1 at 120 and 10.4 at 360. Ten points take 392 runs per arm and 5 points 1,568. The diamonds are gemini-2.5-flash-lite's 8 harness changes at 120 runs per arm: only reprompt's +19.2 is above the line.",
+   "data_note": "the Run setup formula; study_v04, 1,080 runs of gemini-2.5-flash-lite",
+   "headline": [
+    {
+     "key": "d_72",
+     "as_written": "23.3"
+    },
+    {
+     "key": "d_120",
+     "as_written": "18.1"
+    },
+    {
+     "key": "d_360",
+     "as_written": "10.4"
+    },
+    {
+     "key": "n_10",
+     "as_written": "392"
+    },
+    {
+     "key": "n_5",
+     "as_written": "1,568"
+    },
+    {
+     "key": "reprompt",
+     "as_written": "+19.2"
+    }
+   ]
+  },
+  {
+   "id": "a13-tasks",
+   "after_section": 2,
+   "kind": "task_interval",
+   "data_file": "a13-tasks",
+   "title": "More repeats shrink one interval, not the other",
+   "caption": "gemini-2.5-flash-lite under baseline on study_v04's 24 tasks: 22 of the 24 pass all 5 runs or fail all 5. Bars: the 95% interval around the pass rate, 62.5% at 5 runs per task, counting runs (about plus or minus 8.7 points) and counting tasks (18.9).",
+   "data_note": "study_v04, 120 runs",
+   "headline": [
+    {
+     "key": "same",
+     "as_written": "22 of the 24"
+    },
+    {
+     "key": "p",
+     "as_written": "62.5%"
+    },
+    {
+     "key": "runs_5",
+     "as_written": "8.7"
+    },
+    {
+     "key": "tasks_5",
+     "as_written": "18.9"
+    },
+    {
+     "key": "runs_1",
+     "as_written": "19.4"
+    },
+    {
+     "key": "tasks_1",
+     "as_written": "19.8"
+    }
+   ]
+  }
+ ],
+ "worked_example": {
+  "title": "What 24 tasks can and cannot detect",
+  "dataset": {
+   "name": "study_v04",
+   "what": "Bundled with the study copy: 3,240 recorded runs, 3 models x 9 harnesses x 24 small Python tasks x 5 runs. They were collected through OpenRouter (a paid service that passes requests on to many model providers) at temperature 0.",
+   "credit": "TraceHarness bundled data (AURA lab, William & Mary)."
+  },
+  "open": [
+   "Click the dataset name at the top of the left list and choose study_v04.",
+   "Click Analysis, then Run setup, and read the plan's estimate.",
+   "Click Analysis, then Comparison, and read the gemini-2.5-flash-lite row."
+  ],
+  "links": [
+   "ds:study_v04",
+   "an:study_v04:setup",
+   "an:study_v04:delta:gemini-2.5-flash-lite:baseline"
+  ],
+  "body": [
+   "Run setup's first plan is one model and one harness on all 24 tasks, 3 runs each: 72 runs. It reports a detectable difference of 23.3 points per arm.",
+   "The recorded cells have 5 runs per task, so 120 runs per arm. The same formula gives 18.1 points.",
+   "gemini-2.5-flash-lite passed 75 of 120 runs under baseline and 98 of 120 under reprompt. The paired difference is +19.2 points, with 6 tasks better and none worse. That is just above 18.1, and the Comparison page marks it separates.",
+   "Now look inside the tasks. Under baseline, 22 of the 24 tasks either passed all 5 runs or failed all 5. For those tasks, five repeats told the same story five times.",
+   "That is why the task, not the run, is the unit (the thing you count as one independent measurement). Treating the 120 runs as independent gives a 95% interval of about plus or minus 8.7 points around 62.5%. Using the 24 task rates gives about plus or minus 18.9 points.",
+   "So 18.1 points is a floor for this design. To detect a difference of 10 points, add tasks; more runs of these 24 would mostly repeat themselves."
+  ]
+ },
+ "try_it": {
+  "clicks": [
+   "Click the dataset name at the top of the left list and choose study_v04.",
+   "Click Analysis, then Run setup.",
+   "Read the detectable value of the first plan. Then click Change the plan, raise Runs per task from 3 to 5, and read it again."
+  ],
+  "links": [
+   "ds:study_v04",
+   "an:study_v04:setup",
+   null
+  ],
+  "question": "What detectable difference does the plan report with 3 runs per task, and with 5? Using the formula, how many runs per arm would 10 points take?",
+  "answer": "23.3 points per arm with 3 runs per task (72 runs), and 18.1 points with 5 (120 runs). 10 points takes 392 runs per arm. With 24 tasks that is 17 runs per task, so adding tasks is the better way there.",
+  "answer_measured_from": "Run setup page, Estimate: detectable per arm. The formula in traceharness/frontend/src/rig/views/analysis.jsx: 2.8 x sqrt(0.5 / n). For 10 points: n = 2.8^2 x 0.5 / 0.1^2 = 392, and 392 / 24 rounds up to 17."
+ },
+ "quiz": [
+  {
+   "q": "You quadruple the number of runs per arm. What happens to the smallest detectable difference?",
+   "options": [
+    "It drops to a quarter of what it was before",
+    "It does not change at all",
+    "It doubles, because there is more noise",
+    "It halves: it shrinks with the square root"
+   ],
+   "answer": 3,
+   "why": "The detectable difference shrinks with the square root of the sample: four times the runs halves it."
+  },
+  {
+   "q": "Most tasks pass all their runs or fail all of them. What should you add to detect a smaller difference?",
+   "options": [
+    "More runs of the same tasks",
+    "More tasks",
+    "A higher temperature",
+    "A longer step limit"
+   ],
+   "answer": 1,
+   "why": "When runs of a task agree, repeats add little; the noise that matters comes from which tasks you have."
+  },
+  {
+   "q": "A planned comparison covers 0. What may you say?",
+   "options": [
+    "No difference was detected at this sample size",
+    "The two setups perform the same on these tasks",
+    "The harness change made no difference to the runs",
+    "The result proves that the change is harmful"
+   ],
+   "answer": 0,
+   "why": "An interval that covers 0 shows no difference was detected at this sample size. It does not show there is none; a narrow interval only rules out large differences."
+  }
+ ],
+ "sources": [
+  {
+   "title": "Adding Error Bars to Evals: A Statistical Approach to Language Model Evaluations",
+   "authors": "Evan Miller",
+   "year": "2024",
+   "url": "https://arxiv.org/abs/2411.00640",
+   "what_we_took": "Power analysis for evals: 80% power at the 5% level in his worked example, the minimum detectable effect, and that more samples per question shrink only the answer noise (13.2% to 7.5% from 1 to 10 samples in his example).",
+   "quote": "Using power analysis to determine whether an eval (or a random subsample) is capable of testing a hypothesis of interest",
+   "licence": "arXiv non-exclusive distribution licence (not CC). Paraphrased; one short quote for citation.",
+   "checked": "2026-11-23"
+  },
+  {
+   "title": "On Randomness in Agentic Evals",
+   "authors": "Bjarni Haukur Bjarnason, André Silva, Martin Monperrus",
+   "year": "2026 (preprint)",
+   "url": "https://arxiv.org/abs/2602.07150",
+   "what_we_took": "Single-run pass@1 on SWE-bench Verified moved by 2.2 to 6.0 points depending on the run; their advice to estimate pass@1 from several runs per task and to use power analysis to choose the number of runs.",
+   "quote": "use statistical power analysis to determine the number of runs needed to detect expected effect sizes",
+   "licence": "CC BY 4.0 (arXiv).",
+   "checked": "2026-11-23"
+  },
+  {
+   "title": "Statistical Power Analysis for the Behavioral Sciences (2nd edition)",
+   "authors": "Jacob Cohen",
+   "year": "1988 (Lawrence Erlbaum; now published by Routledge)",
+   "url": "https://doi.org/10.4324/9780203771587",
+   "what_we_took": "The standard reference for power analysis when planning a study. We cite it for the idea only and quote nothing from the book.",
+   "licence": "Book; nothing reproduced.",
+   "checked": "2026-11-23"
+  }
+ ],
+ "glossary_terms": [
+  "power",
+  "smallest detectable difference",
+  "arm",
+  "paired comparison",
+  "separates / covers 0",
+  "cell",
+  "pass@1"
+ ],
+ "see_also": [
+  {
+   "kind": "article",
+   "target": "comparing-runs-fairly"
+  },
+  {
+   "kind": "article",
+   "target": "why-runs-differ"
+  },
+  {
+   "kind": "page",
+   "label": "Run setup: what a planned set of runs costs and can detect",
+   "spec": "an:study_v04:setup"
+  }
+ ],
+ "numbers": [
+  {
+   "as_written": [
+    "23.3",
+    "18.1",
+    "10.4",
+    "392",
+    "1,568",
+    "72",
+    "120",
+    "360"
+   ],
+   "meaning": "Run setup's detectable difference, 2.8 x sqrt(0.5 / n), and the runs per arm for 10 and 5 points",
+   "source": "traceharness/frontend/src/rig/views/analysis.jsx (mde); computed in scripts/numbers.py"
+  },
+  {
+   "as_written": [
+    "75 of 120",
+    "98 of 120",
+    "+19.2",
+    "6 tasks better",
+    "22 of the 24",
+    "8.7",
+    "62.5%",
+    "18.9"
+   ],
+   "meaning": "gemini-2.5-flash-lite baseline and reprompt in study_v04; naive and task-level 95% half-widths",
+   "source": "data/runs/study_v04/index.jsonl: hidden_pass by task; 1.96 x sqrt(p(1-p)/120) and 1.96 x sd(task rates)/sqrt(24)"
+  },
+  {
+   "as_written": [
+    "13.2%",
+    "7.5%",
+    "2.2 to 6.0",
+    "80%",
+    "5%",
+    "17"
+   ],
+   "meaning": "Miller's example; Bjarnason et al.; the usual power and level; 392 / 24 rounded up",
+   "source": "arXiv 2411.00640 section 5; arXiv 2602.07150 abstract"
+  },
+  {
+   "as_written": [
+    "19.4",
+    "19.8"
+   ],
+   "meaning": "95% half-widths with 1 run per task (the first run of each of the 24 tasks): counting runs, and counting tasks",
+   "source": "data/runs/study_v04/index.jsonl, gemini-2.5-flash-lite under baseline, repeat 1: 1.96 x sqrt(p(1-p)/24) and 1.96 x sd(task rates)/sqrt(24)"
+  }
+ ],
+ "in_short": [
+  "**Power is the chance of detecting a real difference**; the usual target is 80% power at the 5% level.",
+  "**The smallest detectable difference shrinks with the square root of the runs**: 120 runs per arm detect about 18.1 points, and four times the runs only halve it.",
+  "Runs of one task are not independent, so **add tasks first; more repeats of the same tasks mostly repeat themselves**."
+ ]
+}

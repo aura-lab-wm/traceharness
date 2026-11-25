@@ -1,0 +1,43 @@
+/* Rig · learn/figures/kinds/import-pipeline.css — the ways into a dataset folder (import-pipeline.jsx). The boxes fade
+   and rise in order once; the picked way's lines flow four times (rg-fa-flow, figs-a-parts.css) and the rest stay
+   still and pale; rig.css stops all of it under prefers-reduced-motion. Tokens only. */
+.rg-lfig-sw.fa-path,.rg-lfig-sw.fa-path-off{height:2px;border-radius:0;background:repeating-linear-gradient(90deg,var(--rig-text) 0 4px,transparent 4px 8px)}
+.rg-lfig-sw.fa-path-off{background:repeating-linear-gradient(90deg,var(--rig-line3) 0 4px,transparent 4px 8px)}
+.rg-pipe-link{fill:none;stroke-width:1.6;stroke-dasharray:4 5;transition:stroke var(--rig-dur-2) var(--rig-ease),opacity var(--rig-dur-2) var(--rig-ease)}
+.rg-pipe-link.on{stroke:var(--rig-text)}
+.rg-pipe-link.off{stroke:var(--rig-line3);opacity:.6}
+.rg-pipe-svg.seen .rg-pipe-link.on{animation:rg-fa-flow var(--rig-dur-pulse) linear 4}
+.rg-pipe-box{opacity:0;transform:translateY(6px);transition:opacity var(--rig-dur-2) var(--rig-ease) calc(var(--rig-dur-1) * var(--rig-fig-i)),transform var(--rig-dur-2) var(--rig-ease) calc(var(--rig-dur-1) * var(--rig-fig-i))}
+.rg-pipe-svg.seen .rg-pipe-box{opacity:1;transform:none}
+.rg-pipe-svg.seen .rg-pipe-box.skip{opacity:.5}
+.rg-pipe-box .frame{fill:var(--rig-panel);stroke:var(--rig-line2);stroke-width:1;transition:fill var(--rig-dur-1) var(--rig-ease)}
+.rg-pipe-box.stage .frame{fill:var(--rig-panel2)}
+.rg-pipe-box.way{cursor:pointer;outline:none}
+.rg-pipe-box.way:hover .frame{fill:var(--rig-row-hover)}
+.rg-pipe-box.way.on{cursor:default}
+.rg-pipe-box.way.on .frame{fill:var(--rig-sel-bg);stroke:var(--rig-sel-mark);stroke-width:1.5}
+.rg-pipe-box.way:focus-visible .frame{stroke:var(--rig-sel);stroke-width:2}
+.rg-pipe-box .t{fill:var(--rig-text);font-size:var(--rig-fs-xs);font-weight:var(--rig-fw-semi)}
+.rg-pipe-box.way.on .t{font-weight:var(--rig-fw-bold)}
+.rg-pipe-box .s{fill:var(--rig-dim);font-size:var(--rig-fs-2xs)}
+.rg-pipe-box .m{fill:var(--rig-text);font-family:var(--rig-mono);font-size:var(--rig-fs-2xs)}
+.rg-pipe-box .ln{opacity:0;transition:opacity var(--rig-dur-2) var(--rig-ease) calc(var(--rig-dur-1) * var(--rig-fig-i))}
+.rg-pipe-svg.seen .rg-pipe-box .ln{opacity:1}
+.rg-pipe-svg.seen .rg-pipe-box .ln.dim{opacity:.35}
+.rg-pipe-box .tick.chat{fill:var(--rig-ser1)}
+.rg-pipe-box .tick.execute-tool{fill:var(--rig-ser2)}
+.rg-pipe-box .tick.edit{fill:var(--rig-ph-edit)}
+.rg-pipe-box .tick.grade{fill:var(--rig-sky)}
+.rg-pipe-box .tick.file{fill:var(--rig-ser5)}
+.rg-pipe-steps{display:grid;gap:var(--rig-s2);list-style:none;counter-reset:rg-pipe;margin:var(--rig-s4) 0 0;padding:var(--rig-s3) var(--rig-s4);border-radius:var(--rig-r-md);background:var(--rig-panel2);animation:rg-fade-in var(--rig-dur-2) var(--rig-ease) both}
+.rig .rg-read-col .rg-pipe-steps>li{counter-increment:rg-pipe;display:grid;grid-template-columns:var(--rig-s5) 6rem minmax(0,1fr);gap:var(--rig-s2);align-items:baseline;margin:0;font-size:var(--rig-fs-sm);line-height:var(--rig-lead-md);color:var(--rig-text)}
+.rg-pipe-steps>li::before{content:counter(rg-pipe);display:inline-flex;align-items:center;justify-content:center;width:var(--rig-s5);height:var(--rig-s5);border-radius:var(--rig-r-full);background:var(--rig-panel3);font-size:var(--rig-fs-2xs);line-height:1;color:var(--rig-text)}
+.rg-pipe-steps b{font-weight:var(--rig-fw-semi)}
+.rg-pipe-steps span{overflow-wrap:anywhere}
+@container rglfig (max-width:600px){
+  .rig .rg-read-col .rg-pipe-steps>li{grid-template-columns:var(--rig-s5) minmax(0,1fr)}
+  .rg-pipe-steps>li>span{grid-column:2}
+}
+.rg-prev-pipe rect{fill:var(--rig-ser3)}
+.rg-prev-pipe rect.acc{fill:var(--rig-ser1)}
+.rg-prev-pipe path{fill:none;stroke:var(--rig-ser2);stroke-width:1.5;stroke-dasharray:3 2}

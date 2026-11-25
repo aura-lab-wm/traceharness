@@ -17,7 +17,7 @@
 
 /* suggested questions: full-width rows, one control height, wrap their own text */
 .rig .rg-bud .rg-bud-sugg{display:flex;flex-direction:column;gap:var(--rig-s2)}
-.rig .rg-bud-sugg button.rg-bud-q{display:block;width:100%;min-height:var(--rig-h-ctl);padding:var(--rig-s2) var(--rig-s3);border:1px solid var(--rig-line2);border-radius:var(--rig-r-md);background:var(--rig-panel);color:var(--rig-text);font:var(--rig-fw-regular) var(--rig-fs-sm)/var(--rig-lh-snug) var(--rig-sans);text-align:left;white-space:normal;overflow-wrap:anywhere;cursor:pointer;transition:border-color var(--rig-dur-1) var(--rig-ease),background-color var(--rig-dur-1) var(--rig-ease)}
+.rig .rg-bud-sugg button.rg-bud-q{display:block;width:100%;min-height:var(--rig-h-ctl);padding:var(--rig-s2) var(--rig-s3);border:1px solid var(--rig-line2);border-radius:var(--rig-r-md);background:var(--rig-panel);color:var(--rig-text);font:var(--rig-fw-regular) var(--rig-fs-sm)/var(--rig-lead-sm) var(--rig-sans);text-align:left;white-space:normal;overflow-wrap:anywhere;cursor:pointer;transition:border-color var(--rig-dur-1) var(--rig-ease),background-color var(--rig-dur-1) var(--rig-ease)}
 .rig .rg-bud-sugg button.rg-bud-q:hover{border-color:var(--rig-line3);background:var(--rig-panel2)}
 .rig .rg-bud-sugg button.rg-bud-q:active{background:var(--rig-panel3)}
 .rig .rg-bud-sugg button.rg-bud-q:focus-visible{outline:var(--rig-focus-ring);outline-offset:var(--rig-focus-offset)}
@@ -26,7 +26,7 @@
 /* the question form */
 .rig .rg-bud .rg-bud-form{display:flex;flex-direction:column;gap:var(--rig-s2);margin-top:var(--rig-s3)}
 .rig .rg-bud-form textarea.rg-inp{min-height:calc(2 * var(--rig-h-ctl))}
-.rig .rg-bud .rg-bud-consent{display:flex;align-items:flex-start;gap:var(--rig-s2);min-height:var(--rig-hit);padding:var(--rig-s1) 0;font-size:var(--rig-fs-xs);line-height:var(--rig-lh-snug);color:var(--rig-dim);cursor:pointer}
+.rig .rg-bud .rg-bud-consent{display:flex;align-items:flex-start;gap:var(--rig-s2);min-height:var(--rig-hit);padding:var(--rig-s1) 0;font-size:var(--rig-fs-xs);line-height:var(--rig-lead-sm);color:var(--rig-dim);cursor:pointer}
 .rig .rg-bud .rg-bud-consent input{flex:none;margin:var(--rig-s0) 0 0}
 .rig .rg-bud .rg-bud-send{display:flex;flex-wrap:wrap;align-items:center;gap:var(--rig-s2);margin-top:0}
 .rig .rg-bud .rg-bud-send .rg-btnwrap{display:inline-flex;flex-wrap:wrap;align-items:center;gap:var(--rig-s1) var(--rig-s2);min-width:0}
@@ -36,9 +36,9 @@
 
 /* the conversation */
 .rig .rg-bud .rg-bud-log{gap:var(--rig-s2);margin-bottom:var(--rig-s3);padding-right:var(--rig-s1)}
-.rig .rg-bud .rg-bud-msg{border-radius:var(--rig-r-md);padding:var(--rig-s2) var(--rig-s3);font-size:var(--rig-fs-sm);line-height:var(--rig-lh-body);overflow-wrap:anywhere}
-.rig .rg-bud .rg-bud-msg strong{font:var(--rig-fw-medium) var(--rig-fs-2xs)/var(--rig-lh-tight) var(--rig-mono);letter-spacing:var(--rig-track-caps);text-transform:uppercase;margin-bottom:var(--rig-s1)}
-.rig .rg-bud .rg-bud-msg pre{font:var(--rig-fs-xs)/var(--rig-lh-code) var(--rig-mono);border-radius:var(--rig-r-sm);padding:var(--rig-s2);overflow-x:auto}
+.rig .rg-bud .rg-bud-msg{border-radius:var(--rig-r-md);padding:var(--rig-s2) var(--rig-s3);font-size:var(--rig-fs-sm);line-height:var(--rig-lead-md);overflow-wrap:anywhere}
+.rig .rg-bud .rg-bud-msg strong{font:var(--rig-fw-semi) var(--rig-fs-xs)/var(--rig-lead-xs) var(--rig-sans);letter-spacing:0;margin-bottom:var(--rig-s1)}
+.rig .rg-bud .rg-bud-msg pre{font:var(--rig-fs-xs)/var(--rig-lead-md) var(--rig-mono);border-radius:var(--rig-r-sm);padding:var(--rig-s2);overflow-x:auto}
 
 /* evidence */
 .rig .rg-bud .rg-bud-ev{gap:var(--rig-s1);margin:var(--rig-s2) 0 var(--rig-s3)}
@@ -52,5 +52,9 @@
 .rig .rg-bud .rg-bud-preview[open]>summary::before{content:"▾"}
 .rig .rg-bud .rg-bud-preview>summary:hover{color:var(--rig-text)}
 .rig .rg-bud .rg-bud-preview>summary:focus-visible{outline:var(--rig-focus-ring);outline-offset:var(--rig-focus-offset)}
-.rig .rg-bud .rg-bud-preview .rg-pre{max-height:180px;overflow:auto;font-size:var(--rig-fs-xs);line-height:var(--rig-lh-code)}
-.rig .rg-bud .rg-bud-disc{margin:var(--rig-s3) 0 0;font-size:var(--rig-fs-xs);line-height:var(--rig-lh-snug)}
+.rig .rg-bud .rg-bud-preview .rg-pre{max-height:180px;overflow:auto;font-size:var(--rig-fs-xs);line-height:var(--rig-lead-md)}
+.rig .rg-bud .rg-bud-disc{margin:var(--rig-s3) 0 0;font-size:var(--rig-fs-xs);line-height:var(--rig-lead-sm)}
+
+/* Studio Graphite: the workflow guide in the Buddy dock has no eyebrow; the kind of an answer is a pill */
+.rig .rg-guide .rg-guide-kind{align-self:flex-start;margin:0 0 calc(-1 * var(--rig-s2))}
+.rig .rg-guide>h2{font-size:var(--rig-fs-md);line-height:var(--rig-lead-md)}

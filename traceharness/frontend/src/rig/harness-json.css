@@ -3,22 +3,22 @@
 .rg-hjson{min-width:0;border:1px solid var(--rig-line);border-radius:var(--rig-r-lg);padding:var(--rig-s4);margin-block:var(--rig-s4);background:var(--rig-panel)}
 .rg-hjson-head{display:flex;align-items:center;justify-content:space-between;gap:var(--rig-s2) var(--rig-s4);flex-wrap:wrap}
 .rg-hjson-head>div:first-child{flex:1 1 14rem;min-width:0}
-.rg-hjson-source{font:var(--rig-fw-medium) var(--rig-fs-2xs)/var(--rig-lh-snug) var(--rig-mono);color:var(--rig-dim);letter-spacing:var(--rig-track-caps);text-transform:uppercase;overflow-wrap:anywhere}
-.rig .rg-hjson h3{font:var(--rig-fw-medium) var(--rig-fs-md)/var(--rig-lh-snug) var(--rig-sans);color:var(--rig-text);margin:var(--rig-s0) 0 0;overflow-wrap:anywhere}
+.rg-hjson-source{font:var(--rig-fw-medium) var(--rig-fs-xs)/var(--rig-lead-sm) var(--rig-sans);color:var(--rig-mute);letter-spacing:0;overflow-wrap:anywhere}
+.rig .rg-hjson h3{font:var(--rig-fw-medium) var(--rig-fs-md)/var(--rig-lead-md) var(--rig-sans);color:var(--rig-text);margin:var(--rig-s0) 0 0;overflow-wrap:anywhere}
 .rg-hjson-actions,.rg-hjson-documents{display:flex;flex-wrap:wrap;gap:var(--rig-s2);min-width:0}
-.rg-hjson-description,.rg-hjson-missing{font-size:var(--rig-fs-xs);line-height:var(--rig-lh-body);color:var(--rig-dim);margin:var(--rig-s3) 0 0;max-width:var(--rig-measure)}
-.rg-hjson-identity{font:var(--rig-fs-xs)/var(--rig-lh-body) var(--rig-mono);color:var(--rig-mute);overflow-wrap:anywhere;margin:var(--rig-s1) 0 0}
-.rg-hjson>p[role]{font-size:var(--rig-fs-xs);line-height:var(--rig-lh-body);margin:var(--rig-s3) 0 0}
+.rg-hjson-description,.rg-hjson-missing{font-size:var(--rig-fs-xs);line-height:var(--rig-lead-md);color:var(--rig-dim);margin:var(--rig-s3) 0 0;max-width:var(--rig-measure)}
+.rg-hjson-identity{font:var(--rig-fs-xs)/var(--rig-lead-md) var(--rig-sans);color:var(--rig-mute);overflow-wrap:anywhere;margin:var(--rig-s1) 0 0}
+.rg-hjson>p[role]{font-size:var(--rig-fs-xs);line-height:var(--rig-lead-md);margin:var(--rig-s3) 0 0}
 .rg-hjson-documents{margin-top:var(--rig-s4)}
-.rg-hjson-documents [aria-pressed=true]{color:var(--rig-sel-t);border-color:var(--rig-sel);background:var(--rig-sel-bg)}
-.rg-hjson-file{display:flex;justify-content:space-between;flex-wrap:wrap;align-items:center;gap:var(--rig-s1) var(--rig-s3);margin-top:var(--rig-s3);font:var(--rig-fs-xs)/var(--rig-lh-body) var(--rig-mono);color:var(--rig-dim)}
+.rg-hjson-documents [aria-pressed=true]{color:var(--rig-text);border-color:var(--rig-sel-mark);background:var(--rig-sel-bg)}
+.rg-hjson-file{display:flex;justify-content:space-between;flex-wrap:wrap;align-items:center;gap:var(--rig-s1) var(--rig-s3);margin-top:var(--rig-s3);font:var(--rig-fs-xs)/var(--rig-lead-md) var(--rig-mono);color:var(--rig-dim)}
 .rg-hjson-file>span{min-width:0;overflow-wrap:anywhere}
 .rg-hjson-file label{display:inline-flex;align-items:center;gap:var(--rig-s2);min-height:var(--rig-hit);cursor:pointer;font-family:var(--rig-sans);color:var(--rig-text)}
 .rg-hjson-file input{accent-color:var(--rig-sel);margin:0}
-.rg-hjson pre{box-sizing:border-box;max-width:100%;max-height:32rem;overflow:auto;white-space:pre;background:var(--rig-panel2);border:0;border-radius:var(--rig-r-md);padding:var(--rig-s3) var(--rig-s4);margin:var(--rig-s2) 0 0;font:var(--rig-fs-xs)/var(--rig-lh-code) var(--rig-mono);color:var(--rig-text);tab-size:2;scrollbar-width:thin}
+.rg-hjson pre{box-sizing:border-box;max-width:100%;max-height:32rem;overflow:auto;white-space:pre;background:var(--rig-panel2);border:0;border-radius:var(--rig-r-md);padding:var(--rig-s3) var(--rig-s4);margin:var(--rig-s2) 0 0;font:var(--rig-fs-xs)/var(--rig-lead-md) var(--rig-mono);color:var(--rig-text);tab-size:2;scrollbar-width:thin}
 .rg-hjson pre:focus-visible{outline:var(--rig-focus-ring);outline-offset:var(--rig-focus-offset)}
 .rg-hjson pre.wrap{white-space:pre-wrap;overflow-wrap:anywhere;word-break:normal}
-.rg-hjson-redaction{font-size:var(--rig-fs-xs);color:var(--rig-amb-t);line-height:var(--rig-lh-body);margin:var(--rig-s2) 0 0}
+.rg-hjson-redaction{font-size:var(--rig-fs-xs);color:var(--rig-amb-t);line-height:var(--rig-lead-md);margin:var(--rig-s2) 0 0}
 .rg-hjson-notice{font-size:var(--rig-fs-xs);color:var(--rig-dim);margin:var(--rig-s2) 0 0}
 /* inside a bordered card or summary the section is a tinted second level, never a frame in a frame */
 :is(.rg-harness-card,.rg-harness-summary,.rg-pnl,.rg-card) .rg-hjson{border:0;background:var(--rig-panel2);border-radius:var(--rig-r-md);margin-block:0}

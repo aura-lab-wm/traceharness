@@ -5,6 +5,10 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import { fireEvent, waitFor, within } from '@testing-library/react'
 import { renderRig, resetRig, rigFixture } from '../../test/rig-testing'
 
+/* a number box takes what was typed when it is left (NumberField): type, then leave the box */
+const typeNumber = (node, value) => { fireEvent.change(node, { target: { value } }); fireEvent.blur(node) }
+
+
 afterEach(resetRig)
 
 const CAT = {
@@ -47,7 +51,7 @@ const data = () => ({ ...rigFixture(), '/hf/catalog': CAT, '/import/status': IDL
 
 describe('Hugging Face panel (local)', () => {
   it('lists only the trajectory datasets: id, rows, license or "license not stated", gated', () => {
-    const { container } = renderRig('#/rig/sources', { data: data() })
+    const { container } = renderRig('#/rig/sources:sample', { data: data() })
     const box = el(container, 'hf-catalog')
     const rows = [...box.querySelectorAll('tbody tr')]
     expect(rows.map((r) => r.getAttribute('data-id'))).toEqual(['nebius/SWE-agent-trajectories', 'SALT-NLP/SWE-chat', 'SWE-bench/SWE-smith-trajectories', 'acme/no-license'])
@@ -62,7 +66,7 @@ describe('Hugging Face panel (local)', () => {
 
   it('marks the datasets the console can import and sends their default split', async () => {
     const { calls, fetchImpl } = stub([IDLE])
-    const { container } = renderRig('#/rig/sources', { data: data(), fetchImpl })
+    const { container } = renderRig('#/rig/sources:sample', { data: data(), fetchImpl })
     const rows = [...el(container, 'hf-catalog').querySelectorAll('tbody tr')]
     const marks = rows.map((r) => r.querySelector('[data-el~="hf-importable"]'))
     expect(marks.map((m) => m !== null)).toEqual([false, false, true, false])
@@ -78,7 +82,7 @@ describe('Hugging Face panel (local)', () => {
 
   it('previews a dataset: columns and first rows, a cell with markup shown as text and never run', async () => {
     const { calls, fetchImpl } = stub([IDLE])
-    const { container } = renderRig('#/rig/sources', { data: data(), fetchImpl })
+    const { container } = renderRig('#/rig/sources:sample', { data: data(), fetchImpl })
     fireEvent.click(within(el(container, 'hf-catalog')).getByRole('button', { name: 'Preview nebius/SWE-agent-trajectories' }))
     const prev = await waitFor(() => { const x = el(container, 'hf-preview'); expect(x).not.toBeNull(); return x })
     expect(calls.some((c) => c.url === '/api/hf/preview?dataset=nebius%2FSWE-agent-trajectories')).toBe(true)
@@ -96,12 +100,12 @@ describe('Hugging Face panel (local)', () => {
       { ...IDLE, status: 'running', progress: [1, 3], source: 'huggingface' },
       { ...IDLE, status: 'done', source: 'huggingface', result: { source: 'huggingface', results_dir: 'mine', imported: 3, skipped: [{ offset: 9, reason: 'assistant turns 9, steps parsed 1' }], harness_ids: ['swe-agent'], n_tasks: 3, outcomes_known: 3, outcomes_unknown: 0, provenance: PROV } },
     ])
-    const { container } = renderRig('#/rig/sources', { data: data(), fetchImpl })
+    const { container } = renderRig('#/rig/sources:sample', { data: data(), fetchImpl })
     fireEvent.click(within(el(container, 'hf-catalog')).getByRole('button', { name: 'Preview nebius/SWE-agent-trajectories' }))
     const form = await waitFor(() => { const x = el(container, 'hf-import'); expect(x).not.toBeNull(); return x })
     const [rows, seed, name] = form.querySelectorAll('input')
-    fireEvent.change(rows, { target: { value: '3' } })
-    fireEvent.change(seed, { target: { value: '4' } })
+    typeNumber(rows, '3')
+    typeNumber(seed, '4')
     fireEvent.change(name, { target: { value: '../mine' } })
     expect(name.value).toBe('..mine')                                   // path characters never stay in the field
     fireEvent.change(name, { target: { value: 'mine' } })
@@ -120,7 +124,7 @@ describe('Hugging Face panel (local)', () => {
 
   it('says a license that is not permissive keeps the data out of a default export', async () => {
     const { fetchImpl } = stub([IDLE])
-    const { container } = renderRig('#/rig/sources', { fetchImpl, data: { ...data(), '/import/status': { ...IDLE, status: 'done', source: 'huggingface', result: { results_dir: 'x', imported: 1, skipped: [], provenance: { ...PROV, license: null, redistributable: false } } } } })
+    const { container } = renderRig('#/rig/sources:sample', { fetchImpl, data: { ...data(), '/import/status': { ...IDLE, status: 'done', source: 'huggingface', result: { results_dir: 'x', imported: 1, skipped: [], provenance: { ...PROV, license: null, redistributable: false } } } } })
     fireEvent.click(within(el(container, 'hf-catalog')).getByRole('button', { name: 'Preview nebius/SWE-agent-trajectories' }))
     const prov = await waitFor(() => { const x = el(container, 'hf-provenance'); expect(x).not.toBeNull(); return x })
     expect(prov.textContent).toContain('license not stated')
@@ -134,7 +138,7 @@ describe('Hugging Face panel (local)', () => {
       if (u === '/api/hf/import') return { ok: false, status: 409, statusText: 'Conflict', headers: { get: () => 'application/json' }, json: async () => ({ detail: 'data/runs/hf_x already exists; choose another name' }) }
       return { ok: true, status: 200, headers: { get: () => 'application/json' }, json: async () => IDLE }
     })
-    const { container } = renderRig('#/rig/sources', { data: data(), fetchImpl })
+    const { container } = renderRig('#/rig/sources:sample', { data: data(), fetchImpl })
     fireEvent.click(within(el(container, 'hf-catalog')).getByRole('button', { name: 'Preview nebius/SWE-agent-trajectories' }))
     const form = await waitFor(() => { const x = el(container, 'hf-import'); expect(x).not.toBeNull(); return x })
     fireEvent.click(el(form, 'hf-import-start'))
@@ -143,7 +147,7 @@ describe('Hugging Face panel (local)', () => {
   })
 
   it('uses no retired phrase', () => {
-    const { container } = renderRig('#/rig/sources', { data: data() })
+    const { container } = renderRig('#/rig/sources:sample', { data: data() })
     expect(el(container, 'hugging-face').textContent).not.toMatch(/workbench/i)
   })
 })

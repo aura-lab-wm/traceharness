@@ -86,8 +86,8 @@ export function PromptInspector({ wb, block }) {
     <div className="rg-native-inspector-nav">
       <button type="button" className="rg-btn rg-native-back" onClick={wb.back}>Back to prompt list</button>
       <span className="rg-native-step">
-        <button type="button" className="rg-btn" aria-label="Previous fragment" title="Previous fragment ( [ )" disabled={position <= 0} onClick={() => wb.step(-1)}>Previous</button>
-        <button type="button" className="rg-btn" aria-label="Next fragment" title="Next fragment ( ] )" disabled={position < 0 || position >= rows.length - 1} onClick={() => wb.step(1)}>Next</button>
+        <button type="button" className="rg-btn" aria-label="Previous fragment" data-hint="Previous fragment ( [ )" disabled={position <= 0} onClick={() => wb.step(-1)}>Previous</button>
+        <button type="button" className="rg-btn" aria-label="Next fragment" data-hint="Next fragment ( ] )" disabled={position < 0 || position >= rows.length - 1} onClick={() => wb.step(1)}>Next</button>
       </span>
     </div>
     <div className="rg-native-inspector-head">
@@ -95,7 +95,7 @@ export function PromptInspector({ wb, block }) {
       <span className="rg-native-state" data-state={patchable ? action : 'read-only'}>{stateWord}{unapplied ? ' · unapplied edit' : ''}</span>
     </div>
     {display.path && <p className="rg-native-path">{display.path}</p>}
-    <p className="rg-native-facts">{formatCount(metrics.bytes)} B · {formatCount(metrics.lines)} line{metrics.lines === 1 ? '' : 's'} · <span title={ESTIMATE_TOOLTIP}>≈ {formatCount(metrics.est_tokens)} tokens (estimate)</span>
+    <p className="rg-native-facts">{formatCount(metrics.bytes)} B · {formatCount(metrics.lines)} line{metrics.lines === 1 ? '' : 's'} · <span data-hint={ESTIMATE_TOOLTIP}>≈ {formatCount(metrics.est_tokens)} tokens (estimate)</span>
       {block.required_placeholders.length > 0 && <> · {formatCount(block.required_placeholders.length)} placeholder{block.required_placeholders.length === 1 ? '' : 's'}</>}
       {block.occurrence_count !== 1 && <> · {formatCount(block.occurrence_count)} occurrences</>}</p>
     {patchable && <div className="rg-native-individual">
@@ -127,7 +127,7 @@ export function PromptInspector({ wb, block }) {
           <FindingsAnnouncer findings={findings} />
           {blocked && proposed && <p className="rg-native-hint" data-tone="blocked">{gate ? 'Apply is unavailable: ' + gate : refused ? 'Apply is unavailable until the error above is fixed.' : 'Apply is unavailable: ' + wb.blockingIssue(block, text)} Runner review would refuse this text.</p>}
           <div className="rg-native-replace">
-            <button type="button" className="rg-btn pri" disabled={locked || busy || blocked} onClick={() => wb.applyReplacement(block.id)}>{busy ? 'Checking replacement…' : 'Apply replacement'}</button>
+            <button type="button" className="rg-btn pri" disabled={locked || busy || blocked} aria-busy={busy || undefined} onClick={() => wb.applyReplacement(block.id)}>{busy ? 'Checking replacement…' : 'Apply replacement'}</button>
             <button type="button" className="rg-btn" disabled={locked || busy || text === baseline} onClick={() => wb.setEdit(block.id, baseline)}>Use baseline text</button>
             <button type="button" className="rg-btn" disabled={locked || busy || !unapplied} onClick={() => wb.discardEdits([block.id])}>Discard edit</button>
           </div>
@@ -157,7 +157,7 @@ export function PromptInspector({ wb, block }) {
           <div><dt>Occurrences</dt><dd>{formatCount(block.occurrence_count)} located occurrence{block.occurrence_count === 1 ? '' : 's'}. This is inventory coverage, not observations from an executed run.</dd></div>
           <div><dt>Placeholders</dt><dd>{block.required_placeholders.length ? block.required_placeholders.join(' · ') : 'None'}</dd></div>
           <div><dt>Baseline size</dt><dd>{formatCount(metrics.bytes)} bytes · {formatCount(metrics.code_points)} characters · {formatCount(metrics.lines)} line{metrics.lines === 1 ? '' : 's'} (exact)</dd></div>
-          <div><dt>Baseline tokens</dt><dd title={ESTIMATE_TOOLTIP}>≈ {formatCount(metrics.est_tokens)} (estimate: characters divided by 3.9; not billed tokens)</dd></div>
+          <div><dt>Baseline tokens</dt><dd data-hint={ESTIMATE_TOOLTIP}>≈ {formatCount(metrics.est_tokens)} (estimate: characters divided by 3.9; not billed tokens)</dd></div>
           {codex && <div><dt>Codex span</dt><dd>{formatCount(Math.min(bytes, metrics.bytes))} content bytes · {formatCount(Math.max(0, metrics.bytes - bytes))} padding bytes · {formatCount(metrics.bytes)} span bytes</dd></div>}
           <div><dt>Baseline SHA-256</dt><dd><span>{block.baseline_sha256}</span> <button type="button" className="rg-btn" aria-label="Copy baseline SHA-256"
             onClick={async () => { if (await copyText(block.baseline_sha256)) wb.setNotice('Baseline SHA-256 copied.'); else wb.setError('The digest could not be copied. Select the text instead.') }}>Copy</button></dd></div>

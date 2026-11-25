@@ -94,6 +94,9 @@ reserved. Arguments' free text, prompts and keys are never recorded. Open the pa
 | `fit` | analysis | read | Two-factor fit |
 | `patterns` | analysis | read | Trajectory patterns |
 | `query_actions` | analysis | read | Query action strings |
+| `tokens` | analysis | read | Where the tokens go |
+| `tokens_tasks` | analysis | read | Token spread across a task's runs |
+| `tokens_task` | analysis | read | Compare the runs of one task by tokens |
 | `report` | analysis | read | Report card (Markdown) |
 | `ranking` | analysis | read | Rank harnesses |
 | `recommend_benchmark` | analysis | read | Which benchmark? |

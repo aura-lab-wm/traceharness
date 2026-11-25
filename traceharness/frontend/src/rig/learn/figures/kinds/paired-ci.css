@@ -1,0 +1,28 @@
+/* Rig · learn/figures/kinds/paired-ci.css — paired_ci: intervals paired and unpaired (paired-ci.jsx).
+   An interval that clears zero is the factor colour (--rig-ser1), one that covers zero grey (--rig-ser4). Switching
+   tabs stretches each line with transform. The picked row takes the selected wash; its tasks are squares, better
+   --rig-sky, worse --rig-red. Tokens only. */
+.rg-ci-zero{stroke:var(--rig-text);stroke-width:1.5}
+.rg-ci-row{cursor:pointer;outline:none}
+.rg-ci-row .hit{fill:transparent;transition:fill var(--rig-dur-1) var(--rig-ease)}
+.rg-ci-row:hover .hit{fill:var(--rig-panel2)}
+.rg-ci-row.on .hit{fill:var(--rig-sel-bg)}
+.rg-ci-row:focus-visible .hit{stroke:var(--rig-sel);stroke-width:2}
+.rg-ci-name{fill:var(--rig-dim);font-family:var(--rig-mono);font-size:var(--rig-fs-xs)}
+.rg-ci-row.on .rg-ci-name{fill:var(--rig-text);font-weight:var(--rig-fw-bold)}
+.rg-ci-val{fill:var(--rig-mute);font-size:var(--rig-fs-xs);font-variant-numeric:tabular-nums}
+.rg-ci-val .m{fill:var(--rig-text);font-weight:var(--rig-fw-medium)}
+.rg-ci-bar{fill:var(--rig-ser4);transition:transform calc(var(--rig-dur-2) * 2) var(--rig-ease)}
+.rg-ci-dot{fill:var(--rig-ser4);stroke:var(--rig-panel);stroke-width:2}
+.rg-ci-row.sep .rg-ci-bar,.rg-ci-row.sep .rg-ci-dot{fill:var(--rig-ser1)}
+.rg-ci-row{opacity:0;transition:opacity var(--rig-dur-2) var(--rig-ease) calc(var(--rig-dur-1) * var(--rig-fig-i) / 2)}
+.rg-ci-svg.seen .rg-ci-row{opacity:1}
+
+/* the picked harness, task by task */
+.rg-ci-tasks{margin-top:var(--rig-s3);padding:var(--rig-s3);border-radius:var(--rig-r-md);background:var(--rig-panel2)}
+.rig .rg-read-col .rg-ci-tasks p{margin:0 0 var(--rig-s2);font-size:var(--rig-fs-sm);line-height:var(--rig-lead-md);color:var(--rig-text)}
+.rg-ci-tasks p>span{color:var(--rig-dim)}
+.rg-ci-strip{display:grid;grid-template-columns:repeat(auto-fill,minmax(var(--rig-s6),1fr));gap:var(--rig-s1);list-style:none;margin:0;padding:0}
+.rig .rg-read-col .rg-ci-strip li{display:flex;align-items:center;justify-content:center;height:var(--rig-s6);margin:0;border-radius:var(--rig-r-xs);font-size:var(--rig-fs-2xs);line-height:1;font-variant-numeric:tabular-nums;color:var(--rig-dim);background:var(--rig-panel);box-shadow:inset 0 0 0 1px var(--rig-line2)}
+.rig .rg-read-col .rg-ci-strip li.up{background:var(--rig-sky-bg);color:var(--rig-sky-t);box-shadow:inset 0 0 0 1px var(--rig-sky)}
+.rig .rg-read-col .rg-ci-strip li.down{background:var(--rig-red-bg);color:var(--rig-red-t);box-shadow:inset 0 0 0 1px var(--rig-red)}

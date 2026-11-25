@@ -15,13 +15,19 @@ import {
   removeHarnessSnapshot,
   replaceHarnessSnapshot,
   stableJSON,
+  MAX_MATRIX_REPEATS,
+  MAX_MATRIX_BUDGET_USD,
 } from './experiment-matrix-state'
-import { reasonFor } from '../environment'
+import { reasonFor, why } from '../environment'
 import { HarnessJson } from './HarnessJson'
+import { NumberField } from './NumberField'
 import { Unavailable } from './unavailable'
 import './ExperimentWorkspace.css'
 
 const cellIdentity = cell => `${cell.snapshotId}:${cell.modelId}:${cell.taskId}`
+// why a greyed button is greyed, said right under it
+const SETTLE = 'Apply or discard pending JSON edits (Configuration file) and let any save or import finish first.'
+const RUNNER = 'Needs the local runner: run traceharness runner setup (Docker required).'
 
 // A running experiment is a neutral chip with a pulsing dot (blue is reserved for focus, selection and
 // the one primary action); amber asks for attention. Terminal states stay neutral.
@@ -151,15 +157,23 @@ export function ExperimentWorkspace({
   credential = null,
   credentialRequired = true,
   available = false,
+  historyServed = true,
   disabled = false,
   lease,
   onOpenJob,
+  defaultOpen = false,
 }) {
   const uid = useId()
-  const [open, setOpen] = useState(false)
+  const [open, setOpen] = useState(defaultOpen)
   const [experimentName, setExperimentName] = useState('Harness × model × task matrix')
   const [snapshotName, setSnapshotName] = useState('Harness 1')
   const [snapshots, setSnapshots] = useState([])
+  // what the last Update with current did, under that harness: updated, or nothing changed; an edit to the
+  // current harness makes it stale, so it goes
+  const [snapshotNote, setSnapshotNote] = useState(null)
+  const currentKey = useMemo(() => { try { return stableJSON(configuration) } catch { return '' } }, [configuration])
+  const noteKey = useRef(currentKey)
+  useEffect(() => { if (noteKey.current !== currentKey) { noteKey.current = currentKey; setSnapshotNote(null) } }, [currentKey])
   const [selectedModelIds, setSelectedModelIds] = useState([])
   const [selectedTaskIds, setSelectedTaskIds] = useState([])
   const [modelQuery, setModelQuery] = useState('')
@@ -170,7 +184,8 @@ export function ExperimentWorkspace({
   const [excludedCells, setExcludedCells] = useState(new Set())
   // Saved experiments are read from what the runner recorded, so they need no execution service (Docker stopped);
   // only creating and starting need run.experiments.
-  const historyReadable = available || ['ok', 'runner_not_ready'].includes(reasonFor('run.experiments'))
+  // historyServed: the runner's catalog says it keeps experiments (else GET /experiments is a 404 the browser logs)
+  const historyReadable = historyServed && (available || ['ok', 'runner_not_ready'].includes(reasonFor('run.experiments')))
   const [consentArms, setConsentArms] = useState(null) // null until the user confirms; then the arm ids that carry the flag
   const [rereview, setRereview] = useState(0)
   const [uncertainStart, setUncertainStart] = useState(null)
@@ -373,10 +388,19 @@ export function ExperimentWorkspace({
   const handleReplaceSnapshot = (snapshotId) => {
     try {
       const next = replaceHarnessSnapshot(snapshots, snapshotId, configuration)
+      const was = snapshots.find((row) => row.id === snapshotId)
+      const now = next.find((row) => row.id === snapshotId)
+      setError('')
+      // the same harness again changes nothing: the review stays, and the note says so
+      if (was && now && stableJSON(was.configuration) === stableJSON(now.configuration)) {
+        setSnapshotNote({ id: snapshotId, text: `${was.label} already matches the current harness · nothing changed` })
+        return
+      }
       invalidateAuthoringReview()
       setSnapshots(next)
-      setError('')
+      setSnapshotNote({ id: snapshotId, text: `Updated ${now ? now.label : 'the harness'} from the current harness` })
     } catch (err) {
+      setSnapshotNote(null)
       setError(err?.message || 'Could not update harness snapshot.')
     }
   }
@@ -650,9 +674,23 @@ export function ExperimentWorkspace({
   const plannedTrialPreview = includedCells.length * parsedRepeatsPreview
 
   const statusTone = STATUS_TONES[experiment?.status] || ''
+  const unavailableWhy = !available ? why('run.experiments', 'Reviewing or starting an experiment') || RUNNER : ''
+  const reviewDisabled = busy || disabled || !available || Boolean(draftIssue)
+  const reviewWhy = busy || !reviewDisabled ? '' : [disabled && SETTLE, draftIssue, unavailableWhy].filter(Boolean).join(' ')
+  const freezeDisabled = busy || disabled || !reviewed
+  const freezeWhy = busy || !freezeDisabled || reviewWhy ? '' : 'Freeze unlocks once Review matrix experiment passes.'
+  const startDisabled = !!experiment && (busy || disabled || !available || !!uncertainStart || !!leaseRef.current?.current || !credentialReady || !['ready', 'paused'].includes(experiment.status))
+  const startWhy = !startDisabled || busy ? '' : [
+    disabled && SETTLE,
+    unavailableWhy,
+    uncertainStart && 'Start outcome is unconfirmed. Refresh the experiment before taking another start action.',
+    leaseRef.current?.current && 'Another run or experiment from this page is still going.',
+    !credentialReady && 'Connect an active OpenRouter key in One run before starting or resuming this frozen experiment.',
+    !['ready', 'paused'].includes(experiment.status) && `Only a ready or paused experiment can start; this one is ${experiment.status.replaceAll('_', ' ')}.`,
+  ].filter(Boolean).join(' ')
 
   return (
-    <details className="rg-matrix-experiments" open={open}>
+    <details className="rg-matrix-experiments" data-tour="experiment-matrix" open={open}>
       <summary
         className="rg-matrix-sum"
         onClick={(event) => {
@@ -670,7 +708,7 @@ export function ExperimentWorkspace({
       {open && (
         <div className="rg-matrix-body rg-cq">
           <p className="rg-matrix-lede">
-            Capture immutable harness snapshots from the composer above, choose models and runnable tasks, verify the worst-case budget ceiling, then freeze and run an interleaved trial schedule.
+            Capture immutable harness snapshots of the setup in One run, choose models and runnable tasks, verify the worst-case budget ceiling, then freeze and run an interleaved trial schedule.
           </p>
           {!available && <Unavailable capability="run.experiments" what="The experiment matrix" el="experiments-unavailable" />}
 
@@ -747,6 +785,7 @@ export function ExperimentWorkspace({
                         </button>
                       </div>
                     </div>
+                    {snapshotNote && snapshotNote.id === snapshot.id && <p className="rg-small rg-mute" role="status" data-el="snapshot-note">{snapshotNote.text}</p>}
                     <HarnessJson title={`Captured configuration · ${snapshot.label}`} source="Immutable harness snapshot" description="Model and task are selected independently below. This snapshot changes only when you choose Update with current." documents={[{ id: snapshot.id, label: snapshot.label, value: snapshot.configuration, filename: `harness-${snapshot.id}.json` }]} />
                   </li>
                 ))}
@@ -776,17 +815,21 @@ export function ExperimentWorkspace({
                     value={modelQuery}
                     onChange={(event) => setModelQuery(event.target.value)}
                   />
+                  {/* a choice that changes nothing keeps the finished review: the button is off and says why */}
+                  {(() => { const all = modelOptions.map((row) => row.id); const done = all.length > 0 && all.every((id) => selectedModelIds.includes(id)); return (
                   <button
                     type="button"
                     className="rg-btn"
-                    disabled={busy || modelOptions.length === 0}
+                    disabled={busy || modelOptions.length === 0 || done}
+                    data-hint={done ? 'All models selected' : undefined}
                     onClick={() => {
+                      if (done) return
                       invalidateAuthoringReview()
-                      setSelectedModelIds(modelOptions.map((row) => row.id))
+                      setSelectedModelIds(all)
                     }}
                   >
                     Select all models
-                  </button>
+                  </button>) })()}
                   <button
                     type="button"
                     className="rg-btn"
@@ -841,17 +884,20 @@ export function ExperimentWorkspace({
                     value={taskQuery}
                     onChange={(event) => setTaskQuery(event.target.value)}
                   />
+                  {(() => { const ready = taskOptions.filter((row) => row.ready).map((row) => row.id); const done = ready.length > 0 && ready.length === selectedTaskIds.length && ready.every((id) => selectedTaskIds.includes(id)); return (
                   <button
                     type="button"
                     className="rg-btn"
-                    disabled={busy || !taskOptions.some((row) => row.ready)}
+                    disabled={busy || !ready.length || done}
+                    data-hint={done ? 'Every runnable task is selected' : undefined}
                     onClick={() => {
+                      if (done) return
                       invalidateAuthoringReview()
-                      setSelectedTaskIds(taskOptions.filter((row) => row.ready).map((row) => row.id))
+                      setSelectedTaskIds(ready)
                     }}
                   >
                     Select runnable tasks
-                  </button>
+                  </button>) })()}
                   <button
                     type="button"
                     className="rg-btn"
@@ -910,44 +956,12 @@ export function ExperimentWorkspace({
               <h3 className="rg-matrix-group-t">Schedule and budget</h3>
             </div>
             <div className="rg-form rg-matrix-schedule">
-              <Field label="Repetitions" htmlFor={`${uid}-repeats`}>
-                <input
-                  id={`${uid}-repeats`}
-                  className="rg-inp"
-                  type="number"
-                  min="1"
-                  max="10"
-                  value={repeats}
-                  onChange={(event) => {
-                    invalidateAuthoringReview()
-                    setRepeats(event.target.value)
-                  }}
-                />
-              </Field>
-              <Field label="Schedule seed" htmlFor={`${uid}-seed`}>
-                <input
-                  id={`${uid}-seed`}
-                  className="rg-inp"
-                  inputMode="numeric"
-                  value={seed}
-                  onChange={(event) => {
-                    invalidateAuthoringReview()
-                    setSeed(event.target.value)
-                  }}
-                />
-              </Field>
-              <Field label="Experiment budget (USD)" htmlFor={`${uid}-budget`}>
-                <input
-                  id={`${uid}-budget`}
-                  className="rg-inp"
-                  inputMode="decimal"
-                  value={budgetUsd}
-                  onChange={(event) => {
-                    invalidateAuthoringReview()
-                    setBudgetUsd(event.target.value)
-                  }}
-                />
-              </Field>
+              <NumberField label="Repetitions" id={`${uid}-repeats`} min={1} max={MAX_MATRIX_REPEATS} noun="repetitions" value={repeats}
+                onChange={(value) => { invalidateAuthoringReview(); setRepeats(String(value)) }} />
+              <NumberField label="Schedule seed" id={`${uid}-seed`} min={0} max={4294967295} value={seed}
+                onChange={(value) => { invalidateAuthoringReview(); setSeed(String(value)) }} />
+              <NumberField label="Experiment budget (USD)" id={`${uid}-budget`} min={0.01} max={MAX_MATRIX_BUDGET_USD} step="any" nudge={1} noun="USD" value={budgetUsd}
+                onChange={(value) => { invalidateAuthoringReview(); setBudgetUsd(String(value)) }} />
             </div>
 
             {(consentArms !== null || consentArmsOf(activeReview?.result).length > 0) && (
@@ -977,7 +991,8 @@ export function ExperimentWorkspace({
                 </span>
               </div>
               <div className="rg-matrix-preview-tools">
-                <button type="button" className="rg-btn" disabled={busy || !expanded.cells.length} onClick={() => { invalidateAuthoringReview(); setExcludedCells(new Set(expanded.cells.filter(cell => !cell.compatible).map(cellIdentity))) }}>Select verified cells</button>
+                {(() => { const want = expanded.cells.filter(cell => !cell.compatible).map(cellIdentity); const done = want.length === excludedCells.size && want.every((k) => excludedCells.has(k)); return (
+                <button type="button" className="rg-btn" disabled={busy || !expanded.cells.length || done} data-hint={done && expanded.cells.length ? 'Only verified cells are selected' : undefined} onClick={() => { if (done) return; invalidateAuthoringReview(); setExcludedCells(new Set(want)) }}>Select verified cells</button>) })()}
                 <button type="button" className="rg-btn" disabled={busy || !excludedCells.size} onClick={() => { invalidateAuthoringReview(); setExcludedCells(new Set()) }}>Include all cells</button>
                 <span className="rg-matrix-hint">Excluded cells stay visible and will not be scheduled.</span>
               </div>
@@ -1024,15 +1039,12 @@ export function ExperimentWorkspace({
               <h3 className="rg-matrix-group-t">Review and freeze</h3>
             </div>
 
-            {draftIssue && (
-              <p className="rg-matrix-issue" role="status">{draftIssue}</p>
-            )}
-
             <div className="rg-matrix-actions">
               <button
                 type="button"
                 className="rg-btn"
-                disabled={busy || disabled || !available || Boolean(draftIssue)}
+                disabled={reviewDisabled}
+                aria-describedby={reviewDisabled && reviewWhy ? `${uid}-why` : undefined}
                 onClick={handleReviewPlan}
               >
                 Review matrix experiment
@@ -1040,12 +1052,16 @@ export function ExperimentWorkspace({
               <button
                 type="button"
                 className="rg-btn pri"
-                disabled={busy || disabled || !reviewed}
+                disabled={freezeDisabled}
+                aria-describedby={freezeDisabled && (reviewWhy || freezeWhy) ? `${uid}-why` : undefined}
                 onClick={handleFreezePlan}
               >
                 Freeze matrix experiment
               </button>
             </div>
+            {(reviewWhy || freezeWhy) && (
+              <p className="rg-matrix-issue" id={`${uid}-why`} role="status" data-el="matrix-why">{reviewWhy || freezeWhy}</p>
+            )}
 
             {activeReview && (
               <div className="rg-matrix-review" role="region" aria-label="Matrix experiment review">
@@ -1063,7 +1079,7 @@ export function ExperimentWorkspace({
                         const armLabel = reviewArmById.get(row.arm_id)?.label || row.arm_id
                         return (
                           <li key={row.id}>
-                            Repeat {row.repeat} · {armLabel} · <span className="rg-mono">{row.manifest_sha256.slice(0, 12)}</span>
+                            Repeat {row.repeat} · {armLabel} · <span className="rg-hash">{row.manifest_sha256.slice(0, 12)}</span>
                           </li>
                         )
                       })}
@@ -1107,7 +1123,8 @@ export function ExperimentWorkspace({
                   {
                     label: experiment.status === 'paused' ? 'Resume experiment' : 'Start experiment',
                     primary: true,
-                    disabled: busy || disabled || !available || !!uncertainStart || !!leaseRef.current?.current || !credentialReady || !['ready', 'paused'].includes(experiment.status),
+                    disabled: startDisabled,
+                    describedBy: startWhy ? `${uid}-start-why` : undefined,
                     onClick: handleStartExperiment,
                   },
                   {
@@ -1130,12 +1147,7 @@ export function ExperimentWorkspace({
                 ]}
               />
 
-              {uncertainStart && <p role="status" className="rg-matrix-issue">Start outcome is unconfirmed. Refresh the experiment before taking another start action.</p>}
-              {credentialRequired && !credentialReady && ['ready', 'paused'].includes(experiment.status) && (
-                <p className="rg-matrix-hint">
-                  Connect an active OpenRouter key above before starting or resuming this frozen experiment.
-                </p>
-              )}
+              {startWhy && <p role="status" className="rg-matrix-issue" id={`${uid}-start-why`} data-el="matrix-start-why">{startWhy}</p>}
 
               <TrialQueue>
                 <table className="rg-tbl rg-matrix-table">
@@ -1201,7 +1213,7 @@ export function ExperimentWorkspace({
                             <div className="rg-matrix-identity">
                               <span>{identity.runtimeLine}</span>{identity.isolation && <span data-el="trial-isolation">{identity.isolation}</span>}{identity.verification && <span data-el="trial-verified">{identity.verification}</span>}
                               <span>{identity.taskLine}</span>
-                              <code title={trial.manifest_sha256}>{trial.manifest_sha256}</code>
+                              <code data-hint={trial.manifest_sha256}>{trial.manifest_sha256}</code>
                             </div>
                           </td>
                         </tr>

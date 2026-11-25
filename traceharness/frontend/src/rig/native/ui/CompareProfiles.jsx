@@ -73,7 +73,7 @@ export function CompareProfiles({ wb }) {
         <b>{a.key === 'baseline' && b.key === 'draft'
           ? result.changed ? `${plural(result.changed, 'fragment')} ${result.changed === 1 ? 'differs' : 'differ'} from the inventory baseline: ${counts.replaced} replaced, ${counts.disabled} disabled.` : 'No changes. This profile equals the inventory baseline.'
           : result.changed ? `${plural(result.changed, 'fragment')} ${result.changed === 1 ? 'differs' : 'differ'} between “${a.label}” and “${b.label}”.` : 'These two profiles are identical for this inventory.'}</b>
-        {result.changed > 0 && <span> Text {formatBytes(result.a_bytes)} → {formatBytes(result.b_bytes)} exact · <span title={ESTIMATE_TOOLTIP}>≈ {formatCount(result.a_est_tokens)} → ≈ {formatCount(result.b_est_tokens)} tokens (estimate)</span></span>}
+        {result.changed > 0 && <span> Text {formatBytes(result.a_bytes)} → {formatBytes(result.b_bytes)} exact · <span data-hint={ESTIMATE_TOOLTIP}>≈ {formatCount(result.a_est_tokens)} → ≈ {formatCount(result.b_est_tokens)} tokens (estimate)</span></span>}
       </p>
       <ol className="rg-native-changes">{result.rows.slice(0, shown).map((row) => {
         const block = blockById.get(row.block_id), before = effectiveText(block, a.profile), after = effectiveText(block, b.profile)
@@ -82,7 +82,7 @@ export function CompareProfiles({ wb }) {
             <div><span className="rg-lbl">{row.class_name}</span><strong>{promptDisplay(block).title}</strong></div>
             <span className="rg-native-change-move">{STATE_LABELS[row.a.action]} → {STATE_LABELS[row.b.action]}</span>
           </div>
-          <p className="rg-native-facts">{formatBytes(row.a.bytes)} → {formatBytes(row.b.bytes)} ({formatSigned(row.b.bytes - row.a.bytes, formatCount)} B exact) · <span title={ESTIMATE_TOOLTIP}>≈ {formatCount(row.a.est_tokens)} → ≈ {formatCount(row.b.est_tokens)} tokens (estimate)</span></p>
+          <p className="rg-native-facts">{formatBytes(row.a.bytes)} → {formatBytes(row.b.bytes)} ({formatSigned(row.b.bytes - row.a.bytes, formatCount)} B exact) · <span data-hint={ESTIMATE_TOOLTIP}>≈ {formatCount(row.a.est_tokens)} → ≈ {formatCount(row.b.est_tokens)} tokens (estimate)</span></p>
           {row.b.action === 'disable' && row.a.action !== 'disable'
             ? <p className="rg-native-hint"><b>Disabled: the baseline text is withheld.</b> {wb.runtimeId === 'native-codex' ? 'Codex overwrites this span with spaces and keeps its length.' : 'Claude Code evaluates this fragment to empty text.'}</p>
             : <DiffView before={row.a.action === 'disable' ? '' : before.text} after={after.text} label={'Diff for ' + block.title} beforeLabel={row.a.action === 'disable' ? a.label + ' (disabled: no text)' : a.label} afterLabel={b.label} maxRows={12} />}

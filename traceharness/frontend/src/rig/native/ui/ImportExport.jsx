@@ -27,7 +27,7 @@ export function ImportExport({ wb }) {
   return <section className="rg-native-block" aria-labelledby={id + 'h'}>
     <div className="rg-native-block-head"><h3 id={id + 'h'}>Files</h3></div>
     <ul className="rg-native-files">
-      {row('import', <button type="button" className="rg-btn" aria-describedby={id + 'import'} disabled={wb.disabled || reading} onClick={() => input.current?.click()}>{reading ? 'Reading file…' : 'Import profile file'}</button>,
+      {row('import', <button type="button" className="rg-btn" aria-describedby={id + 'import'} disabled={wb.disabled || reading} aria-busy={reading || undefined} onClick={() => input.current?.click()}>{reading ? 'Reading file…' : 'Import profile file'}</button>,
         'A profile, a profile bundle, a configuration export or an agent-patcher block dump, up to 1.5 MiB. It replaces the draft as one step that Undo reverses; nothing in it is executed.')}
       {row('profile', <button type="button" className="rg-btn" aria-describedby={id + 'profile'} onClick={() => wb.exportFile('profile')}>Export profile</button>,
         'The exact schema-1 profile as canonical JSON. Its SHA-256 equals native_prompt_profile_sha256 in the manifest of a run that used it.')}

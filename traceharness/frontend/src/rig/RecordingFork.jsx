@@ -27,6 +27,8 @@ export function stagedRecordingFork(args = []) {
   if (!value || typeof args[1] !== 'string' || value.request_id !== args[1]) {
     return { error: 'This recorded fork is no longer available in this tab. Open its run and fork it again.' }
   }
+  // applied once already: the draft made from it (and edited since) is the page's own now
+  if (value.applied === true) return { applied: true, request_id: value.request_id }
   try {
     const source = safeRecordingSource(value.source)
     if (!source) throw new Error()
@@ -34,6 +36,13 @@ export function stagedRecordingFork(args = []) {
   } catch {
     return { error: 'The recorded fork is incomplete or unsupported. Your previous draft has been kept.' }
   }
+}
+
+/** The staged fork `requestId` has made its draft: showing the tab again (a tab switch, Back, a reload) keeps
+ *  the reader's edits instead of applying the recorded configuration over them. */
+export function markRecordingForkApplied(requestId) {
+  const value = readDraft('recorded-fork')
+  if (value && value.request_id === requestId && value.applied !== true) writeDraft('recorded-fork', { ...value, applied: true })
 }
 
 export function ForkRecordedHarness({ run, detail, loading, error }) {

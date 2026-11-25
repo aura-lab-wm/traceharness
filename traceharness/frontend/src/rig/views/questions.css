@@ -8,6 +8,9 @@
 @container (max-width:900px){.rg-q-stack{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @container (max-width:640px){.rg-q-stack{grid-template-columns:minmax(0,1fr)}}
 .rg-q-stack li{display:flex;min-width:0}
+/* the question and its number first; the answer sentence behind the switch above the list */
+.rg-q-stack.brief .qa{display:none}
+.rg-q-tog{display:flex;justify-content:flex-end;margin:0 0 var(--rig-s2)}
 /* Cards on one row share their three tracks (question · figure · sentence), so a question that wraps
    to two lines does not push its figure below its neighbours'. */
 @supports (grid-template-rows:subgrid){
@@ -15,17 +18,18 @@
   .rg-q-stack li>.rg-q-card{grid-row:1 / -1;grid-template-rows:subgrid}
 }
 /* a question is a block under a hairline, not a boxed card */
-.rg-q-card{display:grid;grid-template-columns:var(--rig-s5) minmax(0,1fr);grid-template-areas:"n qq" "n qv" "n qa";gap:var(--rig-s2) var(--rig-s2);align-content:start;width:100%;min-width:0;padding:var(--rig-s4) var(--rig-s3) var(--rig-s5) var(--rig-s2);border:0;border-top:1px solid var(--rig-line);border-radius:0;background:none;text-align:left;color:var(--rig-text);cursor:pointer}
-.rg-q-card:hover{background:var(--rig-panel)}
+.rg-q-card{display:grid;grid-template-columns:var(--rig-s5) minmax(0,1fr);grid-template-areas:"n qq" "n qv" "n qa";gap:6px var(--rig-s2);align-content:start;width:100%;min-width:0;padding:var(--rig-s3) var(--rig-s3) var(--rig-s4) var(--rig-s2);border-radius:var(--rig-r-sm);border:0;border-top:1px solid var(--rig-line);border-radius:0;background:none;text-align:left;color:var(--rig-text);cursor:pointer}
+.rg-q-card:hover{background:var(--rig-panel2)}
 .rg-q-card:hover .qq{text-decoration:underline;text-decoration-color:var(--rig-line3);text-underline-offset:3px}
 .rg-q-card:focus-visible{outline:var(--rig-focus-ring);outline-offset:calc(-1 * var(--rig-focus-offset))}
 .rg-q-card.na{border-top-style:dashed}
-.rg-q-card .n{grid-area:n;padding-top:var(--rig-s0);font:var(--rig-fw-medium) var(--rig-fs-2xs)/var(--rig-lh-snug) var(--rig-mono);font-variant-numeric:tabular-nums;color:var(--rig-mute)}
-.rig .rg-q-card .qq{grid-area:qq;font:var(--rig-fw-medium) var(--rig-fs-md)/var(--rig-lh-snug) var(--rig-sans);overflow-wrap:anywhere}
+.rg-q-card .n{grid-area:n;padding-top:var(--rig-s0);font:var(--rig-fw-medium) var(--rig-fs-2xs)/var(--rig-lead-xs) var(--rig-num);font-variant-numeric:tabular-nums;color:var(--rig-mute)}
+.rig .rg-q-card .qq{grid-area:qq;font:var(--rig-fw-semi) var(--rig-fs-sm)/var(--rig-lead-md) var(--rig-sans);overflow-wrap:anywhere}
 .rg-q-card .qv{grid-area:qv;display:flex;flex-wrap:wrap;align-items:baseline;gap:var(--rig-s1) var(--rig-s2);min-width:0}
-.rg-q-card .qv b{font:var(--rig-fw-medium) var(--rig-fs-xl)/1 var(--rig-mono);font-variant-numeric:tabular-nums;letter-spacing:-.03em;color:var(--rig-text)}
-.rg-q-card .qv small{font:var(--rig-fs-xs)/var(--rig-lh-snug) var(--rig-sans);color:var(--rig-mute)}
-.rg-q-card .qa{grid-area:qa;font-size:var(--rig-fs-sm);line-height:var(--rig-lh-body);color:var(--rig-dim);overflow-wrap:anywhere}
+.rg-q-card .qv b{font:var(--rig-fw-medium) var(--rig-fs-lg)/var(--rig-lead-sm) var(--rig-num);font-variant-numeric:tabular-nums;letter-spacing:-.03em;color:var(--rig-text)}
+.rg-q-card .qv small{font:var(--rig-fs-xs)/var(--rig-lead-sm) var(--rig-sans);color:var(--rig-mute)}
+.rg-q-card .qv small.sc{flex-basis:100%;color:var(--rig-dim)}
+.rg-q-card .qa{grid-area:qa;font-size:var(--rig-fs-xs);line-height:var(--rig-lead-sm);color:var(--rig-dim);overflow-wrap:anywhere}
 .rg-q-card.na .qa{color:var(--rig-mute)}
 .rg-q-skel{display:block;height:var(--rig-s3);width:70%}
 .rg-q-mark-t{background:none;color:var(--rig-text);font-weight:var(--rig-fw-semi);box-shadow:inset 0 -1px 0 var(--rig-line3)}
@@ -33,18 +37,20 @@
 /* ---------------------------------------------------------------- one answer: question, figure + sentence, note */
 .rg-q-ask{display:flex;align-items:flex-start;gap:var(--rig-s3);margin:var(--rig-s2) 0 var(--rig-s5)}
 .rg-q-ask .rg-q-mark{flex:none;width:var(--rig-h-sm);height:var(--rig-h-sm);margin-top:var(--rig-s0);font-size:var(--rig-fs-md)}
-.rig .rg-q-ask h1{margin:0;min-width:0;font-size:var(--rig-fs-2xl);line-height:var(--rig-lh-tight);overflow-wrap:anywhere}
+.rig .rg-q-ask h1{margin:0;min-width:0;font-size:var(--rig-fs-xl);line-height:var(--rig-lead-xl);overflow-wrap:anywhere}
 @container (max-width:640px){.rig .rg-q-ask h1{font-size:var(--rig-fs-xl)}.rg-q-ask .rg-q-mark{margin-top:0}}
 /* the figure leads, the sentence it quantifies sits right beside it (under it in a narrow pane) */
-.rg-q-answer{display:flex;flex-wrap:wrap;align-items:center;gap:var(--rig-s4) var(--rig-s6);margin-bottom:var(--rig-s4);padding:var(--rig-s2) 0 var(--rig-s2) var(--rig-s5);border-left:2px solid var(--rig-text)}
+.rg-q-verdict .rg-q-mark-t{box-shadow:none}
+.rg-q-verdict{margin:0 0 var(--rig-s3);max-width:72ch;font:var(--rig-fw-medium) var(--rig-fs-lg)/var(--rig-lead-lg) var(--rig-sans);color:var(--rig-text)}
+.rg-q-answer{display:flex;flex-wrap:wrap;align-items:center;gap:var(--rig-s4) var(--rig-s6);margin-bottom:var(--rig-s4);padding:var(--rig-s2) 0 var(--rig-s2) var(--rig-s4);border-left:2px solid var(--rig-text)}
 .rg-q-answer .big{flex:0 1 auto;min-width:0;max-width:16rem}
-.rg-q-answer .big .v{font:var(--rig-fw-medium) var(--rig-fs-fig)/1 var(--rig-mono);font-variant-numeric:tabular-nums;letter-spacing:-.03em;color:var(--rig-text);overflow-wrap:anywhere}
-.rg-q-answer .big .l{margin-top:var(--rig-s2);font:var(--rig-fs-xs)/var(--rig-lh-snug) var(--rig-sans);color:var(--rig-mute)}
-.rig .rg-q-answer .a{flex:1 1 20rem;min-width:0;max-width:var(--rig-measure);margin:0;font-size:var(--rig-fs-lg);line-height:var(--rig-lh-prose);color:var(--rig-text)}
+.rg-q-answer .big .v{font:var(--rig-fw-medium) var(--rig-fs-2xl)/var(--rig-lead-xl) var(--rig-num);font-variant-numeric:tabular-nums;letter-spacing:-.03em;color:var(--rig-text);overflow-wrap:anywhere}
+.rg-q-answer .big .l{margin-top:var(--rig-s2);font:var(--rig-fs-xs)/var(--rig-lead-sm) var(--rig-sans);color:var(--rig-mute)}
+.rig .rg-q-answer .a{flex:1 1 20rem;min-width:0;max-width:var(--rig-measure);margin:0;font-size:var(--rig-fs-md);line-height:var(--rig-lead-lg);color:var(--rig-text)}
 @container (max-width:640px){.rg-q-answer{padding-left:var(--rig-s4)}.rg-q-answer .big .v{font-size:var(--rig-fs-fig-narrow)}.rig .rg-q-answer .a{flex-basis:100%}}
 .rig .rg-q-foot>.rg-pin{height:var(--rig-h-ctl);padding:0 var(--rig-s3)}
 .rg-q-foot{display:flex;flex-direction:column;align-items:flex-start;gap:var(--rig-s3);margin:0 0 var(--rig-s6)}
-.rig .rg-q-note{margin:0;max-width:var(--rig-measure);color:var(--rig-dim);font-size:var(--rig-fs-sm);line-height:var(--rig-lh-body)}
+.rig .rg-q-note{margin:0;max-width:var(--rig-measure);color:var(--rig-dim);font-size:var(--rig-fs-sm);line-height:var(--rig-lead-md)}
 #rg-q-figure:focus{outline:none}
 
 /* ---------------------------------------------------------------- figure panel */
@@ -78,24 +84,23 @@
 .rg-q-probe{flex:none;min-width:0}
 @container (max-width:480px){.rg-q-leak{flex-wrap:wrap}.rg-q-leakb{flex-basis:100%}}
 .rg-q-list{margin:0;padding-left:0;list-style:none}
+.rg-q-stask{min-width:0}
 .rg-q-strips{display:flex;flex-direction:column;gap:var(--rig-s1);margin-bottom:var(--rig-s2)}
 .rg-q-strip{display:grid;grid-template-columns:minmax(7rem,11rem) minmax(0,1fr) 4rem 4rem;gap:var(--rig-s3);align-items:center;min-height:var(--rig-h-sm)}
 .rg-q-rib{display:flex;flex-wrap:wrap;gap:var(--rig-s0)}
-.rg-q-rib .c{display:inline-grid;place-items:center;width:var(--rig-s5);height:var(--rig-s5);border-radius:var(--rig-r-xs);font:var(--rig-fw-semi) var(--rig-fs-2xs)/1 var(--rig-sans)}
-.rg-q-rib .c.p{background:var(--rig-sky-bg2);color:var(--rig-sky-t);box-shadow:inset 0 -2px 0 var(--rig-sky)}
-.rg-q-rib .c.f{background:var(--rig-red-bg);color:var(--rig-red-t);box-shadow:inset 0 -2px 0 var(--rig-red)}
-.rg-q-rib .c.u{border:1px dashed var(--rig-unk);color:var(--rig-unk)}
+.rg-q-rib .c{display:inline-grid;place-items:center;width:var(--rig-s5);height:20px;border-radius:var(--rig-r-xs);font:var(--rig-fw-medium) var(--rig-fs-2xs)/var(--rig-lead-xs) var(--rig-num);font-variant-numeric:tabular-nums}
+.rg-q-rib .c .rg-st{width:14px;height:14px}
 @container (max-width:640px){.rg-q-strip{grid-template-columns:minmax(0,1fr) auto auto;row-gap:var(--rig-s1)}.rg-q-strip .rg-q-rib{grid-column:1/-1;grid-row:2}}
 .rg-q-run dd.rg-row{flex-wrap:wrap}
-.rg-q-run .rg-fchip{height:auto;min-height:var(--rig-h-xs);padding-block:var(--rig-s0);white-space:normal;line-height:var(--rig-lh-snug)}
+.rg-q-run .rg-fchip{height:auto;min-height:var(--rig-h-xs);padding-block:var(--rig-s0);white-space:normal;line-height:var(--rig-lead-sm)}
 @container (max-width:640px){
   .rg-kv.rg-q-run{grid-template-columns:minmax(0,1fr);row-gap:var(--rig-s1)}
   .rg-q-run dd:not(:last-child){margin-bottom:var(--rig-s3)}
 }
 
 /* ---------------------------------------------------------------- Student Lab lesson */
-.rg-q-lesson{margin-bottom:var(--rig-s6);padding:var(--rig-s4) var(--rig-s5);border:1px solid var(--rig-sel);border-radius:var(--rig-r-lg);background:var(--rig-sel-bg)}
-.rg-q-lesson ol{margin:var(--rig-s2) 0 0;padding-left:var(--rig-s4);display:grid;gap:var(--rig-s2);font-size:var(--rig-fs-sm);line-height:var(--rig-lh-body)}
+.rg-q-lesson{margin-bottom:var(--rig-s6);padding:var(--rig-s4) var(--rig-s5);border:1px solid var(--rig-line2);border-radius:var(--rig-r-lg);background:var(--rig-panel2)}
+.rg-q-lesson ol{margin:var(--rig-s2) 0 0;padding-left:var(--rig-s4);display:grid;gap:var(--rig-s2);font-size:var(--rig-fs-sm);line-height:var(--rig-lead-md)}
 .rg-q-lesson b{display:inline-block;min-width:8rem;margin-right:var(--rig-s2);color:var(--rig-text);font-weight:var(--rig-fw-semi)}
 @container (max-width:480px){.rg-q-lesson{padding:var(--rig-s3) var(--rig-s4)}.rg-q-lesson b{display:block;min-width:0;margin:0}}
 
@@ -124,3 +129,11 @@
 /* ---------------------------------------------------------------- unanswered */
 .rg-q-else{gap:var(--rig-s2)}
 .rg-q-else:not(:has(.rg-btn)){display:none}
+
+/* Studio Graphite: the question pages share the analysis rhythm (header 20, Asking bar, then the body) */
+.rg-dpad.rg-q{padding-top:20px}
+.rg-q>.rg-ph,.rg-q>.rg-ask{margin-bottom:var(--rig-gap-in)}
+.rg-q .rg-pnl{border-radius:var(--rig-r-md)}
+.rg-q .rg-pnl-h{min-height:40px;padding:0 var(--rig-s4)}
+.rg-q .rg-pnl-b{padding:var(--rig-s4)}
+.rg-q-runspnl{border-radius:var(--rig-r-md)}

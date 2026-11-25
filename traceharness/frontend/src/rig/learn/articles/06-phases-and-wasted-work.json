@@ -1,0 +1,448 @@
+{
+ "id": "phases-and-wasted-work",
+ "number": 6,
+ "part": 2,
+ "kind": "concept",
+ "checked": "2026-11-23",
+ "title": "Phases and wasted work",
+ "question": "Which parts of a run moved the agent toward its fix, and which did not?",
+ "what_you_learn": [
+  "How TraceHarness tags each tool call with a phase, and why those tags are ours rather than a standard.",
+  "Three patterns that cost tokens without changing the patch: work after the fix, repeated calls and big outputs carried forward.",
+  "Why some extra work is checking, and how other runs of the same task help you tell the difference."
+ ],
+ "prerequisites": {
+  "read": [
+   "reading-a-trajectory",
+   "run-cost-steps-vs-tokens"
+  ],
+  "know": []
+ },
+ "sections": [
+  {
+   "heading": "Phase tags are our labels",
+   "body": [
+    "TraceHarness tags every tool call with a phase:",
+    {
+     "tags": [
+      [
+       "explore",
+       "reading, listing or searching code"
+      ],
+      [
+       "reproduce",
+       "running a script to see the bug"
+      ],
+      [
+       "edit",
+       "changing project files"
+      ],
+      [
+       "test",
+       "running tests"
+      ],
+      [
+       "lookup",
+       "fetching something from an outside host"
+      ],
+      [
+       "env",
+       "installing or setting up"
+      ],
+      [
+       "submit",
+       "handing in"
+      ],
+      [
+       "other",
+       "anything else"
+      ]
+     ]
+    },
+    "For shell commands the tag comes from fixed rules over the command text. For the lab's own tools it comes from the tool's name.",
+    "These names and rules are ours. There is no standard list of phases, and papers use their own schemes with their own boundaries. A share of explore calls in TraceHarness and a share of exploration in a paper may not count the same things, so compare them with care.",
+    "You meet the tags in two places. On a run page each step in the list carries its tag. On the Tokens page, Tokens by phase adds up each phase's calls, generated tokens and re-read prompt tokens for one model under one harness. It also gives the characters of tool output when the dataset recorded them; otherwise that column reads unknown."
+   ]
+  },
+  {
+   "heading": "After the fix: two definitions",
+   "body": [
+    "Run pages and task pages mark the fix. It is the last edit to a file of the final patch, counting only files that existed before the run. A scratch script the agent created is not the fix.",
+    "After the fix counts the model calls that came after the call that wrote it, out of all the run's model calls. A call that only submits is left out on both sides. Beside the count, the page gives those calls' generated tokens.",
+    "On a failed run that edit fixed nothing, so the page calls it the last edit instead.",
+    "The Termination Lag study (Cim, Topcu and Kandemir, 2026, preprint) uses another fix point: the moment the code first became correct. It tested every distinct patch an agent produced, across 5 models, 2 agent frameworks and 3 SWE-bench sets.",
+    "In 38% to 82% of successful runs, the first source edit was already correct. On SWE-bench Verified (500 real GitHub issues that developers screened) and Multilingual, they counted the steps after that point.",
+    "Those steps were a median 35% to 37% of the steps in successful runs for Qwen3-Coder, and 54% to 60% for Laguna-XS.2. Most went to verifying and exploring, and in 1% to 8% of cases the extra work undid the correct patch.",
+    "The two fix points differ. First became correct needs every in-between patch graded, which TraceHarness does not do. The last edit of the final patch is never earlier, so TraceHarness counts the same or less work after it.",
+    "When you only have the agent's own test results, its first passing test run is a rough third mark. The worked example uses it, and says so.",
+    "The same pages mark the first lookup: the first tool call tagged lookup, a fetch from an outside host. When there was none, they say no lookup. A lookup before the fix can mean the agent searched for the answer."
+   ]
+  },
+  {
+   "heading": "Repeated calls",
+   "body": [
+    "A repeat, as counted here, is a tool call identical to an earlier one in the same run: same tool, same arguments. Hu et al. (2026, preprint) studied three related habits in 300 SWE-bench Verified tasks under 4 configurations. The habits were re-reading code already retrieved, writing near-duplicate scripts and re-running tests without a new patch. At least one appeared in 79% to 98% of tasks. Their share of a task's cost, averaged within each configuration, ranged from 6.86% to 22.75%.",
+    "A repeat is not always the agent's fault. If the harness drops old tool outputs, the agent has to read a file again to see it; the challenge shows this. A stricter rule counts a repeat only when nothing changed in between, such as no edit since the first call."
+   ]
+  },
+  {
+   "heading": "Big outputs carried forward",
+   "body": [
+    "A long test log or a full file listing is sent again with every later call, as the article on cost explains. The AgentDiet study (Xiao et al., FSE 2026) found useless, redundant and expired information throughout agent trajectories. Removing it during the run cut input tokens by 39.9% to 59.7%. Total cost fell by 21.1% to 35.9% with the same results, even counting the removal step itself (one agent, 2 models, 2 benchmarks).",
+    "A simpler fix is to hide old tool outputs. The Complexity Trap study did this for SWE-agent (an agent harness for GitHub issues). Masking old observations halved cost in 4 of 5 configurations. Its solve rate matched that of summarising old turns with a language model. Against the agent with full history, it was within noise in 4 of 5 configurations and significantly lower in 1, by 4.0 points."
+   ]
+  },
+  {
+   "heading": "Checking or waste?",
+   "body": [
+    "Do not call a step waste just because it came after a passing test. The visible tests can miss cases, and a second check may catch them. A fairer test is to look at other runs of the same task. If a run that stopped earlier got the same grade, the extra steps were not needed for that grade. Even then you only know it for that task and that grader. When you report extra work, give it in tokens as well as steps, because late steps re-read the longest conversation."
+   ]
+  }
+ ],
+ "figures": [
+  {
+   "id": "a6-paths",
+   "after_section": 1,
+   "kind": "phase_band",
+   "data_file": "a06-band",
+   "title": "Where the fix falls, run by run",
+   "caption": "Recorded paths of the five runs of t14_spiral_matrix (gpt-5.6-luna under baseline; all pass the hidden tests), one block per model call, coloured by phase and lettered by tool call. Run 2 is RRRETETBS and used 12,140 tokens; Run 5 is RRRETS and used 6,258. Dashed: the mark; hatched: the calls counted after it. By the fix, Run 2 has 2 of its 6 working calls after it; by the first passing test, 3 more tool calls came before submit.",
+   "data_note": "study_v04, the 5 runs of one task",
+   "headline": [
+    {
+     "key": "tokens_2",
+     "as_written": "12,140"
+    },
+    {
+     "key": "tokens_5",
+     "as_written": "6,258"
+    },
+    {
+     "key": "path_2",
+     "as_written": "RRRETETBS"
+    },
+    {
+     "key": "path_5",
+     "as_written": "RRRETS"
+    },
+    {
+     "key": "after_fix_2",
+     "as_written": "2 of its 6"
+    },
+    {
+     "key": "generated_after_2",
+     "as_written": "494"
+    },
+    {
+     "key": "after_pass_2",
+     "as_written": "3 more"
+    },
+    {
+     "key": "fix_call_2",
+     "as_written": "4 of 7"
+    }
+   ]
+  },
+  {
+   "id": "a06-after",
+   "after_section": 4,
+   "kind": "after_hist",
+   "data_file": "a06-after",
+   "title": "Work after the tests passed, across runs",
+   "caption": "Baseline runs of gemini-2.5-flash-lite and gpt-5.6-luna, counted by the work they did after a mark. After the first passing test: 26 of the 119 gpt-5.6-luna runs with one made more tool calls before submit, 31 in all, and none of the 86 gemini-2.5-flash-lite runs did. After the fix: every passing run made at least one model call, exactly 1 in all 75 passing gemini-2.5-flash-lite runs.",
+   "data_note": "study_v04, 240 baseline runs",
+   "headline": [
+    {
+     "key": "with_pass_1",
+     "as_written": "119 of 120"
+    },
+    {
+     "key": "more_1",
+     "as_written": "26 of those 119"
+    },
+    {
+     "key": "calls_1",
+     "as_written": "31"
+    },
+    {
+     "key": "pass_n_0",
+     "as_written": "86"
+    },
+    {
+     "key": "fix_one_0",
+     "as_written": "75"
+    },
+    {
+     "key": "fix_one_1",
+     "as_written": "99"
+    },
+    {
+     "key": "fix_n_1",
+     "as_written": "118"
+    }
+   ]
+  }
+ ],
+ "worked_example": {
+  "title": "Checking after the tests passed, with a cheaper run beside it",
+  "dataset": {
+   "name": "study_v04",
+   "what": "Bundled with the study copy: 3,240 recorded runs, 3 models x 9 harnesses x 24 small Python tasks x 5 runs. They were collected through OpenRouter (a paid service that passes requests on to many model providers) at temperature 0.",
+   "credit": "TraceHarness bundled data (AURA lab, William & Mary)."
+  },
+  "open": [
+   "Click the dataset name at the top of the left list and choose study_v04.",
+   "Click Tasks, type t14_spiral_matrix in Search tasks and open it.",
+   "Click Change and pick the model openai/gpt-5.6-luna (harness baseline).",
+   "Click Run 2 of 5 and read Recorded path in its Findings; then do the same for Run 5 of 5."
+  ],
+  "body": [
+   "All 5 runs pass the hidden tests. Run 5's recorded path is RRRETS: three reads, one edit, one test run that passed, submit. It used 6,258 tokens.",
+   "Run 2's path is RRRETETBS. Its first test run already passed. It then made a second edit for one-row and one-column matrices, ran the tests again and ran its own check script with bash. That is 3 more tool calls before submit, and 12,140 tokens, 1.9x Run 5. By the run page's own mark, Run 2's fix is its second edit, at model call 4 of 7. After it come 2 of its 6 working calls, the submit left out, with 494 generated tokens.",
+   "Was that waste? Run 5 stopped right after its first passing test and still passed the hidden tests, so for this task the extra checking was not needed for the grade. Whether Run 2's own first patch would have passed was never recorded.",
+   "Across the dataset under baseline: 119 of 120 gpt-5.6-luna runs had a passing test run, and 26 of those 119 made more tool calls before submitting, 31 calls in all. gemini-2.5-flash-lite never did: in all 86 of its baseline runs with a passing test, the next call was submit. By the fix instead, every passing run made at least one model call after it. All 75 passing gemini-2.5-flash-lite runs made exactly 1, a test run; 99 of the 118 passing gpt-5.6-luna runs made exactly 1."
+  ],
+  "links": [
+   "ds:study_v04",
+   "task:study_v04:gemini-2.5-flash-lite:baseline:t14_spiral_matrix",
+   "task:study_v04:gpt-5.6-luna:baseline:t14_spiral_matrix",
+   "task:study_v04:gpt-5.6-luna:baseline:t14_spiral_matrix:1"
+  ]
+ },
+ "try_it": {
+  "clicks": [
+   "Click the dataset name at the top of the left list and choose study_v04.",
+   "Click Tokens. Click Change and pick the model openai/gpt-5.6-luna (harness baseline).",
+   "Read the explore row of Tokens by phase.",
+   "Click Change again, pick the harness short_history, and read the explore row again."
+  ],
+  "question": "How many explore tool calls do gpt-5.6-luna's runs make under baseline, and how many under short_history? short_history keeps only the last 2 tool outputs in the conversation. Is the difference the model's fault?",
+  "answer": "390 explore calls under baseline and 821 under short_history, over 120 runs each; prompt tokens rose from 599K to 1.07M. Passing runs barely moved, 118 and 116 of 120. Most of the extra explore calls re-read files whose earlier output the harness had dropped. Under short_history, 312 of the 1,263 tool calls repeat an earlier call exactly, and 295 of those re-read a file. Under baseline only 5 of 795 calls repeat. The harness caused these repeats, not the model alone.",
+  "answer_measured_from": "Tokens page (explore 390 and 821; prompt 599K and 1.07M). GET /api/results/study_v04/tokens?model=openai%2Fgpt-5.6-luna&harness=baseline and &harness=short_history: by_phase explore calls 390 and 821; totals.prompt 598,811 and 1,074,240. GET /api/repeats/study_v04?limit=4000 (a call is a repeat when the same tool and arguments occurred earlier in the run), summed over the 120 runs of each cell: 5 of 795 calls and 312 of 1,263 calls; recounted from the ledgers by tool: 295 of the 312 are read_file. Pass counts from study_v04/index.jsonl.",
+  "links": [
+   "ds:study_v04",
+   "an:study_v04:tokens:gpt-5.6-luna:baseline",
+   null,
+   "an:study_v04:tokens:gpt-5.6-luna:short_history"
+  ]
+ },
+ "quiz": [
+  {
+   "q": "Are TraceHarness's phase names a shared standard?",
+   "options": [
+    "Yes, SWE-bench defines the phase list",
+    "Yes, OpenHands defines the phase list",
+    "No: they are TraceHarness’s own rules",
+    "Only the test phase is a shared standard"
+   ],
+   "answer": 2,
+   "why": "There is no standard phase list; compare phase shares across sources with care."
+  },
+  {
+   "q": "An agent's tests pass at step 5; it keeps working until step 9 and then passes. How can you judge whether steps 6 to 9 were needed?",
+   "options": [
+    "They are always waste, since the tests had already passed",
+    "Compare runs of the task that stopped earlier",
+    "They are never waste, since checking helps",
+    "Ask the agent whether they were needed"
+   ],
+   "answer": 1,
+   "why": "A cheaper run with the same grade shows the extra steps were not needed for that grade."
+  },
+  {
+   "q": "Under short_history, gpt-5.6-luna repeated many calls. Why?",
+   "options": [
+    "The model got worse at reading code",
+    "The grader asked it to read files again",
+    "The tasks were harder under that harness",
+    "The harness dropped earlier tool outputs"
+   ],
+   "answer": 3,
+   "why": "short_history keeps only the last 2 tool outputs; a file read earlier is no longer visible."
+  }
+ ],
+ "sources": [
+  {
+   "title": "Termination Lag: Coding Agents Solve Early but Stop Late",
+   "authors": "Musa Cim, Burak Topcu, Mahmut Taylan Kandemir",
+   "year": "2026 (preprint)",
+   "url": "https://arxiv.org/abs/2611.14960",
+   "what_we_took": "Work after the fix, measured by testing every distinct patch during a run (5 models, 2 frameworks, 3 SWE-bench sets): 38-82% of successful runs were correct at their first source edit; post-solution steps were a median 35-37% (Qwen3-Coder) and 54-60% (Laguna-XS.2) of successful runs on SWE-bench Verified and Multilingual; mostly verifying and exploring; 1-8% of runs undid the correct patch. Counted in steps, not tokens.",
+   "quote": "Coding agents can solve a task well before they stop working on it.",
+   "licence": "CC BY 4.0 (arXiv).",
+   "checked": "2026-11-23"
+  },
+  {
+   "title": "Analyzing and Mitigating Cost-Inefficient Behaviors in Coding Agents",
+   "authors": "Yiran Hu, Nan Jiang, Shanchao Liang, Anik Dey, Yi Wu, Lin Tan",
+   "year": "2026 (preprint, under review)",
+   "url": "https://arxiv.org/abs/2609.30725",
+   "what_we_took": "Three cost-inefficient habits (re-reading code already retrieved, near-duplicate scripts, re-running tests without a new patch) in 300 SWE-bench Verified tasks x 4 configurations, one run each: present in 79-98% of tasks; their cost share, a configuration's mean of the per-task share, ranged 6.86-22.75% (read in the HTML full text).",
+   "quote": "We identify three cost-inefficient behaviors: subsumed retrieval, similar script generation, and test re-execution.",
+   "licence": "arXiv non-exclusive distribution licence (not CC). Paraphrased; one short quote for citation.",
+   "checked": "2026-11-23"
+  },
+  {
+   "title": "Reducing Cost of LLM Agents with Trajectory Reduction (AgentDiet)",
+   "authors": "Yuan-An Xiao, Pengfei Gao, Chao Peng, Yingfei Xiong",
+   "year": "2025 (accepted for FSE 2026)",
+   "url": "https://arxiv.org/abs/2509.23586",
+   "what_we_took": "Useless, redundant and expired information is common in trajectories; removing it during the run cut input tokens by 39.9-59.7% and total cost by 21.1-35.9% at the same performance, counting the removal step's own cost (Trae Agent, 2 LLMs, 2 benchmarks).",
+   "quote": "useless, redundant, and expired information is widespread across trajectories",
+   "licence": "arXiv non-exclusive distribution licence (not CC). Paraphrased; one short quote for citation.",
+   "checked": "2026-11-23"
+  },
+  {
+   "title": "The Complexity Trap: Simple Observation Masking Is as Efficient as LLM Summarization for Agent Context Management",
+   "authors": "Tobias Lindenbauer, Igor Slinko, Ludwig Felder, Egor Bogomolov, Yaroslav Zharov",
+   "year": "2025 (DL4C workshop at NeurIPS 2025)",
+   "url": "https://arxiv.org/abs/2508.21433",
+   "licence": "CC BY 4.0 (arXiv).",
+   "what_we_took": "Masking old observations halved cost in 4 of 5 SWE-agent configurations; its solve rate matched LLM summarisation and, against the raw agent, was within noise in 4 of 5 and significantly lower in 1 (-4.0 points, Table 4).",
+   "quote": "a simple environment observation masking strategy halves cost relative to the raw agent",
+   "checked": "2026-11-23"
+  }
+ ],
+ "glossary_terms": [
+  "phase",
+  "after the fix",
+  "first lookup",
+  "repeat",
+  "observation masking",
+  "recorded path",
+  "model call"
+ ],
+ "see_also": [
+  {
+   "kind": "article",
+   "target": "run-cost-steps-vs-tokens"
+  },
+  {
+   "kind": "article",
+   "target": "what-a-harness-is"
+  },
+  {
+   "kind": "page",
+   "label": "Tokens by phase for gpt-5.6-luna under baseline",
+   "spec": "an:study_v04:tokens:gpt-5.6-luna:baseline"
+  },
+  {
+   "kind": "page",
+   "label": "All runs of t14_spiral_matrix, with the fix and the first lookup marked",
+   "spec": "task:study_v04:gpt-5.6-luna:baseline:t14_spiral_matrix"
+  }
+ ],
+ "numbers": [
+  {
+   "as_written": [
+    "38% to 82%",
+    "5 models",
+    "2 agent frameworks",
+    "3 SWE-bench",
+    "35% to 37%",
+    "54% to 60%",
+    "1% to 8%"
+   ],
+   "meaning": "Termination Lag results",
+   "source": "arXiv 2611.14960 abstract"
+  },
+  {
+   "as_written": [
+    "300",
+    "4 configurations",
+    "79% to 98%",
+    "6.86%",
+    "22.75%"
+   ],
+   "meaning": "Cost-inefficient behaviours",
+   "source": "arXiv 2609.30725 abstract + HTML full text"
+  },
+  {
+   "as_written": [
+    "2",
+    "39.9%",
+    "59.7%",
+    "21.1%",
+    "35.9%"
+   ],
+   "meaning": "AgentDiet results",
+   "source": "arXiv 2509.23586 abstract"
+  },
+  {
+   "as_written": [
+    "4 of 5",
+    "4.0 points"
+   ],
+   "meaning": "Complexity Trap masking results: cost halved in 4 of 5 configurations; solve rate within noise in 4 of 5 and significantly lower in 1",
+   "source": "arXiv 2508.21433, Table 4 (HTML full text): +2.8, -4.0 (p = 0.04), +1.4, -2.0, +1.6 points"
+  },
+  {
+   "as_written": [
+    "6,258",
+    "12,140",
+    "1.9x",
+    "3 more"
+   ],
+   "meaning": "t14_spiral_matrix Run 5 vs Run 2 (gpt-5.6-luna, baseline)",
+   "source": "task page Findings by click-through; ledgers of runs 4cb19f and 6bd7a4"
+  },
+  {
+   "as_written": [
+    "119 of 120",
+    "26 of those 119",
+    "31",
+    "86"
+   ],
+   "meaning": "runs continuing after the first passing test",
+   "source": "own computation over ledgers in data/runs/study_v04/index.jsonl (traceharness-study) (baseline cells)"
+  },
+  {
+   "as_written": [
+    "390",
+    "821",
+    "599K",
+    "1.07M",
+    "118",
+    "116",
+    "312",
+    "1,263",
+    "5 of 795",
+    "last 2",
+    "295"
+   ],
+   "meaning": "gpt-5.6-luna baseline vs short_history",
+   "source": "Tokens page; GET /api/results/study_v04/tokens and /api/repeats/study_v04?limit=4000"
+  },
+  {
+   "as_written": [
+    "step 5",
+    "step 9",
+    "6 to 9"
+   ],
+   "meaning": "made-up values in a quiz question",
+   "source": "invented for the question"
+  },
+  {
+   "as_written": [
+    "4 of 7",
+    "2 of its 6",
+    "494"
+   ],
+   "meaning": "t14_spiral_matrix Run 2: the fix's model call, working calls after the fix, their generated tokens",
+   "source": "core/trajectory_fields.after_fix and call_axis over the ledger of 20261114-131956-6bd7a4; scripts/learn_figures.py a06-band"
+  },
+  {
+   "as_written": [
+    "All 75",
+    "99 of the 118"
+   ],
+   "meaning": "passing baseline runs with exactly 1 model call after the fix",
+   "source": "core/trajectory_fields.after_fix over data/runs/study_v04 baseline runs (traceharness-study); scripts/learn_figures.py a06-after"
+  }
+ ],
+ "in_short": [
+  "**Phase tags are TraceHarness's own labels**, from fixed rules over each tool call, so compare a share of explore calls with a paper's numbers with care.",
+  "**The fix is the last edit to a file of the final patch**, and after the fix counts the model calls that came after it, the submit left out.",
+  "**Work after a passing test is not always waste**: compare with a run of the same task that stopped earlier, and count it in tokens as well as steps."
+ ]
+}

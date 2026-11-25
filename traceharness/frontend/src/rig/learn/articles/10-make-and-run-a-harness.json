@@ -1,0 +1,328 @@
+{
+ "id": "make-and-run-a-harness",
+ "number": 10,
+ "part": 4,
+ "kind": "how-to",
+ "checked": "2026-11-23",
+ "title": "Make a smaller harness and run it once",
+ "question": "How do I make my own harness, run it once for free, and know which Harnesses page to use?",
+ "what_you_learn": [
+  "Which of the Harnesses pages to use for which job.",
+  "How to build a smaller harness from six answers and save it.",
+  "How to run it once with the free mock model, and read what came back."
+ ],
+ "prerequisites": {
+  "read": [
+   "what-a-harness-is"
+  ],
+  "know": [
+   "Nothing to install: the mock model needs no key and costs nothing."
+  ]
+ },
+ "sections": [
+  {
+   "heading": "Which Harnesses page for which job",
+   "body": [
+    "Harnesses has ten pages in the left list, in two groups. Pick by what you want to do.",
+    "The Run group starts and plans runs:",
+    {
+     "list": [
+      "One run: choose a harness, a model and a task, review them and run.",
+      "Run setup: plan many runs at once, models x harnesses x tasks, and see their cost and what they can detect.",
+      "Experiments: capture harness snapshots and run them across models and tasks as one experiment. It needs the local runner.",
+      "Recent runs: the runs started on this computer in this server session."
+     ]
+    },
+    "The Make a harness group makes or changes a harness:",
+    {
+     "list": [
+      "Minimal harness: build a new, small harness from six answers. Start here.",
+      "Fixed harnesses: six TraceHarness copies of coding apps. You can edit their standing prompt, but not their tools or limits.",
+      "Build a harness: stack every block yourself, from the prompt to the sampling settings. It has its own Run button.",
+      "One prompt, six shells: preview one prompt inside each of those six copies.",
+      "Configuration file: edit the harness as JSON, for a field no form shows.",
+      "Saved versions: checkpoints, files and the harnesses saved on this computer. Its button Reopen one in Advanced settings finds a saved harness by its ID."
+     ]
+    }
+   ]
+  },
+  {
+   "heading": "Build a smaller harness",
+   "body": [
+    "A smaller harness is cheaper to run and easier to reason about. Minimal harness asks six questions, each with a recommended answer.",
+    {
+     "olist": [
+      "What may it touch? The recommended answer is read, edit and run tests, with no shell.",
+      "Dangerous command? Strict, so destructive commands and test edits stay blocked.",
+      "Verify before submit? Yes: one sentence in the prompt asks the agent to test first.",
+      "How much history? Full history, or only the last two tool outputs.",
+      "When does it stop? 12 steps, or 6 or 20.",
+      "MCP? None: no outside tools are added through MCP (the Model Context Protocol, a standard way to plug extra tools into an agent)."
+     ]
+    },
+    "Network access, privilege escalation, secret access and leaving the workspace stay blocked whatever you answer.",
+    "Review configuration shows the harness the answers make: its tools, policy, history, step cap and temperature (how much chance goes into each word the model picks). Save harness stores it on this computer without running a model, and offers Run it in One run."
+   ]
+  },
+  {
+   "heading": "Run it once with the mock",
+   "body": [
+    "The mock is a scripted fake agent with designed failure rates. It needs no key, costs nothing and behaves the same on every computer. Use it to check that a harness runs before you spend money on a real model.",
+    {
+     "olist": [
+      "Click Run it in One run. One run opens with your harness chosen. To change it there, click Edit prompt, then Advanced settings. Later, Saved versions finds it again with Reopen one in Advanced settings.",
+      "In 02 · Model, choose Mock (offline). It says free: runs offline, no key and no cost.",
+      "In 03 · Task, choose a task such as t01_slugify. Only runnable task packages are listed; a recorded run cannot be run again.",
+      "Click Review run, read what will happen, then click Run."
+     ]
+    },
+    "When it ends, the panel says the run succeeded and links to Recent runs. Succeeded means the run finished, not that it passed. The run is saved in a dataset, harness_runs, which opens like any other. A mock run proves the harness works, not that it is good. To measure it, run a real model on the same tasks under it and under a baseline, the harness you compare against."
+   ]
+  },
+  {
+   "heading": "Change one thing at a time",
+   "body": [
+    "Make each new harness differ from your baseline in one field. Then a difference in results points at that field.",
+    "Give it its own name, and keep its harness hash with every result. The hash is a short code computed from the harness's settings, and TraceHarness records it with each run. The worked example shows what one changed field did in recorded runs."
+   ]
+  }
+ ],
+ "figures": [
+  {
+   "id": "a10-wizard",
+   "after_section": 1,
+   "kind": "wizard_steps",
+   "data_file": "a10-wizard",
+   "title": "Six answers build the harness",
+   "caption": "Answer the six questions of Minimal harness, or press Play for the recommended answers, and the card fills in as the page's own configuration does. The recommended answers make the cell min_099dc52e693e: five tools, strict, full history and a step cap of 12. For the step cap, study_v04's tight_budget shows what 6 steps did: gemini-2.5-flash-lite passed 69 of 120 against 75 of 120, and runs cut at the limit went from 2 to 26.",
+   "data_note": "the Minimal harness page's questions and cells; study_v04, baseline and tight_budget, 480 runs",
+   "headline": [
+    {
+     "key": "rec_id",
+     "as_written": "min_099dc52e693e"
+    },
+    {
+     "key": "pass_base_0",
+     "as_written": "75 of 120"
+    },
+    {
+     "key": "pass_tight_0",
+     "as_written": "69 of 120"
+    },
+    {
+     "key": "cut_0",
+     "as_written": "2 to 26"
+    }
+   ]
+  },
+  {
+   "id": "a10-replay",
+   "after_section": 3,
+   "kind": "run_replay",
+   "data_file": "a10-replay",
+   "title": "One run replayed under two step caps",
+   "caption": "The same task and repeat, run by gemini-2.5-flash-lite under baseline (max_steps 20) and tight_budget (max_steps 6), replayed step by step. t09_paginate Run 2 submitted after 8 steps under baseline and passed; tight_budget cut it after 6 steps and it failed the hidden tests. In the second tab, t13_roman_leak Run 1 was cut after 6 steps too and still passed, because its edit was already in place.",
+   "data_note": "study_v04, gemini-2.5-flash-lite, 4 runs, chat and tool spans",
+   "headline": [
+    {
+     "key": "steps_0_0",
+     "as_written": "8 steps"
+    },
+    {
+     "key": "steps_0_1",
+     "as_written": "6 steps"
+    }
+   ]
+  }
+ ],
+ "worked_example": {
+  "title": "One field smaller: tight_budget against baseline",
+  "dataset": {
+   "name": "study_v04",
+   "what": "Bundled with the study copy: 3,240 recorded runs, 3 models x 9 harnesses x 24 small Python tasks x 5 runs. They were collected through OpenRouter (a paid service that passes requests on to many model providers) at temperature 0.",
+   "credit": "TraceHarness bundled data (AURA lab, William & Mary)."
+  },
+  "open": [
+   "Click the dataset name at the top of the left list and choose study_v04.",
+   "Click Analysis, then Family matrix, and compare the baseline and tight_budget columns.",
+   "Click Runs, and choose gemini-2.5-flash-lite and baseline in the model and harness menus. The line above the table gives the passes and the mean tokens per run.",
+   "Type max_steps in the search box: the line now counts the runs that ended at the step limit.",
+   "Change the harness menu to tight_budget and read the line again, with and without the search.",
+   "Do the same for gpt-5.6-luna."
+  ],
+  "links": [
+   "ds:study_v04",
+   "an:study_v04:family",
+   "field:study_v04:google/gemini-2.5-flash-lite:baseline",
+   null,
+   "field:study_v04:google/gemini-2.5-flash-lite:tight_budget",
+   "field:study_v04:openai/gpt-5.6-luna:baseline"
+  ],
+  "body": [
+   "tight_budget differs from baseline in one field: max_steps is 6 instead of 20. Everything else, from the prompt to the policy, is the same.",
+   "gemini-2.5-flash-lite passed 75 of 120 runs under baseline and 69 of 120 under tight_budget. Runs that ended at the step limit went from 2 to 26.",
+   "Its mean tokens per run fell from 12,608 to 7,699, about 39% fewer. Over its 120 runs, that is 1,512,935 tokens against 923,905.",
+   "gpt-5.6-luna passed 118 and 119 of 120. 5 of its runs hit the new limit, and its mean tokens per run barely moved, from 5,555 to 5,421. That is 666,643 and 650,575 in all.",
+   "So the smaller harness cost one model passes and saved it tokens. It changed almost nothing for the other. Measure a new harness on more than one model before you call it better or worse."
+  ]
+ },
+ "try_it": {
+  "clicks": [
+   "Click Harnesses in the left list, then Minimal harness.",
+   "Keep the recommended answers, but answer When does it stop? with 6 steps.",
+   "Click Review configuration and read Your configuration."
+  ],
+  "links": [
+   "shallowWizard",
+   null,
+   null
+  ],
+  "question": "Which tools does your smaller harness have, and what are its permission, history, step cap and temperature?",
+  "answer": "Five tools: list_files, read_file, edit_file, run_tests and submit. Permission strict, full history, a step cap of 6 and temperature 0. Saving it would store it on this computer without running anything.",
+  "answer_measured_from": "Minimal harness page, Your configuration panel, with the recommended answers and 6 steps chosen."
+ },
+ "quiz": [
+  {
+   "q": "You want to try a new standing prompt in six app-like shells at once. Which page?",
+   "options": [
+    "Minimal harness",
+    "Configuration file",
+    "Recent runs",
+    "One prompt, six shells"
+   ],
+   "answer": 3,
+   "why": "One prompt, six shells previews one prompt inside each of the six fixed harnesses."
+  },
+  {
+   "q": "Why run a new harness with the mock model first?",
+   "options": [
+    "It checks the harness runs, at no cost",
+    "It shows how good the harness will be",
+    "The mock is the strongest model there is",
+    "Real models cannot use a saved harness"
+   ],
+   "answer": 0,
+   "why": "The mock is free and scripted: it proves the harness works, not that it is good."
+  },
+  {
+   "q": "tight_budget cut gemini-2.5-flash-lite's passes and barely moved gpt-5.6-luna's. What should you report?",
+   "options": [
+    "That tight_budget is worse for every model",
+    "That step limits never matter for strong models",
+    "The effect for each model, on the same tasks",
+    "Only the average over the two models"
+   ],
+   "answer": 2,
+   "why": "A harness effect can depend on the model, so report it per model."
+  }
+ ],
+ "sources": [
+  {
+   "title": "mini-SWE-agent documentation (Overview)",
+   "authors": "SWE-agent team",
+   "year": "n.d. (living documentation page)",
+   "url": "https://mini-swe-agent.com/latest/",
+   "what_we_took": "A small harness can do real work: mini-SWE-agent has bash as its only tool and a linear history. We cite it as a deliberately small design.",
+   "quote": "Does not have any tools other than bash",
+   "licence": "Project code is MIT (github.com/SWE-agent/mini-swe-agent). Paraphrased, one short quote.",
+   "checked": "2026-11-23"
+  },
+  {
+   "title": "SWE-agent: Agent-Computer Interfaces Enable Automated Software Engineering",
+   "authors": "John Yang, Carlos E. Jimenez, Alexander Wettig, Kilian Lieret, Shunyu Yao, Karthik Narasimhan, Ofir Press",
+   "year": "2024",
+   "url": "https://arxiv.org/abs/2405.15793",
+   "what_we_took": "The design of the interface a harness gives the agent changes how the agent behaves and how well it does, which is why one field at a time matters.",
+   "quote": "how the design of the ACI can impact agents' behavior and performance",
+   "licence": "CC BY 4.0 (arXiv).",
+   "checked": "2026-11-23"
+  },
+  {
+   "title": "Demystifying evals for AI agents",
+   "authors": "Mikaela Grace, Jeremy Hadfield, Rodrigo Olivares, Jiri De Jonghe (Anthropic)",
+   "year": "2026 (published 9 Jan 2026)",
+   "url": "https://www.anthropic.com/research/demystifying-evals-for-ai-agents",
+   "what_we_took": "An agent is evaluated as the harness and the model together, so a new harness is a new thing to measure.",
+   "quote": "When we evaluate “an agent,” we’re evaluating the harness and the model working together.",
+   "licence": "Vendor research blog; reuse terms not stated. Paraphrased, one short quote.",
+   "checked": "2026-11-24"
+  }
+ ],
+ "glossary_terms": [
+  "harness",
+  "minimal harness",
+  "mock",
+  "step limit",
+  "permission policy",
+  "stand-in",
+  "temperature"
+ ],
+ "see_also": [
+  {
+   "kind": "article",
+   "target": "what-a-harness-is"
+  },
+  {
+   "kind": "article",
+   "target": "model-or-harness"
+  },
+  {
+   "kind": "page",
+   "label": "Minimal harness: six answers",
+   "spec": "shallowWizard"
+  },
+  {
+   "kind": "page",
+   "label": "One run: harness, model and task, then run",
+   "spec": "harnesses:setup"
+  }
+ ],
+ "numbers": [
+  {
+   "as_written": [
+    "20",
+    "6",
+    "75 of 120",
+    "69 of 120",
+    "2 to 26",
+    "1,512,935",
+    "923,905",
+    "39%",
+    "118",
+    "119",
+    "5",
+    "666,643",
+    "650,575",
+    "12,608",
+    "7,699",
+    "5,555",
+    "5,421"
+   ],
+   "meaning": "study_v04 baseline against tight_budget, per model",
+   "source": "harnesses/baseline.json and tight_budget.json (max_steps); the Runs page scoped to each model and harness (its totals line: passes, mean tokens per run; the max_steps search); data/runs/study_v04/index.jsonl (hidden_pass, exit_reason, input_tokens + output_tokens)"
+  },
+  {
+   "as_written": [
+    "12 steps",
+    "list_files",
+    "run_tests"
+   ],
+   "meaning": "the Minimal harness page's recommended answers and the configuration they make",
+   "source": "Minimal harness page"
+  },
+  {
+   "as_written": [
+    "min_099dc52e693e",
+    "8 steps",
+    "6 steps"
+   ],
+   "meaning": "the recommended cell; t09_paginate Run 2 steps under baseline and tight_budget (figures 1 and 2)",
+   "source": "scripts/learn_figures.py a10-wizard (traceharness.shallow.wizard.compile_minimal) and a10-replay (study_v04 ledgers)"
+  }
+ ],
+ "in_short": [
+  "**Minimal harness builds a smaller harness from six answers**, each with a recommended choice, and saving it runs no model.",
+  "**A mock run proves the harness runs, not that it is good**: succeeded means the run finished, not that it passed.",
+  "**Change one field at a time**: with max_steps 6 instead of 20, gemini-2.5-flash-lite passed 69 of 120 runs instead of 75."
+ ]
+}

@@ -1,9 +1,10 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useId, useRef, useState } from 'react'
 import { runnerRequest } from '../runner-api'
-import { reasonFor } from '../environment'
+import { reasonFor, why } from '../environment'
 import { Unavailable } from './unavailable'
 import { VARIANT_CREDENTIAL_ISSUE, armProfileSummary, captureArm, checkedExperiment, experimentActive, experimentDraft, hasCredentialShape, makeReference, pairAgainstBaseline, stableJSON } from './paired-experiments-state'
 import { ActionBar, Id } from './primitives'
+import { RefreshNote, useRefreshed } from './ui'
 import { planBudget } from './native/budget'
 import { experimentCsv, experimentMarkdown } from './native/experiment-stats'
 import { canonicalJSON, sha256HexSync } from './native/profile-model'
@@ -14,7 +15,10 @@ import { pendingPairing, subscribePairing, takePairing } from './native/ui/pairi
 import { UNVERIFIED_LABEL, consentArmsOf, experimentVerification, withUnverified, withUnverifiedArms } from '../runner-compatibility'
 import { ResultsMatrix, readableExperiment, roleWords } from './native/ui/ResultsMatrix'
 import './PairedExperiments.css'
+import { NumberField } from './NumberField'
 
+/** What the saved list is, for "nothing changed": its experiments and their states. */
+const savedKey = (rows) => rows.map((row) => `${row.id}:${row.status}:${row.trial_count}`).join('|')
 const money = (value) => '$' + Number(value).toLocaleString(undefined, { maximumFractionDigits: 6 })
 const STATE_WORDS = { ok: 'within limit', near: 'near limit', over: 'over limit' }
 const RESERVED = new Set(['Baseline (no edits)', 'All patchable disabled'])
@@ -48,7 +52,7 @@ function captureBlocker(configuration, disabled) {
   if (configuration?.version !== 2) return 'Enable a native prompt profile to capture variants.'
   if (!configuration.model_id) return 'Select a model before capturing variants.'
   if (!configuration.task_id) return 'Select a task before capturing variants.'
-  if (disabled) return 'Capture waits until the configuration above is ready: see “Before this can run”.'
+  if (disabled) return 'Capture waits until the setup is ready: see “Before this can run” in One run.'
   return ''
 }
 function scheduleRounds(plan) {
@@ -60,8 +64,9 @@ function scheduleRounds(plan) {
   return [...rounds.entries()].sort((left, right) => left[0] - right[0])
 }
 
-export function PairedExperiments({ configuration, credential, credentialRequired = true, available, disabled, lease }) {
-  const [open, setOpen] = useState(false)
+export function PairedExperiments({ configuration, credential, credentialRequired = true, available, historyServed = true, disabled, lease, defaultOpen = false }) {
+  const uid = useId()
+  const [open, setOpen] = useState(defaultOpen)
   const [name, setName] = useState('Native prompt comparison')
   const [label, setLabel] = useState('Control')
   const [arms, setArms] = useState([])
@@ -77,6 +82,7 @@ export function PairedExperiments({ configuration, credential, credentialRequire
   const [error, setError] = useState('')
   const [notice, setNotice] = useState('')
   const [revision, setRevision] = useState(0)
+  const [refreshNote, refreshed] = useRefreshed()
   const [busTick, setBusTick] = useState(0)
   const [focusArms, setFocusArms] = useState(0)
   const [storage] = useState(experimentNameStorage)
@@ -87,7 +93,8 @@ export function PairedExperiments({ configuration, credential, credentialRequire
   const generation = useRef(0)
   const armsHeading = useRef(null)
   // Saved experiments need no execution service (Docker stopped); only reviewing, freezing and starting do.
-  const historyReadable = available || ['ok', 'runner_not_ready'].includes(reasonFor('run.experiments'))
+  // A runner whose catalog says it serves no experiments (the local console) is never asked for them.
+  const historyReadable = historyServed && (available || ['ok', 'runner_not_ready'].includes(reasonFor('run.experiments')))
   const armsIssue = labelIssue(arms)
   let draft, draftIssue = ''
   try { draft = experimentDraft(name, seed, repeats, withUnverifiedArms(arms.map((arm) => ({ ...arm, label: arm.label.trim() })), consentArms || [])) } catch (failure) { draftIssue = failure.message }
@@ -98,6 +105,10 @@ export function PairedExperiments({ configuration, credential, credentialRequire
   const budget = draft ? planBudget(draft) : null
   const identical = arms.length >= 2 && arms.every((arm) => stableJSON(arm.configuration.native_prompt_profile) === stableJSON(arms[0].configuration.native_prompt_profile))
   const waiting = pendingPairing()
+  // why a greyed button is greyed, said right under it
+  const unavailableWhy = !available ? why('run.experiments', 'A paired experiment') || 'Needs the local runner: run traceharness runner setup (Docker required).' : ''
+  const reviewWhy = busy || !(!available || draftIssue) ? '' : [draftIssue, unavailableWhy].filter(Boolean).join(' ')
+  const freezeWhy = busy || reviewed || reviewWhy ? '' : 'Freeze unlocks once Review experiment passes.'
 
   useEffect(() => { mounted.current = true; return () => { mounted.current = false; generation.current++ } }, [])
   useEffect(() => subscribePairing((request) => { setBusTick((value) => value + 1); if (request) setOpen(true) }), [])
@@ -108,10 +119,11 @@ export function PairedExperiments({ configuration, credential, credentialRequire
       if (!Array.isArray(data.experiments)) throw new Error('Experiment history is incomplete.')
       if (live) {
         setRecent(data.experiments)
+        refreshed.done(savedKey(data.experiments), plural(data.experiments.length, 'saved experiment'))
         if (uncertainStart.current && data.experiments.some((row) => row.id === uncertainStart.current)) uncertainStart.current = null
         lease.current = !!uncertainStart.current || data.experiments.some(experimentActive)
       }
-    }).catch((failure) => { if (live && failure.status !== 404) setError(failure.message) }) // 404: no runner is configured, so no history
+    }).catch((failure) => { refreshed.fail(); if (live && failure.status !== 404) setError(failure.message) }) // 404: no runner is configured, so no history
     return () => { live = false }
   }, [open, historyReadable, revision, lease])
   useEffect(() => {
@@ -233,8 +245,12 @@ export function PairedExperiments({ configuration, credential, credentialRequire
     else setError('The summary could not be copied. Export it as Markdown instead.')
   }
   const armSummary = (arm) => armProfileSummary(arm)
+  const startDisabled = !!experiment && (busy || !available || (credentialRequired && !credential) || !['ready', 'paused'].includes(experiment.status))
+  const startWhy = !startDisabled || busy ? '' : [unavailableWhy,
+    credentialRequired && !credential && 'Connect OpenRouter in One run before starting.',
+    !['ready', 'paused'].includes(experiment.status) && `Only a ready or paused experiment can start; this one is ${String(experiment.status).replaceAll('_', ' ')}.`].filter(Boolean).join(' ')
   const runControls = experiment && [
-    { label: experiment.status === 'paused' ? 'Resume experiment' : 'Start experiment', primary: true, onClick: () => control('start'), disabled: busy || !available || (credentialRequired && !credential) || !['ready', 'paused'].includes(experiment.status) },
+    { label: experiment.status === 'paused' ? 'Resume experiment' : 'Start experiment', primary: true, onClick: () => control('start'), disabled: startDisabled, describedBy: startWhy ? uid + '-start-why' : undefined },
     { label: 'Refresh experiment', onClick: () => load(experiment.id), disabled: busy },
     { label: 'Cancel experiment', onClick: () => control('cancel'), disabled: busy || ['completed', 'cancelled'].includes(experiment.status) },
     { label: 'Export experiment results', onClick: () => exportAs('json'), title: 'The whole experiment as JSON', more: true },
@@ -242,7 +258,7 @@ export function PairedExperiments({ configuration, credential, credentialRequire
     { label: 'Export Markdown', onClick: () => exportAs('md'), title: 'The summary with every outcome and the caveats', more: true },
     { label: 'Copy summary', onClick: copySummary, title: 'The Markdown summary, to paste', more: true },
   ]
-  return <details className="rg-pnl rg-experiments" open={open} onToggle={(event) => setOpen(event.currentTarget.open)}>
+  return <details className="rg-pnl rg-experiments" data-tour="paired-experiments" open={open} onToggle={(event) => setOpen(event.currentTarget.open)}>
     <summary>Compare prompt variants <span>Paired native experiments</span></summary>
     {open && <div className="rg-pnl-b rg-cq rg-pe">
       <p className="rg-pe-lede">Compare native prompt profiles on the same runtime, model, task, additional instructions and limits; only the profile differs between arms. The first arm is the reference.</p>
@@ -252,14 +268,14 @@ export function PairedExperiments({ configuration, credential, credentialRequire
         <li className="rg-pe-step">
           <h3 ref={armsHeading} tabIndex={-1}>Arms</h3>
           <div className="rg-pe-actions">
-            <button type="button" className="rg-btn pri" disabled={busy || !!blocker} onClick={() => prepare('', noneArm, 'panel')}>Pair current profile against baseline</button>
+            <button type="button" className="rg-btn pri" disabled={busy || !!blocker} aria-describedby={blocker ? uid + '-blocker' : undefined} onClick={() => prepare('', noneArm, 'panel')}>Pair current profile against baseline</button>
             <label className="rg-pe-check"><input type="checkbox" checked={noneArm} disabled={busy} onChange={(event) => setNoneArm(event.target.checked)} />Add an arm with all patchable prompts disabled</label>
           </div>
+          {blocker && <p className="rg-pe-note" id={uid + '-blocker'} data-el="pair-why">{blocker}</p>}
           <div className="rg-pe-fields">
             <label className="rg-fld">Variant name<input className="rg-inp" value={label} maxLength={80} onChange={(event) => setLabel(event.target.value)} disabled={busy} /></label>
-            <button type="button" className="rg-btn" onClick={capture} disabled={busy || !!blocker}>Capture current variant</button>
+            <button type="button" className="rg-btn" onClick={capture} disabled={busy || !!blocker} aria-describedby={blocker ? uid + '-blocker' : undefined}>Capture current variant</button>
           </div>
-          {blocker && <p className="rg-pe-note">{blocker}</p>}
           {notice && <p role="status" className="rg-pe-notice">{notice}</p>}
           {!!arms.length && <ol className="rg-pe-arms" aria-label="Captured variants">{arms.map((arm, index) => {
             const summary = armSummary(arm), digest = profileDigest(arm.configuration.native_prompt_profile)
@@ -282,16 +298,16 @@ export function PairedExperiments({ configuration, credential, credentialRequire
           <h3>Schedule</h3>
           <div className="rg-pe-fields">
             <label className="rg-fld">Experiment name<input className="rg-inp" value={name} maxLength={120} onChange={changed(setName)} disabled={busy} /></label>
-            <label className="rg-fld">Paired repetitions<input className="rg-inp" type="number" min="1" max="10" value={repeats} onChange={changed(setRepeats)} disabled={busy} /></label>
-            <label className="rg-fld">Schedule seed<input className="rg-inp" inputMode="numeric" value={seed} onChange={changed(setSeed)} disabled={busy} /></label>
+            <NumberField label="Paired repetitions" min={1} max={10} noun="repetitions" value={repeats} onChange={(value) => changed(setRepeats)({ target: { value: String(value) } })} disabled={busy} />
+            <NumberField label="Schedule seed" min={0} max={4294967295} value={seed} onChange={(value) => changed(setSeed)({ target: { value: String(value) } })} disabled={busy} />
           </div>
-          {budget && <p className="rg-pe-note">{plural(budget.trials, 'trial')} · worst-case cost {money(budget.maximum_cost_usd)} (sum of per-trial caps, not a forecast) · plan <span title="Estimate before runner review; the runner measures the frozen plan.">≈ {formatKiB(budget.frozen_bytes_estimate)} of {formatKiB(budget.max)} (estimate)</span> · {STATE_WORDS[budget.state]}</p>}
+          {budget && <p className="rg-pe-note">{plural(budget.trials, 'trial')} · worst-case cost {money(budget.maximum_cost_usd)} (sum of per-trial caps, not a forecast) · plan <span data-hint="Estimate before runner review; the runner measures the frozen plan.">≈ {formatKiB(budget.frozen_bytes_estimate)} of {formatKiB(budget.max)} (estimate)</span> · {STATE_WORDS[budget.state]}</p>}
           <p className="rg-pe-note">The seed controls balanced execution order. Native model sampling remains uncontrolled. Trials run sequentially in fresh workspaces; failures remain in the results.</p>
-          {draftIssue && <p className="rg-pe-note">{draftIssue}</p>}
         </li>
         <li className="rg-pe-step">
           <h3>Review and freeze</h3>
-          <div className="rg-pe-actions"><button type="button" className="rg-btn" disabled={busy || !available || !!draftIssue} onClick={reviewPlan}>Review experiment</button><button type="button" className="rg-btn" disabled={busy || !reviewed} onClick={freeze}>Freeze experiment</button></div>
+          <div className="rg-pe-actions"><button type="button" className="rg-btn" disabled={busy || !available || !!draftIssue} aria-describedby={reviewWhy ? uid + '-why' : undefined} onClick={reviewPlan}>Review experiment</button><button type="button" className="rg-btn" disabled={busy || !reviewed} aria-describedby={reviewWhy || freezeWhy ? uid + '-why' : undefined} onClick={freeze}>Freeze experiment</button></div>
+          {(reviewWhy || freezeWhy) && <p className="rg-pe-note" id={uid + '-why'} data-el="paired-why">{reviewWhy || freezeWhy}</p>}
           {(consentArms !== null || consentArmsOf(review?.key === draftKey ? review.result : null).length > 0) && <label className="rg-pe-unverified" data-el="paired-unverified-consent"><input type="checkbox" checked={consentArms !== null && consentArmsOf(review?.key === draftKey ? review.result : null).every((id) => consentArms.includes(id))} disabled={busy} onChange={(event) => {
             const needed = consentArmsOf(review?.key === draftKey ? review.result : null)
             generation.current++; setReview(null); setBusy(false)
@@ -314,7 +330,7 @@ export function PairedExperiments({ configuration, credential, credentialRequire
             {(() => { const label = experimentVerification(experiment); return label && <p className="rg-pe-note" data-el="paired-verified">{label}</p> })()}
             <p className="rg-pe-note">Plan <Id value={experiment.plan_sha256} max={24} head={12} tail={8} /></p>
             <ActionBar label="Experiment actions" actions={runControls} moreLabel="Export" />
-            {credentialRequired && !credential && ['ready', 'paused'].includes(experiment.status) && <p>Connect OpenRouter above before starting.</p>}
+            {startWhy && <p className="rg-pe-note" id={uid + '-start-why'} data-el="paired-start-why">{startWhy}</p>}
             {experiment.issues.map((issue, index) => <p role="alert" key={index}>{issue}</p>)}
             <p className="rg-pe-note">{experiment.summary.finalized_trials} finalized · {experiment.summary.pending_trials} pending · {experiment.summary.active_trials} active</p>
             <p className="rg-pe-note">Confirmed cost subtotal: {money(experiment.summary.confirmed_cost_usd)} · {plural(experiment.summary.cost_unknown_trials, 'trial')} with unconfirmed cost</p>
@@ -322,7 +338,10 @@ export function PairedExperiments({ configuration, credential, credentialRequire
           </section>}
         </li>
       </ol>
-      <div className="rg-pe-result-head"><h3>Saved experiments</h3><button type="button" className="rg-btn" onClick={() => setRevision((value) => value + 1)}>Refresh experiments</button></div>
+      <div className="rg-pe-result-head"><h3>Saved experiments</h3><RefreshNote note={refreshNote} />{historyReadable
+        ? <button type="button" className="rg-btn" onClick={() => { refreshed.begin(savedKey(recent)); setRevision((value) => value + 1) }}>Refresh experiments</button>
+        // a runner that keeps no saved experiments (the local console) has nothing to refresh: inert, and it says so
+        : <button type="button" className="rg-btn" aria-disabled="true" data-hint="This runner keeps no saved experiments, so there is nothing to refresh">Refresh experiments</button>}</div>
       {!recent.length && historyReadable && <p className="rg-pe-note">No saved experiment yet.</p>}
       {!!recent.length && <ul className="rg-pe-saved">{recent.map((row) => <li key={row.id}><button type="button" className="rg-pe-saved-row" disabled={busy} onClick={() => load(row.id)}>
         <span>{names[row.id] || 'name not loaded'} · {row.id.slice(0, 8)} · {String(row.status).replaceAll('_', ' ')} · {plural(row.trial_count, 'trial')}</span>

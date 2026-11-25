@@ -1,11 +1,45 @@
-/* Rig · views/agent.css — the Agent panel and the Connect an agent section (views/agent.jsx). Tokens only. */
-.rg-agent-calls{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;border-top:1px solid var(--rig-line)}
-.rg-agent-call{display:flex;flex-wrap:wrap;align-items:baseline;gap:var(--rig-s1) var(--rig-s2);padding:var(--rig-s2) 0;border-bottom:1px solid var(--rig-line);min-width:0}
-.rg-agent-call.err .rg-agent-tool{color:var(--rig-red)}
-.rg-agent-tool{font-size:var(--rig-fs-sm);font-weight:var(--rig-fw-medium);color:var(--rig-text)}
-.rg-agent-targets{min-width:0;overflow-wrap:anywhere}
-.rg-agent-error{flex-basis:100%;color:var(--rig-red);overflow-wrap:anywhere}
-.rg-agent-codex{display:flex;flex-direction:column;gap:var(--rig-s1)}
-.rg-agent-codex pre{margin:0;padding:var(--rig-s2) var(--rig-s3);border:1px solid var(--rig-line);background:var(--rig-panel2);white-space:pre-wrap;overflow-wrap:anywhere}
-.rg-agent-levels{margin:0;padding-left:var(--rig-s4);display:flex;flex-direction:column;gap:var(--rig-s1)}
+/* Rig · views/agent.css — the Agent panel and the Connect an agent section (views/agent.jsx). Tokens only.
+   rig.css loads after this file, so rules that restate a shared table rule carry .rig. */
+.rg-agent{display:flex;flex-direction:column;gap:var(--rig-s4);padding:var(--rig-s4) var(--rig-s5);min-width:0}
+.rg-agent-head{display:flex;align-items:center;flex-wrap:wrap;gap:var(--rig-s1) var(--rig-s2);min-width:0;font-size:var(--rig-fs-sm);color:var(--rig-text)}
+.rg-agent-head b{font-weight:var(--rig-fw-semi)}
+.rg-agent-count{font:var(--rig-fw-regular) var(--rig-fs-xs)/var(--rig-lead-sm) var(--rig-sans);font-variant-numeric:tabular-nums;color:var(--rig-mute)}
+.rg-agent-dot{flex:none;width:8px;height:8px;border-radius:var(--rig-r-full);background:var(--rig-panel3);box-shadow:inset 0 0 0 1px var(--rig-line3)}
+.rg-agent-dot.on{background:var(--rig-sky);box-shadow:none;animation:rg-pl 1.6s infinite}
+
+/* the connector's report: label column, mono values, level pills on one line */
+.rg-agent-kv{grid-template-columns:auto minmax(0,1fr);align-items:center}
+.rg-agent-lv{display:flex;flex-wrap:wrap;align-items:center;gap:var(--rig-s1) var(--rig-s2)}
+
+/* calls: time | tool (+ level and cost), what it touched, the console's reason | took */
+.rig .rg-agent-tbl td{padding-top:var(--rig-s2);padding-bottom:var(--rig-s2);vertical-align:top}
+.rig .rg-agent-tbl :is(th,td){padding-left:var(--rig-s2);padding-right:var(--rig-s2)}
+.rig .rg-agent-tbl :is(th,td):first-child{padding-left:0}
+.rig .rg-agent-tbl :is(th,td):last-child{padding-right:0}
+.rg-agent-at{width:1%;white-space:nowrap;font:var(--rig-fw-regular) var(--rig-fs-xs)/var(--rig-lead-md) var(--rig-mono);font-variant-numeric:tabular-nums;color:var(--rig-mute)}
+.rg-agent-what{display:flex;flex-direction:column;gap:2px;min-width:0}
+.rg-agent-line{display:flex;flex-wrap:wrap;align-items:center;gap:var(--rig-s1) var(--rig-s2);min-width:0}
+.rg-agent-tool{font:var(--rig-fw-medium) var(--rig-fs-xs)/var(--rig-lead-md) var(--rig-mono);color:var(--rig-text);overflow-wrap:break-word}
+.rg-agent-call.err .rg-agent-tool{color:var(--rig-red-t)}
+.rg-agent-targets{font:var(--rig-fw-regular) var(--rig-fs-xs)/var(--rig-lead-sm) var(--rig-mono);color:var(--rig-dim);overflow-wrap:break-word}
+.rg-agent-error{font-size:var(--rig-fs-xs);line-height:var(--rig-lead-sm);color:var(--rig-red-t);overflow-wrap:break-word}
+/* an error already written out at a newer call: one line pointing back to it (its words are in the hint) */
+.rg-agent-again{font-size:var(--rig-fs-xs);line-height:var(--rig-lead-sm);color:var(--rig-red-t)}
+.rig .rg-agent-tbl td.rg-num{line-height:var(--rig-lead-md);white-space:nowrap}
+.rg-agent-ms{width:1%;color:var(--rig-mute)}
+.rg-agent-cost{font:var(--rig-fw-regular) var(--rig-fs-xs)/var(--rig-lead-md) var(--rig-num);font-variant-numeric:tabular-nums;color:var(--rig-dim)}
+/* a narrow panel drops the clock column; the newest call is still first */
+@container rgdockb (max-width:380px){
+  .rg-agent{padding:var(--rig-s3) var(--rig-s4)}
+  .rig .rg-agent-tbl th:first-child,.rig .rg-agent-tbl td.rg-agent-at{display:none}
+}
+
+/* Settings: the two ways to connect, then what each level allows */
+.rg-agent-cmds{display:flex;flex-direction:column;gap:var(--rig-s3);min-width:0}
+.rg-agent-codex{display:flex;flex-direction:column;gap:var(--rig-s1);min-width:0}
+.rg-agent-codex .rg-pre{max-width:48rem}
+.rig .rg-agent-levels td{padding-top:var(--rig-s2);padding-bottom:var(--rig-s2);vertical-align:top;line-height:var(--rig-lead-md)}
+.rig .rg-agent-levels td:first-child{width:1%}
+.rg-agent-flag{width:1%;white-space:nowrap}
+.rg-agent-flag .rg-mono{font-size:var(--rig-fs-xs);color:var(--rig-text)}
 .rg-agent-cmd{white-space:nowrap}

@@ -30,7 +30,7 @@ export function EvidenceOrigin({ args }) {
     <div className="rg-note" data-el="harness-source-evidence">
       <div>
         <p>Use the source evidence to guide a new harness. Saving a harness does not run it or change the recorded results.</p>
-        {run.data && <p className="rg-small">{run.data.dir} · <span className="rg-mono">{run.data.run.id}</span></p>}
+        {run.data && <p className="rg-small">{run.data.dir} · <span className="rg-hash">{run.data.run.id}</span></p>}
         <Go spec={source} className="rg-btn" el="return-to-source-evidence">Return to source evidence</Go>
       </div>
     </div>

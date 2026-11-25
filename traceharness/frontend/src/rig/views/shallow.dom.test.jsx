@@ -133,3 +133,52 @@ describe('shallow doors', () => {
     expect(plain.container.querySelector('[data-el="reset-wizard-answers"]')).toBeNull()
   })
 })
+
+describe('Build a harness and the six-shell preview say what they just did', () => {
+  afterEach(() => resetRig())
+  const json = (body) => ({ ok: true, status: 200, statusText: 'OK', headers: { get: () => 'application/json' }, json: async () => body })
+  const blank = [
+    { type: 'prompt', text: 'Blank stack prompt.' }, { type: 'tools', names: ['read_file', 'submit'] }, { type: 'policy', mode: 'strict' },
+    { type: 'context', window: 0, observation_chars: 6000 }, { type: 'stop', max_steps: 12, max_total_tokens: 400000 },
+    { type: 'sampling', temperature: 0, max_tokens_per_call: 2048 }, { type: 'listing', include: true },
+  ]
+  const preset = { id: 'fixture_agent', name: 'Fixture agent', default_model: 'mock', default_basis: 'A fixture preset.', blocks: [{ type: 'prompt', text: 'Preset prompt.' }, { type: 'tools', names: ['bash', 'submit'] }] }
+  const fetchImpl = vi.fn(async (url) => {
+    const path = String(url)
+    if (path.endsWith('/blocks/palette')) return json({ tools: ['list_files', 'read_file', 'edit_file', 'run_tests', 'bash', 'submit'], types: blank.map((b) => b.type), blank })
+    if (path.endsWith('/blocks/catalog')) return json({ harnesses: [preset] })
+    if (path.endsWith('/blocks/compile')) return json({ ok: true, hash: 'abc', warnings: [], harness: { id: 'min_abc' } })
+    return { ok: false, status: 404, statusText: 'Not Found', headers: { get: () => 'application/json' }, json: async () => ({ detail: 'not primed' }) }
+  })
+
+  it('Blank stack really clears a preset back to the blank palette, and says so beside the button', async () => {
+    const { container } = renderRig('#/rig/blocks', { data: { '/overview': { results: [] } }, fetchImpl })
+    const presets = await screen.findByRole('group', { name: 'Start from a preset:' })
+    const cards = () => container.querySelectorAll('[data-el="harness-block"]')
+    expect(cards()).toHaveLength(7)
+    fireEvent.click(within(presets).getByRole('button', { name: 'Fixture agent — TraceHarness copy' }))
+    expect(cards()).toHaveLength(2)
+    expect(within(presets).getByRole('button', { name: 'Fixture agent — TraceHarness copy' }).getAttribute('aria-pressed')).toBe('true')
+    fireEvent.click(within(presets).getByRole('button', { name: 'Blank stack' }))
+    expect(cards()).toHaveLength(7)
+    expect([...cards()].map((card) => card.getAttribute('data-block-type'))).toEqual(blank.map((b) => b.type))
+    expect(within(presets).getByRole('status').textContent).toBe('Back to the blank stack: the 7 default blocks, no preset, model mock.')
+    expect(within(presets).getByRole('button', { name: 'Fixture agent — TraceHarness copy' }).getAttribute('aria-pressed')).toBe('false')
+    // the note describes that stack only: the next edit clears it
+    fireEvent.click(within(presets).getByRole('button', { name: 'Fixture agent — TraceHarness copy' }))
+    expect(within(presets).queryByRole('status')).toBeNull()
+  })
+
+  it('Apply to all six confirms beside the button: how many fit and how many were clipped', async () => {
+    const { appliedSentence } = await import('./shallow-apply')
+    renderRig('#/rig/shallowApply', { data: { '/overview': { results: [] } } })
+    fireEvent.change(screen.getByRole('textbox', { name: 'Prompt applied to all six' }), { target: { value: 'Read the code, fix the bug, run the tests.' } })
+    expect(screen.getByText('Unapplied edits')).toBeTruthy()
+    fireEvent.click(screen.getByRole('button', { name: 'Apply to all six' }))
+    const said = document.querySelector('[data-el="apply-result"]')
+    expect(said.getAttribute('role')).toBe('status')
+    expect(said.textContent).toBe('Applied to all 6 cards below: 6 fit. Preview only; saved prompts are unchanged.')
+    expect(said.previousElementSibling.textContent).toBe('Apply to all six')
+    expect(appliedSentence('x'.repeat(30), [{ cap_bytes: 10 }, { cap_bytes: 100 }])).toBe('Applied to all 2 cards below: 1 fit, 1 clipped to their byte cap. Preview only; saved prompts are unchanged.')
+  })
+})

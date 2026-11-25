@@ -7,8 +7,12 @@ suite on the untouched repository. Those are not wrong fixes, and a pass@1 that 
 wrong fixes is partly measuring the harness's `max_tokens_per_call`.
 
 Endpoint (prefix /api/outcomes):
-  GET /{dir}   {"runs": {run_id: {"mode", "cutoff_calls", "last_finish", "ledger"}},
+  GET /{dir}   {"runs": {run_id: {"mode", "cutoff_calls", "last_finish", "ledger", "model_calls"}},
                 "counts": {mode: n}, "modes": [{id, label, meaning}]}
+
+model_calls is the run's number of model calls, grouped as tokens.run_profile groups them (call_index), so an
+importer that wrote one chat span per tool call is not counted once per tool call; null when the ledger cannot be
+read.
 
 Modes, judged against the HIDDEN suite (the oracle every headline figure uses):
   passed               hidden suite passed
@@ -30,6 +34,8 @@ import os
 import threading
 
 from fastapi import APIRouter
+
+from traceharness.core.tokens import ESTIMATED_USAGE, model_call_of
 
 from . import metrics as M
 from .repeats_api import _dir
@@ -55,7 +61,14 @@ _lock = threading.Lock()
 
 def _finish_reasons(ledger_path: str) -> tuple[list[list[str]], bool]:
     """Every chat span's finish_reasons, in order, and whether any span carried them at all."""
+    out, seen, _ = _chat_facts(ledger_path)
+    return out, seen
+
+
+def _chat_facts(ledger_path: str, estimated: bool = False) -> tuple[list[list[str]], bool, int | None]:
+    """_finish_reasons, plus the run's model calls (None when the ledger cannot be read)."""
     out: list[list[str]] = []
+    chats: list[dict] = []
     seen = False
     try:
         with open(ledger_path, encoding="utf-8") as f:
@@ -68,13 +81,14 @@ def _finish_reasons(ledger_path: str) -> tuple[list[list[str]], bool]:
                     continue
                 if s.get("span") != "chat":
                     continue
+                chats.append(s)
                 fr = s.get("gen_ai.response.finish_reasons")
                 if fr is not None:
                     seen = True
                 out.append(list(fr or []))
     except OSError:
-        return [], False
-    return out, seen
+        return [], False, None
+    return out, seen, model_call_of(chats, estimated)[1]
 
 
 def classify(row: dict, finishes: list[list[str]] | None) -> dict:
@@ -120,9 +134,9 @@ def study(name: str) -> dict:
             ledger = confine(d, rid, "ledger.jsonl")      # a run id in index.jsonl is data, not trusted
         except PathRefused:
             continue
-        finishes, seen = _finish_reasons(ledger)
+        finishes, seen, calls = _chat_facts(ledger, row.get("provider") in ESTIMATED_USAGE)
         c = classify(row, finishes if seen else None)
-        runs[rid] = c
+        runs[rid] = {**c, "model_calls": calls}
         counts[c["mode"]] += 1
     out = {"runs": runs, "counts": counts, "modes": MODES}
     with _lock:

@@ -28,6 +28,29 @@ def wilson(c: int, n: int, z: float = 1.96) -> tuple[float, float]:
     return (max(0.0, centre - half), min(1.0, centre + half))
 
 
+def pooled_wilson(per_task: list, z: float = 1.96):
+    """Interval of a pooled pass rate (all passes over all graded runs) when a task's runs repeat each other.
+
+    `per_task` is [(passes, graded runs)] per task. Runs of one task are not independent, so the Wilson
+    interval is taken at the effective sample size n / deff, where deff is the task-clustered design effect:
+    the cluster-robust variance of the ratio over the binomial one, never below 1. With one run per task it
+    is Wilson at n (T-1)/T; with repeats that always agree, about Wilson at the number of tasks. Where the
+    spread between tasks cannot be measured (one task, or every run passed, or every run failed) the
+    repeats are taken to agree fully: Wilson at the number of tasks. Returns (lo, hi), or None when nothing
+    is graded."""
+    cells = [(c, n) for c, n in per_task if n]
+    total = sum(n for _, n in cells)
+    if not total:
+        return None
+    p = sum(c for c, _ in cells) / total
+    if len(cells) < 2 or not 0 < p < 1:
+        n_eff = float(len(cells))
+    else:
+        spread = sum((c - p * n) ** 2 for c, n in cells) / (total * total) * len(cells) / (len(cells) - 1)
+        n_eff = total / max(1.0, spread / (p * (1 - p) / total))
+    return wilson(p * n_eff, n_eff, z)
+
+
 def sequences(runs: list, outcome: str = "hidden_pass") -> list[dict]:
     """Group runs by their exact action string. The repeated shapes are the agent's habits."""
     groups = defaultdict(list)

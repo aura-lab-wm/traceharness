@@ -49,7 +49,7 @@ export function PairView({ wb }) {
       <li><b>Profile included in the run:</b> {wb.active ? 'yes' : 'not yet. Pairing includes it.'}</li>
       <li><b>Fragments changed:</b> {formatCount(changed)}{changed ? ` (${formatCount(counts.replaced || 0)} replaced, ${formatCount(counts.disabled || 0)} disabled)` : '. The pair is an A/A control: baseline against baseline, which measures how much this task varies between identical runs.'}</li>
       <li><b>Audit:</b> {audit ? `${plural(audit.error, 'error')} · ${plural(audit.warning, 'warning')} · ${plural(audit.info, 'note')}` : 'not available'}. The audit predicts runner review. It does not replace it.</li>
-      <li><b>Estimated plan size:</b> {plan ? <span title="Estimate before runner review; the runner measures the frozen plan.">≈ {formatKiB(plan.used)} of {formatKiB(plan.max)} (estimate) · {STATE_WORDS[plan.state]}</span> : 'not available'}</li>
+      <li><b>Estimated plan size:</b> {plan ? <span data-hint="Estimate before runner review; the runner measures the frozen plan.">≈ {formatKiB(plan.used)} of {formatKiB(plan.max)} (estimate) · {STATE_WORDS[plan.state]}</span> : 'not available'}</li>
       {unapplied > 0 && <li><b>Unapplied edits:</b> {plural(unapplied, 'fragment')} with unapplied text. That text is not part of the pairing until you apply it.</li>}
     </ul>
     <label className="rg-pe-pair-option"><input type="checkbox" checked={noneArm} onChange={(event) => setNoneArm(event.target.checked)} />Add an arm with all patchable prompts disabled</label>

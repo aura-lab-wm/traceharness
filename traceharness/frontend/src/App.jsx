@@ -56,9 +56,12 @@ export function legacyToRig(hash) {
   }
 }
 
+/** The app opened with nothing in its address (what `python -m traceharness` opens) starts on Home. An old
+ *  link, #/ included, keeps its own page (legacyToRig). */
+export const START_HASH = '#/rig/start'
 function normalise() {
   if (typeof location === 'undefined' || isRigHash(location.hash)) return false
-  const next = legacyToRig(location.hash)
+  const next = location.hash === '' || location.hash === '#' ? START_HASH : legacyToRig(location.hash)
   try { history.replaceState(null, '', next) } catch { location.hash = next }
   return true
 }
@@ -66,7 +69,7 @@ function normalise() {
 /* The last line of defence. Every document tab already has its own boundary; this one catches a
    crash in the shell itself (titlebar, rail, status bar, palette) so the page is never blank. It styles itself from the
    global tokens in index.css, not the Rig's stylesheet, so it draws even if that is what failed. */
-const RIG_KEYS = ['rig.theme', 'rig.density', 'rig.motion']
+const RIG_KEYS = ['rig.theme', 'rig.cvd', 'rig.density', 'rig.motion', 'rig.dataset']
 export class AppBoundary extends Component {
   constructor(p) { super(p); this.state = { error: null } }
   static getDerivedStateFromError(error) { return { error } }

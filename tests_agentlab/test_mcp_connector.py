@@ -127,6 +127,28 @@ class LiveSweepBodyTest(unittest.TestCase):
         self.assertAlmostEqual(guard.report()["left_usd"], 0.8)
 
 
+class LiveRunsOrderTest(unittest.TestCase):
+    """/api/live gives last_ts as an ISO string, epoch seconds, or "" for a run imported without timestamps;
+    a str and an int must sort together."""
+
+    def test_mixed_timestamps_are_ordered_newest_first_and_unknown_last(self):
+        rows = [{"run_id": "no_clock", "last_ts": ""}, {"run_id": "iso_old", "last_ts": "2026-11-06T11:31:02.784Z"},
+                {"run_id": "epoch_new", "last_ts": 1796000000.5}, {"run_id": "none", "last_ts": None},
+                {"run_id": "iso_new", "last_ts": "2026-11-18T13:00:00+00:00"}, {"run_id": "bad", "last_ts": "soon"}]
+
+        class FakeConsole:
+            url, started = "http://testserver", None
+
+            def get(self, path, **params):
+                return [dict(r) for r in rows]
+
+        tools = Tools(Config(), SpendGuard(1.0, allowed=False), lambda: FakeConsole())
+        tools._record = lambda **kw: None
+        got = [r["run_id"] for r in tools.live_runs(limit=10)["rows"]]
+        self.assertEqual(got[:3], ["epoch_new", "iso_new", "iso_old"])
+        self.assertEqual(got[3:], ["no_clock", "none", "bad"])          # unknown keeps the console's order
+
+
 class DiscoveryTest(unittest.TestCase):
     def test_only_loopback_consoles_are_accepted(self):
         self.assertEqual(C.check_loopback("http://127.0.0.1:8765/"), "http://127.0.0.1:8765")
@@ -263,6 +285,31 @@ class ToolsThroughMcpTest(unittest.TestCase):
         self.assertTrue(err)
         self.assertIn("budget is left", text)
         self.assertEqual(self.appmod.JOBS, before)            # nothing reached /api/jobs
+
+    def test_the_token_tools_read_the_token_routes(self):
+        rt = self._runtime(Config())
+        tools = self._tools(rt)
+        for name in ("tokens", "tokens_tasks", "tokens_task"):
+            self.assertIn(name, tools)
+            self.assertTrue(tools[name].annotations.read_only_hint)
+        err, text = self._call(rt, "tokens", {"dataset": "demo_mock"})
+        self.assertFalse(err, text)
+        doc = json.loads(text)
+        self.assertIn("cached", doc["unknown"])
+        self.assertGreater(doc["totals"]["prompt"], 0)
+        err, text = self._call(rt, "tokens_tasks", {"dataset": "demo_mock", "limit": 2})
+        self.assertFalse(err, text)
+        page_ = json.loads(text)
+        self.assertEqual(len(page_["rows"]), 2)
+        self.assertIn("median_spread", page_)
+        self.assertIn("n_tasks_ungraded", page_)
+        self.assertIn("graded_only", tools["tokens_tasks"].input_schema["properties"])
+        err, text = self._call(rt, "tokens_tasks", {"dataset": "demo_mock", "graded_only": True, "limit": 2})
+        self.assertFalse(err, text)
+        self.assertEqual(json.loads(text)["n_runs_ungraded"], 0)
+        err, text = self._call(rt, "tokens_task", {"dataset": "demo_mock", "task": page_["rows"][0]["task_id"]})
+        self.assertFalse(err, text)
+        self.assertEqual(json.loads(text)["task_id"], page_["rows"][0]["task_id"])
 
     def test_runner_preflight_reviews_the_template(self):
         rt = self._runtime(Config())

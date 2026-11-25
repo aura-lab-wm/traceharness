@@ -38,11 +38,13 @@ function fixture() {
 
 const version = (data, harness = 'baseline') => data[versionsPath].versions.find((row) => row.harness_id === harness)
 const entry = (data, harness = 'baseline') => version(data, harness).recorded_configurations[0]
-const panel = () => screen.getByRole('region', { name: 'Agent and harness configuration' })
+// the configuration is in the column inspector: "Inspect a harness" selects the column
+const inspect = (harness) => { fireEvent.click(screen.getByRole('button', { name: 'Inspect a harness' })); fireEvent.click(screen.getByRole('menuitem', { name: harness })) }
+const inspector = () => document.querySelector('[data-el="inspector"]')
+const panel = () => { if (!inspector()) inspect('baseline'); return screen.getByRole('region', { name: 'Agent and harness configuration' }) }
 const field = (name) => within(panel()).getByText(name, { selector: 'dt' }).nextElementSibling.textContent
 const matrix = (container) => container.querySelector('[data-el="family-matrix"] table')
-const header = (container, harness) => within(matrix(container)).getByRole('button', { name: `Inspect ${harness} configuration` }).closest('th')
-const inspect = (harness) => fireEvent.click(screen.getByRole('button', { name: `Inspect ${harness} configuration` }))
+const header = (container, harness) => { inspect(harness); return inspector() }
 
 describe('recorded configuration cohort boundaries', () => {
   it('joins explicit run IDs, deduplicates within a record, and excludes foreign or conflicting coverage', () => {
@@ -84,13 +86,13 @@ describe('Family matrix recorded configuration inspector', () => {
 
     const before = location.hash
     inspect('terse')
-    expect(location.hash).toBe(before)
+    expect(location.hash.split('?')[0]).toBe(before.split('?')[0])   // the analysis route stays; only the selection (sel=) moves
     expect(field('Model-call cap')).toBe('6')
     expect(within(panel()).getByText('Tools removed: run_tests, bash')).toBeTruthy()
     expect(within(panel()).getByText('Model-call cap: 20 → 6')).toBeTruthy()
-    const button = screen.getByRole('button', { name: 'Inspect terse configuration' })
-    expect(button.getAttribute('aria-pressed')).toBe('true')
-    expect(document.getElementById(button.getAttribute('aria-controls')).contains(panel())).toBe(true)
+    expect(location.hash).toContain('sel=col:terse')
+    expect(inspector().contains(panel())).toBe(true)
+    expect(matrix(container).querySelector('th[data-h="terse"]').classList.contains('sel')).toBe(true)
     expect(requests.filter((request) => request.method !== 'GET')).toEqual([])
   })
 
@@ -102,7 +104,8 @@ describe('Family matrix recorded configuration inspector', () => {
     expect(location.hash).toContain(`run:${firstRun}`)
     resetRig()
     const next = renderRig('#/rig/an:mini:family', { data: fixture() })
-    fireEvent.click(within(matrix(next.container)).getByTitle('Open the trajectories of beta-2 under terse'))
+    fireEvent.click(within(matrix(next.container)).getByRole('button', { name: /^beta-2 under terse/ }))
+    fireEvent.click(inspector().querySelector('[data-hint="Open the tasks of beta-2 under terse"]'))
     expect(location.hash).toContain('tasks:mini:beta-2:terse')
     expect(container.isConnected).toBe(false)
   })
@@ -263,12 +266,15 @@ describe('Family matrix recorded configuration inspector', () => {
     expect(within(panel()).getByRole('status').textContent).toContain('The matrix results remain available.')
     expect(panel().textContent).not.toContain('Server detail')
     expect(header(container, 'baseline').textContent).toContain('Settings unavailable')
-    expect(matrix(container).textContent).toContain('3 / 4 known')
+    expect(matrix(container).querySelector('[data-model="acme/alpha-1"][data-harness="baseline"]').getAttribute('aria-label')).toContain('3 of 4 known')
+    // the matrix reads /comparisons once for the paired changes when it mounts; the retry adds only the configuration read
+    const before = fetchImpl.mock.calls.length
+    expect(fetchImpl.mock.calls.every(([url]) => url.includes('/comparisons'))).toBe(true)
     fireEvent.click(within(panel()).getByRole('button', { name: 'Retry configurations' }))
     await waitFor(() => expect(field('Model-call cap')).toBe('20'))
-    expect(fetchImpl).toHaveBeenCalledTimes(1)
-    expect(fetchImpl.mock.calls[0][0]).toBe('/api' + versionsPath)
-    expect(fetchImpl.mock.calls[0][1].method).toBeUndefined()
+    expect(fetchImpl).toHaveBeenCalledTimes(before + 1)
+    expect(fetchImpl.mock.calls[before][0]).toBe('/api' + versionsPath)
+    expect(fetchImpl.mock.calls[before][1].method).toBeUndefined()
   })
 })
 

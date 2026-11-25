@@ -11,8 +11,8 @@ const NO_FOLDS = new Set()
 function Pieces({ pieces, removedBreak, addedBreak }) {
   return <span className="rg-diff-text">
     {pieces.map((piece, index) => piece.op === 'delete' ? <del key={index}>{piece.text}</del> : piece.op === 'insert' ? <ins key={index}>{piece.text}</ins> : <span key={index}>{piece.text}</span>)}
-    {removedBreak && <del className="rg-diff-nl" title="Line break removed">⏎</del>}
-    {addedBreak && <ins className="rg-diff-nl" title="Line break added">⏎</ins>}
+    {removedBreak && <del className="rg-diff-nl" data-hint="Line break removed">⏎</del>}
+    {addedBreak && <ins className="rg-diff-nl" data-hint="Line break added">⏎</ins>}
   </span>
 }
 

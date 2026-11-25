@@ -1,0 +1,83 @@
+/* Rig · runlanes.css — every run of a task step by step (RunLanes.jsx): one lane per run, step k of every run on one
+   row, the lanes' heads held at the top of their own scrolling box, the step docked at the right. Under 1280 px the
+   lanes are cards that swipe sideways inside that box (the page itself never scrolls sideways); a step opened there
+   docks at the right as from 1280 down to 1024, and stacks under the lanes below 1024. One step line is steprows.css.
+   Tokens only. */
+.rig .rg-ln-page{display:flex;flex-direction:column;height:100%;min-height:560px;min-width:0}
+.rig .rg-ln-top{flex:none;padding-bottom:var(--rig-s3)}
+.rig .rg-ln-rule{display:flex;flex-wrap:wrap;align-items:center;gap:var(--rig-s2) var(--rig-s3);margin:var(--rig-s2) 0 0;font-size:var(--rig-fs-sm);color:var(--rig-dim)}
+.rig .rg-ln-keys{display:inline-flex;flex-wrap:wrap;align-items:center;gap:var(--rig-s1);margin-left:auto;font-size:var(--rig-fs-2xs);color:var(--rig-mute)}
+.rig .rg-ln-body{flex:1 1 0;min-height:0;display:grid;grid-template-columns:minmax(0,1fr);border-top:1px solid var(--rig-line);background:var(--rig-panel)}
+.rig .rg-ln-body.with-panel{grid-template-columns:minmax(0,1fr) minmax(340px,33%)}
+/* the lanes' box and its edge fades: a side where more lanes lie fades, and the cue above says how many */
+.rig .rg-ln-lanes{position:relative;display:grid;grid-template-rows:minmax(0,1fr);grid-template-columns:minmax(0,1fr);min-width:0;min-height:0}
+.rig .rg-ln-lanes::before,.rig .rg-ln-lanes::after{content:"";position:absolute;top:0;bottom:0;width:28px;z-index:3;pointer-events:none;opacity:0;transition:opacity var(--rig-dur-1) var(--rig-ease)}
+.rig .rg-ln-lanes::before{left:0;background:linear-gradient(to right,var(--rig-panel),transparent)}
+.rig .rg-ln-lanes::after{right:0;background:linear-gradient(to left,var(--rig-panel),transparent)}
+.rig .rg-ln-lanes[data-start]::before,.rig .rg-ln-lanes[data-end]::after{opacity:1}
+.rig .rg-ln-cue{display:flex;flex-wrap:wrap;align-items:center;gap:var(--rig-s2);margin-top:var(--rig-s2);font-size:var(--rig-fs-sm);color:var(--rig-text);font-variant-numeric:tabular-nums}
+.rig .rg-ln-cue .rg-btn{min-width:var(--rig-h-ctl);justify-content:center}
+.rig .rg-ln-fixgo{all:unset;box-sizing:border-box;align-self:flex-start;display:inline-flex;align-items:center;height:20px;margin-top:2px;padding:0 8px;border-radius:var(--rig-r-full);box-shadow:inset 0 0 0 1px var(--rig-text);background:var(--rig-panel);font:var(--rig-fw-medium) var(--rig-fs-2xs)/var(--rig-lead-xs) var(--rig-sans);color:var(--rig-text);white-space:nowrap;cursor:pointer}
+.rig .rg-ln-fixgo:hover{background:var(--rig-row-hover)}
+.rig .rg-ln-fixgo:focus-visible{outline:2px solid var(--rig-sel);outline-offset:1px}
+.rig .rg-ln-body>.rg-cx-detail{border-left:1px solid var(--rig-line);border-right:0}
+.rig .rg-ln-scroll{position:relative;min-width:0;min-height:0;overflow:auto;overscroll-behavior:contain;scrollbar-width:thin;scrollbar-color:var(--rig-line2) transparent}
+/* a folded lane: letter, step and tokens (the unit is in its head), so five lanes fit beside a docked step at 1440 */
+.rig .rg-ln-scroll{--rig-ln-compact:8rem}
+.rig .rg-ln-grid{display:grid;grid-template-columns:var(--rig-ln-cols,repeat(var(--rig-ln-n),minmax(220px,1fr)));min-width:min-content;padding:0 var(--rig-s2) var(--rig-s5)}
+.rig .rg-ln-row,.rig .rg-ln-heads{display:contents}
+.rig .rg-ln-head{position:sticky;top:0;z-index:2;display:flex;flex-direction:column;gap:3px;min-width:0;padding:var(--rig-s2) var(--rig-s2) 10px;background:var(--rig-panel);border-bottom:1px solid var(--rig-line)}
+.rig .rg-ln-h1{display:inline-flex;align-items:center;gap:6px;min-width:0;margin:0;font:var(--rig-fw-semi) var(--rig-fs-sm)/var(--rig-lead-sm) var(--rig-sans);color:var(--rig-text)}
+.rig .rg-ln-h1 .rg-st{flex:none;width:14px;height:14px}
+.rig .rg-ln-role{padding:0 6px;border-radius:var(--rig-r-full);background:var(--rig-panel3);font:var(--rig-fw-medium) var(--rig-fs-2xs)/var(--rig-lead-sm) var(--rig-sans);color:var(--rig-dim)}
+.rig .rg-ln-h2{font:var(--rig-fw-regular) var(--rig-fs-xs)/var(--rig-lead-xs) var(--rig-num);color:var(--rig-mute);font-variant-numeric:tabular-nums}
+.rig .rg-ln-h3{font-size:var(--rig-fs-xs);line-height:var(--rig-lead-xs);color:var(--rig-dim);margin-bottom:4px}
+.rig .rg-ln-cell{min-width:0;min-height:40px;padding:0 var(--rig-s1)}
+.rig .rg-ln-cell.cur::before{left:0}
+.rig .rg-ln-cell .rg-sl-row{padding:0 6px;gap:6px;box-shadow:inset 0 0 0 1px var(--rig-line-soft)}
+/* a tool name is never cut: it keeps its whole width, and when the line has no room for it beside the
+   step's marks and tokens, those move to a second line of the cell, kept to the right; the row of every lane grows
+   with it, so step k stays on one row. Only the arguments give way (the step's card has them whole): they take no
+   room of their own. A name longer than the cell breaks after an underscore (StepRows <Wb>). */
+.rig .rg-ln-cell .rg-sl-row{flex-wrap:wrap;justify-content:flex-end;align-content:center;row-gap:2px;height:auto;min-height:40px;padding-block:4px}
+.rig .rg-ln-cell .rg-sl-what{flex:1 1 auto;white-space:normal}
+.rig .rg-ln-cell .rg-sl-what .t{flex:0 1 auto;max-width:100%;overflow:visible;text-overflow:clip}
+.rig .rg-ln-cell .rg-sl-what .a{flex:1 1 0;contain:inline-size;white-space:nowrap}
+.rig .rg-ln-cell+.rg-ln-cell{box-shadow:inset 1px 0 0 var(--rig-line-soft)}
+.rig .rg-ln-split{grid-column:1/-1;margin:6px 0;padding:4px var(--rig-s2);border-top:1.5px dashed var(--rig-amb);font-size:var(--rig-fs-xs);color:var(--rig-amb-t)}
+.rig .rg-ln-wait{grid-column:1/-1;padding:var(--rig-s5) var(--rig-s3);color:var(--rig-mute)}
+.rig .rg-ln-dir{font-size:var(--rig-fs-xs);color:var(--rig-mute)}
+.rig .rg-ln-phases{display:inline-flex;flex-wrap:wrap;gap:2px var(--rig-s2);font-size:var(--rig-fs-xs);color:var(--rig-dim)}
+.rig .rg-ln-phases>span{display:inline-flex;align-items:center;gap:4px}
+/* a step docked beside the lanes: the lanes but its own fold to letter, step and tokens; the step's card has the rest */
+@media (min-width:1024px){
+  .rig .rg-ln-cell.compact :is(.rg-sl-what,.rg-sl-badge,.rg-cx-chip,.rg-sl-ph){display:none}
+  .rig .rg-ln-cell.compact .rg-cx-stm{margin-left:auto}
+  /* "model call N" on two lines, "model" over "call N" (a no-break space keeps those together) */
+  .rig .rg-ln-cell.compact.shared .rg-cx-stm{width:min-content;white-space:normal;text-align:right;font-size:var(--rig-fs-2xs);line-height:var(--rig-lead-xs)}
+  .rig .rg-ln-head.compact :is(.rg-ln-h3,.rg-ln-role){display:none}
+}
+@media (max-width:1279px){
+  .rig .rg-ln-page{height:auto;min-height:0}
+  .rig .rg-ln-body,.rig .rg-ln-body.with-panel{flex:none;grid-template-columns:minmax(0,1fr)}
+  .rig .rg-ln-scroll{max-height:62vh;scroll-snap-type:x mandatory}
+  .rig .rg-ln-grid{grid-template-columns:repeat(var(--rig-ln-n),min(84vw,340px))}
+  .rig .rg-ln-head{scroll-snap-align:start}
+  .rig .rg-ln-body>.rg-cx-detail{max-height:none;overflow:visible;border-left:0;border-top:1px solid var(--rig-line)}
+  .rig .rg-ln-keys{margin-left:0}
+}
+/* 1024 to 1279: an opened step docks beside the lanes as from 1280, so its content is in view at once; its lane
+   keeps a readable width, the others fold */
+@media (min-width:1024px) and (max-width:1279px){
+  .rig .rg-ln-page.docked{height:100%;min-height:560px}
+  .rig .rg-ln-page.docked .rg-ln-body{flex:1 1 0;grid-template-columns:minmax(0,1fr) minmax(340px,33%)}
+  .rig .rg-ln-page.docked .rg-ln-scroll{max-height:none;scroll-snap-type:none}
+  .rig .rg-ln-page.docked .rg-ln-grid{grid-template-columns:var(--rig-ln-cols)}
+  .rig .rg-ln-page.docked .rg-ln-body>.rg-cx-detail{overflow:auto;border-top:0;border-left:1px solid var(--rig-line)}
+}
+/* a phone or a narrow tablet: one whole lane at a time, the next one a swipe away (no lane cut at the edge) */
+@media (max-width:767px){
+  .rig .rg-ln-scroll{container-type:inline-size}
+  .rig .rg-ln-grid{grid-template-columns:repeat(var(--rig-ln-n),calc(100cqw - 2 * var(--rig-s2)))}
+}
+@media (prefers-reduced-motion:reduce){.rig .rg-ln-lanes::before,.rig .rg-ln-lanes::after{transition:none}}

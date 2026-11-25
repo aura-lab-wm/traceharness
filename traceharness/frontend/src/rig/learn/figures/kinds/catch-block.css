@@ -1,0 +1,31 @@
+/* Rig · learn/figures/kinds/catch-block.css — catch_block: caught against blocked (catch-block.jsx).
+   The model's line is the factor (--rig-ser1) and draws itself in once; the rule is a grey diamond (--rig-ser4);
+   random blocking is a dashed diagonal. Bad submits are --rig-red, good ones --rig-sky. Tokens only. */
+.rg-cb-rand{stroke:var(--rig-line3);stroke-width:1.5;stroke-dasharray:5 4}
+.rg-cb-randl{fill:var(--rig-mute);font-size:var(--rig-fs-2xs)}
+.rg-cb-line{fill:none;stroke:var(--rig-ser1);stroke-width:2.5;stroke-linejoin:round;stroke-dasharray:1;stroke-dashoffset:1;transition:stroke-dashoffset calc(var(--rig-dur-pulse) / 2) var(--rig-ease)}
+.rg-cb-svg.seen .rg-cb-line{stroke-dashoffset:0}
+.rg-cb-rule rect{fill:var(--rig-ser4);stroke:var(--rig-panel);stroke-width:1.5}
+.rg-cb-rule text{fill:var(--rig-dim);font-size:var(--rig-fs-xs);font-weight:var(--rig-fw-medium)}
+.rg-cb-mark{transition:transform var(--rig-dur-2) var(--rig-ease)}
+.rg-cb-mark circle{fill:var(--rig-ser1);stroke:var(--rig-panel);stroke-width:2}
+.rg-cb-mark text,.rg-cb-rule text{paint-order:stroke;stroke:var(--rig-panel);stroke-width:3px;stroke-linejoin:round}
+.rg-cb-mark text{fill:var(--rig-text);font-size:var(--rig-fs-xs);font-weight:var(--rig-fw-bold);font-variant-numeric:tabular-nums}
+.rg-lfig-sw.rule{background:var(--rig-ser4);transform:rotate(45deg) scale(.8)}
+.rg-lfig-sw.rand{height:0;border-radius:0;background:none;border-top:2px dashed var(--rig-line3)}
+
+/* the two 2 x 2 tables */
+.rg-cb-grids{display:grid;gap:var(--rig-s4);min-width:0}
+.rg-cb-grid{width:100%;border-collapse:separate;border-spacing:var(--rig-s1);table-layout:fixed;font-size:var(--rig-fs-sm);line-height:var(--rig-lead-md);font-variant-numeric:tabular-nums}
+.rg-cb-grid caption{caption-side:top;text-align:left;padding:0 var(--rig-s1) var(--rig-s1);font-weight:var(--rig-fw-bold);color:var(--rig-text)}
+.rg-cb-grid thead td{width:5.5rem}
+.rg-cb-grid th{font-weight:var(--rig-fw-medium);font-size:var(--rig-fs-xs);color:var(--rig-dim);text-align:left;vertical-align:middle}
+.rg-cb-grid thead th{padding-bottom:var(--rig-s1)}
+.rg-cb-grid thead th .rg-lfig-sw{display:inline-block;margin-right:var(--rig-s1);vertical-align:-1px}
+.rg-cb-grid tbody td{padding:var(--rig-s2);border-radius:var(--rig-r-sm);background:var(--rig-panel2);color:var(--rig-dim)}
+.rg-cb-grid tbody td.key{background:var(--rig-panel3);color:var(--rig-text)}
+.rg-cb-grid tbody td b{margin-right:var(--rig-s1);font-size:var(--rig-fs-md)}
+.rg-cb-grid tbody td span{display:block;font-size:var(--rig-fs-xs);color:var(--rig-dim)}
+
+/* the Learn index preview */
+.rg-prev-line .rg-prev-rule{fill:var(--rig-ser4)}

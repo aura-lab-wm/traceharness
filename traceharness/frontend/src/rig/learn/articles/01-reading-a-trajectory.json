@@ -1,0 +1,370 @@
+{
+ "id": "reading-a-trajectory",
+ "number": 1,
+ "part": 1,
+ "kind": "concept",
+ "checked": "2026-11-23",
+ "title": "Reading an agent trajectory",
+ "question": "How do I read one recorded agent run, step by step?",
+ "what_you_learn": [
+  "What one step of a run holds: the request sent to the model, its reply, the tool it asked for and what the tool returned.",
+  "Where the run page shows each of those parts, and a reading order that works for any run.",
+  "How to keep what the agent believed about its fix apart from what the grader decided."
+ ],
+ "prerequisites": {
+  "read": [],
+  "know": [
+   "Nothing yet: this is the first article on the path.",
+   "Have TraceHarness open beside it, so you can follow the links."
+  ]
+ },
+ "sections": [
+  {
+   "heading": "The loop behind every run",
+   "body": [
+    "A coding agent is a language model that works through tools. It can read a file, edit a file, run the tests and hand in its change. It works in a loop: the model gets a message, picks one action, asks for a tool, sees what the tool returned, and picks again. The Hugging Face Agents Course, written by Joffrey Thomas and Thomas Simonini, calls this the Thought-Action-Observation cycle. It walks through the cycle with a small weather agent. If the loop is new to you, read that page first. This page is about the record the loop leaves behind.",
+    "That record is the trajectory: every message sent to the model, every reply, every tool call and every tool output, in order, for one run. A run is one attempt by one agent at one task. Anthropic's guide to agent evals treats transcript, trace and trajectory as names for the same record. Reading trajectories is also a research method. Bouzenia and Pradel (2025) studied 120 trajectories of three agents and found habits that separate successful runs from failed ones."
+   ]
+  },
+  {
+   "heading": "What TraceHarness calls a step",
+   "body": [
+    "In TraceHarness a step is one model call: one request to the model and the reply that came back. Most replies ask for a tool. The tool runs, its output joins the conversation, and the next step begins. So step 3 means the third time the model was asked what to do, together with the tool it chose.",
+    "Imported datasets sometimes count steps their own way. On an imported run the header says Model calls instead of Steps, so you can always see what was counted."
+   ]
+  },
+  {
+   "heading": "Read the run page from top to bottom",
+   "body": [
+    "Open any run from the Runs list or from a task. The page has four parts. Read them in this order.",
+    {
+     "list": [
+      "The header. It names the task and shows its grade (Pass or Fail), the model, the harness, the oracle and which repeat this is. Run 1 of 5 means the first of five runs of the same task under the same model and harness. The oracle is the test suite that decides the grade. Below that you see the steps used out of the limit, the tokens, the cost and the wall time.",
+      "The step list, on the left. One row per step. It shows the tool and its main argument (a file name or a command) and a phase tag such as explore, edit or test. It also shows the tokens the step read (in) and wrote (out). The small number at the right edge is a risk score from Sentinel, an early-warning model. The Sentinel article explains it; you can skip it for now.",
+      "The step detail, on the right. Sent to the model shows the new messages in this request. Reply shows what the model wrote and why the reply stopped (its finish reason). Tool call shows the tool, its arguments and its output.",
+      "The end of the list. Graded shows up to three marks. Visible is the suite the agent could see, hidden is the default grade, and strengthened is the hidden suite plus extra tests. Ended shows the exit reason, which says why the run stopped, for example submitted."
+     ]
+    }
+   ]
+  },
+  {
+   "heading": "Two things the page does not say outright",
+   "body": [
+    "First, Sent to the model lists only what is new, but the model received the whole conversation again. The tokens-in count beside it is the size of the whole request. That is why later steps read more tokens than earlier ones. The article on steps and tokens follows this up.",
+    "Second, a test run inside the trajectory is the agent checking its own work with the tests it can see. The grade comes afterwards, from tests it never saw. A green run_tests step tells you what the agent believed. Graded tells you what happened. Read both, and notice when they disagree.",
+    "Some datasets did not record every field. TraceHarness then shows unknown or a dash, never a made-up 0. Some imported runs have no visible suite. Then the mark beside hidden reads agent's last test: the result of the agent's own last test command, not a second grader."
+   ]
+  },
+  {
+   "heading": "A reading routine",
+   "body": [
+    "Use the same routine on every run, so a long run does not swallow you.",
+    {
+     "olist": [
+      "Open step 1 and read the issue in Sent to the model. Say in one sentence what has to change.",
+      "Read the step list once without opening anything. Say the agent's plan in one sentence.",
+      "Open only the steps where something changed: the first edit, each test run and the last step.",
+      "Compare the agent's last test result with the Graded marks.",
+      "Open the patch (the Patch tab on the task page) and check that it does what your first sentence said."
+     ]
+    },
+    "On the task page each run is also written as one letter per tool call, for example RETS for read, edit, test, submit. The full alphabet is L list, R read, F find, W write, E edit, T test, B other shell command and S submit. Reading the letters of all runs of a task side by side is the quickest way to see where they part."
+   ]
+  }
+ ],
+ "figures": [
+  {
+   "id": "a1-step",
+   "after_section": 1,
+   "kind": "run_steps",
+   "data_file": "a01-run-steps",
+   "title": "One run, one model call at a time",
+   "caption": "The worked example's run, t01_slugify Run 1, step by step. Step 1 sent 540 tokens and the reply wrote 69; the reply asked for read_file, and the file's text became part of what step 2 sent (740 tokens).",
+   "data_note": "study_v04, run 9624e4, 4 model calls",
+   "headline": [
+    {
+     "key": "in_1",
+     "as_written": "540"
+    },
+    {
+     "key": "out_1",
+     "as_written": "69"
+    },
+    {
+     "key": "in_2",
+     "as_written": "740"
+    },
+    {
+     "key": "total",
+     "as_written": "3,950"
+    }
+   ]
+  },
+  {
+   "id": "a01-call-tokens",
+   "after_section": 3,
+   "kind": "call_tokens",
+   "data_file": "a01-call-tokens",
+   "title": "Where the tokens go",
+   "caption": "Tokens read (in) and written (out) at each model call. In t01_slugify Run 1 the four requests read 540, 740, 1,064 and 1,129 tokens: 3,950 in all with the replies. The second tab, t09_paginate Run 1, made 13 calls: 55,956 tokens in and 3,533 out.",
+   "data_note": "study_v04, 2 runs of gemini-2.5-flash-lite under baseline",
+   "headline": [
+    {
+     "key": "in_0_1",
+     "as_written": "540"
+    },
+    {
+     "key": "in_0_2",
+     "as_written": "740"
+    },
+    {
+     "key": "in_0_3",
+     "as_written": "1,064"
+    },
+    {
+     "key": "in_0_4",
+     "as_written": "1,129"
+    },
+    {
+     "key": "total_0",
+     "as_written": "3,950"
+    },
+    {
+     "key": "calls_1",
+     "as_written": "13 calls"
+    },
+    {
+     "key": "in_1",
+     "as_written": "55,956"
+    },
+    {
+     "key": "out_1",
+     "as_written": "3,533"
+    }
+   ]
+  }
+ ],
+ "worked_example": {
+  "title": "A four-step run of t01_slugify",
+  "dataset": {
+   "name": "study_v04",
+   "what": "Bundled with the study copy: 3,240 recorded runs, 3 models x 9 harnesses x 24 small Python tasks x 5 runs. They were collected through OpenRouter (a paid service that passes requests on to many model providers) at temperature 0.",
+   "credit": "TraceHarness bundled data (AURA lab, William & Mary)."
+  },
+  "open": [
+   "Click the dataset name at the top of the left list and choose study_v04.",
+   "Click Runs in the left list.",
+   "Open the first row: run 20261114-131327-9624e4 (t01_slugify, gemini-2.5-flash-lite under baseline, Pass, 4 steps)."
+  ],
+  "body": [
+   "The header reads: t01_slugify, Pass, model google/gemini-2.5-flash-lite, harness baseline, Run 1 of 5, oracle hidden, Steps 4 / 20, Tokens 3,950.",
+   "Step 1 is read_file textkit/slug.py, tagged explore. Sent to the model holds the system prompt and the issue: slugify(\"Hello,  World!\") returns \"hello--world-\" but should return \"hello-world\". The reply says it will look at the function first. The tool output shows the cause. The code swaps every character that is not a lowercase letter or a digit for its own hyphen, so two such characters in a row give two hyphens.",
+   "Step 2 is edit_file on the same file, tagged edit. Step 3 is run_tests, tagged test, with the chip 2 passed. Step 4 is submit. Graded shows visible, hidden and strengthened all passed, and Ended says submitted.",
+   "The plan in one sentence: read the function, change the pattern so a run of other characters becomes one hyphen, trim hyphens at the ends, check, hand in. The patch matches: it changes [^a-z0-9] to [^a-z0-9]+ and adds text.strip('-').",
+   "Now look at tokens in: 540, 740, 1,064 and 1,129 for steps 1 to 4. Each request carried everything before it."
+  ],
+  "links": [
+   "ds:study_v04",
+   "field:study_v04",
+   "run:20261114-131327-9624e4"
+  ]
+ },
+ "try_it": {
+  "clicks": [
+   "Click the dataset name at the top of the left list and choose study_v04.",
+   "Click Tasks in the left list.",
+   "Type t24_ini_parser in Search tasks, then click the task name.",
+   "Check that the Asking line says gemini-2.5-flash-lite under baseline. If not, click Change and pick them.",
+   "Click Run 1 of 5, then Open run."
+  ],
+  "question": "The agent ran the tests once. What did that test run report? What grade did the run get, and how can both be true?",
+  "answer": "Step 3 (run_tests) shows 3 passed: the visible tests passed, and How it failed adds that its last own test run passed. The grade is still Fail, labelled wrong patch: Graded shows visible passed, hidden failed and strengthened failed. The visible tests did not check the case the hidden tests check, so the agent believed it was done. All 5 runs of this task under this model and harness end the same way.",
+  "answer_measured_from": "GET /api/results/study_v04/runs/20261114-131327-1d0cfa: run_tests span tests_passed = true; summary visible_pass = true, hidden_pass = false, strong_pass = false. GET /api/outcomes/study_v04: mode wrong_patch. data/runs/study_v04/index.jsonl, task t24_ini_parser, model google/gemini-2.5-flash-lite, harness baseline: visible_pass true and hidden_pass false in 5 of 5. The click path was re-run on a fresh profile.",
+  "links": [
+   "ds:study_v04",
+   "tasks:study_v04:gemini-2.5-flash-lite:baseline",
+   "task:study_v04:gemini-2.5-flash-lite:baseline:t24_ini_parser",
+   null,
+   "run:20261114-131327-1d0cfa"
+  ]
+ },
+ "quiz": [
+  {
+   "q": "In TraceHarness, what is one step?",
+   "options": [
+    "One model call, with the tool it asked for",
+    "One tool call, counted apart from the model call",
+    "One file the agent edited",
+    "One run of the test suite"
+   ],
+   "answer": 0,
+   "why": "Steps are counted by model calls; the tool a reply asked for is shown inside that step."
+  },
+  {
+   "q": "A run's last run_tests step shows 3 passed. What do you know about its grade?",
+   "options": [
+    "It passed, because its tests passed",
+    "It failed, because the step was late",
+    "Nothing yet: the grade uses tests it never saw",
+    "Only that the hidden tests passed too"
+   ],
+   "answer": 2,
+   "why": "A test run in the trajectory uses the tests the agent can see; the grade comes from the oracle's suite, and the two can disagree."
+  },
+  {
+   "q": "Why does tokens in grow from one step to the next?",
+   "options": [
+    "The model slows down near the end of a long run",
+    "The issue text gets longer at every step",
+    "The grader adds its own tokens to each step",
+    "Each request re-sends the whole conversation"
+   ],
+   "answer": 3,
+   "why": "The model keeps no memory between calls, so every request carries all earlier messages and tool outputs."
+  }
+ ],
+ "sources": [
+  {
+   "title": "Understanding AI Agents through the Thought-Action-Observation Cycle (Agents Course, Unit 1)",
+   "authors": "Joffrey Thomas and Thomas Simonini (writers); maintained by Ben Burtenshaw and Sergio Paniego (Hugging Face)",
+   "year": "n.d. (undated course page)",
+   "url": "https://huggingface.co/learn/agents-course/unit1/agent-steps-and-structure",
+   "what_we_took": "The name and shape of the think, act, observe loop. We link to it instead of teaching the loop again.",
+   "quote": "the loop continues until the objective of the agent has been fulfilled",
+   "licence": "Course repository github.com/huggingface/agents-course is Apache-2.0. We paraphrase, quote one line and copy no images.",
+   "checked": "2026-11-23",
+   "cited_at": [
+    "calls this the Thought-Action-Observation cycle"
+   ]
+  },
+  {
+   "title": "Demystifying evals for AI agents",
+   "authors": "Mikaela Grace, Jeremy Hadfield, Rodrigo Olivares, Jiri De Jonghe (Anthropic)",
+   "year": "2026 (published 9 Jan 2026)",
+   "url": "https://www.anthropic.com/research/demystifying-evals-for-ai-agents",
+   "licence": "Vendor research blog; reuse terms not stated. Paraphrased, one short quote.",
+   "what_we_took": "Transcript, trace and trajectory name the same record of a run; the transcript is kept apart from the outcome.",
+   "quote": "A transcript (also called a trace or trajectory) is the complete record of a trial",
+   "checked": "2026-11-24",
+   "cited_at": [
+    "treats transcript, trace and trajectory as names for the same record"
+   ]
+  },
+  {
+   "title": "Understanding Software Engineering Agents: A Study of Thought-Action-Result Trajectories",
+   "authors": "Islem Bouzenia, Michael Pradel",
+   "year": "2025 (ASE 2025)",
+   "url": "https://arxiv.org/abs/2506.18824",
+   "what_we_took": "Reading trajectories is a research method in its own right: their study of 120 trajectories from three agents found behaviour patterns that separate successful from failed runs. We say so in the first section.",
+   "quote": "Our findings reveal behavioral motifs and anti-patterns that distinguish successful from failed executions",
+   "licence": "CC BY 4.0 (arXiv).",
+   "checked": "2026-11-23",
+   "cited_at": [
+    "found habits that separate successful runs from failed ones"
+   ]
+  }
+ ],
+ "glossary_terms": [
+  "trajectory",
+  "run",
+  "step",
+  "model call",
+  "tool call",
+  "oracle",
+  "strengthened",
+  "exit reason",
+  "repeat",
+  "phase",
+  "recorded path"
+ ],
+ "see_also": [
+  {
+   "kind": "article",
+   "target": "outcome-labels"
+  },
+  {
+   "kind": "article",
+   "target": "run-cost-steps-vs-tokens"
+  },
+  {
+   "kind": "page",
+   "label": "Runs: every run of study_v04 in one list",
+   "spec": "field:study_v04"
+  },
+  {
+   "kind": "page",
+   "label": "Tasks: one row per task, with its runs",
+   "spec": "tasks:study_v04:gemini-2.5-flash-lite:baseline"
+  }
+ ],
+ "numbers": [
+  {
+   "as_written": [
+    "[^a-z0-9]+"
+   ],
+   "meaning": "regex in the patch (code, not a measurement)",
+   "source": "patch.diff of run 20261114-131327-9624e4"
+  },
+  {
+   "as_written": [
+    "3,950",
+    "4 / 20"
+   ],
+   "meaning": "t01_slugify Run 1: total tokens; steps used of the limit",
+   "source": "run page + GET /api/results/study_v04/runs/20261114-131327-9624e4 (3,473 in + 477 out; harness max_steps 20)"
+  },
+  {
+   "as_written": [
+    "540",
+    "740",
+    "1,064",
+    "1,129"
+   ],
+   "meaning": "tokens in at steps 1-4 of that run",
+   "source": "same run, ledger chat spans gen_ai.usage.input_tokens"
+  },
+  {
+   "as_written": [
+    "69"
+   ],
+   "meaning": "tokens out at step 1",
+   "source": "same run, step 1 chat span"
+  },
+  {
+   "as_written": [
+    "2 passed"
+   ],
+   "meaning": "run_tests chip at step 3",
+   "source": "run page; ledger tests_passed true"
+  },
+  {
+   "as_written": [
+    "3 passed"
+   ],
+   "meaning": "t24_ini_parser Run 1, run_tests chip",
+   "source": "headless click-through of the try-it path"
+  },
+  {
+   "as_written": [
+    "5 runs",
+    "All 5"
+   ],
+   "meaning": "t24_ini_parser runs under gemini-2.5-flash-lite + baseline, all visible pass / hidden fail",
+   "source": "data/runs/study_v04/index.jsonl (traceharness-study)"
+  },
+  {
+   "as_written": [
+    "55,956",
+    "3,533",
+    "13 calls"
+   ],
+   "meaning": "t09_paginate Run 1 (figure 2, second tab): tokens in, tokens out, model calls",
+   "source": "scripts/learn_figures.py over data/runs/study_v04, run 20261114-131327-5484dd chat spans gen_ai.usage"
+  }
+ ],
+ "in_short": [
+  "A trajectory is the **full record of one run**: every request sent to the model, every reply, every tool call and every tool output, in order.",
+  "In TraceHarness **a step is one model call**, with the tool its reply asked for, and **tokens in grows** because each request re-sends the whole conversation.",
+  "A green test run inside the trajectory is **what the agent believed**; the Graded marks, from tests it never saw, are **what happened**."
+ ]
+}

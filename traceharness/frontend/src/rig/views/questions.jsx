@@ -12,13 +12,18 @@ import { useEffect, useMemo, useRef } from 'react'
 import { makeSpec, withChain } from '../route'
 import { useDataset, useDatasets, useRuns, useMetrics, useExperiment, useOracle, useIntegrity, useSentinel, useReport, useOutcomes,
   short, sfx, fmt, verdict, tally, isFailureMode, resolveCondition, invalidate } from '../data'
-import { QUESTIONS, QMAP, answerQuestion, operatingPoint } from '../answers'
+import { QUESTIONS, QMAP, answerQuestion, operatingPoint, sourceDataset, plainParts } from '../answers'
+import { Term } from '../Term'
 import { useRig, useTabState } from '../context'
-import { AskingSentence, PinButton, Go, Panel, HBar, OutcomeBar, CiBar, Verdict, FailureChip, Tag, Loading, ErrorState, NotFound, Empty, NextSteps, Seg, About,
-  TableScroll, Toolbar, PanelState } from '../ui'
+import { PinButton, Go, Wb, Panel, HBar, OutcomeBar, CiBar, Verdict, FailureChip, Tag, Loading, ErrorState, NotFound, Empty, NextSteps, Seg, About,
+  TableScroll, Toolbar, PanelState, PageHeader, PageHelp } from '../ui'
+import { DemoBanner } from '../DemoBanner'
+import { AskBar } from '../AskBar'
+import { PagePath } from '../PagePath'
 import './questions.css'
+import { StatusIcon } from '../StatusIcon'
 
-const { pct, int, pp } = fmt
+const { pct, int, pp, rate, share } = fmt
 
 /* ---------------------------------------------------------------- data */
 const status = (r) => (r.error ? 'error' : r.loading ? true : false)
@@ -52,30 +57,44 @@ export function useAnswers(dir, override) {
 
 /* ---------------------------------------------------------------- pieces */
 export function Sentence({ parts }) {
-  return <>{(parts || []).map((p, i) => (typeof p === 'string' ? <span key={i}>{p}</span> : <mark key={i} className="rg-q-mark-t">{p.mark}</mark>))}</>
+  return <>{(parts || []).map((p, i) => (typeof p === 'string' ? <span key={i}>{p}</span>
+    : p.term ? <Term key={i} slug={p.term}>{p.text}</Term> : <mark key={i} className="rg-q-mark-t">{p.mark}</mark>))}</>
 }
-const plain = (parts) => (parts || []).map((p) => (typeof p === 'string' ? p : p.mark)).join('')
+const plain = plainParts
 
-/** The stack of nine answered questions (dataset tab, q:<dir>). */
-export function QuestionStack({ dir, compact, model, harness }) {
+/** The stack of nine answered questions (dataset tab, q:<dir>). `brief` keeps each question with its number and
+ *  leaves the answer sentence to the toggle above it and to the question's own page. */
+export function QuestionStack({ dir, compact, model, harness, brief }) {
   const A = useAnswers(dir, { model, harness })
   const cond = A.input.cond
   return (
-    <ol className={`rg-q-stack${compact ? ' compact' : ''}`} aria-label="Questions, answered" data-el="question-stack">
+    <ol className={`rg-q-stack${compact ? ' compact' : ''}${brief ? ' brief' : ''}`} aria-label="Questions, answered" data-el="question-stack">
       {A.results.map(({ q, state, answer, reason }, i) => (
         <li key={q.id}>
           <Go spec={makeSpec('q', dir, q.id)} className={`rg-q-card${state === 'unanswered' ? ' na' : ''}${i === 0 ? ' lead' : ''}`} el={`question-${q.id}`}>
             <span className="n">{i + 1}</span>
             <span className="qq">{cond && cond.model ? q.q(cond) : q.q({ model: '…', harness: '…' })}</span>
-            {state === 'answered' && <span className="qv"><b>{answer.num}</b><small>{answer.numLabel}</small></span>}
+            {state === 'answered' && <span className="qv"><b>{answer.num}</b><small>{answer.numLabel}</small>{answer.scope && <small className="sc" data-el="answer-scope">{answer.scope}</small>}</span>}
             {state === 'answered' && <span className="qa"><Sentence parts={answer.sentence} /></span>}
-            {state === 'loading' && <span className="qa"><span className="rg-skel rg-q-skel" aria-hidden="true" /></span>}
+            {state === 'loading' && <span className="qa rg-skel-cap">Answering from the runs…</span>}
             {state === 'unanswered' && <><span className="qv"><Tag tone="dash">not answered</Tag></span><span className="qa">{reason}</span></>}
           </Go>
         </li>
       ))}
     </ol>
   )
+}
+
+/** One switch over the list: the questions with their numbers (the calm first screen), or with each answer's sentence
+ *  as well. The choice is the tab's own. */
+function AnswersToggle({ spec, dir }) {
+  const [full, setFull] = useTabState(spec, 'answers', false)
+  return (<>
+    <div className="rg-q-tog">
+      <button type="button" className="rg-btn sm" aria-pressed={full} data-el="answers-toggle" onClick={() => setFull(!full)}>{full ? 'Hide answers' : 'Show answers'}</button>
+    </div>
+    <QuestionStack dir={dir} brief={!full} />
+  </>)
 }
 
 /* ---------------------------------------------------------------- figures */
@@ -86,12 +105,12 @@ function Figure({ fig, dir }) {
       const { f } = fig
       return (<>
         <div className="rg-q-bars">
-          <HBar label="model" value={f.model.share} text={pct(f.model.share)} />
-          <HBar label="harness" value={f.harness.share} text={pct(f.harness.share)} />
-          <HBar label="interaction" value={f.interaction_share} text={pct(f.interaction_share)} tone="dim" />
+          <HBar label="model" value={f.model.share} text={share(f.model.share)} />
+          <HBar label="harness" value={f.harness.share} text={share(f.harness.share)} />
+          <HBar label="interaction" value={f.interaction_share} text={share(f.interaction_share)} tone="dim" />
         </div>
-        <p className="rg-small rg-dim rg-q-cap">Share of the sum of squares in a two-factor fit of hidden-suite pass (model × harness). Spread of level means: model {pp(f.model.range)}, harness {pp(f.harness.range)}.</p>
-        <div className="rg-lbl rg-q-sub">{fig.nSep ? `Contrasts that separate from zero · ${fig.nSep} of ${fig.nAll}` : `Largest contrasts · none of ${fig.nAll} separates`}</div>
+        <p className="rg-small rg-dim rg-q-cap">Share of the sum of squares in a two-factor fit of hidden-oracle Pass (model × harness). Spread of level means: model {pp(f.model.range)}, harness {pp(f.harness.range)}.</p>
+        <div className="rg-lbl rg-q-sub">{fig.nSep ? `Comparisons that separate from zero · ${fig.nSep} of ${fig.nAll}` : `Largest comparisons · none of ${fig.nAll} separates`}</div>
         <TableScroll label="Contrasts between harnesses"><table className="rg-tbl rg-q-tbl"><thead><tr><th>model</th><th>from → to (harness)</th><th className="rg-num">Δ pass@1</th><th className="rg-cq-hide-sm rg-q-ci">95% CI</th></tr></thead>
           <tbody>{fig.contrasts.map((c, i) => <tr key={i}><td className="rg-mono">{short(c.a)}</td><td className="rg-mono">{c.from} → {c.to}</td><td className={`rg-num ${c.delta < 0 ? 'rg-red' : 'rg-sky'}`}>{pp(c.delta)}</td>
             <td className="rg-cq-hide-sm rg-q-ci"><CiBar lo={c.ci95[0]} hi={c.ci95[1]} pt={c.delta} min={-0.6} max={0.6} zero={0} /></td></tr>)}</tbody></table></TableScroll>
@@ -102,10 +121,10 @@ function Figure({ fig, dir }) {
       const c = o.cells
       return (<>
         <div className="rg-q-bars">
-          <HBar label="hidden suite" value={o.rate_a.rate} text={pct(o.rate_a.rate)} tone="sky" />
+          <HBar label="hidden oracle" value={o.rate_a.rate} text={pct(o.rate_a.rate)} tone="sky" />
           <HBar label="strengthened" value={o.rate_b.rate} text={pct(o.rate_b.rate)} tone="sky" />
         </div>
-        <TableScroll label="Grader agreement" className="rg-q-2x2w"><table className="rg-tbl rg-q-2x2"><caption className="rg-lbl">Agreement over {int(o.n_eligible)} runs graded by both · κ {fmt.fx(o.kappa)}</caption>
+        <TableScroll label="Oracle agreement" className="rg-q-2x2w"><table className="rg-tbl rg-q-2x2"><caption className="rg-lbl">Agreement over {int(o.n_eligible)} runs graded by both · κ {fmt.fx(o.kappa)}</caption>
           <thead><tr><th /><th className="rg-num">strengthened ✓</th><th className="rg-num">strengthened ×</th></tr></thead>
           <tbody><tr><th>hidden ✓</th><td className="rg-num rg-mono">{int(c.both_true)}</td><td className="rg-num rg-mono rg-red">{int(c.only_a_true)}</td></tr>
             <tr><th>hidden ×</th><td className="rg-num rg-mono">{int(c.only_b_true)}</td><td className="rg-num rg-mono">{int(c.both_false)}</td></tr></tbody></table></TableScroll>
@@ -116,12 +135,12 @@ function Figure({ fig, dir }) {
       return (<>
         <div className="rg-q-strips">{fig.strips.map((s) => (
           <div key={s.task} className="rg-q-strip">
-            <span className="rg-mono rg-small rg-ell">{s.task}</span>
-            <span className="rg-q-rib">{s.runs.map((r) => { const v = verdict(r, oracle); return <span key={r.id} className={`c ${v === true ? 'p' : v === false ? 'f' : 'u'}`} title={`repeat ${r.rep} · ${sfx(r.id)}`}>{v === true ? '✓' : v === false ? '×' : '?'}</span> })}</span>
+            <span className="rg-mono rg-small rg-q-stask"><Wb>{s.task}</Wb></span>
+            <span className="rg-q-rib">{s.runs.map((r) => { const v = verdict(r, oracle); return <span key={r.id} className={`c ${v === true ? 'p' : v === false ? 'f' : 'u'}`} data-hint={`Run ${r.rep != null ? r.rep + 1 : '?'} · ${sfx(r.id)}`}><StatusIcon status={v === true || v === false ? v : null} /></span> })}</span>
             <span className="rg-mono rg-small">{s.p}/{s.known}{s.u ? ` · ${s.u}?` : ''}</span>
             {s.mixed ? <Tag tone="amb">mixed</Tag> : <span />}
           </div>))}</div>
-        <p className="rg-small rg-dim rg-q-cap">Repeats in order of repeat_index, graded by the {oracle} suite. A task is mixed when some repeats pass and others fail.</p>
+        <p className="rg-small rg-dim rg-q-cap">Runs in order (Run 1 = repeat_index 0), graded by the {oracle} oracle. A task is mixed when some runs pass and others fail.</p>
       </>)
     case 'modes': {
       const max = Math.max(...fig.fails.map(([, n]) => n), 1)
@@ -130,10 +149,10 @@ function Figure({ fig, dir }) {
       const cf = Object.entries(fig.condCounts).sort((a, b) => b[1] - a[1])
       return (<>
         <div className="rg-lbl rg-q-sub rg-q-first">Every failed run in {dir} · {int(fig.failures)}</div>
-        <div className="rg-q-bars">{fig.fails.map(([m, n]) => <div key={m} title={meaning(m)}><HBar label={label(m)} value={n} max={max} text={`${int(n)} · ${pct(n / fig.failures, 0)}`} tone="red" /></div>)}</div>
+        <div className="rg-q-bars">{fig.fails.map(([m, n]) => <div key={m} data-hint={meaning(m)}><HBar label={label(m)} value={n} max={max} text={`${int(n)} · ${share(n / fig.failures)}`} tone="red" /></div>)}</div>
         <div className="rg-lbl rg-q-sub">In {short(fig.cond.model)} · {fig.cond.harness} · {int(fig.condFailures)} failed</div>
-        {cf.length ? <div className="rg-cluster rg-cluster-lg">{cf.map(([m, n]) => <span key={m} className="rg-q-chipn"><FailureChip mode={m} dir={dir} /><span className="rg-mono rg-small">×{n}</span></span>)}</div>
-          : <p className="rg-small rg-dim">No run in this condition failed the hidden suite.</p>}
+        {cf.length ? <div className="rg-cluster rg-cluster-lg">{cf.map(([m, n]) => <span key={m} className="rg-q-chipn"><FailureChip mode={m} dir={dir} /><span className="rg-mono rg-small">×{int(n)}</span></span>)}</div>
+          : <p className="rg-small rg-dim">No run in this condition failed the {oracle} oracle.</p>}
       </>)
     }
     case 'leak': {
@@ -141,7 +160,7 @@ function Figure({ fig, dir }) {
       return (<>
         <div className="rg-q-bars">{fig.rows.map((x) => (
           <div key={x.task} className="rg-q-leak">
-            <div className="rg-q-leakb"><HBar label={x.task} value={x.patch_issue_similarity} max={max} text={pct(x.patch_issue_similarity, 0)} tone={x.probe && x.probe !== 'none' ? 'amb' : undefined} /></div>
+            <div className="rg-q-leakb"><HBar label={x.task} value={x.patch_issue_similarity} max={max} text={share(x.patch_issue_similarity)} tone={x.probe && x.probe !== 'none' ? 'amb' : undefined} /></div>
             <span className="rg-q-probe">{x.probe && x.probe !== 'none' ? <Tag tone="amb">◆ {x.probe.replace(/_/g, ' ')}</Tag> : null}</span>
           </div>))}</div>
         <p className="rg-small rg-dim rg-q-cap">Similarity between each task's patches and its issue text. ◆ marks tasks built as probes (a planted leak, injection or temptation).</p>
@@ -151,10 +170,10 @@ function Figure({ fig, dir }) {
       const r = fig.run
       return (
         <dl className="rg-kv rg-q-run">
-          <dt>run</dt><dd>{r.id}</dd><dt>task</dt><dd>{r.task} · repeat {r.rep}</dd><dt>condition</dt><dd>{short(r.model)} · {r.harness}</dd>
+          <dt>run</dt><dd>{r.id}</dd><dt>task</dt><dd>{r.task}{r.rep != null ? ` · run ${r.rep + 1}` : ''}</dd><dt>condition</dt><dd>{short(r.model)} · {r.harness}</dd>
           <dt>{oracle} tests</dt><dd className="rg-row"><Verdict v={verdict(r, oracle)} /><FailureChip run={r} /></dd>
           <dt>visible · hidden · strengthened</dt><dd className="rg-row"><Verdict v={r.vis} /><Verdict v={r.hid} /><Verdict v={r.str} /></dd>
-          <dt>model calls · tool calls · edits</dt><dd>{r.steps} · {r.tools} · {r.edits}</dd>
+          <dt>model calls · tool calls · edits</dt><dd>{r.modelCalls ?? '—'} · {r.tools ?? '—'} · {r.edits ?? '—'}</dd>
           <dt>tokens</dt><dd>{r.in == null || r.out == null ? '— not recorded' : `${int(r.in + r.out)} (${int(r.in)} in / ${int(r.out)} out)${r.usageEstimated ? " · estimated" : ""}`}</dd>
           <dt>exit</dt><dd>{r.exit}{r.lastFinish ? ` · last finish “${r.lastFinish}”` : ''}</dd>
         </dl>
@@ -165,8 +184,8 @@ function Figure({ fig, dir }) {
       const op = operatingPoint(fig.model, fig.threshold)
       return (<>
         <TableScroll label="Sentinel operating points" stickyCol={false}><table className="rg-tbl rg-q-tbl rg-q-narrow"><thead><tr><th className="rg-num">threshold</th><th className="rg-num">bad caught</th><th className="rg-num">good blocked</th><th className="rg-num">lead (steps)</th></tr></thead>
-          <tbody>{ops.map((o) => <tr key={o.threshold} className={o === op ? 'sel' : ''}><td className="rg-num rg-mono">{fmt.fx(o.threshold)}</td><td className="rg-num rg-mono">{pct(o.recall, 0)}</td><td className="rg-num rg-mono rg-red">{pct(o.false_alarm, 0)}</td><td className="rg-num rg-mono">{fmt.fx(o.mean_lead_steps, 1)}</td></tr>)}</tbody></table></TableScroll>
-        <p className="rg-small rg-dim rg-q-cap">{fig.model.name} · trained on {(fig.model.meta.sources || []).join(', ')} · {int(fig.model.meta.n_runs)} runs · run-weighted AUC {fmt.fx(fig.model.meta.auc_run_weighted)}. Highlighted row = the default threshold.</p>
+          <tbody>{ops.map((o) => <tr key={o.threshold} className={o === op ? 'sel' : ''}><td className="rg-num rg-mono">{fmt.fx(o.threshold)}</td><td className="rg-num rg-mono">{rate(o.recall)}</td><td className="rg-num rg-mono rg-red">{rate(o.false_alarm)}</td><td className="rg-num rg-mono">{fmt.fx(o.mean_lead_steps, 1)}</td></tr>)}</tbody></table></TableScroll>
+        <p className="rg-small rg-dim rg-q-cap">{fig.model.name} · trained on {(fig.model.meta.sources || []).map(sourceDataset).join(', ')} · {int(fig.model.meta.n_runs)} runs · run-weighted AUC {fmt.fx(fig.model.meta.auc_run_weighted)}. Highlighted row = the default threshold.</p>
       </>)
     }
     case 'report': {
@@ -174,16 +193,16 @@ function Figure({ fig, dir }) {
       const ks = Object.keys(o.pass_at_k || {})
       return (<>
         <div className="rg-q-rep"><span className="rg-fig md">{pct(o.pass1)}</span><div className="rg-q-repci"><CiBar lo={o.ci95[0]} hi={o.ci95[1]} pt={o.pass1} /></div></div>
-        <p className="rg-small"><Tag tone={fig.pooled ? 'amb' : undefined} nc>{fig.scope}</Tag> <span className="rg-dim">n = {int(fig.card.cell.runs)} · {fig.card.cell.repeat_range ? [...new Set(fig.card.cell.repeat_range)].join('–') : fig.card.cell.repeats} attempts per observed task slot · {fig.card.cell.tasks.length} tasks</span></p>
-        <TableScroll label="pass@k and pass^k" stickyCol={false}><table className="rg-tbl rg-q-metrics rg-q-narrow"><thead><tr><th>k</th><th className="rg-num">pass@k (any of k)</th><th className="rg-num">pass^k (all of k)</th></tr></thead>
-          <tbody>{ks.map((k) => <tr key={k}><td className="rg-mono">{k}</td><td className="rg-num rg-mono">{pct(o.pass_at_k[k])}</td><td className="rg-num rg-mono">{pct(o.pass_pow_k[k])}</td></tr>)}</tbody></table></TableScroll>
+        <p className="rg-small"><Tag tone={fig.pooled ? 'amb' : undefined} nc>{fig.scope}</Tag> <span className="rg-dim">n = {int(fig.card.cell.runs)} · {fig.card.cell.repeat_range ? [...new Set(fig.card.cell.repeat_range)].join('–') : fig.card.cell.repeats} runs per observed task slot · {fig.card.cell.tasks.length} tasks</span></p>
+        <TableScroll label="pass@k and pass^k" stickyCol={false}><table className="rg-tbl rg-q-metrics rg-q-narrow"><thead><tr><th className="rg-num">k</th><th className="rg-num">pass@k (any of k)</th><th className="rg-num">pass^k (all of k)</th></tr></thead>
+          <tbody>{ks.map((k) => <tr key={k}><td className="rg-num rg-mono">{k}</td><td className="rg-num rg-mono">{pct(o.pass_at_k[k])}</td><td className="rg-num rg-mono">{pct(o.pass_pow_k[k])}</td></tr>)}</tbody></table></TableScroll>
         {(fig.card.missing || []).length > 0 && <><div className="rg-lbl rg-q-sub">What this card does not cover</div><ul className="rg-small rg-dim rg-q-list">{fig.card.missing.map((m, i) => <li key={i}>{m}</li>)}</ul></>}
       </>)
     }
     case 'plan':
       return (<>
         <div className="rg-q-bars">{fig.p.models.map((x) => <HBar key={x.m} label={short(x.m)} value={x.reps} max={fig.p.max} text={`${x.reps} / task`} tone={x.reps < fig.p.max ? 'amb' : undefined} />)}</div>
-        <p className="rg-small rg-dim rg-q-cap">Fewest repeats per task across each model's (harness, task) slots.</p>
+        <p className="rg-small rg-dim rg-q-cap">Fewest runs per task across each model's (harness, task) slots.</p>
       </>)
     default: return null
   }
@@ -191,15 +210,15 @@ function Figure({ fig, dir }) {
 
 /* ---------------------------------------------------------------- lesson (Student Lab) */
 const LESSONS = {
-  variable: ['A two-factor fit split the variance between model, harness and their interaction.', 'Find the contrast with the widest separation, then open its runs.', 'If the harness barely moves the outcome, the model choice is the decision that matters.'],
-  grader: ['A second, stronger suite re-graded every run.', 'Open the runs the hidden suite passed and the strengthened suite failed.', 'If the oracle is weak, the pass rate measures the tests, not the fix.'],
-  repeats: ['Identical model, harness and task, repeated, did not always agree.', 'Open the failing repeat and read the event where it stopped.', 'pass@1 hides flips; pass^k is what a user relying on one attempt experiences.'],
+  variable: ['A two-factor fit split the variance between model, harness and their interaction.', 'Find the comparison with the widest separation, then open its runs.', 'If the harness barely moves the outcome, the model choice is the decision that matters.'],
+  grader: ['A second, stronger oracle re-graded every run.', 'Open the runs the hidden oracle passed and the strengthened oracle failed.', 'If the oracle is weak, the pass rate measures the tests, not the fix.'],
+  repeats: ['Identical model, harness and task, run again, did not always agree.', 'Open the failing run and read the event where it stopped.', 'pass@1 hides flips; pass^k is what a user relying on one run experiences.'],
   outcomes: ['Each failed run was classified by how it stopped, from its ledger.', 'Open a cut-off run and find the last model reply.', 'A run cut off before any edit says nothing about whether the model could fix the bug.'],
   leak: ['One task hands the fix to the agent in the issue text, deliberately.', 'Compare its patch↔issue overlap with every other task.', 'A high score on a leak probe is copying, not solving.'],
-  run: ['One recorded attempt, event by event.', 'Find the last model response and check what it asked for.', 'Exit reasons describe how a run stopped, not why the task failed.'],
+  run: ['One recorded run, event by event.', 'Find the last model response and check what it asked for.', 'Exit reasons describe how a run stopped, not why the task failed.'],
   sentinel: ['A classifier scored partial trajectories step by step.', 'Compare the operating points.', 'Early warning trades good submits for bad ones.'],
   report: ['Every number condensed into one card.', 'Check the card’s scope against its n.', 'A card without its limits reads as a claim about everything.'],
-  next: ['The design with the least information per repeat.', 'Compare repeat counts per model.', 'More repeats narrow an interval; a new variable answers a new question.'],
+  next: ['The design with the least information per run.', 'Compare runs per task, per model.', 'More runs per task narrow an interval; a new variable answers a new question.'],
 }
 function Lesson({ qid, dir }) {
   const L = LESSONS[qid]; if (!L) return null
@@ -252,7 +271,7 @@ function localWays(qid, dir, reason, A, setCondition) {
   if (qid === 'report') acts.push({ label: 'Open the report view', spec: makeSpec('an', dir, 'report') })
   if (qid === 'outcomes') acts.push({ label: 'What did one run do?', spec: makeSpec('q', dir, 'run') })
   if (qid === 'leak') acts.push({ label: 'How do runs fail?', spec: makeSpec('q', dir, 'outcomes') })
-  if (qid === 'next') acts.push({ label: 'Load trajectories', spec: 'sources' })
+  if (qid === 'next') acts.push({ label: 'Add data', spec: 'sources' })
   if (qid === 'repeats' || qid === 'run') acts.push(...condSwitches(A.input.runs, dir, A.input.cond, setCondition))
   return acts
 }
@@ -288,12 +307,13 @@ function QuestionsDoc({ spec, args }) {
   if (!A.row) return <Loading label="Reading /api/overview…" />
   if (!qid) {
     return (
-      <div className="rg-dpad">
-        <div className="rg-dh"><div className="t"><div className="rg-eyebrow">{A.row.kind === 'mock' ? 'Mock control' : 'Recorded dataset'} · {int(A.row.runs)} runs</div>
-          <h1>What do you want to know about <span className="rg-mono rg-break">{dir}</span>?</h1>
-          <p>Nine questions, each answered from the recorded runs with one sentence and one number. Every answer leads down to the runs and the exact recorded event behind it.</p></div></div>
-        <AskingSentence dir={dir} />
-        <QuestionStack dir={dir} />
+      <div className="rg-dpad rg-q">
+        <DemoBanner dir={dir} row={A.row} />
+        <PageHeader el="questions-head" title={<PagePath kind="q" args={[dir]}>Questions</PagePath>}
+          subtitle={<>{A.row.kind === 'mock' ? 'Mock control' : 'Recorded dataset'} · <span className="rg-mono">{dir}</span> · {fmt.int(A.row.runs)} {A.row.runs === 1 ? 'run' : 'runs'}</>}
+          lede={<>What do you want to know about <span className="rg-mono rg-break">{dir}</span>? Nine questions; open one for its runs and the exact event behind it.</>} />
+        <AskBar dir={dir} busy={A.results.some((r) => r.state === 'loading')} />
+        <AnswersToggle spec={spec} dir={dir} />
       </div>
     )
   }
@@ -302,14 +322,17 @@ function QuestionsDoc({ spec, args }) {
   const cond = A.input.cond
   if (sub === 'runs') return <RunsDoc dir={dir} res={res} runs={A.input.runs} runsLoading={!A.input.runs} spec={spec} />
   return (
-    <div className="rg-dpad">
-      <AskingSentence dir={dir} />
+    <div className="rg-dpad rg-q">
+      <DemoBanner dir={dir} row={A.row} />
       <div className="rg-q-ask"><span className="rg-q-mark" aria-hidden="true">?</span><h1>{q.q(cond)}</h1></div>
+      <PageHelp />
+      <AskBar dir={dir} busy={res.state === 'loading'} {...askScope(res)} />
       {res.state === 'loading' && <Loading label="Answering from the recorded data…" />}
       {res.state === 'unanswered' && <Unanswered dir={dir} qid={qid} reason={res.reason} A={A} />}
       {res.state === 'answered' && (<>
+        {res.answer.verdict && <p className="rg-q-verdict" data-el="answer-verdict"><Sentence parts={res.answer.verdict} /></p>}
         <div className="rg-q-answer" data-el="answer">
-          <div className="big"><div className="v">{res.answer.num}</div><div className="l">{res.answer.numLabel}</div></div>
+          <div className="big"><div className="v">{res.answer.num}</div><div className="l">{res.answer.numLabel}</div>{res.answer.scope && <div className="l sc" data-el="answer-scope">{res.answer.scope}</div>}</div>
           <p className="a"><Sentence parts={res.answer.sentence} /></p>
         </div>
         <div className="rg-q-foot">
@@ -330,11 +353,26 @@ function QuestionsDoc({ spec, args }) {
   )
 }
 
+/** What the Asking line says the answer is of: { pooled: "all 3 models × 9 harnesses" } when it pools the dataset (its
+ *  scope, scope.js), { pooled: "all 3 models under baseline" } when it pools every model under one harness, the cell
+ *  { model, harness } when it is of a cell other than the one in focus, else nothing (the cell in focus). */
+const askScope = (res) => {
+  const a = res && res.state === 'answered' && res.answer
+  if (!a) return {}
+  const sc = String(a.scope || '')
+  if (sc.startsWith('pooled: ')) return { pooled: sc.slice('pooled: '.length) }
+  const of = a.of
+  if (!of || !of.harness) return {}
+  if (of.models > 1) return { pooled: `all ${of.models} models under ${of.harness}` }
+  return { model: of.model, harness: of.harness }
+}
+
 function ShowRuns({ dir, qid, res, runs }) {
   const list = runs ? runs.filter(res.answer.runs.test) : null
   return (
     <div className="rg-q-next">
-      <p>Show me the runs behind this answer: <b>{res.answer.runs.title}</b>{list ? <> · <span className="rg-mono">{int(list.length)}</span> runs</> : ' · loading the run index…'}</p>
+      {/* a caption for the button beside it, not a command of its own */}
+      <p>The runs behind this answer: <b>{res.answer.runs.title}</b>{list ? <> · <span className="rg-mono">{int(list.length)}</span> runs</> : ' · loading the run index…'}</p>
       <Go spec={makeSpec('q', dir, qid, 'runs')} className="rg-btn pri lg" el="show-me-the-runs">Show me the runs →</Go>
     </div>
   )
@@ -364,36 +402,38 @@ function RunsDoc({ dir, res, runs, spec }) {
   const t = tally(all, oracle)
   const shown = list.slice(pg * PAGE, pg * PAGE + PAGE)
   return (
-    <div className="rg-dpad">
-      <div className="rg-dh"><div className="t"><div className="rg-eyebrow">Runs behind the answer · {q.short}</div><h1>{res.answer.runs.title}</h1>
-        <p className="rg-mono rg-small">{int(all.length)} runs · {t.p} pass · {t.f} fail · {t.u} unknown under the {oracle} suite</p>
-        <div className="rg-q-runsbar"><OutcomeBar p={t.p} f={t.f} u={t.u} tall /></div></div></div>
+    <div className="rg-dpad rg-q">
+      <PageHeader el="question-runs-head" title={res.answer.runs.title}
+        subtitle={<>Runs behind the answer · {q.short}</>}
+        meta={<span className="rg-mono">{fmt.int(all.length)} {all.length === 1 ? 'run' : 'runs'} · {t.p} Pass · {t.f} Fail · {t.u} Ungraded · graded by the {oracle} oracle</span>}>
+        <div className="rg-q-runsbar"><OutcomeBar p={t.p} f={t.f} u={t.u} tall /></div>
+      </PageHeader>
       <div className="rg-q-runs">
       <Toolbar label="Filter the runs behind this answer">
         <Seg label="Filter runs" el="failure-mode-filter" value={mode} onChange={(v) => { setMode(v); setPg(0) }}
           options={[['all', `All ${all.length}`], ['failed', `Failed ${t.f}`], ...modes.map((m) => [m, `${modeLabel(m)} ${all.filter((r) => r.mode === m).length}`])]} />
       </Toolbar>
       <div className="rg-pnl rg-q-runspnl" data-el="question-runs"><TableScroll label="Runs behind this answer" stickyCol={false}><table className="rg-tbl rg-q-runtbl">
-        <thead><tr><th className="rg-q-v">{oracle}</th><th>run</th><th>task</th><th className="rg-cq-hide-sm">model · harness</th><th className="rg-num rg-q-lo">rep</th><th className="rg-num">calls</th><th className="rg-num rg-q-lo">tokens</th><th>how it failed</th><th className="rg-q-pin"><span className="sr-only">Pin</span></th></tr></thead>
+        <thead><tr><th className="rg-q-v">{oracle}</th><th>run</th><th>task</th><th className="rg-cq-hide-sm">model · harness</th><th className="rg-num rg-q-lo" data-hint="Run number within its task and condition (repeat_index + 1)">run #</th><th className="rg-num" data-hint="Model calls, from each run's ledger; hover a number for its tool calls">model calls</th><th className="rg-num rg-q-lo">tokens</th><th>how it failed</th><th className="rg-q-pin"><span className="sr-only">Pin</span></th></tr></thead>
         <tbody>{shown.map((r) => (
           <tr key={r.id}>
             <td className="rg-q-v"><Verdict v={verdict(r, oracle)} /></td>
-            <td><Go spec={withChain(makeSpec('run', r.id), chain)} className="rg-tlink" title={r.id}>{sfx(r.id)}</Go></td>
+            <td><Go spec={withChain(makeSpec('run', r.id), chain)} className="rg-tlink" tip={r.id}>{sfx(r.id)}</Go></td>
             <td className="rg-mono">{r.task}</td>
             <td className="rg-mono rg-cq-hide-sm rg-q-dim">{short(r.model)} · {r.harness}</td>
-            <td className="rg-num rg-q-lo">{r.rep}</td>
-            <td className="rg-num">{r.steps}</td>
+            <td className="rg-num rg-q-lo">{r.rep != null ? r.rep + 1 : '—'}</td>
+            <td className="rg-num" data-hint={r.tools == null ? 'tool calls not recorded' : `${int(r.tools)} tool calls`}>{r.modelCalls ?? '—'}</td>
             <td className="rg-num rg-q-lo">{r.in == null || r.out == null ? '—' : int(r.in + r.out)}</td>
             <td><FailureChip run={r} /></td>
             <td className="rg-q-pin"><PinButton compact item={{ id: `run:${r.id}`, kind: 'run', label: `run ${sfx(r.id)} · ${r.task}`, value: `${short(r.model)} · ${r.harness} · ${verdict(r, oracle) === true ? 'pass' : verdict(r, oracle) === false ? 'fail' : 'unknown'} (${oracle})`, spec: withChain(makeSpec('run', r.id), chain), dir, run: r.id, model: r.model, harness: r.harness, task: r.task }} /></td>
           </tr>))}</tbody>
       </table></TableScroll>
-      {!list.length && <PanelState title="No run matches this filter." actions={<button type="button" className="rg-btn pri" onClick={() => { setMode('all'); setPg(0) }}>Show all {all.length} runs</button>}>None of the runs behind this answer has this outcome under the {oracle} suite.</PanelState>}
+      {!list.length && <PanelState title="No run matches this filter." actions={<button type="button" className="rg-btn pri" onClick={() => { setMode('all'); setPg(0) }}>Show all {all.length} runs</button>}>None of the runs behind this answer has this outcome under the {oracle} oracle.</PanelState>}
       {list.length > PAGE && <div className="rg-q-pager"><span className="rg-small rg-mono rg-mute">{pg * PAGE + 1}–{Math.min(list.length, pg * PAGE + PAGE)} of {list.length}</span>
         <div className="rg-cluster">{pg > 0 && <button type="button" className="rg-btn" onClick={() => setPg(pg - 1)}>← previous {PAGE}</button>}{(pg + 1) * PAGE < list.length && <button type="button" className="rg-btn" onClick={() => setPg(pg + 1)}>next {Math.min(PAGE, list.length - (pg + 1) * PAGE)} →</button>}</div></div>}
       </div>
       </div>
-      <About summary="Where the failure modes come from">Failure modes are read from each run's ledger by /api/outcomes, on the hidden suite whatever suite grades the rest of the page. Open a run to follow the chain down to the event where it stopped.</About>
+      <About summary="Where the failure modes come from">Failure modes are read from each run's ledger by /api/outcomes. Under the strengthened oracle, a run that passed the hidden oracle but failed the extra cases shows as strengthened only. Open a run to follow the chain down to the event where it stopped.</About>
     </div>
   )
 }
@@ -401,9 +441,9 @@ function RunsDoc({ dir, res, runs, spec }) {
 export const views = {
   q: {
     tag: 'q',
-    title: (a) => (a[1] ? `${QMAP[a[1]] ? QMAP[a[1]].short : a[1]}${a[2] === 'runs' ? ' · runs' : ''} · ${a[0]}` : `questions · ${a[0]}`),
+    title: (a) => (a[1] ? `${QMAP[a[1]] ? QMAP[a[1]].short : a[1]}${a[2] === 'runs' ? ' · runs' : ''} · ${a[0]}` : `Questions · ${a[0]}`),
     ctx: (a) => ({ dir: a[0] }),
-    crumbs: (a) => [[a[0], makeSpec('ds', a[0])], ['questions', a[1] ? makeSpec('q', a[0]) : null], ...(a[1] ? [[QMAP[a[1]] ? QMAP[a[1]].short : a[1]]] : [])],
+    crumbs: (a) => [[a[0], makeSpec('ds', a[0])], ['Questions', a[1] ? makeSpec('q', a[0]) : null], ...(a[1] ? [[QMAP[a[1]] ? QMAP[a[1]].short : a[1]]] : [])],
     retarget: (a, c) => (c.dir !== a[0] ? makeSpec('q', c.dir, ...a.slice(1)) : null),
     outsideGuided: (a) => a[1] === 'sentinel',
     render: QuestionsDoc,

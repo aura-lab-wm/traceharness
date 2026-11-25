@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { QUESTIONS, QMAP, answerQuestion, sentinelFor, repeatsPlan } from './answers'
+import { QUESTIONS, QMAP, answerQuestion, sentinelFor, repeatsPlan, sourceDataset } from './answers'
 import { normRuns, joinOutcomes, normOverview } from './data'
 import { rigFixture, miniRuns, miniOutcomes, MINI } from '../../test/rig-testing'
 
@@ -19,7 +19,7 @@ describe('the nine questions answer from payloads, never invent', () => {
   })
   it('variable → experiment fit', () => {
     const r = ask('variable'); expect(r.state).toBe('answered')
-    expect(r.answer.num).toBe('20.0%'); expect(text(r.answer)).toContain('model')
+    expect(r.answer.num).toBe('5%'); expect(text(r.answer)).toContain('model')
     expect(text(r.answer)).not.toContain('additive')
     expect(r.answer.runs.test(runs[8])).toBe(true)
     expect(ask('variable', { experiment: { fit: { status: 'insufficient_data', reason: 'fewer_than_2_balanced_levels_b' } } }).state).toBe('unanswered')
@@ -32,25 +32,50 @@ describe('the nine questions answer from payloads, never invent', () => {
   })
   it('repeats → flip rate from /metrics, mixed task from runs', () => {
     const r = ask('repeats')
-    expect(r.answer.num).toBe('50%'); expect(text(r.answer)).toContain('1 of 2 tasks'); expect(text(r.answer)).toContain('t2')
+    expect(r.answer.num).toBe('50.0%'); expect(text(r.answer)).toContain('1 of 2 tasks'); expect(text(r.answer)).toContain('t2')
   })
   it('outcomes → how runs fail, ungraded is not a failure', () => {
     const r = ask('outcomes')
     // 4 failures, one each: cut off, wrong patch, no patch, step limit
     expect(r.answer.numLabel).toContain('4 failures of 16 runs')
     expect(r.answer.note).toContain('1 ungraded runs are unknown, not failures')
+    expect(r.answer.numLabel).toContain('hidden oracle')
+  })
+  it('outcomes under the strengthened oracle counts that oracle\'s failures and never says hidden suite', () => {
+    const r = ask('outcomes', { oracle: 'strengthened' })
+    // strengthened: the four hidden failures plus one hidden pass that fails the extra cases; one run is ungraded
+    expect(r.answer.numLabel).toContain('5 failures of 16 runs · strengthened oracle')
+    expect(r.answer.fig.fails.map(([m]) => m)).toContain('strengthened_only')
+    expect(r.answer.runs.test(runs[1])).toBe(r.answer.fig.fails[0][0] === 'strengthened_only')
+    const words = [text(r.answer), r.answer.numLabel, r.answer.note, r.answer.runs.title].join(' ')
+    expect(words).not.toMatch(/hidden suite/)
+    expect(ask('outcomes', { oracle: 'strengthened', runs: null }).state).toBe('unanswered')
   })
   it('leak → highest patch↔issue overlap, probe named', () => {
     const r = ask('leak'); expect(r.answer.num).toBe('40%'); expect(text(r.answer)).toContain('solution leak probe')
   })
   it('run → a failing run with its mode', () => {
     const r = ask('run'); expect(text(r.answer)).toContain('a00003'); expect(text(r.answer)).toContain('cut off · no patch')
+    // the fixture's /outcomes carry no model-call count, so the run's tool calls are shown, named as tool calls
+    expect(text(r.answer)).toMatch(/\) made 6 tool calls and \d+ edits?, then stopped/)
   })
   it('sentinel → only a model trained on this dataset answers', () => {
-    expect(ask('sentinel').answer.num).toBe('50%')
+    expect(ask('sentinel').answer.num).toBe('50.0%')
     expect(ask('sentinel').answer.note).toBe('Replay measures detection on these recorded trajectories. A live intervention can change later actions; its effect on outcomes requires separate measurement.')
     expect(sentinelFor(F['/sentinel'], 'other')).toBeNull()
     expect(ask('sentinel', { dir: 'other' }).state).toBe('unanswered')
+  })
+  it('sentinel → a model trained on a data/runs/<name> path answers for <name>', () => {
+    expect(sourceDataset('data/runs/llma4se_live')).toBe('llma4se_live')
+    expect(sourceDataset('/abs/lab/data/runs/llma4se_live/')).toBe('llma4se_live')
+    expect(sourceDataset('data\\runs\\live')).toBe('live')
+    expect(sourceDataset('llma4se_live')).toBe('llma4se_live')
+    const pathed = { ...F['/sentinel'], models: F['/sentinel'].models.map((m) => ({ ...m, meta: { ...m.meta, sources: m.meta.sources.map((s) => `data/runs/${s}`) } })) }
+    const dir = F['/sentinel'].models[0].meta.sources[0]
+    expect(sentinelFor(pathed, dir).name).toBe(F['/sentinel'].models[0].name)
+    expect(sentinelFor(pathed, 'other')).toBeNull()
+    expect(sentinelFor(pathed, 'runs')).toBeNull()
+    expect(ask('sentinel', { sentinel: pathed }).answer.num).toBe('50.0%')
   })
   it('report → the pooled card is labelled pooled with its n', () => {
     const r = ask('report')
@@ -103,16 +128,16 @@ describe('repeat agreement needs comparable known grades in the selected suite',
       attempt('agree', 0, true), attempt('agree', 1, true), attempt('agree', 2, null),
       attempt('singleton', 0, false), attempt('unknown', 0, null),
     ]).answer
-    expect(result.num).toBe('50%')
+    expect(result.num).toBe('50.0%')
     expect(text(result)).toContain('1 of 2 tasks')
     expect(result.note).toContain('2 of 4 tasks')
-    expect(result.note).toContain('2 ungraded attempts')
+    expect(result.note).toContain('2 ungraded runs')
     expect(result.fig.strips).toHaveLength(4)
   })
   it.each(['visible', 'strengthened'])('uses %s grades rather than hidden metrics', (oracle) => {
     const key = oracle === 'visible' ? 'vis' : 'str'
     const result = repeatAnswer([attempt('a', 0, true, { [key]: true }), attempt('a', 1, false, { [key]: true })], oracle).answer
-    expect(result.num).toBe('0%')
+    expect(result.num).toBe('0.0%')
     expect(result.numLabel).toContain(oracle)
     expect(text(result)).toContain('1 eligible task')
     expect(text(result)).not.toContain("every task's repeats agree")

@@ -5,18 +5,20 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <title>TraceHarness</title>
     <meta name="description" content="Measure LLM coding agents, not score them: every run of every harness, down to the recorded action.">
-    <meta name="color-scheme" content="dark light">
-    <!-- No webfont link. The faces are self-hosted and base64-inlined (src/fonts.css),
-         so the page renders identically served, exported, or opened from
-         file:// with no network at all. -->
+    <meta name="color-scheme" content="light dark">
+    <!-- No webfont link. IBM Plex Mono is vendored (src/fonts) and inlined into the CSS bundle,
+         and words are set in the system grotesk, so the page renders identically served, exported, or opened
+         from file:// with no network at all. -->
     <link rel="icon" type="image/svg+xml" href="/favicon.svg">
-    <style>html,body{color:#ededed;background:#000;margin:0}html.hl-light,html.hl-light body{color:#171717;background:#fafafa}.hl-boot{place-items:center;font:14px/1.5 IBM Plex Sans,system-ui,-apple-system,Segoe UI,sans-serif;display:grid;position:fixed;inset:0}.hl-boot-in{text-align:center;flex-direction:column;align-items:center;gap:14px;max-width:520px;padding:24px;display:flex}.hl-mark{animation:1.4s ease-in-out infinite hl-pulse}.hl-boot b{font-size:15px;font-weight:600}.hl-boot p{opacity:.72;margin:0}.hl-boot code{white-space:nowrap;background:#7f7f7f29;border-radius:5px;padding:2px 6px;font:12.5px/1.5 IBM Plex Mono,ui-monospace,Menlo,monospace}.hl-boot[data-state=failed] .hl-mark{animation:none}@keyframes hl-pulse{50%{opacity:.35}}@media (prefers-reduced-motion:reduce){.hl-mark{animation:none}}</style>
+    <style>html,body{color:#242623;background:#f4f4ef;margin:0}html.hl-dark,html.hl-dark body{color:#f1f2ef;background:#1a1c1c}html.hl-hc,html.hl-hc body{color:#fff;background:#000}html.hl-hcl,html.hl-hcl body{color:#000;background:#fff}.hl-boot{color:#242623;background:#f4f4ef}html.hl-dark .hl-boot{color:#f1f2ef;background:#1a1c1c}html.hl-hc .hl-boot{color:#fff;background:#000}html.hl-hcl .hl-boot{color:#000;background:#fff}.hl-boot{place-items:center;font:14px/1.5 system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;display:grid;position:fixed;inset:0}.hl-boot-in{text-align:center;flex-direction:column;align-items:center;gap:14px;max-width:520px;padding:24px;display:flex}.hl-mark{animation:1.4s ease-in-out infinite hl-pulse}.hl-boot b{font-size:15px;font-weight:600}.hl-boot p{opacity:.72;margin:0}.hl-boot code{white-space:nowrap;background:#7f7f7f29;border-radius:5px;padding:2px 6px;font:12px/1.5 ui-monospace,Menlo,monospace}.hl-boot[data-state=failed] .hl-mark{animation:none}@keyframes hl-pulse{50%{opacity:.35}}@media (prefers-reduced-motion:reduce){.hl-mark{animation:none}}</style>
     <script>
       (function () {
         var t = null
         try { t = localStorage.getItem('rig.theme') } catch (e) {}
-        var light = t === 'light' || (t === 'system' && window.matchMedia && matchMedia('(prefers-color-scheme: light)').matches)
-        if (light) document.documentElement.className += ' hl-light'
+        var mm = function (q) { return !!(window.matchMedia && matchMedia(q).matches) }
+        var sys = t === 'system' && (mm('(prefers-color-scheme: light)') ? (mm('(prefers-contrast: more)') ? 'contrast-light' : 'light') : (mm('(prefers-contrast: more)') ? 'contrast' : 'dark'))
+        var cls = { dark: 'hl-dark', contrast: 'hl-hc', 'contrast-light': 'hl-hcl' }[sys || t]
+        if (cls) document.documentElement.className += ' ' + cls
         function esc(v) {
           return String(v).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c] })
         }
@@ -41,11 +43,11 @@
         setTimeout(function () { if (document.getElementById('hl-boot')) fail('It did not start within 15 seconds.') }, 15000)
       })()
     </script>
-    <script type="module" crossorigin src="/assets/index-CkvhU3xn.js"></script>
-    <link rel="stylesheet" crossorigin href="/assets/index-B9dk5b9F.css">
+    <script type="module" crossorigin src="/assets/index-CwhQsLFs.js"></script>
+    <link rel="stylesheet" crossorigin href="/assets/index-D6Wb5BZp.css">
   </head>
   <body>
-    <div id="root"><div class="hl-boot" id="hl-boot" role="status" aria-live="polite"><div class="hl-boot-in"><svg class="hl-mark" viewBox="0 0 22 14" width="33" height="21" aria-hidden="true"><rect x="0" y="3" width="3" height="8" fill="#a8a8a8"/><rect x="5" y="3" width="3" height="8" fill="#a8a8a8"/><rect x="10" y="3" width="3" height="8" fill="#9aa0a9"/><rect x="15" y="3" width="3" height="8" fill="currentColor"/><rect x="20" y="1" width="2" height="12" fill="#0062e6"/></svg><b>TraceHarness</b><p>Loading the workbench…</p></div></div></div>
+    <div id="root"><div class="hl-boot" id="hl-boot" role="status" aria-live="polite"><div class="hl-boot-in"><svg class="hl-mark" viewBox="0 0 24 24" width="28" height="28" aria-hidden="true"><rect width="24" height="24" rx="6" fill="#b74924"/><path d="M5 16l4-5 3 2.5 3.5-6 3.5 4" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg><b>TraceHarness</b><p>Loading the workbench…</p></div></div></div>
     <noscript><div class="hl-boot"><div class="hl-boot-in"><b>TraceHarness needs JavaScript.</b><p>Turn it on for this page and reload.</p></div></div></noscript>
   </body>
 </html>

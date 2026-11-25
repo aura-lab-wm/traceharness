@@ -87,12 +87,14 @@ def unattended_only(*row_params: str):
 
 # ---------------------------------------------------------------- loading
 def load_index(results_dir: str) -> list[dict]:
+    """The index rows; an imported run's tests_modified is read from its final patch (patch_kinds)."""
+    from .patch_kinds import with_patch_tests_modified
     rows = []
     with open(os.path.join(results_dir, "index.jsonl")) as f:
         for line in f:
             if line.strip():
                 rows.append(json.loads(line))
-    return rows
+    return with_patch_tests_modified(results_dir, rows)
 
 
 def load_ledger(results_dir: str, run_id: str) -> list[dict]:

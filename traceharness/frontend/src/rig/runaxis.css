@@ -1,0 +1,24 @@
+/* Rig · runaxis.css — every run of a task on one step axis (TaskRunAxis.jsx): a label, the band on the shared
+   scale, a sentence; stacked when the page is narrow. The band itself is steprows.css. Tokens only. */
+.rig .rg-traj-axis{display:flex;flex-direction:column;gap:var(--rig-s2);min-width:0;container-type:inline-size;container-name:rgaxis}
+.rig .rg-traj-axis-h{display:flex;flex-wrap:wrap;align-items:baseline;gap:var(--rig-s2) var(--rig-s4);min-width:0}
+.rig .rg-traj-axis-h .rg-traj-h{margin:0}
+.rig .rg-traj-axis-k{display:inline-flex;flex-wrap:wrap;align-items:center;gap:6px;font-size:var(--rig-fs-2xs);color:var(--rig-mute)}
+.rig .rg-traj-axis-k i{display:inline-block;flex:none;margin-left:var(--rig-s2)}
+.rig .rg-traj-axis-k i:first-child{margin-left:0}
+.rig .rg-traj-axis-k i.fix{width:0;height:12px;border-left:1.5px dashed var(--rig-text)}
+.rig .rg-traj-axis-k i.tail{width:14px;height:10px;border-radius:2px;background-color:var(--rig-ph-test);background-image:repeating-linear-gradient(135deg,color-mix(in srgb,var(--rig-panel) 78%,transparent) 0 2px,transparent 2px 6px)}
+.rig .rg-traj-axis-k i.look{width:2px;height:8px;background:var(--rig-text)}
+.rig .rg-traj-axis-rows{display:grid;gap:10px;min-width:0}
+.rig .rg-traj-axis-row{display:grid;grid-template-columns:9.5rem minmax(0,1fr) 18rem;gap:var(--rig-s3);align-items:center;min-width:0}
+.rig .rg-traj-axis-row .l{display:inline-flex;align-items:center;gap:6px;min-width:0;white-space:nowrap}
+.rig .rg-traj-axis-row .l .n{font:var(--rig-fw-regular) var(--rig-fs-xs)/var(--rig-lead-xs) var(--rig-num);color:var(--rig-mute);font-variant-numeric:tabular-nums}
+.rig .rg-traj-axis-row .s{font-size:var(--rig-fs-xs);line-height:var(--rig-lead-xs);color:var(--rig-dim);min-width:0}
+.rig .rg-traj-axis-x{display:flex;justify-content:space-between;margin:0 calc(18rem + var(--rig-s3)) 0 calc(9.5rem + var(--rig-s3));font:var(--rig-fw-regular) var(--rig-fs-2xs)/var(--rig-lead-xs) var(--rig-num);color:var(--rig-mute)}
+@container rgaxis (max-width:720px){
+  .rig .rg-traj-axis-row{grid-template-columns:minmax(0,1fr);gap:6px}
+  .rig .rg-traj-axis-row .s{order:3}
+  .rig .rg-traj-axis-x{margin:0}
+}
+.rig .rg-traj-axis-k>span{display:inline-flex;align-items:center;gap:4px;margin-right:var(--rig-s1)}
+.rig .rg-traj-axis-k>span .rg-tok-sw{margin:0}

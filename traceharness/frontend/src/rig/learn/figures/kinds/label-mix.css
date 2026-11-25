@@ -1,0 +1,21 @@
+/* Rig · learn/figures/kinds/label-mix.css — one model's runs under each harness, by label (label-mix.jsx). A row is a
+   button: the harness's name, then its bar; under 600 px the name sits above the bar. The bars grow from the left once,
+   a row after the row before (transform only); rig.css stops it under prefers-reduced-motion. Tokens only. */
+.rg-mix{display:grid;gap:var(--rig-s1);list-style:none;margin:0;padding:0}
+.rig .rg-read-col .rg-mix>li{margin:0}
+.rig .rg-mix-row{display:grid;grid-template-columns:minmax(7rem,10rem) minmax(0,1fr);align-items:center;gap:var(--rig-s3);width:100%;min-height:var(--rig-h-ctl);padding:var(--rig-s1) var(--rig-s2);border:0;border-radius:var(--rig-r-sm);background:none;color:var(--rig-text);text-align:left;font:inherit;cursor:pointer}
+.rig .rg-mix-row:hover{background:var(--rig-row-hover)}
+.rig .rg-mix-row.on{background:var(--rig-sel-bg);box-shadow:inset var(--rig-row-bar) 0 0 var(--rig-sel-mark);cursor:default}
+.rg-mix-name{display:flex;flex-wrap:wrap;align-items:baseline;gap:0 var(--rig-s2);min-width:0;font:var(--rig-fw-medium) var(--rig-fs-xs)/var(--rig-lead-xs) var(--rig-mono);overflow-wrap:anywhere}
+.rg-mix-tag{font:var(--rig-fw-regular) var(--rig-fs-2xs)/var(--rig-lead-xs) var(--rig-sans);color:var(--rig-mute)}
+.rg-mix-bar{display:flex;height:var(--rig-s5);border-radius:var(--rig-r-xs);overflow:hidden;background:var(--rig-panel3);transform-origin:0 50%;transform:scaleX(0);transition:transform calc(var(--rig-dur-2) * 3) var(--rig-ease) calc(var(--rig-dur-1) * var(--rig-fig-i) / 2)}
+.rg-mix.seen .rg-mix-bar{transform:none}
+.rg-mix-bar>i{display:flex;align-items:center;justify-content:center;min-width:2px;height:100%;background:var(--fa-c);color:var(--rig-panel);font-style:normal}
+.rg-mix-bar>i+i{box-shadow:inset 1px 0 0 var(--rig-panel)}
+.rg-mix-bar b{font-size:var(--rig-fs-2xs);line-height:var(--rig-lead-xs);font-weight:var(--rig-fw-semi);font-variant-numeric:tabular-nums}
+.rg-mix-bar>i.fa-step,.rg-mix-bar>i.fa-err,.rg-mix-bar>i.fa-ung{color:var(--rig-text)}
+.rig .rg-read-col .rg-mix-axis{display:flex;justify-content:space-between;gap:var(--rig-s2);margin-left:calc(min(10rem,30%) + var(--rig-s5))}
+@container rglfig (max-width:600px){
+  .rig .rg-mix-row{grid-template-columns:minmax(0,1fr);gap:var(--rig-s1)}
+  .rig .rg-read-col .rg-mix-axis{margin-left:var(--rig-s2)}
+}

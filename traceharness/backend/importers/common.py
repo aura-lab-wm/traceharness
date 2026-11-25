@@ -58,6 +58,12 @@ TOOL_MAP: dict[str, str] = {
     "create": "write_file", "insert": "edit_file", "str_replace": "edit_file",
 }
 
+# str_replace_editor and its renamings: `command` says what the call did
+EDITOR_TOOLS = {"str_replace_editor", "text_editor", "editor", "str_replace_based_edit_tool", "file_editor"}
+EDITOR_COMMANDS = {"view": "read_file", "create": "write_file", "str_replace": "edit_file", "insert": "edit_file",
+                   "undo_edit": "edit_file"}
+_DIR_LISTING = re.compile(r"\AHere's the files and directories up to \d+ levels? deep in ")
+
 # Argument keys that mean "a path", in preference order.
 _PATH_KEYS = ("file_path", "filePath", "path", "file", "filename", "target_file", "notebook_path", "abs_path")
 _CMD_KEYS = ("command", "cmd", "code", "input", "script", "commands")
@@ -130,6 +136,9 @@ class Session:
     exit_status: str = ""                      # native exit status string, if any
     patch: str = ""                            # final diff, if the source has one
     extra: dict = field(default_factory=dict)
+    repeat_index: int = 0                      # which attempt of its task this run is, when the source says
+    run_extra: dict = field(default_factory=dict)   # small per-run facts kept on the start span (import_extra)
+    wall_seconds: Optional[float] = None       # the run's wall time when the source measured it
 
 
 # ------------------------------------------------------------------ facts a source may not record
@@ -311,13 +320,21 @@ def hunks_from_line_counts(added: int, removed: int) -> list:
              "newStart": 0, "newLines": int(added or 0), "lines": lines}]
 
 
-def map_tool(name: str, args: dict, overrides: Optional[dict] = None) -> tuple[str, dict]:
+def map_tool(name: str, args: dict, overrides: Optional[dict] = None, result: Optional[str] = None) -> tuple[str, dict]:
     """Native (name, args) -> (lab tool, lab args). Unknown tools become `bash` with the
-    native name in the command, so nothing is silently dropped from the trajectory."""
+    native name in the command, so nothing is silently dropped from the trajectory.
+    `result` is the call's observation when known: an editor view answered with a directory
+    listing is a list_files."""
     args = args if isinstance(args, dict) else {"input": args}
     raw = (name or "").strip()
     key = raw.lower()
-    tool = (overrides or {}).get(key) or TOOL_MAP.get(key)
+    sub = args.get("command") if key in EDITOR_TOOLS else None
+    if isinstance(sub, str) and sub in EDITOR_COMMANDS:
+        tool = EDITOR_COMMANDS[sub]
+        if tool == "read_file" and isinstance(result, str) and _DIR_LISTING.match(result):
+            tool = "list_files"
+    else:
+        tool = (overrides or {}).get(key) or TOOL_MAP.get(key)
     if tool is None:
         if key.startswith("mcp__") or key.startswith("mcp."):
             tool = "bash"
@@ -328,7 +345,10 @@ def map_tool(name: str, args: dict, overrides: Optional[dict] = None) -> tuple[s
     path = first_str(args, _PATH_KEYS)
     cmd = first_str(args, _CMD_KEYS)
     if tool == "read_file":
-        return "read_file", {"path": path or cmd or raw}
+        la = {"path": path or cmd or raw}
+        if isinstance(args.get("view_range"), list):
+            la["view_range"] = args["view_range"]
+        return "read_file", la
     if tool == "list_files":
         la = {"path": path or args.get("dir") or args.get("directory") or "."}
         for k in ("pattern", "glob"):
@@ -388,6 +408,14 @@ def is_test_path(path: str) -> bool:
     return bool(_TEST_PATH.search(path or ""))
 
 
+_DIFF_FILE = re.compile(r"^(?:diff --git a/\S+ b/|\+\+\+ b/)(\S+)", re.M)
+
+
+def patch_files(patch: str) -> list[str]:
+    """The files a git diff changes, in order of first mention."""
+    return list(dict.fromkeys(_DIFF_FILE.findall(patch or "")))
+
+
 def destructive_kinds(command: str) -> list[str]:
     return [name for rx, name in DESTRUCTIVE if rx.search(command or "")]
 
@@ -397,6 +425,15 @@ def truncation_hints(text: str) -> list[str]:
 
 
 # ------------------------------------------------------------------ harness fingerprint
+def _results_by_call(events: list) -> dict:
+    """{call id: the first tool_result event that names it}."""
+    out: dict = {}
+    for e in events:
+        if e.kind == "tool_result" and e.call_id:
+            out.setdefault(e.call_id, e)
+    return out
+
+
 def fingerprint(events: list, meta: dict) -> dict:
     """Extract what the trace itself tells us about the harness.
 
@@ -414,6 +451,7 @@ def fingerprint(events: list, meta: dict) -> dict:
     n_errors = 0
     max_result_chars = 0
     step = -1
+    results = _results_by_call(ev)
     for e in ev:
         if e.kind in ("assistant", "reasoning"):
             if e.kind == "reasoning":
@@ -423,7 +461,8 @@ def fingerprint(events: list, meta: dict) -> dict:
             steps.add(step)
             if e.name and e.name not in native_tools:
                 native_tools.append(e.name)
-            lt, la = map_tool(e.name, e.args, meta.get("tool_overrides"))
+            res = results.get(e.call_id) if e.call_id else None
+            lt, la = map_tool(e.name, e.args, meta.get("tool_overrides"), res.text if res else None)
             if lt not in lab_tools:
                 lab_tools.append(lt)
             if lt == "bash":
@@ -468,7 +507,7 @@ def harness_from_fingerprint(harness_id: str, fp: dict, notes: str = "") -> dict
         "system_prompt": "",                       # never stored for an external harness
         "tools": fp.get("lab_tools") or [],
         "policy": fp.get("policy_hint") if fp.get("policy_hint") == "permissive" else "unknown",
-        "max_steps": int(fp.get("declared_max_steps") or fp.get("observed_max_steps") or 0),
+        "max_steps": int(fp.get("declared_max_steps") or 0),   # the steps a run took are not its limit
         "max_total_tokens": 0,
         "context_window": 0,
         "observation_chars": int(fp.get("max_observation_chars") or 0),
@@ -520,7 +559,7 @@ def _exit_reason(sess: Session, submitted: bool, n_steps: int, stopped_calling_t
     s = (sess.exit_status or "").lower()
     if "context" in s:
         return "budget_exceeded"
-    if s.startswith("submitted") or s in ("success", "completed", "finished", "resolved"):
+    if s.startswith("submitted") or s in ("submit", "success", "completed", "finished", "resolved"):
         return "submitted"
     if "cost" in s or "budget" in s or "token" in s:
         return "budget_exceeded"
@@ -590,6 +629,15 @@ def _add_usage(acc: dict, u: Optional[dict]) -> dict:
     return out
 
 
+def _gap_ms(start, end) -> Optional[int]:
+    """Milliseconds from one timestamp to a later one; None when either is missing or they run backwards."""
+    from traceharness.core.ledger import epoch_of
+    a, b = epoch_of(start), epoch_of(end)
+    if a is None or b is None or b < a:
+        return None
+    return int(round((b - a) * 1000))
+
+
 def convert(sess: Session, out_root: str, task_id: str, harness: dict, model_override: str = "",
             missing: frozenset = frozenset(), run_id: str = "", grades: Optional[dict] = None) -> Any:
     """Write one run's four files and return its RunSummary.
@@ -602,10 +650,17 @@ def convert(sess: Session, out_root: str, task_id: str, harness: dict, model_ove
     `run_id` replaces the deterministic import id (traceharness/agents names the runs it launches).
     `grades` = {"visible", "hidden", "strong", "tests_modified"} is a real grade of the final workspace
     (traceharness/agents grades it with core.grader); it replaces the verdict-less defaults.
+
+    Each chat span carries the model call it belongs to (`call_index`, 1-based: the tool calls of one
+    reply share it), the reply's reasoning apart from its text, the cache counts when the source records
+    them, and `duration_ms` from the timestamps (from the event before the reply to the reply; null when
+    either is missing). Each execute_tool span carries its `phase` (core/phases.py) and `output_chars`.
     """
     tools_known = "tool_spans" not in missing
     usage_known = "usage" not in missing
     from traceharness.core.ledger import RunSummary   # local import: keeps this module importable without the lab on sys.path
+    from traceharness.core.phases import package_of, tool_phase
+    from traceharness.core.trajectory_fields import CUT_MARKER
 
     model = model_override or sess.model or "unknown"
     harness_id = harness["id"]
@@ -614,7 +669,7 @@ def convert(sess: Session, out_root: str, task_id: str, harness: dict, model_ove
     os.makedirs(run_dir, exist_ok=True)
 
     summary = RunSummary(run_id=run_id, task_id=task_id, harness_id=harness_id, model=model,
-                         provider=f"import:{sess.source}", repeat_index=0,
+                         provider=f"import:{sess.source}", repeat_index=int(sess.repeat_index or 0),
                          started_at=next((e.ts for e in sess.events if e.ts), ""))
     spans: list[dict] = []
     messages: list[dict] = []
@@ -629,22 +684,36 @@ def convert(sess: Session, out_root: str, task_id: str, harness: dict, model_ove
         spans.append(r)
         seq += 1
 
-    rec("invoke_agent", ts=first_ts, status="start", harness=harness, seed=None, repeat_index=0,
-        import_source=sess.source, source_path=os.path.basename(sess.path), session_id=sess.session_id)
+    rec("invoke_agent", ts=first_ts, status="start", harness=harness, seed=None, repeat_index=summary.repeat_index,
+        import_source=sess.source, source_path=os.path.basename(sess.path), session_id=sess.session_id,
+        **({"import_extra": sess.run_extra} if sess.run_extra else {}))
 
     # results indexed by call id, so a tool_call span can carry its observation even when the
     # source interleaves them differently
-    results: dict[str, Event] = {}
-    for e in sess.events:
-        if e.kind == "tool_result" and e.call_id:
-            results.setdefault(e.call_id, e)
+    results: dict[str, Event] = _results_by_call(sess.events)
     orphan_results = [e for e in sess.events if e.kind in ("tool_result", "observation") and not e.call_id]
+    # the timestamp of the last event before each one, for durations
+    prev_ts: dict[int, str] = {}
+    last = ""
+    for e in sess.events:
+        prev_ts[id(e)] = last
+        last = e.ts or last
+    # thinking whose text the source kept (Claude Code logs only a signature): otherwise its size is unknown
+    has_reasoning = any(e.kind == "reasoning" and e.text for e in sess.events)
+    has_cache = usage_known and any(isinstance(e.usage, dict) and "cache_read_input_tokens" in e.usage
+                                    for e in sess.events)
+    scripts: dict = {}                 # phases: the run's heredoc-written scripts, in call order
+    package = package_of(task_id)
 
     if sess.system_prompt:
         messages.append({"role": "system", "content": "(external harness system prompt withheld; "
                                                       f"sha256={sha256_hex(sess.system_prompt)[:16]}…, {len(sess.system_prompt)} chars)"})
     step = -1
+    pending_all = ""                   # reasoning and text as one string: the length estimate and the stop rule
     pending_text = ""
+    pending_reasoning = ""
+    reasoning_chars = text_chars = 0   # the source's own lengths: the strings above are joined and stripped
+    reply_start: Optional[Event] = None   # the first event of the reply the pending text belongs to
     # Usage a source recorded on a text or reasoning event (a model call that ended in prose, or a
     # message whose usage the adapter could not pin to a tool call). It belongs to the NEXT chat span
     # that has none of its own -- the final answer included -- instead of being dropped and replaced
@@ -654,26 +723,53 @@ def convert(sess: Session, out_root: str, task_id: str, harness: dict, model_ove
     # (Claude Code: every tool_use of a parallel batch carries the same usage, measured identical on
     # all 429 multi-block requests of 12 real sessions), so a request id already counted adds 0.
     counted: set = set()
+    call_index, last_rid = 0, None
+    cache_read = cache_write = 0
     last_edit, last_test = -1, -1
     submitted = False
     unmatched = iter(orphan_results)
 
+    def chat_fields(u: dict, measured: bool, new_call: bool, start: Optional[Event], reply_ts: str) -> dict:
+        nonlocal cache_read, cache_write
+        cr = cw = None
+        if has_cache and measured:
+            cr, cw = int(u.get("cache_read_input_tokens") or 0), int(u.get("cache_creation_input_tokens") or 0)
+            cache_read += cr
+            cache_write += cw
+        dur = _gap_ms(prev_ts.get(id(start)) if start is not None else "", reply_ts)
+        return {"gen_ai.usage.cache_read_input_tokens": cr, "gen_ai.usage.cache_creation_input_tokens": cw,
+                "call_index": call_index,
+                # the tool calls after the first of one reply: the reply's time is on the first
+                "duration_ms": dur if new_call else (0 if dur is not None else None),
+                "reasoning": pending_reasoning[:2000], "reasoning_chars": reasoning_chars if has_reasoning else None,
+                "text_chars": text_chars}
+
+    def assistant_message(**f) -> dict:
+        m = {"role": "assistant", "content": pending_text[:2000], **f}
+        if has_reasoning:
+            m["reasoning"] = pending_reasoning[:2000]
+        return m
+
     for e in sess.events:
         if e.kind == "user":
             messages.append({"role": "user", "content": e.text[:4000]})
-        elif e.kind == "reasoning":
-            pending_text = (pending_text + "\n" + e.text).strip()
-            _note_usage(pending_parts, e)
-        elif e.kind == "assistant":
-            pending_text = (pending_text + "\n" + e.text).strip()
+        elif e.kind in ("reasoning", "assistant"):
+            reply_start = reply_start or e
+            pending_all = (pending_all + "\n" + e.text).strip()
+            if e.kind == "reasoning":
+                pending_reasoning = (pending_reasoning + "\n" + e.text).strip()
+                reasoning_chars += len(e.text)
+            else:
+                pending_text = (pending_text + "\n" + e.text).strip()
+                text_chars += len(e.text)
             _note_usage(pending_parts, e)
         elif e.kind == "tool_call":
             step += 1
-            tool, args = map_tool(e.name, e.args, sess.extra.get("tool_overrides"))
             res_ev = results.get(e.call_id) if e.call_id else None
             if res_ev is None:
                 res_ev = next(unmatched, None)
             obs = (res_ev.text if res_ev else "") or ""
+            tool, args = map_tool(e.name, e.args, sess.extra.get("tool_overrides"), obs if res_ev else None)
             ok = res_ev.ok if res_ev else None
             tp = tests_passed_for(tool, args, obs, ok)
             if ok is False:
@@ -682,6 +778,10 @@ def convert(sess: Session, out_root: str, task_id: str, harness: dict, model_ove
                 status = "ok"
             else:
                 status = "error" if (tool != "submit" and _ERR_OBS.search(obs[:600])) else "ok"
+            # the phase is read off the whole command: map_tool clips what the ledger keeps
+            phase = (e.raw or {}).get("phase") or tool_phase(
+                tool, {"command": first_str(e.args or {}, _CMD_KEYS) or args.get("command", "")} if tool == "bash" else args,
+                scripts, package)
             u = _span_usage(pending_parts, e, counted)
             if usage_known and _measured(u):
                 # recorded counts, a recorded 0 included (the second of two parallel calls the source
@@ -689,23 +789,30 @@ def convert(sess: Session, out_root: str, task_id: str, harness: dict, model_ove
                 in_tok = int(u.get("input_tokens") or 0)
                 out_tok = int(u.get("output_tokens") or 0)
             elif usage_known:
-                in_tok, out_tok = 0, max(1, len(pending_text) // 4)
+                in_tok, out_tok = 0, max(1, len(pending_all) // 4)
             else:
                 in_tok = out_tok = None
             measured_call = usage_known and _measured(u)
+            new_call = not (e.request_id and e.request_id == last_rid)
+            call_index += new_call
+            last_rid = e.request_id
             pending_parts = []
             rec("chat", ts=e.ts, **{
                 "gen_ai.operation.name": "chat",
                 "gen_ai.usage.input_tokens": in_tok,
-                "gen_ai.usage.output_tokens": out_tok,
+                "gen_ai.usage.output_tokens": out_tok, "usage_estimated": usage_known and not measured_call,
                 "gen_ai.response.finish_reasons": ["tool_calls"],
-                "duration_ms": 0, "cost_usd": 0.0 if usage_known else None, "step": step,
-                "text": pending_text[:2000],
+                "cost_usd": 0.0 if usage_known else None, "step": step,
+                "text": pending_text[:2000], "phase": phase,
+                **chat_fields(u, measured_call, new_call, reply_start or e, e.ts),
+                # the call's arguments are generated text too (the raw string when the adapter kept its length)
+                "args_chars": (e.raw or {}).get("args_chars", len(json.dumps(e.args or {}, ensure_ascii=False))),
                 "tool_calls": [{"name": tool, "arguments": args}]})
             tc_id = e.call_id or f"call_{step}"
-            messages.append({"role": "assistant", "content": pending_text[:2000],
-                             "tool_calls": [{"id": tc_id, "name": tool, "arguments": args}]})
-            pending_text = ""
+            messages.append(assistant_message(tool_calls=[{"id": tc_id, "name": tool, "arguments": args}]))
+            pending_all = pending_text = pending_reasoning = ""
+            reasoning_chars = text_chars = 0
+            reply_start = None
             summary.steps += 1
             if usage_known:
                 summary.input_tokens += in_tok if measured_call else (in_tok or len(obs) // 4)
@@ -714,14 +821,18 @@ def convert(sess: Session, out_root: str, task_id: str, harness: dict, model_ove
                 continue            # the request is on the chat span; its execution was never recorded
             summary.tool_calls += 1
             extra = {"tests_passed": tp} if tp is not None else {}
+            out_chars = (res_ev.raw or {}).get("output_chars", len(obs)) if res_ev else 0   # no result: nothing came back
             rec("execute_tool", ts=(res_ev.ts if res_ev else e.ts), **{
                 "gen_ai.operation.name": "execute_tool", "gen_ai.tool.name": tool, "args": args,
-                "status": status, "duration_ms": 0, "result_preview": obs[:400],
-                "native_tool": e.name, "import_source": sess.source, **extra})
+                "status": status, "duration_ms": _gap_ms(prev_ts.get(id(res_ev)), res_ev.ts) if res_ev else None,
+                "result_preview": obs[:400], "output_chars": out_chars, "phase": phase,
+                "native_tool": e.name, "import_source": sess.source, **extra,
+                **({"output_truncated": True} if CUT_MARKER.search(obs) else {})})
             messages.append({"role": "tool", "tool_call_id": tc_id,
                              "content": ("exit=0\n" if tp else "exit=1\n" if tp is False else "") + obs[:1500]})
             if tool in ("edit_file", "write_file") and status == "ok":
-                rec("edit", ts=e.ts, path=args.get("path", ""), lines_added=0, lines_removed=0, tool=tool)
+                rec("edit", ts=e.ts, path=args.get("path", ""), lines_added=0, lines_removed=0, tool=tool,
+                    line_counts_known=False)   # one edit's lines are never measured here; the patch has the totals
                 summary.edits += 1
                 if args.get("path") and args["path"] not in summary.files_touched:
                     summary.files_touched.append(args["path"])
@@ -742,25 +853,34 @@ def convert(sess: Session, out_root: str, task_id: str, harness: dict, model_ove
             if tool == "submit":
                 submitted = True
 
-    stopped_calling_tools = bool(pending_text.strip())
-    if pending_text.strip():
+    stopped_calling_tools = bool(pending_all.strip())
+    if pending_all.strip():
         step += 1
+        rid = next((r for r, _ in pending_parts if r), "")
+        new_call = not (rid and rid == last_rid)
+        call_index += new_call
         fin_u = _span_usage(pending_parts, None, counted)
         final_measured = usage_known and _measured(fin_u)
         fin_in = int(fin_u.get("input_tokens") or 0) if final_measured else 0
         fin_out = (int(fin_u.get("output_tokens") or 0) if final_measured
-                   else max(1, len(pending_text) // 4))
-        rec("chat", **{"gen_ai.operation.name": "chat",
-                       "gen_ai.usage.input_tokens": fin_in if usage_known else None,
-                       "gen_ai.usage.output_tokens": fin_out if usage_known else None,
-                       "gen_ai.response.finish_reasons": ["stop"], "duration_ms": 0,
-                       "cost_usd": 0.0 if usage_known else None,
-                       "step": step, "text": pending_text[:2000], "tool_calls": []})
-        messages.append({"role": "assistant", "content": pending_text[:2000]})
+                   else max(1, len(pending_all) // 4))
+        last_model_ts = next((e.ts for e in reversed(sess.events) if e.kind in ("reasoning", "assistant") and e.ts), "")
+        rec("chat", ts=last_model_ts, **{"gen_ai.operation.name": "chat",
+                                         "gen_ai.usage.input_tokens": fin_in if usage_known else None,
+                                         "gen_ai.usage.output_tokens": fin_out if usage_known else None,
+                                         "usage_estimated": usage_known and not final_measured,
+                                         "gen_ai.response.finish_reasons": ["stop"],
+                                         "cost_usd": 0.0 if usage_known else None,
+                                         "step": step, "text": pending_text[:2000], "phase": None,
+                                         **chat_fields(fin_u, final_measured, new_call, reply_start, last_model_ts),
+                                         "args_chars": 0, "tool_calls": []})
+        messages.append(assistant_message())
         summary.steps += 1
         if usage_known:
             summary.input_tokens += fin_in
             summary.output_tokens += fin_out
+    if has_cache:
+        summary.cache_read_tokens, summary.cache_write_tokens = cache_read, cache_write
 
     summary.exit_reason = _exit_reason(sess, submitted, summary.steps, stopped_calling_tools)
     summary.ran_tests_before_submit = last_test >= last_edit >= 0
@@ -775,10 +895,17 @@ def convert(sess: Session, out_root: str, task_id: str, harness: dict, model_ove
     if sess.patch:
         from traceharness.core.real_traj import patch_stats
         ps = patch_stats(sess.patch)
-        summary.lines_added = ps["lines_edited"]
+        lines = sess.patch.splitlines()
+        summary.lines_added = sum(1 for x in lines if x.startswith("+") and not x.startswith("+++"))
+        summary.lines_removed = sum(1 for x in lines if x.startswith("-") and not x.startswith("---"))
         summary.patch_bytes = len(sess.patch.encode())
         if ps["test_files_edited"]:
             summary.tests_modified = True
+        if sess.extra.get("touched_from_patch"):
+            # a shell agent's edits are not all recognisable; the files of its final diff were touched
+            for f in patch_files(sess.patch):
+                if not any(t == f or t.endswith("/" + f) for t in summary.files_touched):
+                    summary.files_touched.append(f)
     summary.hidden_pass = sess.hidden_pass                  # None unless the trace carries a verdict
     last_tp = next((s.get("tests_passed") for s in reversed(spans)
                     if s["span"] == "execute_tool" and "tests_passed" in s), None)
@@ -789,6 +916,9 @@ def convert(sess: Session, out_root: str, task_id: str, harness: dict, model_ove
         summary.tests_modified = bool(grades.get("tests_modified"))
     summary.error = "" if summary.exit_reason != "error" else (sess.exit_status or "")[:200]
     summary.finished_at = next((e.ts for e in reversed(sess.events) if e.ts), "")
+    w = sess.wall_seconds
+    if isinstance(w, (int, float)) and not isinstance(w, bool) and w > 0:
+        summary.wall_ms = int(round(w * 1000))
     if missing:
         blank_unmeasured(summary, missing)
 
@@ -802,6 +932,7 @@ def convert(sess: Session, out_root: str, task_id: str, harness: dict, model_ove
     rec("invoke_agent", ts=summary.finished_at, status="end", exit_reason=summary.exit_reason,
         hidden_pass=summary.hidden_pass, cost_usd=0.0 if usage_known else None,
         total_tokens=(summary.input_tokens + summary.output_tokens) if usage_known else None,
+        cache_read_input_tokens=summary.cache_read_tokens, cache_creation_input_tokens=summary.cache_write_tokens,
         native_exit_status=sess.exit_status, outcome_known=summary.hidden_pass is not None,
         unmeasured=unmeasured_fields(missing))
 

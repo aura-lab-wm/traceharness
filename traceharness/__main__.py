@@ -53,15 +53,19 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--log-level", default="warning", choices=["critical", "error", "warning", "info", "debug"])
     p.add_argument("--export", metavar="FILE.html", default=None,
                    help="write one self-contained HTML file with the data embedded, and exit. "
-                        "Opens from disk with no server; live actions are absent by construction.")
+                        "Opens from disk with no server; live actions are absent by construction. "
+                        "Run details go in by whole tasks (see --export-runs).")
     p.add_argument("--export-results", metavar="A,B", default=None,
                    help="comma-separated results directories to embed (default: all of them)")
     p.add_argument("--export-field", metavar="FILE.html", default=None,
                    help="write one self-contained Field (the projector cold-open) with its corpus "
                         "embedded, and exit. Opens from disk with no server.")
     p.add_argument("--export-runs", type=int, default=None, metavar="N",
-                   help="how many per-run detail payloads to embed for the Trajectories page "
-                        "(default 40; 0 embeds none and keeps the file small)")
+                   help="how many per-run detail payloads to embed per dataset for the Trajectories page "
+                        "(default 40; 0 embeds none and keeps the file small). They are taken by whole tasks: "
+                        "every run of the first tasks (one model, harness and task, the runs an all-runs view "
+                        "shows) while they fit in N, so each task in the file opens with all its runs; raise N "
+                        "to include more tasks")
     p.add_argument("--export-compress-data", action="store_true",
                    help="gzip the embedded snapshot to keep large exports smaller; requires "
                         "a browser with native DecompressionStream support")
@@ -137,7 +141,7 @@ def _fmt_sessions(n) -> str:
 def _print_adapters(adapters: list[dict]) -> None:
     print("\nthe adapters, any of which you can force with --source:")
     for a in adapters:
-        print(f"  {a['name']:<14}{a['description']}")
+        print(f"  {a['name']:<16}{a['description']}")
 
 
 def import_cli(argv: list[str]) -> int:
@@ -184,7 +188,7 @@ def import_cli(argv: list[str]) -> int:
             print("\nper-adapter confidence" + ("  (mean over the files each one won)" if d["is_dir"] else ""))
             for c in d["candidates"]:
                 over = f"  over {c['files']} file{'' if c['files'] == 1 else 's'}" if d["is_dir"] else ""
-                print(f"  {c['source']:<14}{c['confidence']:.2f}{over}")
+                print(f"  {c['source']:<16}{c['confidence']:.2f}{over}")
         if d["error"]:
             print(f"\n{d['error']}", file=sys.stderr)
         if not d["source"]:

@@ -1,0 +1,101 @@
+/* Rig · steprows.css — one step as one 40 px line, the step groups, the row card, the phase band and the layer
+   toggles (StepRows.jsx). Shared by the run page, the task page and the all-runs view. Tokens only; a phase's
+   colour is --rig-tok-c from its .rg-tok-p<n> class (views/tokens.css). */
+
+/* ------------------------------------------------------------------ one step, one line */
+.rig .rg-cx-rowb.rg-sl-row{align-items:center;gap:var(--rig-s2);height:40px;padding:0 var(--rig-s2);border-radius:var(--rig-r-sm);font-size:var(--rig-fs-sm);color:var(--rig-text);min-width:0}
+.rig .rg-sl-row .rg-cx-sn{display:block;width:auto;min-width:3ch;height:auto;background:none;box-shadow:none;border-radius:0;text-align:right;font:var(--rig-fw-regular) var(--rig-fs-xs)/var(--rig-lead-md) var(--rig-num);color:var(--rig-mute);font-variant-numeric:tabular-nums}
+.rig .rg-cx-st.cur .rg-sl-row .rg-cx-sn{background:none;color:var(--rig-text)}
+.rig .rg-sl-tile{display:inline-grid;place-items:center;flex:none;width:20px;height:20px;border-radius:5px;background:var(--rig-panel3);box-shadow:inset 0 0 0 1px var(--rig-line);font:var(--rig-fw-semi) var(--rig-fs-2xs)/var(--rig-lead-xs) var(--rig-mono);color:var(--rig-text)}
+.rig .rg-sl-tile.tint{background:color-mix(in srgb,var(--rig-tok-c) 24%,var(--rig-panel));box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--rig-tok-c) 60%,transparent)}
+.rig .rg-sl-what{display:flex;align-items:baseline;gap:6px;flex:1 1 auto;min-width:0;overflow:hidden;white-space:nowrap}
+.rig .rg-sl-what .t{flex:none;max-width:60%;overflow:hidden;text-overflow:ellipsis;font-weight:var(--rig-fw-medium)}
+.rig .rg-sl-what .t.rg-mono{font-size:var(--rig-fs-xs)}
+.rig .rg-sl-what .a{min-width:0;overflow:hidden;text-overflow:ellipsis;font:var(--rig-fw-regular) var(--rig-fs-xs)/var(--rig-lead-md) var(--rig-mono);color:var(--rig-mute)}
+.rig .rg-sl-row>.rg-cx-chip,.rig .rg-sl-row>.rg-cx-ph,.rig .rg-sl-row>.rg-cx-rk{flex:none}
+.rig .rg-sl-row .rg-cx-stm{display:block;flex:none;margin:0;white-space:nowrap;font:var(--rig-fw-regular) var(--rig-fs-xs)/var(--rig-lead-md) var(--rig-num);color:var(--rig-mute);font-variant-numeric:tabular-nums}
+
+/* badges: each says what it marks in words, so none relies on its tint */
+.rig .rg-sl-badge{display:inline-flex;align-items:center;flex:none;height:18px;padding:0 6px;border-radius:var(--rig-r-full);font:var(--rig-fw-medium) var(--rig-fs-2xs)/var(--rig-lead-xs) var(--rig-sans);white-space:nowrap;background:var(--rig-panel3);color:var(--rig-dim)}
+.rig .rg-sl-badge.fix{background:var(--rig-panel);box-shadow:inset 0 0 0 1px var(--rig-text);color:var(--rig-text)}
+.rig .rg-sl-badge.cut{background:var(--rig-amb-bg);color:var(--rig-amb-t)}
+.rig .rg-sl-badge.rep{background:var(--rig-panel);box-shadow:inset 0 0 0 1px var(--rig-line2);color:var(--rig-text)}
+.rig .rg-sl-badge.look{background:color-mix(in srgb,var(--rig-ph-lookup) 16%,var(--rig-panel));color:var(--rig-text)}
+.rig .rg-sl-badge.after{background-color:var(--rig-panel2);background-image:repeating-linear-gradient(135deg,color-mix(in srgb,var(--rig-text) 14%,transparent) 0 1.5px,transparent 1.5px 5px);color:var(--rig-text)}
+
+/* the fix: a dashed rule over its row; the steps after it hatched (on a layer of their own, so hover and selection
+   keep their fills) */
+.rig .rg-cx-st.fixrow::after{content:"";position:absolute;left:0;right:0;top:0;border-top:1.5px dashed var(--rig-text);pointer-events:none}
+.rig .rg-cx-st.after::after{content:"";position:absolute;inset:0;border-radius:var(--rig-r-sm);pointer-events:none;background-image:repeating-linear-gradient(135deg,color-mix(in srgb,var(--rig-text) 7%,transparent) 0 1.5px,transparent 1.5px 7px)}
+.rig .rg-sl-row:focus-visible{outline:2px solid var(--rig-sel);outline-offset:-2px}
+
+/* ------------------------------------------------------------------ groups */
+.rig .rg-sl-gh{list-style:none;margin:2px 0 0;min-width:0}
+.rig .rg-sl-gh:first-child{margin-top:0}
+.rig .rg-sl-ghb{all:unset;box-sizing:border-box;display:flex;align-items:center;gap:var(--rig-s2);width:100%;height:28px;padding:0 var(--rig-s2);border-radius:var(--rig-r-sm);cursor:pointer;font-size:var(--rig-fs-xs);color:var(--rig-dim);min-width:0;transition:background-color var(--rig-dur-1) var(--rig-ease)}
+.rig .rg-sl-ghb:hover{background:var(--rig-row-hover)}
+.rig .rg-sl-ghb:focus-visible{outline:2px solid var(--rig-sel);outline-offset:-2px}
+.rig .rg-sl-ghb .rg-ico{flex:none;width:12px;height:12px;color:var(--rig-mute);transition:transform var(--rig-dur-1) var(--rig-ease)}
+.rig .rg-sl-ghb[aria-expanded="true"] .rg-ico{transform:rotate(90deg)}
+.rig .rg-sl-ghb b{font-weight:var(--rig-fw-semi);color:var(--rig-text);white-space:nowrap}
+.rig .rg-sl-ghb .w{white-space:nowrap;font-variant-numeric:tabular-nums}
+.rig .rg-sl-ghb .mix{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--rig-mute)}
+.rig .rg-sl-ghb .rg-sl-badge{margin-left:auto}
+.rig .rg-sl-ghb .rg-sl-band{flex:0 0 72px;height:6px}
+.rig .rg-sl-gh.after .rg-sl-ghb{background-image:repeating-linear-gradient(135deg,color-mix(in srgb,var(--rig-text) 7%,transparent) 0 1.5px,transparent 1.5px 7px)}
+
+/* ------------------------------------------------------------------ the row card */
+.rig .rg-sl-card{min-width:15rem;max-width:22rem}
+.rig .rg-sl-card-h{display:block;margin:0 0 6px;font:var(--rig-fw-semi) var(--rig-fs-xs)/var(--rig-lead-xs) var(--rig-sans);color:var(--rig-text)}
+.rig .rg-sl-card dl{display:grid;grid-template-columns:auto minmax(0,1fr);gap:2px var(--rig-s3);margin:0}
+.rig .rg-sl-card dl>div{display:contents}
+.rig .rg-sl-card dt{color:var(--rig-mute);white-space:nowrap}
+.rig .rg-sl-card dd{margin:0;color:var(--rig-text);font-family:var(--rig-num);font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
+
+/* ------------------------------------------------------------------ the phase band */
+.rig .rg-sl-band{position:relative;height:14px;border-radius:3px;background:var(--rig-panel2);box-shadow:inset 0 0 0 1px var(--rig-line-soft)}
+.rig .rg-sl-band.compact{height:10px}
+.rig .rg-sl-band.pick{cursor:pointer}
+.rig .rg-sl-band i{position:absolute;display:block}
+/* a pickable band's phases are buttons: no button chrome, the phase colour only */
+.rig .rg-sl-band button.seg{position:absolute;display:block;margin:0;padding:0;border:0;min-width:0;font:inherit;cursor:pointer;appearance:none}
+.rig .rg-sl-band .seg{top:0;bottom:0;background:var(--rig-tok-c)}
+.rig .rg-sl-band .seg.none{background:var(--rig-panel3)}
+.rig .rg-sl-band .seg:first-child{border-radius:3px 0 0 3px}
+.rig .rg-sl-band .end{top:-2px;bottom:-2px;width:1px;background:var(--rig-line2)}
+.rig .rg-sl-band .tail{pointer-events:none;top:0;bottom:0;background-image:repeating-linear-gradient(135deg,color-mix(in srgb,var(--rig-panel) 78%,transparent) 0 2px,transparent 2px 6px)}
+.rig .rg-sl-band .fix{top:-5px;bottom:-5px;width:0;border-left:1.5px dashed var(--rig-text)}
+.rig .rg-sl-band .look{bottom:-7px;width:2px;height:6px;margin-left:-1px;background:var(--rig-text)}
+.rig .rg-sl-band .cur{top:-3px;bottom:-3px;min-width:3px;border-radius:2px;box-shadow:0 0 0 1.5px var(--rig-sel-mark)}
+
+/* ------------------------------------------------------------------ layer toggles */
+.rig .rg-sl-layers{display:inline-flex;flex-wrap:wrap;gap:var(--rig-s1);min-width:0}
+.rig .rg-sl-layer{display:inline-flex;align-items:center;gap:var(--rig-s1);height:24px;padding:0 var(--rig-s2);border:1px solid var(--rig-line);border-radius:var(--rig-r-full);background:var(--rig-panel);color:var(--rig-dim);font:var(--rig-fw-medium) var(--rig-fs-2xs)/var(--rig-lead-xs) var(--rig-sans);cursor:pointer;white-space:nowrap;transition:background-color var(--rig-dur-1) var(--rig-ease),border-color var(--rig-dur-1) var(--rig-ease)}
+.rig .rg-sl-layer:hover{background:var(--rig-row-hover)}
+.rig .rg-sl-layer.on{border-color:var(--rig-text);background:var(--rig-panel2);color:var(--rig-text)}
+.rig .rg-sl-layer.on::before{content:"";width:6px;height:6px;border-radius:var(--rig-r-full);background:var(--rig-text)}
+.rig .rg-sl-layer:focus-visible{outline:2px solid var(--rig-sel);outline-offset:1px}
+.rig .rg-sl-layer .n{color:var(--rig-mute);font-family:var(--rig-num);font-variant-numeric:tabular-nums}
+.rig .rg-sl-layer.none{border-style:dashed;background:transparent;color:var(--rig-mute);cursor:default}
+.rig .rg-sl-layer.none:hover{background:transparent}
+
+@media (prefers-reduced-motion:reduce){.rig .rg-sl-ghb .rg-ico{transition:none}}
+
+/* the run page's band, under the facts row */
+.rig .rg-sl-runband{margin-top:var(--rig-s3);min-width:0}
+.rig .rg-sl-runband-h{display:flex;flex-wrap:wrap;align-items:center;gap:var(--rig-s1) var(--rig-s3);margin-bottom:10px;font-size:var(--rig-fs-xs);color:var(--rig-mute);min-width:0}
+.rig .rg-sl-runband-h .t{color:var(--rig-text);font-weight:var(--rig-fw-semi)}
+.rig .rg-sl-runband-h .lg{display:inline-flex;flex-wrap:wrap;gap:var(--rig-s1) var(--rig-s3)}
+.rig .rg-sl-runband-h .lg>span{display:inline-flex;align-items:center;gap:5px}
+.rig .rg-sl-runband-h .w{color:var(--rig-dim)}
+
+/* a narrow step list keeps the command: the phase word goes first (its colour stays on the tile, the word in the
+   group head, the card and the step), then the tokens and time give way */
+.rig .rg-cx-stepcol{container-type:inline-size;container-name:rgsteps}
+@container rgsteps (max-width:560px){.rig .rg-sl-row>.rg-sl-ph{display:none}}
+@container rgsteps (max-width:420px){.rig .rg-sl-row .rg-cx-stm{flex:0 1 auto;min-width:0;max-width:42%;overflow:hidden;text-overflow:ellipsis}}
+
+/* the key of the step letters (StepRows LetterKey) */
+.rig .rg-sl-key{display:inline-flex;flex-wrap:wrap;align-items:center;gap:var(--rig-s1) var(--rig-s3);font-size:var(--rig-fs-xs);color:var(--rig-dim)}
+.rig .rg-sl-key-i{display:inline-flex;align-items:center;gap:var(--rig-s1);white-space:nowrap}
+.rig .rg-sl-key-i .rg-sl-tile{width:18px;height:18px;font-size:var(--rig-fs-2xs)}

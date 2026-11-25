@@ -1,0 +1,110 @@
+/* Token views: an:<dir>:tokens, the task comparison panel, the run and step token facts. */
+
+/* phase colours, in PHASES order (token-model.js): the one phase palette (index.css ph-*), the same on
+   the task bars, the tokens table, the run console and the step facts */
+.rg-tok-p0{--rig-tok-c:var(--rig-ph-explore)}
+.rg-tok-p1{--rig-tok-c:var(--rig-ph-reproduce)}
+.rg-tok-p2{--rig-tok-c:var(--rig-ph-edit)}
+.rg-tok-p3{--rig-tok-c:var(--rig-ph-test)}
+.rg-tok-p4{--rig-tok-c:var(--rig-ph-lookup)}
+.rg-tok-p5{--rig-tok-c:var(--rig-ph-env)}
+.rg-tok-p6{--rig-tok-c:var(--rig-ph-submit)}
+.rg-tok-p7{--rig-tok-c:var(--rig-ph-other)}
+/* run lines on the cumulative chart: inks and greys with their own dash, so a run is never read as a phase;
+   each line is also labelled at its end */
+.rg-tok-r0{--rig-tok-c:var(--rig-text)}
+.rg-tok-r1{--rig-tok-c:var(--rig-mute);--rig-tok-dash:6 3}
+.rg-tok-r2{--rig-tok-c:var(--rig-ser5);--rig-tok-dash:2 3}
+.rg-tok-r3{--rig-tok-c:var(--rig-ser4);--rig-tok-dash:8 3 2 3}
+.rg-tok-r4{--rig-tok-c:var(--rig-qty);--rig-tok-dash:1 2}
+.rg-tok-r5{--rig-tok-c:var(--rig-ser6);--rig-tok-dash:4 4}
+
+.rg-tok-sw{display:inline-block;width:var(--rig-s3);height:var(--rig-s3);flex:none;border-radius:var(--rig-r-xs);background:var(--rig-tok-c)}
+.rg-tok-unk{color:var(--rig-unk);font-style:italic}
+/* a tile whose figure is not recorded: small and upright, the reason one hover or focus away */
+/* plain text, not a control: the reason is printed in the tile's line under it (no dotted underline, no help cursor) */
+.rg-kpi-v .rg-tok-nr{display:inline-block;color:var(--rig-mute);font:var(--rig-fw-regular) var(--rig-fs-sm)/var(--rig-lead-lg) var(--rig-sans);font-style:normal;letter-spacing:0}
+.rg-tok-gt{min-width:28rem}
+
+/* stats row */
+.rg-tok-kpis{margin-bottom:var(--rig-s2)}
+/* the lead tile's scope is the scope of all five: said in ink, not grey */
+.rg-tok-kpis .rg-lead .rg-scope{color:var(--rig-text);font-weight:var(--rig-fw-medium)}
+
+/* tokens by phase: bars inside a table */
+.rg-tok-pt td{white-space:nowrap}
+/* a phase name keeps its swatch apart, in the table and in the legends */
+.rg-tok-ph{display:inline-flex;gap:var(--rig-s2);align-items:center}
+.rg-tok-bar{display:grid;grid-template-columns:minmax(4rem,1fr) 4.5rem 3.5rem;gap:var(--rig-s2);align-items:center;min-width:12rem}
+.rg-tok-bar .t{height:8px;background:var(--rig-panel3);position:relative;border-radius:var(--rig-r-xs);overflow:hidden}
+.rg-tok-bar .t i{position:absolute;left:0;top:0;bottom:0;background:var(--rig-tok-c,var(--rig-qty))}
+.rg-tok-bar .v{text-align:right;font-family:var(--rig-num);font-variant-numeric:tabular-nums}
+.rg-tok-bar .s{text-align:right;font-family:var(--rig-num);color:var(--rig-mute);font-variant-numeric:tabular-nums}
+.rg-tok-bar.rg-tok-read .t i{background:var(--rig-qty)}
+
+/* svg charts */
+.rg-tok-chart{margin:var(--rig-s2) 0 var(--rig-s3)}
+.rg-tok-chart svg{overflow:visible}
+.rg-tok-chart .rg-tok-grid{stroke:var(--rig-line);stroke-width:1}
+.rg-tok-chart .rg-tok-axis{stroke:var(--rig-line2);stroke-width:1}
+.rg-tok-chart text{font:var(--rig-fw-regular) var(--rig-fs-2xs) var(--rig-num);fill:var(--rig-mute);font-variant-numeric:tabular-nums}
+.rg-tok-chart .rg-tok-band{fill:color-mix(in srgb,var(--rig-text) 8%,transparent);stroke:none}
+.rg-tok-chart .rg-tok-med{fill:none;stroke:var(--rig-text);stroke-width:2;stroke-linejoin:round}
+.rg-tok-chart .rg-tok-ln{fill:none;stroke:var(--rig-tok-c);stroke-width:2;stroke-linejoin:round;stroke-dasharray:var(--rig-tok-dash,none)}
+.rg-tok-chart .rg-tok-end{fill:var(--rig-tok-c);stroke:var(--rig-panel);stroke-width:1.5}
+.rg-tok-chart text.rg-tok-endl{fill:var(--rig-dim)}
+.rg-tok-chart .rg-tok-mk{stroke:var(--rig-amb);stroke-width:1.5;stroke-dasharray:4 3}
+.rg-tok-chart .rg-tok-mk.dim{stroke:var(--rig-mute)}
+.rg-tok-chart text.rg-tok-mkl{fill:var(--rig-amb-t)}
+.rg-tok-chart text.rg-tok-mkl.dim{fill:var(--rig-dim)}
+.rg-tok-legend{display:flex;flex-wrap:wrap;gap:var(--rig-s1) var(--rig-s4);font-size:var(--rig-fs-xs);color:var(--rig-dim)}
+.rg-tok-legend>span{display:inline-flex;gap:var(--rig-s2);align-items:center;min-width:0}
+.rg-tok-legend .rg-tok-lnsw{display:inline-block;width:var(--rig-s5);height:0;border-top:2px solid var(--rig-tok-c)}
+.rg-tok-legend :is(.rg-tok-r1,.rg-tok-r3,.rg-tok-r5) .rg-tok-lnsw{border-top-style:dashed}
+.rg-tok-legend :is(.rg-tok-r2,.rg-tok-r4) .rg-tok-lnsw{border-top-style:dotted}
+
+/* task comparison panel */
+.rg-tok-task{margin-top:var(--rig-s6);min-width:0}
+.rg-tok-task h3{margin:var(--rig-s4) 0 var(--rig-s2)}
+
+/* per-run stacked bar by phase */
+.rg-tok-runs{display:flex;flex-direction:column;gap:var(--rig-s3);margin:var(--rig-s3) 0}
+.rg-tok-run{display:grid;grid-template-columns:minmax(7rem,12rem) minmax(0,1fr);gap:var(--rig-s2) var(--rig-s3);align-items:center;min-width:0}
+.rg-tok-run .rg-tok-rl{display:flex;flex-direction:column;gap:2px;min-width:0;font-size:var(--rig-fs-sm)}
+.rg-tok-run .rg-tok-rl a,.rg-tok-run .rg-tok-rl button{font-weight:var(--rig-fw-medium)}
+.rg-tok-stackw{display:flex;flex-direction:column;gap:var(--rig-s1);min-width:0}
+.rg-tok-stack{display:flex;height:var(--rig-s4);min-width:2px;background:var(--rig-panel3);border-radius:var(--rig-r-xs);overflow:hidden}
+.rg-tok-stack>i{height:100%;background:var(--rig-tok-c)}
+.rg-tok-stack.rg-tok-nophase{background:repeating-linear-gradient(135deg,var(--rig-panel3) 0 4px,var(--rig-line2) 4px 6px)}
+.rg-tok-stackm{font-family:var(--rig-num);font-size:var(--rig-fs-sm);color:var(--rig-dim);font-variant-numeric:tabular-nums}
+@container (max-width:480px){.rg-tok-run{grid-template-columns:minmax(0,1fr)}}
+
+/* gap by phase */
+.rg-tok-gap{display:flex;flex-direction:column;gap:var(--rig-s1);max-width:40rem}
+.rg-tok-gaprow{display:grid;grid-template-columns:minmax(6rem,8rem) minmax(0,1fr);gap:var(--rig-s3);align-items:center;font-size:var(--rig-fs-sm)}
+.rg-tok-gap .rg-tok-bar .t i.neg{background:var(--rig-mute)}
+
+/* spread list */
+.rg-tok-spread td.rg-num{font-family:var(--rig-num);font-variant-numeric:tabular-nums}
+.rg-tok-more{margin-top:var(--rig-s3)}
+
+/* run page and step facts */
+.rg-tok-line{display:flex;flex-wrap:wrap;gap:var(--rig-s1) var(--rig-s4);margin:0;font-size:var(--rig-fs-sm);color:var(--rig-dim)}
+.rg-tok-line>div{display:inline-flex;gap:var(--rig-s1);align-items:baseline}
+.rg-tok-line dt{color:var(--rig-mute);font-size:var(--rig-fs-xs)}
+.rg-tok-line dd{margin:0;font-family:var(--rig-num);color:var(--rig-text);font-variant-numeric:tabular-nums}
+.rg-tok-think{border:1px solid var(--rig-line2);border-radius:var(--rig-r-sm);background:var(--rig-panel2);min-width:0}
+.rg-tok-think>summary{cursor:pointer;padding:var(--rig-s2) var(--rig-s3);font-size:var(--rig-fs-xs);color:var(--rig-dim);display:flex;flex-wrap:wrap;gap:var(--rig-s1) var(--rig-s3)}
+.rg-tok-think>summary b{color:var(--rig-text);font-weight:var(--rig-fw-medium)}
+.rg-tok-think pre{margin:0;border-top:1px solid var(--rig-line);max-height:24rem;overflow:auto;padding:var(--rig-s3);white-space:pre-wrap;overflow-wrap:anywhere;font:var(--rig-fs-xs)/var(--rig-lead-md) var(--rig-mono);color:var(--rig-text)}
+.rg-tok-think .rg-tok-cut{padding:0 var(--rig-s3) var(--rig-s2);font-size:var(--rig-fs-xs);color:var(--rig-mute)}
+.rg-tok-chip{display:inline-flex;gap:var(--rig-s1);align-items:center}
+
+/* phase of a step in the run console, in the console's command-kind colours */
+.rig .rg-cx-ph{display:inline-flex;align-items:center;gap:var(--rig-s1);flex:none;padding:0 6px;border-radius:var(--rig-r-xs);background:var(--rig-panel3);color:var(--rig-text);font:var(--rig-fw-regular) var(--rig-fs-xs)/var(--rig-lead-sm) var(--rig-num);white-space:nowrap;font-variant-numeric:tabular-nums}
+.rig .rg-cx-detail .rg-tok-think{margin:var(--rig-s2) 0}
+/* a run's id sits on one line under its label, cut with an ellipsis (the whole id is in the link's title) */
+.rg-tok-rl>.rg-row{flex-wrap:wrap;row-gap:0}
+.rg-tok-rl .rg-hash{flex:1 1 100%;min-width:0}
+
+.rg-tok-cached{display:inline-flex;align-items:center;gap:var(--rig-s1);white-space:nowrap}

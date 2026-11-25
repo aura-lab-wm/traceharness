@@ -1,0 +1,14 @@
+/* Rig · learn/figures/kinds/pool-weights.css — pool_weights: pooled against averaged (pool-weights.jsx).
+   Passing runs fill a column in --rig-sky, failing runs are the light rest; the average is a line in the text
+   colour. Columns change width and the line moves with transform, once per switch. Tokens only. */
+.rg-pw-col{transition:transform calc(var(--rig-dur-2) * 3) var(--rig-ease),opacity calc(var(--rig-dur-2) * 2) var(--rig-ease)}
+.rg-pw-col .p{fill:var(--rig-sky)}
+.rg-pw-col .f{fill:var(--rig-line2)}
+.rg-pw-svg .rg-pw-col{opacity:0}
+.rg-pw-svg.seen .rg-pw-col{opacity:1}
+.rg-pw-avg{transition:transform calc(var(--rig-dur-2) * 3) var(--rig-ease)}
+.rg-pw-avg line{stroke:var(--rig-text);stroke-width:2}
+.rg-pw-avg text{fill:var(--rig-text);font-size:var(--rig-fs-sm);font-weight:var(--rig-fw-bold);font-variant-numeric:tabular-nums}
+.rg-lfig-sw.pfail{background:var(--rig-line2)}
+.rg-lfig-sw.avg{height:2px;border-radius:0;background:var(--rig-text)}
+.rg-prev-avg{stroke:var(--rig-ser1);stroke-width:2}

@@ -144,5 +144,6 @@ describe('repeat evidence counts condition/task slots with two known selected-su
       attempt('agree', null), attempt('single', null, { [key]: false }),
     ], oracle)
     expect(evidence).toMatchObject({ total: 3, eligible: 2, excluded: 1, mixed: 1, unknown: 1, rate: .5 })
+    expect(evidence.coverage).toBe(`2 of 3 tasks eligible (at least two ${oracle}-oracle grades); 1 excluded; 1 ungraded run.`)
   })
 })

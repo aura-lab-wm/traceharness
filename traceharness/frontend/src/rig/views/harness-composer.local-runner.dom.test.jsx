@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 // The ordinary Docker-free local console: the runner capabilities answer runner_not_ready, yet an
 // in-process TraceHarness task runs. These are transport fixtures; the Python suite proves the real routes.
-import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { CARDS, RECOMMENDED_ID, blocksFromAnswers } from './shallow-data'
 
@@ -75,7 +75,7 @@ describe('the Docker-free local console (run.container and run.native are runner
     await screen.findByText('Engine ready · container runner not set up')
     await ready('In-process slugify task')
     await waitFor(() => expect(review().disabled).toBe(false))
-    expect(screen.queryByText(/needs the local runner/)).toBeNull()
+    expect(within(document.querySelector('[data-view="setup"]')).queryByText(/needs the local runner/)).toBeNull()
     fireEvent.click(review())
     await screen.findByText('Configuration verified')
     fireEvent.click(screen.getByRole('button', { name: 'Run', exact: true }))
@@ -91,7 +91,7 @@ describe('the Docker-free local console (run.container and run.native are runner
     await ready('Container registry task')
     expect(review().disabled).toBe(true)
     expect(screen.getByText('Running a task in a container needs the local runner. Run traceharness runner setup (Docker required).')).toBeTruthy()
-    choose('Harness', 'Claude Code')
+    choose('Harness', 'Claude Code — your installed app (not connected)')
     const note = await waitFor(() => { const n = document.querySelector('[data-el="native-unavailable"]'); expect(n).toBeTruthy(); return n })
     expect(note.getAttribute('data-capability')).toBe('run.native')
     expect(note.textContent).toMatch(/needs the local runner\. Run traceharness runner setup \(Docker required\)\.$/)

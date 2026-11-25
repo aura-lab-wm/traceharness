@@ -1,0 +1,29 @@
+/* rig/AskBar.jsx — the slim context bar under a page title. Classes: rg-ask-*, rg-orc (OracleButton,
+   the oracle on run, step and compare meta lines, drawn like the oracle in the bar). Tokens only.
+   A neutral inset strip, 34px high: the sentence's controls read as inline mono values with a small caret
+   (they stay real selects), the condition's figures and one action at the right. */
+.rig .rg-ask{display:flex;flex-wrap:wrap;align-items:center;gap:var(--rig-s1) 10px;min-height:34px;padding:var(--rig-s1) 6px var(--rig-s1) var(--rig-s3);border-radius:var(--rig-r-md);background:var(--rig-panel2);box-shadow:inset 0 0 0 1px var(--rig-line);color:var(--rig-dim);min-width:0}
+.rg-ask-g{width:14px;height:14px;color:var(--rig-mute)}
+.rg-ask-g.spin{animation:rg-ask-spin 1.2s linear infinite}
+@keyframes rg-ask-spin{to{transform:rotate(360deg)}}
+@media (prefers-reduced-motion:reduce){.rg-ask-g.spin{animation:none}}
+.rig .rg-ask .rg-asking{flex:1 1 30rem;margin:0;gap:0 var(--rig-s1);font-size:var(--rig-fs-sm);line-height:var(--rig-lead-md);color:var(--rig-dim);min-width:0}
+.rig .rg-ask .rg-asking-g{gap:var(--rig-s1)}
+.rig .rg-ask .rg-q-mark{display:none}
+.rig .rg-ask .rg-brk select,.rig .rg-ask .rg-brk-b,.rig .rg-orc{min-height:24px;height:24px;max-width:22rem;padding:0 var(--rig-s4) 0 var(--rig-s1);border:0;border-radius:var(--rig-r-xs);background:none;color:var(--rig-text);font:var(--rig-fw-medium) var(--rig-fs-xs)/var(--rig-lead-xs) var(--rig-num);text-overflow:ellipsis;field-sizing:content;cursor:pointer;font-variant-numeric:tabular-nums}
+.rig .rg-ask .rg-brk select:hover,.rig .rg-ask .rg-brk-b:hover,.rig .rg-orc:hover{background:var(--rig-panel3)}
+.rig .rg-ask .rg-brk-c{right:var(--rig-s1)}
+.rig .rg-ask .rg-brk-b,.rig .rg-orc{position:relative}
+.rig .rg-orc{display:inline-flex;align-items:center}
+.rig .rg-orc .rg-brk-c{right:var(--rig-s1)}
+.rg-ask-r{display:flex;flex-wrap:wrap;align-items:center;gap:var(--rig-s1) 10px;margin-left:auto;color:var(--rig-mute);font:var(--rig-fw-regular) var(--rig-fs-2xs)/var(--rig-lead-md) var(--rig-num);font-variant-numeric:tabular-nums;white-space:nowrap;min-width:0}
+.rg-ask-r b{color:var(--rig-dim);font-weight:var(--rig-fw-regular)}
+.rig .rg-ask-r .rg-btn{min-height:24px;height:24px;padding:0 var(--rig-s2);gap:var(--rig-s1);font:var(--rig-fw-medium) var(--rig-fs-xs)/var(--rig-lead-xs) var(--rig-sans);background:var(--rig-panel)}
+.rg-ask-r .rg-btn .rg-ico{width:12px;height:12px;color:var(--rig-dim)}
+/* touch keeps full-size targets */
+@media (max-width:767px),(pointer:coarse){.rig .rg-ask .rg-brk select,.rig .rg-ask .rg-brk-b,.rig .rg-orc,.rig .rg-ask-r .rg-btn{min-height:var(--rig-h-ctl);height:auto}}
+@container (max-width:480px){
+  .rig .rg-ask{padding:var(--rig-s2)}
+  .rg-ask-g{display:none}
+  .rg-ask-r{margin-left:0}
+}

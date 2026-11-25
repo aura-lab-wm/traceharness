@@ -1,0 +1,24 @@
+/* Rig · learn/figures/kinds/spread-pairs.css — steps spread against tokens spread (spread-pairs.jsx). A group above the
+   diagonal is the factor (--rig-ser1), one on or below it grey; the medians are amber, dashed. The dots fade in once,
+   in waves, and the diagonal draws; rig.css stops both under prefers-reduced-motion. Tokens only. */
+.rg-lfig-sw.fa-up{background:var(--rig-ser1);border-radius:var(--rig-r-full)}
+.rg-lfig-sw.fa-down{background:var(--rig-ser5);border-radius:var(--rig-r-full)}
+.rg-lfig-sw.fa-med{height:2px;border-radius:0;background:repeating-linear-gradient(90deg,var(--rig-amb) 0 4px,transparent 4px 7px)}
+.rg-pair-svg{cursor:crosshair;outline:none}
+.rg-pair-svg:focus-visible{outline:2px solid var(--rig-sel);outline-offset:2px;border-radius:var(--rig-r-sm)}
+.rg-pair-above{fill:color-mix(in srgb,var(--rig-ser1) 7%,transparent)}
+.rg-pair-tag{fill:var(--rig-mute);font-size:var(--rig-fs-2xs);font-style:italic}
+.rg-pair-diag{stroke:var(--rig-line3);stroke-width:1.5;stroke-dasharray:1;stroke-dashoffset:1;transition:stroke-dashoffset var(--rig-dur-pulse) var(--rig-ease)}
+.rg-pair-svg.seen .rg-pair-diag{stroke-dashoffset:0}
+.rg-pair-med{stroke:var(--rig-amb);stroke-width:1.25;stroke-dasharray:4 3}
+.rg-pair-medl{fill:var(--rig-amb-t);font-size:var(--rig-fs-2xs);font-variant-numeric:tabular-nums;paint-order:stroke;stroke:var(--rig-panel);stroke-width:3px}
+.rg-pair-dot{stroke:var(--rig-panel);stroke-width:.75;opacity:0;transition:opacity var(--rig-dur-2) var(--rig-ease) calc(var(--rig-dur-1) * var(--rig-fig-i) / 4)}
+.rg-pair-svg.seen .rg-pair-dot{opacity:.72}
+.rg-pair-dot.up{fill:var(--rig-ser1)}
+.rg-pair-dot.down{fill:var(--rig-ser5)}
+.rg-pair-svg.seen .rg-pair-dot.on{opacity:1;stroke:var(--rig-text);stroke-width:1.5}
+.rg-pair-ex circle{fill:none;stroke:var(--rig-text);stroke-width:1.5}
+.rg-pair-ex text{fill:var(--rig-text);font-family:var(--rig-mono);font-size:var(--rig-fs-2xs);paint-order:stroke;stroke:var(--rig-panel);stroke-width:3px}
+.rg-prev-pair line{stroke:var(--rig-line3);stroke-width:1}
+.rg-prev-pair circle{fill:var(--rig-ser4)}
+.rg-prev-pair circle.up{fill:var(--rig-ser1)}

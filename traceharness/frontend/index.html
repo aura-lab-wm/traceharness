@@ -5,22 +5,31 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <title>TraceHarness</title>
     <meta name="description" content="Measure LLM coding agents, not score them: every run of every harness, down to the recorded action.">
-    <meta name="color-scheme" content="dark light">
-    <!-- No webfont link. The faces are self-hosted and base64-inlined (src/fonts.css),
-         so the page renders identically served, exported, or opened from
-         file:// with no network at all. -->
+    <meta name="color-scheme" content="light dark">
+    <!-- No webfont link. IBM Plex Mono is vendored (src/fonts) and inlined into the CSS bundle,
+         and words are set in the system grotesk, so the page renders identically served, exported, or opened
+         from file:// with no network at all. -->
     <link rel="icon" type="image/svg+xml" href="/favicon.svg">
     <style>
       /* The page before the bundle runs. It is never blank: the mark while the workbench loads,
          and a plain explanation if it never does. React replaces #root on mount. */
-      html,body{margin:0;background:#000;color:#ededed}
-      html.hl-light,html.hl-light body{background:#fafafa;color:#171717}
-      .hl-boot{position:fixed;inset:0;display:grid;place-items:center;font:14px/1.5 "IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif}
+      html,body{margin:0;background:#f4f4ef;color:#242623}
+      html.hl-dark,html.hl-dark body{background:#1a1c1c;color:#f1f2ef}
+      html.hl-hc,html.hl-hc body{background:#000;color:#fff}
+      html.hl-hcl,html.hl-hcl body{background:#fff;color:#000}
+      /* The bundle's stylesheet loads after this one and gives html, body and the app root the classic dark
+         ground. The boot block covers the window and paints the theme's ground itself, so the first paint is
+         the theme the workbench opens in (no dark flash before a light workbench). */
+      .hl-boot{background:#f4f4ef;color:#242623}
+      html.hl-dark .hl-boot{background:#1a1c1c;color:#f1f2ef}
+      html.hl-hc .hl-boot{background:#000;color:#fff}
+      html.hl-hcl .hl-boot{background:#fff;color:#000}
+      .hl-boot{position:fixed;inset:0;display:grid;place-items:center;font:14px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif}
       .hl-boot-in{display:flex;flex-direction:column;align-items:center;gap:14px;max-width:520px;padding:24px;text-align:center}
       .hl-mark{animation:hl-pulse 1.4s ease-in-out infinite}
       .hl-boot b{font-weight:600;font-size:15px}
       .hl-boot p{margin:0;opacity:.72}
-      .hl-boot code{white-space:nowrap;font:12.5px/1.5 "IBM Plex Mono",ui-monospace,Menlo,monospace;padding:2px 6px;border-radius:5px;background:rgba(127,127,127,.16)}
+      .hl-boot code{white-space:nowrap;font:12px/1.5 ui-monospace,Menlo,monospace;padding:2px 6px;border-radius:5px;background:rgba(127,127,127,.16)}
       .hl-boot[data-state="failed"] .hl-mark{animation:none}
       @keyframes hl-pulse{50%{opacity:.35}}
       @media (prefers-reduced-motion:reduce){.hl-mark{animation:none}}
@@ -29,8 +38,10 @@
       (function () {
         var t = null
         try { t = localStorage.getItem('rig.theme') } catch (e) {}
-        var light = t === 'light' || (t === 'system' && window.matchMedia && matchMedia('(prefers-color-scheme: light)').matches)
-        if (light) document.documentElement.className += ' hl-light'
+        var mm = function (q) { return !!(window.matchMedia && matchMedia(q).matches) }
+        var sys = t === 'system' && (mm('(prefers-color-scheme: light)') ? (mm('(prefers-contrast: more)') ? 'contrast-light' : 'light') : (mm('(prefers-contrast: more)') ? 'contrast' : 'dark'))
+        var cls = { dark: 'hl-dark', contrast: 'hl-hc', 'contrast-light': 'hl-hcl' }[sys || t]
+        if (cls) document.documentElement.className += ' ' + cls
         function esc(v) {
           return String(v).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c] })
         }
@@ -57,7 +68,7 @@
     </script>
   </head>
   <body>
-    <div id="root"><div class="hl-boot" id="hl-boot" role="status" aria-live="polite"><div class="hl-boot-in"><svg class="hl-mark" viewBox="0 0 22 14" width="33" height="21" aria-hidden="true"><rect x="0" y="3" width="3" height="8" fill="#a8a8a8"/><rect x="5" y="3" width="3" height="8" fill="#a8a8a8"/><rect x="10" y="3" width="3" height="8" fill="#9aa0a9"/><rect x="15" y="3" width="3" height="8" fill="currentColor"/><rect x="20" y="1" width="2" height="12" fill="#0062e6"/></svg><b>TraceHarness</b><p>Loading the workbench…</p></div></div></div>
+    <div id="root"><div class="hl-boot" id="hl-boot" role="status" aria-live="polite"><div class="hl-boot-in"><svg class="hl-mark" viewBox="0 0 24 24" width="28" height="28" aria-hidden="true"><rect width="24" height="24" rx="6" fill="#b74924"/><path d="M5 16l4-5 3 2.5 3.5-6 3.5 4" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg><b>TraceHarness</b><p>Loading the workbench…</p></div></div></div>
     <noscript><div class="hl-boot"><div class="hl-boot-in"><b>TraceHarness needs JavaScript.</b><p>Turn it on for this page and reload.</p></div></div></noscript>
     <script type="module" src="/src/main.jsx"></script>
   </body>

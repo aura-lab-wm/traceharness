@@ -1,0 +1,26 @@
+/* Rig · learn/figures/kinds/cum-tokens.css — two runs call by call (cum-tokens.jsx). The longer run is the factor
+   (--rig-ser1), the shorter one grey (--rig-ser4); generated tokens alone are dashed. Lines draw once (dashoffset);
+   the marker slides with the slider. rig.css stops both under prefers-reduced-motion. Tokens only. */
+.rg-lfig-sw.fa-run-a{background:var(--rig-ser1)}
+.rg-lfig-sw.fa-run-b{background:var(--rig-ser4)}
+.rg-lfig-sw.fa-gen{height:2px;border-radius:0;background:repeating-linear-gradient(90deg,var(--rig-dim) 0 5px,transparent 5px 8px)}
+.rg-cum-line{fill:none;stroke-width:2.5;stroke-linejoin:round;stroke-dasharray:1;stroke-dashoffset:1;transition:stroke-dashoffset calc(var(--rig-dur-pulse) / 2) var(--rig-ease)}
+.rg-cum-svg.seen .rg-cum-line{stroke-dashoffset:0}
+.rg-cum-line.a{stroke:var(--rig-ser1)}
+.rg-cum-line.b{stroke:var(--rig-ser4)}
+/* the generated lines are dashed for good, so they fade in instead of drawing */
+.rg-cum-line.gen{stroke-width:1.75;stroke-dasharray:5 4;stroke-dashoffset:0;opacity:0;transition:opacity var(--rig-dur-pulse) var(--rig-ease)}
+.rg-cum-svg.seen .rg-cum-line.gen{opacity:.9}
+.rg-cum-pt{fill:var(--rig-panel);stroke-width:2}
+.rg-cum-pt.a{stroke:var(--rig-ser1)}
+.rg-cum-pt.b{stroke:var(--rig-ser4)}
+.rg-cum-pt.on.a{fill:var(--rig-ser1)}
+.rg-cum-pt.on.b{fill:var(--rig-ser4)}
+.rg-cum-name{font-size:var(--rig-fs-xs);font-weight:var(--rig-fw-medium);font-variant-numeric:tabular-nums;paint-order:stroke;stroke:var(--rig-panel);stroke-width:3px;stroke-linejoin:round}
+.rg-cum-name.a{fill:var(--rig-text)}
+.rg-cum-name.b{fill:var(--rig-dim)}
+.rg-cum-end{stroke:var(--rig-line3);stroke-dasharray:2 3}
+.rg-cum-read line{stroke:var(--rig-dim);stroke-width:1.5}
+.rg-cum-read text{fill:var(--rig-dim);font-size:var(--rig-fs-2xs);font-variant-numeric:tabular-nums}
+.rg-cum-mark{transition:transform var(--rig-dur-2) var(--rig-ease)}
+.rg-cum-mark>line{stroke:var(--rig-text);stroke-dasharray:3 3;opacity:.6}

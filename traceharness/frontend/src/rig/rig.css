@@ -11,43 +11,144 @@
      is untouched.
    ==================================================================================== */
 
-/* ---------------------------------------------------------------- theme mapping */
-.rig,.rig[data-rig-theme="dark"]{
-  --rig-brand:var(--rig-brand-d);
-  --rig-bg:var(--rig-bg-d);--rig-panel:var(--rig-panel-d);--rig-panel2:var(--rig-panel2-d);--rig-panel3:var(--rig-panel3-d);
-  --rig-line:var(--rig-line-d);--rig-line2:var(--rig-line2-d);--rig-line3:var(--rig-line3-d);
-  --rig-text:var(--rig-text-d);--rig-dim:var(--rig-dim-d);--rig-mute:var(--rig-mute-d);--rig-unk:var(--rig-unk-d);
-  --rig-sel:var(--rig-sel-d);--rig-sel-t:var(--rig-sel-t-d);--rig-sel-ink:var(--rig-sel-ink-d);
-  --rig-sky:var(--rig-sky-d);--rig-sky-t:var(--rig-sky-t-d);--rig-red:var(--rig-red-d);--rig-red-t:var(--rig-red-t-d);--rig-amb:var(--rig-amb-d);--rig-amb-t:var(--rig-amb-t-d);
-  --rig-qty:var(--rig-qty-d);--rig-ser1:var(--rig-ser1-d);--rig-ser2:var(--rig-ser2-d);--rig-ser3:var(--rig-ser3-d);--rig-ser4:var(--rig-ser4-d);--rig-ser5:var(--rig-ser5-d);--rig-ser6:var(--rig-ser6-d);
-  --rig-on-accent:var(--rig-on-accent-d);--rig-shadow:var(--rig-shadow-d);--rig-scrim:var(--rig-scrim-d);
-
-  --rig-cx-bg:var(--rig-cx-bg-d);--rig-cx-bg2:var(--rig-cx-bg2-d);--rig-cx-bg3:var(--rig-cx-bg3-d);--rig-cx-line:var(--rig-cx-line-d);--rig-cx-line2:var(--rig-cx-line2-d);--rig-cx-text:var(--rig-cx-text-d);--rig-cx-dim:var(--rig-cx-dim-d);--rig-cx-mute:var(--rig-cx-mute-d);--rig-cx-acc:var(--rig-cx-acc-d);--rig-cx-ok:var(--rig-cx-ok-d);--rig-cx-bad:var(--rig-cx-bad-d);--rig-cx-amb:var(--rig-cx-amb-d);--rig-cx-k-i-bg:var(--rig-cx-k-i-bg-d);--rig-cx-k-i:var(--rig-cx-k-i-d);--rig-cx-k-e-bg:var(--rig-cx-k-e-bg-d);--rig-cx-k-e:var(--rig-cx-k-e-d);--rig-cx-k-t-bg:var(--rig-cx-k-t-bg-d);--rig-cx-k-t:var(--rig-cx-k-t-d);--rig-cx-k-b-bg:var(--rig-cx-k-b-bg-d);--rig-cx-k-b:var(--rig-cx-k-b-d);--rig-cx-k-s-bg:var(--rig-cx-k-s-bg-d);--rig-cx-k-s:var(--rig-cx-k-s-d);--rig-cx-shadow:var(--rig-cx-shadow-d);--rig-sel-h:var(--rig-sel-h-d);--rig-dot:var(--rig-dot-d);
+/* ---------------------------------------------------------------- theme mapping
+   Paper (light, the default), Graphite (dark), High contrast dark and light. System resolves to one
+   of these in RigApp (prefers-color-scheme, prefers-contrast: more). */
+.rig[data-rig-theme="dark"]{
+  --rig-ph-explore:var(--rig-ph-explore-d);--rig-ph-reproduce:var(--rig-ph-reproduce-d);--rig-ph-edit:var(--rig-ph-edit-d);--rig-ph-test:var(--rig-ph-test-d);--rig-ph-lookup:var(--rig-ph-lookup-d);--rig-ph-env:var(--rig-ph-env-d);--rig-ph-submit:var(--rig-ph-submit-d);--rig-ph-other:var(--rig-ph-other-d);
+  --rig-brand:var(--rig-brand-d);--rig-brand2:var(--rig-brand2-d);--rig-bg:var(--rig-bg-d);--rig-panel:var(--rig-panel-d);--rig-panel2:var(--rig-panel2-d);
+  --rig-panel3:var(--rig-panel3-d);--rig-code:var(--rig-code-d);--rig-wash:var(--rig-wash-d);--rig-line-soft:var(--rig-line-soft-d);--rig-line:var(--rig-line-d);--rig-line2:var(--rig-line2-d);
+  --rig-line3:var(--rig-line3-d);--rig-text:var(--rig-text-d);--rig-dim:var(--rig-dim-d);--rig-mute:var(--rig-mute-d);--rig-unk:var(--rig-unk-d);
+  --rig-faint:var(--rig-faint-d);--rig-sel:var(--rig-sel-d);--rig-sel-h:var(--rig-sel-h-d);--rig-sel-t:var(--rig-sel-t-d);--rig-sel-ink:var(--rig-sel-ink-d);
+  --rig-sky:var(--rig-sky-d);--rig-sky-t:var(--rig-sky-t-d);--rig-red:var(--rig-red-d);--rig-red-t:var(--rig-red-t-d);--rig-amb:var(--rig-amb-d);
+  --rig-amb-t:var(--rig-amb-t-d);--rig-qty:var(--rig-qty-d);--rig-ser1:var(--rig-ser1-d);--rig-ser2:var(--rig-ser2-d);--rig-ser3:var(--rig-ser3-d);
+  --rig-ser4:var(--rig-ser4-d);--rig-ser5:var(--rig-ser5-d);--rig-ser6:var(--rig-ser6-d);--rig-on-accent:var(--rig-on-accent-d);--rig-shadow:var(--rig-shadow-d);
+  --rig-scrim:var(--rig-scrim-d);--rig-dot:var(--rig-dot-d);--rig-lift:var(--rig-lift-d);--rig-cx-k-i-bg:var(--rig-cx-k-i-bg-d);--rig-cx-k-i:var(--rig-cx-k-i-d);
+  --rig-cx-k-e-bg:var(--rig-cx-k-e-bg-d);--rig-cx-k-e:var(--rig-cx-k-e-d);--rig-cx-k-t-bg:var(--rig-cx-k-t-bg-d);--rig-cx-k-t:var(--rig-cx-k-t-d);
+  --rig-cx-k-b-bg:var(--rig-cx-k-b-bg-d);--rig-cx-k-b:var(--rig-cx-k-b-d);--rig-cx-k-s-bg:var(--rig-cx-k-s-bg-d);--rig-cx-k-s:var(--rig-cx-k-s-d);
   color-scheme:dark;
 }
-.rig[data-rig-theme="light"]{
-  --rig-brand:var(--rig-brand-l);
-  --rig-bg:var(--rig-bg-l);--rig-panel:var(--rig-panel-l);--rig-panel2:var(--rig-panel2-l);--rig-panel3:var(--rig-panel3-l);
-  --rig-line:var(--rig-line-l);--rig-line2:var(--rig-line2-l);--rig-line3:var(--rig-line3-l);
-  --rig-text:var(--rig-text-l);--rig-dim:var(--rig-dim-l);--rig-mute:var(--rig-mute-l);--rig-unk:var(--rig-unk-l);
-  --rig-sel:var(--rig-sel-l);--rig-sel-t:var(--rig-sel-t-l);--rig-sel-ink:var(--rig-sel-ink-l);
-  --rig-sky:var(--rig-sky-l);--rig-sky-t:var(--rig-sky-t-l);--rig-red:var(--rig-red-l);--rig-red-t:var(--rig-red-t-l);--rig-amb:var(--rig-amb-l);--rig-amb-t:var(--rig-amb-t-l);
-  --rig-qty:var(--rig-qty-l);--rig-ser1:var(--rig-ser1-l);--rig-ser2:var(--rig-ser2-l);--rig-ser3:var(--rig-ser3-l);--rig-ser4:var(--rig-ser4-l);--rig-ser5:var(--rig-ser5-l);--rig-ser6:var(--rig-ser6-l);
-  --rig-on-accent:var(--rig-on-accent-l);--rig-shadow:var(--rig-shadow-l);--rig-scrim:var(--rig-scrim-l);
-
-  --rig-cx-bg:var(--rig-cx-bg-l);--rig-cx-bg2:var(--rig-cx-bg2-l);--rig-cx-bg3:var(--rig-cx-bg3-l);--rig-cx-line:var(--rig-cx-line-l);--rig-cx-line2:var(--rig-cx-line2-l);--rig-cx-text:var(--rig-cx-text-l);--rig-cx-dim:var(--rig-cx-dim-l);--rig-cx-mute:var(--rig-cx-mute-l);--rig-cx-acc:var(--rig-cx-acc-l);--rig-cx-ok:var(--rig-cx-ok-l);--rig-cx-bad:var(--rig-cx-bad-l);--rig-cx-amb:var(--rig-cx-amb-l);--rig-cx-k-i-bg:var(--rig-cx-k-i-bg-l);--rig-cx-k-i:var(--rig-cx-k-i-l);--rig-cx-k-e-bg:var(--rig-cx-k-e-bg-l);--rig-cx-k-e:var(--rig-cx-k-e-l);--rig-cx-k-t-bg:var(--rig-cx-k-t-bg-l);--rig-cx-k-t:var(--rig-cx-k-t-l);--rig-cx-k-b-bg:var(--rig-cx-k-b-bg-l);--rig-cx-k-b:var(--rig-cx-k-b-l);--rig-cx-k-s-bg:var(--rig-cx-k-s-bg-l);--rig-cx-k-s:var(--rig-cx-k-s-l);--rig-cx-shadow:var(--rig-cx-shadow-l);--rig-sel-h:var(--rig-sel-h-l);--rig-dot:var(--rig-dot-l);
+.rig,.rig[data-rig-theme="light"]{
+  --rig-ph-explore:var(--rig-ph-explore-l);--rig-ph-reproduce:var(--rig-ph-reproduce-l);--rig-ph-edit:var(--rig-ph-edit-l);--rig-ph-test:var(--rig-ph-test-l);--rig-ph-lookup:var(--rig-ph-lookup-l);--rig-ph-env:var(--rig-ph-env-l);--rig-ph-submit:var(--rig-ph-submit-l);--rig-ph-other:var(--rig-ph-other-l);
+  --rig-brand:var(--rig-brand-l);--rig-brand2:var(--rig-brand2-l);--rig-bg:var(--rig-bg-l);--rig-panel:var(--rig-panel-l);--rig-panel2:var(--rig-panel2-l);
+  --rig-panel3:var(--rig-panel3-l);--rig-code:var(--rig-code-l);--rig-wash:var(--rig-wash-l);--rig-line-soft:var(--rig-line-soft-l);--rig-line:var(--rig-line-l);--rig-line2:var(--rig-line2-l);
+  --rig-line3:var(--rig-line3-l);--rig-text:var(--rig-text-l);--rig-dim:var(--rig-dim-l);--rig-mute:var(--rig-mute-l);--rig-unk:var(--rig-unk-l);
+  --rig-faint:var(--rig-faint-l);--rig-sel:var(--rig-sel-l);--rig-sel-h:var(--rig-sel-h-l);--rig-sel-t:var(--rig-sel-t-l);--rig-sel-ink:var(--rig-sel-ink-l);
+  --rig-sky:var(--rig-sky-l);--rig-sky-t:var(--rig-sky-t-l);--rig-red:var(--rig-red-l);--rig-red-t:var(--rig-red-t-l);--rig-amb:var(--rig-amb-l);
+  --rig-amb-t:var(--rig-amb-t-l);--rig-qty:var(--rig-qty-l);--rig-ser1:var(--rig-ser1-l);--rig-ser2:var(--rig-ser2-l);--rig-ser3:var(--rig-ser3-l);
+  --rig-ser4:var(--rig-ser4-l);--rig-ser5:var(--rig-ser5-l);--rig-ser6:var(--rig-ser6-l);--rig-on-accent:var(--rig-on-accent-l);--rig-shadow:var(--rig-shadow-l);
+  --rig-scrim:var(--rig-scrim-l);--rig-dot:var(--rig-dot-l);--rig-lift:var(--rig-lift-l);--rig-cx-k-i-bg:var(--rig-cx-k-i-bg-l);--rig-cx-k-i:var(--rig-cx-k-i-l);
+  --rig-cx-k-e-bg:var(--rig-cx-k-e-bg-l);--rig-cx-k-e:var(--rig-cx-k-e-l);--rig-cx-k-t-bg:var(--rig-cx-k-t-bg-l);--rig-cx-k-t:var(--rig-cx-k-t-l);
+  --rig-cx-k-b-bg:var(--rig-cx-k-b-bg-l);--rig-cx-k-b:var(--rig-cx-k-b-l);--rig-cx-k-s-bg:var(--rig-cx-k-s-bg-l);--rig-cx-k-s:var(--rig-cx-k-s-l);
   color-scheme:light;
 }
+/* High contrast · dark: white on pure black, bright hairlines, a 2px focus ring at 7:1 */
+.rig[data-rig-theme="contrast"]{
+  --rig-ph-explore:var(--rig-ph-explore-hc);--rig-ph-reproduce:var(--rig-ph-reproduce-hc);--rig-ph-edit:var(--rig-ph-edit-hc);--rig-ph-test:var(--rig-ph-test-hc);--rig-ph-lookup:var(--rig-ph-lookup-hc);--rig-ph-env:var(--rig-ph-env-hc);--rig-ph-submit:var(--rig-ph-submit-hc);--rig-ph-other:var(--rig-ph-other-hc);
+  --rig-brand:var(--rig-brand-hc);--rig-brand2:var(--rig-brand2-hc);--rig-bg:var(--rig-bg-hc);--rig-panel:var(--rig-panel-hc);--rig-panel2:var(--rig-panel2-hc);
+  --rig-panel3:var(--rig-panel3-hc);--rig-code:var(--rig-code-hc);--rig-wash:var(--rig-wash-hc);--rig-line-soft:var(--rig-line-soft-hc);--rig-line:var(--rig-line-hc);--rig-line2:var(--rig-line2-hc);
+  --rig-line3:var(--rig-line3-hc);--rig-text:var(--rig-text-hc);--rig-dim:var(--rig-dim-hc);--rig-mute:var(--rig-mute-hc);--rig-unk:var(--rig-unk-hc);
+  --rig-faint:var(--rig-faint-hc);--rig-sel:var(--rig-sel-hc);--rig-sel-h:var(--rig-sel-h-hc);--rig-sel-t:var(--rig-sel-t-hc);--rig-sel-ink:var(--rig-sel-ink-hc);
+  --rig-sky:var(--rig-sky-hc);--rig-sky-t:var(--rig-sky-t-hc);--rig-red:var(--rig-red-hc);--rig-red-t:var(--rig-red-t-hc);--rig-amb:var(--rig-amb-hc);
+  --rig-amb-t:var(--rig-amb-t-hc);--rig-qty:var(--rig-qty-hc);--rig-ser1:var(--rig-ser1-hc);--rig-ser2:var(--rig-ser2-hc);--rig-ser3:var(--rig-ser3-hc);
+  --rig-ser4:var(--rig-ser4-hc);--rig-ser5:var(--rig-ser5-hc);--rig-ser6:var(--rig-ser6-hc);--rig-on-accent:var(--rig-on-accent-hc);--rig-shadow:var(--rig-shadow-hc);
+  --rig-scrim:var(--rig-scrim-hc);--rig-dot:var(--rig-dot-hc);--rig-lift:var(--rig-lift-hc);--rig-cx-k-i-bg:var(--rig-cx-k-i-bg-hc);--rig-cx-k-i:var(--rig-cx-k-i-hc);
+  --rig-cx-k-e-bg:var(--rig-cx-k-e-bg-hc);--rig-cx-k-e:var(--rig-cx-k-e-hc);--rig-cx-k-t-bg:var(--rig-cx-k-t-bg-hc);--rig-cx-k-t:var(--rig-cx-k-t-hc);
+  --rig-cx-k-b-bg:var(--rig-cx-k-b-bg-hc);--rig-cx-k-b:var(--rig-cx-k-b-hc);--rig-cx-k-s-bg:var(--rig-cx-k-s-bg-hc);--rig-cx-k-s:var(--rig-cx-k-s-hc);
+  color-scheme:dark;
+}
+/* High contrast · light: black on white, dark hairlines, the same rules */
+.rig[data-rig-theme="contrast-light"]{
+  --rig-ph-explore:var(--rig-ph-explore-hcl);--rig-ph-reproduce:var(--rig-ph-reproduce-hcl);--rig-ph-edit:var(--rig-ph-edit-hcl);--rig-ph-test:var(--rig-ph-test-hcl);--rig-ph-lookup:var(--rig-ph-lookup-hcl);--rig-ph-env:var(--rig-ph-env-hcl);--rig-ph-submit:var(--rig-ph-submit-hcl);--rig-ph-other:var(--rig-ph-other-hcl);
+  --rig-brand:var(--rig-brand-hcl);--rig-brand2:var(--rig-brand2-hcl);--rig-bg:var(--rig-bg-hcl);--rig-panel:var(--rig-panel-hcl);--rig-panel2:var(--rig-panel2-hcl);
+  --rig-panel3:var(--rig-panel3-hcl);--rig-code:var(--rig-code-hcl);--rig-wash:var(--rig-wash-hcl);--rig-line-soft:var(--rig-line-soft-hcl);--rig-line:var(--rig-line-hcl);
+  --rig-line2:var(--rig-line2-hcl);--rig-line3:var(--rig-line3-hcl);--rig-text:var(--rig-text-hcl);--rig-dim:var(--rig-dim-hcl);--rig-mute:var(--rig-mute-hcl);
+  --rig-unk:var(--rig-unk-hcl);--rig-faint:var(--rig-faint-hcl);--rig-sel:var(--rig-sel-hcl);--rig-sel-h:var(--rig-sel-h-hcl);--rig-sel-t:var(--rig-sel-t-hcl);
+  --rig-sel-ink:var(--rig-sel-ink-hcl);--rig-sky:var(--rig-sky-hcl);--rig-sky-t:var(--rig-sky-t-hcl);--rig-red:var(--rig-red-hcl);--rig-red-t:var(--rig-red-t-hcl);
+  --rig-amb:var(--rig-amb-hcl);--rig-amb-t:var(--rig-amb-t-hcl);--rig-qty:var(--rig-qty-hcl);--rig-ser1:var(--rig-ser1-hcl);--rig-ser2:var(--rig-ser2-hcl);
+  --rig-ser3:var(--rig-ser3-hcl);--rig-ser4:var(--rig-ser4-hcl);--rig-ser5:var(--rig-ser5-hcl);--rig-ser6:var(--rig-ser6-hcl);--rig-on-accent:var(--rig-on-accent-hcl);
+  --rig-shadow:var(--rig-shadow-hcl);--rig-scrim:var(--rig-scrim-hcl);--rig-dot:var(--rig-dot-hcl);--rig-lift:var(--rig-lift-hcl);--rig-cx-k-i-bg:var(--rig-cx-k-i-bg-hcl);
+  --rig-cx-k-i:var(--rig-cx-k-i-hcl);--rig-cx-k-e-bg:var(--rig-cx-k-e-bg-hcl);--rig-cx-k-e:var(--rig-cx-k-e-hcl);--rig-cx-k-t-bg:var(--rig-cx-k-t-bg-hcl);
+  --rig-cx-k-t:var(--rig-cx-k-t-hcl);--rig-cx-k-b-bg:var(--rig-cx-k-b-bg-hcl);--rig-cx-k-b:var(--rig-cx-k-b-hcl);--rig-cx-k-s-bg:var(--rig-cx-k-s-bg-hcl);
+  --rig-cx-k-s:var(--rig-cx-k-s-hcl);
+  color-scheme:light;
+}
+.rig:is([data-rig-theme="dark"],[data-rig-theme="contrast"],[data-rig-theme="contrast-light"],[data-rig-cvd="1"]){--rig-pass-fill:var(--rig-sky-bg);--rig-fail-fill:var(--rig-red-bg)}
+/* Colour-blind safe status colours: passed blue, failed orange, caution yellow, in every theme (the run
+   console reads the same tokens, so it follows). The accent turns to ink, so a selection never reads as a fail. */
+.rig[data-rig-cvd="1"],.rig[data-rig-theme="light"][data-rig-cvd="1"]{
+  --rig-sky:var(--rig-sky-cvd-l);--rig-sky-t:var(--rig-sky-t-cvd-l);--rig-red:var(--rig-red-cvd-l);--rig-red-t:var(--rig-red-t-cvd-l);--rig-amb:var(--rig-amb-cvd-l);--rig-amb-t:var(--rig-amb-t-cvd-l);
+  --rig-sel:var(--rig-sel-cvd-l);--rig-sel-h:var(--rig-sel-h-cvd-l);--rig-sel-t:var(--rig-sel-t-cvd-l);--rig-wash:var(--rig-wash-cvd-l);
+}
+.rig[data-rig-theme="dark"][data-rig-cvd="1"]{
+  --rig-sky:var(--rig-sky-cvd-d);--rig-sky-t:var(--rig-sky-t-cvd-d);--rig-red:var(--rig-red-cvd-d);--rig-red-t:var(--rig-red-t-cvd-d);--rig-amb:var(--rig-amb-cvd-d);--rig-amb-t:var(--rig-amb-t-cvd-d);
+  --rig-sel:var(--rig-sel-cvd-d);--rig-sel-h:var(--rig-sel-h-cvd-d);--rig-sel-t:var(--rig-sel-t-cvd-d);--rig-wash:var(--rig-wash-cvd-d);
+}
+.rig[data-rig-theme="contrast"][data-rig-cvd="1"]{
+  --rig-sky:var(--rig-sky-cvd-hc);--rig-sky-t:var(--rig-sky-t-cvd-hc);--rig-red:var(--rig-red-cvd-hc);--rig-red-t:var(--rig-red-t-cvd-hc);--rig-amb:var(--rig-amb-cvd-hc);--rig-amb-t:var(--rig-amb-t-cvd-hc);
+  --rig-sel:var(--rig-sel-cvd-hc);--rig-sel-h:var(--rig-sel-h-cvd-hc);--rig-sel-t:var(--rig-sel-t-cvd-hc);--rig-wash:var(--rig-wash-cvd-hc);
+}
+.rig[data-rig-theme="contrast-light"][data-rig-cvd="1"]{
+  --rig-sky:var(--rig-sky-cvd-hcl);--rig-sky-t:var(--rig-sky-t-cvd-hcl);--rig-red:var(--rig-red-cvd-hcl);--rig-red-t:var(--rig-red-t-cvd-hcl);--rig-amb:var(--rig-amb-cvd-hcl);--rig-amb-t:var(--rig-amb-t-cvd-hcl);
+  --rig-sel:var(--rig-sel-cvd-hcl);--rig-sel-h:var(--rig-sel-h-cvd-hcl);--rig-sel-t:var(--rig-sel-t-cvd-hcl);--rig-wash:var(--rig-wash-cvd-hcl);
+}
+/* Print is always Paper: a printout or a PDF for a paper or slides gets the light surfaces, whatever the
+   screen shows. The chrome folds away and the document flows onto as many pages as it needs. */
+@media print{
+  .rig,.rig[data-rig-theme]{
+  --rig-ph-explore:var(--rig-ph-explore-l);--rig-ph-reproduce:var(--rig-ph-reproduce-l);--rig-ph-edit:var(--rig-ph-edit-l);--rig-ph-test:var(--rig-ph-test-l);--rig-ph-lookup:var(--rig-ph-lookup-l);--rig-ph-env:var(--rig-ph-env-l);--rig-ph-submit:var(--rig-ph-submit-l);--rig-ph-other:var(--rig-ph-other-l);
+    --rig-brand:var(--rig-brand-l);--rig-brand2:var(--rig-brand2-l);--rig-bg:var(--rig-bg-l);--rig-panel:var(--rig-panel-l);--rig-panel2:var(--rig-panel2-l);
+  --rig-panel3:var(--rig-panel3-l);--rig-code:var(--rig-code-l);--rig-wash:var(--rig-wash-l);--rig-line-soft:var(--rig-line-soft-l);--rig-line:var(--rig-line-l);--rig-line2:var(--rig-line2-l);
+  --rig-line3:var(--rig-line3-l);--rig-text:var(--rig-text-l);--rig-dim:var(--rig-dim-l);--rig-mute:var(--rig-mute-l);--rig-unk:var(--rig-unk-l);
+  --rig-faint:var(--rig-faint-l);--rig-sel:var(--rig-sel-l);--rig-sel-h:var(--rig-sel-h-l);--rig-sel-t:var(--rig-sel-t-l);--rig-sel-ink:var(--rig-sel-ink-l);
+  --rig-sky:var(--rig-sky-l);--rig-sky-t:var(--rig-sky-t-l);--rig-red:var(--rig-red-l);--rig-red-t:var(--rig-red-t-l);--rig-amb:var(--rig-amb-l);
+  --rig-amb-t:var(--rig-amb-t-l);--rig-qty:var(--rig-qty-l);--rig-ser1:var(--rig-ser1-l);--rig-ser2:var(--rig-ser2-l);--rig-ser3:var(--rig-ser3-l);
+  --rig-ser4:var(--rig-ser4-l);--rig-ser5:var(--rig-ser5-l);--rig-ser6:var(--rig-ser6-l);--rig-on-accent:var(--rig-on-accent-l);--rig-shadow:var(--rig-shadow-l);
+  --rig-scrim:var(--rig-scrim-l);--rig-dot:var(--rig-dot-l);--rig-lift:var(--rig-lift-l);--rig-cx-k-i-bg:var(--rig-cx-k-i-bg-l);--rig-cx-k-i:var(--rig-cx-k-i-l);
+  --rig-cx-k-e-bg:var(--rig-cx-k-e-bg-l);--rig-cx-k-e:var(--rig-cx-k-e-l);--rig-cx-k-t-bg:var(--rig-cx-k-t-bg-l);--rig-cx-k-t:var(--rig-cx-k-t-l);
+  --rig-cx-k-b-bg:var(--rig-cx-k-b-bg-l);--rig-cx-k-b:var(--rig-cx-k-b-l);--rig-cx-k-s-bg:var(--rig-cx-k-s-bg-l);--rig-cx-k-s:var(--rig-cx-k-s-l);
+    color-scheme:light;
+  }
+  .rig[data-rig-theme][data-rig-cvd="1"],.rig[data-rig-cvd="1"]{
+    --rig-sky:var(--rig-sky-cvd-l);--rig-sky-t:var(--rig-sky-t-cvd-l);--rig-red:var(--rig-red-cvd-l);--rig-red-t:var(--rig-red-t-cvd-l);--rig-amb:var(--rig-amb-cvd-l);--rig-amb-t:var(--rig-amb-t-cvd-l);
+    --rig-sel:var(--rig-sel-cvd-l);--rig-sel-h:var(--rig-sel-h-cvd-l);--rig-sel-t:var(--rig-sel-t-cvd-l);--rig-wash:var(--rig-wash-cvd-l);
+  }
+}
 .rig{
-  --rig-sel-bg:color-mix(in srgb,var(--rig-sel) 10%,transparent);--rig-sel-bg2:color-mix(in srgb,var(--rig-sel) 18%,transparent);
-  --rig-sky-bg:color-mix(in srgb,var(--rig-sky) 12%,transparent);--rig-sky-bg2:color-mix(in srgb,var(--rig-sky) 22%,transparent);
-  --rig-red-bg:color-mix(in srgb,var(--rig-red) 12%,transparent);--rig-red-bg2:color-mix(in srgb,var(--rig-red) 20%,transparent);--rig-amb-bg:color-mix(in srgb,var(--rig-amb) 12%,transparent);
+  /* one selected look (selected-style.test.js): a chip, a filter, the sidebar's page, a table row, a step row
+     and a matrix cell all take the cool blue wash and an ink mark (a bar on a row, an edge on a chip). The
+     wash is >= 15 ΔE00 from the fail tint and fill on Paper and Graphite, so a selected Pass never reads as
+     a Fail; the brick accent is left to focus and the logo. */
+  --rig-sel-bg:var(--rig-wash);--rig-sel-bg2:var(--rig-wash);
+  --rig-sel-mark:var(--rig-text);--rig-sel-edge:color-mix(in srgb,var(--rig-sel-mark) 45%,transparent);
+  /* one colour per model (em, a filled dot) and per harness (eh, a ring), the same on every page (entityColor.js):
+     the chart hues each theme already defines, so Paper, Graphite and both High contrast themes draw their own.
+     Every pair is >= 10 ΔE00 apart in each theme; a model and a harness may share a hue, never a mark. */
+  --rig-em-1:var(--rig-ser1);--rig-em-2:var(--rig-ph-reproduce);--rig-em-3:var(--rig-ph-edit);--rig-em-4:var(--rig-ph-test);
+  --rig-em-5:var(--rig-ph-lookup);--rig-em-6:var(--rig-ph-explore);--rig-em-7:var(--rig-ph-submit);--rig-em-8:var(--rig-ph-env);
+  --rig-eh-1:var(--rig-ph-test);--rig-eh-2:var(--rig-ph-lookup);--rig-eh-3:var(--rig-ser1);--rig-eh-4:var(--rig-ph-reproduce);--rig-eh-5:var(--rig-ph-submit);
+  --rig-eh-6:var(--rig-ph-edit);--rig-eh-7:var(--rig-ph-explore);--rig-eh-8:var(--rig-ph-env);--rig-eh-9:var(--rig-ser5);
+  /* a row: hover is a 3% ink wash; selected is the wash with a 2 px ink bar, >= 8 ΔE00
+     from the hover on Paper and Graphite (row-states.test.js) */
+  --rig-row-hover:color-mix(in srgb,var(--rig-text) 3%,transparent);
+  --rig-row-sel:var(--rig-sel-bg);--rig-row-bar:2px;
+  /* status tints mixed into the panel, not laid over the ground: a chip reads the same on any cell */
+  --rig-sky-bg:color-mix(in srgb,var(--rig-sky) 12%,var(--rig-panel));--rig-sky-bg2:color-mix(in srgb,var(--rig-sky) 15%,var(--rig-panel));
+  --rig-red-bg:color-mix(in srgb,var(--rig-red) 12%,var(--rig-panel));--rig-red-bg2:color-mix(in srgb,var(--rig-red) 15%,var(--rig-panel));--rig-amb-bg:color-mix(in srgb,var(--rig-amb) 12%,var(--rig-panel));
   --rig-red-wash:color-mix(in srgb,var(--rig-red) 6%,transparent);
+  /* pass and fail as a fill (verdict glyphs, outcome chips): on Paper the pass fill is faint and the fail
+     fill strong, so they differ in lightness and stay >= 10 ΔE00 apart under red-green colour blindness;
+     the dark, High contrast and colour-blind sets keep the 12% tints (their own hues already differ) */
+  --rig-pass-fill:color-mix(in srgb,var(--rig-sky) 6%,var(--rig-panel));--rig-fail-fill:color-mix(in srgb,var(--rig-red) 30%,var(--rig-panel));
   /* bar fill for "passed": the pass hue, stepped back so failures are what the eye finds */
   --rig-sky-fill:color-mix(in srgb,var(--rig-sky) 62%,var(--rig-panel3));--rig-qty-bg2:color-mix(in srgb,var(--rig-qty) 24%,transparent);
-  --rig-mono:var(--rig-font-mono);--rig-sans:var(--rig-font-sans);
-  position:fixed;inset:0;z-index:var(--rig-z-base);display:grid;grid-template-columns:var(--rig-nav-w) minmax(0,1fr);grid-template-rows:var(--rig-tb-h) minmax(0,1fr) auto var(--rig-sb-h);
-  background:var(--rig-bg);color:var(--rig-text);font:var(--rig-fw-regular) var(--rig-fs-md)/var(--rig-lh-body) var(--rig-sans);-webkit-font-smoothing:antialiased;overflow:hidden;
+  /* the run console paints from its own names, which follow the theme like every other surface */
+  --rig-cx-bg:var(--rig-code);--rig-cx-bg2:var(--rig-panel);--rig-cx-bg3:var(--rig-panel2);--rig-cx-line:var(--rig-line-soft);--rig-cx-line2:var(--rig-line);
+  --rig-cx-text:var(--rig-text);--rig-cx-dim:var(--rig-dim);--rig-cx-mute:var(--rig-mute);--rig-cx-acc:var(--rig-sel-t);
+  --rig-cx-ok:var(--rig-sky-t);--rig-cx-bad:var(--rig-red-t);--rig-cx-amb:var(--rig-amb-t);--rig-cx-shadow:none;
+  --rig-mono:var(--rig-font-mono);--rig-sans:var(--rig-font-sans);--rig-num:var(--rig-font-sans);
+  position:fixed;inset:0;z-index:var(--rig-z-base);display:grid;grid-template-columns:var(--rig-nav-w) minmax(0,1fr);grid-template-rows:minmax(0,1fr) auto var(--rig-sb-h);
+  background:var(--rig-bg);color:var(--rig-text);font:var(--rig-fw-regular) var(--rig-fs-sm)/var(--rig-lead-md) var(--rig-sans);-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;overflow:hidden;
 }
 .rig *{box-sizing:border-box}
 /* zero-specificity reset: any class rule on a control (.rg-btn, .rg-tbtn, a view's .rg-x) wins over it */
@@ -57,24 +158,29 @@
 :where(.rig) :where(a){color:inherit}
 .rig p{margin:0 0 8px}
 .rig h1,.rig h2,.rig h3{margin:0;font-weight:600;letter-spacing:-.01em}
-.rig h1{font-size:var(--rig-fs-xl);line-height:1.2}
-.rig h2{font-size:var(--rig-fs-md);line-height:1.3}
+.rig h1{font-size:var(--rig-fs-xl);line-height:var(--rig-lead-xl)}
+.rig h2{font-size:var(--rig-fs-lg);line-height:var(--rig-lead-lg)}
 .rig h3{font-size:var(--rig-fs-sm)}
 /* one focus ring everywhere; it never changes the element's own corners */
 .rig :focus-visible{outline:var(--rig-focus-ring);outline-offset:var(--rig-focus-offset)}
+/* a heading the app focuses after a page change (tabindex -1, never reached by Tab) is announced, not ringed */
+.rig :is(h1,h2,h3,[role="heading"])[tabindex="-1"]:focus{outline:none}
 .rig ::selection{background:var(--rig-sel);color:var(--rig-sel-ink)}
-.rig code,.rig .rg-code{font-family:var(--rig-mono);font-size:var(--rig-fs-xs);background:var(--rig-panel2);border:1px solid var(--rig-line);padding:1px 4px;border-radius:var(--rig-r-sm)}
+.rig code,.rig .rg-code{font-family:var(--rig-mono);font-size:var(--rig-fs-xs);background:var(--rig-panel3);padding:0 4px;border-radius:var(--rig-r-xs)}
 @media (prefers-reduced-motion:reduce){.rig *,.rig *::before,.rig *::after{animation:none!important;transition:none!important}}
 
 /* ---------------------------------------------------------------- utilities */
-/* ids and figures: the sans with tabular numerals. Monospace is kept for code, diffs, raw
-   payloads and keys (code, .rg-code, .rg-pre, .rg-kbd), where alignment is the point. */
-.rg-mono{font-family:var(--rig-mono);font-variant-numeric:tabular-nums}
-.rg-num{font-family:var(--rig-mono);font-variant-numeric:tabular-nums;text-align:right}
-.rg-lbl{font:600 var(--rig-fs-xs)/1.2 var(--rig-sans);color:var(--rig-mute)}
+/* .rg-mono is the historical name of the figure and id style: the word face with tabular digits.
+   Code, commands, hashes and paths take .rg-hash (Plex Mono). */
+.rg-mono{font-family:var(--rig-num);font-variant-numeric:tabular-nums}
+.rg-hash{font-family:var(--rig-mono);font-size:max(var(--rig-fs-2xs),.92em);font-variant-numeric:tabular-nums}
+/* words inside a block that sets figures in mono (a key-value list, run facts) */
+.rig .rg-sans,.rig dl dd.rg-sans{font-family:var(--rig-sans)}
+.rg-num{font-family:var(--rig-num);font-variant-numeric:tabular-nums;text-align:right}
+.rg-lbl{font:var(--rig-fw-regular) var(--rig-fs-xs)/var(--rig-lead-xs) var(--rig-sans);color:var(--rig-mute)}
 .rg-mute{color:var(--rig-mute)}.rg-dim{color:var(--rig-dim)}
-.rg-sky{color:var(--rig-sky-t)}.rg-red,.rg-red-t{color:var(--rig-red-t)}.rg-acc{color:var(--rig-sel-t)}.rg-amb{color:var(--rig-amb-t)}
-.rg-small{font-size:var(--rig-fs-2xs)}.rg-tiny{font-size:var(--rig-fs-2xs)}
+.rg-sky{color:var(--rig-sky-t)}.rg-red,.rg-red-t{color:var(--rig-red-t)}.rg-acc{color:var(--rig-text)}.rg-amb{color:var(--rig-amb-t)}
+.rg-small{font-size:var(--rig-fs-xs)}.rg-tiny{font-size:var(--rig-fs-2xs)}
 .rg-row{display:flex;align-items:center;gap:8px;min-width:0}
 .rg-row.wrap,.rg-wrap{flex-wrap:wrap}
 .rg-col{display:flex;flex-direction:column;gap:8px;min-width:0}
@@ -87,24 +193,9 @@
 .rg-g2{grid-template-columns:repeat(2,minmax(0,1fr))}
 .rg-g3{grid-template-columns:repeat(3,minmax(0,1fr))}
 .rg-g4{grid-template-columns:repeat(4,minmax(0,1fr))}
-.rg-ico{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:1.6;stroke-linecap:square;flex:none}
+.rg-ico{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round;flex:none}
 
-/* The run console is always dark (the site's console is). Every page token is re-pointed at its
-   -d primitive inside it, so shared components nested in the console (RowDetail buttons, PinButton,
-   <pre>) are dark even when the app is light. Derived tints are re-declared here because a custom
-   property that uses var() is resolved where it is declared, not where it is used. */
-.rig .rg-cx{
-  --rig-bg:var(--rig-bg-d);--rig-panel:var(--rig-panel-d);--rig-panel2:var(--rig-panel2-d);--rig-panel3:var(--rig-panel3-d);--rig-line:var(--rig-line-d);--rig-line2:var(--rig-line2-d);--rig-line3:var(--rig-line3-d);--rig-text:var(--rig-text-d);--rig-dim:var(--rig-dim-d);--rig-mute:var(--rig-mute-d);--rig-unk:var(--rig-unk-d);--rig-sel:var(--rig-sel-d);--rig-sel-t:var(--rig-sel-t-d);--rig-sel-ink:var(--rig-sel-ink-d);--rig-sky:var(--rig-sky-d);--rig-sky-t:var(--rig-sky-t-d);--rig-red:var(--rig-red-d);--rig-red-t:var(--rig-red-t-d);--rig-amb:var(--rig-amb-d);--rig-amb-t:var(--rig-amb-t-d);--rig-qty:var(--rig-qty-d);--rig-ser1:var(--rig-ser1-d);--rig-ser2:var(--rig-ser2-d);--rig-ser3:var(--rig-ser3-d);--rig-ser4:var(--rig-ser4-d);--rig-ser5:var(--rig-ser5-d);--rig-ser6:var(--rig-ser6-d);--rig-on-accent:var(--rig-on-accent-d);--rig-shadow:var(--rig-shadow-d);--rig-scrim:var(--rig-scrim-d);
-  --rig-sel-bg:color-mix(in srgb,var(--rig-sel) 10%,transparent);--rig-sel-bg2:color-mix(in srgb,var(--rig-sel) 18%,transparent);
-  --rig-sky-bg:color-mix(in srgb,var(--rig-sky) 12%,transparent);--rig-sky-bg2:color-mix(in srgb,var(--rig-sky) 22%,transparent);
-  --rig-red-bg:color-mix(in srgb,var(--rig-red) 12%,transparent);--rig-red-bg2:color-mix(in srgb,var(--rig-red) 20%,transparent);--rig-amb-bg:color-mix(in srgb,var(--rig-amb) 12%,transparent);
-  --rig-red-wash:color-mix(in srgb,var(--rig-red) 6%,transparent);
-  --rig-sky-fill:color-mix(in srgb,var(--rig-sky) 62%,var(--rig-panel3));--rig-qty-bg2:color-mix(in srgb,var(--rig-qty) 24%,transparent);
-  --rig-dot:var(--rig-dot-d);--rig-sel-h:var(--rig-sel-h-d);
-  color-scheme:dark;
-}
-
-.rg-kbd{display:inline-flex;align-items:center;justify-content:center;min-width:18px;height:18px;padding:0 4px;border:1px solid var(--rig-line2);border-bottom-width:2px;border-radius:var(--rig-r-xs);font:500 var(--rig-fs-2xs)/1 var(--rig-mono);color:var(--rig-dim);background:var(--rig-panel2);white-space:nowrap;vertical-align:middle}
+.rg-kbd{display:inline-flex;align-items:center;justify-content:center;min-width:18px;height:18px;padding:0 4px;border:1px solid var(--rig-line2);border-bottom-width:2px;border-radius:var(--rig-r-xs);font:var(--rig-fw-regular) var(--rig-fs-2xs)/var(--rig-lead-xs) var(--rig-mono);color:var(--rig-dim);background:var(--rig-panel2);white-space:nowrap;vertical-align:middle}
 
 
 
@@ -114,51 +205,53 @@
 .rg-dot.warn{background:var(--rig-red)}
 
 /* ---------------------------------------------------------------- buttons, inputs */
-.rg-btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:30px;padding:0 10px;border:1px solid var(--rig-line2);border-radius:var(--rig-r-sm);background:var(--rig-panel);color:var(--rig-text);font:500 var(--rig-fs-sm)/1 var(--rig-sans);white-space:nowrap;text-decoration:none}
+.rg-btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:30px;padding:0 10px;border:1px solid var(--rig-line2);border-radius:var(--rig-r-sm);background:var(--rig-panel);color:var(--rig-text);font:var(--rig-fw-semi) var(--rig-fs-sm)/var(--rig-lead-xs) var(--rig-sans);white-space:nowrap;text-decoration:none}
 .rg-btn:hover{border-color:var(--rig-line3);background:var(--rig-panel2)}
-.rg-btn.pri{background:var(--rig-sel);border-color:var(--rig-sel);color:var(--rig-sel-ink);font-weight:600}
+.rg-btn.pri{background:var(--rig-text);border-color:var(--rig-text);color:var(--rig-panel);font-weight:600}
 .rg-btn.pri:hover{filter:brightness(1.06)}
 .rg-btn.warn{background:var(--rig-red-bg);border-color:var(--rig-red);color:var(--rig-red-t);font-weight:600}
 .rg-btn.ghost{background:none;border-color:transparent;color:var(--rig-dim)}
 .rg-btn.ghost:hover{color:var(--rig-text);background:var(--rig-panel2)}
 .rg-btn.lg{min-height:40px;padding:0 14px;font-size:var(--rig-fs-sm)}
 .rg-btn:disabled{opacity:.5;filter:none}
-.rg-btn.pri .rg-kbd{background:color-mix(in srgb,var(--rig-sel-ink) 12%,transparent);border-color:color-mix(in srgb,var(--rig-sel-ink) 25%,transparent);color:var(--rig-sel-ink)}
+.rg-btn.pri .rg-kbd{background:color-mix(in srgb,var(--rig-panel) 12%,transparent);border-color:color-mix(in srgb,var(--rig-panel) 25%,transparent);color:var(--rig-panel)}
 .rg-go{all:unset;cursor:pointer}
 .rg-go:focus-visible{outline:var(--rig-focus-ring);outline-offset:var(--rig-focus-offset)}
-.rg-tlink{all:unset;cursor:pointer;font-family:var(--rig-sans);font-size:var(--rig-fs-xs);color:var(--rig-text)}
-.rg-tlink:hover{color:var(--rig-sel-t);text-decoration:underline}
+.rg-tlink{all:unset;cursor:pointer;font-family:var(--rig-sans);font-size:var(--rig-fs-xs)}
 .rg-tlink:focus-visible{outline:var(--rig-focus-ring);outline-offset:var(--rig-focus-offset)}
 .rg-seg{display:inline-flex;border:1px solid var(--rig-line2);border-radius:var(--rig-r-sm);overflow-x:auto;scrollbar-width:none;flex:none;background:var(--rig-panel);max-width:100%}
-.rg-seg button{border:0;background:none;padding:0 10px;min-height:28px;font:500 var(--rig-fs-xs)/1 var(--rig-sans);color:var(--rig-dim);border-right:1px solid var(--rig-line2);white-space:nowrap}
+.rg-seg button{border:0;background:none;padding:0 10px;min-height:28px;font:var(--rig-fw-regular) var(--rig-fs-xs)/var(--rig-lead-xs) var(--rig-sans);color:var(--rig-dim);border-right:1px solid var(--rig-line2);white-space:nowrap}
 .rg-seg button:last-child{border-right:0}
 .rg-seg button:hover{color:var(--rig-text);background:var(--rig-panel2)}
 .rg-seg button.on{background:var(--rig-panel3);color:var(--rig-text)}
-.rg-inp,.rg-selc{height:30px;padding:0 10px;border:1px solid var(--rig-line2);border-radius:var(--rig-r-sm);background:var(--rig-panel);color:var(--rig-text);font:var(--rig-fs-sm)/1 var(--rig-sans);min-width:0}
-textarea.rg-inp{height:auto;padding:8px 10px;line-height:1.5;resize:vertical;width:100%}
+.rg-inp,.rg-selc{height:30px;padding:0 10px;border:1px solid var(--rig-line2);border-radius:var(--rig-r-sm);background:var(--rig-panel);color:var(--rig-text);font:var(--rig-fs-sm)/var(--rig-lead-xs) var(--rig-sans);min-width:0}
+textarea.rg-inp{height:auto;padding:8px 10px;line-height:var(--rig-lead-md);resize:vertical;width:100%}
 .rg-inp::placeholder{color:var(--rig-mute)}
 /* a field draws one ring: the focus outline sits on its border, no second box-shadow ring */
 .rg-inp:focus,.rg-selc:focus{border-color:var(--rig-sel);outline:none}
-.rg-inp:focus-visible,.rg-selc:focus-visible{outline:var(--rig-focus-ring);outline-offset:-1px}
+.rg-inp:focus-visible,.rg-selc:focus-visible{outline:var(--rig-focus-ring);outline-offset:var(--rig-focus-offset)}
+.rg-search:focus-within{outline:var(--rig-focus-ring);outline-offset:2px}
+.rg-search .rg-inp:focus-visible{outline:none}
 .rg-search{position:relative;display:flex;align-items:center;min-width:0;flex:1 1 220px}
 .rg-search .rg-ico{position:absolute;left:8px;color:var(--rig-mute);pointer-events:none}
 .rg-search .rg-inp{padding-left:28px;width:100%}
 .rg-search .rg-kbd{position:absolute;right:6px}
-.rg-fld{display:flex;flex-direction:column;gap:4px;font:500 var(--rig-fs-xs)/1.2 var(--rig-sans);color:var(--rig-mute);min-width:0}
+.rg-fld{display:flex;flex-direction:column;gap:4px;font:var(--rig-fw-regular) var(--rig-fs-xs)/var(--rig-lead-xs) var(--rig-sans);color:var(--rig-mute);min-width:0}
 .rg-sw{display:inline-flex;align-items:center;gap:10px;border:0;background:none;padding:0;color:var(--rig-text);min-height:32px;text-align:left}
 .rg-sw .rg-sw-tr{width:34px;height:18px;border-radius:var(--rig-r-full);background:var(--rig-panel3);border:1px solid var(--rig-line2);position:relative;flex:none}
-.rg-sw .rg-sw-tr::after{content:"";position:absolute;top:2px;left:2px;width:12px;height:12px;border-radius:50%;background:var(--rig-dim);transition:left .15s}
+.rg-sw .rg-sw-tr::after{content:"";position:absolute;top:2px;left:2px;width:12px;height:12px;border-radius:50%;background:var(--rig-dim);transition:transform var(--rig-dur-1) var(--rig-ease),background-color var(--rig-dur-1) var(--rig-ease)}
 .rg-sw[aria-checked="true"] .rg-sw-tr{background:var(--rig-sel);border-color:var(--rig-sel)}
-.rg-sw[aria-checked="true"] .rg-sw-tr::after{left:18px;background:var(--rig-sel-ink)}
+.rg-sw[aria-checked="true"] .rg-sw-tr::after{transform:translateX(16px);background:var(--rig-sel-ink)}
 .rg-confirm{display:inline-flex;align-items:center;gap:6px;flex-wrap:wrap}
 
 /* ---------------------------------------------------------------- panels, stats, tables */
 .rg-pnl{border:1px solid var(--rig-line);background:var(--rig-panel);min-width:0}
 .rg-pnl.rg-err{border-color:var(--rig-red)}
 .rg-pnl.rg-err>.rg-pnl-h{background:var(--rig-red-wash)}
-.rg-pnl-h{display:flex;align-items:center;gap:8px;min-height:32px;padding:0 12px;border-bottom:1px solid var(--rig-line);min-width:0}
+/* a panel head wraps its note under its label when the panel is narrow (a laptop column), instead of running past it */
+.rg-pnl-h{display:flex;flex-wrap:wrap;align-items:center;gap:2px 8px;min-height:32px;padding:0 12px;border-bottom:1px solid var(--rig-line);min-width:0}
 .rg-pnl-h .rg-lbl{white-space:nowrap}
-.rg-pnl-h .meta{margin-left:auto;font:500 var(--rig-fs-xs)/1 var(--rig-sans);color:var(--rig-mute);white-space:nowrap;display:flex;gap:6px;align-items:center}
+.rg-pnl-h .meta{margin-left:auto;font:var(--rig-fw-regular) var(--rig-fs-xs)/var(--rig-lead-xs) var(--rig-sans);color:var(--rig-mute);display:flex;gap:6px;align-items:center;text-align:right}
 .rg-pnl-b{padding:12px}
 .rg-pnl-b.flush{padding:0}
 .rg-stats{display:grid;border:1px solid var(--rig-line);background:var(--rig-panel)}
@@ -166,30 +259,36 @@ textarea.rg-inp{height:auto;padding:8px 10px;line-height:1.5;resize:vertical;wid
 .rg-stat:last-child{border-right:0}
 button.rg-stat{border-top:0;border-bottom:0;border-left:0;background:none;color:inherit;cursor:pointer}
 button.rg-stat:hover{background:var(--rig-panel2)}
-.rg-fig{font:500 var(--rig-fs-fig)/1 var(--rig-sans);letter-spacing:-.03em;color:var(--rig-sky-t);font-feature-settings:"tnum" 1}
+.rg-fig{font:var(--rig-fw-bold) var(--rig-fs-fig)/var(--rig-lead-xl) var(--rig-sans);letter-spacing:-.03em;color:var(--rig-sky-t);font-feature-settings:"tnum" 1}
 .rg-fig.md{font-size:var(--rig-fs-fig-md)}
 .rg-fig.sm{font-size:var(--rig-fs-fig-sm)}
-.rg-fig.acc{color:var(--rig-sel-t)}.rg-fig.amb{color:var(--rig-amb-t)}
-.rg-fig .u{font-size:.5em;color:var(--rig-dim);margin-left:2px;letter-spacing:0}
+.rg-fig.acc{color:var(--rig-text)}.rg-fig.amb{color:var(--rig-amb-t)}
+.rg-fig .u{font-size:max(var(--rig-fs-2xs),.5em);color:var(--rig-dim);margin-left:2px;letter-spacing:0}
 .rg-tbl{width:100%;border-collapse:collapse;font-size:var(--rig-fs-xs)}
 .rg-tbl th{position:sticky;top:0;background:var(--rig-panel);text-align:left;padding:8px 10px;border-bottom:1px solid var(--rig-line2);white-space:nowrap;z-index:var(--rig-z-base)}
 .rg-tbl td{padding:6px 10px;border-bottom:1px solid var(--rig-line);vertical-align:middle}
 .rg-tbl td.rg-num,.rg-tbl th.rg-num{text-align:right}
-.rg-tbl tr.hov:hover td{background:var(--rig-panel2);cursor:pointer}
+.rg-tbl tr.hov:hover td{background:var(--rig-row-hover);cursor:pointer}
 .rg-tbl tr.sel td{background:var(--rig-sel-bg)}
-.rg-tbl tr.sel td:first-child{box-shadow:inset 2px 0 0 var(--rig-sel)}
+.rg-tbl tr.sel td:first-child{box-shadow:inset var(--rig-row-bar) 0 0 var(--rig-sel-mark)}
 .rg-tblwrap{overflow:auto;max-width:100%}
 .rg-kv{display:grid;grid-template-columns:auto 1fr;gap:6px 16px;font-size:var(--rig-fs-xs);margin:0}
-.rg-kv dt{color:var(--rig-mute);font:500 var(--rig-fs-xs)/1.5 var(--rig-sans)}
+.rg-kv dt{color:var(--rig-mute);font:var(--rig-fw-regular) var(--rig-fs-xs)/var(--rig-lead-md) var(--rig-sans)}
 .rg-kv dd{margin:0;font-family:var(--rig-sans);font-size:var(--rig-fs-xs);min-width:0;overflow-wrap:anywhere}
-.rg-pre{margin:0;font:var(--rig-fs-xs)/1.55 var(--rig-mono);white-space:pre-wrap;overflow-wrap:anywhere;color:var(--rig-dim);background:var(--rig-panel2);border:1px solid var(--rig-line);padding:10px 12px;max-height:420px;overflow:auto}
+.rg-pre{margin:0;font:var(--rig-fs-xs)/var(--rig-lead-md) var(--rig-mono);white-space:pre-wrap;overflow-wrap:anywhere;color:var(--rig-dim);background:var(--rig-panel2);border:1px solid var(--rig-line);padding:10px 12px;max-height:420px;overflow:auto}
 
 /* ---------------------------------------------------------------- verdicts, bars, tags */
-.rg-v{display:inline-grid;place-items:center;width:18px;height:18px;font:700 var(--rig-fs-2xs)/1 var(--rig-sans);border-radius:var(--rig-r-sm);flex:none}
-.rg-v.p{color:var(--rig-sky-t);background:var(--rig-sky-bg2)}
-.rg-v.f{color:var(--rig-red-t);background:var(--rig-red-bg2)}
-.rg-v.u{color:var(--rig-unk);border:1px dashed var(--rig-unk);background:none}
-.rg-vt{display:inline-flex;align-items:center;gap:6px;font:600 var(--rig-fs-xs)/1 var(--rig-sans)}
+/* run status (StatusIcon.jsx): the shape says it as well as the colour; pass is the one filled shape, and
+   no status sits in a box (a ticked box reads as a checkbox) */
+.rg-st{display:inline-block;flex:none;width:16px;height:16px;vertical-align:-3px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.rg-st-pass{color:var(--rig-sky-t)}
+.rg-st-pass .rg-st-fill{fill:currentColor}
+.rg-st-pass .rg-st-mark{stroke:var(--rig-on-accent);stroke-width:2.2}
+.rg-st-fail,.rg-st-cutoff{color:var(--rig-red-t)}
+.rg-st-ungraded{color:var(--rig-unk)}
+.rg-st-error{color:var(--rig-amb-t)}
+.rg-v{width:18px;height:18px}
+.rg-vt{display:inline-flex;align-items:center;gap:5px;font:600 var(--rig-fs-xs)/var(--rig-lead-xs) var(--rig-sans)}
 .rg-vt.p{color:var(--rig-sky-t)}.rg-vt.f{color:var(--rig-red-t)}.rg-vt.u{color:var(--rig-unk)}
 .rg-obar{display:flex;height:4px;background:var(--rig-panel3);min-width:40px;overflow:hidden}
 .rg-obar i{display:block;height:100%}
@@ -211,48 +310,56 @@ button.rg-stat:hover{background:var(--rig-panel2)}
 .rg-hb .bt i.red{background:var(--rig-red)}
 .rg-hb .bt i.amb{background:var(--rig-amb)}
 .rg-hb .bt i.dim{background:var(--rig-dim)}
-.rg-hb .nm{font:500 var(--rig-fs-xs)/1.2 var(--rig-sans);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.rg-hb .vl{font:500 var(--rig-fs-xs)/1 var(--rig-sans);text-align:right}
-.rg-tag{display:inline-flex;align-items:center;gap:4px;height:18px;padding:0 6px;border:1px solid var(--rig-line2);border-radius:var(--rig-r-sm);font:600 var(--rig-fs-xs)/1 var(--rig-sans);color:var(--rig-dim);white-space:nowrap}
+/* a bar's name wraps at its hyphens, so a long model id is not cut */
+.rg-hb .nm{font:var(--rig-fw-regular) var(--rig-fs-xs)/var(--rig-lead-xs) var(--rig-sans);min-width:0;overflow-wrap:break-word}
+.rg-hb .vl{font:var(--rig-fw-regular) var(--rig-fs-xs)/var(--rig-lead-xs) var(--rig-sans);text-align:right}
+.rg-tag{display:inline-flex;align-items:center;gap:4px;height:18px;padding:0 6px;border:1px solid var(--rig-line2);border-radius:var(--rig-r-sm);font:600 var(--rig-fs-xs)/var(--rig-lead-xs) var(--rig-sans);color:var(--rig-dim);white-space:nowrap}
 .rg-tag.sky{color:var(--rig-sky-t);border-color:transparent;background:var(--rig-sky-bg)}
 .rg-tag.red{color:var(--rig-red-t);border-color:transparent;background:var(--rig-red-bg)}
-.rg-tag.acc{color:var(--rig-sel-t);border-color:transparent;background:var(--rig-sel-bg2)}
+.rg-tag.acc{color:var(--rig-text);border-color:transparent;background:var(--rig-panel3)}
 .rg-tag.amb{color:var(--rig-amb-t);border-color:transparent;background:var(--rig-amb-bg)}
-.rg-tag.dash{border-style:dashed;color:var(--rig-mute)}
-.rg-tag.nc{text-transform:none;letter-spacing:0;font-weight:500}
-.rg-fchip{display:inline-flex;align-items:center;gap:4px;height:18px;padding:0 6px;border-radius:var(--rig-r-sm);font:600 var(--rig-fs-xs)/1 var(--rig-sans);white-space:nowrap;border:1px solid transparent;color:var(--rig-red-t);background:var(--rig-red-bg);cursor:help}
+.rg-tag.dash{color:var(--rig-mute)}
+.rg-tag.nc{text-transform:none;letter-spacing:0;font-weight:var(--rig-fw-regular)}
+.rg-fchip{display:inline-flex;align-items:center;gap:4px;height:18px;padding:0 6px;border-radius:var(--rig-r-sm);font:600 var(--rig-fs-xs)/var(--rig-lead-xs) var(--rig-sans);white-space:nowrap;border:1px solid transparent;color:var(--rig-red-t);background:var(--rig-red-bg);cursor:help}
 .rg-fchip.he{border-color:var(--rig-line3);color:var(--rig-dim);background:var(--rig-panel2)}
 .rg-note{display:flex;gap:10px;align-items:flex-start;padding:10px 12px;border:1px solid var(--rig-line2);border-left:2px solid var(--rig-line3);background:var(--rig-panel);font-size:var(--rig-fs-xs);color:var(--rig-dim)}
-.rg-note.acc{border-left-color:var(--rig-sel)}.rg-note.amb{border-left-color:var(--rig-amb)}.rg-note.red{border-left-color:var(--rig-red)}.rg-note.sky{border-left-color:var(--rig-sky)}
+.rg-note.acc{border-left-color:var(--rig-text)}.rg-note.amb{border-left-color:var(--rig-amb)}.rg-note.red{border-left-color:var(--rig-red)}.rg-note.sky{border-left-color:var(--rig-sky)}
 .rg-note b{color:var(--rig-text)}
 .rg-dh{display:flex;align-items:flex-end;gap:16px;margin-bottom:16px;flex-wrap:wrap}
 .rg-dh .t{min-width:0;flex:1}
-.rg-eyebrow{font:600 var(--rig-fs-xs)/1 var(--rig-sans);color:var(--rig-mute);margin-bottom:8px}
+.rg-eyebrow{font:600 var(--rig-fs-xs)/var(--rig-lead-xs) var(--rig-sans);color:var(--rig-mute);margin-bottom:8px}
 .rg-dh p{color:var(--rig-dim);margin:6px 0 0;max-width:72ch}
 
 /* ---------------------------------------------------------------- pin, asking, chain */
-.rg-pin{display:inline-flex;align-items:center;gap:var(--rig-s1);height:var(--rig-h-xs);padding:0 var(--rig-s2);border:1px solid var(--rig-line2);border-radius:var(--rig-r-sm);background:var(--rig-panel);color:var(--rig-dim);font:var(--rig-fw-medium) var(--rig-fs-sm)/var(--rig-lh-tight) var(--rig-sans);white-space:nowrap}
-.rg-pin:hover{border-color:var(--rig-sel);color:var(--rig-text)}
-.rg-pin.on{border-color:var(--rig-sel);color:var(--rig-sel-t);background:var(--rig-sel-bg)}
+.rg-pin{display:inline-flex;align-items:center;gap:var(--rig-s1);height:var(--rig-h-xs);padding:0 var(--rig-s2);border:1px solid var(--rig-line2);border-radius:var(--rig-r-sm);background:var(--rig-panel);color:var(--rig-dim);font:var(--rig-fw-medium) var(--rig-fs-sm)/var(--rig-lead-xs) var(--rig-sans);white-space:nowrap}
+.rg-pin:hover{border-color:var(--rig-line3);color:var(--rig-text)}
+.rg-pin.on{border-color:var(--rig-sel-mark);color:var(--rig-text);background:var(--rig-sel-bg)}
 .rg-pin.cmp{width:24px;padding:0;justify-content:center}
-.rg-asking{display:flex;flex-wrap:wrap;align-items:center;gap:4px 6px;margin:0 0 14px;font-size:var(--rig-fs-md);line-height:1.9;color:var(--rig-dim)}
-.rg-q-mark{display:inline-grid;place-items:center;width:20px;height:20px;border-radius:50%;background:var(--rig-panel3);color:var(--rig-dim);font:700 var(--rig-fs-sm)/1 var(--rig-sans);margin-right:2px}
+.rg-asking{display:flex;flex-wrap:wrap;align-items:center;gap:4px 6px;margin:0 0 14px;font-size:var(--rig-fs-md);line-height:var(--rig-lead-xl);color:var(--rig-dim)}
+.rg-q-mark{display:inline-grid;place-items:center;width:20px;height:20px;border-radius:50%;background:var(--rig-panel3);color:var(--rig-dim);font:var(--rig-fw-bold) var(--rig-fs-sm)/var(--rig-lead-xs) var(--rig-sans);margin-right:2px}
 .rg-brk{display:inline-flex;align-items:center;position:relative}
-.rg-brk select{appearance:none;border:0;border-bottom:1px dashed var(--rig-sel);background:var(--rig-sel-bg);color:var(--rig-text);font:600 var(--rig-fs-md)/1.3 var(--rig-sans);padding:2px 18px 2px 6px;border-radius:var(--rig-r-sm);max-width:20rem;text-overflow:ellipsis}
-.rg-brk::after{content:"▾";position:absolute;right:5px;font-size:var(--rig-fs-2xs);color:var(--rig-sel-t);pointer-events:none}
-.rg-brk select:hover{background:var(--rig-sel-bg2)}
+.rg-brk select{appearance:none;border:0;border-bottom:1px dashed var(--rig-line3);background:var(--rig-panel2);color:var(--rig-text);font:600 var(--rig-fs-md)/var(--rig-lead-md) var(--rig-sans);padding:2px 18px 2px 6px;border-radius:var(--rig-r-sm);max-width:20rem;text-overflow:ellipsis}
+/* the caret of a bracket or an oracle button: an icon, since Plex Mono has no ▾ */
+.rg-brk-c{position:absolute;top:50%;right:5px;display:inline-flex;transform:translateY(-50%);color:var(--rig-mute);pointer-events:none}
+.rg-brk-c .rg-ico{width:12px;height:12px}
+.rg-brk select:hover{background:var(--rig-panel3)}
 .rg-brk select option{background:var(--rig-panel);color:var(--rig-text)}
 /* the chain sits in a ScrollX (.rg-chain-s): it scrolls there, with edge fades, never squeezed */
-.rg-chain{display:flex;align-items:center;gap:0;margin:0;padding:0;list-style:none;min-width:max-content;font:500 var(--rig-fs-xs)/1 var(--rig-sans)}
+.rg-chain{display:flex;align-items:center;gap:0;margin:0;padding:0;list-style:none;min-width:max-content;font:var(--rig-fw-regular) var(--rig-fs-xs)/var(--rig-lead-xs) var(--rig-sans)}
 .rg-chain-s{flex:1 1 auto;min-width:0}
 .rg-chain li{display:flex;align-items:center;flex:none}
-.rg-chain li+li::before{content:"→";color:var(--rig-line3);margin:0 var(--rig-s2)}
+.rg-chain li+li::before{content:"→";color:var(--rig-mute);margin:0 var(--rig-s2)}
 .rg-chain button,.rg-chain .off{display:inline-flex;align-items:center;gap:5px;border:1px solid var(--rig-line2);background:var(--rig-panel);color:var(--rig-dim);padding:3px 7px;border-radius:var(--rig-r-sm);white-space:nowrap}
-.rg-chain button:hover{border-color:var(--rig-sel);color:var(--rig-text)}
+.rg-chain button:hover:not(.off){border-color:var(--rig-line3);color:var(--rig-text)}
 .rg-chain button[aria-current="step"]{border-color:var(--rig-line3);background:var(--rig-panel3);color:var(--rig-text)}
 .rg-chain b{font-size:var(--rig-fs-2xs);color:var(--rig-mute)}
 .rg-chain em{font-style:normal;color:var(--rig-text)}
 .rg-chain .off{opacity:.55;border-style:dashed;cursor:default}
+/* a jump to a section (the chain's Figure, Review configuration) marks its target (ui.jsx flashJumped) until the next
+   press elsewhere, so the press is seen even when the target was already in view; the pulse is extra */
+.rig [data-state="jumped"]{box-shadow:0 0 0 2px var(--rig-sel-mark);animation:rg-jumped calc(var(--rig-dur-2) * 6) var(--rig-ease) 1}
+@keyframes rg-jumped{0%,30%{box-shadow:0 0 0 4px var(--rig-sel-mark)}100%{box-shadow:0 0 0 2px var(--rig-sel-mark)}}
+@media (prefers-reduced-motion:reduce){.rig [data-state="jumped"]{animation:none}}
 
 /* ---------------------------------------------------------------- states */
 .rg-pulse{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--rig-sky);animation:rg-pl 1.2s infinite}
@@ -271,35 +378,40 @@ button.rg-stat:hover{background:var(--rig-panel2)}
    This layer sits BEFORE the responsive sections so the phone rules (44px touch targets,
    16px gutters) still win on small screens. */
 .rig{--rig-s1:4px;--rig-s2:8px;--rig-s3:12px;--rig-s4:16px;--rig-s5:24px;--rig-s6:32px;--rig-s7:48px}
-.rig h1{font-size:var(--rig-fs-2xl);line-height:1.2;letter-spacing:-.015em}
+.rig h1{font-size:var(--rig-fs-2xl);line-height:var(--rig-lead-xl);letter-spacing:-.015em}
 .rig h2{font-size:var(--rig-fs-lg)}
 .rig h3{font-size:var(--rig-fs-md)}
-.rg-lbl{font:500 var(--rig-fs-xs)/1.3 var(--rig-sans);color:var(--rig-mute)}
+.rg-lbl{font:var(--rig-fw-regular) var(--rig-fs-xs)/var(--rig-lead-xs) var(--rig-sans);color:var(--rig-mute)}
 .rg-small{font-size:var(--rig-fs-xs)}.rg-tiny{font-size:var(--rig-fs-xs)}
 .rg-pnl{border-radius:var(--rig-r-lg);border-color:var(--rig-line)}
-.rg-tlink:hover{color:var(--rig-text)}
-.rg-tlink{font-family:var(--rig-sans);font-size:var(--rig-fs-sm);text-decoration:underline;text-decoration-color:var(--rig-line3);text-underline-offset:3px}
-.rg-tlink:hover{text-decoration-color:var(--rig-text)}
+.rg-tlink{font-family:var(--rig-sans);font-size:var(--rig-fs-sm)}
+/* links: two looks, both in the text colour (the accent marks only the current item and focus).
+   Every link is underlined at rest: 1px, 3px under the text, in a soft ink (35%); hover draws it in full
+   ink over 150 ms. An entity name (a dataset, task, run, harness or model that opens its page) is also
+   bold, so a bold word that is not a link (no underline) never reads as one; a short one never wraps. */
+.rig :is(.rg-tlink,.rg-cx-evl,a:not([class])){color:var(--rig-text);text-decoration:underline;text-decoration-thickness:1px;text-decoration-color:color-mix(in srgb,var(--rig-text) 35%,transparent);text-underline-offset:3px;transition:text-decoration-color var(--rig-dur-1) var(--rig-ease)}
+.rig :is(.rg-tlink,.rg-cx-evl,a:not([class])):hover{text-decoration-color:currentColor}
+.rig :is(.rg-elink,.rg-tbl .rg-tlink){color:var(--rig-text);font-weight:var(--rig-fw-semi);text-decoration:underline;text-decoration-thickness:1px;text-decoration-color:color-mix(in srgb,var(--rig-text) 35%,transparent);text-underline-offset:3px;transition:text-decoration-color var(--rig-dur-1) var(--rig-ease);cursor:pointer}
+.rig :is(.rg-elink,.rg-tbl .rg-tlink):hover,.rig :is(tr,.rg-elink-row):hover>:first-child .rg-elink{text-decoration-color:currentColor}
 .rg-seg button{min-height:30px;font-size:var(--rig-fs-xs)}
 .rg-seg button.on{background:var(--rig-panel3);color:var(--rig-text);box-shadow:none;font-weight:600}
 .rg-btn{min-height:32px;font-size:var(--rig-fs-sm)}
 .rg-inp,.rg-selc{height:32px;font-size:var(--rig-fs-sm)}
-.rg-tag{height:20px;padding:0 7px;font-size:var(--rig-fs-xs);font-weight:500}
-.rg-fchip{height:20px;padding:0 7px;font-size:var(--rig-fs-xs);font-weight:500;border-radius:var(--rig-r-sm)}
+.rg-tag{height:20px;padding:0 7px;font-size:var(--rig-fs-xs);font-weight:var(--rig-fw-semi)}
+.rg-fchip{height:20px;padding:0 7px;font-size:var(--rig-fs-xs);font-weight:var(--rig-fw-semi);border-radius:var(--rig-r-sm)}
 .rg-vt{font-size:var(--rig-fs-xs)}
 .rg-obar{border-radius:var(--rig-r-xs)}
 .rg-asking{font-size:var(--rig-fs-md)}
 .rg-q-mark{font-family:var(--rig-sans)}
 /* Figures are quantities, not verdicts: they read in ink. */
-.rg-fig{color:var(--rig-text);font-weight:500}
-.rg-fig.acc{color:var(--rig-sel-t)}.rg-fig.amb{color:var(--rig-amb-t)}
-.rg-q-card .qv b,.rg-q-answer .big .v{color:var(--rig-text);font-weight:500}
+.rg-fig{color:var(--rig-text);font-weight:var(--rig-fw-bold)}
+.rg-fig.acc{color:var(--rig-text)}.rg-fig.amb{color:var(--rig-amb-t)}
+.rg-q-card .qv b,.rg-q-answer .big .v{color:var(--rig-text);font-weight:var(--rig-fw-bold)}
 .rg-q-card .n{color:var(--rig-mute)}
 .rg-q-card.lead{box-shadow:none}
 .rg-q-mark-t{box-shadow:inset 0 -1px 0 var(--rig-line3)}
 .rg-brk select{border:1px solid var(--rig-line2);background:var(--rig-panel2);border-radius:var(--rig-r-md)}
 .rg-brk select:hover{background:var(--rig-panel3);border-color:var(--rig-line3)}
-.rg-brk::after{color:var(--rig-mute)}
 
 /* ---------------------------------------------------------------- breathing (round 3)
    Global defaults every document inherits, on the --rig-s* scale. New properties are wrapped
@@ -310,7 +422,16 @@ button.rg-stat:hover{background:var(--rig-panel2)}
    * table rows at least 40px, numbers right-aligned in mono (.rg-num) */
 .rg-dpad{padding:var(--rig-s6) var(--rig-s6) var(--rig-s7)}
 :where(.rg-dpad){max-width:calc(1240px + 2 * var(--rig-s6));margin-inline:auto}
-:where(.rg-dpad)>:where(.rg-pnl,.rg-grid,.rg-stats,section,.rg-sec,.rg-empty,.rg-note)+:where(.rg-pnl,.rg-grid,.rg-stats,section,.rg-sec,.rg-empty,.rg-note){margin-top:var(--rig-s6)}
+/* one rhythm down a page column (spacing.test.js): the column owns its children's vertical
+   margins. Blocks stand --rig-gap-sec apart; the page head's own parts (the head, the scope line, a verdict,
+   a lede, the KPI strip, a toolbar, a tab strip) and the block right under them, --rig-gap-in. */
+.rig{--rig-gap-sec:var(--rig-s6);--rig-gap-in:var(--rig-s4);--rig-gap-line:var(--rig-s2)}
+.rig .rg-dpad{row-gap:0}
+.rig .rg-dpad>*{margin-block:0}
+.rig .rg-dpad>*+*{margin-top:var(--rig-gap-sec)}
+.rig .rg-dpad>:is(.rg-ph,.rg-q-ask,.rg-demo,.rg-ask,.rg-q-verdict,.rg-q-answer,.rg-an-head,.rg-scope,.rg-learn-lede,.rg-learn-gfind,.rg-toolbar,.rg-q-tog,.rg-ws-tabs,.rg-scrollx,:has(>.rg-ph))+*{margin-top:var(--rig-gap-in)}
+/* a tab's panel, a footnote under a table and an "About this" line belong to the block above them */
+.rig .rg-dpad>*+:is(.rg-composer-view,.rg-ws-tabp,.rg-an-after,details.rg-about){margin-top:var(--rig-gap-in)}
 .rg-dh{margin-bottom:var(--rig-s5);gap:var(--rig-s4)}
 .rg-grid{gap:var(--rig-s4)}
 .rg-pnl-h{min-height:44px;padding:0 var(--rig-s5);border-bottom-color:var(--rig-line)}
@@ -323,15 +444,15 @@ button.rg-stat:hover{background:var(--rig-panel2)}
 .rg-tbl td{padding:var(--rig-s2) var(--rig-s3)}
 :where(.rg-tbl) :where(td){height:40px}
 .rg-tbl td.rg-num,.rg-tbl th.rg-num{text-align:right}
-.rg-tbl td.rg-num{font-family:var(--rig-mono);font-variant-numeric:tabular-nums}
+.rg-tbl td.rg-num{font-family:var(--rig-num);font-variant-numeric:tabular-nums}
 /* long explanations live behind "About this" (ui.jsx <About>) */
 .rg-about{max-width:72ch;font-size:var(--rig-fs-sm);color:var(--rig-dim)}
-.rg-about summary{cursor:pointer;width:max-content;max-width:100%;font:500 var(--rig-fs-xs)/1.4 var(--rig-sans);color:var(--rig-mute);list-style:none;display:flex;align-items:center;gap:6px;padding:2px 0}
+.rg-about summary{cursor:pointer;width:max-content;max-width:100%;font:var(--rig-fw-regular) var(--rig-fs-xs)/var(--rig-lead-sm) var(--rig-sans);color:var(--rig-mute);list-style:none;display:flex;align-items:center;gap:6px;padding:2px 0}
 .rg-about summary::-webkit-details-marker{display:none}
-.rg-about summary::before{content:"";width:0;height:0;border-left:5px solid currentColor;border-top:4px solid transparent;border-bottom:4px solid transparent;transition:transform .12s}
+.rg-about summary::before{content:"";width:0;height:0;border-left:5px solid currentColor;border-top:4px solid transparent;border-bottom:4px solid transparent;transition:transform var(--rig-dur-1) var(--rig-ease)}
 .rg-about[open] summary::before{transform:rotate(90deg)}
 .rg-about summary:hover{color:var(--rig-text)}
-.rg-about-b{padding:var(--rig-s2) 0 0 11px;line-height:1.55}
+.rg-about-b{padding:var(--rig-s2) 0 0 11px;line-height:var(--rig-lead-md)}
 .rg-about-b p:last-child{margin-bottom:0}
 
 /* ---------------------------------------------------------------- dead-end primitives
@@ -340,18 +461,18 @@ button.rg-stat:hover{background:var(--rig-panel2)}
 .rg-empty{display:flex;flex-direction:column;gap:var(--rig-s3);padding:var(--rig-s2) 0;border:0;background:none;min-width:0}
 .rg-empty-t{display:flex;align-items:center;gap:10px;font-size:var(--rig-fs-md)}
 .rg-empty-t b{font-weight:600}
-.rg-empty-why{color:var(--rig-dim);font-size:var(--rig-fs-sm);line-height:1.55;max-width:68ch;margin:0}
+.rg-empty-why{color:var(--rig-dim);font-size:var(--rig-fs-sm);line-height:var(--rig-lead-md);max-width:68ch;margin:0}
 .rg-next{display:flex;flex-wrap:wrap;align-items:center;gap:var(--rig-s2)}
 .rg-btnwrap{display:inline-flex;align-items:center;gap:10px;flex-wrap:wrap}
 .rg-why{font-size:var(--rig-fs-xs);color:var(--rig-mute)}
-.rg-why::before{content:"← ";color:var(--rig-line3)}
+.rg-why::before{content:"← ";color:var(--rig-mute)}
 .rg-copy{display:inline-flex;align-items:center;gap:6px;flex-wrap:wrap;max-width:100%;min-width:0}
 .rg-copy-l{font-size:var(--rig-fs-xs);color:var(--rig-mute)}
 .rig .rg-copy-c{font-size:var(--rig-fs-xs);padding:6px 8px;border-radius:var(--rig-r-sm);white-space:pre-wrap;overflow-wrap:anywhere;min-width:0}
 .rg-copy-b{min-height:28px}
 .rg-state{padding:var(--rig-s5) var(--rig-s6);display:flex;flex-direction:column;gap:var(--rig-s3)}
 .rg-state-doc{display:flex;flex-direction:column;gap:var(--rig-s3);max-width:68ch;padding-top:var(--rig-s5)}
-.rg-state-doc h2{font-size:var(--rig-fs-xl);line-height:1.3;overflow-wrap:anywhere}
+.rg-state-doc h2{font-size:var(--rig-fs-xl);line-height:var(--rig-lead-xl);overflow-wrap:anywhere}
 .rg-state-doc .rg-eyebrow{margin-bottom:0;overflow-wrap:anywhere}
 .rg-state-near{gap:var(--rig-s2);margin:var(--rig-s1) 0}
 .rg-errstate{max-width:78ch;border-left:2px solid var(--rig-red);padding:var(--rig-s2) 0 var(--rig-s2) var(--rig-s5);margin:var(--rig-s5) var(--rig-s6)}
@@ -393,9 +514,9 @@ button.rg-stat:hover{background:var(--rig-panel2)}
 
 /* A wide monitor re-points the type tokens once (see "shell"); only these view widths change here. */
 /* (The analysis step list stays a strip above the document at every width: a 15rem column of nine short items beside a
-   document several screens tall is a full-height bar beside short content. The open sidebar lists the steps anyway.) */
+   document several screens tall is a full-height bar beside short content.) */
 @media (min-width:1920px){
-  .rg-traj-split{--rig-trajnav-w:280px}
+  .rg-traj-tview{--rig-trajnav-w:280px}
 }
 
 /* ---------------------------------------------------------------- one UI, full window
@@ -428,13 +549,6 @@ button.rg-stat:hover{background:var(--rig-panel2)}
   .rg-tbl tr:hover .rg-pin.cmp,.rg-tbl tr:focus-within .rg-pin.cmp{opacity:1}
 }
 
-/* ---------------------------------------------------------------- one left navigation
-   With the sidebar open, a task page's task list lives in it (under Trajectories) and the page drops
-   its own column. Collapsed, the page draws its list as a strip (trajectory.css). */
-@media (min-width:768px){
-  .rig[data-rig-nav="open"] .rg-traj-split{grid-template-columns:minmax(0,1fr);background:none}
-  .rig[data-rig-nav="open"] .rg-traj-split>.rg-traj-nav{display:none}
-}
 
 /* ---------------------------------------------------------------- shell v7: one set of edges
    Things that sit side by side line up, and things inside a box start where its header starts. */
@@ -455,107 +569,167 @@ button.rg-stat:hover{background:var(--rig-panel2)}
   .rg-dh:has(>.t>.rg-eyebrow:first-child)>:not(.t)~:not(.t){grid-column:3}
 }
 
-/* ================================================================ TraceHarness look (traceharness.dev)
-   Last in the cascade on purpose: it restates the shared primitives in the website's vocabulary
-   (tools/site.css .cx-lbl / .cx-chip / .sev / .btn / .kc). It sets no heights, so the phone and
-   large-screen touch-target rules above still win. Data is mono (ids, steps, numbers, chips,
-   small labels); prose and headings stay IBM Plex Sans. Shared names for the run console:
-   .rg-lbl (section label)  .rg-chip + .on/.ok/.bad/.amb (chip)  .rg-sev + .s1-.s4 (severity)
-   .rg-kc + .k-i/.k-e/.k-t/.k-b/.k-s (event-kind badge)  .rg-btn(.pri/.ghost)  .rg-mono  .rg-num */
-.rg-lbl,.rg-eyebrow{font:500 var(--rig-fs-2xs)/1.2 var(--rig-mono);letter-spacing:.07em;text-transform:uppercase;color:var(--rig-mute)}
-/* Eyebrows carry task, model, run and dataset ids, which are case-sensitive data: keep their case
-   (the site's eyebrows are prose, so it can uppercase them). .rg-lbl holds fixed labels only. */
-.rg-eyebrow{display:inline-flex;align-items:center;gap:8px;color:var(--rig-sel-t);margin-bottom:10px;text-transform:none;letter-spacing:.02em}
-.rg-eyebrow::before{content:"";width:6px;height:6px;border-radius:1px;background:var(--rig-sel);flex:none}
-.rg-fld{font-family:var(--rig-mono);font-size:var(--rig-fs-2xs);font-weight:var(--rig-fw-medium);letter-spacing:var(--rig-track-caps);text-transform:uppercase}
-/* table headers: table.data thead th. One rule for every header row (tables and grid rows), so no
-   view declares its own header font. Matrix headers are harness ids (case-sensitive data): keep case. */
-.rg-tbl th,.rg-an-mx thead th,.rg-an-trow.th>*{font:var(--rig-fw-medium) var(--rig-fs-2xs)/var(--rig-lh-snug) var(--rig-mono);letter-spacing:.04em;text-transform:uppercase;color:var(--rig-mute);white-space:nowrap}
-.rg-an-mx thead th,.rg-tbl.rg-keep th{text-transform:none}   /* .rg-keep: a header row that names runs, models or harnesses keeps case in every cell */
-.rg-tbl thead th,.rg-an-mx thead th,.rg-an-trow.th{background:var(--rig-panel2)}
-.rg-pnl>.rg-tblwrap:first-child,.rg-pnl>.rg-an-trow.th:first-child{border-top-left-radius:calc(var(--rig-r-lg) - 1px);border-top-right-radius:calc(var(--rig-r-lg) - 1px)}
-.rg-pnl>.rg-tblwrap:last-child{border-bottom-left-radius:calc(var(--rig-r-lg) - 1px);border-bottom-right-radius:calc(var(--rig-r-lg) - 1px)}
-.rg-fld{font-size:var(--rig-fs-2xs)}
-.rg-kbd{font-family:var(--rig-mono)}
-.rg-kv dt{font-family:var(--rig-mono);font-size:var(--rig-fs-xs)}
-.rg-kv dd{font-family:var(--rig-mono)}
-.rg-hb .nm,.rg-hb .vl{font-family:var(--rig-mono)}
+/* ================================================================ Studio Graphite
+   Last of the primitive layers on purpose: it restates the shared primitives. The system grotesk for words,
+   labels, ids and figures (tabular digits); mono (IBM Plex Mono) for code, commands, hashes and paths only.
+   No uppercase-tracked labels, no accent eyebrows. Hairlines, 6px controls, 8px panels, 28px buttons, 20px pills.
+   Shared names:
+   .rg-btn(.pri/.ghost/.ico/.sm)  .rg-tag + tone  .rg-chip  .rg-filt (filter chip)  .rg-seg
+   .rg-inp/.rg-selc  .rg-kbd  .rg-tbl  .rg-kstrip/.rg-kstat (KPI strip)  .rg-callout  .rg-sev  .rg-kc */
+.rg-lbl{font:var(--rig-fw-medium) var(--rig-fs-xs)/var(--rig-lead-xs) var(--rig-sans);letter-spacing:0;text-transform:none;color:var(--rig-mute)}
+/* an eyebrow is a quiet line of context above a title, never a coloured mono badge */
+.rg-eyebrow{display:inline-flex;align-items:center;gap:var(--rig-s2);margin-bottom:var(--rig-s1);font:var(--rig-fw-regular) var(--rig-fs-xs)/var(--rig-lead-xs) var(--rig-sans);letter-spacing:0;text-transform:none;color:var(--rig-mute)}
+.rg-fld{font:var(--rig-fw-medium) var(--rig-fs-xs)/var(--rig-lead-xs) var(--rig-sans);letter-spacing:0;text-transform:none;color:var(--rig-mute)}
+/* table headers: one rule for every header row (tables and grid rows), so no view declares its own header font */
+.rg-tbl th,.rg-an-mx thead th,.rg-an-trow.th>*{font:var(--rig-fw-medium) var(--rig-fs-xs)/var(--rig-lead-sm) var(--rig-sans);letter-spacing:0;text-transform:none;color:var(--rig-mute);white-space:nowrap}
+.rg-tbl thead th,.rg-an-mx thead th,.rg-an-trow.th{background:var(--rig-panel)}
+.rg-pnl>.rg-tblwrap:first-child,.rg-pnl>.rg-an-trow.th:first-child{border-top-left-radius:calc(var(--rig-r-md) - 1px);border-top-right-radius:calc(var(--rig-r-md) - 1px)}
+.rg-pnl>.rg-tblwrap:last-child{border-bottom-left-radius:calc(var(--rig-r-md) - 1px);border-bottom-right-radius:calc(var(--rig-r-md) - 1px)}
+.rg-kbd{display:inline-flex;align-items:center;justify-content:center;min-width:18px;height:18px;padding:0 var(--rig-s1);border:1px solid var(--rig-line);border-radius:var(--rig-r-xs);background:var(--rig-panel2);color:var(--rig-mute);box-shadow:inset 0 -1px 0 var(--rig-line);font:var(--rig-fw-regular) var(--rig-fs-2xs)/var(--rig-lead-xs) var(--rig-mono);white-space:nowrap;vertical-align:middle}
+.rg-kv dt{font:var(--rig-fw-regular) var(--rig-fs-xs)/var(--rig-lead-md) var(--rig-sans);color:var(--rig-mute)}
+.rg-kv dd{font-family:var(--rig-num);font-variant-numeric:tabular-nums;font-size:var(--rig-fs-xs);color:var(--rig-text)}
+.rg-hb .nm,.rg-hb .vl{font-family:var(--rig-num);font-variant-numeric:tabular-nums}
 .rg-hb .nm{font-size:var(--rig-fs-xs)}
-.rg-fig{font-family:var(--rig-mono);font-weight:500;letter-spacing:-.03em}
-.rg-chain{font-family:var(--rig-mono)}
-.rg-an-nb .n,.rg-traj-nav-it .n{font-family:var(--rig-mono)}
-.rig code,.rig .rg-code{border-radius:var(--rig-r-sm)}
+.rg-fig{font-family:var(--rig-num);font-variant-numeric:tabular-nums;font-weight:var(--rig-fw-bold);letter-spacing:-.02em;color:var(--rig-text)}
+.rg-chain{font-family:var(--rig-num)}
+.rg-an-nb .n,.rg-traj-nav-it .n{font-family:var(--rig-num);font-variant-numeric:tabular-nums}
 
-/* chips: .cx-chip */
-.rg-tag,.rg-fchip,.rg-chip{display:inline-flex;align-items:center;gap:6px;height:22px;padding:0 8px;border:1px solid var(--rig-line2);border-radius:var(--rig-r-sm);font:500 var(--rig-fs-xs)/1 var(--rig-mono);color:var(--rig-dim);white-space:nowrap;background:none;max-width:100%}
+/* pills and chips: 20px, a dot or glyph, tinted by meaning */
+.rg-tag,.rg-fchip,.rg-chip{display:inline-flex;align-items:center;gap:var(--rig-s1);height:20px;padding:0 7px;border:0;border-radius:var(--rig-r-full);background:var(--rig-panel3);font:var(--rig-fw-medium) var(--rig-fs-xs)/var(--rig-lead-xs) var(--rig-sans);color:var(--rig-dim);white-space:nowrap;max-width:100%}
 /* a chip never pokes out of its cell: <Tag> wraps plain text in .rg-ell, which truncates with an ellipsis */
-.rg-tag>.rg-ell{line-height:1.3}
-.rg-tag.sky,.rg-chip.ok{color:var(--rig-sky-t);border-color:color-mix(in srgb,var(--rig-sky) 40%,transparent);background:none}
-.rg-tag.red,.rg-chip.bad{color:var(--rig-red-t);border-color:color-mix(in srgb,var(--rig-red) 40%,transparent);background:none}
-.rg-chip.live{display:inline-flex;align-items:center;gap:var(--rig-s1)}
-.rg-chip.live::before{content:"";flex:none;width:var(--rig-s2);height:var(--rig-s2);border-radius:var(--rig-r-full);background:var(--rig-text);animation:rg-pl 1.2s infinite}
-.rg-tag.acc,.rg-chip.on{color:var(--rig-sel-t);border-color:color-mix(in srgb,var(--rig-sel-t) 45%,transparent);background:none}
-.rg-tag.amb,.rg-chip.amb{color:var(--rig-amb-t);border-color:color-mix(in srgb,var(--rig-amb) 40%,transparent);background:none}
-.rg-tag.dash{border-style:dashed;color:var(--rig-mute)}
+.rg-tag>.rg-ell{line-height:var(--rig-lead-sm)}
+.rg-tag.sky,.rg-chip.ok{color:var(--rig-sky-t);background:var(--rig-pass-fill);box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--rig-sky) 45%,transparent)}
+.rg-tag.red,.rg-chip.bad,.rg-fchip{color:var(--rig-red-t);background:var(--rig-fail-fill)}
+.rg-tag.amb,.rg-chip.amb{color:var(--rig-amb-t);background:var(--rig-amb-bg)}
+.rg-tag.acc{color:var(--rig-text);background:var(--rig-panel3);box-shadow:inset 0 0 0 1px var(--rig-line3)}
+.rg-chip.on{color:var(--rig-text);background:var(--rig-sel-bg)}
+.rg-tag.dash,.rg-fchip.he{background:none;box-shadow:inset 0 0 0 1px var(--rig-line2);color:var(--rig-mute)}
 .rg-tag.nc{text-transform:none;letter-spacing:0}
-.rg-fchip{color:var(--rig-red-t);border-color:color-mix(in srgb,var(--rig-red) 40%,transparent);background:none}
-.rg-fchip.he{color:var(--rig-dim);border-color:var(--rig-line3);background:none}
-/* Pin is a button: one face everywhere (sans 13, set with .rg-pin above), never a mono chip in one view and a button in another */
-.rg-pin{border-radius:var(--rig-r-sm)}
-.rg-chain button,.rg-chain .off{min-height:calc(var(--rig-h-ctl) - var(--rig-s1));padding:0 var(--rig-s2);border-radius:var(--rig-r-sm)}
-/* severity: .sev */
-.rg-sev{display:inline-flex;align-items:center;gap:6px;height:22px;padding:0 8px;border-radius:var(--rig-r-sm);font:500 var(--rig-fs-2xs)/1 var(--rig-mono);letter-spacing:.04em;text-transform:uppercase;background:var(--rig-panel3);color:var(--rig-dim)}
-.rg-sev::before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor}
-.rg-sev.s4{background:var(--rig-red-bg);color:var(--rig-red-t)}.rg-sev.s3{background:var(--rig-amb-bg);color:var(--rig-amb-t)}.rg-sev.s2{background:var(--rig-sel-bg);color:var(--rig-sel-t)}
+button.rg-chip,a.rg-chip{cursor:pointer}
+button.rg-chip:hover,a.rg-chip:hover{filter:brightness(1.12)}
+.rg-chip.live::before{content:"";flex:none;width:6px;height:6px;border-radius:var(--rig-r-full);background:currentColor;animation:rg-pl 1.2s infinite}
+.rg-fchip{cursor:help}
+/* the kind dot inside a pill: filled for recorded data, a ring for mock data */
+.rg-kdot{display:inline-block;flex:none;width:7px;height:7px;border-radius:var(--rig-r-full)}
+.rg-kdot.rg-kdot-rec{background:var(--rig-sky)}
+.rg-kdot.rg-kdot-mock{box-shadow:inset 0 0 0 1.5px var(--rig-mute)}
+/* the six dataset kinds by shape and two hues, never a rainbow: filled = runs of models, ring = not yours to vary */
+.rg-kdot.rg-kdot-imp{background:var(--rig-amb)}
+.rg-kdot.rg-kdot-cap{background:var(--rig-amb);border-radius:1px}
+.rg-kdot.rg-kdot-pub{box-shadow:inset 0 0 0 1.5px var(--rig-sky)}
+.rg-kdot.rg-kdot-demo{box-shadow:inset 0 0 0 1.5px var(--rig-amb)}
+/* filter chips (FilterChips): dashed until chosen, then an accent outline; the count follows the search */
+.rg-filts{display:inline-flex;flex-wrap:wrap;align-items:center;gap:var(--rig-s2);min-width:0}
+.rig .rg-filt{display:inline-flex;align-items:center;gap:6px;height:var(--rig-h-ctl);padding:0 10px;border:1px dashed var(--rig-line2);border-radius:7px;background:none;color:var(--rig-dim);font:var(--rig-fw-medium) var(--rig-fs-xs)/var(--rig-lead-xs) var(--rig-sans);white-space:nowrap;transition:background-color var(--rig-dur-1) var(--rig-ease),color var(--rig-dur-1) var(--rig-ease),border-color var(--rig-dur-1) var(--rig-ease)}
+.rig .rg-filt:hover{background:var(--rig-panel2);color:var(--rig-text)}
+.rig .rg-filt[aria-pressed="true"]{border-style:solid;border-color:var(--rig-sel-edge);background:var(--rig-sel-bg);color:var(--rig-text)}
+.rig .rg-filt[aria-pressed="true"]:hover{border-color:var(--rig-sel-mark)}
+/* the chip already shown does nothing: no pointer */
+.rig .rg-filt[aria-pressed="true"][aria-disabled="true"]{cursor:default}
+.rg-filt-n{font:var(--rig-fw-regular) var(--rig-fs-2xs)/var(--rig-lead-xs) var(--rig-num);font-variant-numeric:tabular-nums;color:var(--rig-mute)}
+.rg-filt .rg-ico{width:12px;height:12px;color:var(--rig-mute)}
 /* event-kind badge: .kc */
-.rg-kc{display:inline-grid;place-items:center;width:20px;height:20px;border-radius:var(--rig-r-xs);font:600 var(--rig-fs-2xs)/1 var(--rig-mono);flex:none;background:var(--rig-panel3);color:var(--rig-dim)}
-.rg-kc.k-e{background:var(--rig-sel-bg2);color:var(--rig-sel-t)}
-.rg-kc.k-t{background:var(--rig-sky-bg2);color:var(--rig-sky-t)}
-.rg-kc.k-b{background:var(--rig-amb-bg);color:var(--rig-amb-t)}
-.rg-kc.k-s{background:var(--rig-text);color:var(--rig-bg)}
-.rg-v{font-family:var(--rig-mono);border-radius:var(--rig-r-xs)}
-.rg-vt{font-family:var(--rig-mono);font-weight:500}
+.rg-kc{display:inline-grid;place-items:center;width:20px;height:20px;border-radius:5px;font:var(--rig-fw-medium) var(--rig-fs-2xs)/var(--rig-lead-xs) var(--rig-mono);flex:none;background:var(--rig-panel3);color:var(--rig-dim);box-shadow:inset 0 0 0 1px var(--rig-line)}
+.rg-kc.k-e{background:var(--rig-cx-k-e-bg);color:var(--rig-cx-k-e);box-shadow:none}
+.rg-kc.k-t{background:var(--rig-cx-k-t-bg);color:var(--rig-cx-k-t);box-shadow:none}
+.rg-kc.k-b{background:var(--rig-cx-k-b-bg);color:var(--rig-cx-k-b);box-shadow:none}
+.rg-kc.k-s{background:var(--rig-cx-k-s-bg);color:var(--rig-cx-k-s);box-shadow:none}
+.rg-vt{font-family:var(--rig-sans);font-weight:var(--rig-fw-medium)}
 
-/* buttons: .btn (primary = accent fill + white text; default/ghost = bordered) */
-.rg-btn{border-radius:var(--rig-r-md);font-weight:500;background:transparent}
-.rg-btn.pri{background:var(--rig-sel);border-color:var(--rig-sel);color:var(--rig-sel-ink);font-weight:500}
-.rg-btn.pri:hover{filter:none;background:var(--rig-sel-h);border-color:var(--rig-sel-h)}
-.rg-btn.ghost{background:none;border-color:var(--rig-line2);color:var(--rig-text)}
-.rg-btn.ghost:hover{border-color:var(--rig-line3);background:var(--rig-panel2)}
-.rg-btn.warn{font-weight:500}
-.rg-seg{border-radius:var(--rig-r-md)}
-.rg-inp,.rg-selc{border-radius:var(--rig-r-md)}
-/* Form text must not inherit the small uppercase field-label typography. */
-.rig input.rg-inp,.rig textarea.rg-inp,.rig select.rg-selc{font-family:var(--rig-sans);font-size:var(--rig-fs-md);font-weight:400;letter-spacing:normal;text-transform:none}
-.rig textarea.rg-inp{line-height:1.5}
+/* buttons: 32px, 6px corners. One filled primary per page (ink); the secondary is outlined on the
+   panel with an edge of at least 3:1 (line3), so it reads as a button at rest; ghost = an icon or a
+   quiet tool with no box until pointed at; .ico = square */
+.rg-btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:0 12px;border:1px solid var(--rig-line3);border-radius:var(--rig-r-sm);background:var(--rig-panel);color:var(--rig-text);white-space:nowrap;text-decoration:none;transition:background-color var(--rig-dur-1) var(--rig-ease),border-color var(--rig-dur-1) var(--rig-ease),color var(--rig-dur-1) var(--rig-ease)}
+.rg-btn:hover{background:var(--rig-panel2);border-color:var(--rig-text)}
+.rg-btn .rg-ico{width:14px;height:14px;color:var(--rig-dim)}
+/* the primary action is a square ink fill (Studio's solid button); oxide is kept for selection, focus and links */
+.rg-btn.pri{background:var(--rig-text);border-color:var(--rig-text);color:var(--rig-panel);box-shadow:none}
+.rg-btn.pri .rg-ico{color:inherit}
+.rg-btn.pri:hover{filter:none;background:var(--rig-dim);border-color:var(--rig-dim)}
+.rg-btn.pri .rg-kbd{background:color-mix(in srgb,var(--rig-panel) 16%,transparent);border-color:color-mix(in srgb,var(--rig-panel) 24%,transparent);color:var(--rig-panel);box-shadow:none}
+.rg-btn.ghost{background:none;border-color:transparent;color:var(--rig-dim)}
+.rg-btn.ghost:hover{background:var(--rig-panel3);border-color:transparent;color:var(--rig-text)}
+/* a ghost button with words is a secondary button: it keeps a visible edge at rest (an icon-only ghost stays bare) */
+.rg-btn.ghost:not(.ico){border-color:var(--rig-line3);color:var(--rig-text)}
+.rg-btn.ghost:not(.ico):hover{border-color:var(--rig-text);background:var(--rig-panel2)}
+.rg-btn.warn{background:var(--rig-red-bg);border-color:transparent;color:var(--rig-red-t);font-weight:var(--rig-fw-medium)}
+.rg-btn.ico{width:var(--rig-h-ctl);padding:0}
+.rg-btn.sm{min-height:var(--rig-h-xs);padding:0 var(--rig-s2);font-size:var(--rig-fs-xs)}
+.rg-btn:disabled{opacity:.45;filter:none}
+/* segmented control: a recessed track, the chosen option raised */
+.rg-seg{display:inline-flex;gap:2px;padding:2px;border:1px solid var(--rig-line);border-radius:7px;background:var(--rig-panel2);overflow-x:auto;scrollbar-width:none;flex:none;max-width:100%}
+.rg-seg button{min-height:22px;padding:0 var(--rig-s2);border:0;border-radius:5px;background:none;color:var(--rig-mute);font:var(--rig-fw-medium) var(--rig-fs-xs)/var(--rig-lead-xs) var(--rig-sans);white-space:nowrap}
+.rg-seg button:last-child{border-right:0}
+.rg-seg button:hover{color:var(--rig-text);background:none}
+.rg-seg button.on{background:var(--rig-panel);color:var(--rig-text);font-weight:var(--rig-fw-medium);box-shadow:0 0 0 1px var(--rig-line)}
+/* fields: 28px, bordered, the accent on the border while focused */
+.rg-inp,.rg-selc{padding:0 9px;border:1px solid var(--rig-line);border-radius:var(--rig-r-sm);background:var(--rig-panel);color:var(--rig-text);transition:border-color var(--rig-dur-1) var(--rig-ease)}
+.rg-inp:hover,.rg-selc:hover{border-color:var(--rig-line2)}
+.rg-inp:focus,.rg-selc:focus{border-color:color-mix(in srgb,var(--rig-sel) 65%,transparent);outline:none}
+.rg-inp::placeholder{color:var(--rig-mute)}
+/* Form text must not inherit a field label's typography. */
+.rig input.rg-inp,.rig textarea.rg-inp,.rig select.rg-selc{font-family:var(--rig-sans);font-size:var(--rig-fs-sm);font-weight:var(--rig-fw-regular);letter-spacing:normal;text-transform:none}
+.rig textarea.rg-inp{line-height:var(--rig-lead-md)}
 /* 16px text in fields on touch screens, so a phone never zooms into a focused field */
 @media (pointer:coarse){.rig input.rg-inp,.rig textarea.rg-inp,.rig select.rg-selc{font-size:var(--rig-fs-lg)}}
+.rg-search .rg-ico{left:9px;width:14px;height:14px}
+.rg-search .rg-inp{padding-left:30px;padding-right:30px}
+.rg-search .rg-kbd{right:5px}
 .rg-sw .rg-sw-tr{border-radius:var(--rig-r-full)}
 
-/* surfaces: 1px line borders, cards 12px */
-.rg-pnl{border-radius:var(--rig-r-lg);border-color:var(--rig-line)}
-.rg-pnl>.rg-pnl-h:first-child{border-radius:calc(var(--rig-r-lg) - 1px) calc(var(--rig-r-lg) - 1px) 0 0}
-.rg-stats{border-radius:var(--rig-r-lg)}
-.rg-stats>.rg-stat:first-child{border-radius:calc(var(--rig-r-lg) - 1px) 0 0 calc(var(--rig-r-lg) - 1px)}.rg-stats>.rg-stat:last-child{border-radius:0 calc(var(--rig-r-lg) - 1px) calc(var(--rig-r-lg) - 1px) 0}
-.rg-pre{border-radius:var(--rig-r-md)}
-.rg-note{border-radius:var(--rig-r-md)}
-.rg-dh h1{letter-spacing:-.02em}
-.rg-tbl .rg-tlink{font-family:var(--rig-mono);font-size:var(--rig-fs-xs)}
+/* surfaces: 1px hairlines, panels and cards 8px */
+.rg-pnl,.rg-stats{border-radius:var(--rig-r-md);border-color:var(--rig-line)}
+.rg-pnl>.rg-pnl-h:first-child{border-radius:calc(var(--rig-r-md) - 1px) calc(var(--rig-r-md) - 1px) 0 0}
+.rg-pnl-h{min-height:calc(var(--rig-h-ctl) + var(--rig-s3));padding:0 var(--rig-s4)}
+.rg-pnl-h .rg-lbl{font-size:var(--rig-fs-xs);font-weight:var(--rig-fw-semi);color:var(--rig-text)}
+.rg-pnl-b{padding:var(--rig-s4)}
+.rg-stats>.rg-stat:first-child{border-radius:calc(var(--rig-r-md) - 1px) 0 0 calc(var(--rig-r-md) - 1px)}.rg-stats>.rg-stat:last-child{border-radius:0 calc(var(--rig-r-md) - 1px) calc(var(--rig-r-md) - 1px) 0}
+.rg-pre{border-radius:var(--rig-r-md);background:var(--rig-code);border-color:var(--rig-line-soft)}
+.rg-note{border-radius:var(--rig-r-md);border-left-width:1px;background:var(--rig-panel2);border-color:var(--rig-line)}
+.rg-note.acc{box-shadow:inset 2px 0 0 var(--rig-text)}.rg-note.amb{box-shadow:inset 2px 0 0 var(--rig-amb)}.rg-note.red{box-shadow:inset 2px 0 0 var(--rig-red)}.rg-note.sky{box-shadow:inset 2px 0 0 var(--rig-sky)}
+.rg-tbl .rg-tlink{font-family:var(--rig-num);font-size:var(--rig-fs-sm);font-variant-numeric:tabular-nums}
+/* tables: 32px header on a hairline, 40px rows on soft dividers, the row under the pointer raised */
+.rg-tbl th{height:32px;padding:0 var(--rig-s3);border-bottom:1px solid var(--rig-line)}
+.rg-tbl td{padding:0 var(--rig-s3);border-bottom:1px solid var(--rig-line-soft)}
+.rg-tbl tr.hov:hover td{background:var(--rig-row-hover)}
+.rg-tbl td.rg-num{font-size:var(--rig-fs-sm)}
 
-/* ================================================================ Site accuracy pass (traceharness.dev tools/site.css)
-   Values copied from the website's stylesheet: headings (h1-h4 500 / -.02em / balance), the hero's
-   dot-grid backdrop, the lede, the stat figure (.risk b), and the .icon-btn. Buttons, panels and
-   figures are restated in place above. Eyebrows keep their case (they carry case-sensitive ids). */
-.rig h1,.rig h2,.rig h3{font-weight:500;letter-spacing:-.02em;text-wrap:balance}
-.rig h2{letter-spacing:-.015em}
-.rig .rg-dh h1{font-size:var(--rig-fs-2xl);line-height:1.15}
+/* headings, page heads and ledes */
+.rig h1,.rig h2,.rig h3{font-weight:var(--rig-fw-semi);letter-spacing:-.012em;text-wrap:balance}
+.rig h1,.rig h2{font-weight:var(--rig-fw-bold)}
+.rig .rg-dh h1{font-size:var(--rig-fs-xl);line-height:var(--rig-lead-xl);letter-spacing:var(--rig-track-title)}
+/* bold in running text is a real semibold: the browser's 700 is not one of the three weights */
+.rig b,.rig strong{font-weight:var(--rig-fw-semi)}
 .rg-dh{position:relative;isolation:isolate}
-/* a field of dots behind the home title only, as behind the site's hero (every other page head stays flat,
-   hairline-and-ink): tall enough for several rows, on the 4px rhythm, fading out from the title */
-.rg-home-head::before{content:"";position:absolute;z-index:-1;pointer-events:none;inset:calc(-1 * var(--rig-s7)) 0 calc(-1 * var(--rig-s5)) 0;
-  background-image:radial-gradient(var(--rig-dot) 1px,transparent 1.2px);background-size:var(--rig-s5) var(--rig-s5);background-position:var(--rig-s3) var(--rig-s3);
-  -webkit-mask-image:radial-gradient(ellipse 60% 75% at 22% 45%,var(--rig-text) 25%,transparent 78%);mask-image:radial-gradient(ellipse 60% 75% at 22% 45%,var(--rig-text) 25%,transparent 78%)}
-.rig .rg-dh p,.rg-an-sub,.rg-traj-lede{color:var(--rig-dim);font-size:var(--rig-fs-md);line-height:1.6;max-width:62ch}
+.rig .rg-dh p,.rg-an-sub,.rg-traj-lede{color:var(--rig-mute);font-size:var(--rig-fs-sm);line-height:var(--rig-lead-md);max-width:72ch}
+/* a finding sentence over a figure: body ink, its key figures bold; a panel's one-line subtitle under its title */
+.rig .rg-lead-line{margin:0 0 var(--rig-s3);max-width:var(--rig-measure);font-size:var(--rig-fs-md);line-height:var(--rig-lead-lg);color:var(--rig-text)}
+.rig .rg-lead-line b{font-weight:var(--rig-fw-bold)}
+.rig .rg-panel-sub{margin:var(--rig-s1) 0 var(--rig-s3);font-size:var(--rig-fs-xs);line-height:var(--rig-lead-sm);color:var(--rig-mute);max-width:var(--rig-measure)}
+
+/* the KPI strip (KpiStrip): label above value, hairlines between, no boxes */
+.rg-kstrip{display:flex;flex-wrap:wrap;align-items:stretch;row-gap:var(--rig-s2);min-width:0;margin:0}
+.rg-kstat{display:flex;flex-direction:column;min-width:0;padding:0 var(--rig-s4);border-left:1px solid var(--rig-line)}
+.rg-kstat:first-child{padding-left:0;border-left:0}
+/* a KPI's label wraps in a narrow strip instead of running past its column */
+.rig .rg-kstat-k{margin:0;font:var(--rig-fw-regular) var(--rig-fs-2xs)/var(--rig-lead-xs) var(--rig-sans);color:var(--rig-mute)}
+.rig .rg-kstat-v{margin:0;font:var(--rig-fw-regular) var(--rig-fs-sm)/var(--rig-lead-md) var(--rig-num);font-variant-numeric:tabular-nums;color:var(--rig-text);white-space:nowrap}
+.rg-kstat-u{margin-left:2px;font-size:var(--rig-fs-2xs);color:var(--rig-mute)}
+.rg-kstat-v.rg-red{color:var(--rig-red-t)}.rg-kstat-v.rg-sky{color:var(--rig-sky-t)}.rg-kstat-v.rg-amb{color:var(--rig-amb-t)}
+
+/* a callout (Callout): a tinted glyph, a title, one paragraph, an action at the right */
+.rg-callout{display:flex;align-items:flex-start;gap:var(--rig-s3);padding:10px var(--rig-s3);border-radius:var(--rig-r-md);background:var(--rig-panel2);box-shadow:inset 0 0 0 1px var(--rig-line);min-width:0}
+.rg-callout-g{display:grid;place-items:center;flex:none;width:24px;height:24px;border-radius:var(--rig-r-sm);background:var(--rig-panel3);color:var(--rig-dim)}
+.rg-callout-g .rg-ico{width:14px;height:14px;stroke-width:2}
+.rg-callout.rg-callout-red .rg-callout-g{background:var(--rig-red-bg);color:var(--rig-red-t)}
+.rg-callout.rg-callout-amb .rg-callout-g{background:var(--rig-amb-bg);color:var(--rig-amb-t)}
+.rg-callout.rg-callout-acc .rg-callout-g{background:var(--rig-panel3);color:var(--rig-text)}
+.rg-callout.rg-callout-sky .rg-callout-g{background:var(--rig-sky-bg);color:var(--rig-sky-t)}
+.rg-callout-b{flex:1;min-width:0}
+.rig .rg-callout-t{margin:0;font:var(--rig-fw-semi) var(--rig-fs-sm)/var(--rig-lead-md) var(--rig-sans);color:var(--rig-text)}
+.rg-callout-p{color:var(--rig-dim);max-width:900px;overflow-wrap:anywhere}
+.rg-callout-p>:last-child{margin-bottom:0}
+.rg-callout-a{flex:none;display:flex;align-items:center;gap:var(--rig-s2)}
 
 /* Keep named radio-group legends full width without the browser fieldset inset. */
 .rig fieldset.rg-pnl{min-inline-size:0;padding:0}
@@ -567,24 +741,34 @@ button.rg-stat:hover{background:var(--rig-panel2)}
    tokens above, never from a literal. New work uses these names; the literals in the layers above
    are migrated to them by the shell owner (mapping in plans/UI_CONTRACT.md).
    Spacing      --rig-s0 2 · s1 4 · s2 8 · s3 12 · s4 16 · s5 24 · s6 32 · s7 48 · s8 64   (4px scale)
-   Radius       --rig-r-xs 4 (kbd, glyphs) · sm 6 (chips, menu items) · md 8 (controls, notes, code)
-                · lg 12 (cards, panels, popovers, dialogs) · full (dots, pills)
-   Type         --rig-fs-2xs 11 · xs 12 · sm 13 · md 14 · lg 16 · xl 20 · 2xl 26, figures 18 / 26 / 40
-   Control      --rig-h-ctl is THE control height: 36px with a mouse, 44px on a coarse pointer or a
-                phone-width window. --rig-hit is the minimum touch target, --rig-h-row a table row.
+   Radius       --rig-r-xs 4 (kbd, glyphs) · sm 6 (controls, chips, menu items) · md 8 (panels, cards,
+                notes, code) · lg 12 (popovers, dialogs) · panel 10 (the main panel) · full (dots, pills)
+   Type         --rig-fs-2xs 12 (the floor) · xs 13 (labels) · sm 14 (body) · md 15 · lg 17 (section
+                heading) · xl 24 (page title) · 2xl 28, figures 17 / 22 / 28; the logo is never larger than the
+                page title. Weights are 400 (body), 600 (emphasis: --rig-fw-medium and --rig-fw-semi) and 650
+                (titles, key numbers: --rig-fw-bold); 500 is not used, it drew as 400 in the old Arial face.
+                Figures are set in the word face with tabular digits (--rig-num); mono is for code only.
+   Control      --rig-h-ctl is THE control height: 28px with a mouse, 44px on a coarse pointer or a
+                phone-width window. --rig-hit is the minimum target (36px with a mouse: small controls
+                grow an invisible hit area), --rig-h-row a table row.
    Layers       --rig-z-* mirror the literals in use today, so swapping one in changes no stacking. */
 .rig{
   --rig-s0:2px;--rig-s8:64px;--rig-gutter:var(--rig-s5);--rig-measure:68ch;
-  --rig-r-xs:4px;--rig-r-sm:6px;--rig-r-md:8px;--rig-r-lg:12px;--rig-r-full:999px;
-  --rig-fs-2xs:11px;--rig-fs-xs:12px;--rig-fs-sm:13px;--rig-fs-md:14px;--rig-fs-lg:16px;--rig-fs-xl:20px;--rig-fs-2xl:26px;
-  --rig-fs-fig-sm:18px;--rig-fs-fig-md:26px;--rig-fs-fig-narrow:32px;--rig-fs-fig:40px;
-  --rig-lh-tight:1.2;--rig-lh-snug:1.35;--rig-lh-body:1.5;--rig-lh-prose:1.6;--rig-lh-code:1.7;
-  --rig-fw-regular:400;--rig-fw-medium:500;--rig-fw-semi:600;--rig-track-caps:.07em;
+  --rig-r-xs:4px;--rig-r-sm:6px;--rig-r-md:6px;--rig-r-lg:6px;--rig-r-full:999px;--rig-r-panel:6px;
+  --rig-fs-2xs:12px;--rig-fs-xs:13px;--rig-fs-sm:14px;--rig-fs-md:15px;--rig-fs-lg:17px;--rig-fs-xl:24px;--rig-fs-2xl:28px;
+  --rig-fs-fig-sm:17px;--rig-fs-fig-md:22px;--rig-fs-fig-narrow:24px;--rig-fs-fig:28px;--rig-fs-logo:20px;
+  /* leading: five whole-pixel steps; a rule picks the one for its type size, never a ratio
+     (a ratio of 13 or 14 px drew 17.55, 18.9, 20.02, 21.56 px lines). The lh names are the old ratios' slots. */
+  --rig-lead-xs:16px;--rig-lead-sm:18px;--rig-lead-md:20px;--rig-lead-lg:24px;--rig-lead-xl:30px;
+  --rig-lh-tight:var(--rig-lead-xs);--rig-lh-snug:var(--rig-lead-sm);--rig-lh-body:var(--rig-lead-md);--rig-lh-prose:var(--rig-lead-lg);--rig-lh-code:var(--rig-lead-md);
+  --rig-fw-regular:400;--rig-fw-medium:600;--rig-fw-semi:600;--rig-fw-bold:650;--rig-track-title:-.3px;--rig-track-caps:.07em;
   --rig-h-xs:24px;--rig-h-sm:28px;--rig-h-md:36px;--rig-h-lg:44px;
-  --rig-h-ctl:var(--rig-h-md);--rig-hit:var(--rig-h-md);--rig-h-row:40px;
-  --rig-z-base:1;--rig-z-sticky:10;--rig-z-rail:30;--rig-z-dropdown:45;--rig-z-dock:58;--rig-z-scrim:60;--rig-z-sheet:62;--rig-z-popover:65;--rig-z-menu:70;--rig-z-toast:80;--rig-z-skip:100;
-  --rig-focus-ring:2px solid var(--rig-sel);--rig-focus-offset:2px;
-  --rig-dur-1:120ms;--rig-dur-2:180ms;--rig-ease:cubic-bezier(.2,0,0,1);
+  --rig-h-btn:32px;--rig-h-ctl:var(--rig-h-btn);--rig-hit:var(--rig-h-md);--rig-h-row:40px;
+  --rig-z-base:1;--rig-z-sticky:10;--rig-z-rail:30;--rig-z-dropdown:45;--rig-z-dock:58;--rig-z-scrim:60;--rig-z-sheet:62;--rig-z-popover:65;--rig-z-menu:70;--rig-z-toast:80;--rig-z-tour:90;--rig-z-skip:100;
+  --rig-focus-ring:2px solid var(--rig-sel);--rig-focus-offset:4px;
+  --rig-dur-1:120ms;--rig-dur-2:180ms;--rig-dur-pulse:1.2s;--rig-ease:cubic-bezier(.2,0,0,1);
+  /* a placeholder shows only when a wait outlasts this (feel.css); a pressed control dims to this */
+  --rig-wait:150ms;--rig-press:.72;
 }
 @media (max-width:767px){.rig{--rig-gutter:var(--rig-s4)}}
 @media (max-width:767px),(pointer:coarse){.rig{--rig-h-ctl:var(--rig-h-lg);--rig-hit:var(--rig-h-lg);--rig-h-row:44px}}
@@ -598,7 +782,7 @@ button.rg-stat:hover{background:var(--rig-panel2)}
 .rg-inp,.rg-selc{height:var(--rig-h-ctl)}
 .rg-seg button{min-height:calc(var(--rig-h-ctl) - 2px)}
 .rg-sw{min-height:var(--rig-h-ctl)}
-button.rg-btn,a.rg-btn{font:var(--rig-fw-medium) var(--rig-fs-sm)/var(--rig-lh-tight) var(--rig-sans)}
+button.rg-btn,a.rg-btn{font:var(--rig-fw-medium) var(--rig-fs-sm)/var(--rig-lead-xs) var(--rig-sans)}
 
 /* ---------------------------------------------------------------- page heads keep their title
    .rg-dh: the title block has a 20rem basis, so actions that do not fit wrap UNDER it instead of
@@ -639,192 +823,219 @@ button.rg-btn,a.rg-btn{font:var(--rig-fw-medium) var(--rig-fs-sm)/var(--rig-lh-t
   .rig input[type="checkbox"],.rig input[type="radio"]{min-width:calc(var(--rig-s4) + var(--rig-s1));min-height:calc(var(--rig-s4) + var(--rig-s1))}
 }
 
-/* ================================================================ shell (UI contract v1, section 11)
-   The chrome around the documents. Only this layer reads the window (@media):
-     phone ≤760 · tablet 761–1099 · laptop 1100–1279 · desktop ≥1280 · wide ≥1800.
-   Everything inside answers to a container: rgwork (the work area), rgpane (one pane), rgdoc (its
+/* ================================================================ shell (Studio Graphite)
+   The chrome around the documents: the app ground (bg) with the sidebar on it, ONE rounded main
+   panel (the panes), a side panel beside it when a dock is open, and the status bar across the foot.
+   Only this layer reads the window (@media): phone ≤767 · tablet 768–1023 · laptop+ ≥1024 · wide ≥1920.
+   Everything inside answers to a container: rgwork (the main panel), rgpane (one pane), rgdoc (its
    document), rgpanel (the side panel), rgdockb (the panel body), rgsb (the status bar).
-   Heights come from --rig-h-ctl, so every bar grows with it on a coarse pointer. */
+   The first row of a pane is its head: the breadcrumb (or its tabs) and the page's actions; the pane
+   on the right also carries the console's own controls (search, Buddy, split, maximize, theme). */
 .rig{
-  --rig-rail-w:56px;--rig-side-w:224px;--rig-nav-w:var(--rig-rail-w);--rig-cmd-max:600px;--rig-pal-w:680px;--rig-drawer-w:420px;
-  --rig-tb-h:calc(var(--rig-h-ctl) + var(--rig-s3));
-  --rig-head-h:calc(var(--rig-h-ctl) + var(--rig-s1));
-  --rig-sb-h:calc(var(--rig-h-sm) + var(--rig-s1) + 1px);   /* 32px items under a 1px rule */
+  --rig-rail-w:76px;--rig-side-w:224px;--rig-nav-w:var(--rig-rail-w);--rig-cmd-w:300px;--rig-pal-w:640px;--rig-drawer-w:420px;
+  --rig-gap:var(--rig-s2);
+  --rig-head-h:44px;
+  --rig-sb-h:26px;
   /* the docked panel: the reader's width, 320px at least, never more than 40% of the window, and never
      leaving the document under 480px */
   --rig-dock-cw:clamp(320px,min(var(--rig-dock-w,420px),40vw,calc(100vw - var(--rig-nav-w) - 480px)),640px);
 }
-@media (max-width:767px),(pointer:coarse){.rig{--rig-sb-h:calc(var(--rig-h-lg) + 1px)}}
+@media (max-width:767px),(pointer:coarse){.rig{--rig-sb-h:calc(var(--rig-h-lg) + 1px);--rig-head-h:calc(var(--rig-h-lg) + var(--rig-s2))}}
 .rig[data-rig-nav="open"]{--rig-nav-w:var(--rig-side-w)}
 .rig.has-side{grid-template-columns:var(--rig-nav-w) minmax(0,1fr) var(--rig-dock-cw)}
 body.rg-resizing{cursor:col-resize;user-select:none}
-.rg-skip{position:fixed;left:var(--rig-s2);top:calc(-1 * var(--rig-s8));z-index:var(--rig-z-skip);padding:var(--rig-s2) var(--rig-s3);border-radius:var(--rig-r-md);background:var(--rig-sel);color:var(--rig-sel-ink);font:var(--rig-fw-medium) var(--rig-fs-sm)/var(--rig-lh-tight) var(--rig-sans);text-decoration:none}
+.rg-skip{position:fixed;left:var(--rig-s2);top:calc(-1 * var(--rig-s8));z-index:var(--rig-z-skip);padding:var(--rig-s2) var(--rig-s3);border-radius:var(--rig-r-sm);background:var(--rig-sel);color:var(--rig-sel-ink);font:var(--rig-fw-medium) var(--rig-fs-sm)/var(--rig-lead-xs) var(--rig-sans);text-decoration:none}
 .rg-skip:focus{top:var(--rig-s2)}
 
 /* ---------------------------------------------------------------- maximize: the focused pane takes the window */
-.rig[data-rig-max]{grid-template-columns:minmax(0,1fr);grid-template-rows:var(--rig-tb-h) minmax(0,1fr) auto 0}
+.rig[data-rig-max]{grid-template-columns:minmax(0,1fr);grid-template-rows:minmax(0,1fr) auto 0}
 .rig.has-side[data-rig-max]{grid-template-columns:minmax(0,1fr) var(--rig-dock-cw)}
 .rig[data-rig-max] .rg-rail,.rig[data-rig-max] .rg-sb,.rig[data-rig-max] .rg-nav-scrim{display:none}
-.rig[data-rig-max] .rg-work,.rig[data-rig-max] .rg-dock:not(.side){grid-column:1}
+.rig[data-rig-max] .rg-work,.rig[data-rig-max] .rg-dock:not(.side){grid-column:1;margin-left:var(--rig-gap)}
 .rig[data-rig-max] .rg-dock.side{grid-column:2}
 .rig[data-rig-max] .rg-pane:not(.focus){display:none}
 .rig[data-rig-max] .rg-pane+.rg-pane{border-left:0}
 
-/* ---------------------------------------------------------------- top bar
-   brand · search · actions. One button style for the whole cluster: ghost, --rig-h-ctl square,
-   a hairline on hover and while pressed. The search field is the only bordered element. */
-.rg-tb{grid-column:1/-1;grid-row:1;display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;column-gap:var(--rig-s4);min-width:0;padding:0 var(--rig-s3);background:var(--rig-panel);border-bottom:1px solid var(--rig-line)}
-.rg-tb-l{display:flex;align-items:center;min-width:0;height:100%}
-.rg-brand{display:flex;align-items:center;gap:var(--rig-s3);height:var(--rig-h-ctl);padding:0 var(--rig-s2);border:0;border-radius:var(--rig-r-md);background:none;color:var(--rig-text);text-decoration:none;flex:none}
-.rg-brand:hover{background:var(--rig-panel2)}
-.rg-brand .mk{display:grid;place-items:center;flex:none}
-.rg-brand b{font:var(--rig-fw-semi) var(--rig-fs-lg)/1 var(--rig-sans);letter-spacing:-.015em;white-space:nowrap}
-.rg-mark .m1{fill:var(--rig-text)}.rg-mark .m4{fill:var(--rig-brand)}
-.rg-cmd{justify-self:center;display:flex;align-items:center;gap:var(--rig-s2);width:100%;max-width:var(--rig-cmd-max);min-width:0;height:var(--rig-h-ctl);padding:0 var(--rig-s2) 0 var(--rig-s3);border:1px solid var(--rig-line);border-radius:var(--rig-r-md);background:var(--rig-panel2);color:var(--rig-mute);text-align:left;font:var(--rig-fw-regular) var(--rig-fs-sm)/var(--rig-lh-tight) var(--rig-sans)}
-.rg-cmd:hover{border-color:var(--rig-line3);background:var(--rig-panel3);color:var(--rig-dim)}
-.rg-cmd-ph{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.rg-cmd-k{display:flex;gap:var(--rig-s0);flex:none}
-.rg-kbd{display:inline-flex;align-items:center;justify-content:center;min-width:var(--rig-s5);height:var(--rig-s5);padding:0 var(--rig-s1);border:1px solid var(--rig-line2);border-bottom-width:2px;border-radius:var(--rig-r-xs);background:var(--rig-panel2);color:var(--rig-dim);font:var(--rig-fw-medium) var(--rig-fs-2xs)/1 var(--rig-mono);white-space:nowrap;vertical-align:middle}
-.rg-mtab{display:none;flex:1 1 auto;align-items:center;gap:var(--rig-s2);min-width:7.5rem;height:var(--rig-h-ctl);padding:0 var(--rig-s2) 0 var(--rig-s3);border:1px solid var(--rig-line2);border-radius:var(--rig-r-md);background:var(--rig-bg);color:var(--rig-text);text-align:left}
-.rg-mtab>.rg-ico{color:var(--rig-mute)}
-.rg-mtab .tt{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font:var(--rig-fw-medium) var(--rig-fs-md)/var(--rig-lh-tight) var(--rig-sans)}
-.rg-mtab .n{flex:none;min-width:var(--rig-s5);padding:var(--rig-s1);border-radius:var(--rig-r-xs);background:var(--rig-panel3);color:var(--rig-text);font:var(--rig-fw-medium) var(--rig-fs-2xs)/1 var(--rig-mono);text-align:center}
-.rg-tb-r{display:flex;align-items:center;justify-content:flex-end;gap:var(--rig-s1);min-width:0}
-.rg-tbtn{display:inline-flex;align-items:center;justify-content:center;gap:var(--rig-s2);flex:none;height:var(--rig-h-ctl);min-width:var(--rig-h-ctl);padding:0 var(--rig-s3);border:1px solid transparent;border-radius:var(--rig-r-md);background:none;color:var(--rig-dim);font:var(--rig-fw-medium) var(--rig-fs-sm)/1 var(--rig-sans);white-space:nowrap;text-decoration:none}
-.rg-tbtn:hover{border-color:var(--rig-line2);color:var(--rig-text)}
-.rg-tbtn.on,.rg-tbtn[aria-pressed="true"]{border-color:var(--rig-line2);background:var(--rig-sel-bg);color:var(--rig-sel-t)}
-.rg-tbtn.ico{width:var(--rig-h-ctl);padding:0}
-.rg-tbtn .lbl-d{display:none}
-.rg-tb-sep{flex:none;width:1px;height:var(--rig-s5);margin:0 var(--rig-s1);background:var(--rig-line2)}
-.rg-tb-more{display:none}
-/* desktop: the search is centred on the window and the actions carry their words */
-@media (min-width:1280px){
-  .rg-tb{grid-template-columns:minmax(max-content,1fr) minmax(15rem,var(--rig-cmd-max)) minmax(max-content,1fr)}
-  .rg-tbtn .lbl-d{display:inline}
-}
-/* below it, every action is an icon with a tooltip */
-@media (max-width:1279px){
-  .rg-tbtn:has(>.lbl-d){width:var(--rig-h-ctl);padding:0}
-}
-@media (max-width:1023px){.rg-brand b,.rg-cmd-k{display:none}}
+/* ---------------------------------------------------------------- the logo: the "traceharness." wordmark ("t." in a square); only its period is oxide */
+.rg-mark{font:var(--rig-fw-bold) var(--rig-fs-logo)/var(--rig-lead-lg) var(--rig-sans);letter-spacing:-1.3px;color:var(--rig-text);white-space:nowrap}
+.rg-mark-dot{color:var(--rig-sel-t)}
 
-/* ---------------------------------------------------------------- sidebar: labelled (224) or an icon rail (56) */
-.rg-rail{grid-column:1;grid-row:2/4;display:flex;flex-direction:column;min-width:0;min-height:0;padding:var(--rig-s2) calc((var(--rig-rail-w) - var(--rig-h-ctl)) / 2);background:var(--rig-panel);border-right:1px solid var(--rig-line)}
-.rig[data-rig-nav="open"] .rg-rail{padding:var(--rig-s3);overflow-x:hidden;overflow-y:auto;scrollbar-width:thin}
+/* ---------------------------------------------------------------- sidebar: labelled (224) or an icon rail (56), on the app ground */
+.rg-rail{grid-column:1;grid-row:1/3;display:flex;flex-direction:column;gap:1px;min-width:0;min-height:0;padding:var(--rig-s2) calc((var(--rig-rail-w) - var(--rig-h-ctl)) / 2);background:var(--rig-bg)}
+.rig[data-rig-nav="open"] .rg-rail{padding:var(--rig-s2);overflow-x:hidden;overflow-y:auto;scrollbar-width:thin}
 .rg-rail .sp{flex:1}
-.rg-nav-g{display:flex;flex-direction:column;gap:var(--rig-s0)}
-.rg-nav-g+.rg-nav-g{margin-top:var(--rig-s4)}
-.rg-nav-gl{padding:var(--rig-s1) var(--rig-s2) var(--rig-s2);color:var(--rig-mute);font:var(--rig-fw-medium) var(--rig-fs-2xs)/1 var(--rig-mono);letter-spacing:var(--rig-track-caps);text-transform:uppercase}
-.rg-rail .rg-nav-it{position:relative;display:flex;align-items:center;gap:var(--rig-s3);width:100%;height:var(--rig-h-ctl);padding:0 var(--rig-s2);border:0;border-radius:var(--rig-r-md);background:none;color:var(--rig-dim);font:var(--rig-fw-medium) var(--rig-fs-sm)/1 var(--rig-sans);text-align:left;white-space:nowrap}
+.rg-side-top{display:flex;align-items:center;gap:0;min-width:0;min-height:36px;margin-bottom:6px}
+.rig .rg-brand{display:grid;place-items:center;flex:none;width:var(--rig-h-ctl);height:var(--rig-h-ctl);padding:0;border:0;border-radius:var(--rig-r-sm);background:none;color:var(--rig-text)}
+.rig .rg-brand:hover{background:var(--rig-panel2)}
+.rig[data-rig-nav="open"] .rg-side-top{flex-wrap:wrap}
+.rig[data-rig-nav="open"] .rg-brand{place-items:center start;width:auto;height:36px;padding:0 6px}
+.rig[data-rig-nav="open"] .rg-dsw{flex-basis:100%}
+.rg-nav-g{display:flex;flex-direction:column;gap:1px}
+.rg-nav-g+.rg-nav-g::before{content:"";display:block;height:1px;margin:var(--rig-s2) var(--rig-s2);background:var(--rig-line-soft)}
+.rg-nav-gl{display:none}
+.rg-rail .rg-nav-it{position:relative;display:flex;align-items:center;gap:var(--rig-s2);width:100%;height:var(--rig-h-ctl);padding:0 var(--rig-s2);border:0;border-radius:var(--rig-r-sm);background:none;color:var(--rig-dim);font:var(--rig-fw-regular) var(--rig-fs-sm)/var(--rig-lead-xs) var(--rig-sans);text-align:left;white-space:nowrap;user-select:none}
+.rg-rail .rg-nav-it .rg-ico{width:16px;height:16px;color:var(--rig-mute)}
 .rg-rail .rg-nav-it:hover{background:var(--rig-panel2);color:var(--rig-text)}
-.rg-rail .rg-nav-it.on{background:var(--rig-sel-bg);color:var(--rig-text)}
-.rg-rail .rg-nav-it.on .rg-ico{color:var(--rig-sel-t)}
+.rg-rail .rg-nav-it.on{background:var(--rig-panel3);color:var(--rig-text)}
+.rg-rail .rg-nav-it.on .rg-ico{color:var(--rig-text)}
 .rg-rail .rg-nav-it .lbl{min-width:0;overflow:hidden;text-overflow:ellipsis}
-.rg-rail .rg-nav-foot{margin-top:var(--rig-s3);padding-top:var(--rig-s3);border-top:1px solid var(--rig-line)}
+.rg-nav-ct{margin-left:auto;padding-left:var(--rig-s2);color:var(--rig-mute);font:var(--rig-fw-regular) var(--rig-fs-2xs)/var(--rig-lead-xs) var(--rig-num);font-variant-numeric:tabular-nums}
+.rg-rail .rg-nav-foot{margin-top:auto;padding-top:var(--rig-s2)}
+.rg-rail .rg-nav-foot::before{display:none}
 .rg-rail .rg-nav-toggle{color:var(--rig-mute)}
-.rg-rail .tip{display:none;position:absolute;left:calc(100% + var(--rig-s3));top:50%;z-index:var(--rig-z-rail);padding:var(--rig-s1) var(--rig-s2);border-radius:var(--rig-r-sm);background:var(--rig-panel3);color:var(--rig-text);font:var(--rig-fw-medium) var(--rig-fs-xs)/var(--rig-lh-snug) var(--rig-sans);white-space:nowrap;pointer-events:none;opacity:0;transform:translateY(-50%);box-shadow:var(--rig-shadow)}
+.rg-rail .tip{display:none;position:absolute;left:calc(100% + var(--rig-s3));top:50%;z-index:var(--rig-z-rail);padding:var(--rig-s1) var(--rig-s2);border-radius:var(--rig-r-sm);background:var(--rig-panel3);color:var(--rig-text);font:var(--rig-fw-medium) var(--rig-fs-xs)/var(--rig-lead-sm) var(--rig-sans);white-space:nowrap;pointer-events:none;opacity:0;transform:translateY(-50%);box-shadow:var(--rig-shadow)}
 .rg-rail button:hover .tip,.rg-rail button:focus-visible .tip{opacity:1}
-.rig[data-rig-nav="closed"] .rg-rail .rg-nav-it{justify-content:center;width:var(--rig-h-ctl);padding:0}
-.rig[data-rig-nav="closed"] .rg-rail .tip{display:block}
-.rig[data-rig-nav="closed"] .rg-nav-it .lbl,.rig[data-rig-nav="closed"] .rg-nav-gl{display:none}
-.rig[data-rig-nav="closed"] .rg-nav-g+.rg-nav-g{margin-top:var(--rig-s2);padding-top:var(--rig-s2);border-top:1px solid var(--rig-line)}
-/* the section's own list under its sidebar item (Analysis steps, a task page's tasks) */
-.rg-nav-node{display:flex;flex-direction:column}
-.rg-nav-sub{position:relative;display:flex;flex-direction:column;gap:var(--rig-s0);margin:var(--rig-s0) 0 var(--rig-s2) var(--rig-s4);padding-left:var(--rig-s2)}
-.rg-nav-sub::before{content:"";position:absolute;left:0;top:var(--rig-s0);bottom:var(--rig-s0);width:1px;background:var(--rig-line2)}
-.rg-rail .rg-nav-sub-it{display:flex;align-items:center;gap:var(--rig-s2);width:100%;height:var(--rig-h-ctl);padding:0 var(--rig-s2);border:0;border-radius:var(--rig-r-sm);background:none;color:var(--rig-mute);font:var(--rig-fw-medium) var(--rig-fs-sm)/1 var(--rig-sans);text-align:left;white-space:nowrap}
-.rg-rail .rg-nav-sub-it:hover{background:var(--rig-panel2);color:var(--rig-text)}
-.rg-rail .rg-nav-sub-it.on{background:var(--rig-panel3);color:var(--rig-text)}
-.rg-rail .rg-nav-sub-it .n{flex:none;width:var(--rig-s4);color:var(--rig-mute);font:var(--rig-fw-medium) var(--rig-fs-2xs)/1 var(--rig-mono);font-variant-numeric:tabular-nums;text-align:right}
-.rg-rail .rg-nav-sub-it.on .n{color:var(--rig-sel-t)}
-.rg-rail .rg-nav-sub-it .lbl{min-width:0;overflow:hidden;text-overflow:ellipsis}
-.rg-rail .rg-nav-sub-it .ct{flex:none;margin-left:auto;padding-left:var(--rig-s2);color:var(--rig-mute);font:var(--rig-fw-medium) var(--rig-fs-2xs)/1 var(--rig-mono);font-variant-numeric:tabular-nums}
-.rg-rail .rg-nav-sub-it .ct.bad{color:var(--rig-red-t)}
-.rg-rail .rg-nav-sub-it.rg-nav-sub-all{color:var(--rig-dim)}
-.rg-rail .rg-nav-tasks{max-height:min(52vh,35rem);overflow-y:auto;scrollbar-width:thin}
-@media (min-width:768px){
-  .rig[data-rig-nav="open"] .rg-an-split{grid-template-columns:minmax(0,1fr)}
-  .rig[data-rig-nav="open"] .rg-an-split>.rg-an-nav{display:none}
-}
-/* dataset switcher at the top of the sidebar; its menu may leave the 224px rail */
-.rg-dsw{position:relative;margin:0 0 var(--rig-s4)}
-.rg-dsw-b{display:flex;align-items:center;gap:var(--rig-s2);width:100%;min-height:var(--rig-h-lg);padding:var(--rig-s1) var(--rig-s2) var(--rig-s1) var(--rig-s1);border:1px solid var(--rig-line);border-radius:var(--rig-r-md);background:var(--rig-bg);color:var(--rig-text);text-align:left}
-.rg-dsw-b:hover,.rg-dsw-b[aria-expanded="true"]{border-color:var(--rig-line3)}
-.rg-dsw-b>.rg-ico{flex:none;color:var(--rig-mute)}
-.rg-dsw-ic{flex:none;display:grid;place-items:center;width:var(--rig-h-sm);height:var(--rig-h-sm);border-radius:var(--rig-r-sm);background:var(--rig-panel3);color:var(--rig-text);font:var(--rig-fw-semi) var(--rig-fs-sm)/1 var(--rig-sans)}
-.rg-dsw-t{display:flex;flex-direction:column;gap:var(--rig-s1);flex:1;min-width:0}
-.rg-dsw-t b{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font:var(--rig-fw-semi) var(--rig-fs-sm)/var(--rig-lh-tight) var(--rig-sans)}
-.rg-dsw-t small{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--rig-mute);font:var(--rig-fs-xs)/var(--rig-lh-tight) var(--rig-sans)}
-.rg-dsw-m{position:absolute;left:0;top:calc(100% + var(--rig-s1));z-index:var(--rig-z-dropdown);display:flex;flex-direction:column;gap:var(--rig-s0);width:max(100%,16.25rem);max-width:min(20rem,calc(100vw - 2 * var(--rig-s4)));max-height:60vh;overflow:auto;padding:var(--rig-s1);background:var(--rig-panel);border:1px solid var(--rig-line2);border-radius:var(--rig-r-lg);box-shadow:var(--rig-shadow)}
+/* collapsed (below 1280 px, or by choice): every item keeps its words, small, under its icon, so the list is never
+   a row of unnamed icons */
+.rig[data-rig-nav="closed"] .rg-rail .rg-nav-it{flex-direction:column;justify-content:center;align-items:center;gap:2px;width:100%;height:auto;min-height:calc(var(--rig-h-ctl) + var(--rig-s4));padding:var(--rig-s1) 2px}
+.rig[data-rig-nav="closed"] .rg-rail .tip{display:none}
+.rig[data-rig-nav="closed"] .rg-rail{padding-left:var(--rig-s1);padding-right:var(--rig-s1)}
+.rig[data-rig-nav="closed"] .rg-nav-it .lbl{display:block;max-width:100%;font-size:var(--rig-fs-2xs);line-height:var(--rig-lead-xs);text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rig[data-rig-nav="closed"] .rg-nav-ct{display:none}
+.rig[data-rig-nav="closed"] .rg-nav-g+.rg-nav-g::before{margin:var(--rig-s1) 0 var(--rig-s2)}
+/* Help at the foot of the sidebar: its list is fixed to the window, opening upward from the button */
+.rg-help{position:relative;display:flex;flex-direction:column}
+.rg-help-m{position:fixed;left:var(--rig-help-left,var(--rig-s2));bottom:var(--rig-help-bottom,var(--rig-s8));z-index:var(--rig-z-menu);display:flex;flex-direction:column;gap:1px;width:19rem;max-width:calc(100vw - 2 * var(--rig-s4));padding:var(--rig-s1);background:var(--rig-panel);border-radius:var(--rig-r-md);box-shadow:var(--rig-shadow)}
+.rig .rg-help-it{display:flex;align-items:center;gap:var(--rig-s2);min-height:var(--rig-h-ctl);padding:var(--rig-s1) var(--rig-s2);border:0;border-radius:5px;background:none;color:var(--rig-text);font:var(--rig-fw-regular) var(--rig-fs-sm)/var(--rig-lead-xs) var(--rig-sans);text-align:left}
+.rig .rg-help-it:hover,.rig .rg-help-it:focus-visible{background:var(--rig-panel3)}
+/* the brand row's dataset switcher: the product name, the dataset in focus under it; its menu may leave the rail */
+.rg-dsw{position:relative;flex:1;min-width:0}
+.rig .rg-dsw-b{display:flex;align-items:center;gap:var(--rig-s2);width:100%;min-height:36px;padding:var(--rig-s1) var(--rig-s2) var(--rig-s1) 6px;border:0;border-radius:var(--rig-r-sm);background:none;color:var(--rig-text);text-align:left}
+.rig .rg-dsw-b:hover,.rig .rg-dsw-b[aria-expanded="true"]{background:var(--rig-panel2)}
+.rg-dsw-b>.rg-ico{flex:none;width:14px;height:14px;margin-left:auto;color:var(--rig-mute)}
+.rg-dsw-t{display:flex;flex-direction:column;gap:1px;flex:1;min-width:0}
+/* the name and its folder wrap to a second line instead of being cut */
+.rg-dsw-t b{font:var(--rig-fw-medium) var(--rig-fs-sm)/var(--rig-lead-sm) var(--rig-num);font-variant-numeric:tabular-nums}
+.rg-dsw-t small{color:var(--rig-mute);font:var(--rig-fw-regular) var(--rig-fs-2xs)/var(--rig-lead-xs) var(--rig-sans)}
+.rg-dsw-m{position:absolute;left:0;top:calc(100% + var(--rig-s1));z-index:var(--rig-z-dropdown);display:flex;flex-direction:column;gap:1px;width:max(100%,26rem);max-width:min(26rem,calc(100vw - 2 * var(--rig-s4)));max-height:min(70vh,40rem);overflow:auto;overscroll-behavior:contain;padding:var(--rig-s1);background:var(--rig-panel);border-radius:var(--rig-r-md);box-shadow:var(--rig-shadow)}
+/* the picker says what each dataset is (DatasetOption.jsx) */
+.rg-dsw-what{margin:0;padding:var(--rig-s2) var(--rig-s2) var(--rig-s1);color:var(--rig-dim);font:var(--rig-fs-xs)/var(--rig-lead-xs) var(--rig-sans)}
+.rg-dsw-l{display:flex;flex-direction:column;gap:1px}
+.rg-dsw-g{display:flex;flex-direction:column;gap:1px;padding-top:var(--rig-s2)}
+.rg-dsw-gh{display:flex;align-items:center;gap:6px;padding:0 var(--rig-s2) var(--rig-s1);color:var(--rig-mute);font:var(--rig-fw-medium) var(--rig-fs-2xs)/var(--rig-lead-xs) var(--rig-sans)}
+.rg-dsw-gn{color:var(--rig-mute);font:var(--rig-fs-2xs)/var(--rig-lead-xs) var(--rig-num);font-variant-numeric:tabular-nums}
+.rig .rg-dsw-l .rg-dsw-o{align-items:flex-start;min-height:0;padding:var(--rig-s2);line-height:normal}
+.rg-dso{display:flex;flex-direction:column;gap:2px;min-width:0;flex:1}
+.rg-dso-h{display:flex;align-items:center;gap:var(--rig-s2);min-width:0}
+.rg-dso-n{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0;color:var(--rig-text);font:var(--rig-fw-medium) var(--rig-fs-sm)/var(--rig-lead-sm) var(--rig-sans)}
+.rg-dso-h .rg-kind{flex:none;margin-left:auto}
+.rg-dso-f{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--rig-mute);font-size:var(--rig-fs-2xs);line-height:var(--rig-lead-xs)}
+.rg-dso-s{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;line-clamp:2;overflow:hidden;color:var(--rig-dim);font:var(--rig-fs-xs)/var(--rig-lead-xs) var(--rig-sans)}
+.rg-dsw-gw{padding:0 var(--rig-s2) var(--rig-s1);color:var(--rig-mute);font:var(--rig-fs-2xs)/var(--rig-lead-xs) var(--rig-sans)}
+.rg-dso-s.none{color:var(--rig-mute);font-style:italic}
+.rg-dso-m{overflow-wrap:anywhere;color:var(--rig-mute);font:var(--rig-fs-2xs)/var(--rig-lead-xs) var(--rig-num);font-variant-numeric:tabular-nums}
+.rg-dso-m .rg-rate{display:inline-flex;gap:2px;font-size:inherit}
+.rg-dso-ng{font-style:italic}
+.rg-kind{display:inline-flex;align-items:center;gap:5px;white-space:nowrap}
+.rg-dsc{display:flex;flex-direction:column;gap:var(--rig-s1);max-width:24rem}
+.rg-dsc-d{color:var(--rig-text);font:var(--rig-fs-xs)/var(--rig-lead-sm) var(--rig-sans)}
+.rg-dsc-src{display:flex;flex-direction:column;gap:2px;font:var(--rig-fs-2xs)/var(--rig-lead-xs) var(--rig-sans);color:var(--rig-dim);overflow-wrap:anywhere}
+.rg-dsc-k{color:var(--rig-dim);font:var(--rig-fs-2xs)/var(--rig-lead-xs) var(--rig-sans)}
+.rg-dsel .rg-harness-picker-popup{min-width:min(26rem,calc(100vw - 2 * var(--rig-s4)))}
+.rg-dsel .rg-harness-picker-option-copy{min-width:0;flex:1}
+.rg-ws-sel .rg-ws-dsel{flex:1 1 12rem;min-width:0}
 .rig .rg-rail:has(.rg-dsw-b[aria-expanded="true"]){position:relative;z-index:var(--rig-z-dropdown);overflow:visible}
-.rg-dsw-o{display:flex;align-items:center;gap:var(--rig-s2);min-height:var(--rig-h-ctl);padding:0 var(--rig-s2);border:0;border-radius:var(--rig-r-sm);background:none;color:var(--rig-dim);font:var(--rig-fw-medium) var(--rig-fs-sm)/1 var(--rig-sans);text-align:left}
-.rg-dsw-o small{color:var(--rig-mute);font:var(--rig-fs-xs)/1 var(--rig-mono);font-variant-numeric:tabular-nums}
-.rg-dsw-o:hover{background:var(--rig-panel2);color:var(--rig-text)}
-.rg-dsw-o.on{background:var(--rig-sel-bg);color:var(--rig-text)}
-.rg-dsw-o.all{justify-content:space-between;margin-top:var(--rig-s1);border-top:1px solid var(--rig-line);border-radius:0 0 var(--rig-r-sm) var(--rig-r-sm)}
+.rig .rg-dsw-o{display:flex;align-items:center;gap:var(--rig-s2);min-height:var(--rig-h-ctl);padding:0 var(--rig-s2);border:0;border-radius:5px;background:none;color:var(--rig-dim);font:var(--rig-fw-regular) var(--rig-fs-sm)/var(--rig-lead-xs) var(--rig-num);text-align:left;font-variant-numeric:tabular-nums}
+.rg-dsw-o small{color:var(--rig-mute);font:var(--rig-fs-2xs)/var(--rig-lead-xs) var(--rig-num);font-variant-numeric:tabular-nums}
+.rig .rg-dsw-o:hover{background:var(--rig-panel3);color:var(--rig-text)}
+.rig .rg-dsw-o.on{background:var(--rig-sel-bg);color:var(--rig-text)}
+.rig .rg-dsw-o.all{justify-content:space-between;margin-top:var(--rig-s1);font-family:var(--rig-sans);border-top:1px solid var(--rig-line-soft);border-radius:0 0 5px 5px}
 .rg-nav-scrim{display:none}
 
-/* ---------------------------------------------------------------- panes: one, or two side by side */
-.rg-work{grid-column:2;grid-row:2;display:flex;min-width:0;min-height:0;background:var(--rig-bg);container-type:inline-size;container-name:rgwork}
+/* ---------------------------------------------------------------- the main panel: one rounded surface on the ground */
+.rg-work{grid-column:2;grid-row:1;display:flex;min-width:0;min-height:0;margin:var(--rig-gap) var(--rig-gap) var(--rig-gap) 0;background:var(--rig-panel);border:1px solid var(--rig-line);border-radius:var(--rig-r-panel);overflow:hidden;container-type:inline-size;container-name:rgwork}
 .rg-pane{display:flex;flex-direction:column;flex:1 1 0;min-width:0;min-height:0;container-type:inline-size;container-name:rgpane}
-.rg-pane+.rg-pane{border-left:1px solid var(--rig-line2)}
+.rg-pane+.rg-pane{border-left:1px solid var(--rig-line)}
 /* a pane never drops under 480px: below 960px of work area only the focused one is drawn, and the
-   pane-switch button in its header brings the other one forward */
+   pane-switch button in its head brings the other one forward */
 .rg-paneswap{display:none}
 @container rgwork (max-width:959px){
   .rg-pane:not(.focus){display:none}
   .rg-pane+.rg-pane{border-left:0}
   .rg-paneswap{display:grid}
 }
-/* the pane header: one row with the breadcrumb (one tab) or the tabs (two or more), then the page's
-   actions and the split controls */
-.rg-panehead,.rg-tabbar{display:flex;align-items:center;flex:none;min-width:0;height:var(--rig-head-h);background:var(--rig-panel);border-bottom:1px solid var(--rig-line)}
-.rg-panehead{gap:var(--rig-s3);padding:0 0 0 var(--rig-gutter)}
-.rg-doctb{display:flex;align-items:center;gap:var(--rig-s3);flex:none;min-width:0;min-height:var(--rig-head-h);padding:0 var(--rig-gutter);background:var(--rig-bg)}
+/* the pane head: the breadcrumb (one tab) or the tabs (two or more), the page's actions, and on the
+   right-hand pane the console's controls */
+.rg-panehead,.rg-tabbar{display:flex;align-items:center;gap:10px;flex:none;min-width:0;height:var(--rig-head-h);padding:0 10px 0 var(--rig-s4);background:var(--rig-panel);border-bottom:1px solid var(--rig-line)}
+.rg-tabbar{padding-left:var(--rig-s2)}
+.rg-doctb{display:flex;align-items:center;gap:10px;flex:none;min-width:0;min-height:var(--rig-head-h);padding:0 10px 0 var(--rig-s4);background:var(--rig-panel)}
 .rg-chainrow{border-bottom:1px solid var(--rig-line)}
-.rg-panehead .tb-end,.rg-tabbar .tb-end{display:flex;align-items:center;gap:var(--rig-s1);flex:none;height:100%;margin-left:auto;padding:0 var(--rig-s1) 0 var(--rig-s2)}
-.rg-tabbar .tb-end{border-left:1px solid var(--rig-line)}
+.rg-head-sp{flex:1 1 auto}
+.rg-panehead .tb-end,.rg-tabbar .tb-end{display:flex;align-items:center;gap:var(--rig-s2);flex:none;min-width:0;height:100%;margin-left:auto}
 .rg-panehead .tb-end .acts,.rg-tabbar .tb-end .acts{display:flex;align-items:center;gap:var(--rig-s2)}
 .rg-panehead .tb-end .acts:empty,.rg-tabbar .tb-end .acts:empty{display:none}
-/* page actions in the chrome row are secondary: the page's own header carries its primary action */
-.rg-panehead .acts .rg-btn.pri,.rg-tabbar .acts .rg-btn.pri{background:var(--rig-panel);border-color:var(--rig-line2);color:var(--rig-text)}
-.rg-panehead .acts .rg-btn.pri:hover,.rg-tabbar .acts .rg-btn.pri:hover{background:var(--rig-panel2);border-color:var(--rig-line3)}
-.rg-splitbtn,.rg-paneswap{place-items:center;flex:none;width:var(--rig-h-ctl);height:var(--rig-h-ctl);padding:0;border:1px solid transparent;border-radius:var(--rig-r-md);background:none;color:var(--rig-mute)}
-.rg-splitbtn{display:grid}
-.rg-splitbtn:hover,.rg-paneswap:hover{border-color:var(--rig-line2);color:var(--rig-text)}
-/* breadcrumb: the current document (last crumb) stays whole; the middle crumbs give way first, then
-   fold into "…" under 480px of pane; "workspace ›" leaves under 640px */
-.rg-crumb{display:flex;align-items:center;gap:var(--rig-s1);flex:1 1 auto;min-width:0;color:var(--rig-mute);font:var(--rig-fw-medium) var(--rig-fs-xs)/1 var(--rig-mono);white-space:nowrap}
-.rg-crumb-i{display:flex;align-items:center;gap:var(--rig-s1);flex:0 1000 auto;min-width:0}
-.rg-crumb-i:last-child{flex-shrink:1}
+/* page actions in the head are secondary: the page's own header carries its primary action */
+.rg-panehead .acts .rg-btn.pri,.rg-tabbar .acts .rg-btn.pri{background:var(--rig-panel2);border-color:var(--rig-line);color:var(--rig-text);box-shadow:none}
+.rg-panehead .acts .rg-btn.pri:hover,.rg-tabbar .acts .rg-btn.pri:hover{background:var(--rig-panel3);border-color:var(--rig-line2)}
+.rg-paneswap{place-items:center;flex:none;width:var(--rig-h-ctl);height:var(--rig-h-ctl);padding:0;border:0;border-radius:var(--rig-r-sm);background:none;color:var(--rig-mute)}
+.rg-paneswap:hover{background:var(--rig-panel3);color:var(--rig-text)}
+/* breadcrumb: dataset › section › item. Ids are mono; the current item is ink; the middle crumbs give
+   way first, then fold into "…" under 480px of pane */
+.rg-crumb{display:flex;align-items:center;gap:6px;flex:1 1 auto;min-width:0;min-height:var(--rig-h-xs);color:var(--rig-mute);font:var(--rig-fw-regular) var(--rig-fs-sm)/var(--rig-lead-xs) var(--rig-sans);white-space:nowrap}
+.rg-crumb-i{display:flex;align-items:center;gap:6px;flex:0 1 auto;min-width:0;min-height:var(--rig-h-xs)}
+/* the places above the page keep their names; the page itself gives way first, since its whole name is the title
+   right under the bar */
+.rg-crumb-i:last-child{flex-shrink:1000;min-width:6ch}
 .rg-crumb-l{display:block;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.rg-crumb button.rg-crumb-l{height:var(--rig-h-ctl);padding:0 var(--rig-s1);border:0;border-radius:var(--rig-r-sm);background:none;color:var(--rig-dim);font:inherit;line-height:var(--rig-h-ctl)}
-.rg-crumb button.rg-crumb-l:hover{background:var(--rig-panel2);color:var(--rig-text)}
-.rg-crumb .sep{flex:none;color:var(--rig-line3)}
-.rg-crumb .cur{color:var(--rig-text)}
+.rg-crumb .rg-crumb-id{font-family:var(--rig-num);font-size:var(--rig-fs-sm)}
+.rig .rg-crumb button.rg-crumb-l{height:var(--rig-h-xs);padding:0 var(--rig-s1);margin:0 calc(-1 * var(--rig-s1));border:0;border-radius:var(--rig-r-xs);background:none;color:var(--rig-mute);line-height:var(--rig-h-xs);text-decoration:underline;text-decoration-thickness:1px;text-decoration-color:color-mix(in srgb,currentColor 35%,transparent);text-underline-offset:3px}
+.rig .rg-crumb button.rg-crumb-l.rg-crumb-id{font-family:var(--rig-num);font-size:var(--rig-fs-sm)}
+.rig .rg-crumb button.rg-crumb-l:hover{background:var(--rig-panel2);color:var(--rig-text);text-decoration-color:currentColor}
+.rg-crumb .sep{display:grid;place-items:center;flex:none;color:var(--rig-faint)}
+.rg-crumb .sep .rg-ico{width:12px;height:12px}
+.rg-crumb .cur{color:var(--rig-text);font-weight:var(--rig-fw-medium)}
 .rg-crumb-more{display:none}
 .rg-crumb-more .rg-menu-list{left:0;right:auto}
-.rg-crumb button.rg-crumb-mb{min-width:var(--rig-h-ctl)}
-@container rgpane (max-width:640px){.rg-crumb-ws,.rg-crumb-ws+.rg-crumb-i>.sep,.rg-crumb-more>.sep,.rg-crumb-more+.rg-crumb-i>.sep{display:none}}
-@container rgpane (max-width:480px){.rg-crumb-mid{display:none}.rg-crumb-more{display:flex}}
-/* tabs: a strip that scrolls sideways with edge fades; the active tab is kept in view */
+/* a deep path in a pane under 960 px (a 1024 px laptop, a split): the dataset and the page stay, the places between
+   fold into "…", whose menu lists the whole path, instead of every crumb cut to a few letters */
+@container rgpane (max-width:960px){
+  .rg-crumb:has(.rg-crumb-mid~.rg-crumb-mid~.rg-crumb-mid) .rg-crumb-mid~.rg-crumb-mid{display:none}
+  .rg-crumb:has(.rg-crumb-mid~.rg-crumb-mid~.rg-crumb-mid) .rg-crumb-more{display:flex;order:1}
+  .rg-crumb:has(.rg-crumb-mid~.rg-crumb-mid~.rg-crumb-mid) .rg-crumb-more::before{content:"›";color:var(--rig-mute)}
+  .rg-crumb:has(.rg-crumb-mid~.rg-crumb-mid~.rg-crumb-mid) .rg-crumb-i:last-child{order:2}
+}
+.rig .rg-crumb button.rg-crumb-mb{min-width:var(--rig-h-xs)}
+@container rgpane (max-width:480px){.rg-crumb-mid{display:none}.rg-crumb-more{display:flex}.rg-crumb-more:first-child>.sep{display:none}}
+/* tabs: compact, in the head row; a strip that scrolls sideways with edge fades; the active tab stays in view */
 .rg-tabbar-s{flex:1 1 auto;min-width:0;height:100%}
 .rg-tabbar-s>.rg-scrollx-v{height:100%}
-.rg-tabbar-l{display:flex;align-items:stretch;height:100%;min-width:max-content}
-.rg-tab{display:flex;align-items:center;gap:var(--rig-s1);flex:none;max-width:16rem;height:100%;padding:0 var(--rig-s1) 0 var(--rig-s4);border-right:1px solid var(--rig-line);border-top:2px solid transparent;color:var(--rig-mute);font:var(--rig-fw-medium) var(--rig-fs-sm)/1 var(--rig-sans);white-space:nowrap}
+.rg-tabbar-l{display:flex;align-items:center;gap:2px;height:100%;min-width:max-content}
+.rg-tab{display:flex;align-items:center;gap:var(--rig-s1);flex:none;max-width:15rem;height:var(--rig-h-ctl);padding:0 2px 0 10px;border-radius:var(--rig-r-sm);color:var(--rig-mute);font:var(--rig-fw-medium) var(--rig-fs-xs)/var(--rig-lead-sm) var(--rig-sans);white-space:nowrap}
 .rg-tab .tab-b{display:flex;align-items:center;gap:var(--rig-s2);height:100%;min-width:0;padding:0;border:0;background:none;color:inherit;font:inherit}
 .rg-tab .tt{min-width:0;overflow:hidden;text-overflow:ellipsis}
 .rg-tab .k{display:none}
 .rg-tab:hover{background:var(--rig-panel2);color:var(--rig-text)}
-.rg-tab.act{background:var(--rig-bg);color:var(--rig-text);border-top-color:var(--rig-text)}
-.rg-pane:not(.focus) .rg-tab.act{border-top-color:var(--rig-line3)}
-.rg-tab .x{display:grid;place-items:center;flex:none;width:calc(var(--rig-h-sm) + var(--rig-s1));height:calc(var(--rig-h-sm) + var(--rig-s1));padding:0;border:0;border-radius:var(--rig-r-sm);background:none;color:var(--rig-mute);font-size:var(--rig-fs-md);line-height:1;opacity:.6}
+.rg-tab.act{background:var(--rig-panel3);color:var(--rig-text)}
+.rg-pane:not(.focus) .rg-tab.act{background:var(--rig-panel2)}
+.rg-tab .x{display:grid;place-items:center;flex:none;width:20px;height:20px;padding:0;border:0;border-radius:var(--rig-r-xs);background:none;color:var(--rig-mute);font-size:var(--rig-fs-sm);line-height:1;opacity:.6}
 .rg-tab.act .x,.rg-tab:hover .x,.rg-tab .x:focus-visible{opacity:1}
-.rg-tab .x:hover{background:var(--rig-panel3);color:var(--rig-text)}
+.rg-tab .x:hover{background:var(--rig-line);color:var(--rig-text)}
+
+/* ---------------------------------------------------------------- the console's controls (search, Buddy, split, maximize, theme) */
+.rg-gcl{display:flex;align-items:center;gap:var(--rig-s1);flex:none;min-width:0}
+.rig .rg-cmd{display:flex;align-items:center;gap:var(--rig-s2);width:var(--rig-cmd-w);min-width:0;height:var(--rig-h-ctl);margin-right:var(--rig-s1);padding:0 5px 0 9px;border:1px solid var(--rig-line);border-radius:7px;background:var(--rig-panel2);color:var(--rig-mute);text-align:left;font:var(--rig-fw-regular) var(--rig-fs-sm)/var(--rig-lead-xs) var(--rig-sans);transition:border-color var(--rig-dur-1) var(--rig-ease),color var(--rig-dur-1) var(--rig-ease)}
+.rig .rg-cmd:hover{border-color:var(--rig-line2);color:var(--rig-dim)}
+.rg-cmd>.rg-ico{width:14px;height:14px}
+.rg-cmd-ph{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.rg-cmd-k{display:flex;flex:none}
+.rig .rg-tbtn{display:inline-grid;place-items:center;flex:none;width:var(--rig-h-ctl);height:var(--rig-h-ctl);padding:0;border:0;border-radius:var(--rig-r-sm);background:none;color:var(--rig-dim);text-decoration:none}
+.rig .rg-tbtn .rg-ico{width:16px;height:16px}
+.rig .rg-tbtn:hover{background:var(--rig-panel3);color:var(--rig-text)}
+.rig .rg-tbtn.on,.rig .rg-tbtn[aria-pressed="true"]{background:var(--rig-sel-bg);color:var(--rig-text)}
+.rig .rg-tbtn.here{box-shadow:inset 0 -2px 0 var(--rig-line3)}
+.rg-tb-more,.rig .rg-gcl .rg-brand-m,.rg-mtab{display:none}
+.rig .rg-mtab{flex:1 1 auto;align-items:center;gap:var(--rig-s2);min-width:7.5rem;height:var(--rig-h-ctl);padding:0 var(--rig-s2) 0 var(--rig-s3);border:1px solid var(--rig-line);border-radius:var(--rig-r-sm);background:var(--rig-panel2);color:var(--rig-text);text-align:left}
+.rg-mtab>.rg-ico{color:var(--rig-mute)}
+.rg-mtab .tt{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font:var(--rig-fw-medium) var(--rig-fs-md)/var(--rig-lead-sm) var(--rig-sans)}
+.rg-mtab .n{flex:none;min-width:var(--rig-s5);padding:var(--rig-s1);border-radius:var(--rig-r-xs);background:var(--rig-panel3);color:var(--rig-text);font:var(--rig-fw-medium) var(--rig-fs-2xs)/var(--rig-lead-xs) var(--rig-num);text-align:center;font-variant-numeric:tabular-nums}
+/* a narrow pane keeps the search as a field until it can no longer show its words, then it is an icon */
+@container rgpane (max-width:900px){.rig .rg-cmd{width:200px}}
+@container rgpane (max-width:640px){.rig .rg-cmd{width:var(--rig-h-ctl);padding:0;justify-content:center}.rg-cmd-ph,.rg-cmd-k{display:none}}
+
 /* the document */
-.rg-doc{flex:1;min-height:0;overflow:auto;position:relative;container-type:inline-size;container-name:rgdoc}
+.rg-doc{flex:1;min-height:0;overflow:auto;position:relative;container-type:inline-size;container-name:rgdoc;background:var(--rig-panel)}
 .rg-doc:focus{outline:none}
-.rg-banner{display:flex;align-items:center;flex-wrap:wrap;gap:var(--rig-s2) var(--rig-s3);padding:var(--rig-s2) var(--rig-gutter);border-bottom:1px solid var(--rig-line);font-size:var(--rig-fs-xs);line-height:var(--rig-lh-snug)}
+.rg-banner{display:flex;align-items:center;flex-wrap:wrap;gap:var(--rig-s2) var(--rig-s3);padding:var(--rig-s2) var(--rig-gutter);border-bottom:1px solid var(--rig-line);font-size:var(--rig-fs-xs);line-height:var(--rig-lead-sm)}
 /* the Student Lab notice is a caution, not a selection: a neutral tint led by an amber marker */
 .rg-banner.lab{background:var(--rig-panel2);color:var(--rig-dim)}
 .rg-banner.lab>b{display:inline-flex;align-items:center;gap:var(--rig-s2);color:var(--rig-text);font-weight:var(--rig-fw-medium)}
@@ -832,193 +1043,211 @@ body.rg-resizing{cursor:col-resize;user-select:none}
 .rg-banner.ro{background:var(--rig-red-wash);color:var(--rig-red-t)}
 
 /* ---------------------------------------------------------------- side panel (Buddy, Event log, Capture watcher, Case file)
-   Docked and resizable from 1100px; an overlay drawer on a tablet; a bottom sheet on a phone. */
-.rg-dock{grid-column:2;grid-row:3;display:flex;flex-direction:column;min-width:0;min-height:0;background:var(--rig-bg);border-top:1px solid var(--rig-line2);container-type:inline-size;container-name:rgpanel}
+   A second rounded panel beside the main one from 1024px; an overlay drawer on a tablet; a bottom sheet on a phone. */
+.rg-dock{grid-column:2;grid-row:2;display:flex;flex-direction:column;min-width:0;min-height:0;margin:0 var(--rig-gap) var(--rig-gap) 0;background:var(--rig-panel);border:1px solid var(--rig-line);border-radius:var(--rig-r-panel);container-type:inline-size;container-name:rgpanel}
 .rg-dock.open:not(.side){height:clamp(16rem,38vh,25rem)}
-.rg-dock.side{position:relative;grid-column:3;grid-row:2/4;border-top:0;border-left:1px solid var(--rig-line2)}
-.rg-dock-rs{position:absolute;left:calc(-1 * var(--rig-s1));top:0;bottom:0;z-index:var(--rig-z-sticky);width:var(--rig-s2);cursor:col-resize;outline:none}
-.rg-dock-rs:hover,.rg-dock-rs:focus-visible{background:var(--rig-sel);opacity:.55}
-.rg-dock-h{display:flex;align-items:center;gap:var(--rig-s1);flex:none;height:var(--rig-head-h);padding:0 var(--rig-s1) 0 var(--rig-s2);background:var(--rig-panel);border-bottom:1px solid var(--rig-line)}
-.rg-dock-tabs{display:flex;align-items:center;gap:var(--rig-s0);flex:1;min-width:0;overflow-x:auto;scrollbar-width:thin}
-.rg-dock-tab{display:flex;align-items:center;justify-content:center;gap:var(--rig-s2);flex:none;min-width:var(--rig-h-ctl);height:var(--rig-h-ctl);padding:0 var(--rig-s3);border:0;border-radius:var(--rig-r-md);background:none;color:var(--rig-mute);font:var(--rig-fw-medium) var(--rig-fs-sm)/1 var(--rig-sans);white-space:nowrap}
-.rg-dock-tab:hover{background:var(--rig-panel2);color:var(--rig-text)}
-.rg-dock-tab.on{background:var(--rig-panel3);color:var(--rig-text)}
-.rg-dock-tab.on .rg-ico{color:var(--rig-sel-t)}
-.rg-dock-tab .n{padding:var(--rig-s0) var(--rig-s1);border-radius:var(--rig-r-xs);background:var(--rig-panel3);color:var(--rig-text);font:var(--rig-fw-medium) var(--rig-fs-2xs)/1 var(--rig-mono)}
-.rg-dock-h .dt{display:grid;place-items:center;flex:none;width:var(--rig-h-ctl);height:var(--rig-h-ctl);padding:0;border:0;border-radius:var(--rig-r-md);background:none;color:var(--rig-mute)}
-.rg-dock-h .dt:hover{background:var(--rig-panel2);color:var(--rig-text)}
-.rg-dock-b{flex:1;min-height:0;overflow:auto;overscroll-behavior:contain;background:var(--rig-bg)}
+.rg-dock.side{position:relative;grid-column:3;grid-row:1/3;margin:var(--rig-gap) var(--rig-gap) var(--rig-gap) 0}
+.rg-dock-rs{position:absolute;left:calc(-1 * var(--rig-gap) - 1px);top:0;bottom:0;z-index:var(--rig-z-sticky);width:var(--rig-gap);cursor:col-resize;outline:none;border-radius:var(--rig-r-xs)}
+.rg-dock-rs:hover{background:var(--rig-line3);opacity:.55}
+.rg-dock-rs:focus-visible{background:var(--rig-sel);opacity:.55}
+.rg-dock-h{display:flex;align-items:center;gap:var(--rig-s1);flex:none;height:var(--rig-head-h);padding:0 var(--rig-s2);border-bottom:1px solid var(--rig-line);border-radius:calc(var(--rig-r-panel) - 1px) calc(var(--rig-r-panel) - 1px) 0 0}
+.rg-dock-tabs{display:flex;align-items:center;gap:2px;flex:1;min-width:0;overflow-x:auto;scrollbar-width:thin}
+.rig .rg-dock-tab{display:flex;align-items:center;justify-content:center;gap:6px;flex:none;min-width:var(--rig-h-ctl);height:var(--rig-h-ctl);padding:0 10px;border:0;border-radius:var(--rig-r-sm);background:none;color:var(--rig-mute);font:var(--rig-fw-medium) var(--rig-fs-xs)/var(--rig-lead-xs) var(--rig-sans);white-space:nowrap}
+.rg-dock-tab .rg-ico{width:14px;height:14px}
+.rig .rg-dock-tab:hover{background:var(--rig-panel2);color:var(--rig-text)}
+.rig .rg-dock-tab.on{background:var(--rig-panel3);color:var(--rig-text)}
+.rg-dock-tab.on .rg-ico{color:var(--rig-text)}
+.rg-dock-tab .n{padding:var(--rig-s0) var(--rig-s1);border-radius:var(--rig-r-xs);background:var(--rig-panel3);color:var(--rig-text);font:var(--rig-fw-regular) var(--rig-fs-2xs)/var(--rig-lead-xs) var(--rig-num);font-variant-numeric:tabular-nums}
+.rig .rg-dock-h .dt{display:grid;place-items:center;flex:none;width:var(--rig-h-ctl);height:var(--rig-h-ctl);padding:0;border:0;border-radius:var(--rig-r-sm);background:none;color:var(--rig-mute)}
+.rig .rg-dock-h .dt:hover{background:var(--rig-panel3);color:var(--rig-text)}
+.rg-dock-b{flex:1;min-height:0;overflow:auto;overscroll-behavior:contain;background:var(--rig-panel);border-radius:0 0 calc(var(--rig-r-panel) - 1px) calc(var(--rig-r-panel) - 1px)}
 @container rgpanel (max-width:520px){.rg-dock-tab:not(.on) .lbl{display:none}.rg-dock-tab:not(.on){padding:0}}
 .rg-dock-scrim{display:none}
 
 /* ---------------------------------------------------------------- status bar
-   Where you are on the left, the panel launchers on the right. Items leave by priority as the bar
-   narrows (dock labels, then jobs and the connection words, then Student Lab, then the condition, then
-   the dataset);
-   the connection item opens a popover that lists all of it, so nothing becomes unreachable. */
-.rg-sb{grid-column:1/-1;grid-row:4;display:flex;align-items:stretch;gap:var(--rig-s0);min-width:0;height:var(--rig-sb-h);padding:0 var(--rig-s1);background:var(--rig-panel);border-top:1px solid var(--rig-line);color:var(--rig-mute);font:var(--rig-fw-medium) var(--rig-fs-xs)/1 var(--rig-mono);white-space:nowrap;container-type:inline-size;container-name:rgsb}
-.rg-sb .it{position:relative;display:inline-flex;align-items:center;gap:var(--rig-s2);flex:0 1 auto;min-width:0;padding:0 var(--rig-s2);border:0;border-radius:var(--rig-r-xs);background:none;color:inherit;font:inherit;text-decoration:none}
+   Where you are on the left (connection, dataset, condition, oracle, jobs, Student Lab), the dataset's
+   size, the panel launchers and search on the right. Items leave by priority as the bar narrows (dock
+   labels, then the size and the connection words, then Student Lab, then the condition, then the
+   dataset); the connection dot opens a popover that lists all of it, so nothing becomes unreachable. */
+.rg-sb{grid-column:1/-1;grid-row:3;display:flex;align-items:stretch;gap:var(--rig-s1);min-width:0;height:var(--rig-sb-h);padding:0 var(--rig-s2);background:var(--rig-bg);border-top:1px solid var(--rig-line);color:var(--rig-mute);font:var(--rig-fw-regular) var(--rig-fs-2xs)/var(--rig-lead-xs) var(--rig-sans);white-space:nowrap;container-type:inline-size;container-name:rgsb}
+.rig .rg-sb .it{position:relative;display:inline-flex;align-items:center;gap:6px;flex:0 1 auto;min-width:0;padding:0 6px;border:0;border-radius:var(--rig-r-xs);background:none;color:inherit;font:inherit;text-decoration:none}
+.rg-sb .it>.rg-ico{width:12px;height:12px;flex:none}
 .rg-sb .it>b,.rg-sb .it>.rg-sb-t{min-width:0;overflow:hidden;text-overflow:ellipsis}
-.rg-sb button.it:hover,.rg-sb a.it:hover{background:var(--rig-panel2);color:var(--rig-text)}
-.rg-sb .rg-sb-conn{flex:0 1 auto;min-width:var(--rig-hit);justify-content:center}
+.rig .rg-sb button.it:hover,.rig .rg-sb a.it:hover{background:var(--rig-panel2);color:var(--rig-text)}
+.rg-sb .rg-sb-conn{flex:0 1 auto;min-width:var(--rig-h-xs);justify-content:center}
+.rg-sb .rg-sb-conn .rg-dot{width:6px;height:6px}
+.rg-sb .rg-sb-conn .rg-dot:not(.off):not(.warn){background:var(--rig-text)}
+.rg-sb .rg-sb-conn.ok .rg-sb-ct{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
+.rg-sb .rg-sb-conn:not(.ok) .rg-sb-ct{color:var(--rig-text)}
 /* items without a truncating part keep their words; the connection words, dataset and condition give way */
 .rg-sb .rg-sb-oracle,.rg-sb .rg-sb-p3,.rg-sb .rg-sb-p4{flex:none}
 .rg-sb .sp{flex:1 1 var(--rig-s2);min-width:var(--rig-s2)}
-.rg-sb b{color:var(--rig-text);font-weight:var(--rig-fw-medium)}
-.rg-sb b.alt{color:var(--rig-sel-t)}
-.rg-sb .lab-on{background:var(--rig-sel-bg2);color:var(--rig-sel-t)}
-.rg-sb button.it.lab-on:hover{background:var(--rig-sel-bg2);color:var(--rig-sel-t)}
-.rg-sb .rg-sb-update{flex:none;background:var(--rig-sel);color:var(--rig-sel-ink)}
-.rg-sb button.it.rg-sb-update:hover{background:var(--rig-sel-h);color:var(--rig-sel-ink)}
-.rg-sb-docks{display:flex;align-items:stretch;gap:var(--rig-s0);flex:none;padding-left:var(--rig-s1);border-left:1px solid var(--rig-line)}
-.rg-sb-docks .it{flex:none;min-width:var(--rig-hit);justify-content:center}
+.rg-sb b{color:var(--rig-dim);font:var(--rig-fw-regular) var(--rig-fs-2xs)/var(--rig-lead-xs) var(--rig-num);font-variant-numeric:tabular-nums}
+.rg-sb b.alt{color:var(--rig-text)}
+.rg-sb .rg-sb-chev{width:10px;height:10px;color:var(--rig-mute)}
+.rig .rg-sb .lab-on{background:var(--rig-panel3);color:var(--rig-text)}
+.rig .rg-sb button.it.lab-on:hover{background:var(--rig-panel3);color:var(--rig-text)}
+.rig .rg-sb .rg-sb-update{flex:none;background:var(--rig-text);color:var(--rig-panel)}
+.rig .rg-sb button.it.rg-sb-update:hover{background:var(--rig-dim);color:var(--rig-panel)}
+.rg-sb-docks{display:flex;align-items:stretch;gap:2px;flex:none;padding-left:var(--rig-s1);border-left:1px solid var(--rig-line-soft)}
+.rg-sb-docks .it{flex:none;min-width:var(--rig-h-xs);justify-content:center}
 .rg-sb-docks .it .rg-ico{color:var(--rig-mute)}
-.rg-sb-docks .it.on{background:var(--rig-panel2);color:var(--rig-text);box-shadow:inset 0 2px 0 var(--rig-text)}
-.rg-sb-docks .it.on .rg-ico{color:var(--rig-sel-t)}
-.rg-sb-docks .n{padding:var(--rig-s0) var(--rig-s1);border-radius:var(--rig-r-xs);background:var(--rig-panel3);color:var(--rig-text);font:var(--rig-fw-medium) var(--rig-fs-2xs)/1 var(--rig-mono)}
-/* a 32px bar with a mouse; each item's target reaches 36px */
+.rig .rg-sb-docks .it.on{background:var(--rig-panel2);color:var(--rig-text);box-shadow:inset 0 -2px 0 var(--rig-sel-mark)}
+.rg-sb-docks .it.on .rg-ico{color:var(--rig-text)}
+.rg-sb-docks .n{padding:1px var(--rig-s1);border-radius:var(--rig-r-xs);background:var(--rig-panel3);color:var(--rig-text);font:var(--rig-fw-regular) var(--rig-fs-2xs)/var(--rig-lead-xs) var(--rig-num);font-variant-numeric:tabular-nums}
+.rg-sb .rg-sb-find .rg-kbd{height:16px;min-width:16px;font-size:var(--rig-fs-2xs)}
+/* a 26px bar with a mouse; each item's target reaches 36px */
 @media (pointer:fine){.rg-sb .it::after{content:"";position:absolute;left:0;right:0;bottom:0;height:var(--rig-hit)}}
-@container rgsb (max-width:1359px){.rg-sb .rg-sb-dl{display:none}}
-@container rgsb (max-width:1279px){.rg-sb .rg-sb-p4,.rg-sb .rg-sb-ct{display:none}}
-@container rgsb (max-width:1099px){.rg-sb .rg-sb-p3{display:none}}
-@container rgsb (max-width:744px){.rg-sb .rg-sb-p2{display:none}}
-@container rgsb (max-width:480px){.rg-sb .rg-sb-p1{display:none}}
-@container rgsb (max-width:376px){.rg-sb .rg-sb-k{display:none}}
+@container rgsb (max-width:899px){.rig .rg-sb .rg-sb-dl{display:none}}
+@container rgsb (max-width:1279px){.rig .rg-sb .rg-sb-p4,.rig .rg-sb .rg-sb-ct{display:none}}
+@container rgsb (max-width:1099px){.rig .rg-sb .rg-sb-p3{display:none}}
+@container rgsb (max-width:744px){.rig .rg-sb .rg-sb-p2{display:none}}
+@container rgsb (max-width:480px){.rig .rg-sb .rg-sb-p1{display:none}}
+@container rgsb (max-width:376px){.rig .rg-sb .rg-sb-k{display:none}}
 
 /* ---------------------------------------------------------------- overlays: scrim, palette, popover, sheet, toast */
-.rg-scrim{position:fixed;inset:0;z-index:var(--rig-z-scrim);display:flex;justify-content:center;align-items:flex-start;padding-top:10vh;background:var(--rig-scrim)}
+.rg-scrim{position:fixed;inset:0;z-index:var(--rig-z-scrim);display:flex;justify-content:center;align-items:flex-start;padding-top:12vh;background:var(--rig-scrim)}
 .rg-scrim.clear{background:transparent}
 .rg-scrim.rg-scrim-sheet{align-items:flex-end;padding:0}
-.rg-pal{display:flex;flex-direction:column;width:min(var(--rig-pal-w),calc(100vw - 2 * var(--rig-s4)));max-height:72vh;overflow:hidden;background:var(--rig-panel);border:1px solid var(--rig-line2);border-radius:var(--rig-r-lg);box-shadow:var(--rig-shadow)}
-.rg-pal-in{display:flex;align-items:center;gap:var(--rig-s3);flex:none;height:calc(var(--rig-h-lg) + var(--rig-s2));padding:0 var(--rig-s2) 0 var(--rig-s4);border-bottom:1px solid var(--rig-line2)}
-.rg-pal-in>.rg-ico{color:var(--rig-mute)}
-.rig .rg-pal-in input{flex:1;min-width:0;height:100%;padding:0;border:0;background:none;color:var(--rig-text);font:var(--rig-fw-regular) var(--rig-fs-lg)/1 var(--rig-sans);outline:none}
+.rg-pal{display:flex;flex-direction:column;width:min(var(--rig-pal-w),calc(100vw - 2 * var(--rig-s4)));max-height:min(72vh,560px);overflow:hidden;background:var(--rig-panel);border-radius:var(--rig-r-lg);box-shadow:var(--rig-shadow)}
+.rg-pal-in{display:flex;align-items:center;gap:10px;flex:none;height:var(--rig-head-h);padding:0 var(--rig-s2) 0 var(--rig-s4);border-bottom:1px solid var(--rig-line)}
+.rg-pal-in>.rg-ico{width:16px;height:16px;color:var(--rig-mute)}
+.rig .rg-pal-in input{flex:1;min-width:0;height:100%;padding:0;border:0;background:none;color:var(--rig-text);font:var(--rig-fw-regular) var(--rig-fs-md)/var(--rig-lead-xs) var(--rig-sans);outline:none}
+.rig .rg-pal-in input::placeholder{color:var(--rig-mute)}
 .rig .rg-pal-in input:focus-visible{outline:none}
-.rg-pal-chip{flex:none;padding:var(--rig-s1) var(--rig-s2);border:1px solid var(--rig-line2);border-radius:var(--rig-r-sm);color:var(--rig-mute);font:var(--rig-fw-medium) var(--rig-fs-2xs)/1 var(--rig-mono);white-space:nowrap}
-.rg-pal-list{flex:1;min-height:0;overflow:auto;overscroll-behavior:contain;padding:var(--rig-s1)}
-.rg-pal-g{padding:var(--rig-s3) var(--rig-s3) var(--rig-s1);color:var(--rig-mute);font:var(--rig-fw-medium) var(--rig-fs-2xs)/1 var(--rig-mono);letter-spacing:var(--rig-track-caps);text-transform:uppercase}
-.rg-pal-it{display:flex;align-items:center;gap:var(--rig-s3);width:100%;min-height:var(--rig-h-ctl);padding:0 var(--rig-s3);border:0;border-radius:var(--rig-r-sm);background:none;color:var(--rig-text);text-align:left}
-.rg-pal-it .k{flex:none;width:4.5rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--rig-mute);font:var(--rig-fw-medium) var(--rig-fs-2xs)/1 var(--rig-mono);letter-spacing:var(--rig-track-caps);text-transform:uppercase}
-.rg-pal-it .t{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font:var(--rig-fw-regular) var(--rig-fs-md)/var(--rig-lh-snug) var(--rig-sans)}
-.rg-pal-it .t mark{background:none;color:var(--rig-sel-t);text-decoration:underline;text-decoration-color:var(--rig-sel);text-underline-offset:3px}
-.rg-pal-it .d{flex:0 1 auto;max-width:40%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--rig-mute);font:var(--rig-fs-xs)/1 var(--rig-sans)}
-.rg-pal-it.on{background:var(--rig-panel3)}
-.rg-pal-it.on .k{color:var(--rig-sel-t)}
-.rg-pal-f{display:flex;flex-wrap:wrap;align-items:center;gap:var(--rig-s2) var(--rig-s4);flex:none;padding:var(--rig-s2) var(--rig-s4);border-top:1px solid var(--rig-line2);color:var(--rig-mute);font:var(--rig-fs-xs)/var(--rig-lh-snug) var(--rig-sans)}
-.rg-pal-empty{padding:var(--rig-s6) var(--rig-s4);color:var(--rig-mute);font:var(--rig-fs-sm)/var(--rig-lh-body) var(--rig-sans)}
+.rg-pal-chip{flex:none;display:none}
+.rg-pal-list{flex:1;min-height:0;overflow:auto;overscroll-behavior:contain;padding:var(--rig-s1) 6px var(--rig-s2)}
+.rg-pal-g{padding:10px var(--rig-s2) var(--rig-s1);color:var(--rig-mute);font:var(--rig-fw-medium) var(--rig-fs-2xs)/var(--rig-lead-xs) var(--rig-sans)}
+/* a result reads on one baseline (kind, name, what it is); a long name wraps under itself */
+.rig .rg-pal-it{display:flex;align-items:baseline;gap:10px;width:100%;min-height:32px;padding:7px var(--rig-s2);border:0;border-radius:var(--rig-r-sm);background:none;color:var(--rig-text);text-align:left}
+.rg-pal-it .k{flex:none;width:4.25rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--rig-mute);font:var(--rig-fw-regular) var(--rig-fs-2xs)/var(--rig-lead-xs) var(--rig-sans)}
+.rg-pal-it .t{flex:1;min-width:0;overflow-wrap:break-word;font:var(--rig-fw-regular) var(--rig-fs-sm)/var(--rig-lead-sm) var(--rig-sans)}
+.rg-pal-it .t mark{background:none;color:var(--rig-text);font-weight:var(--rig-fw-semi);text-decoration:underline;text-underline-offset:2px}
+.rg-pal-it .d{flex:0 1 auto;max-width:42%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--rig-mute);font:var(--rig-fs-xs)/var(--rig-lead-xs) var(--rig-sans)}
+.rig .rg-pal-it.on{background:var(--rig-panel3)}
+.rg-pal-it.on .k{color:var(--rig-text)}
+.rg-pal-f{display:flex;flex-wrap:wrap;align-items:center;gap:var(--rig-s2) var(--rig-s4);flex:none;padding:var(--rig-s2) var(--rig-s4);border-top:1px solid var(--rig-line);color:var(--rig-mute);font:var(--rig-fs-2xs)/var(--rig-lead-xs) var(--rig-sans)}
+.rg-pal-f>span{display:inline-flex;align-items:center;gap:var(--rig-s1)}
+.rg-pal-empty{padding:var(--rig-s6) var(--rig-s4);color:var(--rig-mute);font:var(--rig-fs-sm)/var(--rig-lead-md) var(--rig-sans)}
 @media (pointer:coarse){.rg-pal-f{display:none}}
 /* keyboard shortcuts (a Modal) */
 .rg-keys-l{display:flex;flex-direction:column;margin:0}
-.rg-keys-l>div{display:flex;align-items:center;gap:var(--rig-s4);padding:var(--rig-s2) 0;border-bottom:1px solid var(--rig-line)}
+.rg-keys-l>div{display:flex;align-items:center;gap:var(--rig-s4);padding:var(--rig-s2) 0;border-bottom:1px solid var(--rig-line-soft)}
 .rg-keys-l>div:last-child{border-bottom:0}
-.rg-keys-l dt{flex:1;min-width:0;color:var(--rig-dim);font-size:var(--rig-fs-sm);line-height:var(--rig-lh-snug)}
+.rg-keys-l dt{flex:1;min-width:0;color:var(--rig-dim);font-size:var(--rig-fs-sm);line-height:var(--rig-lead-sm)}
 .rg-keys-l dd{display:flex;gap:var(--rig-s1);flex:none;margin:0}
 /* status popovers: anchored to their status-bar item, clamped inside the window */
-.rg-pop{position:fixed;left:var(--rig-pop-left,var(--rig-s2));bottom:calc(var(--rig-sb-h) + var(--rig-s1));z-index:var(--rig-z-popover);width:min(20rem,calc(100vw - 2 * var(--rig-s2)));max-height:60vh;overflow:auto;overscroll-behavior:contain;padding:var(--rig-s4);background:var(--rig-panel);border:1px solid var(--rig-line2);border-radius:var(--rig-r-lg);box-shadow:var(--rig-shadow)}
-.rg-pop-sec+.rg-pop-sec{margin-top:var(--rig-s4);padding-top:var(--rig-s4);border-top:1px solid var(--rig-line)}
+.rg-pop{position:fixed;left:var(--rig-pop-left,var(--rig-s2));bottom:calc(var(--rig-sb-h) + var(--rig-s1));z-index:var(--rig-z-popover);width:min(20rem,calc(100vw - 2 * var(--rig-s2)));max-height:60vh;overflow:auto;overscroll-behavior:contain;padding:var(--rig-s3);background:var(--rig-panel);border-radius:var(--rig-r-md);box-shadow:var(--rig-shadow)}
+.rg-pop.below{top:var(--rig-pop-top);bottom:auto;max-height:min(60vh,calc(100vh - var(--rig-pop-top) - var(--rig-s2)))}
+.rg-pop-sec+.rg-pop-sec{margin-top:var(--rig-s3);padding-top:var(--rig-s3);border-top:1px solid var(--rig-line-soft)}
+/* a choice in the scope menu with what it is under it */
+.rg-pop-opt{display:flex;flex-direction:column;gap:2px;min-width:0}
+.rg-pop-opt>.rg-btn{align-self:flex-start;max-width:100%}
+.rg-pop-sub{padding-left:var(--rig-s2);color:var(--rig-mute);font:var(--rig-fs-2xs)/var(--rig-lead-xs) var(--rig-sans)}
+/* a harness name with a card (HarnessName.jsx): a soft dotted underline like a glossary word */
+.rig .rg-hn{background:color-mix(in srgb,currentColor 8%,transparent);padding:0 3px;cursor:help;border-radius:3px}
+.rig .rg-hn:hover,.rig .rg-hn[aria-expanded="true"]{background:color-mix(in srgb,currentColor 15%,transparent)}
+.rg-hnc{display:flex;flex-direction:column;gap:var(--rig-s1);max-width:22rem;font:var(--rig-fs-xs)/var(--rig-lead-sm) var(--rig-sans)}
+.rg-hnc-f{color:var(--rig-dim);font-size:var(--rig-fs-2xs)}
 .rg-pop .rg-lbl{display:block;margin-bottom:var(--rig-s2)}
-.rg-pop .rg-pop-p{margin:var(--rig-s2) 0 0;color:var(--rig-dim);font-size:var(--rig-fs-xs);line-height:var(--rig-lh-snug)}
+.rg-pop .rg-pop-p{margin:var(--rig-s2) 0 0;color:var(--rig-dim);font-size:var(--rig-fs-xs);line-height:var(--rig-lead-sm)}
 .rg-pop .opt{display:flex;justify-content:flex-start;width:100%}
-.rg-pop-list{display:flex;flex-direction:column;gap:var(--rig-s0);margin:0 calc(-1 * var(--rig-s2))}
-.rg-pop-row{display:flex;align-items:center;gap:var(--rig-s3);min-height:var(--rig-h-ctl);padding:0 var(--rig-s2);border:0;border-radius:var(--rig-r-sm);background:none;color:var(--rig-text);font:var(--rig-fw-regular) var(--rig-fs-sm)/var(--rig-lh-snug) var(--rig-sans);text-align:left;text-decoration:none}
+.rg-pop-list{display:flex;flex-direction:column;gap:1px;margin:0 calc(-1 * var(--rig-s2))}
+.rig .rg-pop-row{display:flex;align-items:center;gap:var(--rig-s3);min-height:var(--rig-h-ctl);padding:0 var(--rig-s2);border:0;border-radius:5px;background:none;color:var(--rig-text);font:var(--rig-fw-regular) var(--rig-fs-sm)/var(--rig-lead-sm) var(--rig-sans);text-align:left;text-decoration:none}
 .rg-pop-row>span:first-child{flex:none;width:6.5rem;color:var(--rig-mute);font-size:var(--rig-fs-xs)}
-.rg-pop-row>b{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font:var(--rig-fw-medium) var(--rig-fs-xs)/var(--rig-lh-snug) var(--rig-mono)}
-.rg-pop-row>.rg-ico{flex:none;color:var(--rig-mute)}
-button.rg-pop-row:hover,a.rg-pop-row:hover{background:var(--rig-panel2)}
-.rg-pop-st{display:flex;align-items:center;gap:var(--rig-s2);color:var(--rig-text);font-size:var(--rig-fs-sm);line-height:var(--rig-lh-snug);overflow-wrap:anywhere}
+.rg-pop-row>b{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font:var(--rig-fw-regular) var(--rig-fs-xs)/var(--rig-lead-sm) var(--rig-num);font-variant-numeric:tabular-nums}
+.rg-pop-row>.rg-ico{flex:none;width:14px;height:14px;color:var(--rig-mute)}
+.rig button.rg-pop-row:hover,.rig a.rg-pop-row:hover{background:var(--rig-panel3)}
+.rg-pop-st{display:flex;align-items:center;gap:var(--rig-s2);color:var(--rig-text);font-size:var(--rig-fs-sm);line-height:var(--rig-lead-sm);overflow-wrap:anywhere}
 /* the phone document switcher (a bottom sheet) */
-.rg-sheet{position:fixed;left:0;right:0;bottom:0;z-index:var(--rig-z-sheet);display:flex;flex-direction:column;max-height:86dvh;padding-bottom:env(safe-area-inset-bottom);background:var(--rig-panel);border-top:1px solid var(--rig-line2);border-radius:var(--rig-r-lg) var(--rig-r-lg) 0 0;box-shadow:var(--rig-shadow)}
-.rg-sheet .grab{flex:none;width:var(--rig-s6);height:var(--rig-s1);margin:var(--rig-s2) auto;border-radius:var(--rig-r-full);background:var(--rig-line3)}
+.rg-sheet{position:fixed;left:0;right:0;bottom:0;z-index:var(--rig-z-sheet);display:flex;flex-direction:column;max-height:86dvh;padding-bottom:env(safe-area-inset-bottom);background:var(--rig-panel);border-radius:var(--rig-r-lg) var(--rig-r-lg) 0 0;box-shadow:var(--rig-shadow)}
+.rg-sheet .grab{flex:none;width:var(--rig-s6);height:var(--rig-s1);margin:var(--rig-s2) auto;border-radius:var(--rig-r-full);background:var(--rig-line2)}
 .rg-sheet-h{display:flex;align-items:center;gap:var(--rig-s2);flex:none;padding:0 var(--rig-s2) var(--rig-s2) var(--rig-s4)}
 .rg-sheet-h>.rg-lbl{flex:1;min-width:0}
 .rg-sheet-b{flex:1;min-height:0;overflow:auto;overscroll-behavior:contain;padding:0 var(--rig-s2) var(--rig-s4)}
-.rg-sheet-row{display:flex;align-items:center;gap:var(--rig-s1);min-width:0;border-bottom:1px solid var(--rig-line)}
+.rg-sheet-row{display:flex;align-items:center;gap:var(--rig-s1);min-width:0;border-bottom:1px solid var(--rig-line-soft)}
 .rg-sheet-gl{display:block;padding:var(--rig-s4) var(--rig-s3) var(--rig-s2)}
-.rg-sheet .it{display:flex;align-items:center;gap:var(--rig-s3);width:100%;min-width:0;min-height:calc(var(--rig-h-lg) + var(--rig-s1));padding:0 var(--rig-s3);border:0;border-radius:var(--rig-r-sm);background:none;color:var(--rig-text);text-align:left;text-decoration:none}
-.rg-sheet .it:hover{background:var(--rig-panel2)}
-.rg-sheet .it.on{background:var(--rig-panel3);box-shadow:inset 2px 0 0 var(--rig-text)}
+.rig .rg-sheet .it{display:flex;align-items:center;gap:var(--rig-s3);width:100%;min-width:0;min-height:calc(var(--rig-h-lg) + var(--rig-s1));padding:0 var(--rig-s3);border:0;border-radius:var(--rig-r-sm);background:none;color:var(--rig-text);text-align:left;text-decoration:none}
+.rig .rg-sheet .it:hover{background:var(--rig-panel2)}
+.rig .rg-sheet .it.on{background:var(--rig-panel3);box-shadow:inset var(--rig-row-bar) 0 0 var(--rig-sel-mark)}
 .rg-sheet-row>.rg-btn{flex:none;width:var(--rig-h-ctl);padding:0}
 /* toast: bottom centre, above the status bar */
-.rg-toast{position:fixed;left:0;right:0;bottom:calc(var(--rig-sb-h) + var(--rig-s3));z-index:var(--rig-z-toast);display:flex;align-items:center;gap:var(--rig-s3);width:max-content;max-width:calc(100vw - 2 * var(--rig-s4));margin-inline:auto;padding:var(--rig-s2) var(--rig-s4);background:var(--rig-panel3);color:var(--rig-text);border:1px solid var(--rig-line3);border-radius:var(--rig-r-md);box-shadow:var(--rig-shadow);font:var(--rig-fw-medium) var(--rig-fs-sm)/var(--rig-lh-snug) var(--rig-sans);opacity:0;pointer-events:none;transform:translateY(var(--rig-s5));transition:opacity var(--rig-dur-2) var(--rig-ease),transform var(--rig-dur-2) var(--rig-ease)}
+.rg-toast{position:fixed;left:0;right:0;bottom:calc(var(--rig-sb-h) + var(--rig-s3));z-index:var(--rig-z-toast);display:flex;align-items:center;gap:var(--rig-s3);width:max-content;max-width:calc(100vw - 2 * var(--rig-s4));margin-inline:auto;padding:var(--rig-s2) var(--rig-s3);background:var(--rig-panel2);color:var(--rig-text);border-radius:var(--rig-r-md);box-shadow:var(--rig-shadow);font:var(--rig-fw-medium) var(--rig-fs-sm)/var(--rig-lead-sm) var(--rig-sans);opacity:0;pointer-events:none;transform:translateY(var(--rig-s5));transition:opacity var(--rig-dur-2) var(--rig-ease),transform var(--rig-dur-2) var(--rig-ease)}
 .rg-toast.act{padding-right:var(--rig-s2)}
 .rg-toast.show{opacity:1;transform:none}
 .rg-toast.act.show{pointer-events:auto}
 .rg-toast-b{flex:none}
 
-/* ---------------------------------------------------------------- tablet 761–1099: overlays instead of columns */
+/* ---------------------------------------------------------------- tablet 768–1023: overlays instead of columns */
 @media (min-width:768px) and (max-width:1023px){
   /* the sidebar stays a 56px rail; opened, it lies over the document (scrim, Esc or a click closes it) */
   .rig[data-rig-nav="open"]{--rig-nav-w:var(--rig-rail-w)}
   .rig[data-rig-nav="open"] .rg-rail{position:relative;z-index:var(--rig-z-dock);width:var(--rig-side-w);box-shadow:var(--rig-shadow)}
-  .rg-nav-scrim{display:block;position:fixed;inset:var(--rig-tb-h) 0 0 0;z-index:calc(var(--rig-z-dock) - 1);background:var(--rig-scrim)}
+  .rg-nav-scrim{display:block;position:fixed;inset:0;z-index:calc(var(--rig-z-dock) - 1);background:var(--rig-scrim)}
   /* the side panel is a drawer from the right; the document keeps its width */
   .rig.has-side{grid-template-columns:var(--rig-nav-w) minmax(0,1fr)}
   .rig.has-side[data-rig-max]{grid-template-columns:minmax(0,1fr)}
-  .rg-dock.side{position:fixed;top:var(--rig-tb-h);right:0;bottom:0;z-index:var(--rig-z-dock);width:min(var(--rig-drawer-w),calc(100vw - var(--rig-rail-w)));box-shadow:var(--rig-shadow)}
+  .rg-dock.side{position:fixed;top:var(--rig-gap);right:var(--rig-gap);bottom:calc(var(--rig-sb-h) + var(--rig-gap));z-index:var(--rig-z-dock);width:min(var(--rig-drawer-w),calc(100vw - var(--rig-rail-w)));margin:0;box-shadow:var(--rig-shadow)}
   .rg-dock-rs{display:none}
-  .rg-dock-scrim{display:block;position:fixed;inset:var(--rig-tb-h) 0 0 0;z-index:calc(var(--rig-z-dock) - 1);background:var(--rig-scrim)}
+  .rg-dock-scrim{display:block;position:fixed;inset:0;z-index:calc(var(--rig-z-dock) - 1);background:var(--rig-scrim)}
   /* one pane: a split shows the focused pane, and the pane-switch button brings the other forward */
   .rg-pane:not(.focus){display:none}
   .rg-pane+.rg-pane{border-left:0}
   .rg-paneswap{display:grid}
 }
 
-/* ---------------------------------------------------------------- phone ≤760: one pane, sheets, whole-screen palette */
+/* ---------------------------------------------------------------- phone ≤767: one pane edge to edge, sheets, whole-screen palette */
 @media (max-width:767px){
-  .rig,.rig[data-rig-max]{grid-template-columns:minmax(0,1fr);grid-template-rows:var(--rig-tb-h) minmax(0,1fr) 0 var(--rig-sb-h)}
+  .rig,.rig[data-rig-max]{grid-template-columns:minmax(0,1fr);grid-template-rows:minmax(0,1fr) 0 var(--rig-sb-h)}
   .rig.has-side,.rig.has-side[data-rig-max]{grid-template-columns:minmax(0,1fr)}
   .rig[data-rig-max] .rg-sb{display:flex}
-  /* top bar: mark · document switcher · search · Buddy · overflow menu */
-  .rg-tb{display:flex;gap:var(--rig-s1);padding:0 var(--rig-s2)}
-  .rg-tb-l{flex:none}
-  .rg-brand{justify-content:center;width:var(--rig-h-ctl);padding:0}
-  .rg-mtab{display:flex}
-  .rg-cmd{flex:none;justify-content:center;width:var(--rig-h-ctl);padding:0;border-color:transparent;background:none;color:var(--rig-dim)}
-  .rg-cmd:hover{border-color:var(--rig-line2);background:none}
-  .rg-cmd-ph{display:none}
-  .rg-tb-r,.rg-tb-more{flex:none}
-  .rg-tb-r{gap:0}
-  .rg-tb .rg-tour-launcher,.rg-tb .rg-tb-acct,.rg-tb .rg-tb-theme,.rg-tb-sep{display:none}
-  .rg-tb-more{display:inline-flex}
-  /* no sidebar: the document switcher sheet is the navigation */
+  .rg-work,.rig[data-rig-max] .rg-work{grid-column:1;margin:0;border:0;border-radius:0}
+  /* no sidebar: the document switcher sheet is the navigation; the head is mark · switcher · search · Buddy · menu */
   .rg-rail,.rg-nav-scrim{display:none}
-  .rg-work,.rig[data-rig-max] .rg-work{grid-column:1}
   .rg-pane{display:none}
   .rg-pane.focus{display:flex}
   .rg-tabbar{display:none}
-  /* the pane header keeps only what the switcher does not already say: page actions, an evidence trail */
+  .rg-panehead{gap:var(--rig-s1);padding:0 var(--rig-s2)}
   .rg-panehead .rg-crumb{display:none}
-  /* the row goes when nothing in it is drawn on a phone: phone-hidden actions (the oracle switch lives in
-     the status sheet) and buttons that repeat a status-bar launcher (.rg-sb-dup) do not keep a 48px band */
+  .rig .rg-gcl .rg-brand-m{display:grid}
+  .rig .rg-mtab{display:flex}
+  .rig .rg-cmd{width:var(--rig-h-ctl);margin:0;padding:0;justify-content:center;border-color:transparent;background:none;color:var(--rig-dim)}
+  .rg-cmd-ph,.rg-cmd-k{display:none}
+  .rig .rg-tb-more{display:inline-flex}
+  .rg-gcl .rg-tb-theme{display:none}
+  /* only the switcher gives way, so search, Help and the menu stay on screen at 390 px */
+  .rg-panehead .tb-end,.rig .rg-gcl{flex:1 1 auto}
+  .rig .rg-gcl>:not(.rg-mtab){flex:none}
+  .rig .rg-mtab{min-width:var(--rig-h-ctl);overflow:hidden}
+  .rg-panehead .tb-end .acts,.rg-panehead .tb-end .acts>.rg-btn{min-width:0;overflow:hidden}
+  /* phone-hidden actions (the oracle switch lives in the status sheet) and buttons that repeat a
+     status-bar launcher (.rg-sb-dup) leave the head */
   .rg-panehead .rg-sb-dup{display:none}
-  .rg-panehead:not(:has(.rg-chain,.rg-paneswap,.rg-pane-acts :is(button,a,select,input,[role="button"]):not(.rg-hide-sm,.rg-hide-sm *,.rg-sb-dup,.rg-sb-dup *))){display:none}
   /* the panel is a bottom sheet over the document, above the status bar */
-  .rg-dock,.rg-dock.side,.rig[data-rig-max] .rg-dock.side{position:fixed;left:0;right:0;bottom:var(--rig-sb-h);top:auto;z-index:var(--rig-z-dock);width:auto;height:auto;max-height:80dvh;background:var(--rig-panel);border:0;border-top:1px solid var(--rig-line2);border-radius:var(--rig-r-lg) var(--rig-r-lg) 0 0;box-shadow:var(--rig-shadow)}
+  .rg-dock,.rg-dock.side,.rig[data-rig-max] .rg-dock.side{position:fixed;left:0;right:0;bottom:var(--rig-sb-h);top:auto;z-index:var(--rig-z-dock);width:auto;height:auto;max-height:80dvh;margin:0;border:0;border-radius:var(--rig-r-lg) var(--rig-r-lg) 0 0;box-shadow:var(--rig-shadow)}
   .rg-dock.open:not(.side){height:auto}
-  .rg-dock::before{content:"";flex:none;width:var(--rig-s6);height:var(--rig-s1);margin:var(--rig-s2) auto 0;border-radius:var(--rig-r-full);background:var(--rig-line3)}
-  .rg-dock-h{border-bottom-color:var(--rig-line)}
+  .rg-dock::before{content:"";flex:none;width:var(--rig-s6);height:var(--rig-s1);margin:var(--rig-s2) auto 0;border-radius:var(--rig-r-full);background:var(--rig-line2)}
   .rg-dock-rs{display:none}
   .rg-dock-scrim{display:block;position:fixed;inset:0 0 var(--rig-sb-h) 0;z-index:calc(var(--rig-z-dock) - 1);background:var(--rig-scrim)}
   /* palette and dialogs take the screen */
   .rg-scrim.pal{padding:0}
-  .rg-scrim.pal .rg-pal{width:100vw;height:100dvh;max-height:none;border:0;border-radius:0}
+  .rg-scrim.pal .rg-pal{width:100vw;height:100dvh;max-height:none;border-radius:0}
   /* two lines on a phone: kind + label, then the description (task · model · harness) under the label,
      so two runs with look-alike ids can still be told apart */
-  .rg-pal-it{min-height:calc(var(--rig-h-lg) + var(--rig-s1));flex-wrap:wrap;row-gap:var(--rig-s0);padding-block:var(--rig-s2)}
-  .rg-pal-it .d{flex-basis:100%;max-width:none;padding-left:calc(4.25rem + var(--rig-s3));line-height:var(--rig-lh-snug)}
+  .rig .rg-pal-it{min-height:calc(var(--rig-h-lg) + var(--rig-s1));flex-wrap:wrap;row-gap:var(--rig-s0);padding-block:var(--rig-s2)}
+  .rg-pal-it .d{flex-basis:100%;max-width:none;padding-left:calc(4.25rem + 10px);line-height:var(--rig-lead-sm)}
   .rg-pal-it .d:empty{display:none}
-  .rg-pal-it .k{width:4.25rem}
   /* popovers become bottom sheets */
   .rg-scrim.clear{background:var(--rig-scrim)}
-  .rg-pop{left:0;right:0;bottom:0;width:auto;max-height:80dvh;padding:var(--rig-s4) var(--rig-s4) calc(var(--rig-s4) + env(safe-area-inset-bottom));border-width:1px 0 0;border-radius:var(--rig-r-lg) var(--rig-r-lg) 0 0}
-  /* a toast never covers an open sheet's rows: it moves under the top bar */
-  .rig:has(.rg-dock.open) .rg-toast{top:calc(var(--rig-tb-h) + var(--rig-s2));bottom:auto;transform:translateY(calc(-1 * var(--rig-s5)))}
+  .rg-pop{left:0;right:0;bottom:0;width:auto;max-height:80dvh;padding:var(--rig-s4) var(--rig-s4) calc(var(--rig-s4) + env(safe-area-inset-bottom));border-radius:var(--rig-r-lg) var(--rig-r-lg) 0 0}
+  /* a toast never covers an open sheet's rows: it moves to the top */
+  .rig:has(.rg-dock.open) .rg-toast{top:var(--rig-s2);bottom:auto;transform:translateY(calc(-1 * var(--rig-s5)))}
   .rig:has(.rg-dock.open) .rg-toast.show{transform:none}
 }
 
-/* ---------------------------------------------------------------- wide ≥1800: one re-point of the type and the chrome */
+/* ---------------------------------------------------------------- wide ≥1920: one re-point of the type and the chrome */
 @media (min-width:1920px){
-  .rig{--rig-fs-sm:14px;--rig-fs-md:15px;--rig-fs-lg:17px;--rig-fs-xl:22px;--rig-fs-2xl:30px;--rig-gutter:var(--rig-s6);--rig-rail-w:64px;--rig-side-w:256px;--rig-cmd-max:680px}
+  .rig{--rig-fs-sm:15px;--rig-fs-md:16px;--rig-fs-lg:18px;--rig-fs-xl:25px;--rig-fs-2xl:30px;--rig-gutter:var(--rig-s6);--rig-rail-w:84px;--rig-side-w:248px;--rig-cmd-w:360px}
 }
 
 /* ---------------------------------------------------------------- coarse pointers: the chrome's small controls */
@@ -1028,38 +1257,206 @@ button.rg-pop-row:hover,a.rg-pop-row:hover{background:var(--rig-panel2)}
   .rg-sb .it{min-width:var(--rig-hit)}
 }
 
+/* ---------------------------------------------------------------- print: the document alone, on Paper */
+@media print{
+  .rig{position:static;display:block;overflow:visible;background:var(--rig-panel)}
+  .rg-rail,.rg-sb,.rg-panehead,.rg-tabbar,.rg-chainrow,.rg-dock,.rg-skip,.rg-toast,.rg-nav-scrim,.rg-dock-scrim{display:none!important}
+  .rg-work{display:block;margin:0;border:0;border-radius:0;overflow:visible}
+  .rg-pane:not(.focus){display:none}
+  .rg-pane,.rg-doc{display:block;overflow:visible;height:auto}
+}
+
 /* ---------------------------------------------------------------- shared controls the views asked for
    (UI contract v1, cross-ownership requests from the view owners) */
 /* the asking sentence: a word stays with its control */
-.rg-asking{gap:var(--rig-s2);line-height:var(--rig-lh-body)}
+.rg-asking{gap:var(--rig-s2);line-height:var(--rig-lead-md)}
 .rg-asking-g{display:inline-flex;align-items:center;gap:var(--rig-s1) var(--rig-s2);flex-wrap:nowrap;max-width:100%;min-width:0}
 /* the comma sits against its select (no flex gap in front of it) */
 .rg-asking-t{display:inline-flex;align-items:center;min-width:0;max-width:100%}
 .rg-asking-p{padding-left:var(--rig-s0)}
 /* the brackets are real controls: --rig-h-ctl high (36 with a mouse, 44 on touch), one radius family */
 .rg-brk{min-width:0;max-width:100%}
-.rg-brk select{min-height:var(--rig-h-ctl);max-width:100%;padding:0 var(--rig-s5) 0 var(--rig-s2);font:var(--rig-fw-medium) var(--rig-fs-sm)/var(--rig-lh-tight) var(--rig-sans);transition:background-color var(--rig-dur-1) var(--rig-ease),border-color var(--rig-dur-1) var(--rig-ease)}
-.rg-brk::after{right:var(--rig-s2)}
+.rg-brk select{min-height:var(--rig-h-ctl);max-width:100%;padding:0 var(--rig-s5) 0 var(--rig-s2);font:var(--rig-fw-medium) var(--rig-fs-sm)/var(--rig-lead-xs) var(--rig-sans);transition:background-color var(--rig-dur-1) var(--rig-ease),border-color var(--rig-dur-1) var(--rig-ease)}
+.rg-brk-c{right:var(--rig-s2)}
 .rg-brk select:focus-visible{outline:var(--rig-focus-ring);outline-offset:var(--rig-focus-offset)}
 /* the one-line summary of the condition: only in a compact container (a phone) */
 .rg-asking-sum{display:none}
 @container (max-width:480px){
   .rg-asking{display:grid;grid-template-columns:max-content minmax(0,1fr);gap:var(--rig-s2) var(--rig-s3);align-items:center}
-  .rg-asking-sum{display:flex;align-items:center;gap:var(--rig-s2);grid-column:1/-1;width:100%;min-width:0;min-height:var(--rig-h-ctl);padding:0 var(--rig-s3);border:1px solid var(--rig-line2);border-radius:var(--rig-r-md);background:var(--rig-panel2);color:var(--rig-text);text-align:left;font:var(--rig-fw-medium) var(--rig-fs-sm)/var(--rig-lh-tight) var(--rig-sans)}
-  .rg-asking-sum:hover{background:var(--rig-panel3);border-color:var(--rig-line3)}
+  .rg-asking-sum{display:flex;align-items:center;gap:var(--rig-s2);grid-column:1/-1;width:100%;min-width:0;min-height:var(--rig-h-ctl);padding:0 var(--rig-s3);border:1px solid var(--rig-line);border-radius:var(--rig-r-sm);background:var(--rig-panel2);color:var(--rig-text);text-align:left;font:var(--rig-fw-medium) var(--rig-fs-sm)/var(--rig-lead-xs) var(--rig-sans)}
+  .rg-asking-sum:hover{background:var(--rig-panel3);border-color:var(--rig-line2)}
   .rg-asking-sum:focus-visible{outline:var(--rig-focus-ring);outline-offset:var(--rig-focus-offset)}
-  .rg-asking-sl{flex:none;color:var(--rig-mute);font:var(--rig-fw-medium) var(--rig-fs-2xs)/1 var(--rig-mono);letter-spacing:var(--rig-track-caps);text-transform:uppercase}
-  .rg-asking-sv{flex:1 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-family:var(--rig-mono)}
+  .rg-asking-sl{flex:none;color:var(--rig-mute);font:var(--rig-fw-medium) var(--rig-fs-2xs)/var(--rig-lead-xs) var(--rig-sans)}
+  .rg-asking-sv{flex:1 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-family:var(--rig-num);font-variant-numeric:tabular-nums}
   .rg-asking-sc{flex:none;color:var(--rig-mute);font-size:var(--rig-fs-2xs);transition:transform var(--rig-dur-2) var(--rig-ease)}
   .rg-asking.open .rg-asking-sc{transform:rotate(180deg)}
   /* closed: the summary alone; open: a label / control grid under it */
   .rg-asking .rg-q-mark,.rg-asking:not(.open) .rg-asking-g,.rg-asking-x,.rg-asking-p{display:none}
   .rg-asking.open .rg-asking-g,.rg-asking.open .rg-asking-t{display:contents}
-  .rg-asking.open .rg-brk select{width:100%}
+  .rg-asking.open .rg-brk select,.rg-asking.open .rg-brk-b{width:100%}
 }
+/* the oracle in the sentence is a button to the status bar's oracle menu, drawn like its neighbours */
+.rig .rg-brk-b{display:inline-flex;align-items:center;min-height:var(--rig-h-ctl);max-width:100%;padding:0 var(--rig-s5) 0 var(--rig-s2);border:1px solid var(--rig-line);border-radius:var(--rig-r-sm);background:var(--rig-panel2);color:var(--rig-text);font:var(--rig-fw-medium) var(--rig-fs-xs)/var(--rig-lead-xs) var(--rig-num);text-align:left;transition:background-color var(--rig-dur-1) var(--rig-ease),border-color var(--rig-dur-1) var(--rig-ease);font-variant-numeric:tabular-nums}
+.rig .rg-brk-b:hover{background:var(--rig-panel3);border-color:var(--rig-line2)}
 /* "About this" is a control: a 32px row with a mouse (44px on touch, above) */
 @media (pointer:fine){.rg-about summary{min-height:calc(var(--rig-h-sm) + var(--rig-s1))}}
 /* a pin in a row of actions is as tall as its neighbours */
-:is(.rg-actbar,.rg-ph-actions,.rg-dh,.rg-card-acts)>.rg-pin:not(.cmp){height:var(--rig-h-ctl);padding:0 var(--rig-s3);gap:var(--rig-s2);border-radius:var(--rig-r-md)}
+:is(.rg-actbar,.rg-ph-actions,.rg-dh,.rg-card-acts)>.rg-pin:not(.cmp){height:var(--rig-h-ctl);padding:0 var(--rig-s3);gap:var(--rig-s2);border-radius:var(--rig-r-sm)}
 /* a page title in a narrow document */
 @container rgdoc (max-width:640px){.rig .rg-dh h1{font-size:var(--rig-fs-xl)}}
+
+/* ---------------------------------------------------------------- palette: grouped results and "Show all" */
+.rg-pal-sec+.rg-pal-sec{margin-top:var(--rig-s1)}
+.rig .rg-pal-all .t{color:var(--rig-text)}
+
+/* ---------------------------------------------------------------- demo data: a thin line over a mock dataset's page */
+.rg-demo{display:flex;align-items:center;gap:var(--rig-s3);min-height:var(--rig-h-sm);margin:0 0 var(--rig-s4);padding:var(--rig-s1) var(--rig-s3);border-radius:var(--rig-r-sm);background:var(--rig-amb-bg);box-shadow:inset 2px 0 0 var(--rig-amb);color:var(--rig-dim);font:var(--rig-fw-regular) var(--rig-fs-xs)/var(--rig-lead-sm) var(--rig-sans)}
+.rg-demo>b{flex:none;color:var(--rig-amb-t);font-weight:var(--rig-fw-semi)}
+.rg-demo>.rg-tlink{flex:none}
+
+/* ---------------------------------------------------------------- first-visit tour
+   A dimmed layer with a hole around each element a step talks about, and the step's card beside it. */
+.rg-tour-layer{position:fixed;inset:0;z-index:var(--rig-z-tour)}
+.rg-tour-dim{position:absolute;inset:0;display:block}
+.rg-tour-dim>path{fill:var(--rig-scrim)}
+.rg-tour-ring{fill:none;stroke:var(--rig-sel);stroke-width:2}
+.rg-tour-card{position:absolute;left:var(--rig-tour-x,var(--rig-s4));top:var(--rig-tour-y,var(--rig-s4));display:flex;flex-direction:column;gap:6px;width:min(22.5rem,calc(100vw - 2 * var(--rig-s4)));padding:14px var(--rig-s4) var(--rig-s3);background:var(--rig-panel);color:var(--rig-text);border-radius:var(--rig-r-lg);box-shadow:var(--rig-shadow);transition:left var(--rig-dur-2) var(--rig-ease),top var(--rig-dur-2) var(--rig-ease)}
+.rig .rg-tour-n{margin:0;color:var(--rig-mute);font:var(--rig-fw-regular) var(--rig-fs-2xs)/var(--rig-lead-xs) var(--rig-sans)}
+.rig .rg-tour-t{margin:0;font:var(--rig-fw-semi) var(--rig-fs-md)/var(--rig-lead-md) var(--rig-sans);letter-spacing:-.01em}
+.rig .rg-tour-b{margin:0;color:var(--rig-dim);font-size:var(--rig-fs-sm);line-height:var(--rig-lead-md)}
+.rg-tour-f{display:flex;align-items:center;gap:6px;margin-top:var(--rig-s2)}
+/* × at the card's top right; the step line keeps clear of it */
+.rig .rg-tour-card .rg-tour-n{padding-right:28px}
+.rg-tour-x{position:absolute;top:var(--rig-s2);right:var(--rig-s2);display:inline-grid;place-items:center;width:28px;height:28px;padding:0;border:0;border-radius:var(--rig-r-sm);background:transparent;color:var(--rig-mute);cursor:pointer}
+.rg-tour-x:hover{background:var(--rig-panel3);color:var(--rig-text)}
+.rg-tour-x:focus-visible{outline:2px solid var(--rig-sel);outline-offset:1px}
+.rg-tour-card[data-wait] .rg-tour-b{color:var(--rig-mute)}
+/* a page tour plays: the time left in the step is a thin bar along the card's top that runs down (Tour.jsx sets
+   --rig-tour-t to the step's reading time), and stops while the tour is paused or held; no bar under reduced motion */
+.rg-tour-time{position:absolute;top:6px;left:var(--rig-s4);right:var(--rig-s4);height:2px;border-radius:var(--rig-r-full);background:var(--rig-line);overflow:hidden}
+.rg-tour-time>i{display:block;height:100%;background:var(--rig-dim);transform-origin:left center;animation:rg-tour-time var(--rig-tour-t) linear both}
+.rg-tour-card:not([data-play="playing"]) .rg-tour-time>i{animation-play-state:paused}
+@keyframes rg-tour-time{from{transform:scaleX(1)}to{transform:scaleX(0)}}
+@media (prefers-reduced-motion:reduce){.rg-tour-time>i{animation:none}}
+.rg-tour-play>.rg-ico{flex:none}
+.rg-tour-play[aria-disabled="true"]{opacity:.55;cursor:default}
+/* the card is placed by Tour.placeCard at every width (beside, under or over what it points at, never on it) */
+@media (prefers-reduced-motion:reduce){.rg-tour-card{transition:none}}
+/* the help line under a page's title (primitives.PageHelp): the Learn articles of the page */
+.rg-ph-help{display:flex;flex-wrap:wrap;align-items:center;gap:var(--rig-s1) var(--rig-s3);margin-top:var(--rig-s1);min-width:0}
+/* Tour, at the top right of the top bar on every page (TourButton.jsx): a play icon and the word, never cut */
+.rig .rg-tourbtn{display:inline-flex;align-items:center;gap:6px;flex:none;height:var(--rig-h-ctl);padding:0 10px 0 8px;border:1px solid var(--rig-line);border-radius:var(--rig-r-sm);background:none;color:var(--rig-dim);font:var(--rig-fw-medium) var(--rig-fs-sm)/1 var(--rig-sans);white-space:nowrap;cursor:pointer}
+.rig .rg-tourbtn:hover{background:var(--rig-panel3);color:var(--rig-text)}
+.rig .rg-tourbtn:focus-visible{outline:2px solid var(--rig-sel);outline-offset:2px}
+.rig .rg-tourbtn>.rg-ico{flex:none;width:12px;height:12px}
+/* once, on the first visit to the page type: a ring that grows and fades */
+.rg-tourbtn.pulse{animation:rg-tourbtn-pulse var(--rig-dur-pulse) var(--rig-ease) 1}
+@keyframes rg-tourbtn-pulse{0%{box-shadow:0 0 0 0 var(--rig-dim)}70%{box-shadow:0 0 0 8px transparent}100%{box-shadow:0 0 0 0 transparent}}
+.rig .rg-gcl .rg-tbtn.pulse{animation:rg-tourbtn-pulse var(--rig-dur-pulse) var(--rig-ease) 1}
+@media (prefers-reduced-motion:reduce){.rg-tourbtn.pulse,.rig .rg-gcl .rg-tbtn.pulse{animation:none}}
+.rig .rg-ph-learn{margin:0;min-width:0;color:var(--rig-mute);font-size:var(--rig-fs-xs);line-height:var(--rig-lead-sm);overflow-wrap:anywhere}
+.rig .rg-ph-learn .rg-tlink{font-size:var(--rig-fs-xs)}
+.rg-ph-learn-k{color:var(--rig-dim);font-weight:var(--rig-fw-medium)}
+/* a first visit's offer of the tour: a card in the corner, not a dialog; the page under it stays usable */
+.rg-tour-offer{position:fixed;right:var(--rig-s4);bottom:var(--rig-s4);z-index:var(--rig-z-toast);display:flex;gap:var(--rig-s3);align-items:flex-start;width:min(23rem,calc(100vw - 2 * var(--rig-s4)));padding:var(--rig-s4);background:var(--rig-panel);color:var(--rig-text);border:1px solid var(--rig-line3);border-radius:var(--rig-r-lg);box-shadow:var(--rig-shadow);animation:rg-rise-in var(--rig-dur-2) var(--rig-ease) both}
+.rg-tour-offer>.rg-ico{flex:none;margin-top:2px;color:var(--rig-dim)}
+.rig .rg-tour-offer-t{margin:0;font:var(--rig-fw-bold) var(--rig-fs-md)/var(--rig-lead-md) var(--rig-sans)}
+.rig .rg-tour-offer-b{margin:var(--rig-s1) 0 var(--rig-s3);color:var(--rig-dim);font-size:var(--rig-fs-sm);line-height:var(--rig-lead-md)}
+.rg-tour-offer-a{display:flex;flex-wrap:wrap;gap:var(--rig-s2)}
+/* Help items: the name, and one line on what it does */
+.rg-help-l{display:flex;flex-direction:column;gap:2px;min-width:0;text-align:left}
+.rig .rg-help-d{color:var(--rig-mute);font-size:var(--rig-fs-xs);line-height:var(--rig-lead-sm);white-space:normal}
+
+/* ================================================================ the calm frame
+   No status bar: the connection is a dot in the pane head that speaks only when something is not
+   normal. The left list is 220px. Help, the panels and the rest of the controls are menus in the head. */
+.rig{--rig-side-w:220px;--rig-sb-h:0px}
+@media (max-width:767px),(pointer:coarse){.rig{--rig-sb-h:0px}}
+.rig .rg-rail .rg-side-top{flex-direction:column;flex-wrap:nowrap;align-items:stretch;gap:var(--rig-s1);margin-bottom:var(--rig-s2)}
+.rig .rg-rail .rg-side-top .rg-dsw{flex:none}
+.rig[data-rig-nav="open"] .rg-side-top .rg-brand{align-self:flex-start}
+.rig .rg-rail .rg-nav-it.on{background:var(--rig-sel-bg);color:var(--rig-text);box-shadow:inset var(--rig-row-bar) 0 0 var(--rig-sel-mark)}
+/* the left list (navTree.js): seven places; the place in view opens its pages under it, in their groups */
+.rg-tree{gap:1px}
+.rg-nav-sec{display:flex;flex-direction:column;gap:1px}
+.rg-nav-sec.rule{margin-top:var(--rig-s2);padding-top:var(--rig-s2);border-top:1px solid var(--rig-line-soft)}
+.rg-nav-row{position:relative;display:flex;align-items:center;min-width:0}
+.rg-nav-row>.rg-nav-it{flex:1;min-width:0}
+.rig .rg-rail .rg-nav-it.cur{color:var(--rig-text)}
+.rig .rg-rail .rg-nav-it.cur .rg-ico{color:var(--rig-text)}
+.rig .rg-nav-tog{position:absolute;right:0;top:0;display:inline-grid;place-items:center;width:var(--rig-h-ctl);height:var(--rig-h-ctl);padding:0;border:0;border-radius:var(--rig-r-sm);background:none;color:var(--rig-mute)}
+.rig .rg-nav-tog:hover{background:var(--rig-panel3);color:var(--rig-text)}
+.rg-nav-tog .rg-ico{width:12px;height:12px}
+.rg-nav-row:has(.rg-nav-tog)>.rg-nav-it{padding-right:var(--rig-h-ctl)}
+.rg-nav-kids{display:flex;flex-direction:column;gap:1px;margin:1px 0 var(--rig-s1)}
+.rg-nav-kg{display:flex;flex-direction:column;gap:1px}
+.rg-nav-kgl{display:block;padding:var(--rig-s2) var(--rig-s2) var(--rig-s1) calc(var(--rig-s2) + 16px + var(--rig-s2));color:var(--rig-mute);font:var(--rig-fw-medium) var(--rig-fs-2xs)/var(--rig-lead-xs) var(--rig-sans);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rig .rg-rail .rg-nav-it.rg-nav-kid{height:calc(var(--rig-h-ctl) - var(--rig-s1));padding-left:calc(var(--rig-s2) + 16px + var(--rig-s2))}
+.rg-nav-ext{display:inline-flex;flex:none;color:var(--rig-mute)}
+.rg-nav-ext .rg-ico{width:12px;height:12px}
+.rg-nav-sec .rg-dsw{margin:var(--rig-s1) 0}
+.rig[data-rig-nav="closed"] .rg-nav-tog,.rig[data-rig-nav="closed"] .rg-nav-kids{display:none}
+.rig[data-rig-nav="closed"] .rg-rail .rg-nav-it.cur{background:var(--rig-sel-bg);box-shadow:inset var(--rig-row-bar) 0 0 var(--rig-sel-mark)}
+.rig[data-rig-nav="closed"] .rg-nav-row:has(.rg-nav-tog)>.rg-nav-it{padding-right:0}
+.rig[data-rig-nav="closed"] .rg-nav-sec.rule{margin-top:var(--rig-s1);padding-top:var(--rig-s1)}
+/* the phone sheet folds the left list in: the pages of the open place sit indented under it */
+.rig .rg-sheet-dsw{margin:0 0 var(--rig-s1)}
+/* its picker is a layer of the sheet (the sheet is its containing block, not the scrolling body): under the button,
+   down to the sheet's foot, scrolling on its own; nothing of the sheet sits over it */
+.rig .rg-dsw.rg-dsw-insheet{position:static}
+.rig .rg-dsw-m.in-sheet{left:var(--rig-s2);right:var(--rig-s2);bottom:var(--rig-s2);width:auto;max-width:none;max-height:none;z-index:var(--rig-z-dropdown)}
+.rg-sheet-indent{display:inline-block;flex:none;width:18px}
+.rg-rail .rg-nav-foot{padding-top:var(--rig-s1)}
+
+/* the status pill */
+.rg-pill{display:inline-flex;align-items:center;gap:var(--rig-s1);flex:none;min-width:0}
+.rig .rg-pill-b{display:inline-flex;align-items:center;justify-content:center;gap:var(--rig-s2);min-width:var(--rig-h-ctl);height:var(--rig-h-ctl);padding:0 var(--rig-s2);border:0;border-radius:var(--rig-r-full);background:none;color:var(--rig-text);font:var(--rig-fw-medium) var(--rig-fs-xs)/var(--rig-lead-xs) var(--rig-sans)}
+.rig .rg-pill-b:hover{background:var(--rig-panel3)}
+.rig .rg-pill-b:not(.ok){background:var(--rig-panel2)}
+.rg-pill-b .rg-dot{width:6px;height:6px}
+.rg-pill-b.ok .rg-dot:not(.off):not(.warn){background:var(--rig-mute)}
+.rg-pill-t{color:var(--rig-text);font:var(--rig-fw-medium) var(--rig-fs-xs)/var(--rig-lead-xs) var(--rig-sans);white-space:nowrap}
+.rig .rg-pill-a{display:inline-flex;align-items:center;height:var(--rig-h-xs);padding:0 var(--rig-s2);border:1px solid var(--rig-line);border-radius:var(--rig-r-full);background:var(--rig-panel2);color:var(--rig-text);font:var(--rig-fw-medium) var(--rig-fs-xs)/var(--rig-lead-xs) var(--rig-sans);white-space:nowrap}
+.rig .rg-pill-a:hover{background:var(--rig-panel3);border-color:var(--rig-line2)}
+@container rgpane (max-width:900px){.rg-pill-t,.rig .rg-pill-a{display:none}}
+.rig .rg-pop.below{top:var(--rig-pop-top)}
+
+/* the Help menu and the panels menu open under their buttons */
+.rg-help{position:relative;display:inline-flex}
+.rg-help-m{top:var(--rig-help-top,var(--rig-head-h));bottom:auto}
+.rg-panels{position:relative;display:inline-flex}
+.rg-panels .rg-tbtn{position:relative}
+.rg-tbtn-n{position:absolute;top:1px;right:1px;min-width:14px;height:14px;padding:0 3px;border-radius:var(--rig-r-full);background:var(--rig-text);color:var(--rig-panel);font:var(--rig-fw-medium) var(--rig-fs-2xs)/var(--rig-lead-xs) var(--rig-num);text-align:center;font-variant-numeric:tabular-nums}
+.rg-panels-m{position:absolute;right:0;top:calc(100% + var(--rig-s1));z-index:var(--rig-z-menu);display:flex;flex-direction:column;gap:1px;min-width:13rem;padding:var(--rig-s1);background:var(--rig-panel);border-radius:var(--rig-r-md);box-shadow:var(--rig-shadow)}
+.rig .rg-panels-m .it{display:flex;align-items:center;gap:var(--rig-s2);min-height:var(--rig-h-ctl);padding:0 var(--rig-s2);border:0;border-radius:var(--rig-r-sm);background:none;color:var(--rig-text);font:var(--rig-fw-regular) var(--rig-fs-sm)/var(--rig-lead-xs) var(--rig-sans);text-align:left}
+.rig .rg-panels-m .it:hover{background:var(--rig-panel3)}
+.rig .rg-panels-m .it.on{background:var(--rig-sel-bg)}
+.rg-panels-m .it .rg-ico{width:14px;height:14px;color:var(--rig-mute)}
+.rg-panels-m .n{margin-left:auto;padding:1px var(--rig-s1);border-radius:var(--rig-r-xs);background:var(--rig-panel3);color:var(--rig-text);font:var(--rig-fw-regular) var(--rig-fs-2xs)/var(--rig-lead-xs) var(--rig-num);font-variant-numeric:tabular-nums}
+/* More is a menu at every size */
+.rig .rg-gcl .rg-tb-more{display:inline-flex}
+/* one pane with several tabs: the open documents are one button away */
+.rig .rg-docs{display:inline-flex;align-items:center;gap:var(--rig-s1);flex:none;height:var(--rig-h-xs);padding:0 var(--rig-s2);border:1px solid var(--rig-line);border-radius:var(--rig-r-sm);background:none;color:var(--rig-dim);font:var(--rig-fw-medium) var(--rig-fs-2xs)/var(--rig-lead-xs) var(--rig-num);font-variant-numeric:tabular-nums}
+.rig .rg-docs:hover{background:var(--rig-panel2);color:var(--rig-text)}
+.rg-docs .rg-ico{width:14px;height:14px}
+@media (min-width:768px){
+  .rg-scrim.rg-scrim-sheet{align-items:flex-start;padding-top:10vh}
+  .rg-sheet{left:50%;right:auto;bottom:auto;top:10vh;width:min(32rem,calc(100vw - 2 * var(--rig-s4)));max-height:76vh;border-radius:var(--rig-r-lg);transform:translateX(-50%)}
+  .rg-sheet .grab{display:none}
+  .rg-sheet-h{padding-top:var(--rig-s3)}
+}
+
+/* the scope line: plain words, one Change */
+.rig .rg-asking{display:flex;flex-wrap:wrap;align-items:baseline;gap:var(--rig-s1) var(--rig-s3);margin:0 0 var(--rig-s3);color:var(--rig-dim);font:var(--rig-fw-regular) var(--rig-fs-sm)/var(--rig-lead-sm) var(--rig-sans)}
+.rg-asking-s b{color:var(--rig-text);font-weight:var(--rig-fw-medium)}
+.rg-asking-s b.rg-mono{font-size:var(--rig-fs-xs)}
+.rig .rg-asking-chg{display:inline-flex;align-items:center;gap:var(--rig-s1);height:var(--rig-h-xs);padding:0 var(--rig-s2);border:1px solid var(--rig-line);border-radius:var(--rig-r-sm);background:var(--rig-panel);color:var(--rig-text);font:var(--rig-fw-medium) var(--rig-fs-xs)/var(--rig-lead-xs) var(--rig-sans)}
+.rig .rg-asking-chg:hover{background:var(--rig-panel2);border-color:var(--rig-line2)}
+.rg-asking-chg .rg-brk-c{position:static;transform:none}
+
+/* the dataset's own pages (Overview, Tasks, Runs, Analysis) sit in one group under the dataset in focus: a soft panel
+   with the dataset's name (the picker when the list is open, its name when the list is narrow) */
+.rig .rg-nav-ds{display:flex;flex-direction:column;gap:1px;margin:var(--rig-s1) 0;padding:var(--rig-s1);border:1px solid var(--rig-line-soft);border-radius:var(--rig-r-md);background:var(--rig-panel2)}
+.rig .rg-nav-ds>.rg-dsw{margin:0 0 var(--rig-s1)}
+.rig .rg-nav-ds-cap{display:block;max-width:100%;padding:2px 2px var(--rig-s1);border-bottom:1px solid var(--rig-line-soft);margin-bottom:2px;font-size:var(--rig-fs-2xs);line-height:var(--rig-lead-xs);font-weight:var(--rig-fw-semi);color:var(--rig-dim);text-align:center;white-space:normal;overflow-wrap:anywhere}
+.rig[data-rig-nav="closed"] .rg-nav-ds{padding:2px;margin-inline:0}

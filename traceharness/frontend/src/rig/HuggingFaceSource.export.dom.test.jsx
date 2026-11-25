@@ -21,7 +21,7 @@ const CAT = { schema: 1, refreshed: '2026-11-16', datasets: [
 describe('Hugging Face panel in an export', () => {
   it('lists the catalog and replaces every import control with the export\'s own sentence', () => {
     expect(MODE).toBe('export')
-    const { container, requests } = renderRig('#/rig/sources', { data: { ...rigFixture(), '/hf/catalog': CAT } })
+    const { container, requests } = renderRig('#/rig/sources:sample', { data: { ...rigFixture(), '/hf/catalog': CAT } })
     const box = container.querySelector('[data-el="hugging-face"]')
     expect([...box.querySelectorAll('tbody tr')].map((r) => r.getAttribute('data-id'))).toEqual(['nebius/SWE-agent-trajectories', 'SALT-NLP/SWE-chat'])
     expect(box.textContent).toContain('license not stated')

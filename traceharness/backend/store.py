@@ -40,9 +40,11 @@ import threading
 import time
 from typing import Iterable, Optional
 
+from traceharness.core.patterns import pooled_wilson
 from traceharness.shared.contract import availability
 
 from .dataset_dates import dataset_updated
+from .dataset_meta import describe as describe_dataset
 from .paths import INDEX_DB, RUNS_ROOT
 from .results_scope import is_private, list_results_dirs
 from .safe_paths import PathRefused, confine
@@ -392,6 +394,13 @@ def overview(runs_root: Optional[str] = None, db_path: Optional[str] = None) -> 
             " OR COALESCE(json_extract(row_json, '$.human_interventions'), 0) > 0 THEN NULL ELSE hidden_pass END) p"
             " FROM runs WHERE dir = ?",
             (name,)).fetchone()
+        # per task, for the interval: a task's repeats are not independent runs (core/patterns.pooled_wilson)
+        per_task = [(r["c"] or 0, r["n"]) for r in cx.execute(
+            "SELECT task_id, COUNT(hp) n, SUM(hp) c FROM (SELECT task_id, CASE WHEN COALESCE(json_extract(row_json, '$.human_intervened'), 0)"
+            " OR COALESCE(json_extract(row_json, '$.human_interventions'), 0) > 0 THEN NULL ELSE hidden_pass END hp"
+            " FROM runs WHERE dir = ?) GROUP BY task_id ORDER BY task_id", (name,))]
+        ci = pooled_wilson(per_task)
+
         def distinct(col):
             return [r[0] for r in cx.execute(
                 f"SELECT DISTINCT {col} FROM runs WHERE dir = ? ORDER BY {col}", (name,)) if r[0] is not None]
@@ -408,8 +417,13 @@ def overview(runs_root: Optional[str] = None, db_path: Optional[str] = None) -> 
             "name": name, "runs": agg["n"],
             "harnesses": distinct("harness_id"), "models": distinct("model"), "model_runs": model_runs, "tasks": distinct("task_id"),
             "pass_rate": (agg["p"] if agg["n"] else None),
+            "graded": sum(n for _, n in per_task), "pass_ci95": list(ci) if ci else None,
             "updated": updated, "updated_source": updated_source,
             "availability": availability(name),
+            # what the dataset is, from its own files: the same function and the same inputs as metrics.results_dirs
+            **describe_dataset(root, name, [
+                {"run_id": r[0], "harness_id": r[1], "model": r[2], "provider": r[3]} for r in cx.execute(
+                    "SELECT run_id, harness_id, model, json_extract(row_json, '$.provider') FROM runs WHERE dir = ?", (name,))]),
         })
     return _clean(out)
 

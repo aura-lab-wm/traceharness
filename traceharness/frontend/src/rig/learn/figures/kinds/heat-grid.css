@@ -1,0 +1,20 @@
+/* Rig · learn/figures/kinds/heat-grid.css — heat_grid: the Family matrix (heat-grid.jsx).
+   A cell is the series colour (--rig-ser1) mixed into the panel by its pass rate; the margins are plain panel
+   cells. The row or column being read takes the selected mark (--rig-sel-mark), as a selected row does
+   elsewhere. Cell numbers are text-coloured with a panel halo, so they read on every fill. Cells fade in once, in
+   reading order. Tokens only. */
+.rg-hg-cell text{fill:var(--rig-text);font-size:var(--rig-fs-xs);font-weight:var(--rig-fw-medium);font-variant-numeric:tabular-nums;paint-order:stroke;stroke:var(--rig-panel);stroke-width:3px;stroke-linejoin:round}
+.rg-hg-svg .rg-hg-cell{opacity:0;transition:opacity var(--rig-dur-2) var(--rig-ease) calc(var(--rig-dur-1) * var(--rig-fig-i) / 8)}
+.rg-hg-svg.seen .rg-hg-cell{opacity:1}
+.rg-hg-margin rect{fill:var(--rig-panel2);stroke:var(--rig-line);stroke-width:1}
+.rg-hg-margin text{fill:var(--rig-text);font-size:var(--rig-fs-xs);font-weight:var(--rig-fw-bold);font-variant-numeric:tabular-nums}
+.rg-hg-mean{fill:var(--rig-mute);font-size:var(--rig-fs-xs)}
+.rg-hg-head{cursor:pointer;outline:none}
+.rg-hg-head text{fill:var(--rig-dim);font-family:var(--rig-mono);font-size:var(--rig-fs-xs);transition:fill var(--rig-dur-1) var(--rig-ease)}
+.rg-hg-head:hover text{fill:var(--rig-text);text-decoration:underline}
+.rg-hg-head:focus-visible text{fill:var(--rig-text);text-decoration:underline;text-decoration-thickness:2px}
+.rg-hg-head.on{cursor:default}
+.rg-hg-head.on text{fill:var(--rig-text);font-weight:var(--rig-fw-bold);text-decoration:none}
+.rg-hg-focus.on{fill:none;stroke:var(--rig-sel-mark);stroke-width:2.5;pointer-events:none}
+.rg-lfig-sw.avgcell{background:var(--rig-panel2);box-shadow:inset 0 0 0 1px var(--rig-line)}
+.rg-lfig-sw.pick.sel{background:none;box-shadow:inset 0 0 0 2px var(--rig-sel-mark)}

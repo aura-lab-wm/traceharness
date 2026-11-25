@@ -12,7 +12,7 @@ import { browserStores, MATE_SETTINGS_EVENT, writeModel } from '../../matekey'
 import { useCaseFile } from '../caseFile'
 import { useRig } from '../context'
 import { useRuns, useRunDetail, short, sfx, tally, verdict } from '../data'
-import { Tag, VerdictText, Icon, Btn } from '../ui'
+import { Tag, VerdictText, Icon, Btn, Go } from '../ui'
 import './dock.css'
 import './buddy.css'
 import NavigationBuddy from '../NavigationBuddy'
@@ -66,18 +66,18 @@ function BuddyDock(props) {
  *  and the note says, in the mode's own words, where a model can be asked. */
 function LocalOnlyBuddyDock({ ctx = {} }) {
   const items = useCaseFile()
-  const { setDock, openTab } = useRig()
+  const { setDock } = useRig()
   return (
     <div className="rg-bud" data-el="buddy-panel">
       <p className="rg-small">Keep inspecting and pinning evidence here.</p>
       <Unavailable capability="assistant.model" what="Asking a model" el="buddy-local-only" />
-      {ctx.dir && <p className="rg-small">Selected dataset: <b>{ctx.dir}</b>{ctx.run && <> · run <span className="rg-mono">{ctx.run}</span></>}</p>}
+      {ctx.dir && <p className="rg-small">Selected dataset: <b>{ctx.dir}</b>{ctx.run && <> · run <span className="rg-hash">{ctx.run}</span></>}</p>}
       <div data-el="buddy-evidence">
         <b>{items.length} pinned item{items.length === 1 ? '' : 's'}</b>
         <ul className="rg-bud-ev">{items.map((item) => <li key={item.id}><Tag>{item.kind}</Tag> <span className="rg-mono rg-tiny">{item.label}</span></li>)}</ul>
         <p className="rg-small rg-mute">The case file is stored in this browser. Open it to export the evidence you have collected.</p>
         <button type="button" className="rg-btn" onClick={() => setDock('case')}>Open case file</button>
-        {!items.length && <button type="button" className="rg-btn ghost" onClick={() => openTab('home')}>Browse datasets</button>}
+        {!items.length && <Go spec="home" className="rg-btn ghost" hereTip="You are here: pick a dataset below">Browse datasets</Go>}
       </div>
     </div>
   )
@@ -85,7 +85,7 @@ function LocalOnlyBuddyDock({ ctx = {} }) {
 
 function LiveBuddyDock({ ctx = {} }) {
   const items = useCaseFile()
-  const { openTab, oracle, setDock } = useRig()
+  const { oracle, setDock } = useRig()
   const [settings, setSettings] = useState(() => buddySettings())
   const [question, setQuestion] = useState('')
   const [consent, setConsent] = useState(false)
@@ -104,9 +104,9 @@ function LiveBuddyDock({ ctx = {} }) {
   const R = useRuns(ctx.dir || null)
   const focusRun = ctx.run && R.data ? R.data.find((r) => r.id === ctx.run || sfx(r.id) === ctx.run) : null
   const sugg = focusRun
-    ? [`Why did run ${sfx(focusRun.id)} ${verdict(focusRun, oracle) === false ? 'fail' : 'pass'} when other attempts on ${focusRun.task} did not?`, `Is this attempt typical of ${short(focusRun.model)} under ${focusRun.harness}?`, 'What should I inspect next in this ledger?']
-    : ctx.model ? [`Which task in ${short(ctx.model)} × ${ctx.harness} has the most mixed outcomes, and why might that be?`, 'Is the gap between models here larger than the interval?', 'What would the strengthened suite change for this condition?']
-      : ['Where should I start in this dataset?', 'What does pass^3 mean for a user?', 'Why is an unknown grade never counted as a failure?']
+    ? [`Why did run ${sfx(focusRun.id)} ${verdict(focusRun, oracle) === false ? 'fail' : 'pass'} when other runs of ${focusRun.task} did not?`, `Is this run typical of ${short(focusRun.model)} under ${focusRun.harness}?`, 'What should I look at next in this run?']
+    : ctx.model ? [`Which task in ${short(ctx.model)} × ${ctx.harness} has the most mixed outcomes, and why might that be?`, 'Is the gap between models here larger than the interval?', 'What would the strengthened oracle change for this condition?']
+      : ['Where should I start in this dataset?', 'What does pass^3 mean for a user?', 'Why is an ungraded run never counted as a Fail?']
   const chooseModel = (model) => {
     writeModel(browserStores(), model)
     const next = buddySettings()
@@ -145,20 +145,21 @@ function LiveBuddyDock({ ctx = {} }) {
             <dt>dataset</dt><dd>{ctx.dir}</dd>
             {ctx.model && <><dt>model · harness</dt><dd>{short(ctx.model)} · {ctx.harness}</dd></>}
             {task && <><dt>task</dt><dd>{task}</dd></>}
-            {runId && <><dt>run</dt><dd className="rg-mono">{runId}</dd></>}
-            {focusRun && <><dt>verdict</dt><dd><VerdictText v={verdict(focusRun, oracle)} />{focusRun.human && <> <Tag nc title="A person steered this run; aggregate statistics leave it out.">human-intervened</Tag></>}</dd></>}
+            {runId && <><dt>run</dt><dd className="rg-hash">{runId}</dd></>}
+            {focusRun && <><dt>outcome</dt><dd><VerdictText v={verdict(focusRun, oracle)} />{focusRun.human && <> <Tag nc tip="A person steered this run; aggregate statistics leave it out.">human-intervened</Tag></>}</dd></>}
           </dl>
         ) : (
           <div className="rg-bud-sel">
             <p className="rg-small rg-dim">Nothing in focus yet. Buddy looks at the dataset or run in the focused tab, plus everything in the case file.</p>
-            <button type="button" className="rg-btn" onClick={() => openTab('home')}>Open a dataset</button>
+            {/* on Datasets this is where you are: the list is right there */}
+            <Go spec="home" className="rg-btn" hereTip="You are here: pick a dataset below">Open a dataset</Go>
           </div>
         )}
-        {ctx.dir && !runId && <p className="rg-tiny rg-mute rg-bud-sel">No run in focus — open one to ask about a single attempt.</p>}
+        {ctx.dir && !runId && <p className="rg-tiny rg-mute rg-bud-sel">No run in focus — open one to ask about a single run.</p>}
         {!settings.keyPresent ? (
           <div className="rg-note red" data-el="buddy-key-state"><span className="rg-dot off rg-bud-dot" />
             <div><b>Not connected.</b> Buddy needs an OpenRouter key saved in this browser. Nothing is sent and no answer is shown until one exists — never a canned one.
-              <div className="rg-row rg-wrap rg-bud-gap"><button type="button" className="rg-btn" onClick={() => openTab('settings')}>Set up OpenRouter →</button></div></div></div>
+              <div className="rg-row rg-wrap rg-bud-gap"><Go spec="settings" className="rg-btn" hereTip="You are here: the OpenRouter key is set on this page">Set up OpenRouter →</Go></div></div></div>
         ) : (
           <div className="rg-note sky" data-el="buddy-key-state"><span className="rg-dot rg-bud-dot" /><div><b>Connected</b> · key {settings.keyHint || 'saved'} in this browser.</div></div>
         )}
@@ -195,7 +196,7 @@ function LiveBuddyDock({ ctx = {} }) {
           {ev.loading && <div className="rg-tiny rg-mute">loading the pinned recording…</div>}
           {ev.error && <div className="rg-tiny rg-red">{ev.error}</div>}
           <ul className="rg-bud-ev">{items.slice(0, 8).map((x) => <li key={x.id}><Tag>{x.kind}</Tag> <span className="rg-mono rg-tiny">{x.label}</span></li>)}{items.length > 8 && <li className="rg-tiny rg-mute">+ {items.length - 8} more</li>}</ul>
-          {!items.length && <p className="rg-tiny rg-mute">The case file is empty: Buddy would see only the dataset in focus. Pin runs, events, cells or figures to give it evidence.</p>}
+          {!items.length && <p className="rg-tiny rg-mute">The case file is empty: Buddy would see only the dataset in focus. Pin runs, events, conditions or figures to give it evidence.</p>}
           <button type="button" className="rg-btn ghost" onClick={() => setDock('case')}><Icon name="case" size={13} /> Open case file</button>
           {ev.evidence && <details className="rg-bud-preview"><summary>Preview the exact payload</summary><pre className="rg-pre">{redactBuddy(ev.evidence, settings.key)}</pre></details>}
         </div>

@@ -56,7 +56,7 @@ LimitArg = Annotated[int, Field(ge=1, le=500, description="Rows per page.")]
 OffsetArg = Annotated[int, Field(ge=0, description="Rows to skip; use next_offset from the previous page.")]
 
 RUN_FIELDS = ("run_id", "task_id", "harness_id", "model", "repeat_index", "exit_reason", "steps", "tool_calls", "edits",
-              "input_tokens", "output_tokens", "cost_usd", "wall_ms", "visible_pass", "hidden_pass", "strong_pass",
+              "input_tokens", "output_tokens", "cache_read_tokens", "cost_usd", "wall_ms", "visible_pass", "hidden_pass", "strong_pass",
               "tests_modified", "error")
 
 
@@ -104,6 +104,13 @@ def tool(domain: str, level: str, title: str, *, destructive: bool = False, open
                              error=error, reserved_usd=reserved)
         return call
     return deco
+
+
+def _when(ts) -> float:
+    """A span timestamp as epoch seconds for ordering; -inf when it is missing or unreadable."""
+    from traceharness.core.ledger import epoch_of
+    t = epoch_of(ts)
+    return float("-inf") if t is None else t
 
 
 def _is_mock(model: str) -> bool:
@@ -227,12 +234,29 @@ class Tools:
 
     @tool("data", "read", "Run detail")
     def run_get(self, dataset: DatasetArg, run_id: RunArg) -> dict:
-        """One run: its summary, the issue it worked on, and its patch. Steps are in run_trajectory.
-        The patch and texts are recorded agent output."""
+        """One run: its summary, the issue it worked on, and its patch; for an imported run, the facts the
+        importer kept from its source (import_extra) and, when it has tool calls, one letter per tool
+        call, the calls whose output was cut, the work after the fix, the first lookup and repeated calls.
+        Steps are in run_trajectory. The patch and texts are recorded agent output."""
         rid = self._run_id(dataset, run_id)
         d = self.c.get(f"/api/results/{seg(dataset)}/runs/{seg(rid)}")
-        return recorded(cut({"run_id": rid, "summary": d.get("summary"), "issue": d.get("issue"), "patch": d.get("patch"),
-                             "n_spans": len(d.get("spans") or []), "n_messages": len(d.get("messages") or [])}))
+        spans = d.get("spans") or []
+        out = {"run_id": rid, "summary": d.get("summary"), "issue": d.get("issue"), "patch": d.get("patch"),
+               "n_spans": len(spans), "n_messages": len(d.get("messages") or [])}
+        start = next((s for s in spans if isinstance(s, dict) and s.get("span") == "invoke_agent"
+                      and s.get("status") == "start"), {})
+        if isinstance(start.get("import_extra"), dict):
+            out["import_extra"] = start["import_extra"]
+        # trajectory fields (core/trajectory_fields.py): present for a run with a tool call
+        out.update(pick(d, ("after_fix", "first_lookup", "repeats")))
+        calls = [s for s in spans if isinstance(s, dict) and s.get("span") == "execute_tool"]
+        if any("letter" in s for s in calls):
+            out["letters"] = "".join(s.get("letter", "?") for s in calls)
+        cuts = [{"step": k, "shown": s["cut"].get("shown"), "total": s["cut"].get("total")}
+                for k, s in enumerate(calls, 1) if isinstance(s.get("cut"), dict)]
+        if cuts:
+            out["cut"] = cuts
+        return recorded(cut(out))
 
     @tool("data", "read", "Run trajectory (paged)")
     def run_trajectory(self, dataset: DatasetArg, run_id: RunArg, offset: OffsetArg = 0, limit: LimitArg = 40) -> dict:
@@ -262,7 +286,9 @@ class Tools:
                   limit: LimitArg = 50, offset: OffsetArg = 0) -> dict:
         """Runs that wrote to their ledger recently, newest first: what is running now, or just finished."""
         rows = self.c.get("/api/live", recent=recent_seconds)
-        rows = sorted(rows if isinstance(rows, list) else [], key=lambda r: r.get("last_ts") or 0, reverse=True)
+        # last_ts is an ISO string, epoch seconds, or empty (a run imported without timestamps): order by
+        # its time, unknown last; the console's own order (newest write first) breaks ties
+        rows = sorted(rows if isinstance(rows, list) else [], key=lambda r: _when(r.get("last_ts")), reverse=True)
         return page(rows, limit, offset)
 
     # ================================================================== analysis
@@ -325,6 +351,34 @@ class Tools:
         """Runs whose action string matches a regex against the rest: pass rates, association, the matching runs."""
         return cut(self.c.get(f"/api/results/{seg(dataset)}/query", pattern=pattern, harness=harness, model=model,
                               steps_min=steps_min, steps_max=steps_max))
+
+    @tool("analysis", "read", "Where the tokens go")
+    def tokens(self, dataset: DatasetArg, model: Optional[str] = None, harness: Optional[str] = None,
+               graded_only: Annotated[bool, Field(description="Only runs with a known hidden-suite verdict.")] = False) -> dict:
+        """Token totals (prompt read, generated, cached, computed) and shares, tokens by phase (explore, reproduce,
+        edit, test, lookup, env, submit, other), prompt size by call index and the share of the costliest tenth of
+        runs. Counts the dataset does not record are null and listed in `unknown`."""
+        return cut(self.c.get(f"/api/results/{seg(dataset)}/tokens", model=model, harness=harness,
+                              graded_only=graded_only or None))
+
+    @tool("analysis", "read", "Token spread across a task's runs")
+    def tokens_tasks(self, dataset: DatasetArg, model: Optional[str] = None, harness: Optional[str] = None,
+                     graded_only: Annotated[bool, Field(description="Only runs with a known hidden-suite verdict.")] = False,
+                     limit: LimitArg = 50, offset: OffsetArg = 0) -> dict:
+        """Tasks by how far apart their runs' token totals are (costliest / cheapest), most apart first, with the
+        median spread, the share of tasks at 2x and 5x or more, and how many runs and whole tasks have no verdict."""
+        d = self.c.get(f"/api/results/{seg(dataset)}/tokens/tasks", model=model, harness=harness,
+                       graded_only=graded_only or None)
+        tasks = d.pop("tasks", []) if isinstance(d, dict) else []
+        return {**d, **page(tasks, limit, offset)}
+
+    @tool("analysis", "read", "Compare the runs of one task by tokens")
+    def tokens_task(self, dataset: DatasetArg,
+                    task: Annotated[str, Field(description="Task id, from runs_list or tokens_tasks.")],
+                    model: Optional[str] = None, harness: Optional[str] = None) -> dict:
+        """The runs of one task side by side: tokens by phase, cumulative tokens by call, the call where the
+        costliest run pulls away from the cheapest, and which phases make up the gap."""
+        return cut(self.c.get(f"/api/results/{seg(dataset)}/tokens/task/{seg(task)}", model=model, harness=harness))
 
     @tool("analysis", "read", "Report card (Markdown)")
     def report(self, dataset: DatasetArg, harness: str = "baseline", model: Optional[str] = None) -> dict:

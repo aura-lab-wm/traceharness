@@ -79,7 +79,7 @@ export function PromptList({ rows, total, patchableCount, shown, onShow, activeI
 
   return <div className="rg-native-list" ref={scrollRef} data-searching={searching ? 'true' : undefined}>
     <div className="rg-native-list-head">
-      <span className="rg-native-list-count" role="status" title={formatCount(patchableCount) + ' of them patchable'}>{formatCount(rows.length)} of {formatCount(total)}<span className="sr-only"> fragments match{filtered ? ' the filters' : ''}, {formatCount(patchableCount)} patchable</span></span>
+      <span className="rg-native-list-count" role="status" data-hint={formatCount(patchableCount) + ' of them patchable'}>{formatCount(rows.length)} of {formatCount(total)}<span className="sr-only"> fragments match{filtered ? ' the filters' : ''}, {formatCount(patchableCount)} patchable</span></span>
       <span className="rg-native-list-actions">
         <button type="button" className="rg-btn" disabled={locked || !patchableCount} onClick={onSelectFiltered}>Select filtered</button>
         <button type="button" className="rg-btn" aria-label="Clear selection" disabled={locked || !selectedSet.size} onClick={onClearSelection}>Clear</button>
@@ -98,14 +98,14 @@ export function PromptList({ rows, total, patchableCount, shown, onShow, activeI
             <input type="checkbox" tabIndex={-1} aria-label={'Select prompt ' + block.title} disabled={locked || !patchable} checked={selectedSet.has(block.id)} onChange={() => onToggle(block.id)} />
           </label>
           <span className="rg-native-row-main">
-            <strong title={block.title}>{display.title}</strong>
+            <strong data-hint={block.title}>{display.title}</strong>
             <span className="rg-native-row-meta">
               <span>{block.class_name}</span><span className="rg-native-row-state">{rowState(row)}</span><span>{formatBytes(row.bytes)}</span>
-              <span title="Estimate: characters divided by 3.9. Not billed tokens. Measured input tokens appear in run results.">≈ {formatCount(row.est_tokens)} tokens</span>
-              {placeholders > 0 && <span className="rg-native-mark" title={placeholders + ' placeholder' + (placeholders === 1 ? '' : 's') + ' must be preserved'}>{'{' + placeholders + '}'}</span>}
-              {block.occurrence_count > 1 && <span className="rg-native-mark" title={block.occurrence_count + ' located occurrences'}>×{block.occurrence_count}</span>}
-              {flags.finding && <span className="rg-native-mark warn" title="Has audit findings">!</span>}
-              {flags.unapplied && <span className="rg-native-mark edit" title="Unapplied edit">•</span>}
+              <span data-hint="Estimate: characters divided by 3.9. Not billed tokens. Measured input tokens appear in run results.">≈ {formatCount(row.est_tokens)} tokens</span>
+              {placeholders > 0 && <span className="rg-native-mark" data-hint={placeholders + ' placeholder' + (placeholders === 1 ? '' : 's') + ' must be preserved'}>{'{' + placeholders + '}'}</span>}
+              {block.occurrence_count > 1 && <span className="rg-native-mark" data-hint={block.occurrence_count + ' located occurrences'}>×{block.occurrence_count}</span>}
+              {flags.finding && <span className="rg-native-mark warn" data-hint="Has audit findings">!</span>}
+              {flags.unapplied && <span className="rg-native-mark edit" data-hint="Unapplied edit">•</span>}
             </span>
             {row.snippet && <span className="rg-native-row-snip"><span className="rg-native-snip-field">{row.snippet.field === 'new' ? 'replacement' : row.snippet.field}</span> {row.snippet.before}<mark>{row.snippet.match}</mark>{row.snippet.after}</span>}
           </span>

@@ -43,6 +43,8 @@ export default defineConfig({
   define: { __HL_BUILD__: JSON.stringify(sourceHash(process.cwd()).sha256) },
   plugins: [react(), tailwindcss(), stampSource()],
   server: { port: 5173, proxy: { '/api': { target: 'http://127.0.0.1:8765', changeOrigin: true }, '/field': { target: 'http://127.0.0.1:8765', changeOrigin: true } } },
-  build: { outDir: 'dist', emptyOutDir: true },
+  // the vendored fonts and the logos beside names (src/rig/brand) are inlined into the CSS, so an --export snapshot
+  // (one HTML file) and file:// keep them
+  build: { outDir: 'dist', emptyOutDir: true, assetsInlineLimit: (file) => (file.endsWith('.woff2') || /[\\/]src[\\/]rig[\\/]brand[\\/][^\\/]+\.svg$/.test(file) ? true : undefined) },
   test: { environment: 'node', include: ['src/**/*.test.{js,jsx}'] },
 })

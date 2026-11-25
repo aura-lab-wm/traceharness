@@ -46,7 +46,7 @@ function Entry({ wb, entry }) {
         {current && <span className="rg-tag">equals the current draft</span>}
       </span>
     </div>
-    <p className="rg-native-facts">{formatDate(entry.created_at)} · digest <code title={entry.profile_sha256}>{shortDigest(entry.profile_sha256)}</code> · {countsLine(entry.counts)}
+    <p className="rg-native-facts">{formatDate(entry.created_at)} · digest <code data-hint={entry.profile_sha256}>{shortDigest(entry.profile_sha256)}</code> · {countsLine(entry.counts)}
       {!same && <> · {entry.runtime_id} {entry.runtime_version}</>}</p>
     {mode === 'rename' ? <form className="rg-native-rename" onSubmit={async (event) => { event.preventDefault(); await wb.renameEntry(entry, name); setMode('') }}>
       <label className="rg-native-inline-field">New name<input className="rg-inp" value={name} maxLength={80} autoFocus onChange={(event) => setName(event.target.value)} /></label>
@@ -58,7 +58,7 @@ function Entry({ wb, entry }) {
       <button type="button" className="rg-btn" onClick={() => setMode('')}>Keep it</button>
     </div> : <div className="rg-native-entry-actions">
       {same ? <button type="button" className="rg-btn" disabled={wb.disabled || current} aria-label={'Restore ' + entry.name} onClick={() => wb.restoreEntry(entry)}>Restore</button>
-        : sameRuntime && <button type="button" className="rg-btn" disabled={wb.disabled} aria-label={'Rebase and restore ' + entry.name} title="Keeps only overrides whose fragment and baseline are unchanged in this inventory; the rest is listed."
+        : sameRuntime && <button type="button" className="rg-btn" disabled={wb.disabled} aria-label={'Rebase and restore ' + entry.name} data-hint="Keeps only overrides whose fragment and baseline are unchanged in this inventory; the rest is listed."
           onClick={() => wb.rebaseOnto(entry.profile, 'Rebase “' + entry.name + '” onto the current inventory')}>Rebase and restore</button>}
       {sameRuntime && <button type="button" className="rg-btn" aria-label={'Compare ' + entry.name} onClick={() => wb.patch({ view: 'changes', compare: 'lib:' + entry.id })}>Compare</button>}
       <button type="button" className="rg-btn" aria-label={'Export ' + entry.name} onClick={() => wb.exportFile('bundle', entry)}>Export</button>

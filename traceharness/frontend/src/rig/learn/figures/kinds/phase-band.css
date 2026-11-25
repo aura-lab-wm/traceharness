@@ -1,0 +1,51 @@
+/* Rig · learn/figures/kinds/phase-band.css — where the fix falls (phase-band.jsx). A block is its phase's colour, a tint
+   with a solid cap, so its letters read in ink on Paper and Graphite alike; the mark is a dashed ink line and the calls
+   after it are hatched in ink, as on the run and task pages (steprows.css). The bands draw left to right once, then the
+   mark and the hatch fade in; rig.css stops both under prefers-reduced-motion. Tokens only. */
+.rg-band-svg .ph-explore{--ph:var(--rig-ph-explore)}
+.rg-band-svg .ph-reproduce{--ph:var(--rig-ph-reproduce)}
+.rg-band-svg .ph-edit{--ph:var(--rig-ph-edit)}
+.rg-band-svg .ph-test{--ph:var(--rig-ph-test)}
+.rg-band-svg .ph-lookup{--ph:var(--rig-ph-lookup)}
+.rg-band-svg .ph-env{--ph:var(--rig-ph-env)}
+.rg-band-svg .ph-submit{--ph:var(--rig-ph-submit)}
+.rg-band-svg .ph-other{--ph:var(--rig-ph-other)}
+.rg-band-svg .seg .fill{fill:color-mix(in srgb,var(--ph) 38%,var(--rig-panel))}
+.rg-band-svg .seg.submit .fill{fill:color-mix(in srgb,var(--ph) 20%,var(--rig-panel))}
+.rg-band-svg .seg .cap{fill:var(--ph)}
+.rg-band-svg .seg .let{fill:var(--rig-text);font-family:var(--rig-mono);font-size:var(--rig-fs-2xs);font-weight:var(--rig-fw-semi);letter-spacing:.06em}
+.rg-band-grow{transform:scaleX(0);transform-origin:0 0;transition:transform calc(var(--rig-dur-pulse) * 1.2) var(--rig-ease)}
+.rg-band-svg.seen .rg-band-grow{transform:none}
+.rg-band-hatchl{stroke:var(--rig-text);stroke-width:1.6;opacity:.55}
+.rg-band-after,.rg-band-mark{opacity:0;transition:opacity var(--rig-dur-2) var(--rig-ease) calc(var(--rig-dur-pulse) * 1.1)}
+.rg-band-svg.seen .rg-band-after,.rg-band-svg.seen .rg-band-mark{opacity:1}
+.rg-band-mark{stroke:var(--rig-text);stroke-width:1.75;stroke-dasharray:3 2.5}
+.rg-band-run{cursor:pointer;outline:none}
+.rg-band-run .hit{fill:transparent}
+.rg-band-run:hover .hit{fill:var(--rig-row-hover)}
+.rg-band-run.on{cursor:default}
+.rg-band-run.on .hit{fill:var(--rig-sel-bg)}
+.rg-band-run:focus-visible .hit{stroke:var(--rig-sel);stroke-width:2}
+.rg-band-run .lab{fill:var(--rig-text);font-size:var(--rig-fs-xs);font-weight:var(--rig-fw-medium)}
+.rg-band-run.on .lab{font-weight:var(--rig-fw-bold)}
+.rg-band-run .sub{fill:var(--rig-dim);font-size:var(--rig-fs-2xs);font-weight:var(--rig-fw-regular);font-variant-numeric:tabular-nums}
+.rg-band-run .note{fill:var(--rig-dim);font-size:var(--rig-fs-2xs);font-variant-numeric:tabular-nums}
+.rg-band-run.on .note{fill:var(--rig-text)}
+/* the legend chips: the phases, the mark and the hatch */
+.rg-lfig-sw.fa-ph-explore{background:var(--rig-ph-explore)}
+.rg-lfig-sw.fa-ph-reproduce{background:var(--rig-ph-reproduce)}
+.rg-lfig-sw.fa-ph-edit{background:var(--rig-ph-edit)}
+.rg-lfig-sw.fa-ph-test{background:var(--rig-ph-test)}
+.rg-lfig-sw.fa-ph-lookup{background:var(--rig-ph-lookup)}
+.rg-lfig-sw.fa-ph-env{background:var(--rig-ph-env)}
+.rg-lfig-sw.fa-ph-submit{background:var(--rig-ph-submit)}
+.rg-lfig-sw.fa-ph-other{background:var(--rig-ph-other)}
+.rg-lfig-sw.fa-mark{width:0;border-radius:0;background:none;border-left:1.75px dashed var(--rig-text)}
+.rg-lfig-sw.fa-hatch{background-color:var(--rig-panel2);background-image:repeating-linear-gradient(135deg,color-mix(in srgb,var(--rig-text) 42%,transparent) 0 1.5px,transparent 1.5px 4.5px);box-shadow:inset 0 0 0 1px var(--rig-line2)}
+.rg-prev-ph.ph-explore{fill:var(--rig-ph-explore)}
+.rg-prev-ph.ph-reproduce{fill:var(--rig-ph-reproduce)}
+.rg-prev-ph.ph-edit{fill:var(--rig-ph-edit)}
+.rg-prev-ph.ph-test{fill:var(--rig-ph-test)}
+.rg-prev-ph.ph-submit{fill:var(--rig-ph-submit)}
+.rg-prev-ph.ph-other,.rg-prev-ph.ph-env,.rg-prev-ph.ph-lookup{fill:var(--rig-ph-other)}
+.rg-band-run .note.sub2{fill:var(--rig-mute)}

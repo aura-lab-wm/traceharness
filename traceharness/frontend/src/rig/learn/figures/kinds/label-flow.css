@@ -1,0 +1,27 @@
+/* Rig · learn/figures/kinds/label-flow.css — the exit reason → patch → label flow (label-flow.jsx); its tones and the
+   dash keyframes are in figs-a-parts.css. Tokens only. Motion: the bands draw
+   left to right once (a clip that grows) and dashes run along them three times; rig.css stops both under
+   prefers-reduced-motion, and the figure is then simply there. */
+
+/* ================================================================ label_flow */
+.rg-flow-head{fill:var(--rig-mute);font-size:var(--rig-fs-2xs);font-weight:var(--rig-fw-medium)}
+.rg-flow-band .band{fill:var(--fa-c);fill-opacity:.34;transition:fill-opacity var(--rig-dur-2) var(--rig-ease)}
+.rg-flow-band .dash{fill:none;stroke:var(--fa-c);stroke-linecap:round;stroke-dasharray:2 7;opacity:.95;transition:opacity var(--rig-dur-2) var(--rig-ease)}
+.rg-flow-svg.seen .rg-flow-band .dash{animation:rg-fa-flow var(--rig-dur-pulse) linear 3}
+.rg-flow-svg.picked .rg-flow-band.on .band{fill-opacity:.6}
+.rg-flow-band.off .band{fill-opacity:.07}
+.rg-flow-band.off .dash{opacity:0}
+.rg-flow-grow{transform:scaleX(0);transform-origin:0 0;transition:transform calc(var(--rig-dur-pulse) * .9) var(--rig-ease)}
+.rg-flow-svg.seen .rg-flow-grow{transform:none}
+.rg-flow-node{cursor:pointer;outline:none}
+.rg-flow-node .hit{fill:transparent;stroke:none}
+.rg-flow-node:hover .hit{fill:var(--rig-row-hover)}
+.rg-flow-node:focus-visible .hit{stroke:var(--rig-sel);stroke-width:2}
+.rg-flow-node .node{fill:var(--rig-text)}
+.rg-flow-node .lab{fill:var(--rig-text);font-size:var(--rig-fs-xs);font-weight:var(--rig-fw-medium)}
+.rg-flow-node .cnt{fill:var(--rig-dim);font-size:var(--rig-fs-2xs);font-variant-numeric:tabular-nums}
+.rg-flow-node text{paint-order:stroke;stroke:var(--rig-panel);stroke-width:3px;stroke-linejoin:round}
+.rg-flow-node .pill{fill:var(--rig-panel);fill-opacity:.92;stroke:var(--rig-line2)}
+.rg-flow-node.on .lab{font-weight:var(--rig-fw-bold)}
+.rg-flow-node.on .hit{fill:var(--rig-sel-bg)}
+.rg-flow-svg.picked .rg-flow-node:not(.on) .node{fill:var(--rig-line3)}

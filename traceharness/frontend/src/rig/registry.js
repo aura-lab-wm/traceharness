@@ -46,6 +46,7 @@ import * as m_recommend from './views/recommend.jsx'
 import * as m_shallow_apply from './views/shallow-apply.jsx'
 import * as m_shallow_cards from './views/shallow-cards.jsx'
 import * as m_shallow_wizard from './views/shallow-wizard.jsx'
+import * as m_start from './views/start.jsx'
 import * as m_trajectory from './views/trajectory.jsx'
 import * as m_workspace from './views/workspace.jsx'
 export const modules = {
@@ -64,6 +65,7 @@ export const modules = {
   './views/shallow-apply.jsx': m_shallow_apply,
   './views/shallow-cards.jsx': m_shallow_cards,
   './views/shallow-wizard.jsx': m_shallow_wizard,
+  './views/start.jsx': m_start,
   './views/trajectory.jsx': m_trajectory,
   './views/workspace.jsx': m_workspace,
 }

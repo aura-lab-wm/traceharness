@@ -1,0 +1,76 @@
+/* Rig · views/start-run.css — Home's "A run · five phases" (start/run.jsx). Five numbered tabs, each topped by its
+   phase's colour; the one shown is tinted in that colour and marked with a bar of it. The panel draws the run as the
+   Learn figure's phase band (learn/figures/kinds/phase-band.css: tinted blocks with a solid cap, the fix a dashed ink
+   line, the calls after it hatched); the calls of other phases step back. Tokens only; rig.css stops every
+   transition under prefers-reduced-motion. */
+.rig .rg-start-run .ph-explore{--rig-ph-on:var(--rig-ph-explore)}
+.rig .rg-start-run .ph-reproduce{--rig-ph-on:var(--rig-ph-reproduce)}
+.rig .rg-start-run .ph-edit{--rig-ph-on:var(--rig-ph-edit)}
+.rig .rg-start-run .ph-test{--rig-ph-on:var(--rig-ph-test)}
+.rig .rg-start-run .ph-submit{--rig-ph-on:var(--rig-ph-submit)}
+.rig .rg-start-run .ph-other{--rig-ph-on:var(--rig-ph-other)}
+
+/* the tabs */
+.rig .rg-start-tabs{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));border:1px solid var(--rig-line);border-bottom:0;border-radius:var(--rig-r-md) var(--rig-r-md) 0 0;overflow:hidden;background:var(--rig-panel)}
+.rig .rg-start-tab{position:relative;display:flex;flex-direction:column;align-items:flex-start;gap:2px;min-width:0;padding:var(--rig-s4) var(--rig-s4) var(--rig-s3);border:0;border-left:1px solid var(--rig-line);border-bottom:1px solid var(--rig-line);background:transparent;color:var(--rig-text);text-align:left;transition:background-color var(--rig-dur-1) var(--rig-ease)}
+.rig .rg-start-tab:first-child{border-left:0}
+/* the phase's colour along the top of every tab; the tab shown takes a thicker bar and a tint of it */
+.rig .rg-start-tab::before{content:"";position:absolute;left:0;right:0;top:0;height:3px;background:var(--rig-ph-on);opacity:.55;transition:opacity var(--rig-dur-1) var(--rig-ease)}
+.rig .rg-start-tab:hover{background:var(--rig-panel2)}
+.rig .rg-start-tab:hover::before{opacity:1}
+.rig .rg-start-tab[aria-selected="true"]{background:color-mix(in srgb,var(--rig-ph-on) 14%,var(--rig-panel));border-bottom-color:transparent;cursor:default}
+.rig .rg-start-tab[aria-selected="true"]::before{height:4px;opacity:1}
+.rig .rg-start-tab:focus-visible{outline:var(--rig-focus-ring);outline-offset:-4px}
+.rig .rg-start-tab .n{font:var(--rig-fw-medium) var(--rig-fs-xs)/var(--rig-lead-xs) var(--rig-mono);color:var(--rig-mute);font-variant-numeric:tabular-nums}
+.rig .rg-start-tab b{font:var(--rig-fw-bold) var(--rig-fs-md)/var(--rig-lead-md) var(--rig-sans)}
+.rig .rg-start-tab .s{font-size:var(--rig-fs-xs);line-height:var(--rig-lead-xs);color:var(--rig-dim)}
+/* a narrow page: the five tabs as two rows of numbered chips, the words under the panel's own head */
+@container rgdoc (max-width:760px){
+  .rig .rg-start-tabs{grid-template-columns:repeat(3,minmax(0,1fr))}
+  .rig .rg-start-tab .s{display:none}
+  .rig .rg-start-tab{padding:var(--rig-s3)}
+  /* five in rows of three: the last takes the rest of its row, and the tab shown keeps its line under it */
+  .rig .rg-start-tab:last-child{grid-column:span 2}
+  .rig .rg-start-tab[aria-selected="true"]{border-bottom-color:var(--rig-line)}
+}
+
+/* the panel: the band across the top, then the step lines beside what they cost, then the count and the link */
+.rig .rg-start-runp{display:grid;grid-template-columns:minmax(0,1fr) minmax(12rem,16rem);gap:var(--rig-s4) var(--rig-s6);padding:var(--rig-s5);border:1px solid var(--rig-line);border-top:0;border-radius:0 0 var(--rig-r-md) var(--rig-r-md);background:color-mix(in srgb,var(--rig-ph-on,var(--rig-line)) 5%,var(--rig-panel))}
+.rig .rg-start-runb{grid-column:1/-1;min-width:0}
+.rig .rg-start-band-svg{display:block;max-width:100%;height:auto;overflow:visible}
+.rig .rg-start-band-svg .rg-start-dim{opacity:.5;transition:opacity var(--rig-dur-2) var(--rig-ease)}
+.rig .rg-start-band-svg .seg{transition:opacity var(--rig-dur-2) var(--rig-ease)}
+/* the band fills in from the left once, the first time it is seen (the figure's own timing tokens) */
+.rig .rg-start-grow{transform:scaleX(0);transform-origin:0 50%;transition:transform calc(var(--rig-dur-pulse) * 1.2) var(--rig-ease)}
+.rig .rg-start-band-svg.seen .rg-start-grow{transform:none}
+.rig .rg-start-runk{display:flex;flex-wrap:wrap;align-items:center;gap:var(--rig-s1) var(--rig-s4);margin-top:var(--rig-s2);font-size:var(--rig-fs-xs);line-height:var(--rig-lead-xs);color:var(--rig-mute)}
+.rig .rg-start-runk>span{display:inline-flex;align-items:center;gap:var(--rig-s1);white-space:nowrap}
+.rig .rg-start-runk .mk{display:inline-block;width:0;height:12px;border-left:1.75px dashed var(--rig-text)}
+.rig .rg-start-runk .ht{display:inline-block;width:14px;height:10px;border-radius:2px;background-color:var(--rig-panel2);background-image:repeating-linear-gradient(135deg,color-mix(in srgb,var(--rig-text) 42%,transparent) 0 1.5px,transparent 1.5px 4.5px);box-shadow:inset 0 0 0 1px var(--rig-line2)}
+.rig .rg-start-runl{min-width:0}
+.rig .rg-start-steps{display:flex;flex-direction:column;gap:6px;list-style:none;margin:0;padding:0}
+.rig .rg-start-steps li{display:grid;grid-template-columns:4.2rem auto minmax(0,1fr) auto;align-items:baseline;gap:var(--rig-s3);padding:6px var(--rig-s3);border-left:3px solid var(--rig-ph-on);border-radius:0 var(--rig-r-sm) var(--rig-r-sm) 0;background:var(--rig-panel)}
+.rig .rg-start-steps .k{font:var(--rig-fw-medium) var(--rig-fs-md)/var(--rig-lead-sm) var(--rig-mono);font-variant-caps:all-small-caps;letter-spacing:var(--rig-track-caps);color:var(--rig-mute)}
+.rig .rg-start-steps code{padding:0;background:none;font-size:var(--rig-fs-xs);line-height:var(--rig-lead-sm)}
+.rig .rg-start-steps .tool{font-weight:var(--rig-fw-semi);color:var(--rig-text)}
+.rig .rg-start-steps .arg{min-width:0;color:var(--rig-dim);overflow-wrap:anywhere}
+.rig .rg-start-steps .st{font-size:var(--rig-fs-xs);line-height:var(--rig-lead-sm);color:var(--rig-mute);white-space:nowrap}
+.rig .rg-start-steps .st.ok{color:var(--rig-sky-t)}
+.rig .rg-start-steps .st.bad{color:var(--rig-red-t)}
+@container rgdoc (max-width:640px){
+  .rig .rg-start-steps li{grid-template-columns:auto minmax(0,1fr);gap:2px var(--rig-s2)}
+  .rig .rg-start-steps .arg{grid-column:1/-1}
+  .rig .rg-start-steps .st{grid-column:1/-1}
+}
+.rig .rg-start-none{font-size:var(--rig-fs-sm);line-height:var(--rig-lead-md);color:var(--rig-dim)}
+.rig .rg-start-runr{display:flex;flex-direction:column;gap:var(--rig-s1);min-width:0;padding-left:var(--rig-s4);border-left:1px solid var(--rig-line);font-size:var(--rig-fs-sm);line-height:var(--rig-lead-md);color:var(--rig-dim);font-variant-numeric:tabular-nums}
+.rig .rg-start-runr .big{font-size:var(--rig-fs-md);line-height:var(--rig-lead-xl);color:var(--rig-text)}
+.rig .rg-start-runr .big b{display:inline-block;font:var(--rig-fw-bold) var(--rig-fs-xl)/var(--rig-lead-xl) var(--rig-sans);margin-right:var(--rig-s1)}
+.rig .rg-start-runr .when{margin-top:var(--rig-s1);color:var(--rig-text)}
+.rig .rg-start-runf{grid-column:1/-1;display:flex;flex-wrap:wrap;align-items:baseline;justify-content:space-between;gap:var(--rig-s2) var(--rig-s4);padding-top:var(--rig-s3);border-top:1px solid var(--rig-line)}
+.rig .rg-start-runf .rg-start-kick{margin:0}
+.rig .rg-start-runlink{display:inline-flex;align-items:center;gap:var(--rig-s1);font-weight:var(--rig-fw-semi)}
+@container rgdoc (max-width:760px){
+  .rig .rg-start-runp{grid-template-columns:minmax(0,1fr);padding:var(--rig-s4)}
+  .rig .rg-start-runr{padding-left:0;padding-top:var(--rig-s3);border-left:0;border-top:1px solid var(--rig-line)}
+}

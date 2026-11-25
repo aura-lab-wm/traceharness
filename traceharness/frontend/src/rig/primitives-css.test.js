@@ -61,14 +61,18 @@ describe('foundation tokens in rig.css', () => {
       expect(block, `--rig-${t}`).toMatch(new RegExp(`--rig-${t}:`))
     }
   })
-  it('keeps the spacing scale on 4px and the radius family at four steps', () => {
+  it('keeps the spacing scale on 4px and the radius family at 0, 4, 6 and full', () => {
     const px = (name) => Number((rig.match(new RegExp(`--rig-${name}:(\\d+)px`)) || [])[1])
     expect(['s1', 's2', 's3', 's4', 's5', 's6', 's7', 's8'].map(px)).toEqual([4, 8, 12, 16, 24, 32, 48, 64])
-    expect(['r-xs', 'r-sm', 'r-md', 'r-lg'].map(px)).toEqual([4, 6, 8, 12])
-    expect(['h-md', 'h-lg'].map(px)).toEqual([36, 44])
+    // controls and buttons 6px (the primary too), panels 6px, pills round
+    expect(['r-xs', 'r-sm', 'r-md', 'r-lg', 'r-panel'].map(px)).toEqual([4, 6, 6, 6, 6])
+    expect(px('r-full')).toBe(999)
+    expect(rig).not.toMatch(/\.rg-btn\.pri\{[^}]*border-radius:0[;}]/)
+    expect(['h-sm', 'h-md', 'h-lg'].map(px)).toEqual([28, 36, 44])
   })
-  it('gives controls 36px with a mouse and 44px on a coarse pointer or a phone-width window', () => {
-    expect(block).toContain('--rig-h-ctl:var(--rig-h-md)')
+  it('gives controls 32px with a mouse and 44px on a coarse pointer or a phone-width window', () => {
+    expect(block).toContain('--rig-h-btn:32px;--rig-h-ctl:var(--rig-h-btn)')
+    expect(block).toContain('--rig-hit:var(--rig-h-md)')
     expect(block).toMatch(/@media \(max-width:767px\),\(pointer:coarse\)\{\.rig\{--rig-h-ctl:var\(--rig-h-lg\);--rig-hit:var\(--rig-h-lg\)/)
     expect(block).toMatch(/\.rg-btn\{min-height:var\(--rig-h-ctl\)\}/)
     expect(block).toMatch(/\.rg-inp,\.rg-selc\{height:var\(--rig-h-ctl\)\}/)

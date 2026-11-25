@@ -60,7 +60,7 @@ export function differences(before, after, path = '$', rows = []) {
 }
 
 function parse(text) {
-  try { return { value: parseConfiguration(text), error: '' } }
+  try { return { value: parseConfiguration(text, { typed: true }), error: '' } }
   catch (error) { return { value: null, error: error.message || 'The configuration is invalid.' } }
 }
 
@@ -83,7 +83,7 @@ function Change({ row }) {
     : <div className="rg-json-editor-diff-grid"><div><span>Current fields</span><pre tabIndex={0}>{formatted(row.before)}</pre></div><div><span>Pending JSON</span><pre tabIndex={0}>{formatted(row.after)}</pre></div></div>}</section>
 }
 
-export function ConfigurationEditor({ configuration, disabled = false, onApply, onPendingChange }) {
+export function ConfigurationEditor({ configuration, disabled = false, onApply, onPendingChange, notice = null }) {
   const id = useId()
   const current = useMemo(() => { try { return formatted(configuration) } catch { return '' } }, [configuration])
   const [base, setBase] = useState(current)
@@ -142,5 +142,6 @@ export function ConfigurationEditor({ configuration, disabled = false, onApply, 
     {applyError && <p role="alert">{applyError}</p>}
     {!parsing && !!changes.length && <details open className="rg-json-editor-diff"><summary>{changes.length} changed configuration fields</summary><div>{changes.map((row) => <Change key={row.path} row={row} />)}</div></details>}
     <div className="rg-row rg-wrap"><button type="button" className="rg-btn pri" onClick={apply} disabled={disabled || !dirty || parsing || !parsed.value}>Apply JSON</button><button type="button" className="rg-btn" onClick={discard} disabled={disabled || !pending}>Discard JSON edits</button></div>
+    {notice}
   </div>
 }

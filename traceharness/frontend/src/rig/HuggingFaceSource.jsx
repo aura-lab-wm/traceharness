@@ -7,12 +7,14 @@
    import are replaced by the shared "not available here" note. Every cell is rendered as text. */
 import { useEffect, useRef, useState } from 'react'
 import { can } from '../environment'
-import { hfImport, defaultName, cleanName, clampRows, isDatasetId, isResultsName, licenseText, previewPath, trajectoryDatasets, MAX_ROWS, DEFAULT_ROWS } from '../hf-api'
+import { hfImport, defaultName, cleanName, isDatasetId, isResultsName, licenseText, previewPath, trajectoryDatasets, MAX_ROWS, DEFAULT_ROWS } from '../hf-api'
 import { Unavailable } from './unavailable'
 import { useApi, invalidate, fmt } from './data'
 import { useTabState } from './context'
 import { makeSpec } from './route'
 import { Tag, Note, Loading, ConfirmAction, NextSteps } from './ui'
+import { NumberField } from './NumberField'
+import { BrandName } from './brand/BrandMark'
 
 const { int } = fmt
 const errText = (e) => String((e && e.message) || e || 'unknown error')
@@ -75,14 +77,14 @@ function ImportForm({ spec, dataset, defaults }) {
   return (
     <div className="rg-ws-form" data-el="hf-import">
       <div className="rg-ws-trip">
-        <label className="rg-fld">Rows<input className="rg-inp" type="number" min={1} max={MAX_ROWS} value={n} onChange={(e) => setN(clampRows(e.target.value))} /></label>
-        <label className="rg-fld">Seed<input className="rg-inp" type="number" value={seed} onChange={(e) => setSeed(Math.trunc(Number(e.target.value)) || 0)} /></label>
+        <NumberField label="Rows" min={1} max={MAX_ROWS} noun="rows" value={n} onChange={setN} />
+        <NumberField label="Seed" value={seed} onChange={setSeed} />
         <label className="rg-fld">Results directory (optional)<input className="rg-inp" value={name} spellCheck={false} placeholder={defaultName(dataset)} onChange={(e) => setName(cleanName(e.target.value))} /></label>
       </div>
       {defaults && <p className="rg-small rg-dim" data-el="hf-default-split">Default split: <span className="rg-mono">{defaults.config} / {defaults.split}</span>, the one this console has imported from.</p>}
       <p className="rg-small rg-dim">Reads {int(n)} random rows (seed {seed}) from the public dataset and writes <span className="rg-mono">data/runs/{target}</span> with a <span className="rg-mono">provenance.json</span>. An existing directory is never replaced.</p>
       <div className="rg-row rg-wrap rg-ws-acts rg-ws-quiet">
-        <ConfirmAction label={running ? 'Importing…' : 'Import a sample'} confirmLabel="Import" disabled={running || !valid}
+        <ConfirmAction busy={running} label={running ? 'Importing…' : 'Import a sample'} confirmLabel="Import" disabled={running || !valid}
           why={running ? 'An import is already running' : 'The name may use letters, digits, ".", "_" and "-" only'} el="hf-import-start"
           detail={`Downloads ${int(n)} rows from Hugging Face and writes data/runs/${target}.`} onConfirm={go} />
       </div>
@@ -92,7 +94,7 @@ function ImportForm({ spec, dataset, defaults }) {
       {mine && s.status === 'error' && !running && <div className="rg-ws-err" role="alert" data-el="hf-import-failed"><p><b>The import did not finish.</b> {s.error}</p></div>}
       {prov && (
         <div className="rg-ws-result" data-el="hf-result">
-          <p className="rg-small">Imported {int(s.result.imported)} {s.result.imported === 1 ? 'run' : 'runs'} into <span className="rg-mono">data/runs/{s.result.results_dir}</span>{skipped.length ? `; ${int(skipped.length)} sampled ${skipped.length === 1 ? 'row was' : 'rows were'} skipped` : ''}.</p>
+          <p className="rg-small">Imported {int(s.result.imported)} {s.result.imported === 1 ? 'run' : 'runs'} into <span className="rg-hash">data/runs/{s.result.results_dir}</span>{skipped.length ? `; ${int(skipped.length)} sampled ${skipped.length === 1 ? 'row was' : 'rows were'} skipped` : ''}.</p>
           {skipped.length > 0 && <ul className="rg-small rg-dim" data-el="hf-skipped">{skipped.slice(0, 10).map((x) => <li key={x.offset}>row {x.offset}: {x.reason}</li>)}</ul>}
           <dl className="rg-ws-kv" data-el="hf-provenance">
             <dt>source</dt><dd className="rg-mono">{prov.source} · {prov.dataset}</dd>
@@ -125,10 +127,10 @@ export function HuggingFaceSource({ spec }) {
         <thead><tr><th>dataset</th><th className="rg-num">rows</th><th>license</th><th>access</th><th><span className="sr-only">Preview</span></th></tr></thead>
         <tbody>{rows.map((d) => (
           <tr key={d.id} className={picked === d.id ? 'hov on' : 'hov'} data-id={d.id}>
-            <td><b className="rg-mono rg-break">{d.id}</b>{d.hf_adapter && <> <Tag tone="acc" el="hf-importable" title={`TraceHarness can import it: traceharness hf import ${d.id}`}>importable</Tag></>}<div className="rg-dim rg-small">{d.summary}</div></td>
+            <td><b className="rg-mono rg-break"><BrandName kind="dataset" name={d.id} /></b>{d.hf_adapter && <> <Tag tone="acc" el="hf-importable" tip={`TraceHarness can import it: traceharness hf import ${d.id}`}>importable</Tag></>}<div className="rg-dim rg-small">{d.summary}</div></td>
             <td className="rg-num rg-mono">{d.rows == null ? '—' : int(d.rows)}</td>
             <td className="rg-mono rg-small">{licenseText(d.license)}</td>
-            <td>{d.gated ? <Tag tone="amb" title="Needs an accepted agreement and a token, which this console does not use">gated</Tag> : <Tag>open</Tag>}</td>
+            <td>{d.gated ? <Tag tone="amb" tip="Needs an accepted agreement and a token, which this console does not use">gated</Tag> : <Tag>open</Tag>}</td>
             <td className="rg-num">{local && (d.gated
               ? <span className="rg-small rg-dim">gated</span>
               : <button type="button" className="rg-btn" aria-pressed={picked === d.id} aria-label={`Preview ${d.id}`} onClick={() => setPicked(picked === d.id ? '' : d.id)}>{picked === d.id ? 'Close' : 'Preview'}</button>)}</td>

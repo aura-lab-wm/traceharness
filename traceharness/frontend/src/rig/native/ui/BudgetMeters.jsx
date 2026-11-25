@@ -10,7 +10,7 @@ export function LimitMeter({ label, used, max, kind, state, unit = 'bytes', comp
   const share = max > 0 ? Math.min(100, Math.max(0, used / max * 100)) : 0
   return <div className="rg-native-meter" data-state={state} role="group" aria-label={label + ' limit'}>
     <span className="rg-native-meter-text"><b>{label}</b> {kind === 'estimate' ? '≈ ' : ''}{format(used)} of {format(max)}
-      {' '}<span className="rg-native-meter-kind" title={kind === 'estimate' ? 'Estimate before runner review; the runner measures the real size.' : 'Exact value.'}>{kind}</span>
+      {' '}<span className="rg-native-meter-kind" data-hint={kind === 'estimate' ? 'Estimate before runner review; the runner measures the real size.' : 'Exact value.'}>{kind}</span>
       {(!compact || state !== 'ok') && <span className="rg-native-meter-state"> · {STATE_WORDS[state]}</span>}</span>
     <span className="rg-native-meter-bar" aria-hidden="true"><span style={{ width: share + '%' }} /></span>
   </div>
@@ -30,7 +30,7 @@ export function TextBudgetLine({ budget, explain = false }) {
   return <>
     <p className="rg-native-budget-line" aria-describedby={explain ? captionId : undefined}>
       Text {formatBytes(exact.baseline_bytes)} → {formatBytes(exact.effective_bytes)} <span className="rg-native-kind">exact</span>
-      {' · '}<span title={ESTIMATE_TOOLTIP}>{tokens(estimate.baseline_tokens)} → {tokens(estimate.effective_tokens)} tokens <span className="rg-native-kind">(estimate)</span></span>
+      {' · '}<span data-hint={ESTIMATE_TOOLTIP}>{tokens(estimate.baseline_tokens)} → {tokens(estimate.effective_tokens)} tokens <span className="rg-native-kind">(estimate)</span></span>
       {estimate.not_estimated_blocks > 0 && <span> · {formatCount(estimate.not_estimated_blocks)} not estimated (space padding)</span>}
       {explain && <>{' · '}<button type="button" className="rg-native-sum-why rg-hit" aria-expanded={open} aria-controls={captionId} onClick={() => setOpen(!open)}>sums over fragments, not per request</button></>}
     </p>
@@ -57,7 +57,7 @@ export function BudgetMeters({ budget, breakdown = true, note = '' }) {
   return <section className="rg-native-budget" aria-label="Profile budget">
     <TextBudgetLine budget={budget} />
     <p className="rg-native-budget-line">Change {formatSigned(exact.delta_bytes, formatBytes)} <span className="rg-native-kind">exact</span>
-      {' · '}<span title={ESTIMATE_TOOLTIP}>{formatSigned(estimate.delta_tokens)} tokens <span className="rg-native-kind">(estimate, {budget.estimator})</span></span></p>
+      {' · '}<span data-hint={ESTIMATE_TOOLTIP}>{formatSigned(estimate.delta_tokens)} tokens <span className="rg-native-kind">(estimate, {budget.estimator})</span></span></p>
     <p className="rg-native-footnote">{SUM_CAPTION}</p>
     <div className="rg-native-meters">{budget.limits.map((entry) => <LimitMeter key={entry.id} label={LIMIT_NAMES[entry.id]} unit={entry.id === 'overrides' ? 'count' : 'bytes'} {...entry} />)}</div>
     {note && <p className="rg-native-footnote">{note}</p>}
@@ -65,7 +65,7 @@ export function BudgetMeters({ budget, breakdown = true, note = '' }) {
       <div className="rg-native-table" role="region" aria-label="Budget by class" tabIndex={0}><table>
         <thead><tr><th scope="col">Class</th><th scope="col">Patchable</th><th scope="col">Replaced</th><th scope="col">Disabled</th><th scope="col">Bytes (exact)</th><th scope="col">≈ Tokens (estimate)</th></tr></thead>
         <tbody>{budget.by_class.map((row) => <tr key={row.class_name}><th scope="row">{row.class_name}</th><td>{formatCount(row.patchable)} of {formatCount(row.blocks)}</td><td>{formatCount(row.replace)}</td><td>{formatCount(row.disable)}</td>
-          <td>{formatBytes(row.baseline_bytes)} → {formatBytes(row.effective_bytes)}</td><td title={ESTIMATE_TOOLTIP}>{tokens(row.baseline_tokens)} → {tokens(row.effective_tokens)}</td></tr>)}</tbody>
+          <td>{formatBytes(row.baseline_bytes)} → {formatBytes(row.effective_bytes)}</td><td data-hint={ESTIMATE_TOOLTIP}>{tokens(row.baseline_tokens)} → {tokens(row.effective_tokens)}</td></tr>)}</tbody>
       </table></div>
     </details>}
   </section>

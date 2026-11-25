@@ -31,6 +31,21 @@ def now_iso() -> str:
     return time.strftime("%Y-%m-%dT%H:%M:%S", time.gmtime()) + f".{int((time.time() % 1) * 1000):03d}Z"
 
 
+def epoch_of(ts) -> Optional[float]:
+    """A span timestamp (ISO 8601, or epoch seconds) as epoch seconds; None when missing or unreadable.
+    A timestamp without a zone is read as UTC."""
+    if isinstance(ts, (int, float)) and not isinstance(ts, bool):
+        return float(ts)
+    if not isinstance(ts, str) or not ts.strip():
+        return None
+    from datetime import datetime, timezone
+    try:
+        d = datetime.fromisoformat(ts.strip().replace("Z", "+00:00"))
+    except ValueError:
+        return None
+    return (d if d.tzinfo else d.replace(tzinfo=timezone.utc)).timestamp()
+
+
 class Ledger:
     """Append-only JSONL writer with a monotonically increasing `seq`."""
 
@@ -115,6 +130,11 @@ class RunSummary:
     # reader uses .get() with these defaults.
     human_interventions: int = 0
     human_intervened: bool = False
+    # Prompt tokens served from the provider's cache, and written to it. None: the source records no
+    # cache counts (the lab's own runs record none). Whether input_tokens already includes them depends on the
+    # source (core.tokens.CACHE_OUTSIDE_INPUT).
+    cache_read_tokens: Optional[int] = None
+    cache_write_tokens: Optional[int] = None
 
     def to_json(self) -> str:
         return json.dumps(asdict(self), ensure_ascii=False, indent=2)

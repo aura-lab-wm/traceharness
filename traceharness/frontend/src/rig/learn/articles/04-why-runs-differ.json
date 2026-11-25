@@ -1,0 +1,517 @@
+{
+ "id": "why-runs-differ",
+ "number": 4,
+ "part": 2,
+ "kind": "concept",
+ "checked": "2026-11-23",
+ "title": "Why runs of the same task differ",
+ "question": "Why does the same agent pass a task on one try and fail it on the next?",
+ "what_you_learn": [
+  "Where run-to-run differences come from, even when the temperature is 0.",
+  "What pass@1, pass@k and pass^k each measure, and which one answers your question.",
+  "Why a spread such as longest run divided by shortest run must be compared at the same number of runs per task."
+ ],
+ "prerequisites": {
+  "read": [
+   "reading-a-trajectory"
+  ],
+  "know": [
+   "What a pass rate is: passing runs out of graded runs."
+  ]
+ },
+ "sections": [
+  {
+   "heading": "Same task, same setup, different run",
+   "body": [
+    "A repeat is another run of the same task with the same model and the same harness. Repeats often disagree: one passes and the next fails, or both pass by very different paths. This is normal, and it has several causes.",
+    "Sampling. The temperature setting controls how much chance goes into each word the model picks. More exactly, the model picks tokens, short pieces of text about the size of a word or part of one. Above 0, the model sometimes takes a less likely token on purpose.",
+    "The server. Even at temperature 0, a hosted model is not fully repeatable. Horace He at Thinking Machines traced most of this to batching. The server works on your request together with other people's, the size of that batch changes with load, and the arithmetic changes a little with it.",
+    "The environment. Tool outputs can contain things that differ on every run, such as random ids, temporary folder names or timings. The model reads them, so its input is not exactly the same twice.",
+    "Small differences grow. One different word in a reply can lead to a different edit, a different test result and a different path from then on. Bjarnason et al. (2026) collected 60,000 trajectories on SWE-bench Verified (500 real GitHub issues that developers screened). Runs parted early, often within the first few percent of their tokens."
+   ]
+  },
+  {
+   "heading": "Three ways to count passes",
+   "body": [
+    "Suppose every task was run several times. Each of these numbers answers a different question.",
+    {
+     "list": [
+      "pass@1: how often a single run passes. TraceHarness works out each task's pass rate and then averages over tasks.",
+      "pass@k: the chance that at least one of k runs passes. You get this if you may retry and keep the best run.",
+      "pass^k: the chance that all k runs pass. The tau-bench paper introduced it to measure reliability. It is what a user who needs the agent to work every time experiences."
+     ]
+    },
+    "As k grows, pass@k rises and pass^k falls, so the gap between them shows how much a result depends on luck. A task with both passing and failing runs is said to flip, and the flip rate is the share of tasks that flip.",
+    "Here is the arithmetic for one task, so the numbers stop being magic. Say a task has 10 recorded runs and 5 of them pass. Pick 3 runs at random from the 10; there are 120 ways to do it. In 10 of those 120 picks all 3 runs pass, so pass^3 for this task is 10 / 120, about 8%. In another 10 picks all 3 fail, so pass@3 is 1 - 10 / 120, about 92%. TraceHarness computes this for each task and then averages over the tasks that have at least 3 runs."
+   ]
+  },
+  {
+   "heading": "Seeing it in TraceHarness",
+   "body": [
+    "Two views show run-to-run differences directly. Outcomes lists every task's runs in order as a strip of pass and fail marks, so flipping tasks stand out. The compare view puts two runs side by side and names the first step where they differ in action or result. When it lines steps up, it ignores ids, temporary paths and spacing, so the divergence it reports is a real difference in what the agent did."
+   ]
+  },
+  {
+   "heading": "Spreads grow with the number of runs",
+   "body": [
+    "A spread says how far apart a task's runs are, for example the longest run's step count divided by the shortest run's. With more runs, the longest can only get longer and the shortest only shorter. So the spread grows just because you looked more times.",
+    "This matters whenever two groups have different numbers of runs per task. A task with 20 runs will usually show a bigger spread than a task with 4, even if the agent behaves the same on both. Before you compare spreads, cut every task to the same number of runs, for example its first 4. The worked example below measures how much this matters."
+   ]
+  },
+  {
+   "heading": "What to do about it",
+   "body": [
+    "Run each task more than once; Anthropic's eval guide gives the same advice for the same reason. Say how many runs per task you used. Report pass^k next to pass@1 when reliability matters. Compare spreads only at a fixed number of runs per task. Keep each task's runs in the order they were made, so that its first 4 runs mean the same thing to everyone."
+   ]
+  }
+ ],
+ "figures": [
+  {
+   "id": "a04-repeats",
+   "after_section": 0,
+   "kind": "repeat_dots",
+   "data_file": "a04-repeats",
+   "title": "Same task, same setup: pass or fail, run by run",
+   "caption": "Each column is a task and each dot one of its runs, top to bottom in the order they were made. In study_v04, 2 of the 24 tasks flip under gemini-2.5-flash-lite and baseline. In the SWE-rebench set, 56 of the 200 tasks flip, 68 pass every run and 76 never pass.",
+   "data_note": "study_v04, 120 runs; swe_rebench_openhands_qwen3coder, 2,174 runs",
+   "headline": [
+    {
+     "key": "flip_0",
+     "as_written": "2 of the 24"
+    },
+    {
+     "key": "flip_1",
+     "as_written": "56 of the 200"
+    },
+    {
+     "key": "always_1",
+     "as_written": "68"
+    },
+    {
+     "key": "never_1",
+     "as_written": "76"
+    }
+   ]
+  },
+  {
+   "id": "a04-passk",
+   "after_section": 1,
+   "kind": "pass_k",
+   "data_file": "a04-passk",
+   "title": "Retries against consistency: pass@k and pass^k",
+   "caption": "pass@k (at least one of k runs passes) and pass^k (all k pass), averaged over the 200 SWE-rebench tasks for k from 1 to 4, the fewest runs any task has. At k = 1 both are pass@1, 49.2%; at k = 3 they are 57.0% and 41.3%. The second tab is the made-up task above: 10 runs, 5 of them passing.",
+   "data_note": "swe_rebench_openhands_qwen3coder, 200 tasks, 2,174 runs",
+   "after": {
+    "source": 3,
+    "figure": 4
+   },
+   "headline": [
+    {
+     "key": "at_1",
+     "as_written": "49.2%"
+    },
+    {
+     "key": "at_3",
+     "as_written": "57.0%"
+    },
+    {
+     "key": "all_3",
+     "as_written": "41.3%"
+    },
+    {
+     "key": "ex_at_3",
+     "as_written": "about 92%"
+    },
+    {
+     "key": "ex_all_3",
+     "as_written": "about 8%"
+    },
+    {
+     "key": "ex_ways_3",
+     "as_written": "120 ways"
+    }
+   ]
+  },
+  {
+   "id": "a2-fixed-n",
+   "after_section": 3,
+   "kind": "spread_runs",
+   "data_file": "a04-spread",
+   "title": "Spread grows with the number of runs",
+   "caption": "The same 200 SWE-rebench tasks, cut to their first 2, 3 or 4 runs or left with all of them (4 to 25 per task). Bars: the median task's longest-run steps divided by its shortest-run steps, 1.15, 1.26, 1.34 and 1.59. Labels: tasks at 2x or more, 1 of 200, 3 of 200, 4 of 200 and 24 of 200. The second tab follows the 84 tasks with at least 12 runs.",
+   "data_note": "swe_rebench_openhands_qwen3coder, 200 tasks, 2,174 runs, steps per run",
+   "headline": [
+    {
+     "key": "m_2",
+     "as_written": "1.15"
+    },
+    {
+     "key": "m_3",
+     "as_written": "1.26"
+    },
+    {
+     "key": "mx_4",
+     "as_written": "1.34x"
+    },
+    {
+     "key": "mx_all",
+     "as_written": "1.59x"
+    },
+    {
+     "key": "two_2",
+     "as_written": "1 of 200"
+    },
+    {
+     "key": "two_3",
+     "as_written": "3 of 200"
+    },
+    {
+     "key": "two_4",
+     "as_written": "4 of 200"
+    },
+    {
+     "key": "two_all",
+     "as_written": "24 of 200"
+    },
+    {
+     "key": "long_n",
+     "as_written": "84 tasks"
+    },
+    {
+     "key": "long_mx_4",
+     "as_written": "1.37x"
+    },
+    {
+     "key": "long_mx_all",
+     "as_written": "1.67x"
+    }
+   ]
+  }
+ ],
+ "worked_example": {
+  "title": "Two runs that part at step 4, and 200 tasks that flip or not",
+  "dataset": {
+   "name": "study_v04",
+   "what": "Bundled with the study copy: 3,240 recorded runs, 3 models x 9 harnesses x 24 small Python tasks x 5 runs. They were collected through OpenRouter (a paid service that passes requests on to many model providers) at temperature 0.",
+   "credit": "TraceHarness bundled data (AURA lab, William & Mary)."
+  },
+  "dataset2": {
+   "name": "swe_rebench_openhands_qwen3coder",
+   "what": "A 200-task, 2,174-run subset of nebius/SWE-rebench-openhands-trajectories, drawn with a fixed seed from the tasks with at least 3 runs. The runs are OpenHands (an open-source agent harness for coding tasks), version 0.54.0, with Qwen3-Coder-480B-A35B-Instruct on SWE-rebench tasks.",
+   "credit": "Trofimova, Shevtsov, Badertdinov, Pyaev, Karasik, Golubev (Nebius), SWE-rebench-OpenHands-Trajectories, 2025, CC BY 4.0, https://huggingface.co/datasets/nebius/SWE-rebench-openhands-trajectories"
+  },
+  "open": [
+   "Click the dataset name at the top of the left list and choose study_v04.",
+   "Click Tasks, type t09_paginate in Search tasks and open it (gemini-2.5-flash-lite under baseline).",
+   "Click Run 1 of 5, then Compare with another run. The compare view opens on Run 1 beside Run 2.",
+   "For the second part: Click the dataset name at the top of the left list and choose swe_rebench_openhands_qwen3coder. Then click Outcomes."
+  ],
+  "body": [
+   "All 5 runs of t09_paginate under gemini-2.5-flash-lite and the baseline harness pass, and the recorded harness of each run sets temperature 0.0. Yet they took 13, 8, 8, 8 and 9 steps.",
+   "The compare view puts Run 1 (13 steps) beside Run 2 (8 steps) and reports the first divergence at step 4. Steps 1 to 3 match: read pager/paginate.py, edit it, run the tests, which fail on an indentation error. At step 4 both try to fix the indentation. Run 2's edit applies. Run 1's edit is rejected because its old text does not match the file, and Run 1 needs five more steps to recover.",
+   "Were the inputs to step 4 identical? Not quite. Each run gets fresh random tool-call ids from the provider. The test output at step 3 also names a different random temporary folder. The compare view ignores such ids and paths when it lines steps up. The record cannot tell whether those bytes or the server changed the reply. It only shows that at temperature 0 the runs still parted.",
+   "Now the public set swe_rebench_openhands_qwen3coder: 2,174 runs of OpenHands (an open-source agent harness for coding tasks) with Qwen3-Coder-480B on 200 SWE-rebench tasks, 4 to 25 runs per task. Outcomes reports pass@1 49.2% (95% interval 42.7% to 55.4%), pass@3 57.0% and pass^3 41.3%. A user allowed three tries who keeps the best gets a fix on about 57% of tasks. A user who needs all three tries to work gets that on about 41%. 56 of the 200 tasks flip; 68 pass every run and 76 never pass.",
+   "Last, the spread lesson on the same set, in steps (this set records no tokens). With all runs, the median task's longest run had 1.59x the steps of its shortest, and 24 of 200 tasks reached 2x or more. Cut to each task's first 4 runs, the median was 1.34x and 4 of 200 tasks reached 2x. Among the 84 tasks with at least 12 runs, the median was 1.37x at 4 runs and 1.67x at all runs. Same agent, same tasks; only the number of runs changed."
+  ],
+  "links": [
+   "ds:study_v04",
+   "task:study_v04:gemini-2.5-flash-lite:baseline:t09_paginate",
+   "cmp:20261114-131327-5484dd:20261114-131407-8dfaaf",
+   "an:swe_rebench_openhands_qwen3coder:outcomes"
+  ]
+ },
+ "try_it": {
+  "clicks": [
+   "Click the dataset name at the top of the left list and choose swe_rebench_openhands_qwen3coder.",
+   "Click Outcomes in the left list.",
+   "Scroll to Per task, runs in order, and find ARMmbed__yotta-804 (the first row)."
+  ],
+  "question": "How many of its runs pass? If you had run this task only 3 times (its first 3 runs), what pass rate would you have reported?",
+  "answer": "5 of 10 runs pass (runs 2, 5, 7, 8 and 9). The first 3 runs are Fail, Pass, Fail: 1 of 3, about 33%. Three runs would have suggested a third; all ten say a half. Neither is wrong, but the number from 3 runs is far less certain.",
+  "answer_measured_from": "GET /api/results/swe_rebench_openhands_qwen3coder/metrics: cells[0].tasks['ARMmbed__yotta-804'] = n 10, c 5, outcomes in repeat order F,P,F,F,P,F,P,P,P,F. Read on the Outcomes page.",
+  "links": [
+   "ds:swe_rebench_openhands_qwen3coder",
+   "an:swe_rebench_openhands_qwen3coder:outcomes",
+   null
+  ]
+ },
+ "quiz": [
+  {
+   "q": "The harness sets temperature 0. Can two runs of the same task still differ?",
+   "options": [
+    "No: temperature 0 makes every run exactly the same",
+    "Yes: batching and changing tool outputs can shift them",
+    "Only if the files of the task change between the runs",
+    "Only when the runs use a different model"
+   ],
+   "answer": 1,
+   "why": "Every study_v04 run used temperature 0.0, and t09_paginate's five runs still took between 8 and 13 steps."
+  },
+  {
+   "q": "Which number tells a user who needs the agent to work every time how often it does?",
+   "options": [
+    "pass@1",
+    "pass@k",
+    "flip rate",
+    "pass^k"
+   ],
+   "answer": 3,
+   "why": "pass^k is the chance that all k runs pass."
+  },
+  {
+   "q": "Task A has 4 runs and a step spread of 1.3x. Task B has 20 runs and a spread of 1.9x. What can you conclude?",
+   "options": [
+    "Nothing yet: compare both at their first 4 runs",
+    "B’s runs vary more, because 1.9x is larger",
+    "A’s runs vary more, because it has fewer",
+    "Both vary the same, because spreads scale"
+   ],
+   "answer": 0,
+   "why": "Longest divided by shortest can only grow as runs are added."
+  }
+ ],
+ "sources": [
+  {
+   "title": "Defeating Nondeterminism in LLM Inference",
+   "authors": "Horace He, in collaboration with others at Thinking Machines",
+   "year": "2025 (10 Sep 2025)",
+   "url": "https://thinkingmachines.ai/blog/defeating-nondeterminism-in-llm-inference/",
+   "what_we_took": "Why a hosted model is not repeatable even at temperature 0: the server's batch size changes with load.",
+   "quote": "the load (and thus batch-size) nondeterministically varies",
+   "licence": "Company blog; reuse terms not seen. Paraphrased, one short quote.",
+   "checked": "2026-11-23",
+   "cited_at": [
+    "traced most of this to batching"
+   ]
+  },
+  {
+   "title": "On Randomness in Agentic Evals",
+   "authors": "Bjarni Haukur Bjarnason, André Silva, Martin Monperrus",
+   "year": "2026 (preprint)",
+   "url": "https://arxiv.org/abs/2602.07150",
+   "licence": "CC BY 4.0 (arXiv).",
+   "what_we_took": "60,000 SWE-bench Verified trajectories; runs part early; their advice to use several runs per task and to report pass@k and pass^k.",
+   "quote": "trajectories diverge early, often within the first few percent of tokens",
+   "checked": "2026-11-23",
+   "cited_at": [
+    "Runs parted early, often within the first few percent of their tokens"
+   ]
+  },
+  {
+   "title": "τ-bench: A Benchmark for Tool-Agent-User Interaction in Real-World Domains",
+   "authors": "Shunyu Yao, Noah Shinn, Pedram Razavi, Karthik Narasimhan",
+   "year": "2024",
+   "url": "https://arxiv.org/abs/2406.12045",
+   "what_we_took": "The pass^k metric: the chance that all k runs succeed, as a measure of reliability.",
+   "quote": "a new metric (pass^k) to evaluate the reliability of agent behavior over multiple trials",
+   "licence": "CC BY 4.0 (arXiv).",
+   "checked": "2026-11-23",
+   "cited_at": [
+    "The tau-bench paper introduced it to measure reliability"
+   ]
+  },
+  {
+   "title": "Demystifying evals for AI agents",
+   "authors": "Mikaela Grace, Jeremy Hadfield, Rodrigo Olivares, Jiri De Jonghe (Anthropic)",
+   "year": "2026 (published 9 Jan 2026)",
+   "url": "https://www.anthropic.com/research/demystifying-evals-for-ai-agents",
+   "licence": "Vendor research blog; reuse terms not stated. Paraphrased, one short quote.",
+   "what_we_took": "Run several trials because outputs vary between runs; pass@k and pass^k move apart as k grows.",
+   "quote": "Because model outputs vary between runs, we run multiple trials to produce more consistent results.",
+   "checked": "2026-11-24",
+   "cited_at": [
+    "Anthropic's eval guide gives the same advice for the same reason"
+   ]
+  },
+  {
+   "title": "nebius/SWE-rebench-openhands-trajectories (dataset card)",
+   "authors": "Maria Trofimova, Anton Shevtsov, Ibragim Badertdinov, Konstantin Pyaev, Simon Karasik, Alexander Golubev (Nebius)",
+   "year": "2025",
+   "url": "https://huggingface.co/datasets/nebius/SWE-rebench-openhands-trajectories",
+   "licence": "CC BY 4.0. TraceHarness's swe_rebench_openhands_qwen3coder is a subset; credit is required wherever its runs appear.",
+   "what_we_took": "The runs behind the worked example's second and third parts (TraceHarness's 200-task subset).",
+   "quote": "Each trajectory contains the agent's step-by-step reasoning, actions, and environmental observations.",
+   "checked": "2026-11-23",
+   "cited_at": [
+    "subset of nebius/SWE-rebench-openhands-trajectories"
+   ]
+  }
+ ],
+ "glossary_terms": [
+  "repeat",
+  "temperature",
+  "token",
+  "pass@1",
+  "pass@k",
+  "pass^k",
+  "flip rate",
+  "eligible",
+  "spread"
+ ],
+ "see_also": [
+  {
+   "kind": "article",
+   "target": "comparing-runs-fairly"
+  },
+  {
+   "kind": "article",
+   "target": "how-many-runs"
+  },
+  {
+   "kind": "page",
+   "label": "Outcomes: retries against consistency, and runs in order",
+   "spec": "an:swe_rebench_openhands_qwen3coder:outcomes"
+  },
+  {
+   "kind": "page",
+   "label": "Compare two runs of t09_paginate",
+   "spec": "cmp:20261114-131327-5484dd:20261114-131407-8dfaaf"
+  }
+ ],
+ "numbers": [
+  {
+   "as_written": [
+    "120 ways",
+    "10 / 120",
+    "about 8%",
+    "about 92%",
+    "10 recorded runs",
+    "5 of them"
+   ],
+   "meaning": "worked arithmetic for a made-up task with 10 runs, 5 passing: C(10,3)=120, C(5,3)=10",
+   "source": "arithmetic with the formulas in traceharness/core/analysis.py (pass_at_k, pass_pow_k)"
+  },
+  {
+   "as_written": [
+    "13, 8, 8, 8 and 9"
+   ],
+   "meaning": "steps of the 5 runs of t09_paginate (gemini-2.5-flash-lite, baseline)",
+   "source": "data/runs/study_v04/index.jsonl (traceharness-study)"
+  },
+  {
+   "as_written": [
+    "13 steps",
+    "8 steps",
+    "five more steps"
+   ],
+   "meaning": "Run 1 vs Run 2 of t09_paginate",
+   "source": "compare view 5484dd vs 8dfaaf"
+  },
+  {
+   "as_written": [
+    "step 4",
+    "Steps 1 to 3"
+   ],
+   "meaning": "first divergence",
+   "source": "compare view: 'First divergence step 4'"
+  },
+  {
+   "as_written": [
+    "0.0"
+   ],
+   "meaning": "recorded temperature",
+   "source": "ledger invoke_agent start span, harness.temperature, all study_v04 runs sampled"
+  },
+  {
+   "as_written": [
+    "2,174",
+    "200",
+    "4 to 25"
+   ],
+   "meaning": "SWE-rebench subset size and runs per task",
+   "source": "data/runs/swe_rebench_openhands_qwen3coder/index.jsonl (traceharness-study)"
+  },
+  {
+   "as_written": [
+    "49.2%",
+    "42.7%",
+    "55.4%",
+    "57.0%",
+    "41.3%",
+    "about 57%",
+    "about 41%"
+   ],
+   "meaning": "pass@1 with 95% interval, pass@3, pass^3",
+   "source": "Outcomes page + GET /api/results/swe_rebench_openhands_qwen3coder/metrics"
+  },
+  {
+   "as_written": [
+    "56 of the 200",
+    "68",
+    "76"
+   ],
+   "meaning": "tasks that flip / pass every run / never pass",
+   "source": "Tasks page + data/runs/swe_rebench_openhands_qwen3coder/index.jsonl (traceharness-study)"
+  },
+  {
+   "as_written": [
+    "1.59x",
+    "24 of 200",
+    "1.34x",
+    "4 of 200",
+    "84 tasks",
+    "1.37x",
+    "1.67x",
+    "at least 12"
+   ],
+   "meaning": "steps spread (max/min) at all runs vs first 4 runs",
+   "source": "own computation over data/runs/swe_rebench_openhands_qwen3coder/index.jsonl (traceharness-study), runs ordered by repeat_index"
+  },
+  {
+   "as_written": [
+    "1.15",
+    "1.26",
+    "1 of 200",
+    "3 of 200"
+   ],
+   "meaning": "spread at first 2 / first 3 runs (figure)",
+   "source": "same computation over data/runs/swe_rebench_openhands_qwen3coder/index.jsonl (traceharness-study)"
+  },
+  {
+   "as_written": [
+    "60,000"
+   ],
+   "meaning": "trajectories in On Randomness",
+   "source": "arXiv 2602.07150 abstract"
+  },
+  {
+   "as_written": [
+    "5 of 10",
+    "2, 5, 7, 8 and 9",
+    "1 of 3",
+    "about 33%"
+   ],
+   "meaning": "ARMmbed__yotta-804 outcomes",
+   "source": "GET /api/results/swe_rebench_openhands_qwen3coder/metrics; Outcomes page"
+  },
+  {
+   "as_written": [
+    "8 and 13"
+   ],
+   "meaning": "fewest and most steps among t09_paginate runs",
+   "source": "data/runs/study_v04/index.jsonl (traceharness-study)"
+  },
+  {
+   "as_written": [
+    "1.3x",
+    "1.9x",
+    "20 runs",
+    "4 runs"
+   ],
+   "meaning": "made-up values inside a quiz question and a teaching sentence (not data)",
+   "source": "invented for the question; labelled as a supposition"
+  },
+  {
+   "as_written": [
+    "2 of the 24"
+   ],
+   "meaning": "study_v04 tasks that flip under gemini-2.5-flash-lite + baseline (figure 1)",
+   "source": "scripts/learn_figures.py over data/runs/study_v04/index.jsonl, hidden_pass in repeat order"
+  }
+ ],
+ "in_short": [
+  "**Repeats of the same task often disagree**, even at temperature 0: batching on the server and changing tool outputs shift a run, and small differences grow.",
+  "pass@1 is how often one run passes; **pass@k is the chance one of k runs passes, and pass^k the chance all k do**.",
+  "**A spread grows with the number of runs**, so compare spreads only after cutting every task to the same number of runs."
+ ]
+}

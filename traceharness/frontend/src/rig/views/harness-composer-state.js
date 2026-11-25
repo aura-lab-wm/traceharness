@@ -36,12 +36,27 @@ export function fixedComposerDrafts() {
   }]] : []))
 }
 
+/** The tab's unsaved custom blocks: a draft of the custom harness (or a saved one) being edited, else null.
+ *  Customize opens on them first, so following its old link never drops edits made in One run. */
+const customDraft = (old) => (/^(custom|saved:)/.test(old.selection || '') ? safeBlocks(old.blocks) : null)
+
+/** Did the editor's blocks come back from this tab (Customize's restored-draft notice)? */
+export function customizeRestored(args = []) {
+  const old = readDraft('composer') || {}
+  return !!(args[0] === 'customize' ? customDraft(old) || safeBlocks(readDraft('customize-draft')) : safeBlocks(old.blocks) || safeBlocks(readDraft('customize-draft')))
+}
+
 export function initialComposer(args = []) {
   const old = readDraft('composer') || {}
-  const selection = ['fixed', 'guided', 'custom'].includes(args[0])
-    ? args[0] === 'fixed' ? 'fixed:' + (CARDS.some((c) => c.id === args[1]) ? args[1] : CARDS[0].id) : 'custom'
+  // Customize (blocks:customize, the Minimal harness's way on) opens this editor on the custom harness,
+  // with what Customize showed: its own draft, else the wizard's blocks and answers, in Advanced settings
+  const customize = args[0] === 'customize'
+  const selection = customize ? 'custom' : ['fixed', 'guided', 'custom'].includes(args[0])
+    // `fixed` with no card named (the Fixed harnesses page's way back) keeps the fixed harness already chosen
+    ? args[0] === 'fixed' ? 'fixed:' + (CARDS.some((c) => c.id === args[1]) ? args[1] : String(old.selection || '').startsWith('fixed:') && CARDS.some((c) => 'fixed:' + c.id === old.selection) ? old.selection.slice(6) : CARDS[0].id) : 'custom'
     : typeof old.selection === 'string' && /^(custom|fixed:[a-z]+|saved:min_[a-f0-9]{12}|native:[A-Za-z0-9_-]+)$/.test(old.selection) ? old.selection : 'custom'
-  const blocks = safeBlocks(old.blocks) || safeBlocks(readDraft('customize-draft')) || safeBlocks(readDraft('customize')) || wizardBlocks()
+  const blocks = customize ? customDraft(old) || safeBlocks(readDraft('customize-draft')) || safeBlocks(readDraft('customize')) || wizardBlocks()
+    : safeBlocks(old.blocks) || safeBlocks(readDraft('customize-draft')) || safeBlocks(readDraft('customize')) || wizardBlocks()
   const harnessDrafts = Object.fromEntries(Object.entries(old.harness_drafts || {}).flatMap(([id, value]) => {
     const draft = safeBlocks(value)
     return /^(custom|saved:min_[a-f0-9]{12})$/.test(id) && draft ? [[id, draft]] : []
@@ -54,12 +69,13 @@ export function initialComposer(args = []) {
   }))
   const limits = Object.fromEntries(Object.entries(DEFAULT_LIMITS).map(([key, fallback]) => [key,
     typeof old.limits?.[key] === 'number' && Number.isFinite(old.limits[key]) || old.limits?.[key] === '' ? old.limits[key] : fallback]))
-  const answers = Object.fromEntries(QUESTIONS.map((q) => [q.id, q.options.some(([v]) => v === old.answers?.[q.id]) ? old.answers[q.id] : wizardAnswers()[q.id]]))
+  const remembered = customize ? readDraft('answers') || old.answers : old.answers
+  const answers = Object.fromEntries(QUESTIONS.map((q) => [q.id, q.options.some(([v]) => v === remembered?.[q.id]) ? remembered[q.id] : wizardAnswers()[q.id]]))
   return { selection, model_id: typeof old.model_id === 'string' ? old.model_id : '', task_id: typeof old.task_id === 'string' ? old.task_id : '', blocks,
     native_prompts: nativePrompts, native_prompt_drafts: nativePromptDrafts, harness_drafts: harnessDrafts, answers, limits, preserve_prompt: old.preserve_prompt === true,
     // Consent to run without a receipt is never remembered: each session asks again.
     unverified_ok: false,
-    edit_mode: args[0] === 'guided' ? 'guided' : ['guided', 'advanced'].includes(old.edit_mode) ? old.edit_mode : 'prompt' }
+    edit_mode: customize ? 'advanced' : args[0] === 'guided' ? 'guided' : ['guided', 'advanced'].includes(old.edit_mode) ? old.edit_mode : 'prompt' }
 }
 
 export function configurationFor(state, { card, runtime, fixedPrompt, task = null }) {
@@ -209,11 +225,26 @@ function checkedConfiguration(value) {
   return copy(value)
 }
 
-/** Validate a local file only; catalog membership and run readiness remain server checks. */
-export function parseConfiguration(text) {
-  if (typeof text !== 'string' || new TextEncoder().encode(text).length > CONFIGURATION_MAX_BYTES) fail('Choose a JSON configuration file of at most 1 MiB.')
+/** Where JSON.parse stopped, as "line L, column C", when the engine says (a position or a line and column). */
+export function jsonErrorPlace(text, error) {
+  const message = String(error?.message || '')
+  const lineColumn = message.match(/line (\d+) column (\d+)/)
+  if (lineColumn) return `line ${lineColumn[1]}, column ${lineColumn[2]}`
+  const position = message.match(/position (\d+)/)
+  if (!position) return ''
+  const before = text.slice(0, Number(position[1])).split('\n')
+  return `line ${before.length}, column ${before[before.length - 1].length + 1}`
+}
+
+/** Validate a local file, or text typed in the editor (`typed`); catalog membership and run readiness remain server checks. */
+export function parseConfiguration(text, { typed = false } = {}) {
+  if (typeof text !== 'string' || new TextEncoder().encode(text).length > CONFIGURATION_MAX_BYTES) fail(typed ? 'The configuration must be at most 1 MiB.' : 'Choose a JSON configuration file of at most 1 MiB.')
   let value
-  try { value = JSON.parse(text) } catch { fail('This file is not valid JSON. Choose a TraceHarness configuration export.') }
+  try { value = JSON.parse(text) } catch (error) {
+    if (!typed) fail('This file is not valid JSON. Choose a TraceHarness configuration export.')
+    const place = jsonErrorPlace(text, error)
+    fail(place ? `This is not valid JSON: the error is at ${place}.` : 'This is not valid JSON.')
+  }
   return checkedConfiguration(value)
 }
 

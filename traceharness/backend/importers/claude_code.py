@@ -105,9 +105,11 @@ def _content_events(rec: dict, ts: str, model: str) -> Iterator[Event]:
     content = msg.get("content")
     usage = msg.get("usage") or {}
     use = {"input_tokens": int(usage.get("input_tokens") or 0),
-           "output_tokens": int(usage.get("output_tokens") or 0),
-           "cache_read_input_tokens": int(usage.get("cache_read_input_tokens") or 0),
-           "cache_creation_input_tokens": int(usage.get("cache_creation_input_tokens") or 0)} if usage else {}
+           "output_tokens": int(usage.get("output_tokens") or 0)} if usage else {}
+    # the cache counts as recorded (input_tokens leaves them out); a log without them has none to claim
+    for k in ("cache_read_input_tokens", "cache_creation_input_tokens"):
+        if use and k in usage:
+            use[k] = int(usage.get(k) or 0)
     uuid = rec.get("uuid") if isinstance(rec.get("uuid"), str) else ""
 
     def rid(i: int) -> str:

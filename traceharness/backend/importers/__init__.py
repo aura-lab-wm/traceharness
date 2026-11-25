@@ -31,6 +31,7 @@ Adapters
   openhands      OpenHands events / SWE-bench output.jsonl
   swe_agent      Native SWE-agent .traj
   mini_swe_agent mini-SWE-agent .traj.json (messages + info; what `traceharness agents run` records)
+  mini_swe_jsonl mini-SWE-agent 2.x runs exported one per JSONL row (usage, cache, reasoning, timestamps, grade)
 
 Public API
 ----------
@@ -61,8 +62,8 @@ import os
 import threading
 from typing import Callable, Iterable, Optional
 
-from . import (agy, claude_code, codex, copilot_cli, cursor, grok, inspect_log, kimi_code, mini_swe_agent, muse,
-               openhands, qwen_code, swe_agent, trajectory_fmt, zcode)
+from . import (agy, claude_code, codex, copilot_cli, cursor, grok, inspect_log, kimi_code, mini_swe_agent,
+               mini_swe_jsonl, muse, openhands, qwen_code, swe_agent, trajectory_fmt, zcode)
 from .common import (Event, Session, derive_task_id, fingerprint, harness_from_fingerprint,
                      harness_id_for, map_tool, run_id_for, sha12, convert, LAB_TOOLS)
 
@@ -76,7 +77,7 @@ except Exception:                             # standalone fallback: .../importe
     RUNS_ROOT = os.path.join(LAB_ROOT, "data", "runs")
 
 #: adapter registry, most specific sniffers first (order only breaks ties)
-SOURCES = [inspect_log, mini_swe_agent, swe_agent, qwen_code, agy, kimi_code, zcode, grok, copilot_cli, muse,
+SOURCES = [inspect_log, mini_swe_agent, mini_swe_jsonl, swe_agent, qwen_code, agy, kimi_code, zcode, grok, copilot_cli, muse,
            claude_code, codex, cursor, trajectory_fmt, openhands]
 
 _ADAPTER = {m.NAME: m for m in SOURCES}
@@ -376,6 +377,9 @@ def _import_path(path: str, results_dir_name: str, source: Optional[str] = None,
                 progress(imported + skipped, None, run_id)
         except Exception as e:
             errors.append(f"{os.path.basename(getattr(sess, 'path', '?'))}: {type(e).__name__}: {e}")
+    # rows an adapter could not read at all: it names them rather than raise mid-stream
+    for n, why in list(getattr(_ADAPTER[src], "SKIPPED", None) or ()):
+        errors.append(f"{os.path.basename(path)} line {n}: {why}")
 
     if rows:
         with _WRITE_LOCK:

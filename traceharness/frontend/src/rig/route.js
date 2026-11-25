@@ -14,9 +14,11 @@
              f=<0|1>                         focused pane (only written when 1)
              o=visible|strengthened          oracle (test suite); hidden is the default and not written
              c=<dir>:<model>:<harness>       condition memory for kinds whose spec does not carry one
-             theme=dark|light|system         session override of the stored theme preference
+             theme=dark|light|contrast|system  session override of the stored theme preference
              max=1                           maximized: rail and status bar folded, focused pane only
              lab=1|0                         one-shot Student Lab override (applied, then persisted by RigApp)
+             sel=<kind>[:<arg>...]           what is selected in the focused tab (a matrix cell, a column):
+                                             the inspector shows it; args escaped like spec args
 
    Spec      <kind>[:<arg>...][~<chain>]
              args are colon-separated and escaped with encArg() (only % : | + ? & # ~ = ! and
@@ -29,11 +31,12 @@
              makeSpec(kind, ...args) -> spec  (args escaped; trailing null/'' args dropped)
              withChain(spec, chain|null) -> spec    specKind(spec) -> kind
              isRigHash(hash) -> bool          DEFAULT_STATE
+             makeSel(kind, ...args) / parseSel(sel) -> {kind, args} | null
    ==================================================================================== */
 
 export const SUITES = ['visible', 'hidden', 'strengthened']
 export const DOCKS = ['buddy', 'log', 'capture', 'case', 'agent']
-export const THEMES = ['dark', 'light', 'system']
+export const THEMES = ['dark', 'light', 'contrast', 'contrast-light', 'system']
 
 export const DEFAULT_STATE = Object.freeze({
   panes: [{ tabs: ['home'], active: 0 }],
@@ -46,9 +49,11 @@ export const DEFAULT_STATE = Object.freeze({
   theme: null,
   lab: null,
   max: false,
+  sel: null,
 })
 
 const ESC = /[%:|+?&#~=!\s]/g
+const SEL = /^[a-z]+(?::[^&#?|+\s]*)*$/
 /** Escape one spec argument. Only the characters the grammar uses are escaped. */
 export const encArg = (s) => String(s ?? '').replace(ESC, (c) => '%' + c.charCodeAt(0).toString(16).toUpperCase().padStart(2, '0'))
 /** Undo encArg (and any other %XX a pasted link carries). Never throws. */
@@ -140,6 +145,7 @@ export function parseHash(hash) {
     theme: THEMES.includes(q.theme) ? q.theme : null,
     lab: q.lab === '1' ? true : q.lab === '0' ? false : null,
     max: q.max === '1',
+    sel: q.sel && SEL.test(q.sel) ? q.sel : null,
   }
 }
 
@@ -159,5 +165,14 @@ export function toHash(state) {
   if (s.lab === true) q.push('lab=1')
   if (s.lab === false) q.push('lab=0')
   if (s.max) q.push('max=1')
+  if (s.sel) q.push('sel=' + s.sel)
   return '#/rig/' + path + (q.length ? '?' + q.join('&') : '')
+}
+
+/** The selection value written to `sel=`: `makeSel('cell', model, harness)` is `cell:<model>:<harness>`. */
+export const makeSel = (kind, ...args) => [kind, ...args.map(encArg)].join(':')
+export function parseSel(sel) {
+  if (!sel || !SEL.test(sel)) return null
+  const [kind, ...args] = sel.split(':')
+  return { kind, args: args.map(decArg) }
 }

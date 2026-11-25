@@ -14,12 +14,15 @@ read-modify-write of the library runs under one process lock.
 from __future__ import annotations
 
 import json
+import logging
 import os
 import re
 import threading
+import unicodedata
 
 from traceharness.core.blocks import compile_blocks
 from traceharness.core.harness import content_hash
+from traceharness.core.safe_paths import confine
 from traceharness.runner_service.configuration import has_secret
 from traceharness.shallow import wizard
 from traceharness.shallow.catalog import AGENTS, PERMISSION, card, catalog
@@ -36,6 +39,11 @@ BLOCK_TYPES = ("prompt", "tools", "policy", "context", "stop", "sampling", "list
 MAX_BODY = 1024 * 1024
 CONFLICT = "This prompt changed on this computer. Reload and review it before saving."
 NOT_FOUND = "Not found."
+#: The names readers give saved minimal harnesses, {harness id: name}, beside the library's harnesses/ folder.
+#: The harness JSON stays content-addressed and nameless; this sidecar is the only place a name lives.
+NAMES_FILE = "names.json"
+MAX_NAME = 80
+_LOG = logging.getLogger(__name__)
 
 #: One lock around every read-modify-write of the library (the server runs routes on a thread pool).
 LOCK = threading.Lock()
@@ -219,12 +227,18 @@ def _served(row: dict):
 
 
 def list_saved() -> dict:
+    """The saved harnesses, and `names` ({id: name}) for the minimal ones a reader named, when there are any."""
     try:
         rows = _store().list_harnesses(OWNER)
     except (StoreError, OSError):
         raise LibraryError("The harness library on this computer could not be read.", 503) from None
     served = [r for r in (_served(row) for row in rows) if r is not None]
-    return {"harnesses": served, "loaded": True, "unconfirmed": []}
+    out = {"harnesses": served, "loaded": True, "unconfirmed": []}
+    minimal = {r["id"] for r in served if r["lane"] == "minimal"}
+    names = {hid: name for hid, name in read_names().items() if hid in minimal}
+    if names:
+        out["names"] = names
+    return out
 
 
 def get_saved(harness_id: str) -> dict:
@@ -246,6 +260,71 @@ def get_saved(harness_id: str) -> dict:
             raise LibraryError("This saved harness failed validation. Recreate it with the wizard.", 409)
         return {"harness": built["harness"]}
     return {"harness": row}
+
+
+# --------------------------------------------------------------------------- names
+def clean_name(value) -> str | None:
+    """A harness name as given at Save: its whitespace collapsed; None when there is none. Text of at most
+    MAX_NAME characters with no control or format character (no NUL, no bidi override), else a 400."""
+    if value is None:
+        return None
+    if not isinstance(value, str):
+        raise LibraryError("A harness name must be text.")
+    name = " ".join(value.split())
+    if not name:
+        return None
+    if len(name) > MAX_NAME:
+        raise LibraryError(f"A harness name is at most {MAX_NAME} characters.")
+    if any(unicodedata.category(ch).startswith("C") for ch in name):
+        raise LibraryError("A harness name cannot hold control or invisible characters.")
+    return name
+
+
+def _names_path(suffix: str = "") -> str:
+    """names.json (or its temp file) under the library root; a link out of it is refused (PathRefused)."""
+    return confine(library_root(), NAMES_FILE + suffix)
+
+
+def read_names() -> dict[str, str]:
+    """names.json as {minimal harness id: name}, keeping only well-formed entries; {} when it is absent or
+    unreadable (the console then falls back to the name kept in the browser)."""
+    try:
+        with open(_names_path(), encoding="utf-8") as handle:
+            data = json.load(handle)
+    except FileNotFoundError:
+        return {}
+    except (OSError, ValueError, RecursionError) as error:
+        _LOG.warning("harness names not read: %s", error)
+        return {}
+    if not isinstance(data, dict):
+        _LOG.warning("harness names not read: %s is not an object", NAMES_FILE)
+        return {}
+    out = {}
+    for hid, name in data.items():
+        try:
+            if isinstance(hid, str) and MINIMAL_ID.fullmatch(hid) and isinstance(name, str) and clean_name(name) == name:
+                out[hid] = name
+        except LibraryError:
+            continue
+    return out
+
+
+def _remember_name(harness_id: str, name: str) -> None:
+    """Write `name` for `harness_id` into names.json: a 0600 temp file, never through a link, then a rename.
+    The caller holds LOCK."""
+    try:
+        path, tmp = _names_path(), _names_path(".tmp")
+        names = {**read_names(), harness_id: name}
+        os.makedirs(os.path.dirname(path), exist_ok=True)
+        flags = os.O_WRONLY | os.O_CREAT | os.O_TRUNC | getattr(os, "O_NOFOLLOW", 0)
+        fd = os.open(tmp, flags, 0o600)
+        with os.fdopen(fd, "w", encoding="utf-8") as handle:
+            json.dump(names, handle, sort_keys=True, ensure_ascii=False)
+        os.chmod(tmp, 0o600)
+        os.replace(tmp, path)
+    except (OSError, ValueError) as error:
+        _LOG.warning("harness name not written: %s", error)
+        raise LibraryError("The harness name could not be written on this computer. Nothing was saved.", 503) from None
 
 
 # --------------------------------------------------------------------------- writes
@@ -310,7 +389,12 @@ def save_harness(body: dict) -> dict:
 
 
 def save_wizard(body: dict) -> dict:
+    """POST /wizard: compile and save; an optional `name` is kept in names.json, written first, so a name
+    that cannot be written saves nothing."""
+    name = clean_name(body.get("name"))
     built = compile_request(body)
     with LOCK:
+        if name:
+            _remember_name(built["harness"]["id"], name)
         _write(built["harness"])
-    return {**built, "stored": True}
+    return {**built, "stored": True, **({"name": name} if name else {})}

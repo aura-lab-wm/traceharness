@@ -273,6 +273,8 @@ def write_run(sess, out_dir: str, run_id: str, task_id: str, harness: dict,
     summary.strong_pass = None
     summary.error = "" if summary.exit_reason != "error" else (sess.exit_status or "")[:200]
     summary.finished_at = next((e.ts for e in reversed(sess.events) if e.ts), "")
+    if usage_known:
+        summary.cache_read_tokens, summary.cache_write_tokens = cache_read, cache_write
     if missing:
         C.blank_unmeasured(summary, missing)
 

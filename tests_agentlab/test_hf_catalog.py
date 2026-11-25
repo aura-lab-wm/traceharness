@@ -83,10 +83,12 @@ class PackagedFile(unittest.TestCase):
         live = {"nebius/SWE-agent-trajectories": ("swe_agent", "default", "train"),
                 "nebius/SWE-rebench-openhands-trajectories": ("messages", "default", "train"),
                 "SWE-bench/SWE-smith-trajectories": ("messages", "default", "tool")}
+        # the model a dataset card names, for rows that carry no model column
+        card = {"nebius/SWE-rebench-openhands-trajectories": {"card_model": "Qwen/Qwen3-Coder-480B-A35B-Instruct"}}
         for d in self.cat["datasets"]:
             want = live.get(d["id"])
             self.assertEqual(d["hf_adapter"], want and want[0], d["id"])
-            self.assertEqual(d["hf_import"], want and {"config": want[1], "split": want[2]}, d["id"])
+            self.assertEqual(d["hf_import"], want and {"config": want[1], "split": want[2], **card.get(d["id"], {})}, d["id"])
             if want:
                 self.assertIn({"config": want[1], "split": want[2]}, [{"config": x["config"], "split": x["split"]} for x in d["splits"]])
 

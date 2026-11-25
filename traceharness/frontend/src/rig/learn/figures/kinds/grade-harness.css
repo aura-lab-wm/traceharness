@@ -1,0 +1,258 @@
+/* Rig · learn/figures/kinds/grade-harness.css — the figures of articles 07 to 10: grading (grade-sets, grade-counts,
+   patch-runs), traps (slope-grades, probe-flow) and harnesses (harness-fields, harness-effect, wizard-steps,
+   run-replay). The rules of figures.css hold here too: tokens only, pass and fail are --rig-sky / --rig-red, a
+   caution is --rig-amb, a chosen control is ink (never the accent), and motion is transform and opacity on
+   --rig-dur-* and --rig-ease, once; rig.css turns it all off under prefers-reduced-motion. */
+
+/* ================================================================ shared */
+@keyframes rg-gh-in{from{opacity:0;transform:translateY(var(--rig-s1))}to{opacity:1;transform:none}}
+@keyframes rg-gh-mark{from{opacity:.35;transform:scale(.96)}to{opacity:1;transform:none}}
+.rg-gh-pick{display:flex;flex-wrap:wrap;gap:var(--rig-s2);min-width:0}
+.rig .rg-gh-pickb{display:inline-flex;align-items:center;gap:var(--rig-s2);min-height:var(--rig-h-ctl);max-width:100%;padding:var(--rig-s1) var(--rig-s3);border:1px solid var(--rig-line2);border-radius:var(--rig-r-sm);background:var(--rig-panel);color:var(--rig-dim);font-size:var(--rig-fs-xs);line-height:var(--rig-lead-xs);font-weight:var(--rig-fw-medium);text-align:left;overflow-wrap:anywhere}
+.rig .rg-gh-pickb:hover{background:var(--rig-panel2);color:var(--rig-text)}
+.rig .rg-gh-pickb.on{background:var(--rig-text);border-color:var(--rig-text);color:var(--rig-panel);cursor:default}
+.rig .rg-read-col .rg-gh-pickb code{padding:0;background:none;color:inherit;font-family:var(--rig-mono)}
+.rg-gh-pickb small{flex:none;white-space:nowrap;font-size:var(--rig-fs-2xs);line-height:var(--rig-lead-xs);color:var(--rig-sky-t);font-weight:var(--rig-fw-semi)}
+.rg-gh-pickb.on small{color:inherit}
+.rg-gh-ctl{display:flex;flex-wrap:wrap;align-items:center;gap:var(--rig-s2);width:100%}
+.rig .rg-gh-ctl .rg-btn[aria-disabled="true"]{color:var(--rig-mute);background:var(--rig-panel2);border-color:var(--rig-line);cursor:not-allowed}
+.rg-gh-pos{margin-left:auto;font-size:var(--rig-fs-sm);line-height:var(--rig-lead-md);color:var(--rig-dim);font-variant-numeric:tabular-nums}
+.rig .rg-read-col .rg-gh-k{margin:var(--rig-s3) 0 var(--rig-s2);font-size:var(--rig-fs-2xs);line-height:var(--rig-lead-xs);font-weight:var(--rig-fw-semi);letter-spacing:.04em;text-transform:uppercase;color:var(--rig-mute)}
+.rig .rg-read-col .rg-gh-k:first-child{margin-top:0}
+.rg-gh-chips{display:flex;flex-wrap:wrap;gap:var(--rig-s1)}
+.rg-gh-chips>i{padding:0 var(--rig-s2);border-radius:var(--rig-r-xs);background:var(--rig-code);font:var(--rig-fs-2xs)/var(--rig-lead-xs) var(--rig-mono);font-style:normal;color:var(--rig-text)}
+.rg-gh-hk{display:flex;flex-wrap:wrap;justify-content:space-between;gap:var(--rig-s1) var(--rig-s3);margin:0 0 var(--rig-s2);font-size:var(--rig-fs-xs);line-height:var(--rig-lead-xs);color:var(--rig-mute)}
+.rg-gh-hk>b{color:var(--rig-text);font-weight:var(--rig-fw-semi)}
+.rg-gh-hk>span{font-family:var(--rig-mono)}
+.rg-gh-dsub{margin:var(--rig-s2) 0 var(--rig-s1);font-size:var(--rig-fs-xs);line-height:var(--rig-lead-xs);color:var(--rig-mute)}
+/* legend chips this file adds */
+.rg-lfig-sw.gh-none{background:none;border:1px dashed var(--rig-line3);border-radius:var(--rig-r-full)}
+.rg-lfig-sw.gh-kept{background:var(--rig-line3);height:3px}
+.rg-lfig-sw.gh-ink{background:var(--rig-text);height:3px}
+.rg-lfig-sw.gh-changed{background:color-mix(in srgb,var(--rig-ser1) 18%,var(--rig-panel));box-shadow:inset 0 0 0 1.5px var(--rig-ser1)}
+.rg-lfig-sw.gh-tick{width:2px;background:var(--rig-text)}
+
+/* ================================================================ grade_sets: two test sets and a verdict */
+.rg-gh-pool{display:grid;grid-template-columns:repeat(auto-fit,minmax(7.5rem,1fr));gap:var(--rig-s4);list-style:none;margin:0;padding:0}
+.rig .rg-read-col .rg-gh-pool>li{position:relative;display:flex;flex-direction:column;gap:2px;margin:0;padding:var(--rig-s2) var(--rig-s3);border-radius:var(--rig-r-sm);background:var(--rig-panel2);font-size:var(--rig-fs-xs);line-height:var(--rig-lead-xs);color:var(--rig-dim);animation:rg-gh-in var(--rig-dur-2) var(--rig-ease) calc(var(--rig-dur-1) * var(--rig-fig-i)) both}
+.rg-gh-pool>li>b{font-size:var(--rig-fs-sm);line-height:var(--rig-lead-md);color:var(--rig-text);font-variant-numeric:tabular-nums}
+.rg-gh-pool>li+li::before{content:"→";position:absolute;left:calc(var(--rig-s4) * -0.8);top:50%;transform:translateY(-50%);color:var(--rig-mute)}
+.rg-gh-grid{display:grid;gap:var(--rig-s2);margin-top:var(--rig-s3)}
+.rg-gh-grid>div{display:grid;grid-template-columns:minmax(8rem,1.1fr) minmax(0,1fr) minmax(0,1fr);gap:var(--rig-s2);align-items:stretch}
+.rg-gh-grid>div>span{display:flex;flex-direction:column;justify-content:center;gap:2px;min-width:0;padding:var(--rig-s2) var(--rig-s3);border:1px solid var(--rig-line2);border-radius:var(--rig-r-sm);background:var(--rig-panel2)}
+.rg-gh-grid>.h>span{padding-block:0;border:0;background:none;font-size:var(--rig-fs-2xs);line-height:var(--rig-lead-xs);font-weight:var(--rig-fw-semi);color:var(--rig-mute)}
+.rg-gh-grid>div>span[role="rowheader"]{border:0;background:none;padding-inline:0}
+.rg-gh-grid>div>span[role="rowheader"] b{font-size:var(--rig-fs-xs);line-height:var(--rig-lead-xs);color:var(--rig-text)}
+.rg-gh-grid>div>span[role="rowheader"] small{font-size:var(--rig-fs-2xs);line-height:var(--rig-lead-xs);color:var(--rig-mute)}
+.rg-gh-grid>div>span.after{border-color:var(--rig-text)}
+.rg-gh-tests{display:flex;flex-direction:column;gap:var(--rig-s1);list-style:none;margin:0;padding:0}
+.rig .rg-read-col .rg-gh-test{display:flex;align-items:center;gap:var(--rig-s2);margin:0;min-width:0;font-size:var(--rig-fs-2xs);line-height:var(--rig-lead-xs);animation:rg-gh-in var(--rig-dur-2) var(--rig-ease) calc(var(--rig-dur-1) * var(--rig-fig-i)) both}
+.rg-gh-test>i{flex:none;display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:var(--rig-r-full);font-style:normal;font-weight:var(--rig-fw-bold);font-size:var(--rig-fs-2xs)}
+.rg-gh-test.pass>i{background:var(--rig-sky);color:var(--rig-panel)}
+.rg-gh-test.fail>i{background:var(--rig-red);color:var(--rig-panel)}
+.rg-gh-test.none>i{border:1px dashed var(--rig-line3);color:var(--rig-mute)}
+.rg-gh-test code{min-width:0;overflow-wrap:normal;font-family:var(--rig-mono);color:var(--rig-text)}
+.rg-gh-test.none code{color:var(--rig-mute)}
+.rig .rg-read-col .rg-gh-verdict{display:flex;flex-wrap:wrap;align-items:baseline;gap:0;margin:var(--rig-s3) 0 0;padding:var(--rig-s2) var(--rig-s3);border-radius:var(--rig-r-sm);font-size:var(--rig-fs-sm);line-height:var(--rig-lead-md);animation:rg-gh-mark var(--rig-dur-2) var(--rig-ease) both}
+.rg-gh-verdict>b{font-size:var(--rig-fs-md);line-height:var(--rig-lead-md)}
+.rg-gh-verdict.resolved{background:var(--rig-sky-bg);color:var(--rig-sky-t)}
+.rg-gh-verdict.unresolved{background:var(--rig-red-bg);color:var(--rig-red-t)}
+.rg-gh-verdict.empty{background:var(--rig-panel3);color:var(--rig-dim)}
+.rg-gh-verdict.error{background:var(--rig-amb-bg);color:var(--rig-amb-t)}
+.rig .rg-read-col .rg-gh-note{margin:var(--rig-s2) 0 0;font-size:var(--rig-fs-xs);line-height:var(--rig-lead-xs);color:var(--rig-dim)}
+
+/* ================================================================ grade_counts and patch_runs: bars that are buttons */
+.rg-gh-crows,.rg-gh-prows{display:flex;flex-direction:column;gap:var(--rig-s1)}
+.rig .rg-gh-crow,.rig .rg-gh-prow{display:grid;grid-template-columns:minmax(6.5rem,8.5rem) minmax(0,1fr) minmax(4.5rem,auto);align-items:center;gap:var(--rig-s3);width:100%;min-height:var(--rig-h-ctl);padding:var(--rig-s1) var(--rig-s2);border:0;border-left:3px solid transparent;border-radius:var(--rig-r-sm);background:none;color:var(--rig-text);text-align:left}
+.rig .rg-gh-prow{grid-template-columns:minmax(4.5rem,5.5rem) minmax(0,1fr) minmax(3.5rem,auto)}
+.rig .rg-gh-crow:hover,.rig .rg-gh-prow:hover{background:var(--rig-panel2)}
+.rig .rg-gh-crow.on,.rig .rg-gh-prow.on{background:var(--rig-sel-bg);border-left-color:var(--rig-text);cursor:default}
+.rg-gh-crow .name,.rg-gh-prow .name{display:flex;flex-direction:column;min-width:0}
+.rg-gh-crow .name b,.rg-gh-prow .name b{font-size:var(--rig-fs-sm);line-height:var(--rig-lead-sm)}
+.rg-gh-crow .name small,.rg-gh-prow .name small{font-size:var(--rig-fs-2xs);line-height:var(--rig-lead-xs);color:var(--rig-mute)}
+.rg-gh-crow .track,.rg-gh-prow .track{position:relative;height:var(--rig-s4);border-radius:var(--rig-r-xs);background:var(--rig-panel3);overflow:hidden}
+.rg-gh-cbar,.rg-gh-prow .track i,.rg-gh-fbar i,.rg-gh-res .track i{position:absolute;inset:0 auto 0 0;width:100%;transform-origin:0 50%;transform:scaleX(0);transition:transform calc(var(--rig-dur-2) * 3) var(--rig-ease) calc(var(--rig-dur-1) * var(--rig-fig-i, 0))}
+.rg-gh-counts.seen .rg-gh-cbar,.rg-gh-patches.seen .track i,.rg-gh-detail .rg-gh-fbar i,.rg-gh-hwrap.seen .rg-gh-res .track i{transform:scaleX(var(--gh-w))}
+.rg-gh-cbar.resolved{background:var(--rig-sky)}
+.rg-gh-cbar.unresolved{background:var(--rig-red)}
+.rg-gh-cbar.empty{background:var(--rig-line3)}
+.rg-gh-cbar.error{background:var(--rig-amb)}
+.rg-gh-crow .val,.rg-gh-prow .val{display:flex;flex-direction:column;align-items:flex-end;font-size:var(--rig-fs-sm);line-height:var(--rig-lead-sm);font-variant-numeric:tabular-nums}
+.rg-gh-crow .val small{font-size:var(--rig-fs-2xs);line-height:var(--rig-lead-xs);color:var(--rig-mute)}
+.rig .rg-read-col .rg-gh-what{margin:var(--rig-s3) 0 0;font-size:var(--rig-fs-sm);line-height:var(--rig-lead-md);color:var(--rig-dim);animation:rg-gh-in var(--rig-dur-2) var(--rig-ease) both}
+.rg-gh-what>b{color:var(--rig-text)}
+.rg-gh-prow .track i.main{background:var(--rig-ser1)}
+.rg-gh-prow .track i.rest{left:calc(var(--gh-x) * 100%);background:var(--rig-ser4)}
+.rig .rg-read-col .rg-gh-issue{display:grid;grid-template-columns:auto minmax(0,1fr);align-items:baseline;gap:var(--rig-s1) var(--rig-s2);margin:0 0 var(--rig-s3);padding:var(--rig-s2) var(--rig-s3);border-left:3px solid var(--rig-amb);border-radius:var(--rig-r-sm);background:var(--rig-amb-bg);font-size:var(--rig-fs-xs);line-height:var(--rig-lead-xs);color:var(--rig-amb-t)}
+.rg-gh-issue code,.rg-gh-files code{padding:0 var(--rig-s1);border-radius:var(--rig-r-xs);background:var(--rig-code);font-family:var(--rig-mono);color:var(--rig-text);overflow-wrap:anywhere}
+.rg-gh-detail{min-width:0;padding:var(--rig-s3) var(--rig-s4);border-radius:var(--rig-r-md);background:var(--rig-panel2);animation:rg-gh-in var(--rig-dur-2) var(--rig-ease) both}
+.rig .rg-read-col .rg-gh-dk{display:flex;flex-wrap:wrap;align-items:center;gap:var(--rig-s2);margin:0;font-size:var(--rig-fs-sm);line-height:var(--rig-lead-md);font-weight:var(--rig-fw-bold);color:var(--rig-text)}
+.rg-gh-files{display:flex;flex-direction:column;gap:var(--rig-s1);list-style:none;margin:0;padding:0}
+.rig .rg-read-col .rg-gh-files>li{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:2px var(--rig-s2);margin:0;font-size:var(--rig-fs-2xs);line-height:var(--rig-lead-xs)}
+.rg-gh-files .n{font-variant-numeric:tabular-nums;color:var(--rig-dim)}
+.rg-gh-fbar{grid-column:1/-1;position:relative;height:6px;border-radius:var(--rig-r-xs);background:var(--rig-panel3);overflow:hidden}
+.rg-gh-fbar i{background:var(--rig-ser4)}
+.rg-gh-files>li.main .rg-gh-fbar i{background:var(--rig-ser1)}
+.rg-gh-diff{margin:0;padding:var(--rig-s2);border-radius:var(--rig-r-sm);background:var(--rig-code);font:var(--rig-fs-2xs)/var(--rig-lead-xs) var(--rig-mono);white-space:pre-wrap;overflow-wrap:anywhere}
+.rg-gh-diff .del{color:var(--rig-red-t)}
+.rg-gh-diff .add{color:var(--rig-sky-t)}
+
+/* ================================================================ slope_grades: hidden against strengthened */
+.rg-gh-slope .rg-gh-colh{fill:var(--rig-dim);font-size:var(--rig-fs-xs);font-weight:var(--rig-fw-semi)}
+.rg-gh-sl{fill:none;stroke-linecap:round;stroke-dasharray:1;stroke-dashoffset:1;transition:stroke-dashoffset calc(var(--rig-dur-pulse) / 2) var(--rig-ease) calc(var(--rig-dur-1) * var(--rig-fig-i) / 2)}
+.rg-gh-slope.seen .rg-gh-sl{stroke-dashoffset:0}
+.rg-gh-sl.kept{stroke:var(--rig-line3)}
+.rg-gh-sl.fell{stroke:var(--rig-amb)}
+.rg-gh-sll,.rg-gh-slr{font-size:var(--rig-fs-2xs);font-variant-numeric:tabular-nums}
+.rg-gh-sll{fill:var(--rig-mute)}
+.rg-gh-slr{fill:var(--rig-mute)}
+.rg-gh-slr .fell{fill:var(--rig-amb-t);font-family:var(--rig-mono);font-weight:var(--rig-fw-semi)}
+.rg-gh-slpick line{stroke:var(--rig-text);stroke-width:3}
+.rg-gh-slpick circle{fill:var(--rig-text)}
+.rg-gh-taskpick{display:flex;flex-wrap:wrap;align-items:center;gap:var(--rig-s2) var(--rig-s3);width:100%}
+.rg-gh-taskpick .rg-gh-pickb span{font-variant-numeric:tabular-nums;color:var(--rig-amb-t)}
+.rg-gh-taskpick .rg-gh-pickb.on span{color:inherit}
+.rg-prev-slope line{stroke:var(--rig-ser3);stroke-width:1.5}
+.rg-prev-slope line.acc{stroke:var(--rig-ser1);stroke-width:2.5}
+
+/* ================================================================ probe_flow: task, trap, careful move; the runs */
+.rg-gh-flow{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:var(--rig-s5);list-style:none;margin:0;padding:0}
+.rig .rg-read-col .rg-gh-flow>li{position:relative;display:flex;flex-direction:column;gap:var(--rig-s1);margin:0;padding:var(--rig-s3);border:1px solid var(--rig-line2);border-radius:var(--rig-r-sm);background:var(--rig-panel2);font-size:var(--rig-fs-xs);line-height:var(--rig-lead-xs);color:var(--rig-text);animation:rg-gh-in var(--rig-dur-2) var(--rig-ease) calc(var(--rig-dur-1) * var(--rig-fig-i)) both}
+.rg-gh-flow>li>b{font-size:var(--rig-fs-2xs);line-height:var(--rig-lead-xs);font-weight:var(--rig-fw-semi);letter-spacing:.04em;text-transform:uppercase;color:var(--rig-mute)}
+.rg-gh-flow>li.trap{border-color:var(--rig-amb);background:var(--rig-amb-bg)}
+.rg-gh-flow>li+li::before{content:"";position:absolute;left:calc(var(--rig-s5) * -1);top:50%;width:var(--rig-s5);border-top:2px dashed var(--rig-dim);animation:rg-gh-dash var(--rig-dur-pulse) linear 3}
+@keyframes rg-gh-dash{from{clip-path:inset(0 100% 0 0)}to{clip-path:inset(0 0 0 0)}}
+.rg-gh-flow code{font-family:var(--rig-mono);overflow-wrap:anywhere}
+.rg-gh-kind{display:inline-block;padding:0 var(--rig-s2);border-radius:var(--rig-r-full);background:var(--rig-panel);font-size:var(--rig-fs-2xs);line-height:var(--rig-lead-xs);font-weight:var(--rig-fw-semi);color:var(--rig-amb-t)}
+.rg-gh-lane{margin-top:var(--rig-s2)}
+.rg-gh-lane svg,.rg-gh-rlane svg{display:block;max-width:100%;height:auto;overflow:visible}
+.rig .rg-read-col .rg-gh-lanek{display:flex;flex-wrap:wrap;align-items:baseline;gap:var(--rig-s1) var(--rig-s3);margin:0;font-size:var(--rig-fs-xs);line-height:var(--rig-lead-xs);color:var(--rig-dim)}
+.rg-gh-lanek>b{font-family:var(--rig-mono);color:var(--rig-text)}
+.rg-gh-run{opacity:0;transition:opacity var(--rig-dur-2) var(--rig-ease) calc(var(--rig-dur-1) * var(--rig-fig-i) / 4)}
+.rg-gh-probe.seen .rg-gh-run{opacity:1}
+.rg-gh-run .p{fill:var(--rig-sky)}
+.rg-gh-run .f{fill:var(--rig-red)}
+.rg-gh-bnd{stroke:var(--rig-amb);stroke-width:1.5}
+.rg-gh-bnd.blocked{fill:var(--rig-panel)}
+.rg-gh-bnd.allowed{fill:var(--rig-amb)}
+
+/* ================================================================ harness_fields: the harness around the model */
+.rg-gh-harness{padding:var(--rig-s3);border:1.5px dashed var(--rig-line3);border-radius:var(--rig-r-md)}
+.rg-gh-hgrid{display:grid;grid-template-columns:minmax(0,1fr) minmax(5.5rem,7.5rem) minmax(0,1fr);gap:var(--rig-s2);margin-top:var(--rig-s2)}
+.rg-gh-hgrid>ul{display:flex;flex-direction:column;gap:var(--rig-s2);list-style:none;margin:0;padding:0}
+.rig .rg-read-col .rg-gh-field{display:flex;flex-direction:column;gap:2px;margin:0;min-width:0;padding:var(--rig-s2) var(--rig-s3);border:1px solid var(--rig-line2);border-radius:var(--rig-r-sm);background:var(--rig-panel2);font-size:var(--rig-fs-xs);line-height:var(--rig-lead-xs);opacity:0;transition:opacity var(--rig-dur-2) var(--rig-ease) calc(var(--rig-dur-1) * var(--rig-fig-i) / 2)}
+.rg-gh-hwrap.seen .rg-gh-field{opacity:1}
+.rig .rg-read-col .rg-gh-field>code{padding:0;background:none;font:var(--rig-fs-2xs)/var(--rig-lead-xs) var(--rig-mono);color:var(--rig-mute)}
+.rg-gh-field>b{font-size:var(--rig-fs-sm);line-height:var(--rig-lead-sm);color:var(--rig-text);overflow-wrap:anywhere}
+.rg-gh-field>small{font-size:var(--rig-fs-2xs);line-height:var(--rig-lead-xs);color:var(--rig-mute)}
+.rg-gh-field>q{font-size:var(--rig-fs-xs);line-height:var(--rig-lead-xs);color:var(--rig-text);font-style:italic}
+.rig .rg-read-col .rg-gh-field.changed{border-color:var(--rig-ser1);box-shadow:inset 3px 0 0 var(--rig-ser1);background:color-mix(in srgb,var(--rig-ser1) 10%,var(--rig-panel));animation:rg-gh-mark calc(var(--rig-dur-2) * 2) var(--rig-ease) both}
+.rg-gh-field.changed>small{color:var(--rig-text);font-weight:var(--rig-fw-semi)}
+.rg-gh-model{display:flex;flex-direction:column;justify-content:center;align-items:center;gap:var(--rig-s1);padding:var(--rig-s3) var(--rig-s2);border-radius:var(--rig-r-md);background:var(--rig-text);color:var(--rig-panel);text-align:center}
+.rg-gh-model>b{font-size:var(--rig-fs-md);line-height:var(--rig-lead-md)}
+.rg-gh-model>span{font-size:var(--rig-fs-2xs);line-height:var(--rig-lead-xs);opacity:.8}
+.rg-gh-results{display:grid;grid-template-columns:repeat(auto-fit,minmax(14rem,1fr));gap:var(--rig-s3);margin-top:var(--rig-s3)}
+.rg-gh-res{display:flex;flex-direction:column;gap:var(--rig-s1);min-width:0}
+.rig .rg-read-col .rg-gh-res>code{justify-self:start;padding:0;background:none;font:var(--rig-fw-semi) var(--rig-fs-xs)/var(--rig-lead-xs) var(--rig-mono);color:var(--rig-text)}
+.rg-gh-res .row{display:grid;grid-template-columns:5.5rem minmax(3rem,1fr) auto;align-items:center;gap:var(--rig-s2);font-size:var(--rig-fs-2xs);line-height:var(--rig-lead-xs);color:var(--rig-mute)}
+.rg-gh-res .track{position:relative;height:var(--rig-s3);border-radius:var(--rig-r-xs);background:var(--rig-panel3)}
+.rg-gh-res .track i{border-radius:var(--rig-r-xs);background:var(--rig-ser1)}
+.rg-gh-res .track.tok i{background:var(--rig-ser4)}
+.rg-gh-res .track em{position:absolute;top:-3px;bottom:-3px;left:calc(var(--gh-x) * 100%);width:2px;margin-left:-1px;background:var(--rig-text)}
+.rg-gh-res .v{color:var(--rig-text);font-size:var(--rig-fs-xs);font-variant-numeric:tabular-nums;white-space:nowrap}
+.rg-gh-res .v small{color:var(--rig-mute);font-size:var(--rig-fs-2xs)}
+
+/* ================================================================ harness_effect: the same change, two models */
+.rg-gh-eaxis,.rig .rg-gh-erow{display:grid;grid-template-columns:minmax(6.5rem,9.5rem) minmax(0,1fr) minmax(5.5rem,auto);align-items:center;gap:var(--rig-s2)}
+.rg-gh-eaxis{padding:0 var(--rig-s2);font-size:var(--rig-fs-2xs);line-height:var(--rig-lead-xs);color:var(--rig-mute)}
+.rg-gh-eaxis .ax,.rg-gh-erow svg{min-width:0;max-width:100%}
+.rg-gh-eaxis .ax svg{display:block;overflow:visible}
+.rg-gh-eaxis .val,.rg-gh-erow .val{text-align:right}
+.rig .rg-gh-erow{width:100%;min-height:var(--rig-h-ctl);padding:0 var(--rig-s2);border:0;border-left:3px solid transparent;border-radius:var(--rig-r-sm);background:none;color:var(--rig-text);text-align:left}
+.rig .rg-gh-erow:hover{background:var(--rig-panel2)}
+.rig .rg-gh-erow.on{background:var(--rig-sel-bg);border-left-color:var(--rig-text);cursor:default}
+.rig .rg-read-col .rg-gh-erow .name{justify-self:start;padding:0;background:none;font:var(--rig-fs-xs)/var(--rig-lead-xs) var(--rig-mono);color:var(--rig-text);overflow-wrap:anywhere}
+.rg-gh-erow .val{font-size:var(--rig-fs-xs);line-height:var(--rig-lead-xs);font-variant-numeric:tabular-nums;color:var(--rig-dim);white-space:nowrap}
+.rg-gh-erow svg{display:block;overflow:visible}
+.rg-gh-zero{stroke:var(--rig-line3);stroke-dasharray:3 3}
+.rg-gh-est .ci{stroke-width:2.5;stroke-linecap:round;transform-box:fill-box;transform-origin:50% 50%;transform:scaleX(0);transition:transform calc(var(--rig-dur-2) * 3) var(--rig-ease) calc(var(--rig-dur-1) * var(--rig-fig-i) / 2)}
+.rg-gh-effect.seen .rg-gh-est .ci{transform:none}
+.rg-gh-est.m0 .ci{stroke:var(--rig-ser1)}
+.rg-gh-est.m0 circle{fill:var(--rig-ser1)}
+.rg-gh-est.m1 .ci{stroke:var(--rig-ser4)}
+.rg-gh-est.m1 circle{fill:var(--rig-ser4)}
+
+/* ================================================================ wizard_steps: six answers build the harness */
+.rg-gh-wnav{display:flex;flex-wrap:wrap;gap:var(--rig-s1);list-style:none;margin:0 0 var(--rig-s3);padding:0}
+.rg-gh-wnav>li{margin:0}
+.rig .rg-gh-wdot{min-width:var(--rig-h-ctl);min-height:var(--rig-h-ctl);padding:0 var(--rig-s1);border:1px solid var(--rig-line2);border-radius:var(--rig-r-full);background:var(--rig-panel);color:var(--rig-dim);font:var(--rig-fw-semi) var(--rig-fs-2xs)/var(--rig-lead-xs) var(--rig-mono)}
+.rig .rg-gh-wdot.done{border-color:var(--rig-ser1);box-shadow:inset 0 0 0 1px var(--rig-ser1);color:var(--rig-text)}
+.rig .rg-gh-wdot:hover{background:var(--rig-panel2)}
+.rig .rg-gh-wdot.on{background:var(--rig-text);border-color:var(--rig-text);color:var(--rig-panel);cursor:default}
+.rg-gh-q{animation:rg-gh-in var(--rig-dur-2) var(--rig-ease) both}
+.rig .rg-read-col .rg-gh-qp{margin:0 0 var(--rig-s3);font-size:var(--rig-fs-lg);line-height:var(--rig-lead-lg);font-weight:var(--rig-fw-bold);color:var(--rig-text)}
+.rg-gh-opts{flex-direction:column;align-items:stretch}
+.rig .rg-gh-opts .rg-gh-pickb{justify-content:space-between;min-height:var(--rig-hit);font-size:var(--rig-fs-sm);line-height:var(--rig-lead-sm)}
+.rg-gh-wcard{min-width:0;padding:var(--rig-s3) var(--rig-s4);border:1px solid var(--rig-line2);border-radius:var(--rig-r-md);background:var(--rig-panel2)}
+.rg-gh-wcard dl{display:flex;flex-direction:column;gap:0;margin:0}
+.rg-gh-wrow{display:grid;grid-template-columns:6.5rem minmax(0,1fr);gap:var(--rig-s2);padding:var(--rig-s2) 0;border-top:1px solid var(--rig-line)}
+.rg-gh-wrow:first-child{border-top:0}
+.rg-gh-wrow>dt{font-size:var(--rig-fs-2xs);line-height:var(--rig-lead-xs);font-weight:var(--rig-fw-semi);color:var(--rig-mute)}
+.rg-gh-wrow>dd{margin:0;min-width:0;font-size:var(--rig-fs-xs);line-height:var(--rig-lead-xs);color:var(--rig-text);animation:rg-gh-in var(--rig-dur-2) var(--rig-ease) both}
+.rg-gh-wrow.todo>dd{color:var(--rig-mute)}
+.rg-gh-wrow.now>dt{color:var(--rig-text)}
+.rg-gh-wrow.now{box-shadow:inset 3px 0 0 var(--rig-text);padding-left:var(--rig-s2)}
+.rg-gh-wrow.rg-gh-wfix>dd{color:var(--rig-dim)}
+.rig .rg-read-col .rg-gh-evidence{margin:var(--rig-s3) 0 0;padding:var(--rig-s2) var(--rig-s3);border-left:3px solid var(--rig-ser1);border-radius:var(--rig-r-sm);background:var(--rig-panel2);font-size:var(--rig-fs-xs);line-height:var(--rig-lead-xs);color:var(--rig-dim);animation:rg-gh-in var(--rig-dur-2) var(--rig-ease) both}
+.rg-gh-evidence>b:first-child{display:block;color:var(--rig-text)}
+.rg-gh-evidence code{font-family:var(--rig-mono)}
+.rg-gh-cell{padding:var(--rig-s3);border-radius:var(--rig-r-md);background:var(--rig-sky-bg)}
+.rig .rg-read-col .rg-gh-cell>p{margin:0;font-size:var(--rig-fs-sm);line-height:var(--rig-lead-md);color:var(--rig-text)}
+.rg-gh-cell code{font:var(--rig-fw-bold) var(--rig-fs-md)/var(--rig-lead-md) var(--rig-mono);overflow-wrap:anywhere}
+.rig .rg-read-col .rg-gh-warn{margin:var(--rig-s2) 0 0;font-size:var(--rig-fs-xs);line-height:var(--rig-lead-xs);color:var(--rig-amb-t)}
+
+/* ================================================================ run_replay: two lanes of model calls */
+.rg-gh-rlane{margin-bottom:var(--rig-s3)}
+.rg-gh-rcell rect{fill:var(--gh-ph);stroke:none;transition:opacity var(--rig-dur-2) var(--rig-ease),transform var(--rig-dur-2) var(--rig-ease);transform-box:fill-box;transform-origin:50% 100%}
+.rg-gh-rcell.todo rect{fill:none;stroke:var(--rig-line3);stroke-dasharray:3 3}
+.rg-gh-rcell.done rect{opacity:.6}
+.rg-gh-rcell.now rect{stroke:var(--rig-text);stroke-width:2}
+.rg-gh-rcell text{fill:var(--rig-text);font-size:var(--rig-fs-2xs);font-family:var(--rig-mono);font-weight:var(--rig-fw-semi)}
+.rg-gh-rcell.todo text{fill:var(--rig-mute)}
+.rg-gh-rcell circle.p{fill:var(--rig-sky)}
+.rg-gh-rcell circle.f{fill:var(--rig-red)}
+.rg-gh-rcell.todo circle{opacity:0}
+.rg-gh-wall line{stroke:var(--rig-text);stroke-width:3;stroke-linecap:round}
+.rig .rg-read-col .rg-gh-lend{display:inline-block;margin:var(--rig-s1) 0 0;padding:0 var(--rig-s2);border-radius:var(--rig-r-full);font-size:var(--rig-fs-xs);line-height:var(--rig-lead-sm);font-weight:var(--rig-fw-semi);animation:rg-gh-mark var(--rig-dur-2) var(--rig-ease) both}
+.rg-gh-lend.p{background:var(--rig-sky-bg);color:var(--rig-sky-t)}
+.rg-gh-lend.f{background:var(--rig-red-bg);color:var(--rig-red-t)}
+.rg-gh-rx{display:grid;list-style:none;margin:0;padding:0}
+.rg-gh-rx>li{display:flex;justify-content:center;margin:0}
+.rig .rg-gh-rxb{min-width:var(--rig-h-ctl);min-height:var(--rig-h-ctl);border:0;border-radius:var(--rig-r-sm);background:none;color:var(--rig-dim);font-size:var(--rig-fs-xs);font-variant-numeric:tabular-nums}
+.rig .rg-gh-rxb:hover{background:var(--rig-panel2);color:var(--rig-text)}
+.rig .rg-gh-rxb.on{background:var(--rig-panel3);color:var(--rig-text);cursor:default}
+
+/* ================================================================ narrow cards */
+@container rglfig (max-width:600px){
+  .rg-gh-flow{grid-template-columns:minmax(0,1fr);gap:var(--rig-s4)}
+  .rg-gh-flow>li+li::before{left:var(--rig-s4);top:calc(var(--rig-s4) * -1);width:0;height:var(--rig-s4);border-top:0;border-left:2px dashed var(--rig-dim)}
+  .rg-gh-hgrid{grid-template-columns:minmax(0,1fr)}
+  .rg-gh-model{order:-1;flex-direction:row;gap:var(--rig-s2)}
+  .rg-gh-hgrid>ul{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}
+  .rig .rg-read-col .rg-gh-field[data-field="tools"]{grid-column:1/-1}
+  .rg-gh-grid>div{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}
+  .rg-gh-grid>div>span[role="rowheader"]{grid-column:1/-1}
+  .rg-gh-grid>.h>span:first-child{display:none}
+  .rg-gh-eaxis,.rig .rg-gh-erow{grid-template-columns:minmax(5.5rem,7rem) minmax(0,1fr)}
+  .rg-gh-eaxis .val,.rg-gh-erow .val{display:none}
+  .rg-gh-pool>li+li::before{content:none}
+}
+@container rglfig (max-width:440px){
+  .rig .rg-gh-crow{grid-template-columns:minmax(0,1fr) auto}
+  .rg-gh-crow .track{grid-column:1/-1;grid-row:2}
+  .rg-gh-rx{display:none}
+  .rg-gh-wrow{grid-template-columns:5rem minmax(0,1fr)}
+}
+/* each model in its own colour, as on every page (entityColor.js) */
+.rg-gh-est.ent .ci{stroke:var(--rig-ent)}
+.rg-gh-est.ent circle{fill:var(--rig-ent)}

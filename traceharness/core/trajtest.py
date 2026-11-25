@@ -14,7 +14,7 @@ Run with:  python -m unittest discover -s trajectory_tests -v
 Set the results directory with the TRACEHARNESS_RESULTS environment variable.
 """
 from __future__ import annotations
-import json, os
+import functools, json, os
 from collections import Counter
 from dataclasses import dataclass, field
 from typing import Optional
@@ -49,15 +49,20 @@ class Trajectory:
     def tool_names(self) -> list[str]:
         return [s["gen_ai.tool.name"] for s in self.tool_calls]
 
-    @property
+    @functools.cached_property
     def action_string(self) -> str:
         """The run as one string over the action alphabet used by the console and by trajectory queries:
-        L list_files, R read_file, W write_file, E edit_file, T run_tests, B bash, S submit, F search (imported runs)."""
-        code = {"list_files": "L", "read_file": "R", "write_file": "W", "edit_file": "E", "run_tests": "T", "bash": "B", "submit": "S"}
-        kind = {"view": "R", "search": "F", "edit": "E", "run": "T", "submit": "S", "other": "B"}
+        L list_files, R read_file, W write_file, E edit_file, T run_tests, B bash, S submit, F search (imported runs).
+        A shell command takes the letter of its phase (core/phases.py): L/R/F explore, T test, W/E a repo
+        edit (a scratch write is not one), S submit, B anything else."""
+        from .phases import KIND_LETTER, call_letter, package_of, tool_phase
+        scripts, package = {}, package_of(self.task_id)
         out = []
         for s in self.tool_calls:
-            out.append(kind[s["kind"]] if s.get("kind") in kind else code.get(s["gen_ai.tool.name"], "?"))
+            phase = s.get("phase")
+            if not phase and s.get("kind") not in KIND_LETTER and s["gen_ai.tool.name"] == "bash":
+                phase = tool_phase("bash", {"command": (s.get("args") or {}).get("command", "") or ""}, scripts, package)
+            out.append(call_letter(s, phase))
         return "".join(out)
 
     @property

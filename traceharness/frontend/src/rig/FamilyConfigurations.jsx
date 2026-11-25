@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Go, PanelState } from './ui'
 import { makeSpec } from './route'
 import { HarnessJson } from './HarnessJson'
+import { StatusIcon } from './StatusIcon'
 
 const object = (value) => value && typeof value === 'object' && !Array.isArray(value)
 const text = (value) => typeof value === 'string' && value.length ? value : null
@@ -75,9 +76,9 @@ function BaselineDifference({ current, baseline }) {
 
 // Shaped like the inspector that replaces it: a field grid, then the tool list.
 function ConfigurationLoading() {
-  return <div className="rg-stack rg-stack-md">
+  return <div className="rg-stack rg-stack-md" data-wait="">
     <PanelState kind="loading" title="Reading recorded configurations…" />
-    <div className="rg-skel-stack" aria-hidden="true">
+    <div className="rg-stack" aria-hidden="true">
       {['92%', '78%', '64%'].map((width) => <div key={width} className="rg-skel rg-skel-line" style={{ width }} />)}
     </div>
   </div>
@@ -86,7 +87,7 @@ function ConfigurationLoading() {
 // A polite status, not an alert: the matrix above stays usable and only this read is retried.
 function ConfigurationUnavailable({ onRetry }) {
   return <div className="rg-pstate" role="status" data-el="panel-error">
-    <div className="rg-pstate-t"><span className="rg-v f" aria-hidden="true">×</span><span>Recorded configurations are unavailable.</span></div>
+    <div className="rg-pstate-t"><StatusIcon status="error" decorative /><span>Recorded configurations are unavailable.</span></div>
     <div className="rg-pstate-b">The matrix results remain available.</div>
     <div className="rg-cluster"><button type="button" className="rg-btn" onClick={onRetry}>Retry configurations</button></div>
   </div>

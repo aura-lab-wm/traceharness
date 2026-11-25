@@ -138,7 +138,7 @@ describe('ConfigurationEditor adversarial regressions', () => {
       expect(screen.getByRole('button', { name: 'Apply JSON' }).disabled).toBe(true)
       expect(onPendingChange).toHaveBeenLastCalledWith(true)
       act(() => { vi.advanceTimersByTime(PARSE_PAUSE_MS) })
-      expect(screen.getByRole('alert').textContent).toBe('Choose a JSON configuration file of at most 1 MiB.')
+      expect(screen.getByRole('alert').textContent).toBe('The configuration must be at most 1 MiB.')
       fireEvent.keyDown(input, { key: 'Enter', ctrlKey: true })
       expect(onApply).not.toHaveBeenCalled()
       const polluted = input.value.replace('"padding": "' + 'p'.repeat(1024 * 1024) + '",', '"__proto__": { "admin": true },')

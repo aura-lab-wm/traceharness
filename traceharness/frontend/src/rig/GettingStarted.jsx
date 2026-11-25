@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { GUIDE_TOPICS } from './guidance'
 import { ScrollX } from './ui'
+import { termMeaning } from './learn/glossary'
 import lessons from './tutorial/lessons.json'
 import evidence from './tutorial/evidence.mp3?inline'
 import harness from './tutorial/harness.mp3?inline'
@@ -10,13 +11,13 @@ import buddy from './tutorial/buddy.mp3?inline'
 import './getting-started.css'
 
 const recordings = { evidence, harness, dispatch, results, buddy }
-export default function GettingStarted({ onGuide }) {
-  const [open, setOpen] = useState(false)
-  const close = () => setOpen(false)
-  return <>
-    <button type="button" className="rg-tbtn rg-tour-launcher" aria-label="Voice tour" title="Replay the narrated tour" onClick={() => setOpen(true)}><svg className="rg-ico" width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 16v-4a8 8 0 0 1 16 0v4" /><path d="M4 15h3v6H4zM17 15h3v6h-3z" /></svg><span className="lbl-d">Voice tour</span></button>
-    {open && <VoiceTour onClose={close} onGuide={topic => { close(); onGuide(topic) }} />}
-  </>
+/** The glossary words each chapter's narration uses, defined beside its transcript (stand-in, native agent…). */
+const WORDS = { evidence: ['harness', 'family'], harness: ['harness', 'stand-in', 'native-agent'], dispatch: ['cell'], results: [], buddy: [] }
+const wordsOf = (id) => (WORDS[id] || []).map(termMeaning).filter((e) => e && e.meaning)
+/** The narrated tour, opened from Help › Voice tour (and the phone's More menu). */
+export default function GettingStarted({ open, onClose, onGuide }) {
+  if (!open) return null
+  return <VoiceTour onClose={onClose} onGuide={topic => { onClose(); onGuide(topic) }} />
 }
 
 function VoiceTour({ onClose, onGuide }) {
@@ -43,7 +44,8 @@ function VoiceTour({ onClose, onGuide }) {
     document.addEventListener('visibilitychange', hidden)
     return () => { playback.current++; player?.pause(); document.removeEventListener('visibilitychange', hidden) }
   }, [chapter])
-  const select = index => { playback.current++; audio.current?.pause(); setPlaying(false); setAudioError(false); setChapter(index) }
+  // the chapter in view, chosen again, keeps playing
+  const select = index => { if (index === chapter) return; playback.current++; audio.current?.pause(); setPlaying(false); setAudioError(false); setChapter(index) }
   const play = async () => {
     if (playing) { audio.current?.pause(); setPlaying(false); return }
     const version = ++playback.current, player = audio.current
@@ -62,17 +64,18 @@ function VoiceTour({ onClose, onGuide }) {
   const last = chapter === lessons.length - 1
   return <dialog ref={dialog} className="rg-modal rg-tour" aria-labelledby="traceharness-tour-title" aria-modal="true" onKeyDown={keyDown} onCancel={event => { event.preventDefault(); onClose() }}>
     <header className="rg-modal-h rg-tour-h">
-      <div className="rg-tour-head"><span className="rg-guide-eyebrow">TRACEHARNESS / FIRST STEPS</span><h2 id="traceharness-tour-title" className="rg-modal-t" ref={title} tabIndex={-1}>Find your way around TraceHarness</h2><p>Five short chapters. Read, listen, or jump to the controls.</p></div>
+      <div className="rg-tour-head"><h2 id="traceharness-tour-title" className="rg-modal-t" ref={title} tabIndex={-1}>Find your way around TraceHarness</h2><p>Five short chapters. Read, listen, or jump to the controls.</p></div>
       <button type="button" className="rg-btn ghost rg-tour-x" aria-label="Close voice tour" onClick={onClose}>×</button>
     </header>
     <div className="rg-modal-b rg-tour-b" ref={body}>
       <div className="rg-tour-layout">
-        <ScrollX className="rg-tour-chapters"><nav aria-label="Tour chapters" ref={nav}>{lessons.map((item, index) => <button type="button" key={item.id} aria-current={index === chapter ? 'step' : undefined} onClick={() => select(index)}><span className="n">{String(index + 1).padStart(2, '0')}</span><span className="t">{item.title}</span></button>)}</nav></ScrollX>
-        <section className="rg-tour-lesson"><span className="rg-guide-eyebrow">CHAPTER {chapter + 1} / {lessons.length}</span><h3>{lesson.title}</h3>
+        <ScrollX className="rg-tour-chapters"><nav aria-label="Tour chapters" ref={nav}>{lessons.map((item, index) => <button type="button" key={item.id} aria-current={index === chapter ? 'step' : undefined} aria-disabled={index === chapter || undefined} data-here={index === chapter ? '' : undefined} data-hint={index === chapter ? `Chapter ${index + 1} · you are here` : undefined} onClick={() => select(index)}><span className="n">{String(index + 1).padStart(2, '0')}</span><span className="t">{item.title}</span></button>)}</nav></ScrollX>
+        <section className="rg-tour-lesson"><span className="rg-guide-eyebrow">Chapter {chapter + 1} of {lessons.length}</span><h3>{lesson.title}</h3>
           <audio key={lesson.id} ref={audio} src={recordings[lesson.id]} preload="none" onPlay={() => setPlaying(true)} onPause={() => setPlaying(false)} onEnded={() => setPlaying(false)} onError={() => setAudioError(true)} aria-label={'Narration: ' + lesson.title} />
           <div className="rg-tour-player"><button type="button" className="rg-btn" onClick={play}>{playing ? 'Pause narration' : 'Play narration'}</button><span>Recorded voice · audio starts only when you press Play</span></div>
           {audioError && <p className="rg-tour-alert" role="status">Audio could not play. The complete transcript is available below.</p>}
           <section className="rg-tour-transcript" aria-label="Narration transcript"><p>{lesson.transcript}</p></section>
+          {wordsOf(lesson.id).length > 0 && <section className="rg-tour-words" aria-label="Words used here"><dl>{wordsOf(lesson.id).map((e) => <div key={e.slug}><dt>{e.term}</dt><dd>{e.meaning}.</dd></div>)}</dl></section>}
           <button type="button" className="rg-btn" onClick={() => onGuide(GUIDE_TOPICS.find(topic => topic.id === lesson.topic))}>Show me this workflow →</button>
         </section>
       </div>

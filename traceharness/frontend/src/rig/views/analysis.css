@@ -10,50 +10,78 @@
 /* rig.css centres .rg-dpad with auto inline margins on a phone; pin it so every view starts at the same x */
 .rg-an-main{min-width:0;margin-inline:0;max-width:none;justify-self:stretch}
 .rg-an-nav{min-width:0;padding:0 var(--rig-s3);background:var(--rig-panel);border-bottom:1px solid var(--rig-line)}
+.rg-an-nb:first-child{margin-left:calc(-1 * var(--rig-s1))}
 .rg-an-navx{flex:1 1 auto;min-width:0}
 .rg-an-navl{display:flex;align-items:stretch}
-button.rg-an-nb{display:inline-flex;align-items:center;flex:none;min-height:var(--rig-hit);padding:0 var(--rig-s3);border:0;border-bottom:2px solid transparent;background:none;color:var(--rig-dim);font:var(--rig-fw-medium) var(--rig-fs-sm)/var(--rig-lh-tight) var(--rig-sans);white-space:nowrap;cursor:pointer}
+button.rg-an-nb{display:inline-flex;align-items:center;flex:none;min-height:40px;padding:0 var(--rig-s3);border:0;border-bottom:2px solid transparent;background:none;color:var(--rig-mute);font:var(--rig-fw-medium) var(--rig-fs-sm)/var(--rig-lead-xs) var(--rig-sans);white-space:nowrap;cursor:pointer;transition:color var(--rig-dur-1) var(--rig-ease),background-color var(--rig-dur-1) var(--rig-ease),border-color var(--rig-dur-1) var(--rig-ease)}
 .rg-an-nb .n{display:none}
 .rg-an-nb:hover{color:var(--rig-text)}
 .rg-an-nb:focus-visible{outline:var(--rig-focus-ring);outline-offset:calc(-1 * var(--rig-focus-offset))}
-.rg-an-nb.on{color:var(--rig-text);border-bottom-color:var(--rig-text)}
+.rg-an-nb.on{color:var(--rig-text);border-bottom-color:var(--rig-sel-mark)}
 
-/* ---------- head: eyebrow, title, the answer, About */
-.rg-an-main>.rg-asking,.rg-an-xp>.rg-asking{padding-bottom:var(--rig-s4);margin-bottom:var(--rig-s5);border-bottom:1px solid var(--rig-line)}
-.rg-an-head{margin-bottom:var(--rig-s6);min-width:0}
-.rg-an-head .rg-dh{margin-bottom:var(--rig-s3)}
-.rg-an-lead{margin:0;max-width:var(--rig-measure);font-size:var(--rig-fs-lg);line-height:var(--rig-lh-body);color:var(--rig-text);overflow-wrap:break-word}
-.rg-an-lead b{font-weight:var(--rig-fw-semi)}
-.rg-an-sub{margin:var(--rig-s2) 0 0}
-.rg-an-acts{display:flex;flex-wrap:wrap;gap:var(--rig-s2);align-items:center}
+/* ---------- head: the page header (title, one muted line), the Asking bar, then the answer with the
+   view's actions at its right and the About disclosure. 20 / 14 / 14 / 20 down to the body. */
+.rg-dpad.rg-an-main,.rg-dpad.rg-an-xp{padding-top:20px}
+.rg-an-main>.rg-ph,.rg-an-xp>.rg-ph{margin-bottom:var(--rig-gap-in)}
+.rg-an-subds{color:var(--rig-dim);font-size:var(--rig-fs-xs)}
+.rg-an-main>.rg-ask,.rg-an-xp>.rg-ask{margin-bottom:var(--rig-gap-in)}
+.rg-an-main>.rg-prov,.rg-an-xp>.rg-prov{margin-bottom:var(--rig-s3)}
+.rg-an-head{margin-bottom:var(--rig-s4);min-width:0}
+.rg-an-ans{display:flex;align-items:flex-start;gap:var(--rig-s3);min-width:0}
+/* the finding: body ink, a step larger than body, its key figures in real bold */
+.rg-an-lead{flex:1 1 auto;margin:0;max-width:var(--rig-measure);font-size:var(--rig-fs-md);line-height:var(--rig-lead-lg);color:var(--rig-text);overflow-wrap:break-word}
+.rg-an-lead b{color:var(--rig-text);font-weight:var(--rig-fw-bold)}
+.rg-an-lead b.rg-mono{font-size:inherit}
+.rig .rg-an-sub{margin:var(--rig-s1) 0 0;color:var(--rig-mute);font-size:var(--rig-fs-xs);line-height:var(--rig-lead-sm)}
+.rg-an-acts{display:flex;flex-wrap:wrap;gap:var(--rig-s2);align-items:center;margin-left:auto;flex:none}
 /* a Pin beside page actions is a control like its neighbours: same height, same radius, same type */
-.rg-an-acts .rg-pin:not(.cmp),.rg-an-rbar .rg-pin:not(.cmp){height:var(--rig-h-ctl);padding:0 var(--rig-s3);border-radius:var(--rig-r-md);font-size:var(--rig-fs-sm)}
-.rg-an-head .rg-about{margin-top:var(--rig-s3)}
-.rg-an-head .rg-about summary{min-height:var(--rig-h-ctl)}
-@container (max-width:480px){.rg-an-lead{font-size:var(--rig-fs-md)}}
+.rg-an-acts .rg-pin:not(.cmp),.rg-an-rbar .rg-pin:not(.cmp){height:var(--rig-h-ctl);padding:0 10px;border-radius:var(--rig-r-sm);font-size:var(--rig-fs-sm)}
+.rg-an-head .rg-about{margin-top:var(--rig-s1)}
+@container (max-width:640px){.rg-an-ans{flex-wrap:wrap}.rg-an-acts{margin-left:0}}
 
 /* ---------- sections: a heading and whitespace, not another box */
-.rg-an-sec{margin-top:var(--rig-s6);min-width:0}
-.rg-an-sech{display:flex;flex-wrap:wrap;align-items:baseline;gap:var(--rig-s1) var(--rig-s3);margin-bottom:var(--rig-s4);min-width:0}
-.rg-an-sec .rg-an-sech h2{margin:0;font-size:var(--rig-fs-lg);font-weight:var(--rig-fw-medium);line-height:var(--rig-lh-tight);color:var(--rig-text)}
+.rg-an-sec{margin-top:var(--rig-gap-sec);min-width:0}
+/* a section that opens its block starts at the block's edge (its margin would fold through and add to the gap) */
+.rg-an-sec:first-child{margin-top:0}
+.rg-an-sech{display:flex;flex-wrap:wrap;align-items:baseline;gap:var(--rig-s1) var(--rig-s3);margin-bottom:var(--rig-s3);min-width:0}
+.rg-an-sec .rg-an-sech h2,.rg-an-fam>.rg-an-sech h2,[data-el~="delta-matrix"]>.rg-an-sech h2{margin:0;font-size:var(--rig-fs-lg);font-weight:var(--rig-fw-bold);line-height:var(--rig-lead-lg);letter-spacing:-.01em;color:var(--rig-text)}
+/* the (i) after a panel title: the formula of what the panel shows (analysis-info.jsx) */
+.rg-an-sech h2{display:inline-flex;align-items:center;gap:var(--rig-s1)}
+.rg-an-fam>.rg-an-sech,[data-el~="delta-matrix"]>.rg-an-sech{margin-top:var(--rig-gap-sec)}
+.rg-an-fam>.rg-an-sech:first-child,[data-el~="delta-matrix"]>.rg-an-sech:first-child{margin-top:0}
+/* the matrix block stands a section gap under the figures above it */
+*+.rg-an-fam,*+[data-el~="delta-matrix"]{margin-top:var(--rig-gap-sec)}
+.rg-info-src{color:var(--rig-mute);font-size:var(--rig-fs-2xs)}
+/* pooled and per-task pass@1: why the two differ, said once under the figures */
+.rg-an-more{margin:0 0 var(--rig-s4)}
+/* Run setup leads with its estimate and Launch; the choices sit in one disclosure under them */
+.rg-an-setup2{display:flex;flex-direction:column;gap:var(--rig-s3)}
+.rg-an-setup2>.rg-pnl .rg-kv{max-width:36rem}
+.rg-an-plan>summary{font-size:var(--rig-fs-sm);color:var(--rig-dim)}
+.rg-an-plan[open]>summary{margin-bottom:var(--rig-s3)}
+.rg-an-more-b{display:flex;flex-direction:column;gap:var(--rig-s1);padding:var(--rig-s2) 0 0 var(--rig-s4)}
+.rg-an-more-b p{margin:0}
+.rg-an-why{max-width:72ch;margin:var(--rig-s1) 0 var(--rig-s4);color:var(--rig-dim);font:var(--rig-fw-regular) var(--rig-fs-xs)/var(--rig-lead-sm) var(--rig-sans)}
 .rg-an-sechm{display:inline-flex;flex-wrap:wrap;gap:var(--rig-s2);align-items:center;min-width:0;font-size:var(--rig-fs-xs);color:var(--rig-mute)}
 .rg-an-secha{margin-left:auto;display:inline-flex;gap:var(--rig-s2);align-items:center}
-.rg-an-p{margin:0 0 var(--rig-s3);max-width:var(--rig-measure);color:var(--rig-dim);font-size:var(--rig-fs-sm);line-height:var(--rig-lh-prose)}
+.rg-an-p{margin:0 0 var(--rig-s3);max-width:var(--rig-measure);color:var(--rig-dim);font-size:var(--rig-fs-sm);line-height:var(--rig-lead-lg)}
 
 /* ---------- toolbars (Toolbar primitive) and shared bits */
 .rg-an-tbar{margin-bottom:var(--rig-s4)}
-.rg-an-pg{display:flex;flex-wrap:wrap;align-items:center;gap:var(--rig-s2)}
 .rg-an-key{display:flex;flex-wrap:wrap;align-items:center;gap:var(--rig-s1) var(--rig-s3);min-height:var(--rig-h-ctl)}
-.rg-an-mult{max-width:48ch;line-height:var(--rig-lh-snug)}
+.rg-an-mult{max-width:48ch;line-height:var(--rig-lead-sm)}
 .rg-an-rlbl{overflow-wrap:anywhere}
-.rg-an-foot{gap:var(--rig-s4);margin-top:var(--rig-s3);line-height:var(--rig-lh-prose)}
-.rg-an-caveat{margin:var(--rig-s4) 0 0;max-width:var(--rig-measure);line-height:var(--rig-lh-prose)}
+.rg-an-foot{gap:var(--rig-s4);margin-top:var(--rig-s3);line-height:var(--rig-lead-lg)}
+.rg-an-caveat{margin:var(--rig-s4) 0 0;max-width:var(--rig-measure);line-height:var(--rig-lead-lg)}
 .rg-an-mt,.rg-an-main .rg-an-mt,.rg-an-xp .rg-an-mt{margin-top:var(--rig-s3)}
 .rg-an-fk{margin-bottom:var(--rig-s1)}
-.rg-an-blk{display:block;margin-top:var(--rig-s0);line-height:var(--rig-lh-snug)}
-.rg-an-ul{margin:0;padding-left:0;list-style:none;max-width:var(--rig-measure);color:var(--rig-dim);font-size:var(--rig-fs-sm);line-height:var(--rig-lh-prose)}
+.rg-an-blk{display:block;margin-top:var(--rig-s0);line-height:var(--rig-lead-sm)}
+.rg-an-ul{margin:0;padding-left:0;list-style:none;max-width:var(--rig-measure);color:var(--rig-dim);font-size:var(--rig-fs-sm);line-height:var(--rig-lead-lg)}
 .rg-an-ul li{margin-bottom:var(--rig-s2)}
 .rg-an-legend{gap:var(--rig-s2) var(--rig-s4);margin:var(--rig-s3) 0 0;color:var(--rig-dim)}
+/* the task table's key sits inside the table, above its header row; the eligibility line under it */
+.rg-an-legend-in{margin:0;padding:var(--rig-s2) var(--rig-s4);border-bottom:1px solid var(--rig-line-soft)}
+.rg-an-after{margin:var(--rig-s2) 0 0}
 .rg-an-lg,.rg-an-mode{gap:var(--rig-s1)}
 .rg-an-main .rg-note,.rg-an-xp .rg-note{margin-bottom:var(--rig-s4)}
 .rg-an-main .rg-note .rg-next{margin-top:var(--rig-s2)}
@@ -66,18 +94,18 @@ button.rg-an-nb{display:inline-flex;align-items:center;flex:none;min-height:var(
 .rg-an-measure{max-width:48rem}
 .rg-an-measure-lg{max-width:64rem}
 .rg-an-ladw{max-width:40rem}
-.rg-an-ladw .rg-an-tbl th{white-space:normal;line-height:var(--rig-lh-snug);padding-block:var(--rig-s2)}
+.rg-an-ladw .rg-an-tbl th{white-space:normal;line-height:var(--rig-lead-sm);padding-block:var(--rig-s2)}
 /* tables in this file: 40px rows, numbers right-aligned in mono */
 .rg-an-tbl{font-size:var(--rig-fs-sm)}
 .rg-an-tbl th{height:var(--rig-h-row);padding:0 var(--rig-s3)}
 .rg-an-tbl td{height:var(--rig-h-row);padding:var(--rig-s2) var(--rig-s3)}
 /* rate bar in a table cell */
-.rg-an-rb{display:grid;grid-template-columns:minmax(3.5rem,8.75rem) 2.75rem;gap:var(--rig-s2);align-items:center}
+.rg-an-rb{display:inline-grid;grid-template-columns:minmax(3.5rem,8.75rem) 3.5rem;gap:var(--rig-s2);align-items:center;vertical-align:middle}
 .rg-an-rbt{display:block;height:calc(var(--rig-s1) + var(--rig-s0));border-radius:var(--rig-r-full);background:var(--rig-panel3);overflow:hidden}
 .rg-an-rbt i{display:block;height:100%;background:var(--rig-sky-fill)}
 .rg-an-rbt i.dim{background:var(--rig-dim)}
 @container (max-width:640px){
-  .rg-an-rb{grid-template-columns:2.75rem}
+  .rg-an-rb{grid-template-columns:3.5rem}
   .rg-an-rbt{display:none}
   .rg-an-tbl th,.rg-an-tbl td{padding-inline:var(--rig-s2)}
 }
@@ -89,39 +117,101 @@ button.rg-an-nb{display:inline-flex;align-items:center;flex:none;min-height:var(
 .rg-an-mx td{border:1px solid var(--rig-line);padding:0;vertical-align:top}
 .rg-an-mx tr:last-child td{border-bottom:0}
 .rg-an-mx td:last-child{border-right:0}
-.rg-an-mx td.rh{border-left:0;padding:var(--rig-s4);font-weight:var(--rig-fw-medium);line-height:var(--rig-lh-snug)}
-.rg-an-mname{white-space:nowrap}
+.rg-an-mx td.rh{border-left:0;padding:var(--rig-s4);font-weight:var(--rig-fw-medium);line-height:var(--rig-lead-sm)}
+/* a model's colour mark hangs in the row head's padding, so the grid is no wider */
+.rg-an-mx td.rh:has(.rg-ent){padding-left:4px}
+/* its logo takes the room back from the right padding */
+.rg-an-mx td.rh:has(.rg-logo){padding-right:var(--rig-s2)}
+/* a model's name wraps at its hyphens rather than running out of its column */
+.rg-an-mname{overflow-wrap:break-word}
 .rg-an-dmx td:not(.rh),.rg-an-gmx td:not(.rh){min-width:9.75rem}
 /* in a narrow pane the model column gives up its width first: ids break after a hyphen, cells keep theirs */
 @container (max-width:640px){
   .rg-an-mx:is(.rg-an-dmx,.rg-an-gmx){min-width:0}
   .rg-an-mx:is(.rg-an-dmx,.rg-an-gmx) td.rh{padding:var(--rig-s3)}
+  .rg-an-mx:is(.rg-an-dmx,.rg-an-gmx) td.rh:has(.rg-ent){padding-left:0}
   .rg-an-mx:is(.rg-an-dmx,.rg-an-gmx) .rg-an-mname{white-space:normal}
   .rg-an-dmx td:not(.rh),.rg-an-gmx td:not(.rh){min-width:8.5rem}
 }
-/* family matrix: paged by its own width in JS, so it never needs more than 100% */
-.rg-an-mx.rg-an-family-matrix{table-layout:fixed;min-width:0}
-.rg-an-family-matrix col.rg-an-c0{font:var(--rig-fw-medium) var(--rig-fs-sm)/1 var(--rig-mono);width:calc(var(--rig-an-c0) * 1ch + 2 * var(--rig-s4))}
-.rg-an-mx.rg-an-family-matrix thead th{height:1px;white-space:normal;vertical-align:top}
-.rg-an-family-matrix .rg-an-mname{white-space:normal;overflow-wrap:break-word}
-/* height:1px on the th lets the head fill the cell, so every Inspect button sits on one line */
-.rg-an-fh{display:flex;flex-direction:column;align-items:flex-start;gap:var(--rig-s2);height:100%;min-width:0}
-.rg-an-fh>.rg-skel-stack{width:100%}
-.rg-an-colh{all:unset;max-width:100%;color:var(--rig-text);overflow-wrap:break-word;cursor:pointer}
 .rg-an-trep .rg-an-tname{line-height:var(--rig-hit)}
 /* text links that act as row or column targets keep their drawn size and get a hit area as tall as a control */
 .rg-an-colh,.rg-an-tn .rg-tlink,.rg-an-main td .rg-tlink,.rg-an-ftx .rg-chip{position:relative}
-.rg-an-colh::after,.rg-an-tn .rg-tlink::after,.rg-an-main td .rg-tlink::after,.rg-an-ftx .rg-chip::after{content:"";position:absolute;left:0;right:0;top:50%;height:var(--rig-hit);transform:translateY(-50%)}
-.rg-an-colh:hover{color:var(--rig-sel-t);text-decoration:underline}
+.rg-an-tn .rg-tlink::after,.rg-an-main td .rg-tlink::after,.rg-an-ftx .rg-chip::after{content:"";position:absolute;left:0;right:0;top:50%;height:var(--rig-hit);transform:translateY(-50%)}
+
+/* ---------- condition matrix (Studio Graphite): one framed grid, a tinted head row, 40px model rows on
+   soft hairlines; each cell is pass@1 in mono with its denominators at the right, the hidden-oracle interval
+   as a band with a tick at the estimate, and a tint that grows from 50% to 100%. The focused condition is
+   ringed in the accent, its model and harness lit. */
+.rg-an-ftbar{margin-bottom:var(--rig-s3)}
+.rg-an-ftbar .rg-selc{width:auto;min-width:10rem}
+.rg-an-cmxp{min-width:0;border-radius:var(--rig-r-md);box-shadow:inset 0 0 0 1px var(--rig-line);overflow:hidden}
+.rg-an-cmxp>.rg-tscroll>.rg-scrollx-v{border-radius:inherit}
+.rig .rg-an-cmx{width:100%;table-layout:fixed;border-collapse:separate;border-spacing:0;font-size:var(--rig-fs-sm)}
+.rg-an-cmx th{height:36px;padding:var(--rig-s2) var(--rig-s3);border-bottom:1px solid var(--rig-line);background:var(--rig-panel2);color:var(--rig-dim);text-align:left;vertical-align:top}
+.rig .rg-an-cmx.rg-sticky-col th:first-child,.rg-sticky-col .rg-an-cmx th:first-child{background:var(--rig-panel2)}
+.rg-an-cmx th.corner{vertical-align:middle;color:var(--rig-mute)}
+.rg-an-corner{font:var(--rig-fw-regular) var(--rig-fs-xs)/var(--rig-lead-xs) var(--rig-sans)}
+.rg-an-cmx th.hot{color:var(--rig-text)}
+.rg-an-cmx th.rg-an-config-column{box-shadow:inset 0 -2px 0 var(--rig-sel)}
+.rg-an-fh{display:flex;flex-direction:column;gap:var(--rig-s1);min-width:0}
+.rg-an-fhn{display:flex;flex-wrap:wrap;align-items:center;gap:2px 6px;min-width:0;min-height:20px}
+.rg-an-colh{all:unset;flex:0 1 auto;min-width:0;overflow-wrap:normal;word-break:normal;color:inherit;font:var(--rig-fw-regular) var(--rig-fs-xs)/var(--rig-lead-xs) var(--rig-num);cursor:pointer;font-variant-numeric:tabular-nums}
+.rg-an-colh:hover{color:var(--rig-text);text-decoration:underline;text-underline-offset:3px}
 .rg-an-colh:focus-visible{outline:var(--rig-focus-ring);outline-offset:var(--rig-focus-offset)}
-.rg-an-config-summary{display:block;color:var(--rig-dim);font:var(--rig-fw-regular) var(--rig-fs-xs)/var(--rig-lh-snug) var(--rig-sans);letter-spacing:normal;white-space:normal;overflow-wrap:break-word}
-.rg-btn.rg-an-config-inspect{margin-top:auto;padding:0 var(--rig-s3);letter-spacing:normal}
-.rg-btn.rg-an-config-inspect[aria-pressed=true]{border-color:var(--rig-sel);background:var(--rig-sel-bg);color:var(--rig-sel-t)}
-.rg-an-mx th.rg-an-config-column{box-shadow:inset 0 2px var(--rig-sel)}
-@container (max-width:480px){
-  .rg-an-family-matrix col.rg-an-c0{width:calc(var(--rig-an-c0) * 1ch + 2 * var(--rig-s3))}
-  .rg-an-mx.rg-an-family-matrix th,.rg-an-family-matrix td.rh,.rg-an-family-matrix .rg-an-mc{padding:var(--rig-s3)}
+.rg-an-ref{flex:none;padding:0 5px;border-radius:var(--rig-r-xs);box-shadow:inset 0 0 0 1px var(--rig-line);color:var(--rig-mute);font:var(--rig-fw-regular) var(--rig-fs-2xs)/var(--rig-lead-xs) var(--rig-sans)}
+.rig .rg-an-config-inspect{display:inline-grid;place-items:center;flex:none;width:20px;height:20px;margin-left:auto;padding:0;border:0;border-radius:var(--rig-r-xs);background:none;color:var(--rig-mute);position:relative}
+.rig .rg-an-config-inspect::after{content:"";position:absolute;inset:-8px -4px}
+.rig .rg-an-config-inspect .rg-ico{width:12px;height:12px}
+.rig .rg-an-config-inspect:hover{background:var(--rig-panel3);color:var(--rig-text)}
+.rig .rg-an-config-inspect[aria-pressed=true]{background:var(--rig-sel-bg);color:var(--rig-text)}
+.rg-an-config-summary{display:block;color:var(--rig-mute);font:var(--rig-fw-regular) var(--rig-fs-2xs)/var(--rig-lead-xs) var(--rig-sans);white-space:normal;overflow-wrap:break-word}
+.rg-an-fh>.rg-skel-stack{width:100%}
+.rg-an-cmx td{padding:0;border-bottom:1px solid var(--rig-line-soft);border-left:1px solid var(--rig-line-soft);vertical-align:top}
+.rg-an-cmx tbody tr:last-child td{border-bottom:0}
+.rg-an-cmx td.rh{border-left:0;padding:var(--rig-s3);vertical-align:middle;background:var(--rig-panel)}
+.rg-an-mname{display:block;color:var(--rig-text);font:var(--rig-fw-medium) var(--rig-fs-sm)/var(--rig-lead-md) var(--rig-num);font-variant-numeric:tabular-nums}
+.rg-an-cmx tr.hot .rg-an-mname{color:var(--rig-text);font-weight:var(--rig-fw-bold)}
+.rg-an-mp{color:var(--rig-mute);font-size:var(--rig-fs-2xs);line-height:var(--rig-lead-xs);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rg-an-cmx .rg-an-mcw{position:relative;display:flex;flex-direction:column;gap:var(--rig-s2);min-height:66px;padding:10px 10px var(--rig-s2)}
+.rg-an-cmx .rg-an-mcw:hover{box-shadow:inset 0 0 0 1px var(--rig-line3)}
+.rg-an-cmx .rg-an-mcw.on{box-shadow:inset 0 0 0 1.5px var(--rig-sel-mark)}
+.rig .rg-an-cmx .rg-an-mc{all:unset;display:flex;flex-direction:column;gap:10px;min-width:0;cursor:pointer}
+.rig .rg-an-cmx .rg-an-mc:focus-visible{outline:var(--rig-focus-ring);outline-offset:var(--rig-s1);border-radius:var(--rig-r-xs)}
+.rg-an-cmx .rg-an-mc.empty{cursor:default;min-height:66px;padding:10px var(--rig-s3);color:var(--rig-mute);font-size:var(--rig-fs-2xs)}
+.rg-an-cmx .cv{display:flex;flex-wrap:wrap;align-items:baseline;justify-content:space-between;gap:0 6px;min-width:0}
+.rg-an-cmx .cv .v1{color:var(--rig-text);font:var(--rig-fw-medium) var(--rig-fs-md)/var(--rig-lead-md) var(--rig-num);font-variant-numeric:tabular-nums;white-space:nowrap}
+.rg-an-cmx .cv .v1 small{margin-left:1px;color:var(--rig-mute);font-size:var(--rig-fs-2xs);font-weight:var(--rig-fw-regular)}
+.rg-an-cmx .cv .n{margin-left:auto;color:var(--rig-mute);font:var(--rig-fw-regular) var(--rig-fs-2xs)/var(--rig-lead-md) var(--rig-num);letter-spacing:-.03em;text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums}
+.rg-an-cmx .cv .u{color:var(--rig-amb-t)}
+.rg-an-ci{position:relative;display:block;height:4px;border-radius:2px;background:var(--rig-panel3)}
+.rg-an-ci .band{position:absolute;top:0;bottom:0;border-radius:2px;background:color-mix(in srgb,var(--rig-text) 35%,transparent)}
+.rg-an-ci .tick{position:absolute;top:-3px;width:2px;height:10px;margin-left:-1px;border-radius:1px;background:var(--rig-text)}
+/* the chips and the pin share the cell's last line; the pin shows on hover or focus (always on touch) */
+.rg-an-mcb{display:flex;align-items:center;gap:var(--rig-s1);min-height:20px;padding-right:22px}
+.rg-an-mcb .rg-an-shifts{flex-wrap:wrap}
+.rg-an-cmx .rg-an-mcw .pin{top:auto;bottom:var(--rig-s2);right:6px}
+.rg-an-cmx .rg-an-mcw .pin .rg-pin.cmp{width:22px;height:20px;padding:0;justify-content:center;border:0;background:none;color:var(--rig-mute)}
+.rg-an-cmx .rg-an-mcw .pin .rg-pin.cmp:hover{color:var(--rig-text)}
+.rg-an-cmx .rg-an-mcw .pin .rg-pin.cmp.on{color:var(--rig-sel-t)}
+/* Δ vs the reference harness, for the model in focus: a footer row on the head tint */
+.rg-an-cmx tfoot td{padding:var(--rig-s2) var(--rig-s3);border-top:1px solid var(--rig-line);border-bottom:0;background:var(--rig-panel2);vertical-align:middle}
+.rg-an-cmx tfoot td.rh{background:var(--rig-panel2)}
+.rg-an-dlt{display:block;color:var(--rig-text);font:var(--rig-fw-medium) var(--rig-fs-xs)/var(--rig-lead-sm) var(--rig-sans)}
+.rg-an-dd{display:block;font:var(--rig-fw-medium) var(--rig-fs-xs)/var(--rig-lead-sm) var(--rig-num);font-variant-numeric:tabular-nums}
+.rg-an-dd.neg{color:var(--rig-red-t)}.rg-an-dd.pos{color:var(--rig-sky-t)}.rg-an-dd.flat{color:var(--rig-dim)}
+.rg-an-dc{display:block;color:var(--rig-mute);font:var(--rig-fw-regular) var(--rig-fs-2xs)/var(--rig-lead-xs) var(--rig-num);font-variant-numeric:tabular-nums}
+/* the legend under the matrix */
+.rg-an-mxleg{display:flex;flex-wrap:wrap;align-items:center;gap:var(--rig-s1) var(--rig-s4);margin-top:var(--rig-s3);color:var(--rig-mute);font-size:var(--rig-fs-2xs);line-height:var(--rig-lead-xs)}
+.rg-an-lgi{display:inline-flex;align-items:center;gap:6px}
+.rg-an-lgw b{color:var(--rig-amb-t);font-weight:var(--rig-fw-medium)}
+.rg-an-lg-ci{position:relative;width:28px;height:4px;border-radius:2px;background:color-mix(in srgb,var(--rig-text) 35%,transparent)}
+.rg-an-lg-ci::after{content:"";position:absolute;left:12px;top:-3px;width:2px;height:10px;border-radius:1px;background:var(--rig-text)}
+.rg-an-lg-tint{width:44px;height:10px;border-radius:3px;background:linear-gradient(90deg,transparent,color-mix(in srgb,var(--rig-text) 10%,transparent));box-shadow:inset 0 0 0 1px var(--rig-line)}
+@container (max-width:640px){
+  .rg-an-cmx .rg-an-mcw{padding:var(--rig-s2)}
+  .rg-an-cmx td.rh{padding:var(--rig-s2)}
 }
+
 /* one cell: the figure, its denominators, the outcome bar; the pin shows on hover or focus (always on touch) */
 .rg-an-mcw{position:relative;height:100%}
 .rg-an-mcw .rg-pin.cmp{position:relative}
@@ -132,28 +222,42 @@ button.rg-an-nb{display:inline-flex;align-items:center;flex:none;min-height:var(
 .rg-an-mc{display:flex;flex-direction:column;gap:var(--rig-s2);width:100%;min-height:5rem;padding:var(--rig-s4);border:0;background:var(--rig-panel);text-align:left;color:var(--rig-text);cursor:pointer;box-sizing:border-box}
 .rg-an-mc:hover{background:var(--rig-panel2)}
 .rg-an-mc:focus-visible{outline:var(--rig-focus-ring);outline-offset:calc(-1 * var(--rig-focus-offset))}
-.rg-an-mc.on{background:var(--rig-sel-bg);box-shadow:inset 0 0 0 2px var(--rig-sel)}
+.rg-an-mc.on{background:var(--rig-sel-bg);box-shadow:inset 0 0 0 2px var(--rig-sel-mark)}
 .rg-an-mc.empty{cursor:default;background:var(--rig-bg);justify-content:center}
 .rg-an-mc.empty:hover{background:var(--rig-bg)}
-.rg-an-mc .v1{font:var(--rig-fw-medium) var(--rig-fs-lg)/1 var(--rig-mono);font-variant-numeric:tabular-nums}
-.rg-an-mc .v2{font:var(--rig-fw-regular) var(--rig-fs-xs)/var(--rig-lh-snug) var(--rig-sans);color:var(--rig-mute)}
+/* better / worse than baseline: 20px pills, tinted; each opens the tasks it counts */
+.rg-an-shifts{display:flex;flex-wrap:wrap;gap:var(--rig-s1)}
+.rig .rg-an-shift{display:inline-flex;align-items:center;height:20px;padding:0 7px;border:0;border-radius:var(--rig-r-full);background:var(--rig-panel3);font:var(--rig-fw-medium) var(--rig-fs-2xs)/var(--rig-lead-xs) var(--rig-num);font-variant-numeric:tabular-nums;color:var(--rig-dim);white-space:nowrap}
+button.rg-an-shift{cursor:pointer}
+.rig button.rg-an-shift.better{background:var(--rig-sky-bg);color:var(--rig-sky-t)}
+.rig button.rg-an-shift.worse{background:var(--rig-red-bg);color:var(--rig-red-t)}
+.rig button.rg-an-shift:hover{filter:brightness(1.15)}
+button.rg-an-shift:focus-visible{outline:var(--rig-focus-ring);outline-offset:var(--rig-focus-offset)}
+.rig .rg-an-shift.none{background:none;box-shadow:inset 0 0 0 1px var(--rig-line);color:var(--rig-mute)}
+.rg-an-mc .v1{font:var(--rig-fw-medium) var(--rig-fs-lg)/var(--rig-lead-sm) var(--rig-num);font-variant-numeric:tabular-nums}
+.rg-an-mc .v2{font:var(--rig-fw-regular) var(--rig-fs-xs)/var(--rig-lead-sm) var(--rig-sans);color:var(--rig-mute)}
 .rg-an-mc .v2.rg-sky{color:var(--rig-sky-t)}
-.rg-an-mc .v2.rg-acc{color:var(--rig-sel-t)}
+.rg-an-mc .v2.rg-acc{color:var(--rig-text)}
 .rg-an-mc.sep{box-shadow:inset 2px 0 0 var(--rig-dim)}
 .rg-an-mc.sep .v1{color:var(--rig-text)}
-.rg-an-mc.sep.on{box-shadow:inset 0 0 0 2px var(--rig-sel),inset var(--rig-s1) 0 0 var(--rig-dim)}
-.rg-an-sel{margin-top:var(--rig-s4);border-color:var(--rig-sel)}
+.rg-an-mc.sep.on{box-shadow:inset 0 0 0 2px var(--rig-sel-mark),inset var(--rig-s1) 0 0 var(--rig-dim)}
+.rg-an-sel{margin-top:var(--rig-s4);border-color:var(--rig-line3)}
 .rg-an-sel .rg-pnl-b{display:flex;flex-direction:column;gap:var(--rig-s4)}
 
 /* ---------- outcomes: per task, repeats in order */
 .rg-an-tlist{display:flex;flex-direction:column}
-.rg-an-trep{display:grid;grid-template-columns:minmax(8rem,13rem) fit-content(35rem) 4rem minmax(10rem,1fr);gap:var(--rig-s4);align-items:center;min-height:var(--rig-s7);padding:var(--rig-s2) var(--rig-s4);border-bottom:1px solid var(--rig-line)}
+/* one set of columns for every row (the ribbon takes the slack), so the counts and the chips line up down the list */
+.rg-an-trep{display:grid;grid-template-columns:minmax(9rem,14rem) minmax(0,1fr) 4rem minmax(10rem,15rem);gap:var(--rig-s4);align-items:center;min-height:var(--rig-s7);padding:var(--rig-s2) var(--rig-s4);border-bottom:1px solid var(--rig-line)}
+/* the head stays in view while the list scrolls under it, and says what each row's marks and count are of */
+.rg-an-thead{position:sticky;top:0;z-index:var(--rig-z-sticky);display:grid;grid-template-columns:minmax(8rem,13rem) minmax(0,1fr);gap:var(--rig-s4);padding:var(--rig-s2) var(--rig-s4);border-bottom:1px solid var(--rig-line);background:var(--rig-panel);color:var(--rig-mute);font:var(--rig-fw-medium) var(--rig-fs-2xs)/var(--rig-lead-xs) var(--rig-sans);border-radius:var(--rig-r-md) var(--rig-r-md) 0 0}
 .rg-an-trep:last-child{border-bottom:0}
-.rg-an-trep .rg-an-tname{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.rg-an-trep .rg-an-tname{min-width:0;line-height:var(--rig-lead-sm);overflow-wrap:break-word}
+.rg-an-chkm{overflow-wrap:break-word}
 .rg-an-tags{display:flex;flex-wrap:wrap;gap:var(--rig-s2);align-items:center;min-width:0}
 .rg-an-modes{gap:var(--rig-s2)}
 .rg-an-cnt{text-align:right;white-space:nowrap}
 @container (max-width:900px){
+  .rg-an-thead{grid-template-columns:minmax(0,1fr)}
   .rg-an-trep{grid-template-columns:minmax(0,1fr) auto;row-gap:var(--rig-s2);padding:var(--rig-s3) var(--rig-s4)}
   .rg-an-trep .rg-an-rib{grid-column:1/-1;grid-row:2}
   .rg-an-trep .rg-an-tags{grid-column:1/-1}
@@ -163,17 +267,19 @@ button.rg-an-nb{display:inline-flex;align-items:center;flex:none;min-height:var(
 /* ---------- repeat ribbon: one 32px square per attempt, 4px apart; each square's hit area takes half of
    the gap on every side, so the targets tile at 36px with no overlap and eight still fit a phone on one row.
    The cell size is declared on the ribbon and on the explorer row, whose ribbon column keeps eight on a line. */
-.rg-an-rib,.rg-an-trow{--rig-an-cell:calc(var(--rig-h-md) - var(--rig-s1))}
+.rg-an-rib,.rg-an-trow{--rig-an-cell:calc(var(--rig-h-md) - var(--rig-s1));--rig-an-cell-h:24px}
 .rg-an-rib{display:flex;flex-wrap:wrap;gap:var(--rig-s1);min-width:0}
-button.rg-an-c{display:inline-grid;place-items:center;width:var(--rig-an-cell);height:var(--rig-an-cell);padding:0;border:0;border-radius:var(--rig-r-xs);box-sizing:border-box;position:relative;font:var(--rig-fw-semi) var(--rig-fs-xs)/1 var(--rig-sans);cursor:pointer}
-button.rg-an-c::after{content:"";position:absolute;inset:calc(-1 * var(--rig-s0))}
-.rg-an-c.p{background:var(--rig-sky-bg2);color:var(--rig-sky-t);box-shadow:inset 0 -2px 0 var(--rig-sky)}
-.rg-an-c.f{background:var(--rig-red-bg);color:var(--rig-red-t);box-shadow:inset 0 -2px 0 var(--rig-red)}
-.rg-an-c.u{background:none;border:1px dashed var(--rig-unk);color:var(--rig-unk)}
-.rg-an-c:hover{outline:1px solid var(--rig-line3)}
+/* a run mark is a link to that run of its task (a real link, so it opens in a new tab too) */
+.rg-an-c{display:inline-grid;place-items:center;width:var(--rig-an-cell);height:var(--rig-an-cell-h);padding:0;border:0;border-radius:var(--rig-r-xs);box-sizing:border-box;position:relative;font:var(--rig-fw-medium) var(--rig-fs-2xs)/var(--rig-lead-xs) var(--rig-num);cursor:pointer;font-variant-numeric:tabular-nums}
+/* a 24px-high square keeps a 36px target: its hit area reaches into the row's padding */
+.rg-an-c::after{content:"";position:absolute;inset:-6px calc(-1 * var(--rig-s0))}
+/* each run is its status shape (StatusIcon), not a tinted box with a tick: a box reads as a checkbox */
+.rg-an-c{background:none;color:inherit;text-decoration:none}
+.rg-an-c .rg-st{width:16px;height:16px}
+.rg-an-c:hover{background:color-mix(in srgb,var(--rig-text) 6%,transparent)}
 .rg-an-c:focus-visible,.rg-an-c.cur{outline:var(--rig-focus-ring);outline-offset:1px;z-index:var(--rig-z-base)}
 .rg-an-rib.ribn{margin-top:var(--rig-s1)}
-.rg-an-rib.ribn span{width:var(--rig-an-cell);text-align:center;font:var(--rig-fw-medium) var(--rig-fs-2xs)/1 var(--rig-mono);color:var(--rig-mute)}
+.rg-an-rib.ribn span{width:var(--rig-an-cell);text-align:center;font:var(--rig-fw-medium) var(--rig-fs-2xs)/var(--rig-lead-xs) var(--rig-num);color:var(--rig-mute);font-variant-numeric:tabular-nums}
 
 /* ---------- comparison */
 .rg-an-drows{gap:var(--rig-s1)}
@@ -208,21 +314,20 @@ button.rg-an-c::after{content:"";position:absolute;inset:calc(-1 * var(--rig-s0)
 @container (max-width:900px){.rg-an-o2{grid-template-columns:minmax(0,1fr)}.rg-an-o2>.rg-an-2x2,.rg-an-o2>.rg-an-p{grid-column:1;width:100%}}
 @container (max-width:640px){.rg-stats.rg-an-j4{grid-template-columns:repeat(2,minmax(0,1fr))!important}.rg-an-j4 .rg-stat{border-bottom:0;padding-bottom:var(--rig-s3)}.rg-an-oracle{padding:var(--rig-s4)}}
 .rg-an-flags{gap:var(--rig-s3);max-width:56rem}
-.rg-an-flags .rg-note{margin:0;padding:var(--rig-s3) var(--rig-s4);font-size:var(--rig-fs-sm);line-height:var(--rig-lh-body)}
+.rg-an-flags .rg-note{margin:0;padding:var(--rig-s3) var(--rig-s4);font-size:var(--rig-fs-sm);line-height:var(--rig-lead-md)}
 
 /* ---------- experiment */
 .rg-an-ciw{min-width:10rem}
 
 /* ---------- report */
 .rg-an-report{max-width:68rem}
-.rg-an-report .rg-an-rh1{max-width:40ch;margin:var(--rig-s2) 0 var(--rig-s5);font-size:var(--rig-fs-2xl);font-weight:var(--rig-fw-medium);line-height:var(--rig-lh-snug)}
+.rg-an-report .rg-an-rh1{max-width:var(--rig-measure);margin:var(--rig-s1) 0 var(--rig-s4);color:var(--rig-text);font-size:var(--rig-fs-md);font-weight:var(--rig-fw-medium);line-height:var(--rig-lead-lg)}
 .rg-an-claims{gap:var(--rig-s3);max-width:56rem}
-.rg-an-claims .rg-note{margin:0;padding:var(--rig-s4);font-size:var(--rig-fs-sm);line-height:var(--rig-lh-body)}
+.rg-an-claims .rg-note{margin:0;padding:var(--rig-s4);font-size:var(--rig-fs-sm);line-height:var(--rig-lead-md)}
 .rg-an-lad{display:grid;grid-template-columns:repeat(auto-fill,minmax(7.5rem,1fr));gap:var(--rig-s3)}
 .rg-an-lad>div{display:flex;flex-direction:column;gap:var(--rig-s2);min-width:0;padding:var(--rig-s3);border:1px solid var(--rig-line);border-radius:var(--rig-r-md)}
 .rg-an-kv{max-width:56rem;gap:var(--rig-s2) var(--rig-s5)}
 .rg-an-kv dt,.rg-an-kv dd{font-size:var(--rig-fs-sm);overflow-wrap:anywhere}
-@container (max-width:640px){.rg-an-report .rg-an-rh1{font-size:var(--rig-fs-xl)}}
 
 /* ---------- setup: choices, then estimate + launch beside them (sticky) or under them */
 .rg-an-setup{display:grid;grid-template-columns:minmax(0,1fr) minmax(18rem,24rem);gap:var(--rig-s5);align-items:start}
@@ -235,11 +340,14 @@ button.rg-an-c::after{content:"";position:absolute;inset:calc(-1 * var(--rig-s0)
 .rg-an-chk+.rg-an-chk{box-shadow:inset 0 1px var(--rig-line)}
 .rg-an-chk:hover{background:var(--rig-panel2)}
 .rg-an-chk:has(input:focus-visible){outline:var(--rig-focus-ring);outline-offset:calc(-1 * var(--rig-focus-offset))}
-.rg-an-chk.top{align-items:flex-start}
+/* a model and its price share a baseline (centred, a two-line name would push the price off its first line) */
+.rig .rg-an-chk{align-items:baseline}
+.rig .rg-an-chk.top{align-items:flex-start}
 .rg-an-chk input{accent-color:var(--rig-sel);width:var(--rig-s4);height:var(--rig-s4);flex:none;margin:0}
 .rg-an-chk.top input{margin-top:var(--rig-s0)}
 .rg-an-chk input:focus-visible{outline:0}
 .rg-an-tchips{gap:var(--rig-s2);margin-bottom:var(--rig-s4)}
+.rg-an-suites{margin-bottom:var(--rig-s2)}
 .rg-tag.rg-an-tchip{height:auto;min-height:var(--rig-hit);padding:0 var(--rig-s3);border-radius:var(--rig-r-sm);cursor:pointer}
 .rg-tag.rg-an-tchip:hover{border-color:var(--rig-line3);color:var(--rig-text)}
 .rg-an-tchip:focus-within{outline:var(--rig-focus-ring);outline-offset:1px}
@@ -266,24 +374,27 @@ button.rg-an-c::after{content:"";position:absolute;inset:calc(-1 * var(--rig-s0)
 }
 .rg-an-segb{min-height:var(--rig-h-sm);padding:0 var(--rig-s3);border:0;border-left:1px solid var(--rig-line2);background:none;color:var(--rig-dim);white-space:nowrap;cursor:pointer}
 .rg-an-segb:hover{color:var(--rig-text);background:var(--rig-panel2)}
-.rg-an-trow{display:grid;grid-template-columns:minmax(10.5rem,1.1fr) minmax(0,1.5fr) 5.25rem 7rem 5.75rem 11rem;gap:var(--rig-s4);align-items:center;min-height:3.5rem;padding:var(--rig-s3) var(--rig-s4);border-bottom:1px solid var(--rig-line);min-width:0;box-sizing:border-box}
+/* the probe column holds its longest chip, "test tampering temptation", whole */
+.rg-an-trow{display:grid;grid-template-columns:minmax(10.5rem,1.1fr) minmax(0,1.5fr) 7.75rem 6rem 4.25rem 5.75rem 11rem;gap:var(--rig-s4);align-items:center;min-height:3.5rem;padding:var(--rig-s3) var(--rig-s4);border-bottom:1px solid var(--rig-line);min-width:0;box-sizing:border-box}
 .rg-an-trow:last-child{border-bottom:0}
 .rg-an-trow>*{min-width:0}
 .rg-an-trow:hover:not(.th){background:var(--rig-panel2)}
 .rg-an-trow.th{min-height:var(--rig-h-row);padding-block:var(--rig-s2);border-bottom-color:var(--rig-line2)}
-.rg-an-trow .t-cnt,.rg-an-trow .t-tok{font-variant-numeric:tabular-nums;white-space:nowrap}
+.rg-an-trow .t-cnt,.rg-an-trow .t-tok,.rg-an-trow .t-spread{font-variant-numeric:tabular-nums;white-space:nowrap}
+.rg-an-trow .t-spread .k{display:none}
+.rg-an-trow .t-tok .rg-tiny,.rg-an-trow .t-spread .rg-tiny{white-space:normal}
 .rg-an-trow .t-name{display:flex;flex-direction:column;gap:var(--rig-s1)}
 .rg-an-trow .t-name .rg-an-modes{margin-top:var(--rig-s1)}
 /* A long label ("cut off · no patch") plus its count must stay inside the name column: let the count
    wrap under the chip instead of running into the attempt squares at narrow widths. */
 .rg-an-trow .t-name .rg-an-modes,.rg-an-trow .t-name .rg-an-mode{flex-wrap:wrap;max-width:100%;min-width:0}
-.rg-an-trow .t-name .rg-fchip{max-width:100%;height:auto;min-height:20px;padding-block:2px;line-height:1.25;white-space:normal;overflow-wrap:anywhere;box-sizing:border-box}
+.rg-an-trow .t-name .rg-fchip{max-width:100%;height:auto;min-height:20px;padding-block:2px;line-height:var(--rig-lead-sm);white-space:normal;overflow-wrap:anywhere;box-sizing:border-box}
 .rg-an-tn{gap:var(--rig-s1) var(--rig-s2);flex-wrap:wrap}
 .rg-an-tn .rg-tlink{min-width:0;overflow-wrap:break-word}
 .rg-an-trow .t-pm{display:none}
 .rg-an-pager{gap:var(--rig-s2);padding:var(--rig-s3) var(--rig-s4);border-top:1px solid var(--rig-line)}
 @container (max-width:1200px){
-  .rg-an-trow{grid-template-columns:minmax(8rem,1fr) minmax(calc(8 * var(--rig-an-cell) + 7 * var(--rig-s1)),1.6fr) 5.25rem 5rem;column-gap:var(--rig-s3)}
+  .rg-an-trow{grid-template-columns:minmax(8rem,1fr) minmax(calc(8 * var(--rig-an-cell) + 7 * var(--rig-s1)),1.6fr) 7.25rem 5rem 3.75rem;column-gap:var(--rig-s3)}
   .rg-an-trow .t-tok,.rg-an-trow .t-probe{display:none}
   .rg-an-trow .t-pm{display:inline}
 }
@@ -291,6 +402,8 @@ button.rg-an-c::after{content:"";position:absolute;inset:calc(-1 * var(--rig-s0)
   .rg-an-trow{grid-template-columns:minmax(0,1fr) auto;row-gap:var(--rig-s2)}
   .rg-an-trow .t-name{grid-column:1/2}
   .rg-an-trow .t-cnt{grid-column:2;grid-row:1}
+  .rg-an-trow .t-spread{grid-column:1/-1}
+  .rg-an-trow .t-spread .k{display:inline}
   .rg-an-trow .t-rib,.rg-an-trow .t-bar{grid-column:1/-1}
   .rg-an-trow.th{display:none}
   .rg-an-main .rg-pnl-h .rg-lbl,.rg-an-xp .rg-pnl-h .rg-lbl{white-space:normal}
@@ -300,6 +413,8 @@ button.rg-an-c::after{content:"";position:absolute;inset:calc(-1 * var(--rig-s0)
 .rg-an-ft td{vertical-align:middle}
 .rg-an-ftn{color:var(--rig-text)}
 .rg-an-ftr{display:flex;align-items:center;gap:var(--rig-s2);min-width:0}
+/* a rate column reads from the right like every number column: bar, figure, then its count, flush right */
+.rg-num>.rg-an-ftr{justify-content:flex-end}
 .rg-an-ftr .rg-tiny{white-space:nowrap}
 .rg-an-rate{position:relative;flex:none;width:4.5rem;height:calc(var(--rig-s1) + var(--rig-s0));border-radius:var(--rig-r-full);background:var(--rig-panel3);overflow:hidden}
 .rg-an-rate>i{position:absolute;inset:0 auto 0 0;border-radius:var(--rig-r-full);background:var(--rig-dim)}
@@ -325,7 +440,8 @@ button.rg-an-c::after{content:"";position:absolute;inset:calc(-1 * var(--rig-s0)
 /* action patterns (features step, every dataset) */
 .rg-an-alpha{gap:var(--rig-s2);margin-bottom:var(--rig-s3)}
 .rg-an-alpha .rg-chip b,.rg-an-ftx .rg-chip b{color:var(--rig-text);font-weight:var(--rig-fw-semi)}
-.rg-an-seq{display:inline-block;max-width:44ch;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;vertical-align:bottom;color:var(--rig-text);letter-spacing:.04em}
+/* a step-letter sequence is a code, not a word: it wraps anywhere inside its cell */
+.rg-an-seq{word-break:break-all;color:var(--rig-text);letter-spacing:.04em}
 .rg-an-q{gap:var(--rig-s3);align-items:flex-end;margin-bottom:var(--rig-s3)}
 .rg-an-qf{flex:1 1 20rem;min-width:0}
 .rg-an-qf .rg-inp{width:100%}
@@ -333,16 +449,38 @@ button.rg-an-c::after{content:"";position:absolute;inset:calc(-1 * var(--rig-s0)
 .rg-an-qsk{margin-top:var(--rig-s4)}
 .rg-an-code{margin:var(--rig-s3) 0;--rig-max-h:20rem}
 
+/* ---------- the Family matrix seen whole: snug columns ('fit'), or one card per model ('cards') */
+.rg-an-cmx.fit th{padding:var(--rig-s2) var(--rig-s1)}
+.rg-an-cmx.fit th.corner,.rg-an-cmx.fit td.rh{padding-left:var(--rig-s2);padding-right:var(--rig-s2)}
+.rg-an-cmx.fit .rg-an-mname{white-space:normal;overflow-wrap:anywhere}
+.rg-an-cmx.fit .rg-an-colh{overflow-wrap:anywhere}
+.rg-an-fcards{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,17.5rem),1fr));gap:var(--rig-s3);margin:0;padding:0;list-style:none}
+.rg-an-fcard{min-width:0;border-radius:var(--rig-r-md);box-shadow:inset 0 0 0 1px var(--rig-line);background:var(--rig-panel);overflow:hidden}
+.rg-an-fcard>h3{margin:0;padding:var(--rig-s2) var(--rig-s3);border-bottom:1px solid var(--rig-line);background:var(--rig-panel2)}
+.rg-an-fcard.hot>h3{color:var(--rig-text)}
+.rg-an-frows{margin:0;padding:0;list-style:none}
+.rg-an-frow{display:grid;grid-template-columns:minmax(0,1fr) minmax(6.5rem,8rem);align-items:center;gap:var(--rig-s2);padding:var(--rig-s2) var(--rig-s3);border-top:1px solid var(--rig-line-soft)}
+.rg-an-frow:first-child{border-top:0}
+.rg-an-frow.sel{box-shadow:inset var(--rig-row-bar) 0 0 var(--rig-sel-mark)}
+.rig .rg-an-frow .rg-an-mc{all:unset;display:flex;flex-direction:column;gap:6px;min-width:0;cursor:pointer}
+.rig .rg-an-frow .rg-an-mc:focus-visible{outline:var(--rig-focus-ring);outline-offset:var(--rig-s1);border-radius:var(--rig-r-xs)}
+.rg-an-frow .rg-an-mc.empty{cursor:default;color:var(--rig-mute);font-size:var(--rig-fs-2xs)}
+.rg-an-frow .cv{display:flex;flex-wrap:wrap;align-items:baseline;justify-content:space-between;gap:0 6px}
+.rg-an-frow .cv .v1{color:var(--rig-text);font:var(--rig-fw-medium) var(--rig-fs-md)/var(--rig-lead-md) var(--rig-num);font-variant-numeric:tabular-nums;white-space:nowrap}
+.rg-an-frow .cv .v1 small{margin-left:1px;color:var(--rig-mute);font-size:var(--rig-fs-2xs);font-weight:var(--rig-fw-regular)}
+.rg-an-frow .cv .n{color:var(--rig-mute);font:var(--rig-fw-regular) var(--rig-fs-2xs)/var(--rig-lead-xs) var(--rig-num);font-variant-numeric:tabular-nums}
+.rg-an-frow .rg-an-mc.on .v1,.rg-an-frow .rg-an-mc.sel .v1{color:var(--rig-text)}
+
 /* ---------- recorded configuration panel (rig/FamilyConfigurations.jsx, under the family matrix) */
 .rg-an-config-anchor:focus{outline:0}
 .rg-an-config-anchor:focus-visible{outline:var(--rig-focus-ring);outline-offset:var(--rig-focus-offset)}
-.rg-an-config{margin-top:var(--rig-s5);padding:var(--rig-s5);font-size:var(--rig-fs-sm);line-height:var(--rig-lh-body);min-width:0}
+.rg-an-config{margin-top:var(--rig-s5);padding:var(--rig-s5);font-size:var(--rig-fs-sm);line-height:var(--rig-lead-md);min-width:0}
 .rg-an-config-head{display:flex;justify-content:space-between;gap:var(--rig-s4);align-items:flex-start;margin-bottom:var(--rig-s4)}
-.rg-an-config-head h2{margin:var(--rig-s1) 0;font:var(--rig-fw-medium) var(--rig-fs-lg)/var(--rig-lh-snug) var(--rig-mono);overflow-wrap:anywhere}
+.rg-an-config-head h2{margin:var(--rig-s1) 0;font:var(--rig-fw-bold) var(--rig-fs-lg)/var(--rig-lead-lg) var(--rig-num);overflow-wrap:anywhere;font-variant-numeric:tabular-nums}
 .rg-an-config-head p{margin:0;color:var(--rig-dim);overflow-wrap:anywhere}
 .rg-an-config-head>.rg-small{color:var(--rig-dim);text-align:right}
 .rg-an-config-fields{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:var(--rig-s4);margin:var(--rig-s4) 0}
-.rg-an-config dt{color:var(--rig-mute);font-size:var(--rig-fs-2xs);line-height:var(--rig-lh-body);margin-bottom:var(--rig-s1)}
+.rg-an-config dt{color:var(--rig-mute);font-size:var(--rig-fs-2xs);line-height:var(--rig-lead-sm);margin-bottom:var(--rig-s1)}
 .rg-an-config dd{margin:0;color:var(--rig-text);overflow-wrap:anywhere}
 .rg-an-config-fields>div{min-width:0}
 .rg-an-config h3{font-size:var(--rig-fs-xs);font-weight:var(--rig-fw-medium);color:var(--rig-dim);margin:0 0 var(--rig-s2)}
@@ -354,7 +492,7 @@ button.rg-an-c::after{content:"";position:absolute;inset:calc(-1 * var(--rig-s0)
 .rg-an-config summary:focus-visible{outline:var(--rig-focus-ring);outline-offset:var(--rig-focus-offset)}
 .rg-an-config summary span{margin-left:var(--rig-s2);color:var(--rig-dim);font-size:var(--rig-fs-2xs)}
 .rg-an-config-prompt,.rg-an-config-provenance{border-top:1px solid var(--rig-line);padding-block:var(--rig-s1)}
-.rg-an-config pre{white-space:pre-wrap;overflow-wrap:anywhere;max-height:22.5rem;overflow:auto;background:var(--rig-panel2);padding:var(--rig-s4);border-radius:var(--rig-r-md);font:var(--rig-fs-xs)/var(--rig-lh-code) var(--rig-mono);margin:var(--rig-s2) 0}
+.rg-an-config pre{white-space:pre-wrap;overflow-wrap:anywhere;max-height:22.5rem;overflow:auto;background:var(--rig-panel2);padding:var(--rig-s4);border-radius:var(--rig-r-md);font:var(--rig-fs-xs)/var(--rig-lead-md) var(--rig-mono);margin:var(--rig-s2) 0}
 .rg-an-config-provenance dl{display:grid;gap:var(--rig-s3)}
 .rg-an-config-diff{padding-block:var(--rig-s3);border-top:1px solid var(--rig-line)}
 .rg-an-config-diff b{font-size:var(--rig-fs-xs);font-weight:var(--rig-fw-medium);color:var(--rig-dim)}
@@ -362,7 +500,7 @@ button.rg-an-c::after{content:"";position:absolute;inset:calc(-1 * var(--rig-s0)
 .rg-an-config-diff p{margin:var(--rig-s2) 0;color:var(--rig-dim)}
 .rg-an-config-warning{padding:var(--rig-s3);border-left:2px solid var(--rig-amb);background:var(--rig-panel2);color:var(--rig-dim)}
 .rg-an-config-versions{margin:var(--rig-s4) 0}
-.rg-an-config-versions .rg-btn[aria-pressed=true]{border-color:var(--rig-sel);color:var(--rig-sel-t)}
+.rg-an-config-versions .rg-btn[aria-pressed=true]{border-color:var(--rig-sel-mark);color:var(--rig-text)}
 .rg-an-config-footer{display:flex;justify-content:space-between;flex-wrap:wrap;gap:var(--rig-s3);border-top:1px solid var(--rig-line);padding-top:var(--rig-s3);margin-top:var(--rig-s2);color:var(--rig-dim);font-size:var(--rig-fs-xs)}
 @container (max-width:900px){.rg-an-config-fields{grid-template-columns:repeat(3,minmax(0,1fr))}}
 @container (max-width:640px){
@@ -372,3 +510,86 @@ button.rg-an-c::after{content:"";position:absolute;inset:calc(-1 * var(--rig-s0)
   .rg-an-config-fields{grid-template-columns:repeat(2,minmax(0,1fr))}
   .rg-an-config-fields dd{font-size:var(--rig-fs-xs)}
 }
+
+/* ---------- Studio Graphite overrides for every step: 8px panels with 40px heads and 16px bodies, figures in
+   20 / 16px mono, the Δ and condition grids drawn like the condition matrix, the pass@k ladder as a strip */
+.rg-an-main>.rg-ph .rg-ph-sub,.rg-an-xp>.rg-ph .rg-ph-sub{max-width:none}
+.rg-an-main .rg-pnl,.rg-an-xp .rg-pnl{border-radius:var(--rig-r-md)}
+.rg-an-main .rg-pnl-h,.rg-an-xp .rg-pnl-h{min-height:40px;padding:0 var(--rig-s4)}
+.rg-an-main .rg-pnl-b,.rg-an-xp .rg-pnl-b{padding:var(--rig-s4)}
+.rg-an-kpis .rg-kpi{padding:var(--rig-s3) var(--rig-s4)}
+.rg-an-kpis .rg-kpi-v{font-size:var(--rig-fs-fig-sm);letter-spacing:-.01em}
+.rg-an-kpis .rg-kpi.rg-lead .rg-kpi-v{font-size:var(--rig-fs-fig-md)}
+.rg-an-kpis:has(>.rg-lead)>.rg-kpi:not(.rg-lead)>.rg-kpi-v{padding-top:calc(var(--rig-fs-fig-md) - var(--rig-fs-fig-sm))}
+.rg-an-kpis .rg-kpi .rg-cibar{margin:var(--rig-s1) 0}
+/* the headline's interval: the bar to pass@1 and its 95% whisker (RateWithCI) */
+.rg-an-kpis .rg-kpi .rg-an-ratebar{flex:none;width:100%;max-width:16rem;margin:var(--rig-s3) 0 var(--rig-s2)}
+.rg-an-trep{min-height:40px;padding-block:6px}
+/* Every row is laid out at its real height (no content-visibility): a row whose runs wrap is 65-149px, so a guessed
+   height moves the rows below under the pointer after a jump down the list. 200 rows lay out in about 60 ms. */
+/* Δ-matrix and condition grid */
+.rg-an-main .rg-pnl.rg-an-mxp{border:0;box-shadow:inset 0 0 0 1px var(--rig-line);overflow:hidden}
+.rg-an-mx{border-collapse:separate;border-spacing:0}
+.rig .rg-an-mx thead th{height:36px;padding:var(--rig-s2) var(--rig-s3);border-bottom:1px solid var(--rig-line);background:var(--rig-panel2);color:var(--rig-dim);vertical-align:middle}
+.rig .rg-an-mx thead th:first-child{color:var(--rig-mute)}
+.rg-an-hn{font:var(--rig-fw-regular) var(--rig-fs-xs)/var(--rig-lead-xs) var(--rig-num);font-variant-numeric:tabular-nums}
+.rig .rg-sticky-col .rg-an-mx thead th:first-child{background:var(--rig-panel2)}
+.rg-an-mx td{border:0;border-left:1px solid var(--rig-line-soft);border-bottom:1px solid var(--rig-line-soft)}
+.rg-an-mx tbody tr:last-child td{border-bottom:0}
+.rg-an-mx td.rh{border-left:0;padding:var(--rig-s3);vertical-align:middle}
+.rg-an-mx .rg-an-mc{gap:6px;min-height:0;padding:10px var(--rig-s3);background:none}
+.rg-an-mx .rg-an-mc:hover{background:var(--rig-panel2)}
+/* a Δ cell reads as a tile at rest (a separating one keeps its bar, the chosen one its ring) */
+.rg-an-mx .rg-an-mc:not(.sep):not(.on):not(.empty){box-shadow:inset 0 0 0 1px var(--rig-line-soft)}
+.rg-an-mx .rg-an-mc:not(.sep):not(.on):not(.empty):hover{box-shadow:inset 0 0 0 1px var(--rig-line3)}
+.rg-an-mx .rg-an-mc .v1{font-size:var(--rig-fs-md);line-height:var(--rig-lead-md)}
+.rg-an-mx .rg-an-mc .v2{font-size:var(--rig-fs-2xs);line-height:var(--rig-lead-xs)}
+.rg-an-mx .rg-an-mc.empty{background:none;color:var(--rig-mute)}
+.rg-an-mx td>.rg-an-shifts{padding:0 var(--rig-s3) 10px}
+.rg-an-mx .rg-an-mc.on{background:var(--rig-sel-bg);box-shadow:inset 0 0 0 1.5px var(--rig-sel-mark)}
+/* the pass@k ladder: figures in a row with hairlines between, no boxes */
+.rg-an-lad{display:flex;flex-wrap:wrap;gap:var(--rig-s3) 0}
+.rg-an-lad>div{flex:0 0 auto;gap:2px;min-width:5.5rem;padding:0 var(--rig-s4);border:0;border-left:1px solid var(--rig-line);border-radius:0}
+.rg-an-lad>div:first-child{padding-left:0;border-left:0}
+.rg-an-lad .rg-lbl{font-size:var(--rig-fs-2xs)}
+.rig .rg-an-lad .rg-fig{font-size:var(--rig-fs-md)}
+/* run setup: denser choice rows */
+.rg-an-chk{min-height:36px;padding:6px var(--rig-s2)}
+.rg-an-setup{gap:var(--rig-s4)}
+.rg-an-setmain,.rg-an-setside{gap:var(--rig-s4)}
+.rg-tag.rg-an-tchip{min-height:28px;padding:0 10px;border-radius:var(--rig-r-sm);font-family:var(--rig-num);font-variant-numeric:tabular-nums}
+.rig .rg-an-tchip.on{background:var(--rig-sel-bg);border-color:var(--rig-sel-edge);color:var(--rig-text)}
+/* judge: the four oracle figures */
+.rg-an-oracle{padding:var(--rig-s4)}
+.rig .rg-an-j4 .rg-fig{font-size:var(--rig-fs-fig-md)}
+/* notes in a step read like callouts: a soft frame, the tone in the glyph and a 2px edge */
+.rg-an-main .rg-note,.rg-an-xp .rg-note{border-radius:var(--rig-r-md)}
+/* the answer reads first; its "i" sits right after it */
+.rg-an-ans>.rg-an-lead{flex:0 1 auto}
+.rg-an-ans>.rg-an-acts{margin-left:auto}
+.rg-an-constants{margin:0 0 var(--rig-s2);color:var(--rig-mute);font:var(--rig-fw-regular) var(--rig-fs-xs)/var(--rig-lead-sm) var(--rig-sans)}
+/* an open slide-over covers the matrix's right edge: the matrix can scroll its last columns clear of it */
+.rg-al[data-insp="slide-over"] .rg-an-cmxp .rg-scrollx-v{padding-right:328px}
+.rig .rg-an-mc.sel{box-shadow:inset 0 0 0 2px var(--rig-sel-mark);background:var(--rig-sel-bg)}
+.rg-an-cmx th.sel{box-shadow:inset 0 -2px 0 var(--rig-sel-mark)}
+.rig .rg-an-cmx button.rg-an-mc{box-sizing:border-box;width:100%;min-height:66px;padding:10px 10px var(--rig-s2);border-radius:var(--rig-r-xs);box-shadow:inset 0 0 0 1px var(--rig-line-soft)}
+.rig .rg-an-cmx button.rg-an-mc:hover{box-shadow:inset 0 0 0 1px var(--rig-line3)}
+.rig .rg-an-cmx button.rg-an-mc.sel{box-shadow:inset 0 0 0 2px var(--rig-sel-mark);background:var(--rig-sel-bg)}
+
+/* the family matrix: each cell's figure right-aligned in tabular digits, under a right-aligned harness name */
+.rig .rg-an-cmx td{text-align:right;font-variant-numeric:tabular-nums}
+.rig .rg-an-cmx thead th:not(:first-child){text-align:right}
+.rig .rg-an-cmx button.rg-an-mc{text-align:right}
+.rig .rg-an-cmx button.rg-an-mc .cv{align-self:stretch;justify-content:flex-end}
+/* a one-model Model filter is inert and says why; the flag mark on an integrity card is a status
+   mark, not a dismiss button; the task set the plan holds reads as selected; a failure mode that every task shows says so */
+.rg-an-one{gap:var(--rig-s2);align-items:center}
+.rg-an-flagmark{display:inline-flex;flex:none;align-items:center;padding-top:2px}
+.rg-an-suites .rg-btn[aria-pressed=true]{border-color:var(--rig-sel-edge);background:var(--rig-sel-bg);color:var(--rig-text)}
+.rg-an-modeall{margin:0 0 var(--rig-s3)}
+/* a run mark on a touch screen keeps its drawn size and grows the shared hit area (rig.css) */
+@media (pointer:coarse){.rg-an-c::after{inset:calc((var(--rig-an-cell) - var(--rig-hit)) / 2)}}
+/* a control with nothing to do (Run query on the pattern already shown, a jump to a section already in view) takes
+   the one disabled look (feel.css), so it reads as inert; its hint says why */
+.rig .rg-btn[data-here]:is([data-el~="run-query"],[data-el^="jump-"]),.rig .rg-btn[data-here]:is([data-el~="run-query"],[data-el^="jump-"]):hover{background:var(--rig-panel2);border-color:var(--rig-line);color:var(--rig-mute);filter:none}
+.rig .rg-btn.pri[data-here][data-el~="run-query"],.rig .rg-btn.pri[data-here][data-el~="run-query"]:hover{background:var(--rig-panel3);border-color:var(--rig-line2)}

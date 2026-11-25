@@ -4,7 +4,7 @@ import { prepareHarnessJSON, recordedHarnessSnapshot } from './harness-json'
 import './harness-json.css'
 
 /** Every document is the complete source object, not a table's selected fields. */
-export function HarnessJson({ documents = [], source, description, identity, loading = false, error, onRetry, title = 'Full harness JSON', missing = 'No harness JSON was recorded. A current preset is not substituted.' }) {
+export function HarnessJson({ documents = [], source, description, identity, loading = false, error, errorText = 'Harness JSON could not be loaded.', onRetry, title = 'Full harness JSON', missing = 'No harness JSON was recorded. A current preset is not substituted.' }) {
   const id = useId()
   const [selected, setSelected] = useState('')
   const [open, setOpen] = useState(false)
@@ -40,10 +40,10 @@ export function HarnessJson({ documents = [], source, description, identity, loa
     </div>
     {description && <p className="rg-hjson-description">{description}</p>}
     {identity && <p className="rg-hjson-identity">{identity}</p>}
-    {loading ? <p role="status">Loading the harness JSON…</p> : error ? <p role="status">Harness JSON could not be loaded.{onRetry && <> <button type="button" className="rg-btn" onClick={onRetry}>Retry harness JSON</button></>}</p>
+    {loading ? <p role="status">Loading the harness JSON…</p> : error ? <p role="status">{errorText}{onRetry && <> <button type="button" className="rg-btn" onClick={onRetry}>Retry harness JSON</button></>}</p>
       : content.error ? <p role="status">{content.error}</p> : !document ? <p className="rg-hjson-missing">{missing}</p> : null}
     {open && available && <div id={id + '-body'}>
-      {options.length > 1 && <div className="rg-hjson-documents" role="group" aria-label="JSON documents">{options.map((doc) => <button type="button" className="rg-btn" key={doc.id} aria-pressed={doc.id === document.id} onClick={() => setSelected(doc.id)}>{doc.label}</button>)}</div>}
+      {options.length > 1 && <div className="rg-hjson-documents" role="group" aria-label="JSON documents">{options.map((doc) => { const on = doc.id === document.id; return <button type="button" className="rg-btn" key={doc.id} aria-pressed={on} aria-disabled={on || undefined} data-hint={on ? `Showing ${doc.label}` : undefined} onClick={() => { if (!on) setSelected(doc.id) }}>{doc.label}</button> })}</div>}
       <div className="rg-hjson-file"><span>{document.filename || 'harness.json'} · {new TextEncoder().encode(content.json).length.toLocaleString()} bytes</span><label><input type="checkbox" checked={wrap} onChange={(event) => setWrap(event.target.checked)} />Wrap lines</label></div>
       {content.redactions > 0 && <p className="rg-hjson-redaction">Credential-shaped values were redacted in this view and its copy/download. Configuration fields are retained.</p>}
       <pre className={wrap ? 'wrap' : ''} tabIndex={0} role="textbox" aria-readonly="true" aria-multiline="true" aria-label="Harness JSON source">{content.json}</pre>
@@ -52,10 +52,10 @@ export function HarnessJson({ documents = [], source, description, identity, loa
   </section>
 }
 
-export function RecordedHarnessJson({ run, detail, loading, error, onRetry }) {
+export function RecordedHarnessJson({ run, detail, loading, error, errorText, onRetry }) {
   const snapshot = recordedHarnessSnapshot(run, detail)
   const reconstructed = snapshot.source === 'Importer reconstruction' || snapshot.source === 'Captured session'
-  return <HarnessJson key={run.id} source={snapshot.source} loading={loading} error={error} onRetry={onRetry}
+  return <HarnessJson key={run.id} source={snapshot.source} loading={loading} error={error} errorText={errorText} onRetry={onRetry}
     identity={`Run ${run.id}${snapshot.hash ? ' · harness hash ' + snapshot.hash : ''}`}
     description={reconstructed ? 'Every supplied field is shown. Imported or captured metadata can be partial; it does not recover unrecorded native settings.' : 'Every field from this run’s start-of-run harness snapshot. It is independent of the current preset and editor draft.'}
     documents={[{ id: 'harness', label: 'Recorded harness', value: snapshot.config, filename: `harness-${run.id}.json` }]} />

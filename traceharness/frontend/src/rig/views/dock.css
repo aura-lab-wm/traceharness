@@ -14,21 +14,20 @@
 
 /* the model picker inside Buddy */
 .rig .pw-buddy-model-picker{position:relative;min-width:0}
-.rig .pw-buddy-model-trigger{display:flex;align-items:center;gap:var(--rig-s2);max-width:16.25rem;min-height:var(--rig-h-ctl);padding:0 var(--rig-s3);border:1px solid var(--rig-line2);border-radius:var(--rig-r-md);background:var(--rig-panel);color:var(--rig-dim);font:var(--rig-fw-medium) var(--rig-fs-sm)/1 var(--rig-sans)}
+.rig .pw-buddy-model-trigger{display:flex;align-items:center;gap:var(--rig-s2);max-width:16.25rem;min-height:var(--rig-h-ctl);padding:0 var(--rig-s3);border:1px solid var(--rig-line2);border-radius:var(--rig-r-md);background:var(--rig-panel);color:var(--rig-dim);font:var(--rig-fw-medium) var(--rig-fs-sm)/var(--rig-lead-xs) var(--rig-sans)}
 .rig .pw-buddy-model-trigger>span{overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
 .rig .pw-buddy-model-trigger:hover{border-color:var(--rig-line3);color:var(--rig-text)}
 .rig .pw-buddy-model-trigger svg{width:var(--rig-s4);height:var(--rig-s4);stroke:currentColor;fill:none;flex:none}
 .rig .pw-buddy-model-menu{position:absolute;z-index:var(--rig-z-dropdown);left:0;bottom:calc(100% + var(--rig-s1));width:min(26.25rem,calc(100vw - 2 * var(--rig-s4)));max-height:min(26.25rem,60vh);display:flex;flex-direction:column;gap:var(--rig-s2);padding:var(--rig-s3);border:1px solid var(--rig-line2);border-radius:var(--rig-r-lg);background:var(--rig-panel);box-shadow:var(--rig-shadow);font-size:var(--rig-fs-xs);overflow:auto;overscroll-behavior:contain;color:var(--rig-text)}
 .rig .pw-buddy-model-menu header{display:flex;flex-direction:column;gap:var(--rig-s0)}
-.rig .pw-buddy-model-menu small,.rig .pw-buddy-model-menu footer,.rig .pw-buddy-model-menu p{color:var(--rig-mute);font-size:var(--rig-fs-xs);line-height:var(--rig-lh-snug)}
-.rig .pw-buddy-model-menu input{width:100%;height:var(--rig-h-ctl);padding:0 var(--rig-s3);border:1px solid var(--rig-line2);border-radius:var(--rig-r-md);background:var(--rig-bg);color:var(--rig-text);font:var(--rig-fs-sm)/1 var(--rig-sans)}
+.rig .pw-buddy-model-menu small,.rig .pw-buddy-model-menu footer,.rig .pw-buddy-model-menu p{color:var(--rig-mute);font-size:var(--rig-fs-xs);line-height:var(--rig-lead-sm)}
+.rig .pw-buddy-model-menu input{width:100%;height:var(--rig-h-ctl);padding:0 var(--rig-s3);border:1px solid var(--rig-line2);border-radius:var(--rig-r-md);background:var(--rig-bg);color:var(--rig-text);font:var(--rig-fs-sm)/var(--rig-lead-xs) var(--rig-sans)}
 .rig .pw-buddy-model-menu [role=listbox]{overflow:auto;min-height:0}
 .rig .pw-buddy-model-menu [role=option]{display:flex;align-items:center;justify-content:space-between;width:100%;min-height:var(--rig-h-ctl);padding:var(--rig-s1) var(--rig-s2);border:0;border-radius:var(--rig-r-sm);background:none;color:var(--rig-text);text-align:left}
 .rig .pw-buddy-model-menu [role=option]>span{display:flex;flex-direction:column;gap:var(--rig-s0);min-width:0;overflow-wrap:anywhere}
 .rig .pw-buddy-model-menu [role=option]:hover,.rig .pw-buddy-model-menu [role=option]:focus{background:var(--rig-panel2)}
-.rig .pw-buddy-model-menu [role=option][aria-selected=true]{background:var(--rig-sel-bg2);color:var(--rig-sel-t)}
+.rig .pw-buddy-model-menu [role=option][aria-selected=true]{background:var(--rig-sel-bg);color:var(--rig-text)}
 .rig .pw-buddy-model-menu button{min-height:var(--rig-h-sm);padding:var(--rig-s1) var(--rig-s2);border:1px solid var(--rig-line2);border-radius:var(--rig-r-md);background:none;color:var(--rig-text)}
-.rig .pw-buddy-model-menu a{color:var(--rig-sel-t)}
-.rig .pw-buddy-model-group-title{padding:var(--rig-s1) var(--rig-s2);color:var(--rig-mute);font:var(--rig-fw-medium) var(--rig-fs-2xs)/var(--rig-lh-tight) var(--rig-mono);letter-spacing:var(--rig-track-caps);text-transform:uppercase}
+.rig .pw-buddy-model-group-title{padding:var(--rig-s1) var(--rig-s2);color:var(--rig-mute);font:var(--rig-fw-medium) var(--rig-fs-2xs)/var(--rig-lead-xs) var(--rig-sans);letter-spacing:0}
 /* inside a narrow panel the model menu fits the panel, not a fixed 420px */
 @container rgdockb (max-width:760px){.rig .pw-buddy-model-menu{width:min(26.25rem,calc(100cqw - 2 * var(--rig-s4)))}}

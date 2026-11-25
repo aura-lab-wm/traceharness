@@ -1,0 +1,487 @@
+{
+ "id": "how-swe-bench-grades",
+ "number": 7,
+ "part": 3,
+ "kind": "concept",
+ "checked": "2026-11-23",
+ "title": "How SWE-bench and SWE-bench Verified grade a run",
+ "question": "When a benchmark says an agent resolved an issue, what exactly was checked?",
+ "what_you_learn": [
+  "What FAIL_TO_PASS and PASS_TO_PASS tests are, and why a patch needs both to pass.",
+  "Why SWE-bench Verified was made, and what it does not change.",
+  "How an agent can reach the fix without working it out, and what a resolved verdict therefore tells you."
+ ],
+ "prerequisites": {
+  "read": [
+   "reading-a-trajectory",
+   "outcome-labels"
+  ],
+  "know": [
+   "What a patch is: the change a run made to the code, written as a diff."
+  ]
+ },
+ "sections": [
+  {
+   "heading": "A task, a patch and two sets of tests",
+   "body": [
+    "SWE-bench (Jimenez et al., ICLR 2024) turns real GitHub issues into tasks: 2,294 of them, from 12 Python repositories. Each task gives the agent the issue text and the repository as it was just before the real fix. The agent edits files, and its answer is a patch: the list of changes it made, written as a diff.",
+    "Grading uses tests from the pull request that fixed the issue. FAIL_TO_PASS tests failed before that fix and pass after it, so they check that the issue is fixed. PASS_TO_PASS tests passed both before and after, so they check that nothing else broke. A patch resolves the task only if it applies cleanly and both sets pass. The agent never sees these tests.",
+    "A small example. Suppose the issue says a function returns the wrong value for an empty list. The fix's pull request adds a test that calls it with an empty list. That test fails on the old code and passes on the new, so it becomes a FAIL_TO_PASS test. The project's older tests for normal lists passed before and must still pass, so they become PASS_TO_PASS tests. A patch that special-cases the empty list but breaks normal lists fails the second set."
+   ]
+  },
+  {
+   "heading": "Graded inside a container",
+   "body": [
+    "The grader applies the patch and runs the tests inside a Docker container. A container is a packaged copy of the operating system, the Python version and the libraries the project needs at that commit. Every patch for a task is tested in the same container, so the result does not depend on whose computer ran it. This evaluation harness is not the agent's harness; the article on what a harness is covers that one.",
+    "For a batch of patches, the evaluation guide reports a few counts. Resolved means the required tests passed, and unresolved means the tests ran and did not pass. Empty patches had nothing to run. Errors gave no result at all, for example a patch that did not apply or a container that did not start. The article on outcome labels lines these up with TraceHarness's labels.",
+    "In TraceHarness's SWE-rebench subset, 1,092 of the 2,174 runs are resolved, 1,079 are unresolved and 3 are empty patches. None is an error: the source kept a verdict for every run."
+   ]
+  },
+  {
+   "heading": "Why SWE-bench Verified exists",
+   "body": [
+    "In 2024 OpenAI, working with the SWE-bench authors, had professional developers annotate 1,699 randomly drawn samples of the 2,294, with 3 annotators per sample. 38.3% of the samples were flagged for an underspecified issue, one that does not say clearly enough what should change. 61.1% were flagged for unit tests that may reject a valid solution. Some environments also failed to set up, so the tests failed whatever the patch. In all, 68.3% of the samples were filtered out, and 500 of the rest became SWE-bench Verified (the screened 500-task subset).",
+    "Verified removes bad tasks. It does not change how the remaining ones are graded: the tests are still those of the original pull request, and the issues and their fixes are still public."
+   ]
+  },
+  {
+   "heading": "Can the agent look up the fix?",
+   "body": [
+    "Every SWE-bench fix was merged upstream. If the container still holds the repository's later commits, or the agent can reach the internet, it can find the answer instead of working it out. In 2025, jacobkahn showed on the SWE-bench issue tracker (issue #465) an agent running git log --all and reading future commits that fix its issue. The report proposes removing that future history from the images.",
+    "Ludwig et al. (2026, preprint) audited three open models on two other benchmarks, SWE-bench Multilingual and DeepSWE. With network access on, shortcut attempts appeared in 60.7% to 90.1% and 55.5% to 89.1% of trajectories. Examples were fetching upstream code, reading git history or recalling memorised code. Turning the network off did not stop the attempts. The article on traps in the task goes further.",
+    "The issue text can leak too: some issues already suggest a fix, and the agent only has to apply it. The worked example below has one. SWE-rebench (Badertdinov et al., 2025) attacks a related problem by collecting fresh tasks all the time, so models are less likely to have seen the fix while they were trained.",
+    "So a resolved verdict says the required tests passed. It does not say how the agent got there. For that, read the trajectory."
+   ]
+  },
+  {
+   "heading": "What TraceHarness shows",
+   "body": [
+    "For an imported SWE-bench-style run, the hidden oracle is the source's own verdict, for example its resolved column. The article on where runs come from shows what else an import keeps.",
+    "The lab's own tasks carry three suites instead. Visible is the suite the agent can see, hidden is the default grade, and strengthened is the hidden suite plus extra tests.",
+    "The visible suite can be weak in the way a PASS_TO_PASS test is weak. A test that already passes before the fix cannot tell you the bug is gone. The challenge shows a task where that happens."
+   ]
+  }
+ ],
+ "figures": [
+  {
+   "id": "a4-grid",
+   "after_section": 0,
+   "kind": "grade_sets",
+   "data_file": "a07-counts",
+   "title": "Two sets of tests decide the verdict",
+   "caption": "What each test set must do. A patch resolves the task only if every test in both rows passes after the patch. Pick a patch to see its verdict; the tests are the empty-list example above. The tabs show where each benchmark's tasks come from: Verified annotated 1,699 of the 2,294 tasks, filtered out 68.3% and kept 500 of the rest. TraceHarness's SWE-rebench subset holds 200 tasks and 2,174 runs.",
+   "data_note": "the empty-list example; Verified screening as OpenAI reports it; swe_rebench_openhands_qwen3coder, 200 tasks, 2,174 runs",
+   "data": {
+    "verified": [
+     [
+      "2,294 tasks",
+      "SWE-bench, from 12 Python repositories"
+     ],
+     [
+      "1,699 annotated",
+      "3 annotators per sample"
+     ],
+     [
+      "68.3% filtered out",
+      "38.3% underspecified, 61.1% tests that may reject a valid fix"
+     ],
+     [
+      "500 kept",
+      "SWE-bench Verified"
+     ]
+    ],
+    "verified_note": "Verified removes bad tasks. The 500 it keeps are graded exactly this way, with the tests of the original pull request.",
+    "rebench_note": "SWE-rebench tasks carry the same two lists. The source ran them and kept a resolved column, which TraceHarness shows as the hidden grade.",
+    "tests": {
+     "f2p": [
+      "test_empty_list"
+     ],
+     "p2p": [
+      "test_one_item",
+      "test_many_items"
+     ]
+    },
+    "patches": [
+     {
+      "id": "fix",
+      "name": "The real fix",
+      "f2p": "P",
+      "p2p": "PP",
+      "verdict": "resolved"
+     },
+     {
+      "id": "half",
+      "name": "Fixes the empty list, breaks normal lists",
+      "f2p": "P",
+      "p2p": "PF",
+      "verdict": "unresolved"
+     },
+     {
+      "id": "empty",
+      "name": "Empty patch",
+      "f2p": "-",
+      "p2p": "--",
+      "verdict": "empty"
+     },
+     {
+      "id": "noapply",
+      "name": "Does not apply",
+      "f2p": "-",
+      "p2p": "--",
+      "verdict": "error"
+     }
+    ]
+   },
+   "headline": [
+    {
+     "key": "reb_tasks",
+     "as_written": "200 tasks"
+    },
+    {
+     "key": "reb_runs",
+     "as_written": "2,174 runs"
+    }
+   ]
+  },
+  {
+   "id": "a07-counts",
+   "after_section": 1,
+   "kind": "grade_counts",
+   "data_file": "a07-counts",
+   "title": "The four counts of a graded batch",
+   "caption": "The four counts of the evaluation guide over TraceHarness's SWE-rebench subset: 1,092 resolved, 1,079 unresolved, 3 empty patches and 0 errors of 2,174 runs. The second tab is gemini-2.5-flash-lite under baseline in study_v04, graded by its hidden tests: 75 resolved, 20 unresolved and 25 empty patches of 120. Under each count is the outcome label it lines up with.",
+   "data_note": "swe_rebench_openhands_qwen3coder, 2,174 runs; study_v04, 120 runs",
+   "headline": [
+    {
+     "key": "reb_resolved",
+     "as_written": "1,092"
+    },
+    {
+     "key": "reb_unresolved",
+     "as_written": "1,079"
+    },
+    {
+     "key": "reb_runs",
+     "as_written": "2,174"
+    },
+    {
+     "key": "study_resolved",
+     "as_written": "75"
+    },
+    {
+     "key": "study_unresolved",
+     "as_written": "20"
+    },
+    {
+     "key": "study_empty",
+     "as_written": "25"
+    }
+   ]
+  },
+  {
+   "id": "a07-csaps",
+   "after_section": 4,
+   "kind": "patch_runs",
+   "data_file": "a07-csaps",
+   "title": "Five resolved runs, five different patches",
+   "caption": "The five runs of espdev__csaps-3, each bar its patch in bytes: the change to csaps.py and any other file the run added. All five are resolved, after 27 to 52 model calls. Run 2's 9,013 bytes are mostly two scratch scripts; Run 3's 419 bytes are csaps.py alone. Every run changed the if-condition the issue blames.",
+   "data_note": "swe_rebench_openhands_qwen3coder, task espdev__csaps-3, 5 runs, patch.diff",
+   "headline": [
+    {
+     "key": "calls",
+     "as_written": "27 to 52"
+    },
+    {
+     "key": "bytes_2",
+     "as_written": "9,013"
+    },
+    {
+     "key": "bytes_3",
+     "as_written": "419"
+    }
+   ]
+  }
+ ],
+ "worked_example": {
+  "title": "Five resolved runs of one SWE-rebench task",
+  "dataset": {
+   "name": "swe_rebench_openhands_qwen3coder",
+   "what": "A 200-task, 2,174-run subset of nebius/SWE-rebench-openhands-trajectories, drawn with a fixed seed from the tasks with at least 3 runs. The runs are OpenHands (an open-source agent harness for coding tasks), version 0.54.0, with Qwen3-Coder-480B-A35B-Instruct on SWE-rebench tasks.",
+   "credit": "Trofimova, Shevtsov, Badertdinov, Pyaev, Karasik, Golubev (Nebius), SWE-rebench-OpenHands-Trajectories, 2025, CC BY 4.0, https://huggingface.co/datasets/nebius/SWE-rebench-openhands-trajectories"
+  },
+  "open": [
+   "Click the dataset name at the top of the left list and choose swe_rebench_openhands_qwen3coder.",
+   "Click Tasks, type espdev__csaps-3 in Search tasks and open it.",
+   "Click Run 2 of 5, then Open run."
+  ],
+  "body": [
+   "SWE-rebench tasks carry FAIL_TO_PASS and PASS_TO_PASS lists like SWE-bench, and the source's resolved column comes from running them. TraceHarness shows that column as the hidden grade.",
+   "All 5 runs of espdev__csaps-3 are resolved, after 27 to 52 model calls.",
+   "In Run 2, read step 1's Sent to the model. The issue already contains a proposed correction: the person who filed it suggests the exact if-condition to change. This is the issue-text kind of leak from the section above.",
+   "Run 2's patch changes csaps.py and also adds two scratch scripts, reproduce_issue.py and comprehensive_test.py, 9,013 bytes in all. Run 3's patch changes only csaps.py, 419 bytes. Both are resolved: the grader runs the listed tests, and extra files that break none of them do not change the verdict.",
+   "Two more things on this page. The system prompt shows as withheld, because the export kept only a fingerprint (hash) of it. The mark beside hidden reads agent's last test, because this import has no visible suite.",
+   "A caution for this import: when OpenHands only viewed a file or folder, the step is tagged edit_file and edit. That is a known importer limitation, reported for fixing. Trust the patch, not the step tags, for what changed."
+  ],
+  "links": [
+   "ds:swe_rebench_openhands_qwen3coder",
+   "task:swe_rebench_openhands_qwen3coder:unknown:huggingface-messages:espdev__csaps-3",
+   "task:swe_rebench_openhands_qwen3coder:unknown:huggingface-messages:espdev__csaps-3:1"
+  ]
+ },
+ "try_it": {
+  "clicks": [
+   "Click the dataset name at the top of the left list and choose study_v04.",
+   "Click Tasks, type t17_json_pointer in Search tasks and open it.",
+   "Check that the Asking line says gemini-2.5-flash-lite under baseline. If not, click Change and pick them.",
+   "Read the run cards, then click Run 1 of 5 and read its Findings."
+  ],
+  "question": "How many of the 5 runs changed any code? What do the visible and hidden grades say, and what does that tell you about the visible tests?",
+  "answer": "None of the 5 runs made an edit: each card reads cut off, no patch. Yet every run shows visible passed and hidden failed. The visible tests pass on the unchanged code, so they say nothing about the bug, just like a PASS_TO_PASS test. Only the hidden suite has a test that fails before the fix and passes after it.",
+  "answer_measured_from": "data/runs/study_v04/index.jsonl, task t17_json_pointer, model google/gemini-2.5-flash-lite, harness baseline: patch_bytes 0, visible_pass true, hidden_pass false in 5 of 5. GET /api/outcomes/study_v04: mode cutoff_no_patch for all 5. Task page: 5 runs, 0 Pass, 5 Cut off; Grade: visible passed, hidden failed, strengthened failed.",
+  "links": [
+   "ds:study_v04",
+   "task:study_v04:gemini-2.5-flash-lite:baseline:t17_json_pointer",
+   null,
+   "task:study_v04:gemini-2.5-flash-lite:baseline:t17_json_pointer:0"
+  ]
+ },
+ "quiz": [
+  {
+   "q": "A patch makes every FAIL_TO_PASS test pass but breaks one PASS_TO_PASS test. Is the task resolved?",
+   "options": [
+    "Yes, because the issue is now fixed",
+    "Half resolved, since one set passed",
+    "Only on SWE-bench Verified",
+    "No: both sets of tests must pass"
+   ],
+   "answer": 3,
+   "why": "PASS_TO_PASS tests check that the patch broke nothing else; failing one means not resolved."
+  },
+  {
+   "q": "Why can a test that already passes before the fix not show that the bug is fixed?",
+   "options": [
+    "It runs too fast to see the change",
+    "The agent can see it, so it is unfair",
+    "It passes either way, fix or no fix",
+    "It does not run inside the container"
+   ],
+   "answer": 2,
+   "why": "Only a test that fails before and passes after carries information about the fix."
+  },
+  {
+   "q": "What does a resolved verdict not tell you?",
+   "options": [
+    "Whether the required tests passed",
+    "How the agent arrived at its fix",
+    "Which repository the task came from",
+    "Whether the patch applied cleanly"
+   ],
+   "answer": 1,
+   "why": "The grader checks the patch, not how the agent arrived at it."
+  }
+ ],
+ "sources": [
+  {
+   "title": "SWE-bench: Can Language Models Resolve Real-World GitHub Issues?",
+   "authors": "Carlos E. Jimenez, John Yang, Alexander Wettig, Shunyu Yao, Kexin Pei, Ofir Press, Karthik Narasimhan",
+   "year": "2024 (ICLR 2024; arXiv 2023)",
+   "url": "https://arxiv.org/abs/2310.06770",
+   "what_we_took": "The task format: an issue plus the repository before the fix; the model edits the code. 2,294 problems from 12 Python repositories.",
+   "quote": "a language model is tasked with editing the codebase to address the issue",
+   "licence": "CC BY 4.0 (arXiv).",
+   "checked": "2026-11-23"
+  },
+  {
+   "title": "Introducing SWE-bench Verified",
+   "authors": "Neil Chowdhury, James Aung, Chan Jun Shern, Oliver Jaffe, et al. (OpenAI, with the SWE-bench authors)",
+   "year": "2024 (13 Aug 2024; updated 24 Feb 2025)",
+   "url": "https://openai.com/index/introducing-swe-bench-verified/",
+   "what_we_took": "The FAIL_TO_PASS and PASS_TO_PASS definitions; the screening (93 developers annotated 1,699 random samples of the test set, 3 annotators per sample; 38.3% flagged underspecified, 61.1% flagged for unfair tests, 68.3% filtered out; 500 samples kept); the move to a containerised Docker grading harness.",
+   "quote": "These unit tests fail before the solution code in the PR is added, but pass afterwards",
+   "licence": "Vendor blog; reuse terms not stated. Paraphrased, one short quote.",
+   "checked": "2026-11-23"
+  },
+  {
+   "title": "Evaluation Guide (SWE-bench documentation)",
+   "authors": "SWE-bench maintainers",
+   "year": "n.d. (living documentation page)",
+   "url": "https://www.swebench.com/SWE-bench/guides/evaluation/",
+   "licence": "Documentation of the SWE-bench repository (MIT). Paraphrased, one short quote.",
+   "what_we_took": "Grading applies the patch and runs the repository's tests in Docker; the report's counts (resolved, unresolved, empty patches, errors).",
+   "quote": "The patch made the required tests pass",
+   "checked": "2026-11-23"
+  },
+  {
+   "title": "Repo State Loopholes During Agentic Evaluation (SWE-bench GitHub issue #465)",
+   "authors": "jacobkahn (issue author), SWE-bench issue tracker",
+   "year": "2025 (opened 3 Sep 2025; now closed)",
+   "url": "https://github.com/SWE-bench/SWE-bench/issues/465",
+   "what_we_took": "A recorded case of an agent reading future commits with git log --all, and the proposed mitigation of removing future repository state from the images.",
+   "quote": "the agent uses `git log --all` which leaks future commits that directly fix the issue",
+   "licence": "GitHub issue text; quoted briefly with a link.",
+   "checked": "2026-11-23"
+  },
+  {
+   "title": "Shortcutting the Fix: Identifying and Categorizing Agentic Exploits in Software Engineering Benchmarks",
+   "authors": "Nikolai Ludwig, Wasi Uddin Ahmad, Somshubra Majumdar, Boris Ginsburg",
+   "year": "2026 (preprint)",
+   "url": "https://arxiv.org/abs/2609.06780",
+   "what_we_took": "Shortcut attempts (upstream fetches, local git history, memorised code) appeared in 60.7-90.1% (SWE-bench Multilingual) and 55.5-89.1% (DeepSWE) of trajectories with network access on, for three open models; turning the network off did not stop the attempts. We do not use the 72.1% figure.",
+   "quote": "disabling network access fails to curb these high attempt rates",
+   "licence": "CC BY 4.0 (arXiv).",
+   "checked": "2026-11-23"
+  },
+  {
+   "title": "SWE-rebench: An Automated Pipeline for Task Collection and Decontaminated Evaluation of Software Engineering Agents",
+   "authors": "Ibragim Badertdinov, Alexander Golubev, Maksim Nekrashevich, Anton Shevtsov, Simon Karasik, Andrei Andriushchenko, et al.",
+   "year": "2025",
+   "url": "https://arxiv.org/abs/2505.20411",
+   "what_we_took": "Fresh tasks collected continuously to limit contamination (a model having seen the fix in training).",
+   "quote": "static benchmarks quickly become outdated due to contamination issues",
+   "licence": "CC BY 4.0 (arXiv).",
+   "checked": "2026-11-23"
+  },
+  {
+   "title": "nebius/SWE-rebench (dataset card)",
+   "authors": "Nebius",
+   "year": "2025",
+   "url": "https://huggingface.co/datasets/nebius/SWE-rebench",
+   "what_we_took": "SWE-rebench tasks carry FAIL_TO_PASS and PASS_TO_PASS lists and ship Docker images, so the resolved column in the trajectory set comes from SWE-bench-style grading.",
+   "quote": "tests that should pass before and after the PR application",
+   "licence": "CC BY 4.0 (card); each task keeps its repository's licence.",
+   "checked": "2026-11-23"
+  },
+  {
+   "title": "princeton-nlp/SWE-bench_Verified (dataset card)",
+   "authors": "SWE-bench team",
+   "year": "2024",
+   "url": "https://huggingface.co/datasets/princeton-nlp/SWE-bench_Verified",
+   "what_we_took": "Verified has 500 test samples, each with FAIL_TO_PASS and PASS_TO_PASS fields.",
+   "quote": "Evaluation is performed by unit test verification using post-PR behavior as the reference solution.",
+   "licence": "No licence stated on the card. We cite facts only.",
+   "checked": "2026-11-23"
+  },
+  {
+   "title": "nebius/SWE-rebench-openhands-trajectories (dataset card)",
+   "authors": "Maria Trofimova, Anton Shevtsov, Ibragim Badertdinov, Konstantin Pyaev, Simon Karasik, Alexander Golubev (Nebius)",
+   "year": "2025",
+   "url": "https://huggingface.co/datasets/nebius/SWE-rebench-openhands-trajectories",
+   "licence": "CC BY 4.0. TraceHarness's swe_rebench_openhands_qwen3coder is a subset; credit is required wherever its runs appear.",
+   "what_we_took": "The runs in the worked example.",
+   "quote": "Each trajectory contains the agent's step-by-step reasoning, actions, and environmental observations.",
+   "checked": "2026-11-23"
+  }
+ ],
+ "glossary_terms": [
+  "patch",
+  "FAIL_TO_PASS",
+  "PASS_TO_PASS",
+  "resolved",
+  "Docker container",
+  "evaluation harness",
+  "underspecified issue",
+  "SWE-bench Verified",
+  "oracle",
+  "strengthened"
+ ],
+ "see_also": [
+  {
+   "kind": "article",
+   "target": "traps-in-the-task"
+  },
+  {
+   "kind": "article",
+   "target": "where-runs-come-from"
+  },
+  {
+   "kind": "page",
+   "label": "Judge & integrity: hidden against strengthened grades",
+   "spec": "an:study_v04:judge"
+  },
+  {
+   "kind": "page",
+   "label": "espdev__csaps-3: five resolved runs",
+   "spec": "task:swe_rebench_openhands_qwen3coder:unknown:huggingface-messages:espdev__csaps-3"
+  }
+ ],
+ "numbers": [
+  {
+   "as_written": [
+    "2,294",
+    "12"
+   ],
+   "meaning": "SWE-bench size and repositories",
+   "source": "arXiv 2310.06770 abstract"
+  },
+  {
+   "as_written": [
+    "3 annotators",
+    "38.3%",
+    "61.1%",
+    "68.3%",
+    "500"
+   ],
+   "meaning": "Verified screening",
+   "source": "openai.com/index/introducing-swe-bench-verified/"
+  },
+  {
+   "as_written": [
+    "60.7%",
+    "90.1%",
+    "55.5%",
+    "89.1%"
+   ],
+   "meaning": "shortcut attempt rates with network on",
+   "source": "arXiv 2609.06780 abstract"
+  },
+  {
+   "as_written": [
+    "5 runs",
+    "27 to 52"
+   ],
+   "meaning": "espdev__csaps-3: all resolved; model calls range",
+   "source": "data/runs/swe_rebench_openhands_qwen3coder/index.jsonl (traceharness-study)"
+  },
+  {
+   "as_written": [
+    "9,013",
+    "419"
+   ],
+   "meaning": "patch sizes of Run 2 and Run 3 (bytes)",
+   "source": "patch.diff of imp-huggingface-e72b5b7179b9 and imp-huggingface-7e7690f082e2"
+  },
+  {
+   "as_written": [
+    "None of the 5",
+    "every run"
+   ],
+   "meaning": "t17_json_pointer: no patch, visible pass, hidden fail",
+   "source": "data/runs/study_v04/index.jsonl (traceharness-study); task page"
+  },
+  {
+   "as_written": [
+    "1,092",
+    "1,079",
+    "3 are empty",
+    "2,174 runs",
+    "200 tasks"
+   ],
+   "meaning": "the four counts over the SWE-rebench subset (figures 1 and 2)",
+   "source": "scripts/learn_figures.py a07-counts over data/runs/swe_rebench_openhands_qwen3coder/index.jsonl (hidden_pass, patch_bytes)"
+  },
+  {
+   "as_written": [
+    "75 resolved",
+    "20 unresolved",
+    "25 empty"
+   ],
+   "meaning": "study_v04 gemini-2.5-flash-lite under baseline as the four counts (figure 2)",
+   "source": "scripts/learn_figures.py a07-counts over data/runs/study_v04/index.jsonl"
+  }
+ ],
+ "in_short": [
+  "A patch **resolves a task only if both FAIL_TO_PASS and PASS_TO_PASS tests pass**: the first set checks the fix, the second that nothing else broke.",
+  "**SWE-bench Verified removes bad tasks but grades the rest the same way**: it kept 500 after developers screened 1,699 samples.",
+  "**A resolved verdict says the required tests passed, not how the agent got there**; the fix can leak in through the issue, the history or the web."
+ ]
+}

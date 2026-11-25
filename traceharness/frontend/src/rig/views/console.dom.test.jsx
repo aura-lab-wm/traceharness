@@ -30,7 +30,7 @@ describe('console model (pure)', () => {
     const m = consoleModel(spans, replay, false)
     expect(m.rows.map((r) => [r.n, r.letter, r.name, r.arg])).toEqual([[1, 'R', 'read_file', 'src/a.py'], [2, 'E', 'edit_file', 'src/a.py +3 −1'], [3, 'T', 'run_tests', ''], [4, 'S', 'submit', '']])
     expect(m.rows[2].chip).toEqual({ tone: 'bad', text: '2 failed' })
-    expect(m.rows[3].chip).toEqual({ tone: 'bad', text: 'failed' })
+    expect(m.rows[3].chip).toEqual({ tone: 'bad', text: 'Fail' })
     expect(m.rows.map((r) => r.risk)).toEqual([0.4, 0.3, 0.7, 0.55])
   })
   it('parses test output, never guesses', () => {
@@ -67,26 +67,56 @@ describe('run console catalogue', () => {
 })
 
 describe('run console', () => {
-  it('shows rows, risk at the playhead, the replayed intervention, detectors and counts; arrows move the playhead', () => {
+  it('shows step rows, risk at the playhead, the replayed intervention, detectors and counts; a row or an arrow moves the playhead and the link', () => {
     const { container } = renderRig('#/rig/run:a00002', { data: data() })
-    const con = container.querySelector('[data-el="run-console"]')
-    expect(con.querySelectorAll('.rg-cx-st')).toHaveLength(4)
-    expect(con.textContent).toContain('recorded')
-    expect(con.textContent).toContain('sentinel on')
-    expect(con.textContent).toContain('threshold 0.50')            // the run's own harness config wins
-    expect(con.querySelector('[data-el="console-risk"] b').textContent).toBe('0.55')
-    const iv = con.querySelector('[data-el="intervention"]')
+    const con = () => container.querySelector('[data-el="run-console"]')   // a step change remounts the page
+    expect(con().querySelectorAll('.rg-cx-st')).toHaveLength(4)
+    expect(con().textContent).toContain('Scored on replay. Sentinel was on in this harness')
+    expect(con().textContent).toContain('Threshold 0.50')            // the run's own harness config wins
+    expect(con().querySelector('[data-el="console-step"]').textContent).toBe('step 1 / 4')
+    expect(con().querySelector('[data-el="console-risk"] b').textContent).toBe('0.400')
+    const iv = con().querySelector('[data-el="intervention"]')
     expect(iv.textContent).toContain('flag · submit_without_verify')
     expect(iv.textContent).toContain('Run the tests before you submit.')
     expect(iv.textContent.toLowerCase()).toContain('replayed')
-    expect(con.querySelector('.rg-cx-dets li.fired').textContent).toContain('step 3')
-    const first = con.querySelector('.rg-cx-st[data-seq="2"] .rg-cx-rowb')
-    act(() => { fireEvent.click(first) })
-    expect(con.querySelector('[data-el="console-step"]').textContent).toBe('step 1 / 4')
-    expect(con.querySelector('[data-el="console-risk"] b').textContent).toBe('0.40')
-    act(() => { fireEvent.keyDown(con.querySelector('.rg-cx-st.cur .rg-cx-rowb'), { key: 'ArrowDown' }) })
-    expect(con.querySelector('[data-el="console-step"]').textContent).toBe('step 2 / 4')
-    expect(within(con).getAllByRole('listitem').length).toBeGreaterThan(4)
+    expect(con().querySelector('.rg-cx-dets li.fired').textContent).toContain('step 3')
+    expect(con().querySelector('.rg-cx-st[data-n="3"]').textContent).toContain('2 failed')   // the step's outcome badge
+    act(() => { fireEvent.click(con().querySelector('.rg-cx-st[data-n="4"] .rg-cx-rowb')) })
+    expect(location.hash).toBe(`#/rig/run:${ID}:s4`)
+    expect(con().querySelector('[data-el="console-step"]').textContent).toBe('step 4 / 4')
+    expect(con().querySelector('[data-el="console-risk"] b').textContent).toBe('0.550')
+    expect(con().querySelector('[data-el="console-risk"]').textContent).toContain('−0.150 from step 3')
+    act(() => { fireEvent.keyDown(con().querySelector('.rg-cx-st.cur .rg-cx-rowb'), { key: 'ArrowUp' }) })
+    expect(location.hash).toBe(`#/rig/run:${ID}:s3`)
+    expect(con().querySelector('[data-el="console-step"]').textContent).toBe('step 3 / 4')
+    expect(document.activeElement).toBe(con().querySelector('.rg-cx-st.cur .rg-cx-rowb'))   // the keyboard stays in the list
+    act(() => { fireEvent.keyDown(document.activeElement, { key: 'j' }) })                    // j on a focused row works too
+    expect(location.hash).toBe(`#/rig/run:${ID}:s4`)
+    expect(document.activeElement).toBe(con().querySelector('.rg-cx-st.cur .rg-cx-rowb'))
+    expect(within(con()).getAllByRole('listitem').length).toBeGreaterThan(4)
+  })
+  it('j and k, and the arrow keys, move the playhead from anywhere on the focused run page, but not while typing', () => {
+    const { container } = renderRig('#/rig/run:a00002', { data: data() })
+    act(() => { fireEvent.keyDown(document.body, { key: 'j' }) })
+    expect(location.hash).toBe(`#/rig/run:${ID}:s2`)
+    act(() => { fireEvent.keyDown(document.body, { key: 'j' }) })
+    act(() => { fireEvent.keyDown(document.body, { key: 'k' }) })
+    expect(location.hash).toBe(`#/rig/run:${ID}:s2`)
+    act(() => { fireEvent.keyDown(document.body, { key: 'ArrowDown' }) })                     // the list need not have focus
+    expect(location.hash).toBe(`#/rig/run:${ID}:s3`)
+    act(() => { fireEvent.keyDown(document.body, { key: 'ArrowUp' }) })
+    expect(location.hash).toBe(`#/rig/run:${ID}:s2`)
+    const field = document.createElement('input')
+    container.querySelector('#rig-doc-main').appendChild(field)
+    act(() => { fireEvent.keyDown(field, { key: 'j' }) })
+    act(() => { fireEvent.keyDown(field, { key: 'ArrowDown' }) })
+    expect(location.hash).toBe(`#/rig/run:${ID}:s2`)
+    field.remove()
+    act(() => { fireEvent.keyDown(document.body, { key: 'j', altKey: true }) })
+    expect(location.hash).toBe(`#/rig/run:${ID}:s2`)
+    act(() => { fireEvent.keyDown(container.querySelector('[data-el="step-detail"]'), { key: 'ArrowDown' }) })
+    expect(location.hash).toBe(`#/rig/run:${ID}:s2`)                                         // arrows inside the step detail scroll it
+    expect(container.querySelector('[data-el="run-keys"]').textContent).toContain('next / previous step')
   })
   it('without a replay there is no invented curve', () => {
     const { container } = renderRig('#/rig/run:a00002', { data: data([]) })
@@ -101,6 +131,26 @@ describe('run console', () => {
     expect(con.querySelector('[data-el="console-step"]').textContent).toBe('step 1 / 4')
     expect(con.querySelector('[data-el="console-risk"]').getAttribute('aria-live')).toBe('polite')
     expect(con.querySelectorAll('.rg-cx-st.future')).toHaveLength(3)
+  })
+})
+
+/* A step row is a real link to the step's address (run:<id>:s<n>): it can be copied or opened in a new
+   tab, and a plain click selects the step. */
+describe('run console: step rows are links', () => {
+  it('each row links to its step; a plain click selects it, a modified click is left to the browser', () => {
+    const { container } = renderRig('#/rig/run:a00002', { data: data() })
+    const row = (n) => container.querySelector(`[data-el="run-console"] .rg-cx-st[data-n="${n}"] .rg-cx-rowb`)
+    expect(row(2).tagName).toBe('A')
+    expect(row(2).getAttribute('href')).toBe(`#/rig/run:${ID}:s2`)
+    const start = location.hash
+    const shift = new MouseEvent('click', { bubbles: true, cancelable: true, button: 0, shiftKey: true })
+    act(() => { row(3).dispatchEvent(shift) })
+    expect(shift.defaultPrevented).toBe(false)
+    expect(location.hash).toBe(start)
+    act(() => { fireEvent.click(row(2)) })
+    expect(location.hash).toBe(`#/rig/run:${ID}:s2`)
+    act(() => { fireEvent.keyDown(row(2), { key: ' ' }) })
+    expect(location.hash).toBe(`#/rig/run:${ID}:s2`)
   })
 })
 
@@ -159,19 +209,52 @@ describe('run console: playhead and keys', () => {
       expect(stepText(con)).toBe('step 1 / 4')
     } finally { vi.useRealTimers() }
   })
+  it('while replaying the button stops the replay, and the playhead stays where it stopped', () => {
+    vi.useFakeTimers()
+    try {
+      const con = mount()
+      const btn = () => con.querySelector('[data-el="console-replay"]')
+      act(() => { fireEvent.click(btn()) })
+      expect(btn().textContent).toBe('Stop replay')
+      expect(con.querySelector('[data-el="console-replaying"]').textContent).toBe('Replaying…')
+      act(() => { vi.advanceTimersByTime(750) })
+      expect(stepText(con)).toBe('step 2 / 4')
+      act(() => { fireEvent.click(btn()) })
+      expect(btn().textContent).toBe('Replay run')
+      expect(con.querySelector('[data-el="console-replaying"]')).toBeNull()
+      expect(con.querySelectorAll('.rg-cx-st.future')).toHaveLength(0)
+      for (let i = 0; i < 4; i++) act(() => { vi.advanceTimersByTime(750) })
+      expect(stepText(con)).toBe('step 2 / 4')
+      expect(con.querySelector('[data-el="console-replayed"]').textContent).toBe('Replay stopped at step 2')
+    } finally { vi.useRealTimers() }
+  })
+  it('a replay that ends where it began still says it ran: "Replay finished at step 4"', () => {
+    vi.useFakeTimers()
+    try {
+      const con = mount()
+      act(() => { setExt(9) })                                         // the playhead on the last step, as a link to it opens
+      expect(stepText(con)).toBe('step 4 / 4')
+      act(() => { fireEvent.click(con.querySelector('[data-el="console-replay"]')) })
+      for (let i = 0; i < 6; i++) act(() => { vi.advanceTimersByTime(750) })
+      expect(stepText(con)).toBe('step 4 / 4')
+      expect(con.querySelector('[data-el="console-replayed"]').textContent).toBe('Replay finished at step 4')
+      act(() => { setExt(2) })                                         // a selection from elsewhere moves the playhead
+      expect(con.querySelector('[data-el="console-replayed"]')).toBeNull()      // gone once the playhead moves on
+    } finally { vi.useRealTimers() }
+  })
   it('in reduced motion a Step playhead press does not lock the playhead', () => {
     vi.stubGlobal('matchMedia', (q) => ({ matches: true, media: q, addEventListener() {}, removeEventListener() {} }))
     const con = mount()
     act(() => { fireEvent.click(con.querySelector('[data-el="console-replay"]')) })
-    expect(stepText(con)).toBe('step 1 / 4')
+    expect(stepText(con)).toBe('step 2 / 4')                       // from the default step 1, one step on
     act(() => { setExt(5) })
     expect(stepText(con)).toBe('step 2 / 4')
-    expect(con.querySelectorAll('.rg-cx-st .rg-cx-rowb[aria-expanded="true"]')).toHaveLength(1)
+    expect(con.querySelectorAll('.rg-cx-st .rg-cx-rowb[aria-current="step"]')).toHaveLength(1)
   })
-  it('arrow keys typed inside an expanded detail are not intercepted', () => {
+  it('arrow keys typed inside the selected step are not intercepted', () => {
     const con = mount()
-    act(() => { fireEvent.click(con.querySelector('.rg-cx-st[data-seq="2"] .rg-cx-rowb')) })
-    const xp = con.querySelector('.rg-cx-xp')
+    act(() => { fireEvent.click(con.querySelector('.rg-cx-st[data-n="1"] .rg-cx-rowb')) })
+    const xp = con.querySelector('[data-el="step-detail"]')
     expect(xp).not.toBeNull()
     expect(fireEvent.keyDown(xp, { key: 'ArrowDown' })).toBe(true)   // not default-prevented
     expect(stepText(con)).toBe('step 1 / 4')
@@ -179,7 +262,8 @@ describe('run console: playhead and keys', () => {
   it('files edited counts distinct paths of recorded edits only, not blocked or unpaired edit calls', () => {
     const sp = [chat(1, 0, ['edit_file']), { ...base, seq: 2, span: 'edit', path: 'src/a.py', lines_added: 1, lines_removed: 0 }, tool(3, 'edit_file', { path: 'src/a.py' }),
       chat(4, 1, ['edit_file']), tool(5, 'edit_file', { path: 'src/blocked.py' }, { status: 'blocked' })]
-    const { container } = renderRig('#/rig/', { data: data(), Root: () => <RunConsole run={run} spans={sp} replay={[]} sel={null} onSel={() => {}} verdictOf={false} /> })
+    // the playhead on step 2, so both the recorded edit and the blocked one are behind it
+    const { container } = renderRig('#/rig/', { data: data(), Root: () => <RunConsole run={run} spans={sp} replay={[]} sel={4} onSel={() => {}} verdictOf={false} /> })
     const kv = [...container.querySelectorAll('.rg-cx-kv div')].find((d) => d.textContent.startsWith('files edited'))
     expect(kv.querySelector('b').textContent).toBe('1')
   })
@@ -197,8 +281,16 @@ describe('run console: playhead and keys', () => {
     const { container } = renderRig('#/rig/', { data: data(), Root: () => <RunConsole run={run} spans={spans} replay={replay} sel={4} onSel={() => {}} verdictOf={false} /> })
     expect(stepText(container.querySelector('[data-el="run-console"]'))).toBe('step 2 / 4')
   })
-  it('draws no meter fill when the row has no risk', () => {
-    const { container } = renderRig('#/rig/', { data: data(), Root: () => <RunConsole run={run} spans={spans} replay={replay.map((r, i) => (i === 3 ? { ...r, risk: null } : r))} sel={null} onSel={() => {}} verdictOf={false} /> })
-    expect(container.querySelector('.rg-cx-meter i')).toBeNull()
+  it('shows no risk figure when the step has no risk', () => {
+    const { container } = renderRig('#/rig/', { data: data(), Root: () => <RunConsole run={run} spans={spans} replay={replay.map((r, i) => (i === 3 ? { ...r, risk: null } : r))} sel={8} onSel={() => {}} verdictOf={false} /> })
+    expect(container.querySelector('[data-el="console-risk"] b').textContent).toBe('—')
+  })
+  it('a tool call shows its duration and a Pin; an edit event gets its own Pin', () => {
+    const timed = spans.map((x) => (x.span === 'execute_tool' ? { ...x, duration_ms: 37 } : x))
+    const { container } = renderRig('#/rig/', { data: data(), Root: () => <RunConsole run={{ ...run, wall: 5000 }} spans={timed} replay={replay} sel={3} onSel={() => {}} verdictOf={false} /> })
+    const call = container.querySelector('[data-el="tool-call"]')
+    expect(call.querySelector('[data-el="tool-duration"]').textContent).toBe('37 ms')
+    expect(within(call).getByRole('button', { name: /^Pin a00002 #5 / })).toBeTruthy()
+    expect(within(call).getByRole('button', { name: /^Pin a00002 #4 · edit src\/a\.py/ })).toBeTruthy()
   })
 })

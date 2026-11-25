@@ -1,0 +1,410 @@
+{
+ "id": "run-cost-steps-vs-tokens",
+ "number": 5,
+ "part": 2,
+ "kind": "concept",
+ "checked": "2026-11-23",
+ "title": "What an agent's run costs: steps vs tokens",
+ "question": "Why is the number of steps a poor measure of what a run costs?",
+ "what_you_learn": [
+  "The difference between prompt tokens (read) and generated tokens (written), and which one makes up most of an agent run.",
+  "Why each later step reads more than the one before it.",
+  "What cached tokens are, and why to check the provider's documentation instead of a price someone quoted."
+ ],
+ "prerequisites": {
+  "read": [
+   "reading-a-trajectory",
+   "why-runs-differ"
+  ],
+  "know": []
+ },
+ "sections": [
+  {
+   "heading": "Two counts for every model call",
+   "body": [
+    "Providers measure usage in tokens. Every model call has two counts. Prompt tokens, also called input tokens, are everything sent to the model in that request. Generated tokens, also called output tokens, are what the model wrote back. If the model also writes hidden reasoning, often called thinking, that counts as generated too. Some providers report it separately; study_v04 does not, so its Tokens page says thinking unknown.",
+    "A step count treats every step as the same size. Token counts do not, and the next section explains why."
+   ]
+  },
+  {
+   "heading": "Every call re-reads the conversation",
+   "body": [
+    "A language model keeps no memory between calls. To continue a run, the harness sends the whole conversation again: the system prompt, the issue, every earlier reply and every earlier tool output. So the prompt for step 9 contains steps 1 to 8, and a file the agent read at step 2 is read again, and counted again, at every later step.",
+    "Tool outputs are usually the biggest part. The Complexity Trap authors ran SWE-agent (an agent harness for GitHub issues) with GPT-4.1-mini on 50 SWE-bench Lite tasks. In these preliminary runs, tool outputs made up about 84% of an average turn.",
+    "Put together: if each step adds about the same amount, step n re-reads n pieces. A run of n steps then reads about n x (n + 1) / 2 pieces in all. With nothing trimmed, a run with twice the steps reads close to four times the prompt tokens, not twice.",
+    "Generated tokens grow only with what the model writes, so in agent runs prompt tokens usually dominate. Bai et al. (2026) report the same for SWE-bench Verified (500 real GitHub issues that developers screened): input tokens, not output tokens, drive the overall cost."
+   ]
+  },
+  {
+   "heading": "Cached re-reads",
+   "body": [
+    "Most of each prompt is the same as the one before, so some providers keep a recent prompt start in a cache. Anthropic's documentation describes the check: is this prompt's opening part already cached from a recent request? The usage report then splits the prompt into three counts, tokens read from the cache, tokens written to the cache and the rest, and the total input is their sum.",
+    "Reading from a cache is billed at a lower rate than fresh input, but the rates differ by model and provider, and they change. Read the provider's current pricing and caching pages instead of reusing a number from a paper or a blog. Then check whether your dataset recorded cache counts at all. Keep in mind that a cache changes the price of re-reading, not the amount re-read: the prompt still grows with every step.",
+    "TraceHarness shows two counts built from them. Cached is the part of the prompt served from the cache. Computed is what the server had to process fresh: generated tokens plus the prompt tokens that did not come from the cache. When a dataset has no cache counts, both read unknown, never 0."
+   ]
+  },
+  {
+   "heading": "Reading the Tokens page",
+   "body": [
+    "The Tokens page answers where the tokens of one model under one harness went. Its first row of boxes gives read (prompt) and generated totals, cached and computed, and the share of all tokens used by the costliest tenth of runs. A high share there means a few long runs carry the bill, so look at them before you look at averages.",
+    "Below that are three tabs. By phase splits the calls by phase (explore, edit, test and so on; the article on phases explains these labels). Its re-read column counts the prompt tokens read at each phase's calls, which shows where the conversation was already long. Context growth plots the median prompt size at each model call, with the middle half of runs as a band. Token spread lists, for each task, its costliest run divided by its cheapest."
+   ]
+  },
+  {
+   "heading": "How far apart can two runs be?",
+   "body": [
+    "Bai et al. ran each SWE-bench Verified task 4 times with OpenHands (an open-source agent harness for coding tasks). At the extreme, the costliest run of a task used up to 30x the tokens of the cheapest; on average, the costliest of 4 runs used about 2x the cheapest. Treat such ratios with the care the article on run differences asks for: they depend on how many runs per task were compared. Also check which kind of number a paper gives: a ratio like 30x describes the single most extreme task, while an average describes a typical one."
+   ]
+  }
+ ],
+ "figures": [
+  {
+   "id": "a3-prompt",
+   "after_section": 1,
+   "kind": "cum_tokens",
+   "data_file": "a05-tokens",
+   "title": "Two runs of one task, call by call",
+   "caption": "Prompt tokens sent at each model call, t09_paginate, gemini-2.5-flash-lite under baseline. Both runs passed. The first three calls are the same size; Run 1 then keeps going and every extra call re-sends a longer conversation. The second tab adds up all tokens, read and generated: when Run 3 ended at call 8, Run 1 had used 1.04x as many; by Run 1's 13th call, 59,489 against 23,159, 2.6x.",
+   "data_note": "study_v04, t09_paginate, Run 1 (13 calls) and Run 3 (8 calls)",
+   "headline": [
+    {
+     "key": "in_0_1",
+     "as_written": "567"
+    },
+    {
+     "key": "in_0_2",
+     "as_written": "1,328"
+    },
+    {
+     "key": "in_0_3",
+     "as_written": "2,155"
+    },
+    {
+     "key": "last_1",
+     "as_written": "4,060"
+    },
+    {
+     "key": "last_0",
+     "as_written": "7,879"
+    },
+    {
+     "key": "calls_0",
+     "as_written": "13"
+    },
+    {
+     "key": "calls_1",
+     "as_written": "8"
+    },
+    {
+     "key": "total_0",
+     "as_written": "59,489"
+    },
+    {
+     "key": "total_1",
+     "as_written": "23,159"
+    },
+    {
+     "key": "read_0",
+     "as_written": "55,956"
+    },
+    {
+     "key": "read_1",
+     "as_written": "21,537"
+    },
+    {
+     "key": "at_end_1",
+     "as_written": "1.04x"
+    },
+    {
+     "key": "ratio",
+     "as_written": "2.6x"
+    }
+   ]
+  },
+  {
+   "id": "a05-spread",
+   "after_section": 4,
+   "kind": "spread_pairs",
+   "data_file": "a05-spread",
+   "title": "Spread in steps against spread in tokens",
+   "caption": "Each dot is one model, harness and task group of study_v04 (5 runs each): its longest run divided by its shortest, in steps (across) and in tokens (up). Of the 350 groups whose runs differ in steps, 278 lie above the diagonal, where tokens spread more than steps; the medians are 1.5x in steps and 1.68x in tokens. The ringed dot is the worked example, t09_paginate.",
+   "data_note": "study_v04, 3,240 runs in 648 groups",
+   "headline": [
+    {
+     "key": "n",
+     "as_written": "350"
+    },
+    {
+     "key": "above",
+     "as_written": "278"
+    },
+    {
+     "key": "med_steps",
+     "as_written": "1.5x"
+    },
+    {
+     "key": "med_tokens",
+     "as_written": "1.68x"
+    }
+   ]
+  }
+ ],
+ "worked_example": {
+  "title": "Same task, both passed: 1.6x the steps, 2.6x the tokens",
+  "dataset": {
+   "name": "study_v04",
+   "what": "Bundled with the study copy: 3,240 recorded runs, 3 models x 9 harnesses x 24 small Python tasks x 5 runs. They were collected through OpenRouter (a paid service that passes requests on to many model providers) at temperature 0.",
+   "credit": "TraceHarness bundled data (AURA lab, William & Mary)."
+  },
+  "open": [
+   "Click the dataset name at the top of the left list and choose study_v04.",
+   "Click Tasks, type t09_paginate in Search tasks and open it (gemini-2.5-flash-lite under baseline).",
+   "Read the 5-run token comparison under the run cards.",
+   "For the dataset-wide numbers, click Tokens in the left list."
+  ],
+  "body": [
+   "Run 1 and Run 3 both passed. Run 1 made 13 model calls and Run 3 made 8. Run 1 used 59,489 tokens and Run 3 used 23,159: 1.6x the steps but 2.6x the tokens. The rough rule from above predicts 13 x 14 / 2 = 91 pieces against 8 x 9 / 2 = 36, a ratio of 2.5.",
+   "The prompt sent at each call shows why (figure above). Both runs send 567, 1,328 and 2,155 tokens at calls 1 to 3. Run 3 ends at call 8 with a 4,060-token prompt. Run 1 keeps going, and its 13th call alone sends 7,879 tokens. The task page says it in one line, and the second tab of the figure adds the tokens up. When Run 3 ended at call 8, Run 1 had used 1.04x as many tokens; the rest of the gap came after.",
+   "Prompt tokens were 55,956 of Run 1's 59,489 tokens and 21,537 of Run 3's 23,159.",
+   "On the Tokens page (gemini-2.5-flash-lite under baseline, 120 runs), prompt tokens are 87.4% of all tokens. The context growth chart shows a median prompt of 563 tokens at call 1 and 5.07K at call 9 (13 runs reach call 9). Cached shows unknown, because this dataset did not record cache counts.",
+   "Across all of study_v04 (3 models, 9 harnesses, 24 tasks, 5 runs each), 350 model, harness and task groups had runs with different step counts. In 278 of those 350 the token spread was larger than the step spread. The median group's spread was 1.5x in steps and 1.68x in tokens."
+  ],
+  "links": [
+   "ds:study_v04",
+   "task:study_v04:gemini-2.5-flash-lite:baseline:t09_paginate",
+   null,
+   "an:study_v04:tokens:gemini-2.5-flash-lite:baseline"
+  ]
+ },
+ "try_it": {
+  "clicks": [
+   "Click the dataset name at the top of the left list and choose study_v04.",
+   "Click Tokens. The Asking line should say gemini-2.5-flash-lite under baseline; if not, click Change and pick them.",
+   "Click the Token spread tab and find t10_lru_cache.",
+   "Click Tasks, type t10_lru_cache in Search tasks, open it and read the 5-run token comparison."
+  ],
+  "question": "What token spread does t10_lru_cache show, and how many model calls did its cheapest and its costliest run make?",
+  "answer": "Token spread 3.4x: 13.9K tokens for the cheapest run (Run 4) against 48.0K for the costliest (Run 2). Run 4 made 5 calls and Run 2 made 10: twice the calls, 3.4x the tokens. The page adds that when Run 4 ended at call 5, Run 2 had used 0.89x as many tokens, so the whole gap came after. Run 4's own page says Steps 6: its sixth call returned an error with no tokens, and the comparison leaves that call out.",
+  "answer_measured_from": "Read on the Tokens page and the task page. GET /api/results/study_v04/runs/20261114-131430-b831f2: 6 chat spans, the last with finish_reason error and 0 input tokens, total 13,947 tokens; GET /api/results/study_v04/runs/20261114-131348-4a817c: 10 chat spans, total 48,037 tokens.",
+  "links": [
+   "ds:study_v04",
+   "an:study_v04:tokens:gemini-2.5-flash-lite:baseline",
+   null,
+   "task:study_v04:gemini-2.5-flash-lite:baseline:t10_lru_cache"
+  ]
+ },
+ "quiz": [
+  {
+   "q": "Which count makes up most of the tokens in an agent run?",
+   "options": [
+    "Generated tokens",
+    "Cached tokens",
+    "Prompt tokens",
+    "Thinking tokens"
+   ],
+   "answer": 2,
+   "why": "Each call re-sends the conversation; in the gemini-2.5-flash-lite baseline runs prompt tokens were 87.4% of all tokens."
+  },
+  {
+   "q": "With the full history kept, run A takes 8 steps and run B takes 16 steps on the same task. How do their prompt tokens compare?",
+   "options": [
+    "About the same, since the task is the same",
+    "Exactly 2x, since B took twice the steps",
+    "Less than 2x, since late steps are cached",
+    "More than 2x: late steps re-read more"
+   ],
+   "answer": 3,
+   "why": "Each step re-reads everything before it, so prompt tokens grow faster than the step count."
+  },
+  {
+   "q": "The Tokens page shows cached: unknown. What does that mean?",
+   "options": [
+    "No tokens were cached during these runs",
+    "The cache counts were not recorded at all",
+    "This provider has no cache to read from",
+    "The runs were free, so nothing was counted"
+   ],
+   "answer": 1,
+   "why": "Missing is shown as unknown, never as 0."
+  }
+ ],
+ "sources": [
+  {
+   "title": "Prompt caching (Claude Developer Platform documentation)",
+   "authors": "Anthropic",
+   "year": "n.d. (living documentation page)",
+   "url": "https://platform.claude.com/docs/en/build-with-claude/prompt-caching",
+   "what_we_took": "What a prompt cache is, and the three usage counts it reports (read from cache, written to cache, the rest), whose sum is the total input. We copy no prices: rates differ by model and change.",
+   "quote": "checks if a prompt prefix, up to a specified cache breakpoint, is already cached from a recent query",
+   "licence": "Vendor documentation; reuse terms not stated. Paraphrased, one short quote, no prices.",
+   "checked": "2026-11-23"
+  },
+  {
+   "title": "The Complexity Trap: Simple Observation Masking Is as Efficient as LLM Summarization for Agent Context Management",
+   "authors": "Tobias Lindenbauer, Igor Slinko, Ludwig Felder, Egor Bogomolov, Yaroslav Zharov",
+   "year": "2025 (DL4C workshop at NeurIPS 2025)",
+   "url": "https://arxiv.org/abs/2508.21433",
+   "licence": "CC BY 4.0 (arXiv).",
+   "what_we_took": "In preliminary runs (GPT-4.1-mini, 50 SWE-bench Lite tasks), tool outputs were about 84% of an average SWE-agent turn (read in the HTML full text).",
+   "quote": "observation tokens make up around 84% of an average SWE-agent turn",
+   "checked": "2026-11-23"
+  },
+  {
+   "title": "How Do AI Agents Spend Your Money? Analyzing and Predicting Token Consumption in Agentic Coding Tasks",
+   "authors": "Longju Bai, Zhemin Huang, Xingyao Wang, Jiao Sun, Rada Mihalcea, Erik Brynjolfsson, et al.",
+   "year": "2026 (preprint)",
+   "url": "https://arxiv.org/abs/2604.22750",
+   "what_we_took": "Input (prompt) tokens, not output tokens, drive the cost of agentic coding. Within one task, the costliest of 4 runs used up to 30x the tokens of the cheapest at the extreme, and about 2x on average (their Fig. 2b, read in the HTML full text).",
+   "quote": "input tokens rather than output tokens driving the overall cost",
+   "licence": "CC BY 4.0 (arXiv).",
+   "checked": "2026-11-23"
+  }
+ ],
+ "glossary_terms": [
+  "token",
+  "prompt (input) tokens",
+  "generated (output) tokens",
+  "context growth",
+  "cached tokens",
+  "computed tokens",
+  "spread"
+ ],
+ "see_also": [
+  {
+   "kind": "article",
+   "target": "phases-and-wasted-work"
+  },
+  {
+   "kind": "article",
+   "target": "why-runs-differ"
+  },
+  {
+   "kind": "page",
+   "label": "Tokens: where the tokens of one model under one harness went",
+   "spec": "an:study_v04:tokens:gemini-2.5-flash-lite:baseline"
+  },
+  {
+   "kind": "page",
+   "label": "A task’s 5-run token comparison: t09_paginate",
+   "spec": "task:study_v04:gemini-2.5-flash-lite:baseline:t09_paginate"
+  }
+ ],
+ "numbers": [
+  {
+   "as_written": [
+    "3 models",
+    "9 harnesses",
+    "24 tasks",
+    "5 runs"
+   ],
+   "meaning": "study_v04 design",
+   "source": "data/runs/study_v04/index.jsonl (traceharness-study)"
+  },
+  {
+   "as_written": [
+    "84%",
+    "50",
+    "4.1"
+   ],
+   "meaning": "tool outputs share of an average SWE-agent turn; 50 SWE-bench Lite tasks; GPT-4.1-mini",
+   "source": "arXiv 2508.21433 HTML full text"
+  },
+  {
+   "as_written": [
+    "30x",
+    "2x",
+    "4 times"
+   ],
+   "meaning": "costliest/cheapest of 4 runs: extreme vs average",
+   "source": "arXiv 2604.22750 abstract + HTML Fig. 2b"
+  },
+  {
+   "as_written": [
+    "13",
+    "8",
+    "59,489",
+    "23,159",
+    "1.6x",
+    "2.6x"
+   ],
+   "meaning": "t09_paginate Run 1 vs Run 3 calls and tokens",
+   "source": "task page 5-run token comparison; index.jsonl"
+  },
+  {
+   "as_written": [
+    "13 x 14 / 2 = 91",
+    "8 x 9 / 2 = 36",
+    "2.5"
+   ],
+   "meaning": "rough rule arithmetic",
+   "source": "computed from the step counts"
+  },
+  {
+   "as_written": [
+    "567",
+    "1,328",
+    "2,155",
+    "4,060",
+    "7,879",
+    "1.04x"
+   ],
+   "meaning": "prompt tokens per call; task-page sentence",
+   "source": "ledger chat spans of 20261114-131327-5484dd and 20261114-131420-b61ac6; task page"
+  },
+  {
+   "as_written": [
+    "55,956",
+    "21,537"
+   ],
+   "meaning": "prompt tokens of Run 1 and Run 3",
+   "source": "data/runs/study_v04/index.jsonl (traceharness-study)"
+  },
+  {
+   "as_written": [
+    "87.4%",
+    "120",
+    "563",
+    "5.07K",
+    "13 runs"
+   ],
+   "meaning": "Tokens page, gemini-2.5-flash-lite + baseline",
+   "source": "Tokens page + GET /api/results/study_v04/tokens"
+  },
+  {
+   "as_written": [
+    "350",
+    "278",
+    "1.5x",
+    "1.68x"
+   ],
+   "meaning": "groups with different step counts; token spread larger than step spread; medians",
+   "source": "own computation over data/runs/study_v04/index.jsonl (traceharness-study) (groups = model x harness x task, 5 runs each)"
+  },
+  {
+   "as_written": [
+    "3.4x",
+    "13.9K",
+    "48.0K",
+    "5 calls",
+    "10",
+    "0.89x",
+    "Steps 6"
+   ],
+   "meaning": "t10_lru_cache token spread and calls",
+   "source": "Tokens page + task page by click-through; ledger of 20261114-131430-b831f2 and 20261114-131348-4a817c"
+  },
+  {
+   "as_written": [
+    "8 steps",
+    "16 steps"
+   ],
+   "meaning": "made-up values in a quiz question",
+   "source": "invented for the question"
+  }
+ ],
+ "in_short": [
+  "**Every model call re-reads the whole conversation**, so the prompt tokens of a run grow much faster than its step count.",
+  "**Prompt tokens, not generated ones, make up most of an agent run**: 87.4% of all tokens for gemini-2.5-flash-lite under baseline.",
+  "**Compare runs in tokens as well as steps**: two passing runs of t09_paginate differ 1.6x in steps but 2.6x in tokens."
+ ]
+}

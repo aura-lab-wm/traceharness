@@ -44,9 +44,11 @@ async def _run(rt: Runtime, dataset: str | None, network: bool) -> list[tuple]:
         names = [d.get("name") for d in sets if (d.get("runs") or 0) > 0]
         ds = dataset or ("llma4se_live" if "llma4se_live" in names else
                          max(sets, key=lambda d: d.get("runs") or 0).get("name") if names else None)
-        run_ids = []
+        run_ids, task_ids = [], []
         if ds and "runs_list" in listed:
-            run_ids = [r["run_id"] for r in (await data("runs_list", {"dataset": ds, "limit": 2}) or {}).get("rows", [])]
+            listed_runs = (await data("runs_list", {"dataset": ds, "limit": 2}) or {}).get("rows", [])
+            run_ids = [r["run_id"] for r in listed_runs]
+            task_ids = [r.get("task_id") for r in listed_runs if r.get("task_id")]
         harnesses = [h.get("id") for h in (await data("harnesses_list", {}) or {}).get("harnesses", [])] if "harnesses_list" in listed else []
         template = (await data("runner_configuration_template", {}) or {}).get("configuration") if "runner_configuration_template" in listed else None
         jobs = (await data("runner_jobs", {"limit": 1}) or {}).get("rows", []) if "runner_jobs" in listed else []
@@ -61,6 +63,8 @@ async def _run(rt: Runtime, dataset: str | None, network: bool) -> list[tuple]:
             "pass_rates": {"dataset": d}, "outcomes": {"dataset": d}, "comparisons": {"dataset": d}, "oracle": {"dataset": d},
             "integrity": {"dataset": d, "harness": h1 or "baseline"}, "fit": {"dataset": d}, "patterns": {"dataset": d},
             "query_actions": {"dataset": d, "pattern": "E"}, "report": {"dataset": d}, "ranking": {"dataset": d},
+            "tokens": {"dataset": d}, "tokens_tasks": {"dataset": d, "limit": 5},
+            "tokens_task": {"dataset": d, "task": (task_ids[:1] or [None])[0]},
             "recommend_benchmark": {}, "harnesses_list": {}, "harness_get": {"harness_id": h1},
             "harness_diff": {"a": h1, "b": h2}, "ablation_plan": {"base": h1}, "tasks_list": {},
             "sweeps_list": {}, "paused_list": {}, "runner_status": {}, "runner_catalog": {},

@@ -1,0 +1,355 @@
+{
+ "id": "model-or-harness",
+ "number": 14,
+ "part": 5,
+ "kind": "concept",
+ "checked": "2026-11-23",
+ "title": "How much is the model, how much the harness?",
+ "question": "When pass rates differ across models and harnesses, how do I tell which one moved them?",
+ "what_you_learn": [
+  "How to read the Family matrix: every model under every harness, side by side.",
+  "What a share of variance is, and how the Experiment page splits it between model, harness and the two together.",
+  "Why the answer depends on which models, harnesses and tasks you included."
+ ],
+ "prerequisites": {
+  "read": [
+   "what-a-harness-is",
+   "comparing-runs-fairly"
+  ],
+  "know": []
+ },
+ "sections": [
+  {
+   "heading": "Two factors, one table",
+   "body": [
+    "When you run several models under several harnesses, every pair is one condition: one model under one harness. The Family matrix puts them in one table, a row per model and a column per harness.",
+    "Read across a row to see what the harnesses do for one model. Read down a column to see what the models do under one harness. The page calls the cells observed rates, not a causal ranking: a cell can be high for reasons the table does not show."
+   ]
+  },
+  {
+   "heading": "Splitting the spread",
+   "body": [
+    "Every run passes or fails, a 1 or a 0. Across all runs those 1s and 0s spread out. The two-factor fit on the Experiment page asks how much of that spread each part of the design accounts for.",
+    {
+     "list": [
+      "Model: how far the models' average pass rates are apart.",
+      "Harness: how far the harnesses' averages are apart.",
+      "Model x harness, the interaction: a harness that helps one model and not another.",
+      "Task: some tasks are harder than others for everyone.",
+      "Condition x task: a condition that does well on some tasks and badly on others.",
+      "Residual: runs of the same condition and task that still disagree."
+     ]
+    },
+    "Each run's distance from the overall average splits into one piece per part. A part's sum of squares is its pieces squared and added up over all runs. Each part's share is its sum of squares divided by the total, so the six shares add up to 100%. The page also puts a 95% interval on each share."
+   ]
+  },
+  {
+   "heading": "What the literature argues",
+   "body": [
+    "Zhang et al. (2026) argue in a position paper (a paper written to make a case) that for long tasks, the harness often matters more than the model. They limit the claim to models of comparable frontier capability. They also propose splitting variance between harness and model, as this page does.",
+    "Madaan et al. (2024) measured how much benchmark scores vary between training runs that differ only in their random seed. They ask practitioners to weigh that variance before calling one model better than another.",
+    "Miller (2024) gives the matching advice for comparisons: work on the question-level paired differences, not only on the two averages."
+   ]
+  },
+  {
+   "heading": "The answer depends on the design",
+   "body": [
+    "A share of variance describes the runs you made, not the world. Models far apart in skill give the model a large share. A strong model near 100% leaves the harness nothing to move.",
+    "So a small harness share does not mean harnesses never matter. It means these harnesses, on these tasks, moved these models little. Report the models, harnesses and tasks next to every share.",
+    "In study_v04, keep only gpt-5.6-luna and the third model (2,160 runs), and the model's share falls from 18.5% to 1.0%. Fit gemini-2.5-flash-lite alone (1,080 runs), and the harness takes 2.7%, not 1.2%."
+   ]
+  }
+ ],
+ "figures": [
+  {
+   "id": "a14-grid",
+   "after_section": 0,
+   "kind": "heat_grid",
+   "data_file": "a14-cells",
+   "title": "The Family matrix of study_v04: 3 models x 9 harnesses",
+   "caption": "Pass rate of each model under each harness, 120 runs per cell, hidden oracle; the margins are the averages. gemini-2.5-flash-lite passes 62.6%, gpt-5.6-luna 97.5% and the third model 93.3%: a spread of 34.9 points, against 13.6 for the harness averages. Pick a row or a column to read across or down it.",
+   "data_note": "study_v04, 3,240 runs",
+   "headline": [
+    {
+     "key": "m0",
+     "as_written": "62.6%"
+    },
+    {
+     "key": "m1",
+     "as_written": "97.5%"
+    },
+    {
+     "key": "m2",
+     "as_written": "93.3%"
+    },
+    {
+     "key": "spread",
+     "as_written": "34.9"
+    },
+    {
+     "key": "hspan",
+     "as_written": "13.6"
+    },
+    {
+     "key": "min0",
+     "as_written": "52.5%"
+    },
+    {
+     "key": "max0",
+     "as_written": "81.7%"
+    },
+    {
+     "key": "min1",
+     "as_written": "94.2%"
+    },
+    {
+     "key": "max1",
+     "as_written": "99.2%"
+    }
+   ]
+  },
+  {
+   "id": "a14-shares",
+   "after_section": 1,
+   "kind": "var_share",
+   "data_file": "a14-cells",
+   "title": "Where the spread of passes and fails goes",
+   "caption": "The two-factor fit of the Experiment page: each part's sum of squares over the total, 424.9 for all 3,240 runs. Model 18.5%, harness 1.2%, model x harness 1.1%, task 15.8%, condition x task 47.6%, residual 15.8%. The other tabs fit smaller designs: the shares move with the models you include.",
+   "data_note": "study_v04, 3,240 runs; analysis.factorial with tasks as blocks",
+   "headline": [
+    {
+     "key": "model",
+     "as_written": "18.5%"
+    },
+    {
+     "key": "harness",
+     "as_written": "1.2%"
+    },
+    {
+     "key": "inter",
+     "as_written": "1.1%"
+    },
+    {
+     "key": "task",
+     "as_written": "15.8%"
+    },
+    {
+     "key": "cxt",
+     "as_written": "47.6%"
+    },
+    {
+     "key": "total",
+     "as_written": "424.9"
+    },
+    {
+     "key": "strong_model",
+     "as_written": "1.0%"
+    },
+    {
+     "key": "alone_harness",
+     "as_written": "2.7%"
+    }
+   ]
+  }
+ ],
+ "worked_example": {
+  "title": "In study_v04 the model moves more than the harness",
+  "dataset": {
+   "name": "study_v04",
+   "what": "Bundled with the study copy: 3,240 recorded runs, 3 models x 9 harnesses x 24 small Python tasks x 5 runs. They were collected through OpenRouter (a paid service that passes requests on to many model providers) at temperature 0.",
+   "credit": "TraceHarness bundled data (AURA lab, William & Mary)."
+  },
+  "open": [
+   "Click the dataset name at the top of the left list and choose study_v04.",
+   "Click Analysis, then Family matrix, and read all 27 cells.",
+   "Click Analysis, then Experiment, and read the ANOVA table of sums of squares."
+  ],
+  "links": [
+   "ds:study_v04",
+   "an:study_v04:family",
+   "an:study_v04:fit"
+  ],
+  "body": [
+   "The design is balanced, meaning every model ran 5 times on every task under every harness: 3 models x 9 harnesses x 24 tasks x 5 runs. All 3,240 runs are graded by the hidden oracle (the tests the agent never sees).",
+   "The models are far apart. gemini-2.5-flash-lite passes 62.6% of its runs, gpt-5.6-luna 97.5% and the third model 93.3%. That is a spread of 34.9 points. The harness averages span 13.6 points.",
+   "The page shows the model's share as 18%, the harness's as 1% and the interaction's as 1%. It rounds to whole percents, and its SS column gives one more digit. Divided by the total, 424.9, the SS column gives the model 18.5% and the harness 1.2%. The interaction, harnesses helping one model and not another, takes 1.1%.",
+   "The task takes 15.8%, and runs that still disagree take 15.8% (16% each on the page). The largest share, 47.6% (48% on the page), is condition x task: which setup works depends on the task.",
+   "Look at the rows to see why the harness share is small. gemini-2.5-flash-lite ranges from 52.5% under terse_prompt to 81.7% under reprompt. gpt-5.6-luna stays between 94.2% and 99.2%, so there was little left to gain.",
+   "This does not contradict Zhang et al. Their claim is about models of comparable frontier capability on long tasks. These models are not comparable, and these tasks are short."
+  ]
+ },
+ "try_it": {
+  "clicks": [
+   "Click the dataset name at the top of the left list and choose study_v04.",
+   "Click Analysis, then Experiment.",
+   "Read the share column of the ANOVA table, then its SS column."
+  ],
+  "links": [
+   "ds:study_v04",
+   "an:study_v04:fit",
+   null
+  ],
+  "question": "Which term has the largest share of variance? What shares do the model, the harness and their interaction get?",
+  "answer": "Condition x task has the largest share: the page shows 48%. The model gets 18%, the harness 1% and the model x harness interaction 1%. The page shows whole percents; dividing its SS column by the total, 424.9, gives 47.6%, 18.5%, 1.2% and 1.1%. Most of the spread is about which setup suits which task, not about one best harness.",
+  "answer_measured_from": "Experiment page, ANOVA table: the share column in whole percents and the SS column. Recomputed from data/runs/study_v04/index.jsonl with hidden_pass as 0 or 1: total sum of squares 424.9; model 78.51, harness 5.20, interaction 4.53, task 67.24, condition x task 202.24, residual 67.20."
+ },
+ "quiz": [
+  {
+   "q": "The harness share of variance is 1.2%. What may you conclude?",
+   "options": [
+    "Harnesses never matter for coding agents",
+    "These harnesses moved these models little here",
+    "The harness was not recorded for most of the runs",
+    "The model is the only thing worth changing in future"
+   ],
+   "answer": 1,
+   "why": "A share describes the design you ran; it says nothing about harnesses or models you did not include."
+  },
+  {
+   "q": "One harness raises one model by 20 points and leaves another unchanged. Which part of the fit holds that?",
+   "options": [
+    "The task share",
+    "The residual share",
+    "The model share",
+    "The interaction share"
+   ],
+   "answer": 3,
+   "why": "An interaction is an effect of one factor that depends on another: here the harness effect depends on the model."
+  },
+  {
+   "q": "Why does gpt-5.6-luna leave the harnesses little room in study_v04?",
+   "options": [
+    "It ran fewer tasks than the other models did",
+    "It ignores the system prompt that a harness sends",
+    "It already passes 94% to 99% of runs under every one",
+    "Its runs were graded by the strengthened suite instead"
+   ],
+   "answer": 2,
+   "why": "A model near 100% under every harness leaves nothing to gain, so the harness share stays small."
+  }
+ ],
+ "sources": [
+  {
+   "title": "Stop Comparing LLM Agents Without Disclosing the Harness",
+   "authors": "Yunbei Zhang, Janet Wang, Yingqiang Ge, Weijie Xu, Jihun Hamm, Chandan K. Reddy",
+   "year": "2026 (position paper, preprint)",
+   "url": "https://arxiv.org/abs/2605.23950",
+   "what_we_took": "The argument that, for long-horizon tasks across models of comparable frontier capability, harness-induced variance can exceed model-induced variance; their proposal of a variance decomposition protocol.",
+   "quote": "harness-induced variance can substantially exceed model-induced variance",
+   "licence": "CC BY 4.0 (arXiv).",
+   "checked": "2026-11-23"
+  },
+  {
+   "title": "Quantifying Variance in Evaluation Benchmarks",
+   "authors": "Lovish Madaan, Aaditya K. Singh, Rylan Schaeffer, Andrew Poulton, Sanmi Koyejo, Pontus Stenetorp, Sharan Narang, Dieuwke Hupkes",
+   "year": "2024 (preprint)",
+   "url": "https://arxiv.org/abs/2406.10229",
+   "what_we_took": "Benchmark scores vary between training runs that differ only in their seed, and that variance should be weighed before calling one model better.",
+   "quote": "we rarely quantify the variance in our evaluation benchmarks, which dictates whether differences in performance are meaningful",
+   "licence": "CC BY 4.0 (arXiv).",
+   "checked": "2026-11-23"
+  },
+  {
+   "title": "Adding Error Bars to Evals: A Statistical Approach to Language Model Evaluations",
+   "authors": "Evan Miller",
+   "year": "2024",
+   "url": "https://arxiv.org/abs/2411.00640",
+   "what_we_took": "When two models are compared, work on the question-level paired differences rather than only on the two summary scores.",
+   "quote": "conducting statistical inference on the question-level paired differences",
+   "licence": "arXiv non-exclusive distribution licence (not CC). Paraphrased; one short quote for citation.",
+   "checked": "2026-11-23"
+  }
+ ],
+ "glossary_terms": [
+  "family",
+  "condition",
+  "share of variance",
+  "two-factor fit",
+  "interaction",
+  "cell",
+  "oracle",
+  "hidden tests"
+ ],
+ "see_also": [
+  {
+   "kind": "article",
+   "target": "what-a-harness-is"
+  },
+  {
+   "kind": "article",
+   "target": "how-many-runs"
+  },
+  {
+   "kind": "page",
+   "label": "Family matrix: every model under every harness",
+   "spec": "an:study_v04:family"
+  },
+  {
+   "kind": "page",
+   "label": "Experiment: the two-factor fit",
+   "spec": "an:study_v04:fit"
+  }
+ ],
+ "numbers": [
+  {
+   "as_written": [
+    "3,240",
+    "62.6%",
+    "97.5%",
+    "93.3%",
+    "34.9",
+    "13.6"
+   ],
+   "meaning": "study_v04 model averages and the model and harness spreads (hidden oracle)",
+   "source": "data/runs/study_v04/index.jsonl, mean hidden_pass by model and by harness"
+  },
+  {
+   "as_written": [
+    "18.5%",
+    "1.2%",
+    "1.1%",
+    "15.8%",
+    "47.6%",
+    "424.9",
+    "78.51",
+    "5.20",
+    "4.53",
+    "67.24",
+    "202.24",
+    "67.20",
+    "48%",
+    "18%",
+    "16%"
+   ],
+   "meaning": "two-factor fit with tasks as blocks: sums of squares and shares",
+   "source": "recomputed in scripts/numbers.py from index.jsonl; matches the Experiment page"
+  },
+  {
+   "as_written": [
+    "52.5%",
+    "81.7%",
+    "94.2%",
+    "99.2%",
+    "20 points",
+    "94% to 99%"
+   ],
+   "meaning": "the range of each model's row across the 9 harnesses; a made-up value in a quiz question",
+   "source": "index.jsonl, hidden_pass per model and harness, 120 runs each"
+  },
+  {
+   "as_written": [
+    "2,160",
+    "1.0%",
+    "1,080",
+    "2.7%"
+   ],
+   "meaning": "the same fit on smaller designs: gpt-5.6-luna and the third model (model share), gemini-2.5-flash-lite alone (harness share)",
+   "source": "scripts/learn_figures.py a14-cells (analysis.factorial on each subset)"
+  }
+ ],
+ "in_short": [
+  "**Every model under every harness is one condition**; the Family matrix shows them as one table, a row per model and a column per harness.",
+  "The two-factor fit splits the spread of passes and fails into shares: **in study_v04 the model takes 18.5% and the harness 1.2%**.",
+  "**A share describes the design you ran**, so report the models, harnesses and tasks next to every share."
+ ]
+}

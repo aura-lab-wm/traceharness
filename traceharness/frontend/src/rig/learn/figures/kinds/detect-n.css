@@ -1,0 +1,21 @@
+/* Rig · learn/figures/kinds/detect-n.css — detect_n: detectable difference against runs (detect-n.jsx).
+   The curve is the factor (--rig-ser1) and draws itself in once; the picked plan and its four-times ring glide with
+   transform; recorded changes are grey diamonds, the one above the curve in the factor colour. Tokens only. */
+.rg-dn-curve{fill:none;stroke:var(--rig-ser1);stroke-width:2.5;stroke-linejoin:round;stroke-dasharray:1;stroke-dashoffset:1;transition:stroke-dashoffset var(--rig-dur-pulse) var(--rig-ease)}
+.rg-dn-svg.seen .rg-dn-curve{stroke-dashoffset:0}
+.rg-dn-guide polyline{fill:none;stroke:var(--rig-line3);stroke-dasharray:4 3}
+.rg-dn-guide text{fill:var(--rig-dim);font-size:var(--rig-fs-2xs);font-variant-numeric:tabular-nums}
+.rg-dn-guide text.n{fill:var(--rig-text);font-weight:var(--rig-fw-medium)}
+.rg-dn-svg text{paint-order:stroke;stroke:var(--rig-panel);stroke-width:3px;stroke-linejoin:round}
+.rg-dn-obs rect{fill:var(--rig-ser4);stroke:var(--rig-panel);stroke-width:1}
+.rg-dn-obs rect.top{fill:var(--rig-ser1)}
+.rg-dn-obs text{fill:var(--rig-text);font-size:var(--rig-fs-xs);font-weight:var(--rig-fw-medium)}
+.rg-dn-now,.rg-dn-four{transition:transform var(--rig-dur-2) var(--rig-ease)}
+.rg-dn-now line{stroke:var(--rig-ser1);stroke-dasharray:3 3}
+.rg-dn-now circle{fill:var(--rig-ser1);stroke:var(--rig-panel);stroke-width:2}
+.rg-dn-now text,.rg-dn-four text{fill:var(--rig-text);font-size:var(--rig-fs-xs);font-weight:var(--rig-fw-bold);font-variant-numeric:tabular-nums}
+.rg-dn-four circle{fill:var(--rig-panel);stroke:var(--rig-ser1);stroke-width:2;stroke-dasharray:3 2}
+.rg-dn-four text{fill:var(--rig-dim);font-weight:var(--rig-fw-medium)}
+.rg-lfig-sw.four{background:var(--rig-panel);box-shadow:inset 0 0 0 2px var(--rig-ser1);border-radius:var(--rig-r-full)}
+.rg-lfig-sw.obs{background:var(--rig-ser4);transform:rotate(45deg) scale(.75)}
+.rg-prev-line .rg-prev-dot{fill:var(--rig-ser1)}

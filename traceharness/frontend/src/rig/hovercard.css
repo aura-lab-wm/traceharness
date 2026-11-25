@@ -1,0 +1,20 @@
+/* Rig · hovercard.css — the hover card (HoverCard.jsx): a light card in the product's tokens, in the top
+   layer beside its target. It softens in over 120 ms from 40% (so it is readable on its first frame);
+   under reduced motion it just appears. */
+@keyframes rg-hc-in{from{opacity:.4}to{opacity:1}}
+.rig .rg-hc{position:static}
+.rg-hc-card{position:fixed;inset:auto;margin:0;box-sizing:border-box;z-index:var(--rig-z-popover);width:max-content;max-width:min(22rem,calc(100vw - 16px));overflow:auto;overscroll-behavior:contain;
+  padding:var(--rig-s2) var(--rig-s3);background:var(--rig-panel);border:1px solid var(--rig-line);border-radius:var(--rig-r-md);box-shadow:0 4px 16px color-mix(in srgb,var(--rig-text) 8%,transparent);
+  color:var(--rig-text);font:var(--rig-fw-regular) var(--rig-fs-xs)/var(--rig-lead-sm) var(--rig-sans);text-align:left;white-space:normal;text-transform:none;letter-spacing:normal}
+.rg-hc-card[data-open="false"]{display:none}
+.rg-hc-card[data-open="true"]{display:block;animation:rg-hc-in var(--rig-dur-1) var(--rig-ease) both}
+.rg-hc-card p{margin:0}
+.rg-hc-card p+p{margin-top:var(--rig-s2)}
+/* a hint is one plain line or a few (line breaks kept); the pointer passes through it */
+.rg-hint{max-width:min(26rem,calc(100vw - 16px));white-space:pre-line;pointer-events:none}
+/* a glossary word (Term.jsx): a dotted line under it, the word as it was; full ink on hover */
+.rig .rg-term{color:inherit;font:inherit;text-decoration:underline dotted;text-decoration-thickness:1px;text-underline-offset:3px;text-decoration-color:color-mix(in srgb,currentColor 55%,transparent);cursor:help;transition:text-decoration-color var(--rig-dur-1) var(--rig-ease)}
+.rig .rg-term:hover{text-decoration-color:currentColor}
+.rig .rg-term:focus-visible{outline:var(--rig-focus-ring);outline-offset:2px;border-radius:var(--rig-r-xs)}
+.rg-term-card b{font-weight:var(--rig-fw-semi)}
+@media (prefers-reduced-motion:reduce){.rg-hc-card[data-open="true"]{animation:none}}

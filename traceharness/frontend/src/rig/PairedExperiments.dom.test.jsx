@@ -8,6 +8,10 @@ import { baselineProfile } from '../native-prompts-contract'
 import { experimentFixture, nativeInventoryFixture } from '../../test/native-prompts-fixture'
 import { clearPairing, pendingPairing, requestPairing } from './native/ui/pairing-bus'
 import { runnerRequest } from '../runner-api'
+
+/* a number box takes what was typed when it is left (NumberField): type, then leave the box */
+const typeNumber = (node, value) => { fireEvent.change(node, { target: { value } }); fireEvent.blur(node) }
+
 vi.mock('../runner-api', () => ({ runnerRequest: vi.fn() }))
 const configuration = () => ({ version: 2, runtime_id: 'native-claude-code', model_id: 'fixture/model', task_id: 'fixture/task', prompt: '', prompt_mode: 'append', harness: {}, limits: { max_steps: 5, wall_time_seconds: 30, max_cost_usd: 1 }, native_prompt_profile: baselineProfile(nativeInventoryFixture()) })
 const exp = () => ({ id: 'a'.repeat(48), status: 'ready', plan_sha256: 'b'.repeat(64), plan: { name: 'Fixture comparison', arms: [{ id: 'control', label: 'Reference' }, { id: 'variant', label: 'Variant' }] }, trial_count: 0, maximum_cost_usd: 2, issues: [], trials: [], summary: { finalized_trials: 0, pending_trials: 0, active_trials: 0, confirmed_cost_usd: 0, cost_unknown_trials: 0, comparisons: [] } })
@@ -109,6 +113,12 @@ it('lists saved experiments and loads one with the execution service unavailable
   expect(screen.getByRole('button', { name: 'Start experiment' }).disabled).toBe(true)
   expect(screen.getByRole('button', { name: 'Review experiment' }).disabled).toBe(true)
 })
+it('never asks for saved experiments when the runner serves none (no 404 on the local console)', async () => {
+  render(<PairedExperiments configuration={configuration()} available={false} historyServed={false} lease={{ current: false }} />)
+  await open()
+  await new Promise((resolve) => setTimeout(resolve, 0))
+  expect(runnerRequest.mock.calls.filter(([path]) => path === '/experiments')).toEqual([])
+})
 it('starts without credential_id when the catalog says no credential is required', async () => {
   const record = exp()
   runnerRequest.mockImplementation(async (path) => path.endsWith('/start') ? { experiment: { ...record, status: 'running' } } : path === '/experiments' ? { experiments: [record] } : { experiment: record })
@@ -133,7 +143,7 @@ it('invalidates a reviewed plan after schedule changes', async () => {
   render(<PairedExperiments configuration={configuration()} available lease={{ current: false }} />)
   await open(); await captureTwo(); fireEvent.click(screen.getByRole('button', { name: 'Review experiment' }))
   await screen.findByText('2 planned trials · maximum $2')
-  fireEvent.change(screen.getByLabelText('Schedule seed'), { target: { value: '42' } })
+  typeNumber(screen.getByLabelText('Schedule seed'), '42')
   expect(screen.getByRole('button', { name: 'Freeze experiment' }).disabled).toBe(true)
   expect(screen.queryByLabelText('Experiment review')).toBeNull()
 })
@@ -326,4 +336,24 @@ it('labels an experiment from its frozen arm manifests when trial job summaries 
     await waitFor(() => expect(document.querySelector('[data-el="paired-verified"]')?.textContent).toBe(text))
     view.unmount()
   }
+})
+
+it('Refresh experiments says it asked again and what came back', async () => {
+  render(<PairedExperiments configuration={configuration()} available historyServed lease={{ current: false }} />)
+  await open()
+  fireEvent.click(screen.getByRole('button', { name: 'Refresh experiments' }))
+  const note = await waitFor(() => { const n = document.querySelector('[data-el="refresh-note"]'); expect(n).toBeTruthy(); return n })
+  expect(note.textContent).toBe('Refreshed · 0 saved experiments · nothing changed · just now')
+  runnerRequest.mockImplementation(async (path) => (path === '/experiments' ? { experiments: [{ id: 'c'.repeat(48), status: 'ready', trial_count: 2 }] } : {}))
+  fireEvent.click(screen.getByRole('button', { name: 'Refresh experiments' }))
+  await waitFor(() => expect(document.querySelector('[data-el="refresh-note"]').textContent).toBe('Refreshed · 1 saved experiment · just now'))
+})
+it('where no runner serves saved experiments, Refresh experiments is inert and says why', async () => {
+  render(<PairedExperiments configuration={configuration()} available historyServed={false} lease={{ current: false }} />)
+  await open()
+  const b = screen.getByRole('button', { name: 'Refresh experiments' })
+  expect(b.getAttribute('aria-disabled')).toBe('true')
+  expect(b.getAttribute('data-hint')).toBe('This runner keeps no saved experiments, so there is nothing to refresh')
+  fireEvent.click(b)
+  expect(runnerRequest.mock.calls.some(([path]) => path === '/experiments')).toBe(false)
 })

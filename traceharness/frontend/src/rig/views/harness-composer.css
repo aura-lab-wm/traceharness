@@ -4,7 +4,7 @@
 .rig .rg-composer{max-width:none;padding:var(--rig-s5) var(--rig-gutter) var(--rig-s7);margin:0;width:100%;box-sizing:border-box}
 
 /* ---- page head: title, connection state and the configuration actions on one row while they fit */
-.rg-composer-connection{display:inline-flex;align-items:center;gap:var(--rig-s2);font-size:var(--rig-fs-xs);line-height:var(--rig-lh-snug);color:var(--rig-dim)}
+.rg-composer-connection{display:inline-flex;align-items:center;gap:var(--rig-s2);font-size:var(--rig-fs-xs);line-height:var(--rig-lead-sm);color:var(--rig-dim)}
 .rg-composer-connection>span{flex:none;width:var(--rig-s2);height:var(--rig-s2);border-radius:var(--rig-r-full);background:var(--rig-mute)}
 .rg-composer-connection.connected{color:var(--rig-text)}
 .rg-composer-connection.connected>span{background:var(--rig-sky)}
@@ -13,10 +13,10 @@
 /* ---- setup: three pickers side by side, one column in a narrow container */
 .rg-composer-selectors{position:relative;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:var(--rig-s4) var(--rig-s5);margin:0 0 var(--rig-s4);padding:var(--rig-s5);border:1px solid var(--rig-line);border-radius:var(--rig-r-lg);background:var(--rig-panel)}
 .rg-composer-selectors>.rg-fld{min-width:0;align-content:start;margin:0;gap:var(--rig-s2)}
-.rg-composer .rg-composer-step{display:block;margin:0;font:var(--rig-fw-medium) var(--rig-fs-2xs)/var(--rig-lh-snug) var(--rig-mono);text-transform:uppercase;letter-spacing:var(--rig-track-caps);color:var(--rig-dim)}
-.rg-composer-selectors small{font-size:var(--rig-fs-xs);line-height:var(--rig-lh-body);color:var(--rig-dim);overflow-wrap:anywhere}
+.rg-composer .rg-composer-step{display:block;margin:0;font:var(--rig-fw-medium) var(--rig-fs-xs)/var(--rig-lead-sm) var(--rig-sans);letter-spacing:0;color:var(--rig-dim)}
+.rg-composer-selectors small{font-size:var(--rig-fs-xs);line-height:var(--rig-lead-md);color:var(--rig-dim);overflow-wrap:anywhere}
 .rg-composer-selection-actions{margin:0 0 var(--rig-s3);gap:var(--rig-s2)}
-.rg-composer-switch-policy{display:flex;align-items:center;gap:var(--rig-s1) var(--rig-s4);flex-wrap:wrap;margin:0 0 var(--rig-s5);font-size:var(--rig-fs-xs);line-height:var(--rig-lh-body);color:var(--rig-dim);overflow-wrap:anywhere}
+.rg-composer-switch-policy{display:flex;align-items:center;gap:var(--rig-s1) var(--rig-s2);flex-wrap:wrap;margin:0 0 0 auto;font-size:var(--rig-fs-xs);line-height:var(--rig-lead-md);color:var(--rig-dim);overflow-wrap:anywhere}
 .rg-composer-switch-policy>label{display:inline-flex;align-items:center;gap:var(--rig-s2);min-height:var(--rig-hit);cursor:pointer;font-size:var(--rig-fs-sm);color:var(--rig-text)}
 .rg-composer-switch-policy>span{flex:1 1 16rem;min-width:0}
 .rg-composer-switch-policy input{accent-color:var(--rig-sel);flex:none;margin:0}
@@ -25,25 +25,28 @@
 /* phone summary of the three selections (the pickers fold behind "Edit selections") */
 .rg-composer-setup-summary{display:flex;flex-wrap:wrap;align-items:center;gap:var(--rig-s3) var(--rig-s4);margin:0 0 var(--rig-s4);padding:var(--rig-s3) var(--rig-s4);border:1px solid var(--rig-line);border-radius:var(--rig-r-lg);background:var(--rig-panel)}
 .rg-composer-setup-summary dl{flex:1 1 14rem;display:grid;gap:var(--rig-s1);min-width:0;margin:0}
-.rg-composer-setup-summary dl>div{display:grid;grid-template-columns:4rem minmax(0,1fr);gap:var(--rig-s2);font-size:var(--rig-fs-xs);line-height:var(--rig-lh-snug)}
+.rg-composer-setup-summary dl>div{display:grid;grid-template-columns:4rem minmax(0,1fr);gap:var(--rig-s2);font-size:var(--rig-fs-xs);line-height:var(--rig-lead-sm)}
 .rg-composer-setup-summary dt{color:var(--rig-dim)}
 .rg-composer-setup-summary dd{margin:0;min-width:0;color:var(--rig-text);overflow-wrap:anywhere}
 .rg-composer-setup-summary>.rg-btn{flex:none}
 .rg-composer-setup-summary+.rg-composer-setup .rg-composer-selectors{margin-bottom:var(--rig-s3)}
 
 /* ---- disclosures: a full-height summary row, a hairline above and below */
-.rg-composer-details{display:block;margin:0 0 var(--rig-s5);border-top:1px solid var(--rig-line);border-bottom:1px solid var(--rig-line);font-size:var(--rig-fs-xs);line-height:var(--rig-lh-body);color:var(--rig-dim);overflow-wrap:anywhere}
+.rg-composer-details{display:block;margin:0 0 var(--rig-s5);border-top:1px solid var(--rig-line);border-bottom:1px solid var(--rig-line);font-size:var(--rig-fs-xs);line-height:var(--rig-lead-md);color:var(--rig-dim);overflow-wrap:anywhere}
 .rg-composer-details>summary{display:flex;align-items:center;gap:var(--rig-s2);min-height:var(--rig-h-ctl);cursor:pointer;list-style:none;font-size:var(--rig-fs-md);font-weight:var(--rig-fw-medium);color:var(--rig-text)}
 .rg-composer-details>summary::-webkit-details-marker{display:none}
 .rg-composer-details>summary::before{content:"";flex:none;width:0;height:0;border-block:var(--rig-s1) solid transparent;border-left:calc(var(--rig-s1) + var(--rig-s0)) solid var(--rig-dim);transition:transform var(--rig-dur-1) var(--rig-ease)}
 .rg-composer-details[open]>summary::before{transform:rotate(90deg)}
-.rg-composer-details>summary:hover{color:var(--rig-sel-t)}
+/* opened from ⌘K (harnesses:json) it is scrolled to: its summary lands in view, below the phone's top bar */
+.rg-composer-details[data-el~="edit-configuration-json"]{scroll-margin-top:var(--rig-s4)}
+@media (max-width:767px){.rg-composer-details[data-el~="edit-configuration-json"]{scroll-margin-top:calc(var(--rig-head-h) + var(--rig-s2))}}
+.rg-composer-details>summary:hover{color:var(--rig-text)}
 .rg-composer-details>summary:focus-visible{outline:var(--rig-focus-ring);outline-offset:var(--rig-focus-offset)}
 .rg-composer-details[open]{padding-bottom:var(--rig-s4)}
 .rg-composer-details dl{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,14rem),1fr));gap:var(--rig-s3) var(--rig-s5);margin:var(--rig-s2) 0 0}
 .rg-composer-details dl>div{min-width:0}
 .rg-composer-details dt{font-size:var(--rig-fs-xs);color:var(--rig-dim);margin-bottom:var(--rig-s1)}
-.rg-composer-details dd{margin:0;color:var(--rig-text);font:var(--rig-fs-xs)/var(--rig-lh-body) var(--rig-mono)}
+.rg-composer-details dd{margin:0;color:var(--rig-text);font:var(--rig-fs-xs)/var(--rig-lead-md) var(--rig-num);font-variant-numeric:tabular-nums}
 .rg-composer-details>p{margin:var(--rig-s2) 0 0;max-width:var(--rig-measure)}
 .rg-composer-details strong{color:var(--rig-text);font-weight:var(--rig-fw-medium)}
 
@@ -56,39 +59,55 @@
 .rg-composer-editor{display:flex;flex-direction:column;gap:var(--rig-s4)}
 .rg-composer .rg-pnl{margin:0;border-color:var(--rig-line);border-radius:var(--rig-r-lg);overflow:hidden}
 .rg-composer .rg-pnl-h{display:flex;align-items:center;flex-wrap:wrap;gap:var(--rig-s1) var(--rig-s3);min-height:calc(var(--rig-h-ctl) + 2 * var(--rig-s2));padding:var(--rig-s2) var(--rig-s5);background:var(--rig-panel);border-bottom:1px solid var(--rig-line)}
-.rig .rg-composer .rg-pnl-h h2{margin:0;font-size:var(--rig-fs-md);font-weight:var(--rig-fw-medium);line-height:var(--rig-lh-snug);letter-spacing:0}
-.rg-composer .rg-pnl-h .meta{margin-left:auto;color:var(--rig-mute);font-size:var(--rig-fs-xs);line-height:var(--rig-lh-snug)}
+.rig .rg-composer .rg-pnl-h h2{margin:0;font-size:var(--rig-fs-md);font-weight:var(--rig-fw-bold);line-height:var(--rig-lead-md);letter-spacing:0}
+.rg-composer .rg-pnl-h .meta{margin-left:auto;color:var(--rig-mute);font-size:var(--rig-fs-xs);line-height:var(--rig-lead-sm)}
 .rg-composer .rg-pnl-b{padding:var(--rig-s5);display:flex;flex-direction:column;gap:var(--rig-s3)}
 .rg-composer .rg-pnl-b>p{margin:0}
 .rg-composer-prompt .rg-fld{margin:0}
 .rig .rg-composer-prompt textarea.rg-inp{padding:var(--rig-s3) var(--rig-s4);background:var(--rig-bg);border-color:var(--rig-line2);tab-size:2}
 .rig .rg-composer-prompt.is-expanded textarea.rg-inp{min-height:64dvh}
 .rg-composer-prompt-actions{gap:var(--rig-s2)}
-.rg-composer-prompt-actions [aria-expanded=true]{border-color:var(--rig-sel);color:var(--rig-sel-t);background:var(--rig-sel-bg)}
+/* the prompt behind "Edit prompt": one line of it, then the editor when opened */
+.rg-composer-promptbox{display:flex;flex-direction:column;gap:var(--rig-s3);min-width:0}
+.rg-composer-promptbox[open]{flex:1 1 auto}
+.rig .rg-composer-promptbox>summary{display:flex;align-items:center;gap:var(--rig-s3);min-width:0;min-height:var(--rig-h-ctl);padding:0 var(--rig-s3);border:1px solid var(--rig-line);border-radius:var(--rig-r-sm);background:var(--rig-bg);cursor:pointer;list-style:none}
+.rig .rg-composer-promptbox>summary::-webkit-details-marker{display:none}
+.rig .rg-composer-promptbox>summary:hover{border-color:var(--rig-line3)}
+.rig .rg-composer-promptbox>summary:focus-visible{outline:var(--rig-focus-ring);outline-offset:var(--rig-focus-offset)}
+.rg-composer-prompt-first{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--rig-dim);font:var(--rig-fs-sm)/var(--rig-lead-md) var(--rig-sans)}
+.rg-composer-prompt-edit{flex:none;color:var(--rig-text);font:var(--rig-fw-medium) var(--rig-fs-sm)/var(--rig-lead-md) var(--rig-sans);text-decoration:underline;text-underline-offset:3px;text-decoration-color:color-mix(in srgb,var(--rig-text) 35%,transparent)}
+.rg-composer-promptbox[open]>summary .rg-composer-prompt-first{display:none}
+.rg-composer-promptbox[open]>summary{justify-content:flex-end;border-color:transparent;background:none;padding:0}
+.rg-harness-picker-note{margin:0;padding:var(--rig-s2) var(--rig-s3) 0;color:var(--rig-dim);font:var(--rig-fs-xs)/var(--rig-lead-sm) var(--rig-sans)}
+.rg-composer-prompt-actions [aria-expanded=true]{border-color:var(--rig-sel-edge);color:var(--rig-text);background:var(--rig-sel-bg)}
 
 /* run configuration (the side of the split): sticky beside the editor, static once stacked */
 .rg-composer-review{display:flex;flex-direction:column;scrollbar-width:thin;border:1px solid var(--rig-line);border-radius:var(--rig-r-lg);background:var(--rig-panel);padding:var(--rig-s4) var(--rig-s5) var(--rig-s5)}
 .rg-composer-section-head{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:var(--rig-s2) var(--rig-s3);min-height:var(--rig-h-ctl);margin-bottom:var(--rig-s3)}
-.rig .rg-composer-section-head h2{margin:0;font-size:var(--rig-fs-lg);font-weight:var(--rig-fw-medium);line-height:var(--rig-lh-snug);letter-spacing:-.01em}
+.rig .rg-composer-section-head h2{margin:0;font-size:var(--rig-fs-lg);font-weight:var(--rig-fw-bold);line-height:var(--rig-lead-lg);letter-spacing:-.01em}
 .rg-composer-section-head>span{font-size:var(--rig-fs-xs);color:var(--rig-dim)}
 .rg-composer-review>.rg-composer-section-head .rg-ico{color:var(--rig-dim)}
 .rg-composer-review>:last-child{margin-top:auto}
 .rg-composer-review dl{display:grid;gap:var(--rig-s2);margin:0 0 var(--rig-s4)}
 .rg-composer-review dl>div{display:grid;grid-template-columns:4.5rem minmax(0,1fr);gap:var(--rig-s3);align-items:baseline}
 .rg-composer-review dt{font-size:var(--rig-fs-xs);color:var(--rig-dim)}
-.rg-composer-review dd{margin:0;min-width:0;font:var(--rig-fs-xs)/var(--rig-lh-body) var(--rig-mono);overflow-wrap:anywhere}
-.rg-composer-review dd small{display:block;margin-top:var(--rig-s0);font:var(--rig-fs-xs)/var(--rig-lh-body) var(--rig-sans);color:var(--rig-dim)}
+.rg-composer-review dd{margin:0;min-width:0;font:var(--rig-fs-xs)/var(--rig-lead-md) var(--rig-num);overflow-wrap:anywhere;font-variant-numeric:tabular-nums}
+.rg-composer-review dd small{display:block;margin-top:var(--rig-s0);font:var(--rig-fs-xs)/var(--rig-lead-md) var(--rig-sans);color:var(--rig-dim)}
 .rg-composer-limits{border:0;border-top:1px solid var(--rig-line);margin:0;padding:var(--rig-s4) 0;min-inline-size:0;display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,12rem),1fr));gap:var(--rig-s3) var(--rig-s4)}
 .rg-composer-limits legend{padding:0 var(--rig-s2) 0 0;font-size:var(--rig-fs-sm);font-weight:var(--rig-fw-medium);color:var(--rig-text)}
 .rg-composer-limits .rg-fld{margin:0}
 .rg-composer-limits>p{grid-column:1/-1;margin:0}
-.rg-composer-readiness{padding:var(--rig-s3);background:var(--rig-panel2);border-radius:var(--rig-r-md);font-size:var(--rig-fs-xs);line-height:var(--rig-lh-body);overflow-wrap:anywhere}
+.rg-composer-limits>.rg-composer-limits-note{color:var(--rig-text);padding-left:var(--rig-s2);border-left:2px solid var(--rig-amb)}
+.rg-composer-readiness{padding:var(--rig-s3);background:var(--rig-panel2);border-radius:var(--rig-r-md);font-size:var(--rig-fs-xs);line-height:var(--rig-lead-md);overflow-wrap:anywhere}
 .rg-composer-readiness strong{font-weight:var(--rig-fw-medium);font-size:var(--rig-fs-sm);color:var(--rig-text)}
 .rg-composer-readiness p{margin:var(--rig-s2) 0 0;color:var(--rig-dim)}
 .rg-composer-readiness ul{margin:var(--rig-s2) 0 0;padding-left:var(--rig-s4);list-style:disc;display:grid;gap:var(--rig-s1);color:var(--rig-dim)}
 .rg-composer-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:var(--rig-s2);margin:var(--rig-s4) 0 var(--rig-s3)}
+.rg-composer-name{display:grid;gap:var(--rig-s1);margin-top:var(--rig-s4)}
+.rg-composer-name+.rg-composer-actions{margin-top:var(--rig-s3)}
+.rg-composer-started p{margin:0}
 .rg-composer-review>p{margin:0}
-.rg-composer-service-note{border-top:1px solid var(--rig-line);padding-top:var(--rig-s4);margin-top:var(--rig-s4);font-size:var(--rig-fs-xs);line-height:var(--rig-lh-body);color:var(--rig-dim);overflow-wrap:anywhere}
+.rg-composer-service-note{border-top:1px solid var(--rig-line);padding-top:var(--rig-s4);margin-top:var(--rig-s4);font-size:var(--rig-fs-xs);line-height:var(--rig-lead-md);color:var(--rig-dim);overflow-wrap:anywhere}
 .rg-composer-service-note>p{margin:0 0 var(--rig-s3)}
 
 /* every control in the composer: tokens decide its height and type; only the states are drawn here */
@@ -114,8 +133,8 @@
 .rg-composer-key .rg-small{margin:0}
 
 /* messages */
-.rg-composer [role=alert],.rg-composer-import-error{color:var(--rig-red-t);font-size:var(--rig-fs-xs);line-height:var(--rig-lh-body);overflow-wrap:anywhere}
-.rg-composer [role=status],.rg-composer-import-status{font-size:var(--rig-fs-xs);line-height:var(--rig-lh-body);overflow-wrap:anywhere}
+.rg-composer [role=alert],.rg-composer-import-error{color:var(--rig-red-t);font-size:var(--rig-fs-xs);line-height:var(--rig-lead-md);overflow-wrap:anywhere}
+.rg-composer [role=status],.rg-composer-import-status{font-size:var(--rig-fs-xs);line-height:var(--rig-lead-md);overflow-wrap:anywhere}
 .rg-composer>p[role]{margin:0 0 var(--rig-s4)}
 .rg-composer>.rg-note{margin:0 0 var(--rig-s4);flex-wrap:wrap;align-items:center}
 .rg-composer>.rg-note>p{margin:0;flex:1 1 16rem}
@@ -129,23 +148,23 @@
 .rg-composer-run-list,.rg-composer-artifacts{list-style:none;padding:0;margin:0}
 .rg-composer-run-list>li,.rg-composer-artifacts>li{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:var(--rig-s2) var(--rig-s4);padding:var(--rig-s3) 0;border-top:1px solid var(--rig-line);min-width:0}
 .rg-composer-run-list>li>div,.rg-composer-artifacts>li>div{flex:1 1 16rem;display:grid;gap:var(--rig-s1);min-width:0}
-.rg-composer-run-list strong,.rg-composer-artifacts strong{font-size:var(--rig-fs-xs);font-weight:var(--rig-fw-medium);line-height:var(--rig-lh-body);overflow-wrap:anywhere}
-.rg-composer-run-list span,.rg-composer-run-list time,.rg-composer-artifacts span{font-size:var(--rig-fs-xs);line-height:var(--rig-lh-body);color:var(--rig-dim);overflow-wrap:anywhere}
-.rg-composer-run-list>li[aria-current=true]{border-left:2px solid var(--rig-sel);padding-left:var(--rig-s3)}
-.rg-composer-run-list>li[aria-current=true] strong{color:var(--rig-sel-t)}
+.rg-composer-run-list strong,.rg-composer-artifacts strong{font-size:var(--rig-fs-xs);font-weight:var(--rig-fw-medium);line-height:var(--rig-lead-md);overflow-wrap:anywhere}
+.rg-composer-run-list span,.rg-composer-run-list time,.rg-composer-artifacts span{font-size:var(--rig-fs-xs);line-height:var(--rig-lead-md);color:var(--rig-dim);overflow-wrap:anywhere}
+.rg-composer-run-list>li[aria-current=true]{border-left:2px solid var(--rig-sel-mark);padding-left:var(--rig-s3)}
+.rg-composer-run-list>li[aria-current=true] strong{color:var(--rig-text)}
 .rg-composer-run-list .rg-btn,.rg-composer-artifacts .rg-btn{flex:none}
 .rg-composer-history .rg-pnl-h>.rg-btn{margin-left:auto}
 .rg-composer-job .rg-pnl-h h2{overflow-wrap:anywhere;min-width:0}
 .rg-composer-job .rg-mono{overflow-wrap:anywhere}
-.rg-composer-job-identity{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,14rem),1fr));gap:var(--rig-s3) var(--rig-s5);margin:0;font-size:var(--rig-fs-xs);line-height:var(--rig-lh-body)}
+.rg-composer-job-identity{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,14rem),1fr));gap:var(--rig-s3) var(--rig-s5);margin:0;font-size:var(--rig-fs-xs);line-height:var(--rig-lead-md)}
 .rg-composer-job-identity dt{color:var(--rig-dim)}
-.rg-composer-job-identity dd{margin:var(--rig-s0) 0 0;font-family:var(--rig-mono);overflow-wrap:anywhere}
+.rg-composer-job-identity dd{margin:var(--rig-s0) 0 0;font-family:var(--rig-num);overflow-wrap:anywhere;font-variant-numeric:tabular-nums}
 .rg-composer-usage{display:flex;flex-wrap:wrap;gap:var(--rig-s3) var(--rig-s5);margin:0;font-size:var(--rig-fs-xs)}
-.rg-composer-usage dd{font-family:var(--rig-mono);margin:var(--rig-s1) 0 0}
+.rg-composer-usage dd{font-family:var(--rig-num);margin:var(--rig-s1) 0 0;font-variant-numeric:tabular-nums}
 .rg-composer-usage dt{color:var(--rig-dim)}
 
 /* footer */
-.rg-composer-footer{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:var(--rig-s1) var(--rig-s4);padding-top:var(--rig-s4);margin-top:var(--rig-s6);border-top:1px solid var(--rig-line);font-size:var(--rig-fs-xs);line-height:var(--rig-lh-body);color:var(--rig-dim)}
+.rg-composer-footer{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:var(--rig-s1) var(--rig-s4);padding-top:var(--rig-s4);margin-top:var(--rig-s6);border-top:1px solid var(--rig-line);font-size:var(--rig-fs-xs);line-height:var(--rig-lead-md);color:var(--rig-dim)}
 .rg-composer-footer .rg-tlink{display:inline-flex;align-items:center;min-height:var(--rig-hit);font-size:var(--rig-fs-sm)}
 .rg-composer-footer .rg-tlink:focus-visible{outline:var(--rig-focus-ring);outline-offset:var(--rig-focus-offset)}
 
@@ -155,7 +174,7 @@
 .rg-harness-picker-control{position:relative;display:flex;align-items:stretch;width:100%;min-width:0;border:1px solid var(--rig-line2);border-radius:var(--rig-r-md);background:var(--rig-bg);transition:border-color var(--rig-dur-1) var(--rig-ease)}
 .rg-harness-picker-control:hover{border-color:var(--rig-line3)}
 .rg-harness-picker-control:focus-within{border-color:var(--rig-sel);outline:var(--rig-focus-ring);outline-offset:var(--rig-focus-offset)}
-.rig .rg-harness-picker-control input{width:100%;min-width:0;height:var(--rig-h-ctl);padding:0 var(--rig-h-ctl) 0 var(--rig-s3);border:0;border-radius:var(--rig-r-md);font:var(--rig-fw-medium) var(--rig-fs-sm)/var(--rig-lh-tight) var(--rig-sans);background:transparent;color:var(--rig-text);text-overflow:ellipsis}
+.rig .rg-harness-picker-control input{width:100%;min-width:0;height:var(--rig-h-ctl);padding:0 var(--rig-h-ctl) 0 var(--rig-s3);border:0;border-radius:var(--rig-r-md);font:var(--rig-fw-medium) var(--rig-fs-sm)/var(--rig-lead-xs) var(--rig-sans);background:transparent;color:var(--rig-text);text-overflow:ellipsis}
 .rg-harness-picker-control input::placeholder{font-weight:var(--rig-fw-regular);color:var(--rig-dim);opacity:1}
 .rg-composer .rg-harness-picker-control input:focus-visible{outline:none}
 .rg-harness-picker-toggle{display:flex;align-items:center;justify-content:center;position:absolute;inset:0 0 0 auto;width:var(--rig-h-ctl);border:0;background:transparent;color:var(--rig-dim);cursor:pointer;border-radius:0 var(--rig-r-md) var(--rig-r-md) 0}
@@ -166,22 +185,22 @@
 .rg-harness-picker input:disabled,.rg-harness-picker button:disabled{cursor:not-allowed}
 .rg-harness-picker-hint{display:block}
 .rg-harness-picker-popup{position:absolute;z-index:var(--rig-z-dropdown);display:flex;flex-direction:column;left:0;width:100%;min-width:min(100%,18rem);margin:0;border:1px solid var(--rig-line2);border-radius:var(--rig-r-lg);background:var(--rig-panel2);box-shadow:var(--rig-shadow);overflow:hidden;box-sizing:border-box}
-.rg-harness-picker-resultline{display:flex;flex:none;justify-content:space-between;align-items:center;gap:var(--rig-s3);padding:var(--rig-s2) var(--rig-s3);border-bottom:1px solid var(--rig-line);font:var(--rig-fs-xs)/var(--rig-lh-snug) var(--rig-sans);color:var(--rig-dim)}
+.rg-harness-picker-resultline{display:flex;flex:none;justify-content:space-between;align-items:center;gap:var(--rig-s3);padding:var(--rig-s2) var(--rig-s3);border-bottom:1px solid var(--rig-line);font:var(--rig-fs-xs)/var(--rig-lead-sm) var(--rig-sans);color:var(--rig-dim)}
 .rg-harness-picker-resultline>span{font-size:var(--rig-fs-xs);text-align:right;color:var(--rig-mute)}
 .rg-harness-picker-list{min-height:0;flex:1 1 auto;overflow-y:auto;overflow-x:hidden;overscroll-behavior:contain;scrollbar-width:thin;padding:var(--rig-s1);scroll-padding:var(--rig-s1)}
-.rg-harness-picker-group{padding:var(--rig-s3) var(--rig-s2) var(--rig-s1);font:var(--rig-fw-medium) var(--rig-fs-2xs)/var(--rig-lh-snug) var(--rig-mono);letter-spacing:var(--rig-track-caps);text-transform:uppercase;color:var(--rig-mute)}
+.rg-harness-picker-group{padding:var(--rig-s3) var(--rig-s2) var(--rig-s1);font:var(--rig-fw-medium) var(--rig-fs-xs)/var(--rig-lead-sm) var(--rig-sans);letter-spacing:0;color:var(--rig-mute)}
 .rg-harness-picker-option{display:flex;align-items:flex-start;justify-content:space-between;gap:var(--rig-s3);min-width:0;min-height:var(--rig-hit);padding:var(--rig-s2);border-radius:var(--rig-r-sm);cursor:pointer;color:var(--rig-text)}
 .rg-harness-picker-option.is-active{background:var(--rig-sel-bg)}
-.rg-harness-picker-option.is-selected .rg-harness-picker-option-copy>strong{color:var(--rig-sel-t)}
+.rg-harness-picker-option.is-selected .rg-harness-picker-option-copy>strong{color:var(--rig-text)}
 .rg-harness-picker-option[aria-disabled=true]{cursor:not-allowed;color:var(--rig-dim);opacity:.5}
 .rg-harness-picker-option-copy{flex:1 1 0;min-width:0;display:grid;gap:var(--rig-s0);overflow-wrap:anywhere}
-.rg-harness-picker-option-copy>strong{font:var(--rig-fw-medium) var(--rig-fs-sm)/var(--rig-lh-snug) var(--rig-sans)}
-.rg-harness-picker-option-copy>span{font:var(--rig-fs-xs)/var(--rig-lh-snug) var(--rig-sans);color:var(--rig-dim)}
-.rg-harness-picker-option-copy>small{font:var(--rig-fs-xs)/var(--rig-lh-snug) var(--rig-mono);color:var(--rig-mute)}
+.rg-harness-picker-option-copy>strong{font:var(--rig-fw-medium) var(--rig-fs-sm)/var(--rig-lead-sm) var(--rig-sans)}
+.rg-harness-picker-option-copy>span{font:var(--rig-fs-xs)/var(--rig-lead-sm) var(--rig-sans);color:var(--rig-dim)}
+.rg-harness-picker-option-copy>small{font:var(--rig-fs-xs)/var(--rig-lead-sm) var(--rig-num);color:var(--rig-mute);font-variant-numeric:tabular-nums}
 .rg-harness-picker-option-trailing{flex:0 1 auto;display:flex;gap:var(--rig-s1);align-items:center;max-width:40%;text-align:right}
-.rg-harness-picker-option-trailing>small{font:var(--rig-fs-xs)/var(--rig-lh-snug) var(--rig-sans);color:var(--rig-dim);overflow-wrap:normal;word-break:normal}
-.rg-harness-picker-check{flex:none;color:var(--rig-sel-t);font-size:var(--rig-fs-xs)}
-.rg-harness-picker-empty{padding:var(--rig-s4) var(--rig-s3);color:var(--rig-text);font:var(--rig-fs-xs)/var(--rig-lh-body) var(--rig-sans)}
+.rg-harness-picker-option-trailing>small{font:var(--rig-fs-xs)/var(--rig-lead-sm) var(--rig-sans);color:var(--rig-dim);overflow-wrap:normal;word-break:normal}
+.rg-harness-picker-check{flex:none;color:var(--rig-text);font-size:var(--rig-fs-xs)}
+.rg-harness-picker-empty{padding:var(--rig-s4) var(--rig-s3);color:var(--rig-text);font:var(--rig-fs-xs)/var(--rig-lead-md) var(--rig-sans)}
 .rg-harness-picker-empty>span{display:block;color:var(--rig-dim);margin-top:var(--rig-s1)}
 /* iOS zooms a focused field under 16px: a touch device gets 16px, a mouse keeps the 13px control type */
 @media (pointer:coarse){.rig .rg-harness-picker-control input{font-size:var(--rig-fs-lg)}.rg-harness-picker-resultline>span{display:none}}
@@ -215,3 +234,33 @@
 }
 
 .rg-composer-unverified { display: flex; gap: 8px; align-items: flex-start; margin-top: 8px; font-size: 13px; }
+
+/* Studio Graphite: the harness pages share the 20px header rhythm, 8px panels with 40px heads */
+.rg-dpad.rg-harness{padding-top:20px}
+.rg-harness .rg-pnl{border-radius:var(--rig-r-md)}
+.rg-harness .rg-pnl-h{min-height:40px;padding:0 var(--rig-s4)}
+.rg-harness .rg-pnl-b{padding:var(--rig-s4)}
+
+/* ---- one job per view: the view strip under the title, one panel shown at a time */
+.rg-composer>.rg-scrollx,.rg-composer>[data-el=harness-views]{margin:0 0 var(--rig-s5)}
+.rg-composer-view[hidden]{display:none}
+.rg-composer-current{margin:0 0 var(--rig-s4)}
+.rg-composer-current strong{font-weight:var(--rig-fw-medium);color:var(--rig-text)}
+.rg-composer-files{margin-top:var(--rig-s6)}
+.rg-composer-files .rg-pnl-b>p{margin:0}
+.rg-composer-view>.rg-composer-footer{margin-top:var(--rig-s6)}
+/* a confirmation sits under the control that caused it */
+.rg-composer-guide .rg-composer-import-status,.rg-harness-blocks>.rg-composer-import-status,.rg-composer-prompt .rg-composer-import-status,.rg-composer-files .rg-composer-import-status,.rg-json-editor>.rg-composer-import-status{margin:var(--rig-s2) 0 0;flex-wrap:wrap;align-items:center;gap:var(--rig-s2) var(--rig-s3)}
+.rg-composer-import-status>p{margin:0;flex:1 1 16rem}
+/* the run configuration stays in view beside a long prompt or the guided questions */
+@container (min-width:901px){
+  .rg-composer-layout{align-items:start}
+  .rg-composer-review{position:sticky;top:var(--rig-s4);max-height:calc(100dvh - 2 * var(--rig-s8));overflow-y:auto}
+}
+.rg-composer-actions+.rg-composer-readiness{margin-top:var(--rig-s3)}
+/* Saved versions: the four places a harness is kept, each named with where it lives */
+.rg-store{display:grid;gap:var(--rig-s4);margin-top:var(--rig-s4)}
+.rg-store-place{display:grid;gap:var(--rig-s2);min-width:0}
+.rig .rg-store-place>h3{margin:0;font:var(--rig-fw-medium) var(--rig-fs-sm)/var(--rig-lead-sm) var(--rig-sans);color:var(--rig-text)}
+.rig .rg-store-where{margin:0;color:var(--rig-mute);font-size:var(--rig-fs-xs);line-height:var(--rig-lead-sm)}
+.rg-harness-blocks .rg-harness-library{margin-top:var(--rig-s4)}

@@ -1,0 +1,5 @@
+/* Rig · DemoBanner.css — the "Demo data" line on bundled mock datasets (DemoBanner.jsx). Tokens only. */
+.rig .rg-demo{display:flex;flex-wrap:wrap;align-items:baseline;gap:var(--rig-s1) var(--rig-s3);min-height:var(--rig-h-sm);margin:0 0 var(--rig-s4);padding:var(--rig-s1) var(--rig-s3);border:1px dashed var(--rig-amb);border-radius:var(--rig-r-md);background:var(--rig-amb-bg);font-size:var(--rig-fs-sm);line-height:var(--rig-lead-sm);color:var(--rig-dim);min-width:0}
+.rig .rg-demo b{color:var(--rig-amb-t);font-weight:var(--rig-fw-semi);white-space:nowrap}
+.rig .rg-demo span{flex:1 1 20rem;min-width:0}
+.rig .rg-demo-go{white-space:nowrap}

@@ -110,7 +110,37 @@ def _usage(extra: dict) -> dict:
             if isinstance(v, int) and not isinstance(v, bool):
                 out[target] = v
                 break
+    # cached prompt tokens, when the provider reported them (a part of prompt_tokens)
+    details = u.get("prompt_tokens_details") if isinstance(u.get("prompt_tokens_details"), dict) else {}
+    for v in (details.get("cached_tokens"), u.get("cached_prompt_tokens"), u.get("cache_read_input_tokens")):
+        if out and isinstance(v, int) and not isinstance(v, bool):
+            out["cache_read_input_tokens"] = v
+            break
     return out
+
+
+def _reasoning(m: dict, extra: dict) -> str:
+    """The reply's reasoning text when the model returned one apart from its content."""
+    for v in (m.get("reasoning_content"), m.get("reasoning")):
+        if isinstance(v, str) and v.strip():
+            return v
+    resp = extra.get("response") if isinstance(extra.get("response"), dict) else {}
+    choices = resp.get("choices") if isinstance(resp.get("choices"), list) else []
+    msg = choices[0].get("message") if choices and isinstance(choices[0], dict) else None
+    v = msg.get("reasoning_content") if isinstance(msg, dict) else None
+    return v if isinstance(v, str) and v.strip() else ""
+
+
+def iso_of(epoch) -> str:
+    """Epoch seconds (mini-swe-agent's message timestamps) as an ISO 8601 UTC string, or ""."""
+    if not isinstance(epoch, (int, float)) or isinstance(epoch, bool):
+        return ""
+    from datetime import datetime, timezone
+    return datetime.fromtimestamp(epoch, tz=timezone.utc).isoformat(timespec="milliseconds").replace("+00:00", "Z")
+
+
+def _ts(extra: dict) -> str:
+    return iso_of(extra.get("timestamp"))
 
 
 def _call(i: int, j: int, cmd: str, call_id: str = "") -> Event:
@@ -154,7 +184,11 @@ def parse_file(path: str) -> Optional[Session]:
             resp = extra.get("response") if isinstance(extra.get("response"), dict) else {}
             model = model or str(resp.get("model") or "")
             text = content if isinstance(content, str) else ""
-            events.append(Event("assistant", text=text[:4000], model=model, usage=_usage(extra)))
+            usage, ts, rid = _usage(extra), _ts(extra), f"{i}"
+            thought = _reasoning(m, extra)
+            if thought:
+                events.append(Event("reasoning", ts=ts, text=thought, model=model, usage=dict(usage), request_id=rid))
+            events.append(Event("assistant", ts=ts, text=text[:4000], model=model, usage=usage, request_id=rid))
             calls = m.get("tool_calls") if isinstance(m.get("tool_calls"), list) else []
             if calls:
                 for j, tc in enumerate(calls):
@@ -164,7 +198,10 @@ def parse_file(path: str) -> Optional[Session]:
                     except (ValueError, TypeError):
                         args = {}
                     cmd = args.get("command") if isinstance(args, dict) else None
-                    events.append(_call(i, j, str(cmd or json.dumps(args)), str(tc.get("id") or "")))
+                    ev = _call(i, j, str(cmd or json.dumps(args)), str(tc.get("id") or ""))
+                    # the calls of one reply share its usage and id, so the reply is billed once
+                    ev.ts, ev.model, ev.usage, ev.request_id = ts, model, dict(usage), rid
+                    events.append(ev)
             else:
                 for j, cmd in enumerate(c.strip() for c in _FENCE.findall(text) if c.strip()):
                     ev = _call(i, j, cmd)
@@ -173,7 +210,7 @@ def parse_file(path: str) -> Optional[Session]:
             continue
         if role == "tool":
             out, ok = _observation(content)
-            events.append(Event("tool_result", call_id=str(m.get("tool_call_id") or ""), text=out[:4000], ok=ok))
+            events.append(Event("tool_result", ts=_ts(extra), call_id=str(m.get("tool_call_id") or ""), text=out[:4000], ok=ok))
             continue
         if role == "exit":
             exit_status = str(extra.get("exit_status") or exit_status)

@@ -1,0 +1,50 @@
+/* SeriesChart.jsx — a line chart with a crosshair readout, hover focus and end-of-line labels.
+   Tokens only. Lines differ by ink and by dash, never by colour alone (the cumulative chart's rule). */
+.rg-sc{position:relative;margin:var(--rig-s2) 0 var(--rig-s3)}
+.rg-sc-plot{position:relative;border-radius:var(--rig-r-sm);outline:none}
+.rg-sc-plot:focus-visible{box-shadow:0 0 0 2px var(--rig-sel)}
+.rg-sc svg{display:block;max-width:100%;height:auto;overflow:visible;touch-action:pan-y}
+.rg-sc text{font:var(--rig-fw-regular) var(--rig-fs-2xs) var(--rig-num);fill:var(--rig-mute);font-variant-numeric:tabular-nums}
+.rg-sc .rg-sc-grid{stroke:var(--rig-line);stroke-width:1}
+.rg-sc .rg-sc-axis{stroke:var(--rig-line2);stroke-width:1}
+.rg-sc-s0{--rig-sc-c:var(--rig-text)}
+.rg-sc-s1{--rig-sc-c:var(--rig-mute);--rig-sc-dash:6 3}
+.rg-sc-s2{--rig-sc-c:var(--rig-ser5);--rig-sc-dash:2 3}
+.rg-sc-s3{--rig-sc-c:var(--rig-ser4);--rig-sc-dash:8 3 2 3}
+.rg-sc-s4{--rig-sc-c:var(--rig-qty);--rig-sc-dash:1 2}
+.rg-sc-s5{--rig-sc-c:var(--rig-ser6);--rig-sc-dash:4 4}
+.rg-sc .rg-sc-ln{fill:none;stroke:var(--rig-sc-c);stroke-width:2;stroke-linejoin:round;stroke-dasharray:var(--rig-sc-dash,none)}
+/* a wide, invisible stroke so a 2px line is easy to point at */
+.rg-sc .rg-sc-hit{fill:none;stroke:transparent;stroke-width:14;pointer-events:stroke}
+.rg-sc .rg-sc-pt{fill:var(--rig-sc-c);stroke:var(--rig-panel);stroke-width:1}
+.rg-sc text.rg-sc-endl{fill:var(--rig-dim);font-family:var(--rig-sans)}
+.rg-sc .rg-sc-band{fill:color-mix(in srgb,var(--rig-text) 8%,transparent);stroke:none}
+/* the pointer on one line: the others step back */
+.rg-sc g[data-series],.rg-sc .rg-sc-band,.rg-sc-legend li{transition:opacity var(--rig-dur-1) var(--rig-ease)}
+.rg-sc .rg-sc-dim{opacity:.22}
+.rg-sc g[data-series]:not(.rg-sc-dim) .rg-sc-endl{fill:var(--rig-text)}
+.rg-sc-hot g[data-series]:not(.rg-sc-dim) .rg-sc-ln{stroke-width:2.5}
+.rg-sc-cross line{stroke:var(--rig-dim);stroke-width:1;stroke-dasharray:2 2}
+.rg-sc-cross circle{fill:var(--rig-sc-c);stroke:var(--rig-panel);stroke-width:1.5}
+/* the readout: beside the crosshair, on the side away from it, never under the pointer's point */
+.rg-sc-readout{position:absolute;top:4px;z-index:var(--rig-z-base);display:grid;gap:4px;min-width:11rem;max-width:min(20rem,60%);padding:var(--rig-s2) var(--rig-s3);border:1px solid var(--rig-line2);border-radius:var(--rig-r-sm);background:var(--rig-panel);box-shadow:var(--rig-shadow);pointer-events:none;font:var(--rig-fw-regular) var(--rig-fs-xs)/var(--rig-lead-sm) var(--rig-sans);color:var(--rig-text)}
+.rg-sc-readout[hidden]{display:none}
+.rg-sc-rt{color:var(--rig-mute);font-size:var(--rig-fs-2xs)}
+.rg-sc-readout ul{display:grid;gap:2px;margin:0;padding:0;list-style:none}
+.rg-sc-readout li{display:grid;grid-template-columns:14px minmax(0,1fr) auto;align-items:center;gap:var(--rig-s2)}
+.rg-sc-readout li.on{font-weight:var(--rig-fw-semi)}
+.rg-sc-readout li i,.rg-sc-legend li i{display:block;width:14px;height:0;border-top:2px solid var(--rig-sc-c)}
+.rg-sc-s1 i,.rg-sc-s2 i,.rg-sc-s3 i,.rg-sc-s4 i,.rg-sc-s5 i{border-top-style:dashed}
+/* an edge of the shaded band reads out with the band's own swatch */
+.rg-sc-readout li.band i{height:8px;border:0;border-radius:1px;background:color-mix(in srgb,var(--rig-text) 14%,transparent)}
+.rg-sc-readout li b{font:var(--rig-fw-semi) var(--rig-fs-xs)/var(--rig-lead-xs) var(--rig-num);font-variant-numeric:tabular-nums}
+.rg-sc-rx{color:var(--rig-mute);font-size:var(--rig-fs-2xs)}
+.rg-sc-legend{display:flex;flex-wrap:wrap;gap:var(--rig-s1) var(--rig-s4);margin:var(--rig-s2) 0 0;padding:0;list-style:none;color:var(--rig-dim);font:var(--rig-fw-regular) var(--rig-fs-xs)/var(--rig-lead-sm) var(--rig-sans)}
+.rg-sc-legend li{display:inline-flex;align-items:center;gap:var(--rig-s1)}
+/* a mark at one x (the call where a run pulls ahead, where one ends), and the end of a running total */
+.rg-sc .rg-sc-mk line{stroke:var(--rig-amb);stroke-width:1.5;stroke-dasharray:4 3}
+.rg-sc .rg-sc-mk.dim line{stroke:var(--rig-mute)}
+.rg-sc text.rg-sc-mkl{fill:var(--rig-amb-t);font-family:var(--rig-sans)}
+.rg-sc .rg-sc-mk.dim text.rg-sc-mkl{fill:var(--rig-dim)}
+.rg-sc .rg-sc-end{fill:var(--rig-sc-c);stroke:var(--rig-panel);stroke-width:1.5}
+.rg-sc-end-w{color:var(--rig-mute)}

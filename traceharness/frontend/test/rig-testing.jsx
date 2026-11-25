@@ -8,6 +8,7 @@
    same paths data.js requests, e.g. '/overview', '/results/mini/runs'), stubs fetch so any
    UNPRIMED path answers 404 (recorded in `requests`, so a test can assert nothing unexpected
    was asked for), stubs EventSource, sets location.hash and renders <RigApp/>.
+   The first-visit tour is marked done unless the test passes { tour: true }.
    Call resetRig() in afterEach (it also runs cleanup()).
 
    rigFixture() is a tiny, fully consistent dataset "mini" (2 models × 2 harnesses × 2 tasks ×
@@ -113,8 +114,9 @@ export function rigFixture() {
 }
 
 /** Render the Rig at `hash` with primed data. Unprimed GETs 404 and are recorded. */
-export function renderRig(hash = '#/rig/', { data = rigFixture(), storage, Root = RigApp, fetchImpl } = {}) {
+export function renderRig(hash = '#/rig/', { data = rigFixture(), storage, Root = RigApp, fetchImpl, tour = false } = {}) {
   resetCache(); resetTabState()
+  if (!tour) localStorage.setItem('rig.tour.v1', 'done')   // the first-visit tour only where a test asks for it
   if (storage) for (const [k, v] of Object.entries(storage)) localStorage.setItem(k, v)
   reloadCase()
   prime(data)

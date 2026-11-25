@@ -24,7 +24,6 @@ export default function NavigationBuddy({ ctx = {} }) {
   }, [executionTopic, revision])
   const show = topic => { setAnswer(topic); setAsked(true) }
   return <section className="rg-guide" aria-label="TraceHarness navigation help">
-    <span className="rg-guide-eyebrow">BUDDY / WORKFLOW GUIDE</span>
     <h2>What would you like to do?</h2>
     <p className="rg-small rg-dim">Ask how, check what is supported, or choose a workflow. Guidance stays in this browser; no model calls or charges.</p>
     <form onSubmit={event => { event.preventDefault(); show(guidanceFor(question)) }}>
@@ -33,7 +32,7 @@ export default function NavigationBuddy({ ctx = {} }) {
     </form>
     {asked && <section className="rg-guide-answer" aria-label="Buddy guidance" aria-live="polite">
       {answer ? <>
-        <span className="rg-guide-eyebrow">{answer.local ? 'REQUIRES THE LOCAL WORKBENCH' : 'DOCUMENTED WORKFLOW · CHECK PREREQUISITES'}</span>
+        <span className={`rg-tag rg-guide-kind${answer.local ? ' amb' : ''}`}>{answer.local ? 'Requires the local console' : 'Documented workflow · check prerequisites'}</span>
         <h3>{answer.title}</h3>
         {executionTopic && <section className="rg-guide-note" aria-label="Live runner check" aria-live="polite">
           {catalogState === 'loading' ? <p>Checking the current runner catalog…</p>
@@ -45,7 +44,10 @@ export default function NavigationBuddy({ ctx = {} }) {
         </section>}
         <ol>{answer.steps.map(step => <li key={step}>{step}</li>)}</ol>
         <p className="rg-guide-note">{answer.note}</p>
-        <button type="button" className="rg-btn" onClick={() => rig.showGuidance?.(answer, ctx)}>{answer.label}</button>
+        {/* inside Buddy, "Open Ask Buddy" says so and takes you to its question box below */}
+        {answer.destination === 'buddy' && rig.state && rig.state.dock === 'buddy'
+          ? <button type="button" className="rg-btn" aria-current="true" data-here="" data-hint="You are in Buddy" onClick={() => { const box = document.querySelector('#rig-dock .rg-bud textarea, #rig-dock .rg-bud input[type="text"]') || document.querySelector('#rig-dock textarea'); if (box) box.focus() }}>{answer.label} · you are in Buddy: ask below ↓</button>
+          : <button type="button" className="rg-btn" onClick={() => rig.showGuidance?.(answer, ctx)}>{answer.label}</button>}
       </> : <><h3>I can’t reliably map that to a supported workflow.</h3><p>Choose a topic below or ask about a specific control. I won’t claim an unlisted action is available.</p></>}
     </section>}
     <details className="rg-guide-topics" open={!asked}><summary>Browse supported workflows</summary><div>{GUIDE_TOPICS.map(topic => <button type="button" className="rg-btn" key={topic.id} onClick={() => show(topic)}>{topic.title}</button>)}</div></details>

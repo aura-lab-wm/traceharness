@@ -1,12 +1,13 @@
 /* ====================================================================================
    Rig · views/workspace.jsx — the workbench's machine-side documents. Owner: Phase 2 (workspace).
 
-     sources    results on disk (+ descriptions) · three ways to add runs (import a path,
-                download the SWE-agent sample, session capture) · harness versions
-     capture    session capture (PRIVATE: every request carries the x-traceharness-private header)
+     sources    Add data, four tabs: import files · public sample (Hugging Face, SWE-agent) ·
+                capture sessions · results on disk (+ harness versions of the selected dataset)
+     capture    the same page on its Session capture tab (PRIVATE: every request carries the
+                x-traceharness-private header)
      sentinel   early warning on a partial trajectory: AUC, operating points, weights, histogram,
                 trained-model leaderboard (+ EW-AUC@k replay), detector catalogue, rule check
-     canvas     studies → models → cells (pass@1, CI, n) with paired-Δ wires and the cell detail
+     canvas     datasets → models → conditions (pass@1, CI, n) with paired-Δ wires and the condition detail
      settings   appearance (theme / density / motion), Student Lab, Buddy, narrator key, lab key, paths
      guide      Student Lab reading guide     package   school replication package (reference)
    + dock `capture` (Capture watcher).
@@ -27,14 +28,15 @@
    applied here as data-rig-density / data-rig-motion on the `.rig` root, because RigApp only
    owns the theme today. Sec / About / CopyCmd are local; they would serve every view from ui.jsx.
    ==================================================================================== */
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { Fragment, useDeferredValue, useEffect, useId, useMemo, useRef, useState } from 'react'
 import { api, IS_STATIC, captureControl } from '../../api'
 import { can } from '../../environment'
-import { LOCAL_APP } from '../../shared/index.js'
+import { LOCAL_APP, LABELS } from '../../shared/index.js'
 import { Unavailable } from '../unavailable'
 import { HuggingFaceSource } from '../HuggingFaceSource'
 import { AboutConsole } from '../AboutConsole'
 import { AgentConnect } from './agent.jsx'
+import { tildeHome } from '../homePath'
 import schoolPackage from '../../../../school-package.json'
 import { arrival, suggestResultsDir, cleanResultsDir, detectState, progressPct, progressKnown, progressPhrase, verdictTile } from '../../method/importing'
 import { browserStores, readMate, writeKey, forgetKey, writeModel, isKeyRemembered, setCaptured, DEFAULT_MODEL } from '../../matekey'
@@ -44,14 +46,24 @@ import BuddyModelPicker from '../../workspace/BuddyModelPicker'
 import { makeSpec } from '../route'
 import {
   useApi, useOverview, useDatasets, useSettings, useSentinel, useMetrics, useComparisons, useHarnessVersions, useJobs, useRuns,
-  invalidate, short, fmt, verdict, conditionRuns, tally, repeatEvidence, paths,
+  invalidate, loadCaptured, short, fmt, verdict, conditionRuns, tally, repeatEvidence, paths,
 } from '../data'
 import { useRig, useTabState } from '../context'
 import { downloadText } from '../caseFile'
-import { Icon, Kbd, MOD, Tag, Note, Seg, Switch, Go, Loading, ErrorState, Empty, NextSteps, Btn, ConfirmAction, CiBar, PinButton, FailureChip, PageHeader, Kpis, Kpi, TableScroll } from '../ui'
+import { Icon, Kbd, MOD, Skeleton, Tag, Note, Seg, Switch, Go, Loading, ErrorState, Empty, NextSteps, Btn, ConfirmAction, CiBar, PinButton, FailureChip, PageHeader, KpiStrip, TableScroll, Tabs, EntityName } from '../ui'
+import { useRefreshed, RefreshNote, Wb } from '../ui'
+import { ThresholdSlider } from '../ThresholdSlider'
+import { DatasetSelect } from '../DatasetOption'
+import { LearnFrame, LearnPage, learnTitle, learnCrumbs, learnPalette } from '../learn/Learn.jsx'
+import { NumberField } from '../NumberField'
 import './workspace.css'
+import { scopeWords } from '../scope'
+import { PagePath } from '../PagePath'
+import { BrandMark, BrandName } from '../brand/BrandMark'
 
-const { pct, int, fx, usd, pp, plural } = fmt
+const { pct, int, fx, usd, pp } = fmt
+/** "3,240 runs", "1 run": a count with thousands separators and the right plural. */
+const plural = (n, w, p) => `${int(n)} ${n === 1 ? w : p || w + 's'}`
 const NOTES = schoolPackage.dataset_notes || {}
 const PRIV = { private: true }
 const cx = (...a) => a.filter(Boolean).join(' ')
@@ -63,8 +75,19 @@ const stamp = (at) => { const d = new Date((at || 0) * 1000); return at && Numbe
 
 /* ================================================================ local primitives */
 /** The document head: the shared PageHeader (title keeps a 20rem basis, actions wrap under it). */
-function Head({ eyebrow, title, meta, children, actions, el }) {
-  return <PageHeader eyebrow={eyebrow} title={title} meta={meta} lede={children || null} actions={actions} el={el} />
+function Head({ sub, title, meta, children, actions, el }) {
+  return <PageHeader title={title} subtitle={sub} meta={meta} lede={children || null} actions={actions} el={el} />
+}
+/** One figure of a KpiStrip with a muted line under it: an 11px label, a 14px mono value, the hint. */
+function Fig({ label, value, unit, hint, tone, el }) {
+  const none = value == null || value === ''
+  return (
+    <div className="rg-kstat rg-ws-fig" data-el={el}>
+      <dt className="rg-kstat-k">{label}</dt>
+      <dd className={cx('rg-kstat-v', tone && `rg-${tone}`)}>{none ? '—' : value}{unit && !none && <span className="rg-kstat-u">{unit}</span>}</dd>
+      {hint && <dd className="rg-ws-figh">{hint}</dd>}
+    </div>
+  )
 }
 /** "Not available here" for a machine-side control: the mode's sentence for `capability`
  *  (environment.why), under the data-el the tests and the site's proofs select. */
@@ -72,10 +95,10 @@ const LocalOnly = ({ capability, what }) => <Unavailable capability={capability}
 
 /** <Sec title meta? lead? el?>…</Sec> — a section of a document: a heading and whitespace, no box.
  *  Boxes stay for units of data (a table, a list); sections are separated by the page rhythm. */
-function Sec({ title, meta, lead, el, className, children }) {
+function Sec({ title, meta, lead, el, tour, className, brand, children }) {
   return (
-    <section className={cx('rg-ws-sec', className)} data-el={el} aria-label={typeof title === 'string' ? title : undefined}>
-      <div className="rg-ws-sech"><h2>{title}</h2>{meta ? <span className="rg-ws-meta">{meta}</span> : null}</div>
+    <section className={cx('rg-ws-sec', className)} data-el={el} data-tour={tour} aria-label={typeof title === 'string' ? title : undefined}>
+      <div className="rg-ws-sech"><h2>{brand ? <BrandName kind={brand[0]} name={brand[1]}>{title}</BrandName> : title}</h2>{meta ? <span className="rg-ws-meta">{meta}</span> : null}</div>
       {lead ? <p className="rg-ws-lead">{lead}</p> : null}
       {children}
     </section>
@@ -189,67 +212,116 @@ function storeOf(typed, det, folders) {
   return null
 }
 const openSpecOf = (dir) => (dir === PRIVATE_DIR ? 'capture' : makeSpec('ds', dir))
-const openLabelOf = (dir) => (dir === PRIVATE_DIR ? 'Open Session capture' : `Open ${dir}`)
+const openLabelOf = (dir) => (dir === PRIVATE_DIR ? `Open ${LABELS.capture_local}` : `Open ${dir}`)
 
-function Sources({ spec }) {
+/* ================================================================ ADD DATA */
+/** Four ways in, as tabs of one page. `sources:<tab>` links a tab; the `capture` route opens Session capture, the
+ *  contract's word (shared/contract.py LABELS.capture_local). */
+const ADD_TABS = [['import', 'Import files'], ['sample', 'Public sample'], ['capture', LABELS.capture_local], ['disk', 'Results on disk']]
+const addTabOf = (a) => (ADD_TABS.some(([k]) => k === a) ? a : 'import')
+// Session capture has one address, `capture` (the left list's row and the contract's word)
+const addSpecOf = (t) => (t === 'import' ? 'sources' : t === 'capture' ? 'capture' : makeSpec('sources', t))
+/** Form state lives under one key, so what was typed survives a switch to another tab. */
+const FORMS = 'sources'
+/** A tab switch replaces the document; the new one puts focus back on the selected tab. */
+let refocusTab = false
+
+function AddData({ tab }) {
   const ds = useDatasets()
   const st = useSettings()
-  const rig = useRig()
-  const { datasets } = rig
-  if (ds.error) return <ErrorState error={ds.error} onRetry={ds.reload} what="Results on disk" />
+  const { openTab } = useRig()
+  const idBase = useId()
+  const tabsRef = useRef(null)
+  useEffect(() => {
+    if (!refocusTab) return
+    refocusTab = false
+    const t = tabsRef.current && tabsRef.current.querySelector('[role="tab"][aria-selected="true"]')
+    if (t) t.focus()
+  }, [])
+  if (ds.error) return <ErrorState error={ds.error} onRetry={ds.reload} what="The dataset list" />
   if (!ds.data) return <Loading label="Reading /api/overview…" />
   const all = [...ds.data].sort((a, b) => a.name.localeCompare(b.name))
   const total = all.reduce((a, r) => a + (r.runs || 0), 0)
-  const vdir = (datasets.find((d) => d.name === 'llma4se_live') || all.find((d) => d.kind === 'recorded') || all[0] || {}).name
+  const pick = (v) => { if (v === tab) return; refocusTab = true; openTab(addSpecOf(v), { replace: true }) }
   return (
-    <div className="rg-dpad rg-ws rg-ws-doc">
-      <Head eyebrow="Sources & machine" title="Results on disk"
-        meta={<span className="rg-mono rg-break">{st.data ? st.data.results_root : 'data/runs'} · {int(total)} runs in {plural(all.length, 'directory', 'directories')}</span>} />
-      {/* A narrow document stacks each row (name and tag, description, then runs · models · date):
-          the count moves into the meta line instead of squeezing the description into a column. */}
-      <div className="rg-pnl" data-el="results-on-disk">
-        <div className="rg-tblwrap"><table className="rg-tbl rg-ws-disk">
-          <thead><tr><th>directory</th><th className="rg-num rg-cq-hide-sm">runs</th><th className="rg-cq-hide-sm">models</th><th className="rg-cq-hide-sm">updated</th><th><span className="sr-only">Open</span></th></tr></thead>
-          <tbody>{all.map((r) => (
-            <tr key={r.name} className="hov" tabIndex={0}
-              onKeyDown={(e) => { if (e.key === 'Enter' && e.target === e.currentTarget) rig.openTab(makeSpec('ds', r.name), { side: e.metaKey || e.ctrlKey }) }}
-              onClick={(e) => { if (!e.target.closest('button,a')) rig.openTab(makeSpec('ds', r.name), { side: e.metaKey || e.ctrlKey }) }}>
-              <td>
-                <div className="rg-cluster"><Go spec={makeSpec('ds', r.name)} className="rg-tlink rg-hit rg-ws-dname"><b>{r.name}</b></Go><Tag tone={r.kind === 'mock' ? 'dash' : undefined}>{r.kind === 'mock' ? 'mock' : 'recorded'}</Tag></div>
-                <div className="rg-dim rg-ws-desc">{NOTES[r.name] || <span className="rg-mute">No description ships with this directory.</span>}</div>
-                <div className="rg-mute rg-mono rg-ws-dmeta rg-cq-show-sm"><b>{int(r.runs)} {r.runs === 1 ? 'run' : 'runs'}</b> · {r.models.length === 1 ? short(r.models[0]) : `${r.models.length} models`} · <span className="rg-nw">{day(r.updated)}</span></div>
-              </td>
-              <td className="rg-num rg-mono rg-cq-hide-sm">{int(r.runs)}</td>
-              <td className="rg-mono rg-small rg-cq-hide-sm rg-ws-dmodels" title={r.models.join('\n')}>{r.models.length === 1 ? short(r.models[0]) : `${r.models.length} models`}</td>
-              <td className="rg-mono rg-small rg-cq-hide-sm rg-nw">{day(r.updated)}</td>
-              <td className="rg-num rg-ws-go"><Go spec={makeSpec('ds', r.name)} className="rg-rowgo" label={`Open ${r.name}`}><Icon name="right" size={15} /></Go></td>
-            </tr>))}</tbody>
-        </table></div>
+    <div className="rg-dpad rg-ws rg-ws-doc" data-el="add-data">
+      <Head title={<PagePath kind="sources" args={[tab]}>Add data</PagePath>} el="add-data-head"
+        meta={<span className="rg-break"><span className="rg-mono">{st.data ? st.data.results_root : 'data/runs'}</span> · {plural(total, 'run')} in {plural(all.length, 'dataset')}</span>}>
+        Import files from another agent harness, download a public sample, or capture your own sessions. Each becomes a dataset under data/runs.
+      </Head>
+      <div ref={tabsRef} className="rg-ws-tabs">
+        <Tabs tabs={ADD_TABS.map(([k, l]) => [k, l, k === 'disk' ? all.length : null])} value={tab} onChange={pick} label="Ways to add data" idBase={idBase} el="add-data-tabs" />
       </div>
-      <Sec title="Add runs" el="add-runs" lead="Three ways in. Pick the one that matches what you have.">
-        <ImportTrace spec={spec} datasets={all} />
-        <SweAgentImport spec={spec} datasets={all} />
-        <Road n={3} title="Record your own sessions" el="road-capture">
-          <p className="rg-ws-lead">Session capture follows Claude Code, Codex, Cursor, agy and Qwen Code on this machine by itself, so nobody types a path for those.</p>
-          <NextSteps actions={[{ label: 'Open Session capture', spec: 'capture' }]} />
-        </Road>
-      </Sec>
-      <Sec title="Hugging Face" el="hugging-face" meta="public datasets · license and source recorded">
-        <HuggingFaceSource spec={spec} />
-      </Sec>
-      {vdir && <HarnessVersions dir={vdir} />}
+      <div role="tabpanel" aria-labelledby={`${idBase}-${tab}`} className="rg-ws-tabp" data-el={`add-data-${tab}`}>
+        {tab === 'import' && <ImportTrace spec={FORMS} datasets={all} />}
+        {tab === 'sample' && <>
+          <Sec title="Hugging Face catalog" el="hugging-face" brand={['source', 'Hugging Face']} meta="public datasets · license and source recorded">
+            <HuggingFaceSource spec={FORMS} />
+          </Sec>
+          <SweAgentImport spec={FORMS} datasets={all} />
+        </>}
+        {tab === 'capture' && <><p className="rg-ws-lead" data-el="capture-sub">Capture sessions: your own coding-agent sessions on this machine, read back as runs.</p><CaptureBody /></>}
+        {tab === 'disk' && <ResultsOnDisk datasets={all} />}
+      </div>
     </div>
   )
 }
 
-/** One road into data/runs: a numbered sub-section of "Add runs". */
-function Road({ n, title, el, children }) {
-  return (
-    <section className="rg-ws-road" data-el={el} aria-label={title}>
-      <h3><span className="rg-ws-rn" aria-hidden="true">{n}</span>{title}</h3>
-      {children}
-    </section>
+const SourcesDoc = ({ args }) => <AddData tab={addTabOf(args[0])} />
+const CaptureDoc = () => <AddData tab="capture" />
+
+/** Results on disk: one row per dataset; Versions shows that dataset's harness versions below
+ *  (by default the dataset in focus, so the table follows the dataset switch). */
+function ResultsOnDisk({ datasets: all }) {
+  const rig = useRig()
+  const [picked, setPicked] = useTabState(FORMS, 'versions', null)
+  const cur = rig.condition && rig.condition.dir
+  const fallback = (all.find((d) => d.name === cur) || all.find((d) => d.kind === 'recorded') || all[0] || {}).name
+  const vdir = picked && all.some((d) => d.name === picked) ? picked : fallback
+  if (!all.length) return (
+    <Empty title="No dataset on disk yet." el="empty-state disk-empty" actions={[{ label: 'Import files', spec: addSpecOf('import'), primary: true }, { label: 'Download a public sample', spec: addSpecOf('sample') }]}>
+      data/runs holds no dataset. Import a file or folder of sessions, or download a public sample.
+    </Empty>
   )
+  return (<>
+    {/* A narrow document stacks each row (name and tag, description, then runs · models · date):
+        the count moves into the meta line instead of squeezing the description into a column. */}
+    <div className="rg-pnl" data-el="results-on-disk">
+      <div className="rg-tblwrap" data-tour="disk-table"><table className="rg-tbl rg-ws-disk">
+        <thead><tr><th>dataset</th><th className="rg-num rg-cq-hide-sm">runs</th><th className="rg-cq-hide-sm">models</th><th className="rg-cq-hide-sm">updated</th><th><span className="sr-only">Harness versions</span></th><th><span className="sr-only">Open</span></th></tr></thead>
+        <tbody>{all.map((r) => (
+          <tr key={r.name} className={cx('hov', r.name === vdir && 'sel')} tabIndex={0}
+            onKeyDown={(e) => { if (e.key === 'Enter' && e.target === e.currentTarget) rig.openTab(makeSpec('ds', r.name), { side: e.metaKey || e.ctrlKey }) }}
+            onClick={(e) => { if (!e.target.closest('button,a')) rig.openTab(makeSpec('ds', r.name), { side: e.metaKey || e.ctrlKey }) }}>
+            <td>
+              <div className="rg-cluster"><Go spec={makeSpec('ds', r.name)} className="rg-tlink rg-hit rg-ws-dname"><b>{r.name}</b></Go><Tag tone={r.kind === 'mock' ? 'dash' : undefined}>{r.kind === 'mock' ? 'mock' : 'recorded'}</Tag></div>
+              <div className="rg-dim rg-ws-desc">{NOTES[r.name] || <span className="rg-mute">No description ships with this dataset.</span>}</div>
+              <div className="rg-mute rg-mono rg-ws-dmeta rg-cq-show-sm"><b>{plural(r.runs, 'run')}</b> · {r.models.length === 1 ? short(r.models[0]) : `${r.models.length} models`} · <span className="rg-nw">{day(r.updated)}</span></div>
+            </td>
+            <td className="rg-num rg-mono rg-cq-hide-sm">{int(r.runs)}</td>
+            <td className="rg-mono rg-small rg-cq-hide-sm rg-ws-dmodels" data-hint={r.models.join('\n')}>{r.models.length === 1 ? short(r.models[0]) : `${r.models.length} models`}</td>
+            <td className="rg-mono rg-small rg-cq-hide-sm rg-nw">{day(r.updated)}</td>
+            <td className="rg-nw rg-ws-ver"><button type="button" className="rg-btn ghost" aria-pressed={r.name === vdir} aria-label={`Harness versions of ${r.name}`} onClick={() => setPicked(r.name)}>Versions</button></td>
+            <td className="rg-num rg-ws-go"><Go spec={makeSpec('ds', r.name)} className="rg-rowgo" label={`Open ${r.name}`}><Icon name="right" size={15} /></Go></td>
+          </tr>))}</tbody>
+      </table></div>
+    </div>
+    {vdir && <HarnessVersions dir={vdir} />}
+  </>)
+}
+
+/** Finished imports whose dataset list was already refreshed, by dataset and result. Module scope:
+ *  the refresh puts the page in its loading state and the form remounts. */
+const refreshedFor = new Set()
+/** A finished import or download whose dataset is not in the list yet refreshes the list once, so
+ *  "Open <dataset>" works without a reload even when the status poll never saw it running. */
+function useListCatchesUp(done, dir, sig, datasets) {
+  const behind = !!done && !!dir && dir !== PRIVATE_DIR && !datasets.some((d) => d.name === dir)
+  useEffect(() => {
+    if (!behind || refreshedFor.has(sig)) return
+    refreshedFor.add(sig)
+    invalidate('/overview')
+  }, [behind, sig])
 }
 
 /** Port of method/Sources.jsx ImportTrace on Rig primitives, same endpoints:
@@ -268,10 +340,16 @@ function ImportTrace({ spec, datasets }) {
   const running = s.status === 'running'
   useEffect(() => { setPollOn(running) }, [running])
   const was = useRef(s.status)
+  // history length when this page started an import: a fast import can finish before any poll sees it running
+  const startedAt = useRef(null)
+  const nHist = Array.isArray(s.history) ? s.history.length : 0
   useEffect(() => {
-    if (was.current === 'running' && (s.status === 'done' || s.status === 'error')) invalidate('/overview')
+    const finished = s.status === 'done' || s.status === 'error'
+    const mine = startedAt.current != null && nHist > startedAt.current
+    if (finished && (was.current === 'running' || mine)) { invalidate('/overview'); startedAt.current = null }
     was.current = s.status
-  }, [s.status])
+  }, [s.status, nHist])
+  useListCatchesUp(s.status === 'done' && s.result, s.result && s.result.results_dir, `import|${s.result && s.result.results_dir}|${nHist}`, datasets)
 
   const sniff = (q, now) => {
     let dead = false
@@ -284,7 +362,7 @@ function ImportTrace({ spec, datasets }) {
   }
   useEffect(() => { const q = path.trim(); if (!q || !can('data.import')) return undefined; return sniff(q, false) }, [path]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  if (!can('data.import')) return <Road n={1} title="Import files you already have" el="import-trace"><LocalOnly capability="data.import" what="Importing" /></Road>
+  if (!can('data.import')) return <Sec title="Import files you already have" el="import-trace"><LocalOnly capability="data.import" what="Importing" /></Sec>
   const adapters = (srcs.data && srcs.data.sources) || []
   const derived = sessionFolders(adapters)
   const chips = [...(derived.length ? derived : DOCUMENTED_FOLDERS)].sort((x, y) => tool(x.source).localeCompare(tool(y.source)))
@@ -312,7 +390,7 @@ function ImportTrace({ spec, datasets }) {
             : !d.ready ? 'No adapter recognises this path — choose one under Adapter'
               : nothing ? 'Nothing to import: no sessions found here'
                 : unreadable ? `The ${d.source} adapter cannot read this here — see above`
-                : !dir ? 'Name a results directory'
+                : !dir ? 'Name the dataset'
                   : ''
   const picked = adapters.find((a) => a.name === source)
   const inspect = () => { setSniffed(null); sniff(p, true) }
@@ -320,6 +398,7 @@ function ImportTrace({ spec, datasets }) {
   const again = () => { setPath(''); setTyped(null); setSource(''); setMsg('') }
   const start = async () => {
     setMsg('')
+    startedAt.current = nHist
     try {
       await api('/import', { method: 'POST', body: { path: p, results_dir: dir, source: source || null } })
       setPollOn(true); st.reload()
@@ -330,9 +409,9 @@ function ImportTrace({ spec, datasets }) {
   const others = d.others.length > 0 && <p className="rg-tiny rg-mute rg-mono">also scored {d.others.map((c) => `${c.source} ${Number(c.confidence).toFixed(2)}`).join(' · ')}{det && det.is_dir ? ' (mean over the files each one won)' : ''}</p>
   let found = null
   if (!p) found = null
-  else if (sniffing) found = <p className="rg-ws-wait">Inspecting <span className="rg-mono">{p}</span>… a large folder takes a few seconds.</p>
+  else if (sniffing) found = <p className="rg-ws-wait">Inspecting <span className="rg-hash">{p}</span>… a large folder takes a few seconds.</p>
   else if (fresh.error) found = <><p><b>Inspect did not answer.</b> {fresh.error}</p><NextSteps actions={[{ label: 'Inspect again', onClick: inspect }]} /></>
-  else if (!det.exists) found = <p><b>Nothing at <span className="rg-mono">{det.path || p}</span>.</b> Check the spelling, or pick one of the folders above.</p>
+  else if (!det.exists) found = <p><b>Nothing at <span className="rg-hash">{det.path || p}</span>.</b> Check the spelling, or pick one of the folders above.</p>
   else if (!d.source) found = <><p><b>No adapter recognises this path.</b> Choose one under Adapter to import it anyway, or point at a session file or a folder of them.</p>{others}</>
   else {
     found = <>
@@ -346,12 +425,12 @@ function ImportTrace({ spec, datasets }) {
           {fixCmd && <CopyCmd label="Install what it needs on the server, then Inspect again" cmd={fixCmd} el="import-fix" />}</>
         : nothing
         ? <p>The {d.source} adapter reads no session here, so Import would write nothing. Point at another folder.</p>
-        : <p>Import reads {forcedOther || !det.source || det.sessions == null ? 'the sessions' : det.sessions === 1 ? 'it' : 'them'} through the <span className="rg-mono">{d.source}</span> adapter and writes one run per session to <span className="rg-mono">data/runs/{dir || '…'}</span>{!dir ? ' — name the directory below.' : dir === PRIVATE_DIR ? ', the private directory; sessions already in it are skipped.' : exists ? ', which already exists: sessions already in it are skipped.' : ', a new directory.'}</p>}
+        : <p>Import reads {forcedOther || !det.source || det.sessions == null ? 'the sessions' : det.sessions === 1 ? 'it' : 'them'} through the <span className="rg-mono">{d.source}</span> adapter and writes one run per session to <span className="rg-mono">data/runs/{dir || '…'}</span>{!dir ? ' — name the dataset below.' : dir === PRIVATE_DIR ? ', the private dataset; sessions already in it are skipped.' : exists ? ', a dataset that already exists: sessions already in it are skipped.' : ', a new dataset.'}</p>}
       {!unreadable && det.error && <p className="rg-small">The sniffer also reported: <span className="rg-mono">{det.error}</span></p>}
       {store && <p>{tool(store.source)} keeps its live sessions here, so they stay private: {dir === PRIVATE_DIR
-        ? <>every listing and export holds <span className="rg-mono">{PRIVATE_DIR}</span> back.</>
-        : <>the server imports them only into <span className="rg-mono">{PRIVATE_DIR}</span>. <button type="button" className="rg-tlink" onClick={() => setTyped(null)}>Use {PRIVATE_DIR}</button></>}
-        {' '}<Go spec="capture" className="rg-tlink">Session capture</Go> can also follow this folder by itself.</p>}
+        ? <>every listing and export holds <span className="rg-hash">{PRIVATE_DIR}</span> back.</>
+        : <>the server imports them only into <span className="rg-hash">{PRIVATE_DIR}</span>. <button type="button" className="rg-tlink" onClick={() => setTyped(null)}>Use {PRIVATE_DIR}</button></>}
+        {' '}<Go spec="capture" className="rg-tlink">{LABELS.capture_local}</Go> can also follow this folder by itself.</p>}
       {others}
     </>
   }
@@ -359,20 +438,23 @@ function ImportTrace({ spec, datasets }) {
   const earlier = history.slice(s.status === 'done' && s.result ? 1 : 0).filter((h) => h && h.results_dir)
   const fixPrivate = /session store/i.test(msg || s.error || '') && dir !== PRIVATE_DIR
   return (
-    <Road n={1} title="Import files you already have" el="import-trace">
+    <Sec title="Import files you already have" el="import-trace">
       <p className="rg-ws-lead">Point at a session file or a folder of them from another agent harness. Each session becomes one run, with the same ledger the lab&apos;s own runner writes.</p>
       <About summary="About importing" el="import-about">
         <p><b>Capture</b> follows the interactive CLIs on this machine by itself ({(adapters.some((a) => arrival(a.name) === 'capture') ? adapters.filter((a) => arrival(a.name) === 'capture').map((a) => a.name) : DOCUMENTED_FOLDERS.map((f) => f.source)).map(tool).join(', ')}); nobody types a path for those. <b>Import</b> is for everything else ({adapters.filter((a) => arrival(a.name) === 'import').map((a) => tool(a.name)).join(', ') || 'none listed'}), and for a session store you want read once.</p>
-        <p>Inspect sniffs the path first: which adapter recognises it, how confidently, and how many sessions it holds. Nothing is written until you confirm the import. Importing into a directory that exists adds to it and skips runs already there.</p>
-        {picked && <p><b>{tool(picked.name)}</b>: {picked.description}. Recognises <span className="rg-mono">{(picked.patterns || []).join('  ·  ')}</span>.</p>}
+        <p>Inspect sniffs the path first: which adapter recognises it, how confidently, and how many sessions it holds. Nothing is written until you confirm the import. Importing into a dataset that exists adds to it and skips runs already there.</p>
+        {picked && <p><b><BrandMark kind="agent" name={picked.name} />{tool(picked.name)}</b>: {picked.description}. Recognises <span className="rg-mono">{(picked.patterns || []).join('  ·  ')}</span>.</p>}
       </About>
       <div className="rg-ws-form">
         <label className="rg-fld">Path to a session file or folder
           <input className="rg-inp" value={path} spellCheck={false} autoComplete="off" placeholder="e.g. ~/.codex/sessions/2026/07/11/ or logs/run.eval" onChange={(e) => { setPath(e.target.value); setMsg('') }} />
         </label>
+        {/* the suggestions and the form under them depend on the adapter list: drawn once it answered, so nothing
+            already on screen moves when it arrives; typing a path can start at once */}
+        {!srcs.data && !srcs.error ? <div data-el="import-form-wait" aria-busy="true"><Skeleton height="var(--rig-s8)" label="Reading the adapters (/import/sources)" /></div> : <>
         <div className="rg-ws-chips" data-el="path-suggestions">
           <span className="rg-ws-chipsl">{derived.length ? 'Where these tools keep sessions, from the adapters' : 'Where these tools keep sessions by default'} — suggestions, checked when you pick one:</span>
-          {chips.map((f) => <button type="button" key={f.path} className={cx('rg-ws-chip', p === f.path && 'on')} aria-pressed={p === f.path} onClick={() => pick(f)}><span>{tool(f.source)}</span><span className="rg-mono rg-mute">{f.path}</span></button>)}
+          {chips.map((f) => <button type="button" key={f.path} className={cx('rg-ws-chip', p === f.path && 'on')} aria-pressed={p === f.path} onClick={() => pick(f)}><span><BrandMark kind="agent" name={f.source} />{tool(f.source)}</span><span className="rg-mono rg-mute">{f.path}</span></button>)}
         </div>
         {srcs.error && <Failed what="Could not load the adapters." error={srcs.error} onRetry={srcs.reload} back={false} />}
         {found && <div className="rg-ws-found" role="status" aria-live="polite" data-el="import-detect">{found}</div>}
@@ -383,27 +465,27 @@ function ImportTrace({ spec, datasets }) {
               {adapters.map((a) => <option key={a.name} value={a.name}>{tool(a.name)} · {a.name}</option>)}
             </select>
           </label>
-          <label className="rg-fld">Results directory, under data/runs
+          <label className="rg-fld">Dataset name, a folder under data/runs
             <input className="rg-inp" value={typed == null ? suggested : typed} spellCheck={false} placeholder="e.g. imported_codex_0711" onChange={(e) => setTyped(cleanResultsDir(e.target.value))} />
           </label>
         </div>
         {typed != null && suggested && typed !== suggested && <p className="rg-small rg-mute">Inspect suggests <button type="button" className="rg-tlink" onClick={() => setTyped(null)}>{suggested}</button>.</p>}
         <div className="rg-row rg-wrap rg-ws-acts">
           <Btn disabled={!p || sniffing} why={!p ? 'Enter a path first' : 'Inspecting…'} onClick={inspect}>Inspect</Btn>
-          <ConfirmAction label={running ? 'Importing…' : failed ? 'Retry the import' : 'Import this path'} confirmLabel="Import now" disabled={!!block} why={block} el="import-path"
+          <ConfirmAction busy={running} label={running ? 'Importing…' : failed ? 'Retry the import' : 'Import this path'} confirmLabel="Import now" disabled={!!block} why={block} el="import-path"
             detail={`${dir === PRIVATE_DIR ? 'Writes' : exists ? 'Adds to' : 'Creates'} data/runs/${dir || '…'} from ${p || '…'}${source ? ` as ${source}` : ''}.`} onConfirm={start} />
         </div>
         {p && dir && !running && <About summary="Or run the same import from a terminal"><CopyCmd cmd={`traceharness import ${shq(p)} --results-dir ${shq(dir)}${source ? ` --source ${source}` : ''}`} /></About>}
         {running && (
           <div className="rg-col rg-ws-tight" role="status">
             {progressKnown(s.progress) && <div className="rg-ws-bar"><i style={{ width: `${progressPct(s.progress)}%` }} /></div>}
-            <span className="rg-mono rg-small rg-dim">Importing: {progressPhrase(s.progress)} → data/runs/{s.results_dir}</span>
+            <span className="rg-hash rg-small rg-dim">Importing: {progressPhrase(s.progress)} → data/runs/{s.results_dir}</span>
           </div>
         )}
         {failed && !running && (
           <div className="rg-ws-err" role="alert" data-el="import-error">
             <p><b>{msg ? 'The server refused the import.' : `The last import (${s.path || 'a path'} → ${s.results_dir || '…'}) did not finish.`}</b> {msg || s.error}</p>
-            <p>Fix the path or the directory above, then use Retry the import.</p>
+            <p>Fix the path or the dataset name above, then use Retry the import.</p>
             <NextSteps actions={[fixPrivate && { label: `Use ${PRIVATE_DIR} instead`, onClick: () => setTyped(PRIVATE_DIR), primary: true }, { label: 'Back to datasets', spec: 'home' }]} />
           </div>
         )}
@@ -413,11 +495,12 @@ function ImportTrace({ spec, datasets }) {
           <div className="rg-col" data-el="import-history">
             <h4 className="rg-ws-h4">Earlier imports since the server started</h4>
             <ul className="rg-ws-list rg-ws-histl">{earlier.map((h, i) => (
-              <li key={i}><span className="rg-mono">{h.results_dir}</span><span className="rg-small rg-dim">{tool(h.source)} · {int(h.imported)} imported · {int(h.skipped)} already there</span><Go spec={openSpecOf(h.results_dir)} className="rg-btn">{openLabelOf(h.results_dir)}</Go></li>))}</ul>
+              <li key={i}><span className="rg-hash">{h.results_dir}</span><span className="rg-small rg-dim">{tool(h.source)} · {int(h.imported)} imported · {int(h.skipped)} already there</span><Go spec={openSpecOf(h.results_dir)} className="rg-btn">{openLabelOf(h.results_dir)}</Go></li>))}</ul>
           </div>
         )}
+        </>}
       </div>
-    </Road>
+    </Sec>
   )
 }
 
@@ -428,13 +511,13 @@ function ImportResult({ r, onAgain }) {
   return (
     <div className="rg-ws-result" data-el="import-result">
       <h4 className="rg-ws-h4">Last import · {tool(r.source)} → data/runs/{r.results_dir}</h4>
-      <Kpis label="Last import" className="rg-ws-kpis">
-        <Kpi label="imported" value={int(r.imported)} hint="new runs" />
-        <Kpi label="already there" value={int(r.skipped)} hint="re-importing adds nothing" />
-        <Kpi label="tasks" value={int(r.n_tasks)} hint={(r.tasks || []).slice(0, 1).join('') || '—'} />
-        <Kpi label="real verdicts" value={v.value} tone={v.flagged ? 'amb' : undefined} hint={v.note} />
-      </Kpis>
-      {unknown > 0 && <Note><div>{plural(unknown, 'run')} carried no verdict and {unknown === 1 ? 'imports' : 'import'} with an unknown outcome. Unknown is never a failure here, but pass@1 over this directory counts only the known ones.</div></Note>}
+      <KpiStrip label="Last import" className="rg-ws-strip">
+        <Fig label="imported" value={int(r.imported)} hint="new runs" />
+        <Fig label="already there" value={int(r.skipped)} hint="re-importing adds nothing" />
+        <Fig label="tasks" value={int(r.n_tasks)} hint={(r.tasks || []).slice(0, 1).join('') || '—'} />
+        <Fig label="real verdicts" value={v.value} tone={v.flagged ? 'amb' : undefined} hint={v.note} />
+      </KpiStrip>
+      {unknown > 0 && <Note><div>{plural(unknown, 'run')} carried no verdict and {unknown === 1 ? 'imports' : 'import'} with an unknown outcome. Unknown is never a failure here, but pass@1 over this dataset counts only the known ones.</div></Note>}
       {(r.harnesses || []).map((h) => <div key={h.harness_id} className="rg-mono rg-tiny rg-dim">{h.harness_id} · {plural(h.runs, 'run')} · hash {h.hash}</div>)}
       {(r.errors || []).slice(0, 4).map((e, i) => <div key={i} className="rg-mono rg-tiny rg-red">{e}</div>)}
       {!any && <p className="rg-small rg-dim">Nothing was imported from this path.</p>}
@@ -463,7 +546,8 @@ function SweAgentImport({ spec, datasets }) {
     if (was.current === 'running' && (s.status === 'done' || s.status === 'error')) invalidate('/overview')
     was.current = s.status
   }, [s.status])
-  if (!can('data.import')) return <Road n={2} title="Download a public sample" el="swe-agent-import"><LocalOnly capability="data.import" what="Downloading public samples" /></Road>
+  useListCatchesUp(s.status === 'done' && s.result, s.result && s.result.out, `sample|${s.result && s.result.out}|${s.result && s.result.n}`, datasets)
+  if (!can('data.import')) return <Sec title="Download the SWE-agent sample" el="swe-agent-import"><LocalOnly capability="data.import" what="Downloading public samples" /></Sec>
   const has = (x) => datasets.some((d) => d.name === x)
   const freeOf = (b) => { let k = 2; while (has(`${b}_${k}`)) k++; return `${b}_${k}` }
   const auto0 = `real_swe_agent_${n}` + (model ? `_${model.split('/').pop()}` : '')
@@ -480,25 +564,25 @@ function SweAgentImport({ spec, datasets }) {
     try { await api('/real/import', { method: 'POST', body: { n, model: model || null, out: name } }); setPollOn(true); st.reload() } catch (e) { setMsg(errText(e)) }
   }
   return (
-    <Road n={2} title="Download a public sample" el="swe-agent-import">
-      <p className="rg-ws-lead">Downloads trajectories from the public nebius/SWE-agent-trajectories set on Hugging Face and writes them as a results directory. The server needs network access.</p>
+    <Sec title="Download the SWE-agent sample" el="swe-agent-import" brand={['agent', 'SWE-agent']}>
+      <p className="rg-ws-lead">Downloads trajectories from the public nebius/SWE-agent-trajectories set on Hugging Face and writes them as a dataset. The server needs network access.</p>
       <About summary="About the SWE-agent sample">
         <p>Imported runs have no cost ledger and no strengthened oracle; the views that need those say so instead of showing $0. The server also needs the <span className="rg-mono">datasets</span> package (<span className="rg-mono">pip install datasets</span>). The model filter matches a model name exactly.</p>
       </About>
       <div className="rg-ws-form">
         <div className="rg-ws-trip">
-          <label className="rg-fld">Runs<input className="rg-inp" type="number" min={10} max={5000} value={n} onChange={(e) => setN(Math.max(10, Math.min(5000, +e.target.value || 10)))} /></label>
+          <NumberField label="Runs" min={10} max={5000} noun="runs" value={n} onChange={setN} />
           <label className="rg-fld">Model (blank = all)<input className="rg-inp" value={model} spellCheck={false} placeholder="e.g. swe-agent-llama-70b" onChange={(e) => setModel(e.target.value.trim())} /></label>
-          <label className="rg-fld">Results directory (optional)<input className="rg-inp" value={out} spellCheck={false} placeholder="e.g. swe_sample" onChange={(e) => setOut(e.target.value.replace(/[^a-zA-Z0-9_-]/g, ''))} /></label>
+          <label className="rg-fld">Dataset name (optional)<input className="rg-inp" value={out} spellCheck={false} placeholder="e.g. swe_sample" onChange={(e) => setOut(e.target.value.replace(/[^a-zA-Z0-9_-]/g, ''))} /></label>
         </div>
         {known.length > 0 && <div className="rg-ws-chips" data-el="model-suggestions">
           <span className="rg-ws-chipsl">Models in the sample already on disk:</span>
           {known.map((m) => <button type="button" key={m} className={cx('rg-ws-chip', model === m && 'on')} aria-pressed={model === m} onClick={() => setModel(model === m ? '' : m)}><span className="rg-mono">{m}</span></button>)}
         </div>}
         <p className="rg-small rg-dim">Writes <span className="rg-mono">data/runs/{name}</span>{out ? '' : auto === auto0 ? ', named from the run count and the model' : <>, because <span className="rg-mono">data/runs/{auto0}</span> already exists</>}.</p>
-        {taken && <Note el="swe-dir-taken"><div><b>data/runs/{name} already exists.</b> This download would rewrite its index. Keep it by naming a new directory. <button type="button" className="rg-tlink" onClick={() => setOut(free)}>Use {free}</button></div></Note>}
+        {taken && <Note el="swe-dir-taken"><div><b>data/runs/{name} already exists.</b> This download would rewrite its index. Keep it by naming a new dataset. <button type="button" className="rg-tlink" onClick={() => setOut(free)}>Use {free}</button></div></Note>}
         <div className="rg-row rg-wrap rg-ws-acts rg-ws-quiet">
-          <ConfirmAction label={running ? 'Downloading…' : failed ? 'Retry the download' : 'Download SWE-agent sample'} confirmLabel="Download & import" disabled={running} why="A download is already running" el="swe-agent-download"
+          <ConfirmAction busy={running} label={running ? 'Downloading…' : failed ? 'Retry the download' : 'Download SWE-agent sample'} confirmLabel="Download & import" disabled={running} why="A download is already running" el="swe-agent-download"
             detail={`Streams ${int(n)} trajectories and ${taken ? 'rewrites the index of' : 'writes'} data/runs/${name}.`} onConfirm={go} />
         </div>
         {running && <p className="rg-mono rg-small rg-dim" role="status" data-el="swe-agent-progress">{s.phase === 'write' ? 'Writing runs' : 'Downloading from Hugging Face'}: {Array.isArray(s.progress) ? `${int(s.progress[0])}${s.progress[1] ? ` of ${int(s.progress[1])}` : ''} ${s.unit || (s.phase === 'write' ? 'runs' : 'trajectories')}` : 'starting'}</p>}
@@ -516,7 +600,7 @@ function SweAgentImport({ spec, datasets }) {
           </div>
         )}
       </div>
-    </Road>
+    </Sec>
   )
 }
 
@@ -529,11 +613,11 @@ function HarnessVersions({ dir }) {
     <Sec title={`Harness versions · ${dir}`} el="harness-versions" meta={v.data ? `${plural(list.length, 'version')} · ${list.length > ids.size ? 'several per harness' : 'one per harness'}` : ''}
       lead="Each run records the hash of the harness file it ran under. A drifted version means the file on disk changed after those runs.">
       {v.error ? <Failed what="Could not read the harness versions." error={v.error} onRetry={v.reload} />
-        : !v.data ? <div className="rg-skel rg-ws-sk" />
+        : !v.data ? <Skeleton height="var(--rig-s8)" label="Reading the harness versions" />
           : <div className="rg-pnl rg-ws-numpnl"><div className="rg-tblwrap"><table className="rg-tbl rg-ws-numtbl">
             <thead><tr><th>harness</th><th className="rg-cq-hide-sm">hash</th><th className="rg-num">runs</th><th className="rg-num">pass@1</th><th>file</th></tr></thead>
             <tbody>{list.map((x) => (
-              <tr key={x.harness_id + x.hash}><td className="rg-mono rg-small">{x.harness_id}</td><td className="rg-mono rg-small rg-cq-hide-sm">{x.hash}</td><td className="rg-num rg-mono">{int(x.runs)}</td><td className="rg-num rg-mono">{pct(x.pass1)}</td>
+              <tr key={x.harness_id + x.hash}><td className="rg-mono rg-small">{x.harness_id}</td><td className="rg-hash rg-small rg-cq-hide-sm">{x.hash}</td><td className="rg-num rg-mono">{int(x.runs)}</td><td className="rg-num rg-mono">{pct(x.pass1)}</td>
                 <td className="rg-nw">{x.matches_current ? <span className="rg-small rg-sky">✓ current</span> : x.has_file ? <span className="rg-small rg-red">× drifted</span> : <span className="rg-small rg-mute">? no file</span>}</td></tr>))}</tbody>
           </table></div></div>}
       {v.data && !drift && list.length > 0 && <p className="rg-small rg-mute">Every recorded version matches its harness file on disk.</p>}
@@ -599,14 +683,13 @@ function WatcherControls({ st, compact }) {
   )
 }
 
-/** The capture view: Session capture on this machine. */
-const Capture = LocalCapture
-function LocalCapture() {
+/** Add data › Session capture: your own sessions on this machine, read back as runs. */
+function CaptureBody() {
   const local = can('capture.local')
   const st = useCapture(local ? 5000 : 0)
   const runs = useApi(local ? '/capture/runs?limit=25' : null, PRIV)
   const rel = useApi(local ? '/capture/relations' : null, PRIV)
-  if (!local) return <div className="rg-dpad rg-ws rg-ws-doc" data-el="capture"><Head eyebrow="On this machine" title="Session capture">Captured sessions are private and are excluded from every export.</Head><LocalOnly capability="capture.local" what="Session capture" /></div>
+  if (!local) return <div className="rg-stack rg-stack-md" data-el="capture"><p className="rg-ws-lead">Captured sessions are private and are excluded from every export.</p><LocalOnly capability="capture.local" what="Session capture" /></div>
   if (st.error && !st.data) return <ErrorState error={st.error} onRetry={st.reload} what="Session capture" />
   if (!st.data) return <Loading label="Reading /api/capture/status (private)…" />
   const s = st.data
@@ -623,13 +706,13 @@ function LocalCapture() {
   const none = !(s.runs_indexed > 0) && !open.length
   const watching = isWatching(sn)
   return (
-    <div className="rg-dpad rg-ws rg-ws-doc" data-el="capture">
-      <Head eyebrow="On this machine" title="Session capture">Your own coding-agent sessions, recorded on this machine and read back as runs.</Head>
-      <div className="rg-stack rg-stack-md">
+    <div className="rg-ws-capture" data-el="capture">
+      <div className="rg-stack rg-stack-md" data-tour="capture-intro">
+        <p className="rg-ws-lead">Your own coding-agent sessions, recorded on this machine and read back as runs.</p>
         <Note el="capture-private"><div><b>Private.</b> These runs stay on this machine — hidden from every listing, excluded from every export, and each request this page makes has to ask for them by name.</div></Note>
         <About summary="About session capture">
           <p>Each captured session is read back with the same ledger the lab&apos;s runner writes, so every page measures it like any other corpus. A session becomes a run once it has been quiet long enough to count as finished; until then it is open and counted separately.</p>
-          <p>A resumed session supersedes the run it continued; one that diverges is a fork. Sources it can read: {(s.adapters || []).map(tool).join(', ') || 'none reported'}.</p>
+          <p>A resumed session supersedes the run it continued; one that diverges is a fork. Sources it can read: {(s.adapters || []).length ? <span data-el="capture-sources">{s.adapters.map((a, i) => <Fragment key={a}>{i > 0 && ', '}<BrandName kind="agent" name={a}>{tool(a)}</BrandName></Fragment>)}</span> : 'none reported'}.</p>
         </About>
       </div>
       {none ? (
@@ -638,21 +721,21 @@ function LocalCapture() {
           <CopyCmd label="Record what is already here" cmd={BACKFILL_CMD} el="capture-backfill" />
         </Empty>
       ) : (
-        <Kpis label="Captured sessions" el="capture-kpis" className="rg-ws-kpis">
-          <Kpi label="runs captured" value={int(s.runs_indexed)} />
-          <Kpi label="still open" value={int(s.open_runs)} hint="quiet for less than the segment gap" />
-          <Kpi label="input tokens" value={int(t.input_tokens)} hint={um > 0 ? 'over the runs that reported usage' : null} />
-          <Kpi label="output tokens" value={int(t.output_tokens)} hint={um > 0 ? `${plural(um, 'run')} recorded no usage` : null} />
-          <Kpi label="cost" value={usd(t.cost_usd, 2)} hint={um ? `priced from the ledger; ${plural(um, 'run')} unpriced` : 'priced from the ledger, not estimated'} />
-        </Kpis>
+        <KpiStrip label="Captured sessions" el="capture-kpis" className="rg-ws-strip">
+          <Fig label="runs captured" value={int(s.runs_indexed)} />
+          <Fig label="still open" value={int(s.open_runs)} hint="quiet for less than the segment gap" />
+          <Fig label="input tokens" value={int(t.input_tokens)} hint={um > 0 ? 'over the runs that reported usage' : null} />
+          <Fig label="output tokens" value={int(t.output_tokens)} hint={um > 0 ? `${plural(um, 'run')} recorded no usage` : null} />
+          <Fig label="cost" value={usd(t.cost_usd, 2)} hint={um ? `priced from the ledger; ${plural(um, 'run')} unpriced` : 'priced from the ledger, not estimated'} />
+        </KpiStrip>
       )}
       <Sec title="The watcher" meta={stateWord(sn)} el="capture-watcher">
         <p className="rg-ws-lead">{watcherSentence(sn)}</p>
         {sn.error ? <p className="rg-mono rg-small rg-dim">{sn.error}</p> : null}
-        {watching && <p className="rg-mono rg-small rg-mute">{plural(sn.roots || 0, 'root')} · every {fx(sn.interval_s, 0)}s · last pass {stamp(sn.last_tick_at)} · {plural(sn.errors || 0, 'error')}</p>}
+        {watching && <p className="rg-small rg-mute">{plural(sn.roots || 0, 'root')} · every {fx(sn.interval_s, 0)}s · last pass {stamp(sn.last_tick_at)} · {plural(sn.errors || 0, 'error')}</p>}
         <WatcherControls st={st} />
         <About summary="Housekeeping and terminal controls" el="capture-housekeeping">
-          <dl className="rg-kv">
+          <dl className="rg-kv rg-ws-words">
             <dt>crash debris</dt><dd>{sn.debris ? `${int(sn.debris)} left behind` : sn.debris_checked_at ? 'none' : 'not checked yet'} — {sn.debris_checked_at ? `checked ${stamp(sn.debris_checked_at)}` : 'a watcher counts it once a day, and never removes it'}. <span className="rg-mono">python -m traceharness.capture --sweep</span></dd>
             <dt>cursors</dt><dd>{plural(cursors.sources || 0, 'source')} remembered · {cursors.seeded ? `${int(cursors.seeded)} adopted from an existing corpus` : 'none adopted — a first watch reads every source once'}. <span className="rg-mono">python -m traceharness.capture --seed-cursors</span></dd>
             <dt>controls</dt><dd><span className="rg-mono">python -m traceharness.capture --pause · --resume · --nudge</span></dd>
@@ -665,10 +748,10 @@ function LocalCapture() {
           {runs.error ? <Failed what="Could not read the captured runs." error={runs.error} onRetry={runs.reload} />
             : rows.length === 0 ? <Empty title="No finished run to list yet." actions={[{ label: 'Import a session file instead', spec: 'sources' }]}><p className="rg-ws-p">Sessions still open are listed below; a backfill records what is already on this machine.</p><CopyCmd cmd={BACKFILL_CMD} /></Empty>
               : <div className="rg-pnl"><ul className="rg-ws-list">{rows.map((r) => (
-                <li key={r.run_id} className="rg-ws-caprun"><span className="rg-mono rg-ell">{r.task_id || r.run_id}</span><span className="rg-mono rg-small rg-dim rg-ell">{(r.model || '').split('/').pop() || '—'}</span><span className="rg-mono rg-small rg-dim rg-num">{int(r.steps)} steps</span><span className="rg-mono rg-small rg-dim rg-ell">{r.exit_reason || '—'}</span><span className="rg-mono rg-small rg-mute rg-num">{usd(r.cost_usd, 2)}</span></li>))}</ul></div>}
+                <li key={r.run_id}><CapturedRun r={r} /></li>))}</ul></div>}
           <h3 className="rg-ws-h3">Open right now <span className="rg-ws-meta">{open.length}</span></h3>
           {open.length === 0 ? <p className="rg-small rg-dim">None open: every captured session has been quiet long enough to count as finished.</p>
-            : <div className="rg-pnl"><ul className="rg-ws-list">{open.map((r) => <li key={r.run_id} className="rg-ws-capopen"><span className="rg-mono rg-ell">{r.task_id || r.run_id}</span><span className="rg-mono rg-small rg-dim rg-num">{int(r.steps)} steps</span><span className="rg-mono rg-small rg-mute rg-num">{String(r.last_ts || '').slice(0, 19).replace('T', ' ')}</span></li>)}</ul></div>}
+            : <div className="rg-pnl"><ul className="rg-ws-list">{open.map((r) => <li key={r.run_id} className="rg-ws-capopen"><span className="rg-mono rg-ell">{r.task_id || r.run_id}</span><span className="rg-mono rg-small rg-dim rg-num">{plural(r.steps || 0, 'step')}</span><span className="rg-mono rg-small rg-mute rg-num">{String(r.last_ts || '').slice(0, 19).replace('T', ' ')}</span></li>)}</ul></div>}
           <h3 className="rg-ws-h3">What replaced what <span className="rg-ws-meta">{superseded.length} superseded · {forked.length} forked</span></h3>
           {rel.error ? <Failed what="Could not read which runs replaced which." error={rel.error} onRetry={rel.reload} />
             : related.length === 0 ? <p className="rg-small rg-dim">No captured session has been resumed or forked.</p>
@@ -676,6 +759,19 @@ function LocalCapture() {
         </Sec>
       )}
     </div>
+  )
+}
+
+/** One captured run: opens its run page, like any run. The private index is read first, so the
+ *  run page finds it at once instead of reporting it missing while it loads. */
+function CapturedRun({ r }) {
+  const { openTab } = useRig()
+  const spec = makeSpec('run', r.run_id)
+  const open = (e) => { const side = e.metaKey || e.ctrlKey; loadCaptured().then(() => openTab(spec, { side })) }
+  return (
+    <button type="button" className="rg-ws-caprun" data-el="captured-run" data-spec={spec} data-hint={`Open run ${r.run_id}`} onClick={open}>
+      <span className="rg-mono rg-ell">{r.task_id || r.run_id}</span><span className="rg-mono rg-small rg-dim rg-ell"><BrandMark kind="model" name={r.model} />{(r.model || '').split('/').pop() || '—'}</span><span className="rg-mono rg-small rg-dim rg-num">{plural(r.steps || 0, 'step')}</span><span className="rg-mono rg-small rg-dim rg-ell">{r.exit_reason || '—'}</span><span className="rg-mono rg-small rg-mute rg-num">{usd(r.cost_usd, 2)}</span>
+    </button>
   )
 }
 
@@ -690,8 +786,8 @@ function CaptureDock() {
     <div className="rg-ws-dock" data-el="capture-dock">
       <div className="rg-row rg-wrap rg-ws-dockh">
         <span className={cx('rg-ws-dot', ['idle', 'scanning', 'capturing'].includes(sn.state) && 'on')} /><b>{stateWord(sn)}</b>
-        {watching && <span className="rg-small rg-mute rg-mono">{plural(sn.roots || 0, 'root')} · every {fx(sn.interval_s, 0)}s{sn.errors ? ` · ${plural(sn.errors, 'error')}` : ''}</span>}
-        <span className="rg-grow" /><Go spec="capture" className="rg-btn">Open Session capture <Icon name="right" size={13} /></Go>
+        {watching && <span className="rg-small rg-mute">{plural(sn.roots || 0, 'root')} · every {fx(sn.interval_s, 0)}s{sn.errors ? ` · ${plural(sn.errors, 'error')}` : ''}</span>}
+        <span className="rg-grow" /><Go spec="capture" className="rg-btn">Open {LABELS.capture_local} <Icon name="right" size={13} /></Go>
       </div>
       <p className="rg-small rg-dim rg-ws-p">{watcherSentence(sn)}</p>
       <WatcherControls st={st} compact />
@@ -717,6 +813,61 @@ const trainCmd = (dir) => `python3 -c ${shq('import sys; from traceharness.backe
  *  values travel as quoted argv, never spliced into the Python source. */
 const ruleCmd = (when, env) => `python3 -c ${shq('import sys, json; from traceharness.backend.sentinel import safe_eval, rule_env, FEATURE_NAMES as F; print(safe_eval(sys.argv[1], rule_env({**dict.fromkeys(F, 0.0), **json.loads(sys.argv[2])})))')} ${shq(String(when))} ${shq(JSON.stringify(env))}`
 
+/** The threshold section: the operating-point slider, what it buys, and the score histogram with the
+ *  cut-off line. The slider moves on its own state; the figures and the histogram follow the point under
+ *  the thumb as a deferred update, and the page behind learns the choice once, on release. */
+function OperatingPoint({ ops, index, onCommit, cal, buckets, nRuns }) {
+  const [live, setLive] = useState(null)
+  const shown = useDeferredValue(live ?? index)
+  const op = ops[shown] || ops[index]
+  const thr = op.threshold
+  const maxn = Math.max(1, ...cal.map((c) => c.n || 0))
+  return (
+    <div className="rg-ws-2up" data-panes>
+      <div className="rg-ws-col760">
+        <h3 className="rg-ws-h3">Operating point</h3>
+        {/* the slider and its labels share one track: each label sits under the point the thumb snaps to */}
+        <div className="rg-ws-thr">
+          <div className="rg-ws-thrt" style={{ '--rig-ws-n': Math.max(1, ops.length - 1) }}>
+            <ThresholdSlider points={ops.map((o) => o.threshold)} index={index} format={(t) => fx(t)} label="Sentinel threshold operating point" el="sentinel-slider"
+              onPreview={setLive} onCommit={(k) => { setLive(null); onCommit(k) }} />
+            <div className="rg-ws-snaps" aria-hidden="true">{ops.map((o, k) => <span key={o.threshold} className={k === shown ? 'on' : undefined} style={{ '--rig-ws-k': k }}>{fx(o.threshold, 2)}</span>)}</div>
+          </div>
+          <span className="rg-ws-thrv">{fx(thr)}</span>
+        </div>
+        <p className="rg-scope" data-el="figure-scope">At this operating point · {scopeWords({ kind: 'trained', n: nRuns })}</p>
+        <KpiStrip label="At this operating point" className="rg-ws-strip">
+          <Fig label="bad submits caught" value={pct(op.recall, 0)} />
+          <Fig label="good submits blocked" value={pct(op.false_alarm, 0)} tone="red" />
+          <Fig label="mean warning lead" value={fx(op.mean_lead_steps, 1)} unit="steps" />
+        </KpiStrip>
+        <p className="rg-ws-lead">At {fx(op.threshold)} the hook blocks about {pct(op.false_alarm, 0)} of good submits to catch {pct(op.recall, 0)} of bad ones, {fx(op.mean_lead_steps, 1)} steps before the end.</p>
+        <About summary="About the operating points">
+          <p>Only {plural(ops.length, 'operating point')} {ops.length === 1 ? 'was' : 'were'} evaluated when the model was trained; the slider snaps to them rather than inventing points in between. The deployed threshold is the engine&apos;s config and is not changed from here.</p>
+        </About>
+      </div>
+      {(cal.length > 0 || buckets.length > 0) && <div className="rg-ws-col760">
+        {cal.length > 0 && <>
+          <h3 className="rg-ws-h3">Prefix scores by calibration bin</h3>
+          <div className="rg-ws-hist" role="img" aria-label={`Prefix count per score bin; ${cal.map((c) => `${c.bin}: ${c.n}`).join(', ')}`}>
+            {cal.map((c) => { const lo = parseFloat(String(c.bin).split('-')[0]); return <span key={c.bin} className={cx('b', thr != null && lo >= thr - 1e-9 && 'hi')} style={{ height: `${Math.max(2, (c.n / maxn) * 100)}%` }} data-hint={`${c.bin}: n=${c.n}, fail ${pct(c.fail_rate, 0)}`} /> })}
+            {thr != null && <span className="rg-ws-thrw" style={{ '--rig-ws-thr': thr }}><span className="thr" /></span>}
+          </div>
+          <div className="rg-row rg-mono rg-tiny rg-mute rg-ws-ticks"><span>0.0</span><span>score →</span><span>1.0</span></div>
+          <p className="rg-small rg-mute">Bars: prefixes per bin (max n={int(maxn)}). Bins right of the blue line would be blocked (vermilion).</p>
+        </>}
+        {buckets.length > 0 && <>
+          <h3 className="rg-ws-h3">AUC by how much of the trajectory has been seen</h3>
+          <div className="rg-ws-prefix" role="img" aria-label={buckets.map((b) => `${b.bucket}: AUC ${fx(b.auc)}`).join(', ')}>
+            {buckets.map((b) => <div key={b.bucket}><span className="rg-mono rg-tiny">{fx(b.auc)}</span><i style={{ height: `${Math.max(2, (b.auc - 0.5) * 2 * 44)}px` }} /><span className="rg-mono rg-tiny rg-mute">{b.bucket}</span></div>)}
+          </div>
+          <p className="rg-small rg-mute">Bars start at 0.5 (chance). Early prefixes are the hard case.</p>
+        </>}
+      </div>}
+    </div>
+  )
+}
+
 function Sentinel({ spec }) {
   const sn = useSentinel()
   const { datasets } = useRig()
@@ -729,7 +880,7 @@ function Sentinel({ spec }) {
     const dir = (datasets.find((d) => d.name === 'llma4se_live') || datasets.find((d) => d.kind === 'recorded') || datasets[0] || {}).name || 'llma4se_live'
     return (
       <div className="rg-dpad rg-ws rg-ws-doc" data-el="sentinel">
-        <Head eyebrow="Sentinel · early warning on a partial trajectory" title="No trained model on disk" />
+        <Head sub="Early warning on a partial run" title="Sentinel">No trained model on disk.</Head>
         <Empty title="Nothing to show yet." actions={[{ label: `Open ${dir}`, spec: makeSpec('ds', dir) }]}>
           <p className="rg-ws-p">An untrained sentinel has no operating points, so this page cannot say what a threshold buys. Train one on recorded runs from a terminal in the lab root:</p>
           <CopyCmd cmd={trainCmd(dir)} el="sentinel-train" />
@@ -744,9 +895,7 @@ function Sentinel({ spec }) {
   const di = Math.max(0, ops.findIndex((o) => deployed != null && Math.abs(o.threshold - deployed) < 1e-9))
   const i = idx == null || idx >= ops.length ? di : idx
   const op = ops[i] || null
-  const thr = op ? op.threshold : deployed
   const cal = M.calibration || []
-  const maxn = Math.max(1, ...cal.map((c) => c.n || 0))
   const buckets = M.auc_by_prefix || []
   const ci = (M.auc_ci && M.auc_ci.any_prefix) || null
   const oi = M.oracle_invisible || null
@@ -754,55 +903,21 @@ function Sentinel({ spec }) {
   const maxw = Math.max(1e-6, ...feats.map((f) => Math.abs(f.w)))
   return (
     <div className="rg-dpad rg-ws rg-ws-doc" data-el="sentinel">
-      <Head eyebrow="Sentinel · score the partial trajectory at every step" title="Block the submit when it crosses">
-        Model <span className="rg-mono">{sn.data.active || M.name || '—'}</span>, trained {String(M.trained_at || '').slice(0, 10) || '—'} on {int(M.n_runs)} runs ({int(M.n_examples)} prefixes) · {M.folds}-fold{M.cv_grouping ? ` by ${M.cv_grouping}` : ''} · harness filter <span className="rg-mono">{M.harness_filter || 'none'}</span> · fail rate {pct(M.fail_rate)}.
+      <Head sub="Score the partial run at every step; block the submit when it crosses" title="Sentinel">
+        Model <span className="rg-mono">{sn.data.active || M.name || '—'}</span>, trained {String(M.trained_at || '').slice(0, 10) || '—'} on {plural(M.n_runs, 'run')} ({int(M.n_examples)} prefixes) · {M.folds}-fold{M.cv_grouping ? ` by ${M.cv_grouping}` : ''} · harness filter <span className="rg-mono">{M.harness_filter || 'none'}</span> · fail rate {pct(M.fail_rate)}.
       </Head>
-      <Kpis label="Sentinel model" className="rg-ws-kpis">
-        <Kpi label="training AUC · all prefixes" value={fx(M.auc_all_prefixes)} hint={<span className="rg-mono">{ci ? `95% [${fx(ci[0])}, ${fx(ci[1])}] · ${M.auc_ci.bootstrap} boot` : 'no interval recorded'}</span>} />
-        <Kpi label="run-weighted AUC" value={fx(M.auc_run_weighted)} hint={M.auc_baselines ? <span className="rg-mono">{`rules only ${fx(M.auc_baselines.rules_only)} · prior ${fx(M.auc_baselines.prior)}`}</span> : null} />
-        <Kpi label="AUC within task" value={M.auc_within_task != null ? fx(M.auc_within_task) : '—'} el="sentinel-within"
-          hint={M.auc_within_task != null ? <span className="rg-mono">{`same model and task · ${int(M.within_task_pairs)} pairs · steps alone ${fx(M.auc_within_task_step_baseline)}`}</span> : 'retrain to compute: needs failed and passed repeats of a task'} />
-        <Kpi label="calibration ECE" value={fx(M.ece)} hint="lower is better" />
-        <Kpi label="failures invisible to visible tests" value={pct(M.oracle_invisible_failure_share, 0)} hint={<span className="rg-mono">{oi ? `${oi.invisible} of ${oi.n_fail} fails` : '—'}</span>} />
-      </Kpis>
+      <p className="rg-scope" data-el="figure-scope">Sentinel model · {scopeWords({ kind: 'trained', n: M.n_runs })}, not one cell</p>
+      <KpiStrip label="Sentinel model" className="rg-ws-strip" el="sentinel-kpis">
+        <Fig label="training AUC · all prefixes" value={fx(M.auc_all_prefixes)} hint={<span className="rg-mono">{ci ? `95% [${fx(ci[0])}, ${fx(ci[1])}] · ${M.auc_ci.bootstrap} boot` : 'no interval recorded'}</span>} />
+        <Fig label="run-weighted AUC" value={fx(M.auc_run_weighted)} hint={M.auc_baselines ? <span className="rg-mono">{`rules only ${fx(M.auc_baselines.rules_only)} · prior ${fx(M.auc_baselines.prior)}`}</span> : null} />
+        <Fig label="AUC within task" value={M.auc_within_task != null ? fx(M.auc_within_task) : null} el="sentinel-within"
+          hint={M.auc_within_task != null ? <span className="rg-mono">{`same model and task · ${int(M.within_task_pairs)} pairs · steps alone ${fx(M.auc_within_task_step_baseline)}`}</span> : 'retrain to compute: needs failed and passed runs of a task'} />
+        <Fig label="calibration ECE" value={fx(M.ece)} hint="lower is better" />
+        <Fig label="failures invisible to visible tests" value={pct(M.oracle_invisible_failure_share, 0)} hint={<span className="rg-mono">{oi ? `${oi.invisible} of ${oi.n_fail} fails` : '—'}</span>} />
+      </KpiStrip>
       <Sec title="Threshold · operating point" meta={deployed != null ? `deployed at ${fx(deployed)}` : ''} el="sentinel-threshold">
-        {ops.length && op ? <div className="rg-ws-2up" data-panes>
-          <div className="rg-ws-col760">
-          <h3 className="rg-ws-h3">Operating point</h3>
-          <div className="rg-row rg-ws-thr">
-            <input type="range" min="0" max={ops.length - 1} step="1" value={i} onChange={(e) => setIdx(Number(e.target.value))} aria-label="Sentinel threshold operating point" aria-valuetext={fx(thr)} />
-            <span className="rg-fig sm acc">{fx(thr)}</span>
-          </div>
-          <div className="rg-row rg-mono rg-tiny rg-mute rg-ws-ticks">{ops.map((o) => <span key={o.threshold}>{fx(o.threshold, 1)}</span>)}</div>
-          <Kpis label="At this operating point" className="rg-ws-kpis">
-            <Kpi label="bad submits caught" value={pct(op.recall, 0)} />
-            <Kpi label="good submits blocked" value={<span className="rg-ws-redfig">{pct(op.false_alarm, 0)}</span>} />
-            <Kpi label="mean warning lead" value={fx(op.mean_lead_steps, 1)} unit=" steps" />
-          </Kpis>
-          <p className="rg-ws-lead">At {fx(op.threshold)} the hook blocks about {pct(op.false_alarm, 0)} of good submits to catch {pct(op.recall, 0)} of bad ones, {fx(op.mean_lead_steps, 1)} steps before the end.</p>
-          <About summary="About the operating points">
-            <p>Only {plural(ops.length, 'operating point')} {ops.length === 1 ? 'was' : 'were'} evaluated when the model was trained; the slider snaps to them rather than inventing points in between. The deployed threshold is the engine&apos;s config and is not changed from here.</p>
-          </About>
-          </div>
-          {(cal.length > 0 || buckets.length > 0) && <div className="rg-ws-col760">
-          {cal.length > 0 && <>
-            <h3 className="rg-ws-h3">Prefix scores by calibration bin</h3>
-            <div className="rg-ws-hist" role="img" aria-label={`Prefix count per score bin; ${cal.map((c) => `${c.bin}: ${c.n}`).join(', ')}`}>
-              {cal.map((c) => { const lo = parseFloat(String(c.bin).split('-')[0]); return <span key={c.bin} className={cx('b', thr != null && lo >= thr - 1e-9 && 'hi')} style={{ height: `${Math.max(2, (c.n / maxn) * 100)}%` }} title={`${c.bin}: n=${c.n}, fail ${pct(c.fail_rate, 0)}`} /> })}
-              {thr != null && <span className="thr" style={{ left: `calc(${thr * 100}% - 1px)` }} />}
-            </div>
-            <div className="rg-row rg-mono rg-tiny rg-mute rg-ws-ticks"><span>0.0</span><span>score →</span><span>1.0</span></div>
-            <p className="rg-small rg-mute">Bars: prefixes per bin (max n={int(maxn)}). Bins right of the blue line would be blocked (vermilion).</p>
-          </>}
-          {buckets.length > 0 && <>
-            <h3 className="rg-ws-h3">AUC by how much of the trajectory has been seen</h3>
-            <div className="rg-ws-prefix" role="img" aria-label={buckets.map((b) => `${b.bucket}: AUC ${fx(b.auc)}`).join(', ')}>
-              {buckets.map((b) => <div key={b.bucket}><span className="rg-mono rg-tiny">{fx(b.auc)}</span><i style={{ height: `${Math.max(2, (b.auc - 0.5) * 2 * 44)}px` }} /><span className="rg-mono rg-tiny rg-mute">{b.bucket}</span></div>)}
-            </div>
-            <p className="rg-small rg-mute">Bars start at 0.5 (chance). Early prefixes are the hard case.</p>
-          </>}
-          </div>}
-        </div> : <Empty title="No operating points." actions={[{ label: 'Replay the models below', onClick: () => { const e = document.querySelector('[data-el~="sentinel-leaderboard"]'); if (e && e.scrollIntoView) e.scrollIntoView({ block: 'start' }) } }]}>This model was saved without an evaluated threshold sweep. Replaying it on a directory scores it on real runs.</Empty>}
+        {ops.length && op ? <OperatingPoint ops={ops} index={i} onCommit={setIdx} cal={cal} buckets={buckets} nRuns={M.n_runs} />
+         : <Empty title="No operating points." actions={[{ label: 'Replay the models below', onClick: () => { const e = document.querySelector('[data-el~="sentinel-leaderboard"]'); if (e && e.scrollIntoView) e.scrollIntoView({ block: 'start' }) } }]}>This model was saved without an evaluated threshold sweep. Replaying it on a dataset scores it on real runs.</Empty>}
       </Sec>
       <Sec title="What the model weighs" meta="logistic · standardised" el="sentinel-features">
         <div className="rg-col rg-ws-col760 rg-ws-wide">
@@ -810,13 +925,13 @@ function Sentinel({ spec }) {
           <div className="rg-col rg-ws-feats">
             {feats.map((f) => (
               <div className="rg-ws-feat" key={f.raw}>
-                <span className="nm" title={f.raw}>{f.name}</span>
+                <span className="nm" data-hint={f.raw}>{f.name}</span>
                 <span className="bt"><i className={f.w > 0 ? 'pos' : 'neg'} style={f.w > 0 ? { left: '50%', width: `${(f.w / maxw) * 50}%` } : { right: '50%', width: `${(-f.w / maxw) * 50}%` }} /><b /></span>
                 <span className={cx('vl', f.w > 0 ? 'rg-red' : 'rg-sky')}>{f.w > 0 ? '+' : '−'}{fx(Math.abs(f.w))}</span>
               </div>))}
             {!feats.length && <p className="rg-small rg-mute">The model carries no non-zero weights.</p>}
           </div>
-          <p className="rg-small rg-mute"><span className="rg-red">+</span> pushes toward a bad submit · <span className="rg-sky">−</span> pulls away from one. Bias {fx(model.b)}.</p>
+          <p className="rg-small rg-mute"><span className="rg-red">+ pushes</span> toward a bad submit · <span className="rg-sky">− pulls</span> away from one. Bias {fx(model.b)}.</p>
         </div>
       </Sec>
       <Leaderboard spec={spec} models={sn.data.models || []} active={sn.data.active} />
@@ -829,14 +944,20 @@ function Sentinel({ spec }) {
 /** GET /api/sentinel/plugins — the detector catalogue. `?reload=true` re-reads traceharness/plugins/. */
 function Detectors({ spec }) {
   const [reload, setReload] = useTabState(spec, 'plug.reload', 0)
-  const pl = useApi(reload ? `/sentinel/plugins?reload=true&n=${reload}` : '/sentinel/plugins')
+  const url = reload ? `/sentinel/plugins?reload=true&n=${reload}` : '/sentinel/plugins'
+  const pl = useApi(url)
   const list = (pl.data && pl.data.detectors) || []
+  // the re-read says it read the files again, and whether anything changed
+  const [note, reread] = useRefreshed('Re-read')
+  const catalogKey = (d) => JSON.stringify([d.detectors, d.errors, d.n_builtin, d.n_plugin])
+  useEffect(() => { if (pl.data) reread.done(catalogKey(pl.data), plural(list.length, 'detector')) }, [pl.data, url]) // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => { if (pl.error) reread.fail() }, [pl.error, reread])
   return (
     <Sec title="Detectors" el="sentinel-plugins"
-      meta={<>{pl.data ? `${pl.data.n_builtin} built-in · ${pl.data.n_plugin} plugin` : ''}{!IS_STATIC && <button type="button" className="rg-btn ghost" onClick={() => setReload(reload + 1)} title="GET /api/sentinel/plugins?reload=true">Re-read the plugin files</button>}</>}
-      lead={pl.data ? <>What the sentinel checks at every step. Plugins are switched on and off in their files under <span className="rg-mono">{pl.data.dir}</span>; this page reads the catalogue and does not edit it.</> : null}>
+      meta={<>{pl.data ? `${pl.data.n_builtin} built-in · ${pl.data.n_plugin} plugin` : ''}<RefreshNote note={note} />{!IS_STATIC && <button type="button" className="rg-btn ghost" onClick={() => { reread.begin(pl.data ? catalogKey(pl.data) : ''); setReload(reload + 1) }} data-hint="GET /api/sentinel/plugins?reload=true">Re-read the plugin files</button>}</>}
+      lead={pl.data ? <>What the sentinel checks at every step. Plugins are switched on and off in their files under <span className="rg-hash">{pl.data.dir}</span>; this page reads the catalogue and does not edit it.</> : null}>
       {pl.error ? <Failed what="Could not read the detector catalogue." error={pl.error} onRetry={pl.reload} />
-        : !pl.data ? <div className="rg-skel rg-ws-sk" />
+        : !pl.data ? <Skeleton height="var(--rig-s8)" label="Reading the detector catalogue" />
           : <div className="rg-pnl"><ul className="rg-ws-det">{list.map((d) => (
             <li key={d.id}>
               <div className="rg-row rg-wrap"><b>{d.label}</b><Tag tone={d.severity === 'critical' ? 'red' : d.severity === 'high' ? 'amb' : undefined}>{d.severity}</Tag><Tag tone="dash" nc>{d.source}{d.enabled === false ? ' · off' : ''}</Tag><span className="rg-mono rg-tiny rg-mute">{d.id}</span></div>
@@ -871,18 +992,18 @@ function RuleCheck({ spec }) {
     try { const out = await api('/sentinel/plugins/test_rule', { method: 'POST', body: { id: r.id, when: r.when, env: values } }); setRes({ ok: true, out }) } catch (e) { setRes({ ok: false, out: errText(e) }) }
   }
   return (
-    <Sec title="Test a rule" meta={r ? <span className="rg-mono">{r.file}</span> : ''} el="sentinel-test-rule"
+    <Sec title="Test a rule" meta={r ? <span className="rg-hash">{r.file}</span> : ''} el="sentinel-test-rule"
       lead={r ? 'Pick a rule plugin, set the feature values it reads, and see whether it would fire.' : null}>
       {pl.error ? <Failed what="Could not read the rule plugins." error={pl.error} onRetry={pl.reload} />
-        : !pl.data ? <div className="rg-skel rg-ws-sk" />
-          : !r ? <Empty title="No rule plugins." actions={[{ label: 'Re-read the plugins', onClick: pl.reload }]}>Only rule plugins (<span className="rg-mono">*.rule.json</span> under <span className="rg-mono">{pl.data.dir}</span>) carry an expression to test. Add one there, then re-read.</Empty>
+        : !pl.data ? <Skeleton height="var(--rig-s8)" label="Reading the rule plugins" />
+          : !r ? <Empty title="No rule plugins." actions={[{ label: 'Re-read the plugins', onClick: pl.reload }]}>Only rule plugins (<span className="rg-hash">*.rule.json</span> under <span className="rg-mono">{pl.data.dir}</span>) carry an expression to test. Add one there, then re-read.</Empty>
             : <div className="rg-col rg-ws-form">
               <label className="rg-fld">Rule
                 <select className="rg-selc" value={r.id} onChange={(e) => { setRid(e.target.value); setRes(null) }} aria-label="Rule">{rules.map((x) => <option key={x.id} value={x.id}>{x.id}</option>)}</select>
               </label>
               <pre className="rg-pre rg-ws-when">{r.when}</pre>
               <div className="rg-ws-pair" data-panes>{names.map((n) => (
-                <label key={n} className="rg-fld">{n}<input className="rg-inp" type="number" step="any" value={env[n] ?? 0} placeholder="blank counts as 0" onChange={(e) => { setEnv({ ...env, [n]: e.target.value }); setRes(null) }} /></label>))}</div>
+                <NumberField key={n} label={n} step="any" allowEmpty hint="blank counts as 0" value={env[n] ?? 0} onChange={(value) => { setEnv({ ...env, [n]: value === '' ? '' : String(value) }); setRes(null) }} />))}</div>
               {route && !IS_STATIC ? <div className="rg-row rg-wrap"><button type="button" className="rg-btn pri" onClick={run}>Test rule</button></div>
                 : oa.loading && !IS_STATIC ? <p className="rg-small rg-mute">Checking whether this server can test rules…</p>
                   : <div className="rg-ws-unavail" data-el="rule-test-unavailable">
@@ -916,26 +1037,24 @@ function Leaderboard({ spec, models, active }) {
     <Sec title="Trained sentinels" meta={plural(models.length, 'model')} el="sentinel-leaderboard">
       {models.length === 0 ? <p className="rg-small rg-dim">No trained sentinel is registered on this server yet.</p>
         : <div className="rg-pnl rg-ws-numpnl"><TableScroll label="Trained sentinels" stickyCol={false}><table className="rg-tbl rg-ws-numtbl">
-          <thead><tr><th>model</th><th className="rg-num" title="AUC over all prefixes, out of fold">AUC</th><th className="rg-num rg-cq-hide-xs">run-weighted</th><th className="rg-num">runs</th><th><span className="sr-only">Export</span></th></tr></thead>
+          <thead><tr><th>model</th><th className="rg-num" data-hint="AUC over all prefixes, out of fold">AUC</th><th className="rg-num rg-cq-hide-xs">run-weighted</th><th className="rg-num">runs</th><th><span className="sr-only">Export</span></th></tr></thead>
           <tbody>{sorted.map((m, k) => (
             <tr key={m.name} className={m.name === active || m.active ? 'sel' : ''}>
               <td className="rg-mono rg-small"><span className="rg-cluster rg-ws-lbname"><span className="rg-break">{k + 1}. {m.name}</span>{(m.name === active || m.active) && <Tag tone="acc">active</Tag>}</span></td>
               <td className="rg-num rg-mono">{fx(m.meta && m.meta.auc_all_prefixes)}</td>
               <td className="rg-num rg-mono rg-cq-hide-xs">{fx(m.meta && m.meta.auc_run_weighted)}</td>
               <td className="rg-num rg-mono">{int(m.meta && m.meta.n_runs)}</td>
-              <td className="rg-num">{!IS_STATIC && <button type="button" className="rg-btn ghost rg-ws-icob" onClick={() => exp(m.name)} aria-label={`Export ${m.name}`} title="GET /api/sentinel/export/{name}"><Icon name="down" size={13} /></button>}</td>
+              <td className="rg-num">{!IS_STATIC && <button type="button" className="rg-btn ghost rg-ws-icob" onClick={() => exp(m.name)} aria-label={`Export ${m.name}`} data-hint="GET /api/sentinel/export/{name}"><Icon name="down" size={13} /></button>}</td>
             </tr>))}</tbody>
         </table></TableScroll></div>}
       {msg && <Failed what="The export did not download." error={msg} back={false} />}
       {!IS_STATIC && models.length > 0 && <>
         <div className="rg-ws-replay">
-          <label className="rg-fld">Replay every model on
-            <select className="rg-selc" value={d || ''} onChange={(e) => { setDir(e.target.value); setGo(false) }} aria-label="Directory to replay on">{datasets.map((x) => <option key={x.name} value={x.name}>{x.name}</option>)}</select>
-          </label>
-          <Btn disabled={!d || (go && lb.loading)} why={!d ? 'No directory on disk to replay on' : 'Replaying every model on it…'} onClick={() => { if (go) lb.reload(); else setGo(true) }}>Replay on this directory</Btn>
+          <DatasetSelect label="Replay every model on" value={d || ''} datasets={datasets} onChange={(v) => { setDir(v); setGo(false) }} />
+          <Btn disabled={!d || (go && lb.loading)} why={!d ? 'No dataset on disk to replay on' : 'Replaying every model on it…'} onClick={() => { if (go) lb.reload(); else setGo(true) }}>Replay on this dataset</Btn>
         </div>
-        <About summary="Why replay on one directory?">
-          <p>The AUCs in the table are each model&apos;s own out-of-fold training report, on different runs. Replaying every model on one directory scores them on the same runs with EW-AUC@k (AUC among runs still alive at step k), which removes the length confound.</p>
+        <About summary="Why replay on one dataset?">
+          <p>The AUCs in the table are each model&apos;s own out-of-fold training report, on different runs. Replaying every model on one dataset scores them on the same runs with EW-AUC@k (AUC among runs still alive at step k), which removes the length confound.</p>
         </About>
       </>}
       {go && lb.error && <Failed what={`The replay on ${d} did not finish.`} error={lb.error} onRetry={lb.reload} back={false} />}
@@ -948,8 +1067,8 @@ function LeaderboardTable({ lb }) {
   const ciT = (x, c, d = 2) => (x == null ? '—' : `${fx(x, d)}${c ? ` [${fx(c[0], d)}, ${fx(c[1], d)}]` : ''}`)
   return (
     <div className="rg-col" data-el="sentinel-replay">
-      <div className="rg-small rg-mono rg-mute">{lb.dir} · {int(lb.n_runs)} runs ({int(lb.n_fail)} eventual failures) · {int(lb.n_prefixes)} prefixes · recall and false alarm at risk ≥ {lb.threshold} · {lb.bootstrap} bootstrap resamples</div>
-      <div className="rg-pnl"><TableScroll label="Replay of every model on one directory"><table className="rg-tbl rg-ws-lbt">
+      <div className="rg-small rg-mono rg-mute">{lb.dir} · {plural(lb.n_runs, 'run')} ({int(lb.n_fail)} eventual failures) · {int(lb.n_prefixes)} prefixes · recall and false alarm at risk ≥ {lb.threshold} · {lb.bootstrap} bootstrap resamples</div>
+      <div className="rg-pnl"><TableScroll label="Replay of every model on one dataset"><table className="rg-tbl rg-ws-lbt">
         <thead><tr><th>model</th>{ks.map((k) => <th key={k} className="rg-num">EW-AUC@{k}</th>)}<th className="rg-num">recall</th><th className="rg-num">false alarm</th></tr></thead>
         <tbody>{(lb.rows || []).map((r) => (
           <tr key={r.model} className={r.active ? 'sel' : ''}>
@@ -959,7 +1078,7 @@ function LeaderboardTable({ lb }) {
             <td className="rg-num rg-mono rg-small">{r.overall ? pct(r.overall.false_alarm, 0) : '—'}</td>
           </tr>))}</tbody>
       </table></TableScroll></div>
-      {(lb.rows || []).some((r) => r.in_sample) && <p className="rg-small rg-mute">† trained on this directory: in-sample, and therefore optimistic.</p>}
+      {(lb.rows || []).some((r) => r.in_sample) && <p className="rg-small rg-mute">† trained on this dataset: in-sample, and therefore optimistic.</p>}
       <p className="rg-small rg-mute">Alive-at-k cohorts: {((lb.rows && lb.rows[0] && lb.rows[0].per_k) || []).map((p) => `k=${p.k}: n=${p.n_alive} (${pct(p.fail_share, 0)} fail)`).join(' · ')}</p>
     </div>
   )
@@ -981,8 +1100,10 @@ export function canvasLayout(availW, availH, counts) {
   const CX = [x0, x0 + NW + gap, x0 + 2 * (NW + gap)]
   const rows = Math.max(1, counts.s, counts.m, counts.c)
   const room = availH ? (availH - TOP - 32) : 0
-  const grow = (base, n) => Math.round(Math.max(base, Math.min(base * 1.5, room && n ? room / n : base)))
-  return { NW, CX, W: Math.max(w, x0 + used + 16), pitch: { s: grow(84, counts.s), m: grow(84, counts.m), c: grow(104, counts.c) }, rows }
+  const grow = (base, n, max = base * 1.5) => Math.round(Math.max(base, Math.min(max, room && n ? room / n : base)))
+  /* a row is at least as tall as its node: a dataset whose name wraps to a second line is 105 px, a model whose meta
+     wraps 101 px. The tallest a dataset row grows stays 126 px. */
+  return { NW, CX, W: Math.max(w, x0 + used + 16), pitch: { s: grow(108, counts.s, 126), m: grow(108, counts.m, 162), c: grow(104, counts.c) }, rows }
 }
 /** Below this box width the canvas uses its compact tree; below this zoom its labels stop being legible. */
 const CANVAS_NARROW = 640
@@ -1026,7 +1147,7 @@ function Canvas({ spec }) {
   const cells = useMemo(() => ((mt.data && mt.data.cells) || []).filter((c) => c.model && c.harness), [mt.data])
   const models = useMemo(() => [...new Set(cells.map((c) => c.model))].sort(), [cells])
   if (!datasets.length) return <Loading label="Reading /api/overview…" />
-  if (!row) return <div className="rg-dpad"><Empty title="No dataset on disk." actions={[{ label: 'Add runs in Sources', spec: 'sources', primary: true }]}>The canvas wires studies to models to cells, and there is no study in data/runs yet.</Empty></div>
+  if (!row) return <div className="rg-dpad"><Empty title="No dataset on disk." actions={[{ label: 'Add data', spec: 'sources', primary: true }]}>The canvas wires datasets to models to conditions, and there is no dataset in data/runs yet.</Empty></div>
   if (mt.error) return <ErrorState error={mt.error} onRetry={mt.reload} what={`The metrics of ${dir}`} />
   if (!mt.data) return <Loading label={`Reading /api/results/${dir}/metrics…`} />
   const model = models.includes(mS) ? mS : models[0] || null
@@ -1072,24 +1193,30 @@ function Canvas({ spec }) {
   const nsep = Object.values(C).filter(sepOf).length
   const comps = harness === base ? Object.entries(C).sort((a, b) => b[1].mean_diff - a[1].mean_diff) : C[harness] ? [[harness, C[harness]]] : []
   const zoom = (dz) => setZ(Math.max(0.3, Math.min(1.6, +(z + dz).toFixed(2))))
-  const pickDir = (name) => { setDir(name); setM(null); setH(null) }
+  const atFit = Math.abs(z - fit) < 0.005
+  // the dataset or model already picked, picked again, keeps the picks under it ("in focus")
+  const pickDir = (name) => { if (name === dir) return; setDir(name); setM(null); setH(null) }
+  const pickModel = (m) => { if (m === model) return; setM(m); setH(null) }
 
   return (
     <div className="rg-ws-cvdoc" data-el="canvas">
-      <div className="rg-ws-cvtools" role="toolbar" aria-label="Canvas tools">
+      <h1 className="sr-only">Map</h1>
+      <div className="rg-ws-cvtools" role="toolbar" aria-label="Canvas tools" data-tour="canvas-tools">
+        <span className="rg-ph-also" data-el="also-called">Map · also called Canvas in the handout and guides</span>
         <button type="button" className="rg-btn" aria-expanded={adding} onClick={() => setAdding(!adding)}>+ Note</button>
         <span className="rg-ws-sep" />
-        <button type="button" className="rg-btn rg-ws-icob" aria-label="Zoom out" onClick={() => zoom(-0.1)}>−</button>
+        <button type="button" className="rg-btn rg-ws-icob" aria-label="Zoom out" disabled={z <= 0.3} data-hint={z <= 0.3 ? 'Smallest zoom (30%)' : undefined} onClick={() => zoom(-0.1)}>−</button>
         <span className="rg-mono rg-small rg-ws-zv" aria-live="polite">{Math.round(z * 100)}%</span>
-        <button type="button" className="rg-btn rg-ws-icob" aria-label="Zoom in" onClick={() => zoom(0.1)}>+</button>
-        <button type="button" className="rg-btn" onClick={() => setZ(fit)}>fit</button>
-        <button type="button" className="rg-btn" onClick={() => setZ(1)} aria-label="Actual size">1:1</button>
+        <button type="button" className="rg-btn rg-ws-icob" aria-label="Zoom in" disabled={z >= 1.6} data-hint={z >= 1.6 ? 'Largest zoom (160%)' : undefined} onClick={() => zoom(0.1)}>+</button>
+        {/* at that zoom already, each says so and does nothing */}
+        <button type="button" className="rg-btn" aria-disabled={atFit || undefined} data-hint={atFit ? 'The whole tree already fits in view' : 'Zoom to fit the whole tree'} onClick={() => { if (!atFit) setZ(fit) }}>fit</button>
+        <button type="button" className="rg-btn" aria-label="Actual size" aria-disabled={z === 1 || undefined} data-hint={z === 1 ? 'Already at actual size (100%)' : 'Actual size (100%)'} onClick={() => { if (z !== 1) setZ(1) }}>1:1</button>
         <span className="rg-ws-sep" />
         <button type="button" className="rg-btn" onClick={() => setPalette(true)} aria-label="Search"><Icon name="search" size={13} /> <Kbd>{MOD} K</Kbd></button>
         <span className="rg-ws-sel rg-cq-show-sm">
-          <select className="rg-selc" aria-label="Study" value={dir} onChange={(e) => pickDir(e.target.value)}>{datasets.map((d) => <option key={d.name} value={d.name}>{d.name}</option>)}</select>
-          <select className="rg-selc" aria-label="Model" value={model || ''} onChange={(e) => { setM(e.target.value); setH(null) }}>{models.map((x) => <option key={x} value={x}>{short(x)}</option>)}</select>
-          <select className="rg-selc" aria-label="Cell" value={harness || ''} onChange={(e) => setH(e.target.value)}>{mcells.map((x) => <option key={x.harness} value={x.harness}>{x.harness} · {pct(x['pass@1'])}</option>)}</select>
+          <DatasetSelect label="Dataset" hideLabel value={dir} datasets={datasets} onChange={pickDir} className="rg-ws-dsel" />
+          <select className="rg-selc" aria-label="Model" value={model || ''} onChange={(e) => pickModel(e.target.value)}>{models.map((x) => <option key={x} value={x}>{short(x)}</option>)}</select>
+          <select className="rg-selc" aria-label="Condition" value={harness || ''} onChange={(e) => setH(e.target.value)}>{mcells.map((x) => <option key={x.harness} value={x.harness}>{x.harness} · {pct(x['pass@1'])}</option>)}</select>
         </span>
         <span className="rg-mono rg-small rg-mute rg-ws-run"><span className={cx('rg-ws-dot', jobs.data.running > 0 && 'on')} /> {int(jobs.data.running)} running</span>
       </div>
@@ -1099,33 +1226,33 @@ function Canvas({ spec }) {
           <div className="rg-pnl-b rg-col">
             <label className="rg-fld">note text<input className="rg-inp" autoFocus value={draft} onChange={(e) => setDraft(e.target.value)} placeholder="e.g. short_context bites this model" /></label>
             <div className="rg-row"><button type="submit" className="rg-btn pri">Add note</button><button type="button" className="rg-btn ghost" onClick={() => setAdding(false)}>Cancel</button></div>
-            <p className="rg-tiny rg-mute">Study, model and cell nodes come from the data on disk; notes live in this tab only.</p>
+            <p className="rg-tiny rg-mute">Dataset, model and condition nodes come from the data on disk; notes live in this tab only.</p>
           </div>
         </form>
       )}
       {wrapW > 0 && W * z > wrapW + 1 && <p className="rg-ws-cvhint" data-el="canvas-pan-hint">The canvas is wider than this view: scroll or drag inside it to pan, or use <b>fit</b> to see the whole tree.</p>}
       <div className="rg-ws-cvgrid">
-        <div className="rg-ws-cvwrap" ref={wrap} tabIndex={0} role="region" aria-label="Canvas: studies, models and cells">
+        <div className="rg-ws-cvwrap" ref={wrap} tabIndex={0} role="region" aria-label="Canvas: datasets, models and conditions" data-tour="canvas-map">
           <div style={{ width: W * z, height: H * z }}>
             <div className="rg-ws-cv" style={{ width: W, height: H, transform: `scale(${z})` }}>
               <svg className="rg-ws-wires" width={W} height={H} viewBox={`0 0 ${W} ${H}`} aria-hidden="true">
                 {wires.map(([d, on, k]) => <path key={k} d={d} className={cx('w', on && 'on')} />)}
                 {deltaWires.map((w) => <g key={'d' + w.h}><path d={w.d} className={cx('dw', w.sep && 'sep', w.on && 'on')} /><text x={w.lx} y={w.ly} className={cx('dt', w.sep && 'sep')}>{w.t}</text></g>)}
               </svg>
-              <span className="rg-lbl rg-ws-col" style={{ left: CX[0], top: 14 }}>Studies</span>
+              <span className="rg-lbl rg-ws-col" style={{ left: CX[0], top: 14 }}>Datasets</span>
               <span className="rg-lbl rg-ws-col" style={{ left: CX[1], top: 14 }}>Models · {dir}</span>
-              <span className="rg-lbl rg-ws-col" style={{ left: CX[2], top: 14 }}>Cells · {model ? short(model) : '—'} × harness</span>
+              <span className="rg-lbl rg-ws-col" style={{ left: CX[2], top: 14 }}>Conditions · {model ? short(model) : '—'} × harness</span>
               {N.s.map(({ y, h, d }) => (
-                <button key={d.name} type="button" className={cx('rg-ws-node', d.name === dir && 'on')} style={{ width: NW, left: CX[0], top: y, minHeight: h }} onClick={() => pickDir(d.name)} onDoubleClick={() => openTab(makeSpec('ds', d.name))} aria-pressed={d.name === dir} title="Click to wire this study · double-click to open it">
-                  <span className="port r" /><span className="nh">study{d.kind === 'mock' && <Tag tone="dash">mock</Tag>}</span>
-                  <span className="nb"><b>{d.name}</b><span className="rg-tiny rg-mute">{int(d.runs)} runs · {d.models.length}m · {d.harnesses.length}h · {d.tasks.length}t</span></span>
+                <button key={d.name} type="button" className={cx('rg-ws-node', d.name === dir && 'on')} style={{ width: NW, left: CX[0], top: y, minHeight: h }} onClick={() => pickDir(d.name)} onDoubleClick={() => openTab(makeSpec('ds', d.name))} aria-pressed={d.name === dir} data-hint="Click to wire this dataset · double-click to open it">
+                  <span className="port r" /><span className="nh">dataset{d.kind === 'mock' && <Tag tone="dash">mock</Tag>}</span>
+                  <span className="nb"><b><Wb>{d.name}</Wb></b><span className="rg-tiny rg-mute">{plural(d.runs, 'run')} · {d.models.length}m · {d.harnesses.length}h · {d.tasks.length}t</span></span>
                 </button>))}
               {N.m.map(({ y, h, m }) => {
                 const mc = cells.filter((c) => c.model === m)
                 return (
-                  <button key={m} type="button" className={cx('rg-ws-node', m === model && 'on')} style={{ width: NW, left: CX[1], top: y, minHeight: h }} onClick={() => { setM(m); setH(null) }} aria-pressed={m === model}>
+                  <button key={m} type="button" className={cx('rg-ws-node', m === model && 'on')} style={{ width: NW, left: CX[1], top: y, minHeight: h }} onClick={() => pickModel(m)} aria-pressed={m === model} data-hint={m === model ? `${short(m)} · in focus` : undefined}>
                     <span className="port l" /><span className="port r" /><span className="nh">model</span>
-                    <span className="nb"><b>{short(m)}</b><span className="rg-tiny rg-mute">{m.includes('/') ? m.split('/')[0] + ' · ' : ''}{plural(mc.length, 'cell')} · {int(mc.reduce((a, c) => a + (c.runs || 0), 0))} runs</span></span>
+                    <span className="nb"><b><EntityName kind="model" id={m} name={short(m)} /></b><span className="rg-tiny rg-mute">{m.includes('/') ? m.split('/')[0] + ' · ' : ''}{plural(mc.length, 'condition')} · {plural(mc.reduce((a, c) => a + (c.runs || 0), 0), 'run')}</span></span>
                   </button>)
               })}
               {notes.map((t, i) => (
@@ -1137,10 +1264,10 @@ function Canvas({ spec }) {
                 return (
                   <button key={c.harness} type="button" className={cx('rg-ws-node', c.harness === harness && 'on')} style={{ width: NW, left: CX[2], top: y, minHeight: h }} onClick={() => setH(c.harness)} aria-pressed={c.harness === harness}
                     aria-label={`${short(c.model)} under ${c.harness}: pass@1 ${pct(c['pass@1'])}, n=${c.runs}`}>
-                    <span className="port l" /><span className="port r" /><span className="nh">cell · {c.harness}</span>
+                    <span className="port l" /><span className="port r" /><span className="nh">condition · {c.harness}</span>
                     <span className="nb"><span className="rg-row"><span className="rg-mono rg-ws-p1">{pct(c['pass@1'])}</span><span className="rg-tiny rg-mute">{Array.isArray(c.ci95) ? `[${Math.round(c.ci95[0] * 100)}, ${Math.round(c.ci95[1] * 100)}]` : ''} n={int(c.runs)}</span></span>
                       <CiBar lo={c.ci95 && c.ci95[0]} hi={c.ci95 && c.ci95[1]} pt={c['pass@1']} />
-                      {c.harness === base ? <span className="rg-tiny rg-mute">baseline of the paired Δ</span> : x ? <span className={cx('rg-tiny', sepOf(x) ? 'rg-acc' : 'rg-mute')} title={`paired Δ vs ${base}`}>Δ {pp(x.mean_diff)} · {sepOf(x) ? '◆ separates' : '○ covers 0'}</span> : null}
+                      {c.harness === base ? <span className="rg-tiny rg-mute">baseline of the paired Δ</span> : x ? <span className={cx('rg-tiny', sepOf(x) ? 'rg-acc' : 'rg-mute')} data-hint={`paired Δ vs ${base}`}>Δ {pp(x.mean_diff)} · {sepOf(x) ? '◆ separates' : '○ covers 0'}</span> : null}
                     </span>
                   </button>)
               })}
@@ -1154,14 +1281,14 @@ function Canvas({ spec }) {
 }
 
 function CanvasDetail({ dir, model, harness, cell, base, comps, nsep, cmp }) {
-  if (!cell) return <div className="rg-ws-detail" data-el="canvas-detail"><Empty title="No cell to show." actions={[{ label: `Open ${dir}`, spec: makeSpec('ds', dir) }, { label: 'Pick another study', onClick: () => { const e = document.querySelector('.rg-ws-node'); if (e) e.focus() } }]}>{dir} has no model × harness cell in /metrics, so there is nothing to wire.</Empty></div>
+  if (!cell) return <div className="rg-ws-detail" data-el="canvas-detail"><Empty title="No condition to show." actions={[{ label: `Open ${dir}`, spec: makeSpec('ds', dir) }, { label: 'Pick another dataset', onClick: () => { const e = document.querySelector('.rg-ws-node'); if (e) e.focus() } }]}>{dir} has no model × harness condition in /metrics, so there is nothing to wire.</Empty></div>
   const w = Array.isArray(cell.ci95) ? cell.ci95[1] - cell.ci95[0] : null
   const label = `${short(model)} × ${harness}`
   return (
-    <section className="rg-pnl rg-ws-detail" data-el="canvas-detail" aria-label="Selected cell">
-      <div className="rg-pnl-h"><span className="rg-lbl rg-acc">selected · cell</span><span className="meta"><PinButton compact item={{ id: `cell:${dir}:${model}:${harness}`, kind: 'cell', label: `${dir} · ${label}`, value: `pass@1 ${pct(cell['pass@1'])} (95% CI ${pct(cell.ci95 && cell.ci95[0], 0)}–${pct(cell.ci95 && cell.ci95[1], 0)}, n=${cell.runs}, hidden suite)`, spec: makeSpec('ds', dir, short(model), harness), dir, model, harness }} /></span></div>
+    <section className="rg-pnl rg-ws-detail" data-el="canvas-detail" aria-label="Selected condition">
+      <div className="rg-pnl-h"><span className="rg-lbl rg-acc">selected · condition</span><span className="meta"><PinButton compact item={{ id: `cell:${dir}:${model}:${harness}`, kind: 'cell', label: `${dir} · ${label}`, value: `pass@1 ${pct(cell['pass@1'])} (95% CI ${pct(cell.ci95 && cell.ci95[0], 0)}–${pct(cell.ci95 && cell.ci95[1], 0)}, n=${cell.runs}, hidden oracle)`, spec: makeSpec('ds', dir, short(model), harness), dir, model, harness }} /></span></div>
       <div className="rg-pnl-b rg-col">
-        <div><b className="rg-mono">{label}</b><div className="rg-tiny rg-mute rg-mono">{dir} · {int(cell.runs)} runs · {cell.repeat_range ? [...new Set(cell.repeat_range)].join('–') : cell.repeats ?? '—'} attempts per observed task slot · hidden suite</div></div>
+        <div><b className="rg-mono">{label}</b><div className="rg-tiny rg-mute">{dir} · {plural(cell.runs, 'run')} · {cell.repeat_range ? [...new Set(cell.repeat_range)].join('–') : cell.repeats ?? '—'} runs per observed task slot · hidden oracle</div></div>
         <p className="rg-small rg-dim">{w != null ? `The interval is ${fx(w * 100, 1)} points wide at n=${cell.runs}. ` : ''}{cmp.error ? 'The paired comparison did not load.' : !cmp.data ? 'Reading the paired comparison…' : harness === base ? (comps.length ? (nsep ? `${nsep} of ${comps.length} harness${comps.length === 1 ? '' : 'es'} separate${nsep === 1 ? 's' : ''} from ${base} for this model; the rest cover zero.` : `No harness separates from ${base} for this model: every paired interval covers zero.`) : 'There is no other harness to pair with.') : `Paired against ${base} on the same tasks.`}</p>
         <div className="rg-grid rg-ws-mini">
           {[['pass@1', pct(cell['pass@1'])], ['pass^3', pct(cell['pass^3'])], ['flip rate', pct(cell.flip_rate, 0)], ['cost / run', usd(cell.mean_cost, 4)]].map(([l, v]) => <div key={l}><span className="rg-lbl">{l}</span><span className="rg-mono">{v}</span></div>)}
@@ -1173,8 +1300,8 @@ function CanvasDetail({ dir, model, harness, cell, base, comps, nsep, cmp }) {
         </>}
         <div className="rg-lbl">actions</div>
         <div className="rg-row rg-wrap">
-          <Go spec={makeSpec('tasks', dir, short(model), harness)} className="rg-btn">Open {int(cell.runs)} runs</Go>
-          <Go spec={makeSpec('an', dir, 'setup')} className="rg-btn">Design a repeat</Go>
+          <Go spec={makeSpec('tasks', dir, short(model), harness)} className="rg-btn">Open {plural(cell.runs, 'run')}</Go>
+          <Go spec={makeSpec('an', dir, 'setup')} className="rg-btn">Plan more runs</Go>
           <Go spec={makeSpec('an', dir, 'delta')} className="rg-btn">Wire a comparison</Go>
         </div>
       </div>
@@ -1183,6 +1310,8 @@ function CanvasDetail({ dir, model, harness, cell, base, comps, nsep, cmp }) {
 }
 
 /* ================================================================ SETTINGS */
+/** Theme values are the shell's (rig.setTheme); the labels are what people see. */
+const THEMES = [['dark', 'Graphite'], ['light', 'Paper'], ['contrast', 'High contrast · dark'], ['contrast-light', 'High contrast · light'], ['system', 'System']]
 const storageWorks = () => { try { localStorage.setItem('rig.probe', '1'); const ok = localStorage.getItem('rig.probe') === '1'; localStorage.removeItem('rig.probe'); return ok } catch { return false } }
 const KEY_PH = 'e.g. sk-or-v1-…'
 
@@ -1212,25 +1341,26 @@ function Settings() {
   const s = st.data || null
   return (
     <div className="rg-dpad rg-ws rg-ws-doc rg-ws-settings">
-      <Head eyebrow="Settings" title="Preferences, keys, paths">A key is only needed to ask Buddy a question in words or to run live models. Every finding in the workbench is arithmetic over the ledger and works without one.</Head>
+      <Head title="Settings" el="settings-head">A key is only needed to ask Buddy a question in words or to run live models. Every finding in the workbench is arithmetic over the ledger and works without one.</Head>
       <div className="rg-ws-set" data-panes>
       <Sec title="Appearance" meta="this browser" el="appearance">
         <div className="rg-ws-prefs">
-          <div className="rg-ws-prow"><span className="rg-ws-pl">Theme</span><Seg label="Theme" value={rig.themePref} onChange={rig.setTheme} options={[['dark', 'dark · primary'], ['light', 'paper'], ['system', 'system']]} /></div>
+          <div className="rg-ws-prow"><span className="rg-ws-pl">Theme</span><Seg label="Theme" el="theme-options" value={rig.themePref} onChange={rig.setTheme} options={THEMES} /></div>
+          <div className="rg-ws-prow"><span className="rg-ws-pl">Status colours</span><Switch el="cvd-switch" checked={!!rig?.cvd} onChange={(on) => rig?.setCvd?.(on)} label="Colour-blind safe status colours" /></div>
           <div className="rg-ws-prow"><span className="rg-ws-pl">Density</span><Seg label="Density" value={density} onChange={(v) => setP(DENSITY_KEY, v, setDensity)} options={[['compact', 'compact'], ['comfortable', 'comfortable']]} /></div>
           <div className="rg-ws-prow"><span className="rg-ws-pl">Motion</span><Seg label="Motion" value={motion} onChange={(v) => setP(MOTION_KEY, v, setMotion)} options={[['on', 'on'], ['off', 'reduced']]} /></div>
         </div>
-        <p className="rg-small rg-mute">Remembered in this browser. Your system&apos;s reduced-motion setting is always honoured.</p>
+        <p className="rg-small rg-mute">Remembered in this browser. Your system&apos;s reduced-motion setting is always honoured. Colour-blind safe status colours draw Pass in blue and Fail in orange.</p>
         {(prefFail || !probe) && <p className="rg-small rg-red">This browser blocks storage — the preference holds for this visit only.</p>}
       </Sec>
       <Sec title="Paths in use" meta={IS_STATIC ? 'export' : 'GET /api/settings'} el="paths-in-use">
-        {!can('settings.server_key') ? <LocalOnly capability="settings.server_key" what="The server's paths" /> : st.error ? <Failed what="Could not read the server's settings." error={st.error} onRetry={st.reload} /> : !s ? <div className="rg-skel rg-ws-sk" /> : (
+        {!can('settings.server_key') ? <LocalOnly capability="settings.server_key" what="The server's paths" /> : st.error ? <Failed what="Could not read the server's settings." error={st.error} onRetry={st.reload} /> : !s ? <Skeleton height="var(--rig-s8)" label="Reading the server's paths" /> : (
           <dl className="rg-kv rg-ws-kv">
             <dt>base URL</dt><dd>{s.base_url}</dd>
-            <dt>lab root</dt><dd>{s.lab_root}</dd>
-            <dt>runs root</dt><dd>{s.results_root} <span className="rg-mute">· {plural((s.results || []).length, 'directory', 'directories')}</span></dd>
-            <dt>harnesses</dt><dd>{s.harness_dir} <span className="rg-mute">· {(s.harnesses || []).length}</span></dd>
-            <dt>tasks</dt><dd>{s.task_dir} <span className="rg-mute">· {Array.isArray(tasks.data) ? tasks.data.length : '—'}</span></dd>
+            <dt>lab root</dt><dd data-hint={s.lab_root}>{tildeHome(s.lab_root)}</dd>
+            <dt>runs root</dt><dd data-hint={s.results_root}>{tildeHome(s.results_root)} <span className="rg-mute">· {plural((s.results || []).length, 'dataset')}</span></dd>
+            <dt>harnesses</dt><dd data-hint={s.harness_dir}>{tildeHome(s.harness_dir)} <span className="rg-mute">· {(s.harnesses || []).length}</span></dd>
+            <dt>tasks</dt><dd data-hint={s.task_dir}>{tildeHome(s.task_dir)} <span className="rg-mute">· {Array.isArray(tasks.data) ? tasks.data.length : '—'}</span></dd>
           </dl>)}
       </Sec>
       </div>
@@ -1243,7 +1373,7 @@ function Settings() {
       <Sec title="Learning preferences" meta={rig.lab ? <Tag tone="acc">on</Tag> : <Tag tone="dash">off</Tag>} el="student-lab-toggle">
         <Switch checked={rig.lab} onChange={toggleLab} label={<b>Student Lab · Guided Analysis</b>} />
         <div className="rg-ws-pair" data-panes>
-          <Note tone={rig.lab ? 'acc' : undefined}><div><b>When on</b><br />Reading guide, reference materials and an evidence-linked lesson beside each attempt. Prediction and intervention controls are marked as outside the guided path.</div></Note>
+          <Note tone={rig.lab ? 'acc' : undefined}><div><b>When on</b><br />Reading guide, reference materials and an evidence-linked lesson beside each run. Prediction and intervention controls are marked as outside the guided path.</div></Note>
           <Note tone={rig.lab ? undefined : 'acc'}><div><b>When off</b><br />The professional instrument: experiment comparisons and the trajectory inspector. Teaching resources stay out of navigation.</div></Note>
         </div>
         <p className="rg-small rg-mute">Off by default. Remembered in this browser (<span className="rg-mono">hs.studentLab</span>); it does not change data access.</p>
@@ -1253,16 +1383,18 @@ function Settings() {
       {can('assistant.model') ? <NarratorPanel /> : <Sec title="The narrator" el="narrator-key"><Unavailable capability="assistant.model" what="Asking a model" /></Sec>}
 </>
       </div>
-      <div className="rg-ws-set" data-panes><AgentConnect /></div>
-      <div className="rg-ws-set" data-panes><AboutConsole /></div>
+      <div className="rg-ws-set" data-panes><AgentConnect /><AboutConsole /></div>
     </div>
   )
 }
 function SettingsActions() {
-  const { state, openTab } = useRig()
+  const { state, leaveTo } = useRig()
   const p = state && state.panes ? state.panes[state.focus] || state.panes[0] : null
-  const back = (p && p.tabs.find((t) => t !== 'settings')) || 'home'
-  return <button type="button" className="rg-btn" data-el="return-to-work" onClick={() => openTab(back)}>Return to work</button>
+  // Settings opens beside the tab it was opened from (openTab inserts after the active tab): that tab takes the
+  // focus back and Settings closes; with none, Settings becomes the Datasets page
+  const at = p ? p.tabs.indexOf('settings') : -1
+  const back = (p && ((at > 0 && p.tabs[at - 1]) || p.tabs.find((t) => t !== 'settings'))) || 'home'
+  return <button type="button" className="rg-btn" data-el="return-to-work" data-hint={back === 'home' ? 'Back to Datasets' : undefined} onClick={() => leaveTo(back, (t) => t === back)}>Return to work</button>
 }
 
 /** Buddy's browser-held key + model: matekey.js / buddyClient.js exactly as workspace/BuddySettings.jsx. */
@@ -1289,7 +1421,7 @@ function BuddyPanel() {
       lead="Asks about the evidence you pin to the case file. The key lives only in this browser, shared with the narrator below, and is never sent to the traceharness server."
       status={
         <dl className="rg-kv rg-ws-kv rg-ws-buddy">
-          <dt>connection</dt><dd>{state.keyPresent ? <>key {state.keyHint || 'set'} · {isKeyRemembered(stores) ? 'remembered on this browser' : 'this tab only'}</> : <span className="rg-red">no key in this browser</span>}</dd>
+          <dt>connection</dt><dd className="rg-sans">{state.keyPresent ? <>key <span className="rg-mono">{state.keyHint || 'set'}</span> · {isKeyRemembered(stores) ? 'remembered on this browser' : 'this tab only'}</> : <span className="rg-red">no key in this browser</span>}</dd>
           <dt>model</dt><dd><BuddyModelPicker variant="field" value={state.model} onChange={(v) => { writeModel(stores, v); refresh(); setNote(null) }} /></dd>
         </dl>}
       field={
@@ -1325,10 +1457,10 @@ function LabKeyPanel({ st }) {
       lead="Held by the traceharness server for running live models and the judge. Kept in memory while the process runs and never sent back to this page. Recorded results work without one."
       status={
         <dl className="rg-kv rg-ws-kv">
-          <dt>connection</dt><dd>{!st.data ? '…' : s.key_present
+          <dt>connection</dt><dd className="rg-sans">{!st.data ? '…' : s.key_present
             ? <>The server holds a key: <span className="rg-mono">{s.key_hint || 'set'}</span> (its own mask).</>
             : 'The server holds no key.'}</dd>
-          <dt>used for</dt><dd>live model runs and the LLM judge</dd>
+          <dt>used for</dt><dd className="rg-sans">live model runs and the LLM judge</dd>
         </dl>}
       field={!can('settings.server_key') ? <LocalOnly capability="settings.server_key" what="Setting the server key" />
         : <div className="rg-col rg-ws-keyf"><input className="rg-inp" type="password" autoComplete="off" aria-label="traceharness key" value={draft} placeholder={KEY_PH} onChange={(e) => setDraft(e.target.value)} /></div>}
@@ -1397,25 +1529,25 @@ function Guide() {
   if (!datasets.length) return <Loading label="Reading /api/overview…" />
   const m = c && c.model ? short(c.model) : null
   const steps = [
-    ['Pick a dataset', 'home', 'Recorded datasets versus mock controls. Mocks have designed failure rates — an all-pass or all-fail mock means the grader broke, not the model.'],
+    ['Pick a dataset', 'home', 'Recorded datasets versus mock controls. Mocks have designed failure rates — an all-pass or all-fail mock means the measurement broke, not the model.'],
     ['Read the answered questions', makeSpec('q', dir), `${dir} opens with its questions already answered from the data, each with one sentence and one number you can follow down.`],
     ['Read one condition', makeSpec('ds', dir, m, c && c.harness), `${m || 'A model'} under ${c && c.harness}: the success rate always shows its known denominator; unknown is never failure.`],
-    ['Find the mixed task', makeSpec('tasks', dir, m, c && c.harness), ex ? (ex.repeats.rate == null ? `Repeat comparison unavailable under the ${oracle} suite. ${ex.repeats.coverage}` : ex.mixed.length ? `${plural(ex.mixed.length, 'task')} of ${ex.repeats.eligible} eligible tasks ${ex.mixed.length === 1 ? 'has' : 'have'} both passing and failing repeats under the ${oracle} suite (${ex.mixed.slice(0, 3).join(', ')}${ex.mixed.length > 3 ? '…' : ''}). Same model, same harness, different outcomes: that spread is variance. ${ex.repeats.coverage}` : `No mixed outcomes among eligible tasks under the ${oracle} suite. ${ex.repeats.coverage}`) : 'Same model, same harness, different outcomes: that spread is variance.'],
-    ['Open a failing attempt', ex && ex.failing ? makeSpec('run', ex.failing.id) : makeSpec('tasks', dir, m, c && c.harness), ex && ex.failing ? <>Run <span className="rg-mono">{ex.failing.id.slice(-6)}</span> on {ex.failing.task} failed <FailureChip run={ex.failing} />. Follow each claim to the span that records it.</> : 'Follow each claim to the span that records it.'],
+    ['Find the mixed task', makeSpec('tasks', dir, m, c && c.harness), ex ? (ex.repeats.rate == null ? `Run comparison unavailable under the ${oracle} oracle. ${ex.repeats.coverage}` : ex.mixed.length ? `${plural(ex.mixed.length, 'task')} of ${ex.repeats.eligible} eligible tasks ${ex.mixed.length === 1 ? 'has' : 'have'} both passing and failing runs under the ${oracle} oracle (${ex.mixed.slice(0, 3).join(', ')}${ex.mixed.length > 3 ? '…' : ''}). Same model, same harness, different outcomes: that spread is variance. ${ex.repeats.coverage}` : `No mixed outcomes among eligible tasks under the ${oracle} oracle. ${ex.repeats.coverage}`) : 'Same model, same harness, different outcomes: that spread is variance.'],
+    ['Open a failing run', ex && ex.failing ? makeSpec('run', ex.failing.id) : makeSpec('tasks', dir, m, c && c.harness), ex && ex.failing ? <>Run <span className="rg-mono">{ex.failing.id.slice(-6)}</span> on {ex.failing.task} failed <FailureChip run={ex.failing} />. Follow each claim to the span that records it.</> : 'Follow each claim to the span that records it.'],
     ['Put an interval on it', makeSpec('an', dir, 'outcomes'), 'pass@1 with a 95% interval; pass^k is what a user who retries k times experiences.'],
     ['Attribute the difference', makeSpec('an', dir, 'delta'), 'Paired differences against baseline on the same tasks. Count how many intervals exclude zero before believing any of them.'],
-    ['Question the oracle', makeSpec('an', dir, 'judge'), 'Grade the same runs with the visible, hidden and strengthened suites: part of any score can be the suite.'],
+    ['Question the oracle', makeSpec('an', dir, 'judge'), 'Grade the same runs with the visible, hidden and strengthened oracles: part of any score can be the oracle.'],
     ['Close with a report card', makeSpec('an', dir, 'report'), 'Claims, caveats, and what the card does not cover.'],
   ]
   return (
     <div className="rg-dpad rg-ws rg-ws-doc rg-ws-read">
-      <Head eyebrow="Student Lab · guided analysis" title="Start here">
+      <Head sub="Student Lab · guided analysis · start here" title="Reading guide">
         {plural(steps.length, 'step')} from the big picture to the recorded action that changed an outcome, on <span className="rg-mono">{dir}</span>. Each opens as a document tab{isMobile ? '' : <> — keep the guide open beside it with <Kbd>{MOD} click</Kbd></>}.
       </Head>
-      {!lab && <Note el="outside-guided-state"><div>Student Lab is <b>off</b>. The guide is readable, but lessons beside each attempt appear only when it is on (the button above turns it on).</div></Note>}
+      {!lab && <Note el="outside-guided-state"><div>Student Lab is <b>off</b>. The guide is readable, but lessons beside each run appear only when it is on (the button above turns it on).</div></Note>}
       <ol className="rg-pnl rg-ws-steps" data-el="start-here">
         {steps.map(([t, to, d], i) => (
-          <li key={t}><Go spec={to} side={!isMobile} className="rg-ws-step" title={isMobile ? undefined : 'Opens in the other pane'}>
+          <li key={t}><Go spec={to} side={!isMobile} className="rg-ws-step" tip={isMobile ? undefined : 'Opens in the other pane'}>
             <span className="rg-fig sm acc">{i + 1}</span><span className="rg-grow"><b>{t}</b><span className="rg-small rg-dim">{d}</span></span><span className="rg-mute" aria-hidden="true">⇥</span>
           </Go></li>))}
       </ol>
@@ -1443,7 +1575,7 @@ function DatasetList() {
         const d = present.get(name)
         return (
           <li key={name}>
-            <div className="rg-row rg-wrap">{d ? <Go spec={makeSpec('ds', name)} className="rg-tlink rg-hit"><b>{name}</b></Go> : <b className="rg-mono rg-mute">{name}</b>}<span className="rg-grow" /><span className="rg-mono rg-small rg-mute">{d ? `${int(d.runs)} runs` : 'not present on disk'}</span></div>
+            <div className="rg-row rg-wrap">{d ? <Go spec={makeSpec('ds', name)} className="rg-tlink rg-hit"><b>{name}</b></Go> : <b className="rg-mono rg-mute">{name}</b>}<span className="rg-grow" /><span className="rg-mono rg-small rg-mute">{d ? plural(d.runs, 'run') : 'not present on disk'}</span></div>
             {NOTES[name] && <div className="rg-small rg-dim">{NOTES[name]}</div>}
           </li>)
       })}</ul></div>
@@ -1462,59 +1594,68 @@ function Package() {
   const T = (ov.data && ov.data.tasks) || []
   return (
     <div className="rg-dpad rg-ws rg-ws-doc rg-ws-read" data-el="package-contents">
-      <Head eyebrow="School replication package" title="Reference materials" actions={<button type="button" className="rg-btn" onClick={download}><Icon name="down" size={14} /> Download scope</button>}>
+      <Head sub="School replication package" title="Reference materials" actions={<button type="button" className="rg-btn" onClick={download}><Icon name="down" size={14} /> Download scope</button>}>
         What this replication package contains, and how to reproduce it from this directory. Everything recorded replays from disk: no API key is needed to inspect or reanalyse it.
       </Head>
       <About summary="Where the runs come from">
         <p>The recorded datasets were collected for this lab through OpenRouter, plus third-party SWE-agent trajectories. Mock datasets are only for exercises that must behave identically on every machine. Captured sessions and credentials are left out.</p>
       </About>
-      <Sec title="What this package contains">
+      <Sec title="What this package contains" tour="package-contents">
         <div className="rg-pnl"><ul className="rg-ws-dsl">{schoolPackage.materials.map((it) => (
           <li key={it.title}><b>{it.title}</b><div className="rg-small rg-dim">{it.description}</div><div className="rg-row rg-wrap">{it.paths.map((p) => <code key={p} className="rg-mono rg-small">{p}</code>)}</div></li>))}</ul></div>
       </Sec>
       <DatasetList />
-      <Sec title={`Task issues · ${T.length}`} lead={`Each opens the task investigator for ${c && c.model ? `${short(c.model)} × ${c.harness}` : dir}. Probe tasks carry a designed trap (amber).`}>
+      <Sec tour="package-tasks" title={`Task issues · ${T.length}`} lead={`Each opens the task investigator for ${c && c.model ? `${short(c.model)} × ${c.harness}` : dir}. Probe tasks carry a designed trap (amber).`}>
         {ov.error ? <Failed what="Could not read the task list." error={ov.error} onRetry={ov.reload} /> : <div className="rg-row rg-wrap">{T.map((t) => (
-          <Go key={t.id} spec={c && c.model ? makeSpec('task', dir, short(c.model), c.harness, t.id) : makeSpec('ds', dir)} className="rg-ws-chip" title={t.title}>{t.id}{t.probe && t.probe !== 'none' && <span className="rg-amb"> · {t.probe}</span>}</Go>))}</div>}
+          <Go key={t.id} spec={c && c.model ? makeSpec('task', dir, short(c.model), c.harness, t.id) : makeSpec('ds', dir)} className="rg-ws-chip" tip={t.title}>{t.id}{t.probe && t.probe !== 'none' && <span className="rg-amb"> · {t.probe}</span>}</Go>))}</div>}
         <NextSteps actions={[{ label: `Report card · ${dir}`, spec: makeSpec('an', dir, 'report') }]} />
       </Sec>
-      <Sec title={`Harness definitions · ${H.length}`}>
+      <Sec tour="package-harnesses" title={`Harness definitions · ${H.length}`}>
         {ov.error ? <Failed what="Could not read the harness list." error={ov.error} onRetry={ov.reload} /> : <div className="rg-pnl"><ul className="rg-ws-dsl">{H.map((h) => (
-          <li key={h.id}><span className="rg-mono rg-small">{h.file || `${h.id}.json`}</span><div className="rg-small rg-dim">{h.notes || '—'}</div></li>))}</ul></div>}
+          <li key={h.id}><span className="rg-hash rg-small">{h.file || `${h.id}.json`}</span><div className="rg-small rg-dim">{h.notes || '—'}</div></li>))}</ul></div>}
       </Sec>
-      <Sec title="Reproduce from this directory">
+      <Sec title="Reproduce from this directory" tour="package-reproduce">
         <h3 className="rg-ws-h3">1 · Install and run</h3>
         <pre className="rg-pre">{'python3 -m pip install -e .\n' + LOCAL_APP.command}</pre>
         <p className="rg-small rg-mute">Open <span className="rg-mono">{LOCAL_APP.url}</span>. No API key is needed to inspect the included results.</p>
         <h3 className="rg-ws-h3">2 · Reproduce the exercises</h3>
         <pre className="rg-pre">{'python3 exercises/ex1_variance.py\npython3 exercises/ex2_harness.py\npython3 exercises/ex7_real_trajectories.py --offline\npython3 exercises/ex8_experiment.py'}</pre>
         <p className="rg-small rg-mute">Read <span className="rg-mono">HANDOUT.md</span> for exercises 3–6, or open the <Go spec="guide" className="rg-tlink">reading guide</Go>.</p>
-        <About summary="For maintainers: rebuild the archive"><pre className="rg-pre">python3 scripts/build_school_package.py</pre><p>Creates <span className="rg-mono">dist/traceharness-school.zip</span> with an exact file manifest and SHA-256 checksums.</p></About>
+        <About summary="For maintainers: rebuild the archive"><pre className="rg-pre">python3 scripts/build_school_package.py</pre><p>Creates <span className="rg-hash">dist/traceharness-school.zip</span> with an exact file manifest and SHA-256 checksums.</p></About>
       </Sec>
-      <Sec title="Excluded from the handoff">
+      <Sec title="Excluded from the handoff" tour="package-excluded">
         <ul className="rg-ws-bul">{schoolPackage.excluded.map((x) => <li key={x} className="rg-dim">{x}</li>)}</ul>
       </Sec>
     </div>
   )
 }
 
+/* The Reading guide and Reference materials sit inside Learn, beside its left list. */
+function GuideDoc(props) { return <LearnPage {...props} readingGuide={Guide} /> }
+function PackageDoc() { return <LearnFrame current="package"><Package /></LearnFrame> }
+
 /* ================================================================ registration */
 export const views = {
-  sources: { tag: 'src', title: () => 'Sources', render: Sources, crumbs: () => [['sources & machine']],
-    Actions: () => <Go spec="capture" className="rg-btn">Session capture <Icon name="right" size={13} /></Go>,
-    palette: () => [{ title: 'Sources & results on disk', detail: 'data/runs · import a trace', spec: 'sources', keywords: 'load trajectories import' }] },
-  capture: { tag: 'cap', title: () => 'Capture', render: Capture,
-    crumbs: () => [['sources & machine', 'sources'], ['session capture']],
-    palette: () => [{ title: 'Session capture', detail: 'watcher · captured sessions', spec: 'capture' }] },
-  sentinel: { tag: 'sent', title: () => 'Sentinel', render: Sentinel, crumbs: () => [['sentinel · early warning on a partial trajectory']], outsideGuided: () => true,
+  sources: { tag: 'src', title: () => 'Add data', render: SourcesDoc,
+    crumbs: (a) => [['Add data', addTabOf(a[0]) === 'import' ? null : 'sources'], [ADD_TABS.find(([k]) => k === addTabOf(a[0]))[1]]],
+    palette: () => [
+      { title: 'Add data', detail: 'import files · public sample · capture sessions · results on disk', spec: 'sources', keywords: 'import load trajectories sources files' },
+      { title: 'Results on disk', detail: 'Add data · every dataset in data/runs, harness versions', spec: addSpecOf('disk'), keywords: 'sources harness versions' },
+      { title: 'Public sample', detail: 'Add data · Hugging Face catalog, SWE-agent sample', spec: addSpecOf('sample'), keywords: 'download hugging face swe-agent' },
+    ] },
+  capture: { tag: 'cap', title: () => 'Add data', render: CaptureDoc,
+    crumbs: () => [['Add data', 'sources'], [LABELS.capture_local]],
+    palette: () => [{ title: LABELS.capture_local, detail: 'Add data · capture sessions: watcher, captured sessions', spec: 'capture', keywords: 'capture sessions watcher' }] },
+  sentinel: { tag: 'sent', title: () => 'Sentinel', render: Sentinel, crumbs: () => [['Analysis'], ['Sentinel']], outsideGuided: () => true,
     palette: () => [{ title: 'Sentinel', detail: 'early warning on a partial trajectory', spec: 'sentinel' }] },
-  canvas: { tag: 'cv', title: () => 'Canvas', render: Canvas, crumbs: () => [['canvas · studies → models → cells']], outsideGuided: () => true,
-    palette: () => [{ title: 'Canvas', detail: 'node canvas of studies, models, cells', spec: 'canvas' }] },
-  settings: { tag: 'set', title: () => 'Settings', render: Settings, Actions: SettingsActions, crumbs: () => [['settings']],
-    palette: () => [{ title: 'Settings', detail: 'appearance, Student Lab, keys, paths', spec: 'settings' }] },
-  guide: { tag: 'lab', title: () => 'Reading guide', render: Guide, Actions: GuideActions, crumbs: () => [['student lab'], ['reading guide']],
-    palette: () => [{ title: 'Reading guide', detail: 'Student Lab · start here', spec: 'guide' }] },
-  package: { tag: 'pkg', title: () => 'Package contents', render: Package, crumbs: () => [['student lab', 'guide'], ['reference materials']],
+  canvas: { tag: 'cv', title: () => 'Map', render: Canvas, crumbs: () => [['Datasets', 'home'], ['Map']], outsideGuided: () => true,
+    palette: () => [{ title: 'Map', detail: 'Datasets · node canvas of datasets, models, conditions', spec: 'canvas', keywords: 'canvas graph' }] },
+  settings: { tag: 'set', title: () => 'Settings', render: Settings, Actions: SettingsActions, crumbs: () => [['Settings']],
+    palette: () => [{ title: 'Settings', detail: 'appearance, theme, Student Lab, keys, paths', spec: 'settings', keywords: 'theme graphite paper high contrast colour blind' }] },
+  // guide:<page> are the Learn pages (learn/routes.js); the bare guide is still the Reading guide
+  guide: { tag: 'lab', title: (a) => learnTitle(a) || 'Reading guide', render: GuideDoc, Actions: (p) => (p.args && p.args[0] ? null : <GuideActions />), crumbs: (a) => learnCrumbs(a) || [['Student Lab'], ['Reading guide']],
+    palette: () => [{ title: 'Reading guide', detail: 'Student Lab · start here', spec: 'guide' }, ...learnPalette()] },
+  package: { tag: 'pkg', title: () => 'Reference materials', render: PackageDoc, crumbs: () => [['Student Lab', 'guide'], ['Reference materials']],
     palette: () => [{ title: 'Reference materials', detail: 'school replication package', spec: 'package' }] },
 }
 export const docks = {

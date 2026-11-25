@@ -3,10 +3,15 @@
    the capture dock. Every write is tested only as far as its confirm step, then cancelled; where a
    test does confirm, fetch is a local stub and the test asserts the exact endpoint and body. */
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { act, fireEvent, screen, waitFor, within } from '@testing-library/react'
+import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import { renderRig, resetRig, rigFixture, MINI } from '../../../test/rig-testing'
-import { invalidate } from '../data'
-import { sessionFolders, canvasLayout } from './workspace'
+import { invalidate, prime } from '../data'
+import { RigContext } from '../context'
+import { sessionFolders, canvasLayout, views } from './workspace'
+
+/* a number box takes what was typed when it is left (NumberField): type, then leave the box */
+const typeNumber = (node, value) => { fireEvent.change(node, { target: { value } }); fireEvent.blur(node) }
+
 
 afterEach(resetRig)
 
@@ -28,6 +33,15 @@ function stubFetch(routes) {
   return calls
 }
 
+/** fetch for renderRig: /api/overview answers with the fixture plus one new dataset; anything else 404s. */
+function overviewWith(name) {
+  const ov = rigFixture()['/overview']
+  const body = { ...ov, results: [...ov.results, { name, runs: 3, harnesses: ['baseline'], models: ['acme/alpha-1'], tasks: ['t1'], pass_rate: null, updated: '2026-01-03T00:00:00Z' }] }
+  return vi.fn(async (url) => (String(url) === '/api/overview'
+    ? { ok: true, status: 200, headers: { get: () => 'application/json' }, json: async () => body }
+    : { ok: false, status: 404, statusText: 'Not Found', headers: { get: () => 'application/json' }, json: async () => ({ detail: 'not here' }) }))
+}
+
 const IMPORT = {
   '/import/sources': { sources: [{ name: 'codex', description: 'OpenAI Codex CLI rollout JSONL (~/.codex/sessions/YYYY/MM/DD/rollout-*.jsonl)', patterns: ['rollout-*.jsonl'] }, { name: 'inspect', description: 'Inspect AI eval log (.eval zip or .json)', patterns: ['*.eval'] }] },
   '/import/status': { status: 'idle', progress: null, error: null, result: null, history: [{ source: 'codex', results_dir: 'imported_codex_old', imported: 3, skipped: 0 }] },
@@ -38,22 +52,58 @@ const IMPORT = {
 }
 
 describe('sources', () => {
+  it('Add data: one H1, four tabs in order, and the import form first on the page', () => {
+    const { container } = renderRig('#/rig/sources', { data: { ...rigFixture(), ...IMPORT } })
+    const page = el(container, 'add-data')
+    expect(within(page).getByRole('heading', { level: 1 }).textContent).toBe('Add data › Import files')
+    const tabs = within(within(page).getByRole('tablist', { name: 'Ways to add data' })).getAllByRole('tab')
+    expect(tabs.map((t) => t.textContent)).toEqual(['Import files', 'Public sample', 'Session capture', 'Results on disk2'])
+    expect(tabs[0].getAttribute('aria-selected')).toBe('true')
+    const panel = within(page).getByRole('tabpanel')
+    expect(panel.firstElementChild.getAttribute('data-el')).toBe('import-trace')          // the form leads the page
+    expect(within(panel).getByLabelText(/Path to a session file/)).toBeTruthy()
+    expect(el(container, 'swe-agent-import')).toBeNull()
+  })
+  it('a tab opens in place and deep-links; the capture route opens Session capture', () => {
+    const { container } = renderRig('#/rig/sources', { data: { ...rigFixture(), ...IMPORT } })
+    act(() => { fireEvent.click(screen.getByRole('tab', { name: 'Public sample' })) })
+    expect(container.querySelector('.rg-doc').dataset.spec).toBe('sources:sample')
+    expect(location.hash).not.toContain('+')                                              // replaced, not a second tab
+    expect(screen.getByRole('tab', { name: 'Public sample' }).getAttribute('aria-selected')).toBe('true')
+    expect(el(container, 'swe-agent-import')).toBeTruthy()
+    expect(el(container, 'hugging-face')).toBeTruthy()
+    resetRig()
+    renderRig('#/rig/capture', { data: capData() })
+    expect(screen.getByRole('tab', { name: 'Session capture' }).getAttribute('aria-selected')).toBe('true')
+    expect(screen.getByRole('heading', { level: 1 }).textContent).toBe('Add data › Session capture')
+  })
   it('lists results on disk with descriptions, runs, models, updated, and the harness versions', () => {
-    const { container, requests } = renderRig('#/rig/sources', { data: { ...rigFixture(), ...IMPORT } })
+    const { container, requests } = renderRig('#/rig/sources:disk', { data: { ...rigFixture(), ...IMPORT } })
     const disk = el(container, 'results-on-disk')
     const rows = within(disk).getAllByRole('row').slice(1)
     expect(rows.map((r) => r.querySelector('b').textContent)).toEqual(['mini', 'mock_ctl'])
     expect(rows[0].textContent).toContain('16')
     expect(rows[0].textContent).toContain('2 models')
-    expect(rows[1].textContent).toContain('No description ships with this directory.')
-    expect(container.textContent).toContain('/lab/data/runs · 18 runs in 2 directories')
+    expect(rows[1].textContent).toContain('No description ships with this dataset.')
+    expect(container.textContent).toContain('/lab/data/runs · 18 runs in 2 datasets')
+    expect(el(container, 'harness-versions').querySelector('h2').textContent).toBe('Harness versions · mini')
     expect(container.textContent).toContain('× drifted')
     expect(requests).toEqual([])
   })
+  it('harness versions follow the dataset in focus, and each row can show its own', () => {
+    const data = { ...rigFixture(), ...IMPORT, '/harness/versions?dir=mock_ctl': { dir: 'mock_ctl', versions: [{ harness_id: 'baseline', hash: 'ccc333', runs: 2, pass1: 0.5, matches_current: true, has_file: true }] } }
+    const { container } = renderRig('#/rig/sources:disk?c=mock_ctl:mock:baseline', { data })
+    expect(el(container, 'harness-versions').querySelector('h2').textContent).toBe('Harness versions · mock_ctl')
+    expect(screen.getByRole('button', { name: 'Harness versions of mock_ctl' }).getAttribute('aria-pressed')).toBe('true')
+    act(() => { fireEvent.click(screen.getByRole('button', { name: 'Harness versions of mini' })) })
+    expect(el(container, 'harness-versions').querySelector('h2').textContent).toBe('Harness versions · mini')
+    expect(el(container, 'harness-versions').textContent).toContain('bbb222')
+    expect(container.querySelector('.rg-doc').dataset.spec).toBe('sources:disk')          // choosing a row does not open it
+  })
   it('carries a Hugging Face panel that lists the catalog\'s recorded-run datasets', () => {
-    const { container } = renderRig('#/rig/sources', { data: { ...rigFixture(), ...IMPORT } })
+    const { container } = renderRig('#/rig/sources:sample', { data: { ...rigFixture(), ...IMPORT } })
     const hf = el(container, 'hugging-face')
-    expect(hf.querySelector('h2').textContent).toBe('Hugging Face')
+    expect(hf.querySelector('h2').textContent).toBe('Hugging Face catalog')
     expect(within(hf).getByRole('button', { name: 'Preview nebius/SWE-agent-trajectories' })).not.toBeNull()
   })
   it('"status: idle · 0 past imports" is gone; earlier imports are listed, each with a way to open it', () => {
@@ -124,23 +174,52 @@ describe('sources', () => {
     expect(imp.disabled).toBe(true)
     expect(whyOf(imp)).toBe('The inspect adapter cannot read this here — see above')
   })
-  it('the two roads have distinct labels; there is no bare "Import" button', () => {
+  it('the import and download actions have distinct labels; there is no bare "Import" button', () => {
     const { container } = renderRig('#/rig/sources', { data: { ...rigFixture(), ...IMPORT } })
-    const add = el(container, 'add-runs')
-    expect(within(add).getByRole('button', { name: 'Import this path' })).toBeTruthy()
-    expect(within(add).getByRole('button', { name: 'Download SWE-agent sample' })).toBeTruthy()
-    expect(within(add).queryByRole('button', { name: 'Import' })).toBeNull()
-    expect(within(el(container, 'road-capture')).getByRole('button', { name: 'Open Session capture' }).getAttribute('data-spec')).toBe('capture')
+    const imp = el(container, 'add-data-import')
+    expect(within(imp).getByRole('button', { name: 'Import this path' })).toBeTruthy()
+    expect(within(imp).queryByRole('button', { name: 'Import' })).toBeNull()
     expect(el(container, 'import-about').tagName).toBe('DETAILS')          // the explanation sits behind a disclosure
+    resetRig()
+    const { container: c2 } = renderRig('#/rig/sources:sample', { data: { ...rigFixture(), ...IMPORT } })
+    const sample = el(c2, 'add-data-sample')
+    expect(within(sample).getByRole('button', { name: 'Download SWE-agent sample' })).toBeTruthy()
+    expect(within(sample).queryByRole('button', { name: 'Import' })).toBeNull()
   })
-  it('a finished import ends in "Open <dataset>" and "Import another path"', () => {
+  it('a finished import ends in "Open <dataset>" and "Import another path"', async () => {
     const result = { source: 'codex', results_dir: 'imported_codex_x', imported: 3, skipped: 0, n_tasks: 2, tasks: ['t1'], outcomes_known: 3, outcomes_unknown: 0, harnesses: [], errors: [] }
-    const { container } = renderRig('#/rig/sources', { data: { ...rigFixture(), ...IMPORT, '/import/status': { status: 'done', result, history: [result] } } })
+    const { container } = renderRig('#/rig/sources', { data: { ...rigFixture(), ...IMPORT, '/import/status': { status: 'done', result, history: [result] } }, fetchImpl: overviewWith('imported_codex_x') })
+    await waitFor(() => expect(el(container, 'import-result')).toBeTruthy())
     const r = el(container, 'import-result')
     expect(r.textContent).toContain('Last import · Codex → data/runs/imported_codex_x')
     expect(within(r).getByRole('button', { name: 'Open imported_codex_x' }).getAttribute('data-spec')).toBe('ds:imported_codex_x')
     expect(within(r).getByRole('button', { name: 'Import another path' })).toBeTruthy()
     expect(el(container, 'import-history')).toBeNull()                      // the latest one is not repeated as "earlier"
+  })
+  it('a finished import refreshes the dataset list, so Open <dataset> works without a reload', async () => {
+    const result = { source: 'codex', results_dir: 'imported_codex_y', imported: 3, skipped: 0, n_tasks: 2, tasks: ['t1'], outcomes_known: 3, outcomes_unknown: 0, harnesses: [], errors: [] }
+    const fetchImpl = overviewWith('imported_codex_y')
+    const { container } = renderRig('#/rig/sources', { data: { ...rigFixture(), ...IMPORT, '/import/status': { status: 'done', result, history: [result] } }, fetchImpl })
+    await waitFor(() => expect(el(container, 'import-result')).toBeTruthy())
+    expect(fetchImpl.mock.calls.filter((c) => c[0] === '/api/overview')).toHaveLength(1)
+    act(() => { fireEvent.click(within(el(container, 'import-result')).getByRole('button', { name: 'Open imported_codex_y' })) })
+    await waitFor(() => expect(container.querySelector('.rg-doc').dataset.spec).toBe('ds:imported_codex_y'))
+    expect(screen.getByRole('heading', { level: 1 }).textContent).toBe('Overview')                 // H1 = the page-list label
+    expect(container.querySelector('[data-el="breadcrumb"]').textContent).toContain('imported_codex_y')
+  })
+  it('an import that finishes before any poll sees it running still refreshes the dataset list', async () => {
+    const before = { status: 'done', result: null, history: [{ source: 'codex', results_dir: 'imported_codex_old', imported: 3, skipped: 0 }] }
+    const result = { source: 'codex', results_dir: 'mini', imported: 2, skipped: 0, n_tasks: 1, tasks: ['t1'], harnesses: [], errors: [] }
+    const { container } = renderRig('#/rig/sources', { data: { ...rigFixture(), ...IMPORT, '/import/status': before } })
+    const calls = stubFetch((u) => (u.startsWith('/api/import/detect') ? { exists: true, path: '/tmp/x', source: 'codex', sessions: 2, candidates: [{ source: 'codex', confidence: 0.9 }], is_dir: true }
+      : u === '/api/import' ? { ok: true } : u === '/api/import/status' ? { status: 'done', result, history: [result, ...before.history] } : u === '/api/overview' ? rigFixture()['/overview'] : undefined))
+    const box = el(container, 'import-trace')
+    fireEvent.change(within(box).getByLabelText(/Path to a session file/), { target: { value: '/tmp/x' } })
+    fireEvent.change(within(box).getByLabelText(/Dataset name/), { target: { value: 'mini' } })
+    await waitFor(() => expect(within(box).getByRole('button', { name: 'Import this path' }).disabled).toBe(false))
+    fireEvent.click(within(box).getByRole('button', { name: 'Import this path' }))
+    await act(async () => { fireEvent.click(within(box).getByRole('button', { name: 'Import now' })) })
+    await waitFor(() => expect(calls.some((c) => c.url === '/api/overview')).toBe(true))
   })
   it('a live session store is steered into the private directory and says so', async () => {
     const { container } = renderRig('#/rig/sources', { data: { ...rigFixture(), ...IMPORT } })
@@ -155,19 +234,19 @@ describe('sources', () => {
     fireEvent.click(within(box).getByRole('button', { name: 'Cancel' }))
   })
   it('the SWE-agent download names the directory it writes and offers a free name when that one exists', () => {
-    const { container } = renderRig('#/rig/sources', { data: { ...rigFixture(), ...IMPORT } })
+    const { container } = renderRig('#/rig/sources:sample', { data: { ...rigFixture(), ...IMPORT } })
     const box = el(container, 'swe-agent-import')
     expect(box.textContent).toContain('Writes data/runs/real_swe_agent_500')
-    fireEvent.change(within(box).getByLabelText(/Results directory/), { target: { value: 'mini' } })
+    fireEvent.change(within(box).getByLabelText(/Dataset name/), { target: { value: 'mini' } })
     expect(el(box, 'swe-dir-taken').textContent).toContain('data/runs/mini already exists')
     fireEvent.click(within(box).getByRole('button', { name: 'Use mini_2' }))
-    expect(within(box).getByLabelText(/Results directory/).value).toBe('mini_2')
+    expect(within(box).getByLabelText(/Dataset name/).value).toBe('mini_2')
     for (const i of box.querySelectorAll('input')) if (i.placeholder) expect(i.placeholder).toMatch(/^e\.g\. /)
   })
   it('the SWE-agent download never defaults onto the bundled sample: a blank name picks a free directory and posts it', async () => {
     const data = { ...rigFixture(), ...IMPORT }
     data['/overview'] = { ...data['/overview'], results: [...data['/overview'].results, { name: 'real_swe_agent_500', runs: 500, harnesses: ['swe-agent'], models: ['swe-agent-llama-70b'], tasks: ['t1'], pass_rate: 0.1, updated: '2026-01-03T00:00:00Z' }] }
-    const { container } = renderRig('#/rig/sources', { data })
+    const { container } = renderRig('#/rig/sources:sample', { data })
     const calls = stubFetch((u) => (u === '/api/real/import' ? { status: 'running', out: 'real_swe_agent_500_2' } : u === '/api/real/status' ? IMPORT['/real/status'] : undefined))
     const box = el(container, 'swe-agent-import')
     expect(box.textContent).toContain('Writes data/runs/real_swe_agent_500_2, because data/runs/real_swe_agent_500 already exists.')
@@ -176,10 +255,10 @@ describe('sources', () => {
     fireEvent.click(within(box).getByRole('button', { name: 'Download & import' }))
     await waitFor(() => expect(calls.filter((c) => c.method === 'POST').map((c) => c.body)).toEqual([{ n: 500, model: null, out: 'real_swe_agent_500_2' }]))
   })
-  it('the SWE-agent download says which phase it is in: downloading from the Hub (MB, then trajectories), then writing runs', () => {
+  it('the SWE-agent download says which phase it is in: downloading from the Hub (MB, then trajectories), then writing runs', async () => {
     const run = (phase, progress, unit) => {
       resetRig()
-      const { container } = renderRig('#/rig/sources', { data: { ...rigFixture(), ...IMPORT, '/real/status': { status: 'running', progress, phase, unit, error: null, result: null } } })
+      const { container } = renderRig('#/rig/sources:sample', { data: { ...rigFixture(), ...IMPORT, '/real/status': { status: 'running', progress, phase, unit, error: null, result: null } } })
       return el(container, 'swe-agent-progress').textContent
     }
     expect(run('download', [34, 85], 'MB')).toBe('Downloading from Hugging Face: 34 of 85 MB')
@@ -187,13 +266,14 @@ describe('sources', () => {
     expect(run('write', [250, 1000], 'runs')).toBe('Writing runs: 250 of 1,000 runs')
     expect(run('download', null, null)).toBe('Downloading from Hugging Face: starting')
     resetRig()
-    const { container } = renderRig('#/rig/sources', { data: { ...rigFixture(), ...IMPORT, '/real/status': { status: 'done', progress: [1000, 1000], phase: 'write', unit: 'runs', error: null, result: { n: 1000, resolved: 169, out: 'real_swe_agent_1000' } } } })
+    const { container } = renderRig('#/rig/sources:sample', { data: { ...rigFixture(), ...IMPORT, '/real/status': { status: 'done', progress: [1000, 1000], phase: 'write', unit: 'runs', error: null, result: { n: 1000, resolved: 169, out: 'real_swe_agent_1000' } } }, fetchImpl: overviewWith('real_swe_agent_1000') })
+    await waitFor(() => expect(el(container, 'swe-agent-result')).toBeTruthy())       // the new dataset joins the list first
     expect(el(container, 'swe-agent-result').textContent).toContain('Downloaded 1,000 trajectories (169 resolved) into data/runs/real_swe_agent_1000.')
   })
   it('the SWE-agent form keeps what was typed when the dataset list refreshes after a download', async () => {
     const data = { ...rigFixture(), ...IMPORT }
-    const { container } = renderRig('#/rig/sources', { data })
-    fireEvent.change(within(el(container, 'swe-agent-import')).getByLabelText(/^Runs/), { target: { value: '1000' } })
+    const { container } = renderRig('#/rig/sources:sample', { data })
+    typeNumber(within(el(container, 'swe-agent-import')).getByLabelText(/^Runs/), '1000')
     stubFetch((u) => (u === '/api/overview' ? data['/overview'] : u === '/api/real/status' ? IMPORT['/real/status'] : undefined))
     act(() => { invalidate('/overview') })                      // what a finished download does
     await waitFor(() => expect(el(container, 'swe-agent-import')).toBeTruthy())
@@ -209,7 +289,7 @@ describe('sources', () => {
     await waitFor(() => expect(within(box).getByRole('button', { name: 'Inspect' }).disabled).toBe(false))
     fireEvent.click(within(box).getByRole('button', { name: 'Inspect' }))
     await waitFor(() => expect(box.textContent).toContain('Found 3 sessions in Codex format (confidence 0.90).'))
-    expect(el(box, 'import-detect').textContent).toContain('writes one run per session to data/runs/imported_codex_x, a new directory.')
+    expect(el(box, 'import-detect').textContent).toContain('writes one run per session to data/runs/imported_codex_x, a new dataset.')
     expect(within(box).getByDisplayValue('imported_codex_x')).toBeTruthy()
     fireEvent.click(importBtn())
     expect(box.textContent).toContain('Creates data/runs/imported_codex_x from /tmp/x.')
@@ -234,8 +314,8 @@ const CAPTURE_NONE = {
   adapters: ['claude_code', 'codex', 'qwen_code', 'agy', 'cursor'], sniffer: { state: 'never_started', roots: 0, interval_s: 60, errors: 0, debris: 0, debris_checked_at: 0 },
   cursors: { sources: 0, seeded: 0 }, control: { paused: false },
 }
-const capNone = () => ({ ...rigFixture(), 'private:/capture/status': CAPTURE_NONE, 'private:/capture/runs?limit=25': { rows: [], total: 0 }, 'private:/capture/relations': { relations: {} } })
-const capData = () => ({ ...rigFixture(), 'private:/capture/status': CAPTURE, 'private:/capture/runs?limit=25': { rows: [{ run_id: 'cap-1', task_id: 'rename a flag', model: 'anthropic/claude-x', steps: 9, cost_usd: 0.12, exit_reason: 'submitted' }], total: 12 }, 'private:/capture/relations': { relations: { 'cap-0': { superseded_by: ['cap-1'] } } } })
+const capNone = () => ({ ...rigFixture(), '/settings': IMPORT['/settings'], 'private:/capture/status': CAPTURE_NONE, 'private:/capture/runs?limit=25': { rows: [], total: 0 }, 'private:/capture/relations': { relations: {} } })
+const capData = () => ({ ...rigFixture(), '/settings': IMPORT['/settings'], 'private:/capture/status': CAPTURE, 'private:/capture/runs?limit=25': { rows: [{ run_id: 'cap-1', task_id: 'rename a flag', model: 'anthropic/claude-x', steps: 9, cost_usd: 0.12, exit_reason: 'submitted' }], total: 12 }, 'private:/capture/relations': { relations: { 'cap-0': { superseded_by: ['cap-1'] } } } })
 
 describe('capture', () => {
   it('shows the private notice, KPIs with unmeasured runs named, watcher, open, relations, recent runs', () => {
@@ -270,6 +350,31 @@ describe('capture', () => {
     expect(post.url).toBe('/api/capture/control')
     expect(post.body).toEqual({ action: 'pause' })
     expect(post.headers['x-traceharness-private']).toBe('1')
+  })
+  it('a captured run opens like any run: the run page finds it in the private dataset', async () => {
+    const row = { run_id: 'cap-1', task_id: 'rename a flag', harness_id: 'claude_code', model: 'anthropic/claude-x', repeat_index: 0, steps: 9, tool_calls: 4, edits: 1, input_tokens: 900, output_tokens: 80, cost_usd: 0.12, exit_reason: 'submitted', provider: 'capture:claude_code' }
+    const data = { ...capData(), 'private:/results/captured/runs': [row], 'private:/outcomes/captured': { runs: {}, counts: {}, modes: [] }, 'private:/results/captured/runs/cap-1': { spans: [], record: {} } }
+    const { container } = renderRig('#/rig/capture', { data })
+    const link = within(el(container, 'capture-runs')).getByRole('button', { name: /rename a flag/ })
+    expect(link.getAttribute('data-spec')).toBe('run:cap-1')
+    expect(link.textContent).toContain('9 steps')
+    act(() => { fireEvent.click(link) })
+    await waitFor(() => expect(container.querySelector('.rg-doc').dataset.spec).toBe('run:cap-1'))
+    await waitFor(() => expect(container.querySelector('.rg-doc').textContent).toContain('cap-1'))
+    expect(container.querySelector('.rg-doc').textContent).not.toContain('No run matches')
+  })
+  it('a link to a captured run resolves once the private index answers', async () => {
+    const row = { run_id: 'cap-2', task_id: 'tidy imports', harness_id: 'codex', model: 'openai/gpt-x', repeat_index: 0, steps: 3, exit_reason: 'submitted' }
+    const { container } = renderRig('#/rig/run:cap-2', { data: capData(), fetchImpl: vi.fn(async (url, opts) => {
+      const u = String(url), mine = opts && opts.headers && opts.headers['x-traceharness-private'] === '1'
+      const body = !mine ? undefined : u === '/api/results/captured/runs' ? [row] : u === '/api/outcomes/captured' ? { runs: {}, counts: {}, modes: [] } : u === '/api/results/captured/runs/cap-2' ? { spans: [] } : undefined
+      return body === undefined ? { ok: false, status: 404, statusText: 'Not Found', headers: { get: () => 'application/json' }, json: async () => ({ detail: 'no' }) } : { ok: true, status: 200, headers: { get: () => 'application/json' }, json: async () => body }
+    }) })
+    await waitFor(() => expect(container.querySelector('.rg-doc').textContent).toContain('tidy imports'))
+  })
+  it('a run id found nowhere is still reported missing after the private dataset is asked', async () => {
+    const { container } = renderRig('#/rig/run:nope-1', { data: { ...capData(), 'private:/results/captured/runs': [], 'private:/outcomes/captured': { runs: {}, counts: {}, modes: [] } } })
+    await waitFor(() => expect(container.querySelector('.rg-doc').textContent).toContain('No run matches “nope-1”.'))
   })
   it('the capture dock shows the watcher and opens the page', () => {
     const { container } = renderRig('#/rig/home?dock=capture', { data: capData() })
@@ -338,6 +443,13 @@ describe('sentinel', () => {
     expect(lb[1].textContent).toContain('1. other')                    // sorted by AUC
     expect(lb[2].textContent).toContain('active')
   })
+  it('Re-read the plugin files says it read them again: what it found, and that nothing changed', async () => {
+    renderRig('#/rig/sentinel', { data: { ...rigFixture(), '/sentinel': SENT, '/sentinel/plugins': PLUG, '/sentinel/plugins?reload=true&n=1': PLUG, '/../openapi.json': { paths: {} } } })
+    fireEvent.click(screen.getByRole('button', { name: 'Re-read the plugin files' }))
+    const note = await waitFor(() => { const n = document.querySelector('[data-el="refresh-note"]'); expect(n).toBeTruthy(); return n })
+    expect(note.getAttribute('role')).toBe('status')
+    expect(note.textContent).toBe('Re-read · 2 detectors · nothing changed · just now')
+  })
   it('with no rule-test route, testing is shown as unavailable with the terminal alternative — never a dead button', () => {
     const { container } = renderRig('#/rig/sentinel', { data: { ...rigFixture(), '/sentinel': SENT, '/sentinel/plugins': PLUG, '/../openapi.json': { paths: {} } } })
     const t = el(container, 'sentinel-test-rule')
@@ -345,7 +457,7 @@ describe('sentinel', () => {
     const u = el(t, 'rule-test-unavailable')
     expect(u.textContent).toContain('Testing here is unavailable.')
     expect(u.textContent).toContain('POST /api/sentinel/plugins/test_rule')
-    fireEvent.change(within(t).getByLabelText('edits_since_test'), { target: { value: '3' } })
+    typeNumber(within(t).getByLabelText('edits_since_test'), '3')
     expect(within(t).getByLabelText('steps_frac')).toBeTruthy()
     const cmd = el(u, 'rule-test-command').textContent
     expect(cmd).toContain("'edits_since_test >= 2 and steps_frac > 0.5'")
@@ -364,7 +476,7 @@ describe('sentinel', () => {
     const calls = stubFetch((u) => (u === '/api/sentinel/plugins/test_rule' ? { fired: true } : undefined))
     const t = el(container, 'sentinel-test-rule')
     expect(el(t, 'rule-test-unavailable')).toBeNull()
-    fireEvent.change(within(t).getByLabelText('steps_frac'), { target: { value: '0.75' } })
+    typeNumber(within(t).getByLabelText('steps_frac'), '0.75')
     await act(async () => { fireEvent.click(within(t).getByRole('button', { name: 'Test rule' })) })
     const post = calls.find((c) => c.method === 'POST')
     expect(post.body).toEqual({ id: 'streak', when: 'edits_since_test >= 2 and steps_frac > 0.5', env: { edits_since_test: 0, steps_frac: 0.75 } })
@@ -429,7 +541,8 @@ describe('settings', () => {
   it('appearance drives the Rig theme, density and motion on the Rig root', () => {
     const { container } = renderRig('#/rig/settings', { data: { ...rigFixture(), ...IMPORT } })
     const panel = [...container.querySelectorAll('[data-el="appearance"]')].find((x) => x.tagName === 'SECTION')   // the titlebar button shares the id
-    fireEvent.click(within(panel).getByRole('button', { name: 'paper' }))
+    expect(within(el(panel, 'theme-options')).getAllByRole('button').map((b) => b.textContent)).toEqual(['Graphite', 'Paper', 'High contrast · dark', 'High contrast · light', 'System'])
+    fireEvent.click(within(panel).getByRole('button', { name: 'Paper' }))
     expect(container.querySelector('.rig').getAttribute('data-rig-theme')).toBe('light')
     fireEvent.click(within(panel).getByRole('button', { name: 'comfortable' }))
     expect(container.querySelector('.rig').getAttribute('data-rig-density')).toBe('comfortable')
@@ -491,14 +604,61 @@ describe('settings', () => {
     expect(about.textContent).toContain('local')
     expect(about.querySelector('[data-el="about-drift"]')).toBeNull()
   })
+  it('theme options are Graphite, Paper, High contrast dark and light, and System; colour-blind safe status colours is a shell switch', () => {
+    prime({ ...rigFixture(), ...IMPORT })
+    stubFetch(() => undefined)
+    const setTheme = vi.fn(), setCvd = vi.fn()
+    const shell = { state: null, openTab: () => {}, setDock: () => {}, oracle: 'hidden', lab: false, setLab: () => {}, themePref: 'dark', setTheme, cvd: false, setCvd, toast: () => {}, datasets: [], condition: null, conditionFor: (dir) => ({ dir, model: null, harness: null }) }
+    const Settings = views.settings.render
+    const { container } = render(<RigContext.Provider value={shell}><Settings /></RigContext.Provider>)
+    const theme = el(container, 'theme-options')
+    expect(within(theme).getByRole('button', { name: 'Graphite' }).getAttribute('aria-pressed')).toBe('true')
+    for (const [label, value] of [['Paper', 'light'], ['High contrast · dark', 'contrast'], ['High contrast · light', 'contrast-light'], ['System', 'system'], ['Graphite', 'dark']]) {
+      fireEvent.click(within(theme).getByRole('button', { name: label }))
+      expect(setTheme).toHaveBeenLastCalledWith(value)
+    }
+    const cvd = screen.getByRole('switch', { name: 'Colour-blind safe status colours' })
+    expect(cvd.getAttribute('aria-checked')).toBe('false')
+    fireEvent.click(cvd)
+    expect(setCvd).toHaveBeenCalledWith(true)
+    for (const id of ['paths-in-use', 'buddy-settings', 'lab-key', 'student-lab-toggle', 'narrator-key', 'about-console']) expect(el(container, id), id).toBeTruthy()
+  })
+  it('the colour-blind switch is harmless when the shell does not offer it yet', () => {
+    const { container } = renderRig('#/rig/settings', { data: { ...rigFixture(), ...IMPORT } })
+    const cvd = within(el(container, 'cvd-switch').parentElement).getByRole('switch')
+    expect(() => fireEvent.click(cvd)).not.toThrow()
+  })
   it('paths in use, narrator and Buddy panels, and Return to work goes back to the previous tab', () => {
     const { container } = renderRig('#/rig/home+!settings', { data: { ...rigFixture(), ...IMPORT } })
     const p = el(container, 'paths-in-use').textContent
-    expect(p).toContain('/lab/data/runs'); expect(p).toContain('2 directories'); expect(p).toContain('/lab/tasks · 2')
+    expect(p).toContain('/lab/data/runs'); expect(p).toContain('2 datasets'); expect(p).toContain('/lab/tasks · 2')
     expect(el(container, 'narrator-key')).toBeTruthy()
     expect(el(container, 'buddy-settings').textContent).toContain('no key in this browser')
     act(() => { fireEvent.click(el(container, 'return-to-work')) })
-    expect(screen.getByRole('tab', { name: /Datasets|home/i, selected: true })).toBeTruthy()
+    expect(container.querySelector('.rg-doc').dataset.spec).toBe('home')
+  })
+  it('the key panels say their sentences in the word font and keep the key hint in mono', () => {
+    const { container } = renderRig('#/rig/settings', { data: { ...rigFixture(), ...IMPORT, '/settings': { ...IMPORT['/settings'], key_present: false } } })
+    const dd = (sec, k) => [...el(container, sec).querySelectorAll('dt')].find((dt) => dt.textContent === k).nextElementSibling
+    expect(dd('lab-key', 'connection').textContent).toBe('The server holds no key.')
+    expect(dd('lab-key', 'connection').classList.contains('rg-sans')).toBe(true)
+    expect(dd('lab-key', 'used for').classList.contains('rg-sans')).toBe(true)
+    expect(dd('buddy-settings', 'connection').classList.contains('rg-sans')).toBe(true)
+  })
+  it('paths in use show the home folder as ~ and keep the full path on hover; the base URL is untouched', () => {
+    const home = { ...IMPORT['/settings'], lab_root: '/Users/alice/lab', results_root: '/Users/alice/lab/data/runs', harness_dir: '/home/alice/lab/harnesses', task_dir: '/srv/lab/tasks' }
+    const { container } = renderRig('#/rig/settings', { data: { ...rigFixture(), ...IMPORT, '/settings': home } })
+    const sec = el(container, 'paths-in-use')
+    expect(sec.textContent).not.toMatch(/\/Users\/|\/home\//)
+    const dd = Object.fromEntries([...sec.querySelectorAll('dt')].map((dt) => [dt.textContent, dt.nextElementSibling]))
+    expect(dd['lab root'].textContent).toBe('~/lab')
+    expect(dd['lab root'].getAttribute('data-hint')).toBe('/Users/alice/lab')
+    expect(dd['runs root'].textContent).toContain('~/lab/data/runs')
+    expect(dd['runs root'].getAttribute('data-hint')).toBe('/Users/alice/lab/data/runs')
+    expect(dd.harnesses.textContent).toContain('~/lab/harnesses')
+    expect(dd.tasks.textContent).toContain('/srv/lab/tasks')
+    expect(dd['base URL'].textContent).toBe('https://openrouter.ai/api/v1')
+    expect(home.lab_root).toBe('/Users/alice/lab')
   })
 })
 
@@ -510,7 +670,7 @@ describe('guide and package', () => {
     expect(specs[0]).toBe('home')
     expect(specs).toContain('q:mini')
     expect(specs).toContain('run:20260101-000000-a00003')      // alpha-1/baseline t2 rep 1: cut off
-    expect(g.textContent).toContain('1 task of 2 eligible tasks has both passing and failing repeats')
+    expect(g.textContent).toContain('1 task of 2 eligible tasks has both passing and failing runs')
     expect(g.textContent).toContain('cut off · no patch')
     expect(container.textContent).toContain('Student Lab is off')
   })
@@ -528,6 +688,6 @@ it('reading guide does not claim no task is mixed without comparable grades', ()
   const fixture = rigFixture()
   fixture['/results/mini/runs'] = [{ ...fixture['/results/mini/runs'][0], hidden_pass: null }]
   const { container } = renderRig('#/rig/guide', { data: fixture })
-  expect(el(container, 'start-here').textContent).toContain('Repeat comparison unavailable')
+  expect(el(container, 'start-here').textContent).toContain('Run comparison unavailable')
   expect(el(container, 'start-here').textContent).not.toContain('No task is mixed')
 })

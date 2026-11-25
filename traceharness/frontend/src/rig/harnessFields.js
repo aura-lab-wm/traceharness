@@ -1,16 +1,16 @@
 // The constraints already exposed by the numeric editor, shared with its feedback.
 export const NUMBER_FIELDS = {
   context: [
-    { key: 'window', label: 'Last observations kept (0 = full history)', min: 0, max: 100 },
-    { key: 'observation_chars', label: 'Observation characters', min: 200, max: 50000 },
+    { key: 'window', label: 'Last observations kept (0 = full history)', min: 0, max: 100, noun: 'observations' },
+    { key: 'observation_chars', label: 'Observation characters', min: 200, max: 50000, noun: 'characters' },
   ],
   stop: [
-    { key: 'max_steps', label: 'Step cap', min: 1, max: 200 },
-    { key: 'max_total_tokens', label: 'Token cap', min: 1000, max: 2000000 },
+    { key: 'max_steps', label: 'Step cap', min: 1, max: 200, noun: 'steps' },
+    { key: 'max_total_tokens', label: 'Token cap', min: 1000, max: 2000000, noun: 'tokens' },
   ],
   sampling: [
     { key: 'temperature', label: 'Temperature', min: 0, max: 2, step: 'any' },
-    { key: 'max_tokens_per_call', label: 'Tokens per call', min: 16, max: 32000 },
+    { key: 'max_tokens_per_call', label: 'Tokens per call', min: 16, max: 32000, noun: 'tokens' },
   ],
 }
 

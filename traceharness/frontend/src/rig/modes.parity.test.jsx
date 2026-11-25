@@ -2,7 +2,7 @@
 /* Every view in every mode (SPEC 4.2, §5 WP2 step 6).
 
    For each mode the console runs in (local, export) the modules are loaded fresh with that
-   mode's window globals, and every view kind in the registry, the nine analysis steps (AN_VIEWS) and
+   mode's window globals, and every view kind in the registry, the ten analysis steps (AN_VIEWS) and
    the four dock panels are rendered through test/rig-testing.jsx on its small fixture. Each must:
      - render without throwing (no shell crash, no per-tab "this view failed" boundary);
      - show only "not available here" notes ([data-capability]) for a capability that is unavailable
@@ -25,6 +25,8 @@ const M1 = 'alpha-1', H = 'baseline', RUN = 'a00000', RUN2 = 'a00001'
 const SPECS = {
   home: 'home', ds: 'ds:mini', q: 'q:mini', an: 'an:mini:family', tasks: `tasks:mini:${M1}:${H}`, task: `task:mini:${M1}:${H}:t1`,
   run: `run:${RUN}`, span: `span:${RUN}:0`, cmp: `cmp:${RUN}:${RUN2}`, fork: `fork:${RUN}`, field: 'field:mini', paused: 'paused',
+  lanes: `lanes:mini:${M1}:${H}:t1`,
+  start: 'start',
   recommend: 'recommend', sources: 'sources', capture: 'capture', sentinel: 'sentinel', canvas: 'canvas', settings: 'settings', guide: 'guide', package: 'package',
   blocks: 'blocks', harnesses: 'harnesses', shallowApply: 'shallowApply', shallowCards: 'shallowCards', shallowWizard: 'shallowWizard',
 }
@@ -75,7 +77,7 @@ for (const mode of MODES) {
     it('renders every view, analysis step and dock: notes name an unavailable capability, no retired phrase', () => {
       const table = M.shared.SHARED.environment.table
       const retired = M.shared.RETIRED.map((r) => r.phrase)
-      expect(M.analysis.AN_VIEWS).toHaveLength(9)
+      expect(M.analysis.AN_VIEWS).toHaveLength(10)
       const failures = []
       for (const c of cases()) {
         if (NOT_RENDERED[c.name] || NOT_RENDERED[`${c.name}@${mode}`]) continue
@@ -126,7 +128,7 @@ describe('the gap', () => {
     process.stdout.write(`NOT_RENDERED ${JSON.stringify(NOT_RENDERED)}\n`)
     for (const mode of MODES) process.stdout.write(`RENDERED ${mode} (${(report.rendered[mode] || []).length}): ${(report.rendered[mode] || []).join(' ')}\n`)
     process.stdout.write(`HARNESS_VIEW_FINDINGS ${JSON.stringify(report.harnessFindings)}\n`)
-    const expected = Object.keys(SPECS).length + 9 + DOCKS.length
+    const expected = Object.keys(SPECS).length + 10 + DOCKS.length
     for (const mode of MODES) expect(report.rendered[mode], mode).toHaveLength(expected - Object.keys(NOT_RENDERED).filter((k) => !k.includes('@') || k.endsWith(`@${mode}`)).length)
   })
 })

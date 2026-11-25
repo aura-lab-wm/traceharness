@@ -176,6 +176,36 @@ describe('PausedRuns', () => {
   })
 })
 
+describe('a run that pauses again after a decision', () => {
+  const url = '/api/runs/demo/20260101-000000-abc123/decision'
+  it('a later pause of the same run shows fresh buttons, not the old "Sent"', async () => {
+    stubFetch({ ['POST ' + url]: { ok: true } })
+    const { rerender } = render(<PausePanel run={RUN} now={Date.now()} />)
+    fireEvent.click(screen.getByRole('button', { name: 'Deny' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Deny and tell the agent' }))
+    await screen.findByText(/Sent: deny/)
+    expect(screen.queryByRole('button', { name: 'Approve' })).toBeNull()
+    // the same run, now waiting at a later model call (same panel instance)
+    rerender(<PausePanel run={{ ...RUN, step: 4 }} now={Date.now()} />)
+    expect(screen.queryByText(/Sent: deny/)).toBeNull()
+    expect(screen.getByRole('button', { name: 'Approve' })).toBeTruthy()
+    expect(screen.getByText(/model call 4/)).toBeTruthy()
+  })
+  it('the waiting list gives each pause its own card: deny, then the next pause has buttons without a refresh', async () => {
+    let paused = [RUN]
+    stubFetch({ 'GET /api/pause/config': { token_required: false }, 'GET /api/paused': () => paused, ['POST ' + url]: () => { paused = [{ ...RUN, step: 5 }]; return { ok: true } } })
+    render(<PausedRuns />)
+    fireEvent.click(await screen.findByRole('button', { name: 'Deny' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Deny and tell the agent' }))
+    await screen.findByText(/Sent: deny/)
+    // the list polls; the run comes back paused at step 5 and its card starts over
+    await waitFor(() => expect(screen.getByText(/model call 5/)).toBeTruthy(), { timeout: 4000 })
+    expect(screen.queryByText(/Sent: deny/)).toBeNull()
+    expect(screen.getByRole('button', { name: 'Approve' })).toBeTruthy()
+    expect(screen.getByRole('button', { name: 'Deny' }).getAttribute('aria-pressed')).toBe('false')
+  })
+})
+
 describe('the spans in the step view', () => {
   const base = { run_id: 'r', task_id: 't', harness_id: 'baseline', 'gen_ai.request.model': 'm' }
   const pause = { ...base, seq: 2, span: 'pause', step: 0, reason: ['before_tools: run_tests'], pending: [{ index: 0, name: 'run_tests', arguments: { x: 'a\u001b[2Jb' } }], timeout_s: 900, on_timeout: 'abort' }
@@ -183,7 +213,7 @@ describe('the spans in the step view', () => {
   it('are one human-pause kind with a sentence each', () => {
     expect(spanKind(pause)).toBe('hum')
     expect(spanKind(iv)).toBe('hum')
-    expect(spanDesc(pause)).toBe('paused · step 0 · before_tools: run_tests · run_tests')
+    expect(spanDesc(pause)).toBe('paused · step 1 · before_tools: run_tests · run_tests')   // the ledger's model step 0 is Step 1
     expect(spanDesc(iv)).toBe('edit by console · “safer”')
   })
   it('hang above the row they gate, and an abort hangs below the last row', () => {

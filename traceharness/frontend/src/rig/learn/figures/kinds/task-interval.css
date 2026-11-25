@@ -1,0 +1,21 @@
+/* Rig · learn/figures/kinds/task-interval.css — task_interval: two intervals, runs kept (task-interval.jsx).
+   Runs are pass / fail dots (--rig-sky / --rig-red); a run left out is an outline. Counting runs is the factor colour
+   (--rig-ser1), counting tasks a grey (--rig-ser4); bars change width with transform. Tokens only. */
+.rg-ti-dot{transition:fill var(--rig-dur-2) var(--rig-ease),stroke var(--rig-dur-2) var(--rig-ease),opacity var(--rig-dur-2) var(--rig-ease);stroke-width:1.5}
+.rg-ti-dot.p{fill:var(--rig-sky);stroke:var(--rig-sky)}
+.rg-ti-dot.f{fill:var(--rig-red);stroke:var(--rig-red)}
+.rg-ti-dot.out{fill:var(--rig-panel);opacity:.55}
+.rg-ti-svg .rg-ti-dot{opacity:0}
+.rg-ti-svg.seen .rg-ti-dot{opacity:1}
+.rg-ti-svg.seen .rg-ti-dot.out{opacity:.55}
+.rg-ti-group line{stroke:var(--rig-line3);stroke-width:1.5}
+.rg-ti-group.flip line{stroke:var(--rig-amb)}
+.rg-ti-bar rect{transition:transform calc(var(--rig-dur-2) * 2) var(--rig-ease)}
+.rg-ti-bar.runs rect{fill:var(--rig-ser1)}
+.rg-ti-bar.tasks rect{fill:var(--rig-ser4)}
+.rg-ti-bar .mid{stroke:var(--rig-text);stroke-width:2}
+.rg-ti-label{fill:var(--rig-dim);font-size:var(--rig-fs-xs)}
+.rg-ti-label .v{fill:var(--rig-text);font-weight:var(--rig-fw-bold);font-variant-numeric:tabular-nums}
+.rg-lfig-sw.leftout{background:var(--rig-panel);box-shadow:inset 0 0 0 1.5px var(--rig-mute);border-radius:var(--rig-r-full)}
+.rg-lfig-sw.tiruns{background:var(--rig-ser1)}
+.rg-lfig-sw.titasks{background:var(--rig-ser4)}

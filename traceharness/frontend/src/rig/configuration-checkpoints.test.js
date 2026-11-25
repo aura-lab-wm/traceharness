@@ -233,6 +233,23 @@ describe('bounded semantic comparison', () => {
     expect(compareConfigurations(config(''), config('new')).prompt).toMatchObject({ beforeLines: 0, afterLines: 1, changed: true })
   })
 
+  it('shows a long line around its change, so an edit at the end of a one-line prompt is visible', () => {
+    const base = 'You are a minimal agent. ' + 'Read the repository and run the tests. '.repeat(7) + 'Stay inside the sandbox.'
+    expect([...base].length).toBeGreaterThan(240)
+    const diff = compareConfigurations(config(base), config(base + ' Run every test twice.')).prompt
+    const removed = diff.lines.find((l) => l.kind === 'removed'), added = diff.lines.find((l) => l.kind === 'added')
+    expect(diff.truncated).toBe(true)
+    expect(added.text).toContain('Stay inside the sandbox. Run every test twice.')
+    expect(added.text.startsWith('…')).toBe(true)
+    expect(removed.text.endsWith('Stay inside the sandbox.')).toBe(true)
+    expect(removed.text).not.toBe(added.text)
+    expect([...added.text.replace(/^…|…$/g, '')]).toHaveLength(240)
+    // a change near the start keeps the start of the line
+    const early = compareConfigurations(config(base), config('X' + base.slice(1))).prompt.lines.find((l) => l.kind === 'added')
+    expect(early.text.startsWith('Xou are a minimal agent.')).toBe(true)
+    expect(early.text.endsWith('…')).toBe(true)
+  })
+
   it('bounds long-line and large repeated-line output without quadratic matching', () => {
     const long = compareConfigurations(config('a'.repeat(250000)), config('b'.repeat(250000)))
     expect(long.prompt.truncated).toBe(true)

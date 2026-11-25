@@ -1,0 +1,10 @@
+/* Rig · rate.css — a rate with its uncertainty (RateWithCI.jsx): the figure, the ± in muted figures, a
+   4 px bar to the rate and the 95% interval as a whisker (a line with end ticks) over it. */
+.rg-rate{display:inline-flex;align-items:center;gap:6px;min-width:0}
+.rg-rate-rank{flex:none;min-width:2ch;color:var(--rig-mute);font:var(--rig-fw-regular) var(--rig-fs-xs)/var(--rig-lead-xs) var(--rig-num);font-variant-numeric:tabular-nums}
+.rg-rate-v{flex:none;color:var(--rig-text)}
+.rg-rate-pm{flex:none;color:var(--rig-mute);font:var(--rig-fw-regular) var(--rig-fs-xs)/var(--rig-lead-xs) var(--rig-num);font-variant-numeric:tabular-nums;white-space:nowrap}
+.rg-rate-bar{position:relative;display:block;flex:0 1 64px;min-width:24px;height:4px;border-radius:2px;background:var(--rig-panel3)}
+.rg-rate-bar>i{position:absolute;left:0;top:0;bottom:0;border-radius:2px;background:var(--rig-qty)}
+.rg-rate-w{position:absolute;top:-3px;height:10px;box-sizing:border-box;border-left:1px solid var(--rig-text);border-right:1px solid var(--rig-text)}
+.rg-rate-w::before{content:"";position:absolute;left:0;right:0;top:4px;border-top:1px solid var(--rig-text)}

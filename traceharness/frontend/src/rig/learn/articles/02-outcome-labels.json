@@ -1,0 +1,359 @@
+{
+ "id": "outcome-labels",
+ "number": 2,
+ "part": 1,
+ "kind": "concept",
+ "checked": "2026-11-23",
+ "title": "What the outcome labels mean",
+ "question": "A run failed. What kind of failure was it, and was it the agent's?",
+ "what_you_learn": [
+  "That every run carries two separate facts: how it ended, and what the grader said.",
+  "How to read TraceHarness's outcome labels in groups: passed, failed with a patch, failed without one, not the agent's, unknown.",
+  "How those labels line up with the counts in a SWE-bench report."
+ ],
+ "prerequisites": {
+  "read": [
+   "reading-a-trajectory"
+  ],
+  "know": []
+ },
+ "sections": [
+  {
+   "heading": "How a run ended is not how it was graded",
+   "body": [
+    "Each run has an exit reason, which says why it stopped. The common ones are submitted (the agent called submit), no_action (a reply called no tool and the harness ended the run) and max_steps (the step limit ran out). The others are budget_exceeded (the token budget ran out), sentinel_abort (the early-warning model stopped the run), error, and unknown when the source did not record a reason.",
+    "Separately, the grader decides an outcome from whatever patch was left in the workspace. Anthropic's eval guide draws the same line: the transcript is what the agent did, and the outcome is the final state of the environment. Hitting the step limit is an ending. It is not a grade. On a run page the two sit one under the other at the end of the step list: Graded shows the outcome and Ended shows the exit reason."
+   ]
+  },
+  {
+   "heading": "The labels, in groups",
+   "body": [
+    "TraceHarness puts one label on every run. Reading the labels in groups makes them easier to use.",
+    {
+     "list": [
+      "Passed: the oracle's suite passed.",
+      "Failed with a patch: wrong patch. The agent changed code and the tests still fail. This is the only label that says the agent's fix was wrong.",
+      "Failed without a patch. Cut off, no patch: the last reply hit the per-call output limit without calling a tool, before any edit. Step limit, no patch: the steps ran out before any edit. No patch: the run ended without an edit for another reason. The grader ran on the original code, so these fails say nothing about a fix; there was none.",
+      "Not the agent's: harness error. The harness itself failed, so do not count it against the agent.",
+      "Unknown: ungraded. No grade was recorded. It is left out of pass rates, never counted as a fail."
+     ]
+    },
+    "Read a label as a description, not a cause. Cut off, no patch points at the output limit. Yet the article on harnesses shows such runs disappearing when only the rule for replies without a tool call changed. In study_v04, 15 of gemini-2.5-flash-lite's 120 baseline runs are cut off, no patch. Raising the output limit from 2,048 to 8,192 tokens per reply (long_output) still leaves 11. Answering a reply with no tool call with a nudge instead (reprompt) leaves 0 of 120, and 98 of 120 pass."
+   ]
+  },
+  {
+   "heading": "Where TraceHarness shows the labels",
+   "body": [
+    "The Outcomes page draws each task's runs as a strip of marks. A tick is passed and a cross is a fail; a cross marked Cut off is a cut-off run. A question mark is ungraded, which is never counted as a fail. Under the strip a line counts the fails by label. The Tasks and Runs pages can filter by failure mode, and the Runs search box also matches exit reasons.",
+    "A run page names its label in How it failed and links the evidence. For a cut-off run it spells the cause out. For example: the reply of step 2 stopped at 2,047 output tokens against a 2,048-token limit, with no tool call. So the hidden oracle ran on the original code. Follow those links before you trust a count."
+   ]
+  },
+  {
+   "heading": "Lining up with a SWE-bench report",
+   "body": [
+    "SWE-bench's evaluation guide reports four counts. Resolved means the required tests passed, and unresolved means the tests ran but did not pass. An empty patch has nothing to run. An error has no result, for example a patch that did not apply or a container that did not start. Roughly, resolved is passed and unresolved with a patch is wrong patch. An empty patch is one of the no-patch labels. An error is closest to harness error or ungraded, depending on what the import kept; the article on where runs come from shows what an import keeps."
+   ]
+  },
+  {
+   "heading": "Limits and unknowns in real data",
+   "body": [
+    "A run can hit a limit and still pass, because the grade depends on the patch it left behind, not on how it ended. The challenge counts such runs.",
+    "An exit reason is only as good as the source. In the public SWE-rebench set, 161 runs end with max_steps. For each one, the source's exit status is a message from OpenHands, the open-source agent harness that made these runs: the agent reached its maximum of 100 iterations. The import maps that message to max_steps; it never guesses one. 157 of the 161 have exactly 100 model calls, the maximum turn count on the dataset card. Of the 160 runs that reached 100 calls, 35 were still resolved. Counted by exit reason instead, 34 of the 161 max_steps runs were resolved.",
+    "Treat harness error the same careful way. The harness failed, not necessarily the agent. Keep such runs out of any claim about the agent, and report how many there were instead of folding them into its fails."
+   ]
+  }
+ ],
+ "figures": [
+  {
+   "id": "a8-crosstab",
+   "after_section": 0,
+   "kind": "label_flow",
+   "data_file": "a02-flow",
+   "title": "From how a run ended to its label",
+   "caption": "gemini-2.5-flash-lite under baseline in study_v04: 120 runs from their exit reason, through whether they left a patch, to their outcome label, hidden oracle. 89 submitted, 29 no_action and 2 max_steps; 75 passed, 20 wrong patch, 15 cut off, no patch and 10 no patch. 4 no_action runs had already edited the code, so they are wrong patch. The second tab is the SWE-rebench set, where 34 of the 161 max_steps runs passed.",
+   "data_note": "study_v04, 120 runs; swe_rebench_openhands_qwen3coder, 2,174 runs",
+   "headline": [
+    {
+     "key": "runs_0",
+     "as_written": "120"
+    },
+    {
+     "key": "exit_0_submitted",
+     "as_written": "89"
+    },
+    {
+     "key": "exit_0_no_action",
+     "as_written": "29"
+    },
+    {
+     "key": "label_0_passed",
+     "as_written": "75"
+    },
+    {
+     "key": "label_0_wrong_patch",
+     "as_written": "20"
+    },
+    {
+     "key": "label_0_cutoff_no_patch",
+     "as_written": "15"
+    },
+    {
+     "key": "label_0_no_patch",
+     "as_written": "10"
+    },
+    {
+     "key": "edited_0_no_action",
+     "as_written": "4"
+    },
+    {
+     "key": "exit_1_max_steps",
+     "as_written": "161"
+    },
+    {
+     "key": "passed_1_max_steps",
+     "as_written": "34 of the 161"
+    }
+   ]
+  },
+  {
+   "id": "a02-mix",
+   "after_section": 1,
+   "kind": "label_mix",
+   "data_file": "a02-mix",
+   "title": "The same model, nine harnesses, by label",
+   "caption": "The 120 runs of each harness in study_v04 by outcome label: gemini-2.5-flash-lite, then gpt-5.6-luna in the second tab. Under baseline 15 of gemini-2.5-flash-lite's runs are cut off, no patch; a larger output limit (long_output) leaves 11, and the nudge of reprompt leaves 0 of 120.",
+   "data_note": "study_v04, 2 models x 9 harnesses x 120 runs",
+   "headline": [
+    {
+     "key": "cut_0_baseline",
+     "as_written": "15"
+    },
+    {
+     "key": "cut_0_long_output",
+     "as_written": "11"
+    },
+    {
+     "key": "cut_0_reprompt",
+     "as_written": "0 of 120"
+    },
+    {
+     "key": "passed_0_reprompt",
+     "as_written": "98 of 120"
+    },
+    {
+     "key": "runs",
+     "as_written": "120"
+    }
+   ]
+  }
+ ],
+ "worked_example": {
+  "title": "How 120 runs ended, and how they were graded",
+  "dataset": {
+   "name": "study_v04",
+   "what": "Bundled with the study copy: 3,240 recorded runs, 3 models x 9 harnesses x 24 small Python tasks x 5 runs. They were collected through OpenRouter (a paid service that passes requests on to many model providers) at temperature 0.",
+   "credit": "TraceHarness bundled data (AURA lab, William & Mary)."
+  },
+  "open": [
+   "Click the dataset name at the top of the left list and choose study_v04.",
+   "Click Outcomes (gemini-2.5-flash-lite under baseline) and read the failure line under Per task, runs in order.",
+   "Click Runs, choose gemini-2.5-flash-lite and baseline in the two menus, and type an exit reason such as no_action in the search box."
+  ],
+  "body": [
+   "gemini-2.5-flash-lite under baseline has 120 runs: 75 passed, 20 wrong patch, 15 cut off, no patch, and 10 no patch. The figure above splits them by exit reason; its Table view gives the same split as a table.",
+   "Two things to notice. First, 4 runs ended on a reply with no tool call after they had already edited the code, so they are graded on that edit: wrong patch, not no patch. Second, the no-patch runs come from a few tasks. t03_ratelimit, t14_spiral_matrix and t17_json_pointer are cut off, no patch in all 5 runs each. t04_csvsplit and t05_leaky_duration are no patch in all 5. A label count is often a few tasks repeated, not many tasks."
+  ],
+  "links": [
+   "ds:study_v04",
+   "an:study_v04:outcomes:gemini-2.5-flash-lite:baseline",
+   "field:study_v04:google/gemini-2.5-flash-lite:baseline"
+  ]
+ },
+ "try_it": {
+  "clicks": [
+   "Click the dataset name at the top of the left list and choose study_v04.",
+   "Click Runs in the left list.",
+   "In the model menu choose gemini-2.5-flash-lite; in the harness menu choose tight_budget (a 6-step limit).",
+   "Type max_steps in the search box."
+  ],
+  "question": "How many runs ended because they ran out of steps, and how many of those passed?",
+  "answer": "26 of the 120 runs match max_steps. 14 of them pass and 12 fail, all 12 as wrong patch. More than half of the runs that hit the 6-step limit still left a passing patch.",
+  "answer_measured_from": "Runs page: '26 of 120 match max_steps', 14 Pass, 12 Fail, failure mode wrong patch 12. data/runs/study_v04/index.jsonl, model google/gemini-2.5-flash-lite, harness tight_budget, exit_reason max_steps: 26 rows, hidden_pass true in 14. GET /api/outcomes/study_v04: those 26 are 14 passed and 12 wrong_patch.",
+  "links": [
+   "ds:study_v04",
+   "field:study_v04",
+   "field:study_v04:google/gemini-2.5-flash-lite:tight_budget",
+   null
+  ]
+ },
+ "quiz": [
+  {
+   "q": "A run hit the step limit. Did it fail?",
+   "options": [
+    "Yes, a run that hits the limit always fails",
+    "Not necessarily: the grade depends on its patch",
+    "It is ungraded, so it stays out of pass rates",
+    "It is a harness error, not the agent’s fault"
+   ],
+   "answer": 1,
+   "why": "14 of the 26 tight_budget runs that hit the limit still passed."
+  },
+  {
+   "q": "What does cut off, no patch mean?",
+   "options": [
+    "The grader timed out before all the tests had finished",
+    "The agent deleted its own patch before it submitted",
+    "The network was cut, so the model could not answer",
+    "Its last reply hit the output limit, before any edit"
+   ],
+   "answer": 3,
+   "why": "The run ended on a cut-off reply, so the grader ran on the original code."
+  },
+  {
+   "q": "A run has no recorded grade. How should it count in pass@1?",
+   "options": [
+    "Left out of the denominator, shown as ungraded",
+    "As a fail, because nothing passed",
+    "As a pass, because nothing failed",
+    "As half a pass, to split the doubt"
+   ],
+   "answer": 0,
+   "why": "Unknown is not failure."
+  }
+ ],
+ "sources": [
+  {
+   "title": "Evaluation Guide (SWE-bench documentation)",
+   "authors": "SWE-bench maintainers",
+   "year": "n.d. (living documentation page)",
+   "url": "https://www.swebench.com/SWE-bench/guides/evaluation/",
+   "licence": "Documentation of the SWE-bench repository (MIT). Paraphrased, one short quote.",
+   "what_we_took": "The report counts (resolved, unresolved, empty patches, errors) and what causes an error.",
+   "quote": "Resolved plus unresolved is how many were actually graded.",
+   "checked": "2026-11-23"
+  },
+  {
+   "title": "Demystifying evals for AI agents",
+   "authors": "Mikaela Grace, Jeremy Hadfield, Rodrigo Olivares, Jiri De Jonghe (Anthropic)",
+   "year": "2026 (published 9 Jan 2026)",
+   "url": "https://www.anthropic.com/research/demystifying-evals-for-ai-agents",
+   "licence": "Vendor research blog; reuse terms not stated. Paraphrased, one short quote.",
+   "what_we_took": "The outcome is the final state of the environment, kept apart from the transcript of what the agent did.",
+   "quote": "The outcome is the final state in the environment at the end of the trial.",
+   "checked": "2026-11-24"
+  },
+  {
+   "title": "nebius/SWE-rebench-openhands-trajectories (dataset card)",
+   "authors": "Maria Trofimova, Anton Shevtsov, Ibragim Badertdinov, Konstantin Pyaev, Simon Karasik, Alexander Golubev (Nebius)",
+   "year": "2025",
+   "url": "https://huggingface.co/datasets/nebius/SWE-rebench-openhands-trajectories",
+   "licence": "CC BY 4.0. TraceHarness's swe_rebench_openhands_qwen3coder is a subset; credit is required wherever its runs appear.",
+   "what_we_took": "The maximum turn count of 100 for the OpenHands trajectories, and that exit_status holds submit or an error message.",
+   "quote": "Contains `'submit'` in case the agent completes trajectory with a terminating action",
+   "checked": "2026-11-23"
+  }
+ ],
+ "glossary_terms": [
+  "exit reason",
+  "outcome",
+  "wrong patch",
+  "no patch",
+  "cut off, no patch",
+  "step limit, no patch",
+  "harness error",
+  "ungraded",
+  "known / unknown",
+  "resolved / unresolved"
+ ],
+ "see_also": [
+  {
+   "kind": "article",
+   "target": "how-swe-bench-grades"
+  },
+  {
+   "kind": "article",
+   "target": "what-a-harness-is"
+  },
+  {
+   "kind": "page",
+   "label": "Outcomes: the runs of every task as a strip of marks",
+   "spec": "an:study_v04:outcomes:gemini-2.5-flash-lite:baseline"
+  },
+  {
+   "kind": "page",
+   "label": "Runs: search by exit reason",
+   "spec": "field:study_v04"
+  }
+ ],
+ "numbers": [
+  {
+   "as_written": [
+    "2,047",
+    "2,048"
+   ],
+   "meaning": "output tokens of the cut-off reply and the per-call limit, t17_json_pointer Run 1",
+   "source": "run page How it failed; ledger finish_reason length"
+  },
+  {
+   "as_written": [
+    "120",
+    "75",
+    "20",
+    "15",
+    "10",
+    "89",
+    "29",
+    "14",
+    "4",
+    "2"
+   ],
+   "meaning": "gemini-2.5-flash-lite + baseline exit x label table",
+   "source": "data/runs/study_v04/index.jsonl (traceharness-study) + GET /api/outcomes/study_v04"
+  },
+  {
+   "as_written": [
+    "161",
+    "157",
+    "100",
+    "160",
+    "35"
+   ],
+   "meaning": "SWE-rebench runs ending max_steps / at exactly 100 calls / reached 100 calls / resolved among those",
+   "source": "data/runs/swe_rebench_openhands_qwen3coder/index.jsonl and ledgers (native exit status); card max turns 100"
+  },
+  {
+   "as_written": [
+    "26 of the 120",
+    "14",
+    "12",
+    "6-step"
+   ],
+   "meaning": "tight_budget runs that hit max_steps",
+   "source": "Runs page index.jsonl; outcomes API"
+  },
+  {
+   "as_written": [
+    "15 of gemini-2.5-flash-lite's 120",
+    "2,048",
+    "8,192",
+    "11",
+    "0 of 120",
+    "98 of 120"
+   ],
+   "meaning": "gemini-2.5-flash-lite cut off, no patch under baseline, long_output and reprompt; reprompt passes",
+   "source": "own computation: backend/outcomes_api.classify over data/runs/study_v04 (traceharness-study); harnesses/long_output.json and reprompt.json; scripts/learn_figures.py a02-mix"
+  },
+  {
+   "as_written": [
+    "34 of the 161"
+   ],
+   "meaning": "SWE-rebench runs with exit reason max_steps that were resolved",
+   "source": "data/runs/swe_rebench_openhands_qwen3coder/index.jsonl (exit_reason, hidden_pass); scripts/learn_figures.py a02-flow"
+  }
+ ],
+ "in_short": [
+  "Every run carries **two separate facts**: its exit reason says how it ended, and its outcome label says what the grader made of the patch it left.",
+  "**Only wrong patch says the agent's fix was wrong**: the no-patch labels mean there was no fix to grade, and an ungraded run is never a fail.",
+  "**Read a label as a description, not a cause**: cut off, no patch fell from 15 to 0 when only the rule for a reply with no tool call changed."
+ ]
+}
