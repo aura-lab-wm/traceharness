@@ -28,8 +28,10 @@ runs and comparing harnesses, with figures drawn from the included runs, their s
 | **Overview.** What stands out in a dataset; each number says what it counts. | **All runs of a task.** One lane per run: where the runs part, and the work after the fix. |
 | ![One run, step by step](docs/img/readme/run.png) | ![Family matrix: model by harness](docs/img/readme/family.png) |
 | **One run.** Its phases, how it failed, and every model call and tool call. | **Model × harness.** pass@1 for every pair, with its 95% interval. |
-| ![A Learn article with its figure](docs/img/readme/learn.png) | ![A page tour](docs/img/readme/tour.png) |
-| **Learn.** Short articles with figures from the included runs. | **Tour.** A guided walk through any page. |
+| ![Learn: the articles by part](docs/img/readme/learn-home.png) | ![A Learn article with its figure](docs/img/readme/learn.png) |
+| **Learn.** 14 articles in five parts, from reading one run to reporting a comparison. | **A Learn article.** Figures from the included runs, a worked example, a quiz and its sources. |
+| ![A page tour](docs/img/readme/tour.png) | ![Home in the dark theme](docs/img/readme/home-dark.png) |
+| **Tour.** A guided walk through any page. | **Dark theme.** Every page has one. |
 
 ## Quick start
 
